@@ -13,7 +13,7 @@ export default function Home() {
         >
             <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
                 <div className="shrink-0">
-                    <Image className="size-12" src="/favicon.ico" alt="ChitChat Logo"/>
+                    <Image src="/favicon.ico" width={48} height={48} alt="ChitChat Logo"/>
                 </div>
                 <div>
                     <div className="text-xl font-medium text-black">ChitChat</div>
