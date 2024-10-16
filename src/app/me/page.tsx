@@ -13,7 +13,7 @@ export default function Home() {
         >
             <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
                 <div className="shrink-0">
-                    <Image className="size-24" src="/azure.png" alt="Azure Logo"/>
+                    <Image className="size-24" src="/azure.png" width={96} height={96} quality={100} alt="Azure Logo"/>
                 </div>
                 <div>
                     <div className="text-xl font-medium text-black">Azure</div>
