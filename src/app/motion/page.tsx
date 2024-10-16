@@ -1,5 +1,6 @@
 'use client'
 
+import Image from "next/image";
 import { motion } from 'framer-motion';
 
 export default function Home() {
@@ -10,11 +11,15 @@ export default function Home() {
             animate={{ opacity: 1 }} // アニメーション後の状態
             transition={{ duration: 1 }} // アニメーションの持続時間
         >
-            <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start bg-[var(--custom)])">
-                <a className="text-xl">
-                    Motion
-                </a>
-            </main>
+            <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
+                <div className="shrink-0">
+                    <Image src="src/favicon.ico" alt="ChitChat Logo" width={12} height={12} />
+                </div>
+                <div>
+                    <div className="text-xl font-medium text-black">ChitChat</div>
+                    <p className="text-slate-500">You have a new message!</p>
+                </div>
+            </div>
         </motion.div>
     </div>
   );
