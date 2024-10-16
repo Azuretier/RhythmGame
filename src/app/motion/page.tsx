@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 
-const Page: React.FC = () => {
+const Page = () => {
   return (
     <motion.div
       initial={{ opacity: 0 }} // 初期状態
