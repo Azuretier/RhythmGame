@@ -10,7 +10,7 @@ export default function Home() {
             animate={{ opacity: 1 }} // アニメーション後の状態
             transition={{ duration: 1 }} // アニメーションの持続時間
         >
-            <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start bg-[#FFA500])">
+            <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start bg-[var(--custom)])">
                 <a className="text-xl">
                     Motion
                 </a>
