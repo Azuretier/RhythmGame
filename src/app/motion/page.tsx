@@ -1,5 +1,3 @@
-'use client'
-
 import Image from "next/image";
 import { motion } from 'framer-motion';
 
@@ -9,7 +7,7 @@ export default function Home() {
         <motion.div
             initial={{ opacity: 0 }} // 初期状態
             animate={{ opacity: 1 }} // アニメーション後の状態
-            transition={{ duration: 3 }} // アニメーションの持続時間
+            transition={{ duration: 2 }} // アニメーションの持続時間
         >
             <div className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4">
                 <div className="shrink-0">
