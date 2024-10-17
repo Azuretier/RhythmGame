@@ -12,7 +12,7 @@ export default function Home() {
             viewport={{ once: true }}
             variants={{
                 hidden: { opacity: 0, y: -1000 },
-                show: { opacity: 1, y: 0, transition: { type: 'spring' }}
+                show: { opacity: 1, y: 0, transition: { type: 'spring', duration: 0.5}}
             }}
             className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
         >
