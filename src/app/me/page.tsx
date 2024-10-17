@@ -8,11 +8,10 @@ export default function Home() {
     <div className="flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-slate-900">
         <motion.div
             key={Math.random()}
-            initial={{ opacity: 0, y: 500, scale: 0 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{
-              y: { type: 'spring'},
-              scale: { duration: 0.6 },
+              type: 'spring',
             }}
             viewport={{}}
             className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
