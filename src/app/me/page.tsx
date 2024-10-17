@@ -7,13 +7,8 @@ export default function Home() {
   return (
     <div className="flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-slate-900">
         <motion.div
-            initial="hidden"
-            animate="show"
-            viewport={{ once: true }}
-            variants={{
-                hidden: { opacity: 0, y: 500, scale: 0},
-                show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', bounce: 0.3 }},
-            }}
+            initial={{ opacity: 0, y: 500, scale: 0}}
+            animate={{ opacity: 1, y: 0, scale: 1, transition: { type: 'spring', bounce: 0.3 }}}
             className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
         >
             <div className="shrink-0">
