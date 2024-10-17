@@ -20,7 +20,10 @@ export default function Home() {
         <motion.div
             initial={{ opacity: 0, y: 50 }} // 初期状態
             animate={{ opacity: 1, y: 0 }} // アニメーション後の状態
-            transition={{ duration: 2 }} // アニメーションの持続時間
+            transition={{
+                opacity: { duration: 1.6 },      // opacityは2秒でモーション
+                y: { duration: 0.8 }             // y軸は1秒でモーション
+            }} // アニメーションの持続時間
             className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
         >
                 <div className="shrink-0">
