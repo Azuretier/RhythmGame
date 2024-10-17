@@ -14,12 +14,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "azuret.net",
-    template: `%s - azuret.net`,
-  },
   description: "A website created by Azuret.",
-  themeColor: '#ffa500',
+  themeColor: '#007af8',
   openGraph: {
     title: "azuret.net",
     description: "A website created by Azuret.",
