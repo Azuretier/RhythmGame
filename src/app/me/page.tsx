@@ -21,23 +21,23 @@ export default function Home() {
         };
     }, []); // 初回レンダリング時のみ実行される
 
+    const delay = 0.5;
+
     return (
         <div className="flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-slate-900">
             <motion.div
                 initial={{ opacity: 0, y: 100, scale: 0}}
                 animate={isLoaded ? { opacity: 1, y: 0, scale: 1} : {}}
                 transition={{
+                    delay: delay,
                     y: {
                         type: 'spring',
-                        delay: 0.5
                     },
                     opacity: {
                         duration: 2,
-                        delay: 0.5
                     },
                     scale: {
                         duration: 0.3,
-                        delay: 0.5
                     }
                 }}
                 className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
