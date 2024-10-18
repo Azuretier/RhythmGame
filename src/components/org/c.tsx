@@ -1,4 +1,4 @@
-const Konyuuta = () => {
+const konyuuta = () => {
     return (
         // items-center = vertical
         // justify-center = horizontal
@@ -9,4 +9,4 @@ const Konyuuta = () => {
     );
 }
 
-export default Konyuuta
+export default konyuuta
