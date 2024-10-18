@@ -29,15 +29,17 @@ export default function Home() {
                 initial={{ opacity: 0, y: 100, scale: 0}}
                 animate={isLoaded ? { opacity: 1, y: 0, scale: 1} : {}}
                 transition={{
-                    delay: delay,
                     y: {
                         type: 'spring',
+                        delay: delay,
                     },
                     opacity: {
                         duration: 2,
+                        delay: delay,
                     },
                     scale: {
                         duration: 0.3,
+                        delay: delay,
                     }
                 }}
                 className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
