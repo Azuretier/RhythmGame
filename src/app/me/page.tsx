@@ -32,10 +32,12 @@ export default function Home() {
                         delay: 0.5
                     },
                     opacity: {
-                        duration: 0.8
+                        duration: 0.8,
+                        delay: 0.5
                     },
                     scale: {
-                        duration: 0.3
+                        duration: 0.3,
+                        delay: 0.5
                     }
                 }}
                 className="p-6 max-w-sm mx-auto bg-white rounded-xl shadow-lg flex items-center space-x-4"
