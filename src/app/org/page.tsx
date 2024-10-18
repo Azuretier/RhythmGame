@@ -3,6 +3,8 @@ import adhd from "@/components/org/c"
 
 export default function gatiiku() {
     return (
-        adhd
+        <main>
+            <div>aiueo</div>
+        </main>
     );
 }
