@@ -1,8 +1,11 @@
 import ADHD from "@/components/org/c"
-//import {kawaikouki} from "@/components/org/c"
+import Mommy from "@/components/org/konmom"
 
 export default function gatiiku() {
     return (
-        <ADHD />
+        <section>
+            <ADHD />
+            <Mommy>a</Mommy>
+        </section>
     )
 }
