@@ -32,7 +32,7 @@ export default function Home() {
                         delay: 0.5
                     },
                     opacity: {
-                        duration: 0.8,
+                        duration: 2,
                         delay: 0.5
                     },
                     scale: {
