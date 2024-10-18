@@ -1,5 +1,7 @@
 const konyuuta = () => {
-    return <div>This is returned by konyuuta function in c.tsx</div>
+    return (
+        <div>This is returned by konyuuta function in c.tsx</div>
+    );
 }
 
 export const kawaikouki = () => {
