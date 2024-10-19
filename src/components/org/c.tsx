@@ -7,7 +7,7 @@ const Center = ({children}: {children: React.ReactNode}) => {
     // justify-center = horizontal
     return (
         <main className="flex items-center justify-center h-screen">
-            <div className="bg-white font-semibold text-xl text-orange-300">{children}</div>
+            <div className="bg-white font-semibold text-2xl text-orange-300">{children}</div>
         </main>
     )
 }
