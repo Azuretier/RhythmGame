@@ -6,7 +6,7 @@ import B from "@/components/org/button"
 export default function gatiiku() {
     return (
         <section>
-            <Center>Hello how are yo doing bro</Center>
+            <Center>Hello how are yo' doing bro</Center>
             <B/>
         </section>
     )
