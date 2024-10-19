@@ -8,7 +8,7 @@ import {animate} from 'framer-motion/dom'
 const Gatiiku = () => {
 
     useEffect(() => {
-        animate("div", { y: [10, 0]}, { type: "spring" })
+        animate("div", { y: [10, 0], opacity: [0, 1]}, { y: {type: "spring"}, opacity: {duration: 1} })
     }, []); // 空の依存配列で初回レンダリング時にのみ実行
 
     return (
