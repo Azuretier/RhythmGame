@@ -28,7 +28,6 @@ export const metadata: Metadata = {
   },
 };
 
-'use client'
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   const [count, setCount] = useState(0);
