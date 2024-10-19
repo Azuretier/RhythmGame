@@ -1,5 +1,5 @@
 import { FadeUpDiv, FadeUpStagger } from '@/components/animation';
-import { ThemeToggle } from '@/components/theme-toggle';
+//import { ThemeToggle } from '@/components/theme-toggle';
 import Image from 'next/image';
 import {
   FaBirthdayCake,
