@@ -16,8 +16,8 @@ const Gatiiku = () => {
             <motion.div
                 key={count}
                 className="bg-white p-4 rounded-xl text-xl"
-                initial={{scale: 0 }}
-                animate={{scale: 1 }}
+                initial={{scale: 0, opacity: 0.3}}
+                animate={{scale: 1, opacity: 1}}
             >
                 1919
             </motion.div>
