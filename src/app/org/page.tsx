@@ -15,10 +15,10 @@ const Gatiiku = () => {
     }, []); // 空の依存配列で初回レンダリング時にのみ実行
 
     return (
-        <main className="flex items-center justify-center h-screen">
-            <motion.div
+        <main className="flex items-center justify-center h-screen">    
+            {isLoaded ? <motion.div
                 initial={{opacity: 0, y:10}}
-                animate={isLoaded ? 
+                animate={ 
                     {
                         opacity: 1,
                         y:0,
@@ -26,11 +26,12 @@ const Gatiiku = () => {
                             type: 'spring',
                             delay: 0.15
                         }
-                    }: {}
+                    }
                 }
             >
                 <Center>Hello how are yo&apos; doing bro</Center>
             </motion.div>
+            : null}
         </main>
     )
 }
