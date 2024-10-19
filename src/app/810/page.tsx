@@ -1,10 +1,18 @@
 "use client"
 
 import {motion} from 'framer-motion'
+import {useEffect, useState} from 'react'
 
 const Gatiiku = () => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+      // ページを読み込むたびに count を 1 増やす
+      setCount((prevCount) => prevCount + 1);
+    }, []); // 空の依存配列により、ページの最初のレンダリング時のみ実行
+
     return (
-        <main className="flex justify-center items-center h-screen">
+        <main className="flex justify-center items-center h-screen" key={count}>
             <motion.div
                 className="bg-white p-4 rounded-xl text-xl"
                 initial={{ opacity: 0, scale: 0 }}
