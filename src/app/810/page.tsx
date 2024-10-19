@@ -1,23 +1,22 @@
 "use client"
 
-import {motion} from 'framer-motion'
-import {useEffect, useState} from 'react'
+import {motion, animate} from 'framer-motion'
+import {useEffect} from 'react'
 
 const Gatiiku = () => {
-    const [count, setCount] = useState(0);
-
+    
     useEffect(() => {
-      // ページを読み込むたびに count を 1 増やす
-      setCount((prevCount) => prevCount + 1);
+        const fadeUp = document.getElementById("fadeUp")
+        if(fadeUp != null) animate(fadeUp, {opacity: [0.1, 1]})
     }, []); // 空の依存配列により、ページの最初のレンダリング時のみ実行
 
     return (
-        <main className="flex justify-center items-center h-screen" key={count}>
+        <main className="flex justify-center items-center h-screen">
             <motion.div
-                key={count}
                 className="bg-white p-4 rounded-xl text-xl"
-                initial={{scale: 0, opacity: 0.1}}
-                animate={{scale: 1, opacity: 1}}
+                initial={{scale: 0, opacity: 0}}
+                animate={{scale: 1}}
+                id="fadeUp"
             >
                 1919
             </motion.div>
