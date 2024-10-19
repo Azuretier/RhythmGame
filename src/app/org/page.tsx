@@ -23,7 +23,8 @@ const Gatiiku = () => {
                         opacity: 1,
                         y:0,
                         transition: { 
-                            type: 'spring'
+                            type: 'spring',
+                            delay: 0.15
                         }
                     }: {}
                 }
