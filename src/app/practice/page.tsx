@@ -2,16 +2,12 @@ import { FadeUpCard, FadeUpDiv, FadeUpStagger } from '@/components/animation';
 import { CardIcon } from '@/components/link-card-icon';
 import { CardName } from '@/components/link-card-name';
 import { LinkCard } from '@/components/link-card';
-import { DiscordPartnerIcon } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import Image from 'next/image';
 import {
   FaBirthdayCake,
-  FaDiscord,
-  FaGithub,
   FaLocationArrow,
   FaSteam,
-  FaTwitter,
   FaUserGraduate,
   FaXbox,
   FaYoutube,
@@ -61,26 +57,6 @@ export default function Home() {
             </CardIcon>
             <CardName name='YouTube' id='@nonick_mc' />
           </LinkCard>
-          <LinkCard
-            className='col-span-6 grid gap-3 p-6 transition-colors hover:border-twitter md:col-span-3 lg:col-span-2'
-            href='https://twitter.com/nonick_mc'
-          >
-            <CardIcon className='bg-twitter'>
-              <FaTwitter size={25} />
-            </CardIcon>
-            <CardName name='Twitter' id='@nonick_mc' />
-          </LinkCard>
-          <LinkCard
-            className='col-span-6 grid gap-3 p-6 transition-colors hover:border-discord md:col-span-3 lg:col-span-2'
-            href='https://discord.gg/nonick-mc'
-          >
-            <CardIcon className='bg-discord'>
-              <FaDiscord size={25} />
-            </CardIcon>
-            <CardName name='Discord' id='@nonick_mc'>
-              <DiscordPartnerIcon />
-            </CardName>
-          </LinkCard>
           <FadeUpCard className='col-span-6 grid gap-3 p-6 transition-colors hover:border-xbox md:col-span-3 lg:col-span-2'>
             <CardIcon className='bg-xbox'>
               <FaXbox size={25} />
@@ -96,47 +72,8 @@ export default function Home() {
             </CardIcon>
             <CardName name='Steam' id='NULL1017' />
           </LinkCard>
-          <LinkCard
-            className='col-span-12 flex justify-between p-6 transition-colors hover:border-black dark:hover:border-gray-500 md:col-span-6 lg:col-span-4'
-            href='https://github.com/nonick-mc'
-          >
-            <div className='grid gap-3'>
-              <CardIcon className='bg-github'>
-                <FaGithub size={25} />
-              </CardIcon>
-              <CardName name='GitHub' id='@nonick-mc' />
-            </div>
-            <div className='grid grid-cols-2 gap-3'>
-              <Image width={32} height={32} src='/programLangs/JavaScript.svg' alt='javascript' />
-              <Image width={32} height={32} src='/programLangs/TypeScript.svg' alt='typescript' />
-            </div>
-          </LinkCard>
-          <LinkCard
-            className='col-span-12 grid gap-3 p-6 transition-colors hover:border-black dark:hover:border-gray-500 md:col-span-6 lg:col-span-4'
-            href='https://nonick-js.com'
-          >
-            <Image
-              width={40}
-              height={40}
-              className='rounded-2xl'
-              src='/icons/nonickjs.png'
-              alt='nonick.js icon'
-            />
-            <CardName name='NoNICK.js' id='サーバー管理に役立つ多機能DiscordBot' />
-          </LinkCard>
-          <LinkCard
-            className='col-span-12 grid gap-3 p-6 transition-colors hover:border-black dark:hover:border-gray-500 md:col-span-6 lg:col-span-4'
-            href='https://github.com/nonick-mc/nonick.stats'
-          >
-            <Image
-              width={40}
-              height={40}
-              className='rounded-2xl'
-              src='/icons/nonickstats.png'
-              alt='nonick.stats icon'
-            />
-            <CardName name='NoNICK.stats' id='The HIVEサーバーの統計を表示するDiscordBOT' />
-          </LinkCard>
+          
+          
         </div>
       </FadeUpStagger>
     </main>
