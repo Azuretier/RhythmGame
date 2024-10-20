@@ -18,8 +18,8 @@ const Gatiiku = () => {
         <main className="flex items-center justify-center h-screen">    
             <motion.div 
                 className="bg-white p-4 rounded-xl text-xl text-black"
-                initial={{y: 100, scale:0, opacity: 0}}
-                animate={{y: 0, scale: 1}}
+                initial={{y: 20, opacity: 0}}
+                animate={{y: 0}}
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >gatiiku</motion.div>
