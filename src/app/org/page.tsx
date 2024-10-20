@@ -18,7 +18,7 @@ const Main = () => {
         <main className="grid grid-cols-12 grid-rows-3 grid-flow-row gap-4 items-center justify-center h-screen">
             <section className="row-span-2"></section>    
             <motion.div 
-                className="p-4 rounded-xl text-xl text-white row-start-3 col-span-3 self-start border border-zinc-200 dark:border-zinc-800"
+                className="flex justify-center p-4 rounded-xl text-xl text-white row-start-3 col-span-3 self-start border border-zinc-200 dark:border-zinc-800"
                 initial={{y: 20, opacity: 0}}
                 animate={{y: 0}}
                 transition={{type: 'spring'}}
