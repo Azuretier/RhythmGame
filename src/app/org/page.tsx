@@ -25,9 +25,7 @@ const Main = () => {
                 id="fadeUp"
             >
                 <section>あずれーと</section>
-                <div className="grid gap-1">
-                    <p>Happy Birthday 200X/2/18</p>
-                </div>
+                
             </motion.div>
             <section className="row-span-2"></section>  
         </main>
