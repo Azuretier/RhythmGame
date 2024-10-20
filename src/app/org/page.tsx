@@ -26,6 +26,7 @@ const Gatiiku = () => {
             >
                 gatiiku
             </motion.div>
+            <section className="row-span-2"></section>  
         </main>
     )
 }
