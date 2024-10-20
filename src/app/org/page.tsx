@@ -25,6 +25,7 @@ const Main = () => {
                 id="fadeUp"
             >
                 <section>あずれーと</section>
+                <p>Happy Birthday 200X/2/18</p>
             </motion.div>
             <section className="row-span-2"></section>  
         </main>
