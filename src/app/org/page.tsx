@@ -18,7 +18,7 @@ const Gatiiku = () => {
         <main className="grid grid-row-4 gap-4 items-center justify-center h-screen">
             <section className="row-span-2"></section>    
             <motion.div 
-                className="bg-white p-4 rounded-xl text-xl text-black row-start-3 row-span-2"
+                className="bg-white p-4 rounded-xl text-xl text-black row-start-3 row-span-2 items-start"
                 initial={{y: 20, opacity: 0}}
                 animate={{y: 0}}
                 transition={{type: 'spring'}}
