@@ -15,7 +15,8 @@ const Gatiiku = () => {
     }, []); // 空の依存配列で初回レンダリング時にのみ実行
 
     return (
-        <main className="grid grid-row-4 gap-4 items-center justify-center">    
+        <main className="grid grid-row-4 gap-4 items-center justify-center">
+            <section className="row-span-2"></section>    
             <motion.div 
                 className="bg-white p-4 rounded-xl text-xl text-black row-start-2"
                 initial={{y: 20, opacity: 0}}
