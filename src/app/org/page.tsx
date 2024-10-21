@@ -31,8 +31,8 @@ const Main = () => {
             >
                 <section className="text-base justify-center font-black">
                     <Image className="justify-center" src="/azure.png" alt="avatar" width={200} height={200}/>
-                    <p className="text-3xl">Azuret</p>
-                    <p className="text-subtext">あずれーと</p>
+                    <p className="grid justify-center text-3xl">Azuret</p>
+                    <p className="justify-center text-subtext">あずれーと</p>
                     <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
                 </section>
                 <div className="grid grid-flow-row gap-1 text-subtext">
