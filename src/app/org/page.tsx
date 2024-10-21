@@ -6,7 +6,8 @@ import {useEffect} from 'react'
 import {motion} from 'framer-motion'
 import {animate} from 'framer-motion/dom'
 import {
-    FaBirthdayCake
+    FaBirthdayCake,
+    FaAngleDoubleUp
 } from 'react-icons/fa'
 import Image from 'next/image'
 
@@ -32,9 +33,11 @@ const Main = () => {
                     <Image src="/azure.png" alt="avatar" />
                     <p className="justify-self-center">Azuret</p>
                 </section>
-                <div className="grid grid-flow-col items-center justify-start gap-2 text-subtext">
+                <div className="grid grid-flow-col row-cols-2 items-center justify-start gap-2 text-subtext">
                     <FaBirthdayCake/>
                     <p>200X/2/18</p>
+                    <FaAngleDoubleUp/>
+                    <p>Level up enguage</p>
                 </div>
             </motion.div>
             <section className="row-span-2"></section>  
