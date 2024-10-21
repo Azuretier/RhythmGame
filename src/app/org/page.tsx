@@ -28,9 +28,9 @@ const Main = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section className="text-3xl font-black justify-self-center">
+                <section className="text-3xl font-black">
                     <Image src="/azure.png" alt="avatar" />
-                    <p>Azuret</p>
+                    <p className="justify-self-center">Azuret</p>
                 </section>
                 <div className="grid grid-flow-col items-center justify-start gap-2 text-subtext">
                     <FaBirthdayCake/>
