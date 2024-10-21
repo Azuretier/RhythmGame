@@ -5,6 +5,9 @@
 import {useEffect} from 'react'
 import {motion} from 'framer-motion'
 import {animate} from 'framer-motion/dom'
+import {
+    FaBirthdayCake
+} from 'react-icons/fa'
 
 const Main = () => {
     useEffect(() => {
@@ -26,6 +29,7 @@ const Main = () => {
             >
                 <section className="text-3xl font-black justify-self-center">あずれーと</section>
                 <div className="grid gap-1">
+                    <FaBirthdayCake/>
                     <p>Happy Birthday 200X/2/18</p>
                 </div>
             </motion.div>
