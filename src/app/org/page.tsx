@@ -30,7 +30,7 @@ const Main = () => {
                 id="fadeUp"
             >
                 <section className="text-3xl font-black">
-                    <Image src="/azure.png" alt="avatar" />
+                    <Image src="/azure.png" alt="avatar" width={200} height={200}/>
                     <p className="justify-self-center">Azuret</p>
                 </section>
                 <div className="grid grid-flow-row items-center gap-2 text-subtext">
