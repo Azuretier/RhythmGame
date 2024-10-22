@@ -46,7 +46,7 @@ const Main = () => {
                     </div>
                     <div className="grid gap-2 justify-start">
                         <FaPaperPlane/>
-                        <p>人生って紙飛行機じゃない</p>
+                        <p>人生って紙飛行機だよね</p>
                     </div>
                 </div>     
             </motion.div>
