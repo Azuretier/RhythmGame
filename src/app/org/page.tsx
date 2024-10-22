@@ -30,12 +30,12 @@ const Main = () => {
             >
                 <section className="grid justify-center gap-1 text-base font-black">
                     <Image src="/azure.png" alt="avatar" width={200} height={200}/>
-                    <div className="grid  row-start-2">
+                    <div className="grid row-start-2">
                         <p className="text-3xl">Azuret</p>
                         <p className="text-subtext">あずれーと</p>
                         <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
                     </div>
-                    <div className="grid justify-center grid-flow-row gap-1 text-subtext">
+                    <div className="grid grid-flow-row gap-1 text-subtext">
                     <div className="grid grid-flow-col gap-2 justify-start">
                         <FaBirthdayCake/>
                         <p>200X/2/18</p>    
