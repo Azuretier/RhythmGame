@@ -35,8 +35,7 @@ const Main = () => {
                         <p className="text-subtext">あずれーと</p>
                         <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
                     </div>
-                </section>
-                <div className="grid justify-center grid-flow-row gap-1 text-subtext">
+                    <div className="grid justify-center grid-flow-row gap-1 text-subtext">
                     <div className="grid grid-flow-col gap-2 justify-start">
                         <FaBirthdayCake/>
                         <p>200X/2/18</p>    
@@ -46,6 +45,8 @@ const Main = () => {
                         <p>Get experience to level up</p>
                     </div>
                 </div>
+                </section>
+                
             </motion.div>
         </main>
     )
