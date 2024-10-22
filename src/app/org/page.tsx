@@ -28,7 +28,7 @@ const Main = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section className="grid justify-center gap-1 text-base font-black">
+                <section className="grid justify-center gap-4 text-base font-black">
                     <Image src="/azure.png" alt="avatar" width={200} height={200}/>
                     <div className="grid row-start-2">
                         <p className="text-3xl">Azuret</p>
