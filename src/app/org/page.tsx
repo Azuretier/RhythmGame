@@ -28,22 +28,12 @@ const Main = () => {
                 transition={{type: 'spring'}}
                 id="fadeUp"
             >
-                <section className="grid row-start-2 gap-1 text-base font-black">
+                <section className="grid gap-1 text-base font-black">
                     <Image src="/azure.png" alt="avatar" width={200} height={200}/>
-                    <div className="grid row-start-2 col-start-2">
-                        <p className="justify-self-center text-3xl">Azuret</p>
+                    <div className="grid justify-center">
+                        <p className="text-3xl">Azuret</p>
                         <p className="text-subtext">あずれーと</p>
                         <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
-                        <div className="text-subtext">
-                            <div className="grid grid-flow-col gap-2 justify-start">
-                                <FaBirthdayCake/>
-                                <p>200X/2/18</p>    
-                            </div>
-                            <div className="grid grid-flow-col gap-2  justify-start">
-                                <FaAngleDoubleUp/>
-                                <p>Get experience to level up</p>
-                            </div>
-                        </div>
                     </div>
                 </section>
                 <div className="grid grid-flow-row gap-1 text-subtext">
