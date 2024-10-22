@@ -36,7 +36,7 @@ const Main = () => {
                         <p className="font-normal text-subtext text-lg">世界は自分で創る</p>
                     </div>
                 </section>
-                <div className="grid grid-flow-row gap-1 text-subtext">
+                <div className="grid justify-center grid-flow-row gap-1 text-subtext">
                     <div className="grid grid-flow-col gap-2 justify-start">
                         <FaBirthdayCake/>
                         <p>200X/2/18</p>    
