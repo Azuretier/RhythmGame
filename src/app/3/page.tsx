@@ -6,11 +6,11 @@ import {
   FaBirthdayCake,
   FaUserGraduate,
   FaPaperPlane,
-  FaTwitter,
   FaGithub,
   FaDiscord,
   FaYoutube,
 } from "react-icons/fa"
+import { FaXTwitter } from "react-icons/fa6";
 import Image from "next/image"
 
 const Main = () => {
@@ -96,16 +96,16 @@ const Main = () => {
       {/* SNS Widget */}
       <div className="fixed top-1/2 right-4 -translate-y-1/2 flex flex-col gap-4 z-50 text-white">
         <a
-          href="https://twitter.com/yourname"
+          href="https://x.com/09xgg"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-blue-400 transition"
           title="Twitter"
         >
-          <FaTwitter size={24} />
+          <FaXTwitter size={24} />
         </a>
         <a
-          href="https://github.com/yourname"
+          href="https://github.com/Azuretier"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-gray-400 transition"
@@ -114,7 +114,7 @@ const Main = () => {
           <FaGithub size={24} />
         </a>
         <a
-          href="https://discord.gg/yourinvite"
+          href="https://discord.gg/XkwSarHyQm"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-indigo-400 transition"
@@ -123,7 +123,7 @@ const Main = () => {
           <FaDiscord size={24} />
         </a>
         <a
-          href="https://youtube.com/@yourchannel"
+          href="https://youtube.com/@Azuret"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-red-500 transition"
