@@ -39,7 +39,7 @@ const Main = () => {
                     </div>
                     <div className="grid grid-flow-col gap-2 justify-start">
                     <FaAngleDoubleUp/>
-                    <p>Explore the world to experience things around you</p>
+                    <p>Explore the world to experience things around</p>
                     </div>
                     <div className="grid grid-flow-col gap-2 justify-start">
                     <FaPaperPlane/>
