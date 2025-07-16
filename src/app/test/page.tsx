@@ -18,7 +18,7 @@ const Main = () => {
         }
     }, []);
     return (
-        <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen">   
+        <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">   
             <motion.div 
                 className="grid gap-4 p-4 rounded-xl text-base font-black text-white row-start-3 col-start-2 row-span-2 col-span-5"
                 initial={{y: 20, opacity: 0}}
