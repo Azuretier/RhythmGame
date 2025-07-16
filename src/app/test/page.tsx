@@ -33,17 +33,17 @@ const Main = () => {
                     <p className="font-normal text-subtext text-lg">I make my world myself</p>
                 </div>
                 <div className="grid gap-1 text-subtext">
-                    <div className="grid grid-flow-col gap-2 justify-start">
+                    <div className="grid grid-flow-col gap-2 justify-start content-center">
                         <FaBirthdayCake/>
                         <p>200X/2/18</p>  
                     </div>
-                    <div className="grid grid-flow-col gap-2 justify-start">
-                    <FaUserGraduate/>
-                    <p>Student</p>
+                    <div className="grid grid-flow-col gap-2 justify-start content-center">
+                        <FaUserGraduate/>
+                        <p>Student</p>
                     </div>
-                    <div className="grid grid-flow-col gap-2 justify-start">
-                    <FaPaperPlane/>
-                    <p>{"Life is like a paper airplane, isn't it?"}</p>
+                    <div className="grid grid-flow-col gap-2 justify-start content-center">
+                        <FaPaperPlane/>
+                        <p>{"Life is like a paper airplane, isn't it?"}</p>
                     </div>
                 </div>
             </motion.div>
