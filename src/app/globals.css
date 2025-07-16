@@ -28,16 +28,20 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+
   .blinking {
-    animation: blink 1s steps(2, start) infinite;
+    animation: blink 1s steps(1, end) infinite;
   }
 
   @keyframes blink {
-    0%, 100% {
-      opacity: 1;
+    0% {
+      opacity: 1; /* fully visible */
     }
     50% {
-      opacity: 0;
+      opacity: 0; /* fully invisible */
+    }
+    100% {
+      opacity: 1;
     }
   }
 }
