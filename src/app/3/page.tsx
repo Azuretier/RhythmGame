@@ -77,18 +77,20 @@ const Main = () => {
             <p className="font-normal text-subtext text-lg">I make my world myself</p>
           </div>
           <div className="grid gap-1 text-subtext row-start-3 grid-rows-3">
-            <div className="flex gap-2 items-center row-start-1">
+            <div className="grid gap-2 place-items-center row-start-1">
               <FaBirthdayCake />
               <p>200X/2/18</p>
             </div>
-            <div className="flex gap-2 items-center row-start-2">
+            <div className="grid gap-2 place-items-center row-start-2">
               <FaUserGraduate />
               <p>Student</p>
             </div>
-            <div className="flex gap-2 items-center row-start-3">
+            <div className="grid gap-2 place-items-center row-start-3">
               <FaPaperPlane />
-              <span id="rotating-text">{displayedText}</span>
-              <span className="blinking">|</span>
+              <div className="grid grid-rows-1 grid-cols-2">
+                <span id="rotating-text">{displayedText}</span>
+                <span className="blinking">|</span>
+              </div>
             </div>
           </div>
         </motion.div>
