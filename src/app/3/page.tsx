@@ -88,6 +88,7 @@ const Main = () => {
             <div className="flex gap-2 items-center row-start-3">
               <FaPaperPlane />
               <span id="rotating-text">{displayedText}</span>
+              <span className="cursor">|</span>
             </div>
           </div>
         </motion.div>
