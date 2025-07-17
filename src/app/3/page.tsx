@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa"
 import { FaXTwitter } from "react-icons/fa6";
 import Image from "next/image"
-import { FadeUpCard, FadeUpDiv} from "@/components/animation";
+import { FadeUpCard, FadeUpDiv, FadeUpStagger} from "@/components/animation";
 
 const Main = () => {
   const texts = [
@@ -64,6 +64,7 @@ const Main = () => {
     <>
       {/* Main Content */}
       <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
+        <FadeUpStagger>
           <FadeUpDiv className="grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-5">
             <Image src="/azure.png" alt="avatar" width={200} height={200} />
             <div className="grid col-span-3">
@@ -89,18 +90,19 @@ const Main = () => {
               </div>
             </div>
           </FadeUpDiv>
-        <FadeUpCard href="https://x.com/09xgg" className="grid col-span-6 gap-3 row-start-2 col-start-6 hover:text-gray-400 transition">
-          <FaXTwitter size={24} />
-        </FadeUpCard>
-        <FadeUpCard href="https://github.com/Azuretier" className="grid col-span-6 gap-3 row-start-2 col-start-7 hover:text-gray-400 transition">
-          <FaGithub size={24} />
-        </FadeUpCard>
-        <FadeUpCard href="https://discord.gg/XkwSarHyQm" className="grid col-span-6 gap-3 row-start-2 col-start-8 hover:text-indigo-400 transition">
-          <FaDiscord size={24} />
-        </FadeUpCard>
-        <FadeUpCard href="https://youtube.com/@Azuret" className="grid col-span-6 gap-3 row-start-2 col-start-9 hover:text-red-500 transition">
-          <FaYoutube size={24} />
-        </FadeUpCard>
+          <FadeUpCard href="https://x.com/09xgg" className="grid col-span-6 gap-3 row-start-2 col-start-6 hover:text-gray-400 transition">
+            <FaXTwitter size={24} />
+          </FadeUpCard>
+          <FadeUpCard href="https://github.com/Azuretier" className="grid col-span-6 gap-3 row-start-2 col-start-7 hover:text-gray-400 transition">
+            <FaGithub size={24} />
+          </FadeUpCard>
+          <FadeUpCard href="https://discord.gg/XkwSarHyQm" className="grid col-span-6 gap-3 row-start-2 col-start-8 hover:text-indigo-400 transition">
+            <FaDiscord size={24} />
+          </FadeUpCard>
+          <FadeUpCard href="https://youtube.com/@Azuret" className="grid col-span-6 gap-3 row-start-2 col-start-9 hover:text-red-500 transition">
+            <FaYoutube size={24} />
+          </FadeUpCard>
+        </FadeUpStagger>
       </main>
     </>
   )
