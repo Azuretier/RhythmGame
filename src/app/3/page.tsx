@@ -95,10 +95,10 @@ const Main = () => {
               </div>
             </div>
           </motion.div>
-          <motion.a href="https://x.com/09xgg" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-6 text-gray-400 border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
+          <motion.a href="https://x.com/09xgg" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-6 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
             <FaXTwitter size={24} />
           </motion.a>
-          <motion.a href="https://github.com/Azuretier" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-8 text-gray-400 border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
+          <motion.a href="https://github.com/Azuretier" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-8 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
             <FaGithub size={24} />
           </motion.a>
           <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid col-span-1 gap-3 row-start-4 col-start-6 text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg">
