@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa"
 import { FaXTwitter } from "react-icons/fa6";
 import Image from "next/image"
-import { FadeUpCard, FadeUpStagger} from "@/components/animation";
+//import { FadeUpStagger} from "@/components/animation";
 
 const Main = () => {
   const texts = [
@@ -67,7 +67,6 @@ const Main = () => {
   return (
     <>
       {/* Main Content */}
-      <FadeUpStagger>
       <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
           <motion.div
             className="fade-up grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-5"
@@ -113,7 +112,6 @@ const Main = () => {
             <FaYoutube size={24} />
           </a>
       </main>
-      </FadeUpStagger>
     </>
   )
 }
