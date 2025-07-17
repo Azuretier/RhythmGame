@@ -102,15 +102,19 @@ const Main = () => {
           <div className="grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-col row-start-3 col-start-6 row-span-2 col-span-3">
             <motion.a href="https://x.com/09xgg" className="fade-up grid gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
               <FaXTwitter size={24} />
+              <span>Twitter</span>
             </motion.a>
             <motion.a href="https://github.com/Azuretier" className="fade-up grid gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
               <FaGithub size={24} />
+              <span>GitHub</span>
             </motion.a>
             <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up gridgap-3 text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg">
               <FaDiscord size={24} />
+              <span>Discord</span>
             </motion.a>
             <motion.a href="https://youtube.com/@Azuret" className="fade-up grid gap-3 text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg">
               <FaYoutube size={24} />
+              <span>YouTube</span>
             </motion.a>
           </div>
       </main>
