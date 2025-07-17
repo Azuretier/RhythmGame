@@ -100,16 +100,16 @@ const Main = () => {
             </div>
           </motion.div>
           <div className="grid gap-4 p-4 rounded-xl text-base font-black text-white grid-rows-6 grid-cols-6 grid-flow-col row-start-3 col-start-6 row-span-2 col-span-3">
-            <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg row-span-2 col-span-2">
+            <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg col-span-2">
               <FaXTwitter size={24} />
             </motion.a>
-            <motion.a href="https://github.com/Azuretier" className="fade-up place-items-center grid gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg row-span-2 col-span-2">
+            <motion.a href="https://github.com/Azuretier" className="fade-up place-items-center grid gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg col-span-2">
               <FaGithub size={24} />
             </motion.a>
-            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up place-items-center grid gap-3 text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg row-span-2 col-span-2">
+            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up place-items-center grid gap-3 text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg col-span-2">
               <FaDiscord size={24} />
             </motion.a>
-            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg row-span-2 col-span-2">
+            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg col-span-2">
               <FaYoutube size={24} />
             </motion.a>
           </div>
