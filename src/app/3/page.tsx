@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-//import { motion, animate } from "framer-motion"
+import { motion, animate } from "framer-motion"
 import {
   FaBirthdayCake,
   FaUserGraduate,
@@ -26,12 +26,12 @@ const Main = () => {
   const [textIndex, setTextIndex] = useState(0)
   const [typing, setTyping] = useState(true)
 
-  //useEffect(() => {
-  //  const fadeUp = document.getElementById("fadeUp")
-  //  if (fadeUp != null) {
-  //    animate(fadeUp, { opacity: [0.1, 1] })
-  //  }
-  //}, [])
+  useEffect(() => {
+    const fadeUp = document.getElementById("fadeUp")
+    if (fadeUp != null) {
+      animate(fadeUp, { opacity: [0.1, 1] })
+    }
+  }, [])
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
@@ -64,7 +64,13 @@ const Main = () => {
     <>
       {/* Main Content */}
       <FadeUpStagger className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
-          <FadeUpDiv className="grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-5">
+          <motion.div
+            className="grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-5"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0 }}
+            transition={{ type: "spring" }}
+            id="fadeUp"
+          >
             <Image src="/azure.png" alt="avatar" width={200} height={200} />
             <div className="grid col-span-3">
               <p className="text-3xl">Azuret</p>
@@ -88,7 +94,7 @@ const Main = () => {
                 </div>
               </div>
             </div>
-          </FadeUpDiv>
+          </motion.div>
           <FadeUpCard href="https://x.com/09xgg" className="grid col-span-6 gap-3 row-start-2 col-start-6 hover:text-gray-400 transition">
             <FaXTwitter size={24} />
           </FadeUpCard>
