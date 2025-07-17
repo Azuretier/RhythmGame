@@ -10,21 +10,27 @@ const FADE_UP_ANIMATION_VARIANTS = {
 };
 
 // children refer to whatever stuff is nested inside of FadeUpStagger i think
-const FadeUpStagger = ({ children }: { children: React.ReactNode }) => {
+const FadeUpStagger = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
   return (
     <motion.div
-      initial='hidden'
-      animate='show'
+      initial="hidden"
+      animate="show"
       viewport={{ once: true }}
       variants={{
         hidden: {},
         show: {
           transition: {
-            // sec
             staggerChildren: 0.15,
           },
         },
       }}
+      className={className}
     >
       {children}
     </motion.div>
