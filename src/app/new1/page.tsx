@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion } from "framer-motion";
 import { animate } from "framer-motion/dom";
 import {
   FaBirthdayCake,
