@@ -69,7 +69,7 @@ const Main = () => {
       {/* Main Content */}
       <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
           <motion.div
-            className="fade-up grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-5"
+            className="fade-up grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-4"
           >
             <Image src="/azure.png" alt="avatar" width={200} height={200} />
             <div className="grid col-span-3">
@@ -95,18 +95,20 @@ const Main = () => {
               </div>
             </div>
           </motion.div>
-          <motion.a href="https://x.com/09xgg" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-6 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
-            <FaXTwitter size={24} />
-          </motion.a>
-          <motion.a href="https://github.com/Azuretier" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-8 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
-            <FaGithub size={24} />
-          </motion.a>
-          <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid col-span-1 gap-3 row-start-4 col-start-6 text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg">
-            <FaDiscord size={24} />
-          </motion.a>
-          <motion.a href="https://youtube.com/@Azuret" className="fade-up grid col-span-1 gap-3 row-start-4 col-start-8 text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg">
-            <FaYoutube size={24} />
-          </motion.a>
+          <div className="grid row-start-2 col-start-6 place-items-center grid-cols-2">
+            <motion.a href="https://x.com/09xgg" className="fade-up grid gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
+              <FaXTwitter size={24} />
+            </motion.a>
+            <motion.a href="https://github.com/Azuretier" className="fade-up grid gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
+              <FaGithub size={24} />
+            </motion.a>
+            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up gridgap-3 text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg">
+              <FaDiscord size={24} />
+            </motion.a>
+            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid gap-3 text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg">
+              <FaYoutube size={24} />
+            </motion.a>
+          </div>
       </main>
     </>
   )
