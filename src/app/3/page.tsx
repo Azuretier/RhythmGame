@@ -104,7 +104,7 @@ const Main = () => {
           <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-8 text-indigo-400">
             <FaDiscord size={24} />
           </motion.a>
-          <motion.a href="https://youtube.com/@Azuret" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-9 text-red-500">
+          <motion.a href="https://youtube.com/@Azuret" className="fade-up grid col-span-1 gap-3 row-start-2 col-start-9 text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg">
             <FaYoutube size={24} />
           </motion.a>
       </main>
