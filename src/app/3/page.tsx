@@ -63,8 +63,7 @@ const Main = () => {
   return (
     <>
       {/* Main Content */}
-      <main className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
-        <FadeUpStagger>
+      <FadeUpStagger className="grid grid-cols-12 grid-rows-6 grid-flow-row items-center justify-center h-screen bg-black">
           <FadeUpDiv className="grid gap-4 p-4 rounded-xl text-base font-black text-white grid-cols-1 grid-flow-row row-start-3 col-start-2 row-span-2 col-span-5">
             <Image src="/azure.png" alt="avatar" width={200} height={200} />
             <div className="grid col-span-3">
@@ -102,8 +101,7 @@ const Main = () => {
           <FadeUpCard href="https://youtube.com/@Azuret" className="grid col-span-6 gap-3 row-start-2 col-start-9 hover:text-red-500 transition">
             <FaYoutube size={24} />
           </FadeUpCard>
-        </FadeUpStagger>
-      </main>
+      </FadeUpStagger>
     </>
   )
 }
