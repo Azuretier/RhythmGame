@@ -1,4 +1,4 @@
-import { FadeUpCard, FadeUpDiv, FadeUpStagger } from '@/components/animation';
+import { FadeUpDiv, FadeUpStagger } from '@/components/animation';
 import { CardIcon } from '@/components/link-card-icon';
 import { CardName } from '@/components/link-card-name';
 import { LinkCard } from '@/components/link-card';
@@ -13,7 +13,6 @@ import {
   FaSteam,
   FaTwitter,
   FaUserGraduate,
-  FaXbox,
   FaYoutube,
 } from 'react-icons/fa';
 
