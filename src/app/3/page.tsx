@@ -103,13 +103,13 @@ const Main = () => {
             <motion.a href="https://x.com/09xgg" className="fade-up grid gap-3 text-white items-center justify-center border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
               <FaXTwitter size={24} />
             </motion.a>
-            <motion.a href="https://github.com/Azuretier" className="fade-up grid gap-3 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
+            <motion.a href="https://github.com/Azuretier" className="fade-up grid gap-3 text-white items-center justify-center border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
               <FaGithub size={24} />
             </motion.a>
-            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up gridgap-3 text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg">
+            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up gridgap-3 text-indigo-400 items-center justify-center border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg">
               <FaDiscord size={24} />
             </motion.a>
-            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid gap-3 text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg">
+            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid gap-3 text-red-500 items-center justify-center border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg">
               <FaYoutube size={24} />
             </motion.a>
           </div>
