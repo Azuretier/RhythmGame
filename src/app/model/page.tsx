@@ -18,7 +18,7 @@ import {
 
 export default function Home() {
   return (
-    <main className='container dark:bg-black space-y-6 py-6 lg:my-10'>
+    <main className='container space-y-6 py-6 lg:my-10'>
       <FadeUpStagger>
         <div className='flex h-16 items-center justify-end'>
           <ThemeToggle />
