@@ -114,7 +114,7 @@ const Main = () => {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white bg-[rgb(88,101,242)]">
                 <FaDiscord size={24} />
               </div>
-              <div className="grid">
+              <div className="grid text-black">
                 <p>Discord</p>
                 <section className="flex items-center gap-1">
                   <p className="text-sm">@xykmr_only09</p>
