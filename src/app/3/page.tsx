@@ -100,7 +100,7 @@ const Main = () => {
             </div>
           </motion.div>
           <div className="grid p-4 rounded-xl grid-rows-7 grid-cols-9 grid-flow-row row-start-3 col-start-6 row-span-3 col-span-6 h-full">
-            <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 text-white border shadow transition-colors hover:border-black rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 border shadow transition-colors hover:border-black rounded-lg row-span-3 col-span-4">
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
                 <FaXTwitter size={48} />
               </div>
@@ -111,7 +111,7 @@ const Main = () => {
                 </section>
               </div>
             </motion.a>
-            <motion.a href="https://github.com/Azuretier" className="fade-up grid place-items-center gap-3 col-start-6 text-white border shadow transition-colors hover:border-black rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://github.com/Azuretier" className="fade-up grid place-items-center gap-3 col-start-6 border shadow transition-colors hover:border-black rounded-lg row-span-3 col-span-4">
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
                 <FaGithub size={48} />
               </div>
@@ -133,7 +133,7 @@ const Main = () => {
                 </section>
               </div>
             </motion.a>
-            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 row-start-5 col-start-6 text-red-500 border shadow transition-colors hover:border-red-500 rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 row-start-5 col-start-6 border shadow transition-colors hover:border-red-500 rounded-lg row-span-3 col-span-4">
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-[rgb(255,0,0)] bg-white shadow">
                 <FaYoutube size={48} />
               </div>
