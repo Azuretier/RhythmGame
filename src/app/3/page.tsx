@@ -100,17 +100,21 @@ const Main = () => {
             </div>
           </motion.div>
           <div className="grid p-4 rounded-xl text-base font-black text-white grid-rows-5 grid-cols-5 grid-flow-row row-start-3 col-start-6 row-span-2 col-span-2 place-items-center">
-            <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 row-start-2 col-start-2 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
+            <motion.a href="https://x.com/09xgg" className="fade-up grid place-items-center gap-3 row-start-2 col-start-2 grid-flow-col text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
               <FaXTwitter size={24} />
+              <span>@09xgg</span>
             </motion.a>
-            <motion.a href="https://github.com/Azuretier" className="fade-up grid place-items-center gap-3 row-start-2 col-start-4 text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
+            <motion.a href="https://github.com/Azuretier" className="fade-up grid place-items-center gap-3 row-start-2 col-start-4 grid-flow-col text-white border-2 border-black outline outline-2 outline-gray-400 outline-offset-0 rounded-lg">
               <FaGithub size={24} />
+              <span>Azuretier</span>
             </motion.a>
-            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid place-items-center gap-3 row-start-4 col-start-2 text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg">
+            <motion.a href="https://discord.gg/XkwSarHyQm" className="fade-up grid place-items-center gap-3 row-start-4 col-start-2 grid-flow-col text-indigo-400 border-2 border-black outline outline-2 outline-indigo-400 outline-offset-0 rounded-lg">
               <FaDiscord size={24} />
+              <span>Azure Supporter</span>
             </motion.a>
-            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 row-start-4 col-start-4 text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg">
+            <motion.a href="https://youtube.com/@Azuret" className="fade-up grid place-items-center gap-3 row-start-4 col-start-4 grid-flow-col text-red-500 border-2 border-black outline outline-2 outline-red-500 outline-offset-0 rounded-lg">
               <FaYoutube size={24} />
+              <span>@Azuret</span>
             </motion.a>
           </div>
       </main>
