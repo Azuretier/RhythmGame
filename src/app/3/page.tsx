@@ -116,7 +116,7 @@ const Main = () => {
                 <div className="grid">
                   <p>Discord</p>
                   <section className="flex items-center gap-1">
-                    <p className="text-sm text-muted-foreground">@xykmr_only09</p>
+                    <p className="text-sm">@xykmr_only09</p>
                   </section>
                 </div>
               </div>
