@@ -114,7 +114,10 @@ const Main = () => {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl text-white bg-[rgb(88,101,242)]">
                 <FaDiscord size={24} />
                 <div className="grid">
-                  <p>Discord</p><section className="flex items-center gap-1"><p className="text-sm text-muted-foreground">@xykmr_only09</p></section>
+                  <p>Discord</p>
+                  <section className="flex items-center gap-1">
+                    <p className="text-sm text-muted-foreground">@xykmr_only09</p>
+                  </section>
                 </div>
               </div>
             </motion.a>
