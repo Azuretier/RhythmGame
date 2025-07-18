@@ -117,7 +117,7 @@ const Main = () => {
               <div className="grid text-black font-normal">
                 <p>Discord</p>
                 <section className='flex items-center gap-1'>
-                  <p className="text-sm text-gray-100">@xykmr_only09</p>
+                  <p className="text-sm text-gray-500">@xykmr_only09</p>
                 </section>
               </div>
             </motion.a>
