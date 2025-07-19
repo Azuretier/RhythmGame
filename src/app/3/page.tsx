@@ -75,15 +75,15 @@ const Main = () => {
       {/* Main Content */}
       <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
           <motion.div className="fade-up grid items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
-            <div className="flex h-50 w-50 justify-start row-span-2">
+            <div className="flex h-50 w-50 items-center justify-start row-span-2">
               <Image src="/azure.png" alt="avatar" width={200} height={200} />
             </div>
-            <div className="grid col-span-3 row-start-3">
+            <div className="grid col-span-3 row-start-3 items-center">
               <p className="text-3xl font-black">Azure</p>
               <p className="text-gray-500 font-black">あずれーと</p>
               <p className="text-gray-500 font-normal text-lg">I make my world myself</p>
             </div>
-            <div className="grid text-gray-500 col-span-3 row-start-4">
+            <div className="grid text-gray-500 col-span-3 row-start-4 items-center">
               <div className="grid justify-start gap-2 grid-flow-col">
                 <FaBirthdayCake />
                 <p>200X/2/18</p>
