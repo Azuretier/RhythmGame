@@ -74,14 +74,14 @@ const Main = () => {
     <>
       {/* Main Content */}
       <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
-          <motion.div className="fade-up grid gap-4 rounded-xl text-base grid-flow-row row-start-3 col-start-2 row-span-3 col-span-4 h-full">
+          <motion.div className="fade-up grid gap-4 rounded-xl text-base row-start-3 col-start-2 row-span-3 col-span-4 h-full">
             <Image src="/azure.png" alt="avatar" width={200} height={200} />
             <div className="grid col-span-3">
               <p className="text-3xl font-black">Azure</p>
               <p className="font-black">あずれーと</p>
               <p className="font-normal text-lg">I make my world myself</p>
             </div>
-            <div className="grid gap-1 grid-flow-row grid-rows-3">
+            <div className="grid col-span-3">
               <div className="grid justify-start gap-2 items-center grid-flow-col">
                 <FaBirthdayCake />
                 <p>200X/2/18</p>
@@ -99,7 +99,7 @@ const Main = () => {
               </div>
             </div>
           </motion.div>
-          <div className="grid rounded-xl grid-rows-7 grid-cols-9 grid-flow-row row-start-3 col-start-6 row-span-3 col-span-6 h-full">
+          <div className="grid rounded-xl grid-rows-7 grid-cols-9 row-start-3 col-start-6 row-span-3 col-span-6 h-full">
             <motion.a href="https://x.com/09xgg" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 border shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
               <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black dark:drop-shadow-[0_0_8px_rgba(230,255,255,0.5)]">
                 <FaXTwitter size={48} />
