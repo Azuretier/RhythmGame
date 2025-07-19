@@ -102,7 +102,7 @@ const Main = () => {
             </div>
           </motion.div>
           <div className="grid p-4 rounded-xl grid-rows-7 grid-cols-9 grid-flow-row row-start-3 col-start-6 row-span-3 col-span-6 h-full">
-            <motion.a href="https://x.com/09xgg" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 border drop-shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://x.com/09xgg" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 border shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4 justify-items-start">
               <div className="flex h-15 w-15 items-center justify-center rounded-2xl text-white bg-black dark:drop-shadow-[0_0_8px_rgba(0,255,255,0.9)]">
                 <FaXTwitter size={36} />
               </div>
@@ -113,7 +113,7 @@ const Main = () => {
                 </section>
               </div>
             </motion.a>
-            <motion.a href="https://github.com/Azuretier" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 col-start-6 border drop-shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://github.com/Azuretier" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 col-start-6 border shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
               <div className="flex h-15 w-15 items-center justify-center rounded-2xl text-white bg-black">
                 <FaGithub size={36} />
               </div>
@@ -124,7 +124,7 @@ const Main = () => {
                 </section>
               </div>
             </motion.a>
-            <motion.a className="fade-up grid gap-3 p-6 row-start-5 border drop-shadow-md transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
+            <motion.a className="fade-up grid gap-3 p-6 row-start-5 border shadow-md transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
               <div className="flex h-15 w-15 items-center justify-center rounded-2xl text-white bg-[rgb(88,101,242)]">
                 <FaDiscord size={36} />
               </div>
@@ -135,7 +135,7 @@ const Main = () => {
                 </section>
               </div>
             </motion.a>
-            <motion.a href="https://youtube.com/@Azuret" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 row-start-5 col-start-6 border drop-shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4">
+            <motion.a href="https://youtube.com/@Azuret" target="_blank" rel="noopener noreferrer" className="fade-up grid gap-3 p-6 row-start-5 col-start-6 border shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4">
               <div className="flex h-15 w-15 items-center justify-center rounded-2xl text-[rgb(255,0,0)] bg-white drop-shadow-md">
                 <FaYoutube size={36} />
               </div>
