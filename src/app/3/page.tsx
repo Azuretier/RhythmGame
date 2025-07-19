@@ -78,10 +78,10 @@ const Main = () => {
             <Image src="/azure.png" alt="avatar" width={200} height={200} />
             <div className="grid col-span-3">
               <p className="text-3xl font-black">Azure</p>
-              <p className="text-subtext font-black">あずれーと</p>
-              <p className="font-normal text-subtext text-lg">I make my world myself</p>
+              <p className="font-black">あずれーと</p>
+              <p className="font-normal text-lg">I make my world myself</p>
             </div>
-            <div className="grid gap-1 text-subtext grid-flow-row grid-rows-3 grid-cols-1">
+            <div className="grid gap-1 grid-flow-row grid-rows-3 grid-cols-1">
               <div className="grid justify-start gap-2 items-center grid-flow-col">
                 <FaBirthdayCake />
                 <p>200X/2/18</p>
