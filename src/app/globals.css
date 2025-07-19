@@ -12,12 +12,13 @@
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground, 222 47% 11%));
+    font-family: Arial, Helvetica, sans-serif
+  }
 }
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;

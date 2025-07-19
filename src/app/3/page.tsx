@@ -3,7 +3,7 @@
 // for a commit for vercel api 
 import { useEffect, useState } from "react"
 import { motion, animate } from "framer-motion"
-import ThemeToggle from '@/components/sunmoon';
+import { ThemeToggle } from '@/components/sunmoon';
 import {
   FaBirthdayCake,
   FaUserGraduate,

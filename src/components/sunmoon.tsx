@@ -1,56 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import * as React from 'react';
+import { useTheme } from 'next-themes';
 
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+import { Button } from '@/components/ui/button';
+import { FiMoon, FiSun } from 'react-icons/fi';
 
-  // Apply theme to <html> and sync with color-scheme
-  const applyTheme = (newTheme: 'light' | 'dark') => {
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-
-    const root = document.documentElement;
-    if (newTheme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-      root.style.colorScheme = 'dark';
-    } else {
-      root.classList.add('light');
-      root.classList.remove('dark');
-      root.style.colorScheme = 'light';
-    }
-  };
-
-  // On mount: read from localStorage or system preference
-  useEffect(() => {
-    const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
-
-    if (stored === 'dark') {
-      applyTheme('dark');
-    } else if (stored === 'light') {
-      applyTheme('light');
-    } else {
-      // Detect system preference
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      applyTheme(systemPrefersDark ? 'dark' : 'light');
-    }
-  }, []);
-
-  // Toggle between light/dark
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    applyTheme(newTheme);
-  };
+export function ThemeToggle() {
+  const { setTheme, theme } = useTheme();
 
   return (
-    <button
-      onClick={toggleTheme}
-      className="p-2 rounded-lg border dark:border-white border-black hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-      aria-label="Toggle Theme"
+    <Button
+      variant='ghost'
+      size='icon'
+      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
     >
-      {theme === 'dark' ? <Sun className="text-yellow-400" /> : <Moon className="text-blue-600" />}
-    </button>
+      <FiSun size={20} className='rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0' />
+      <FiMoon
+        size={20}
+        className='absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100'
+      />
+      <span className='sr-only'>Toggle theme</span>
+    </Button>
   );
 }
