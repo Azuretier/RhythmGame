@@ -17,6 +17,10 @@ const config: Config = {
       },
     },
   },
+  fontFamily: {
+  arial: ['Arial'],
+  sanserif: ['sans-serif'], // your custom font
+},
   plugins: [],
 };
 export default config;

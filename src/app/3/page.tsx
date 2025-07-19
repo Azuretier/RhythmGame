@@ -83,7 +83,7 @@ const Main = () => {
               <p className="text-gray-500 font-black">あずれーと</p>
               <p className="text-gray-500 font-normal text-lg">I make my world myself</p>
             </div>
-            <div className="grid text-gray-500 col-span-3 row-start-4">
+            <div className="grid text-gray-500 col-span-3 row-start-4 font-sanserif">
               <div className="grid justify-start gap-2 grid-flow-col items-center">
                 <FaBirthdayCake />
                 <p>200X/2/18</p>
