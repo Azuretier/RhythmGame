@@ -4,18 +4,6 @@
 import { useEffect, useState } from "react"
 import { motion, animate } from "framer-motion"
 import { ThemeToggle } from '@/components/sunmoon';
-import {
-  FaBirthdayCake,
-  FaUserGraduate,
-  FaPaperPlane,
-  FaGithub,
-  FaDiscord,
-  FaYoutube,
-} from "react-icons/fa"
-import { FaXTwitter } from "react-icons/fa6";
-import Image from "next/image"
-//import { FadeUpStagger} from "@/components/animation";
-
 const Main = () => {
   const texts = [
     "Life is like a paper airplane, isn't it?",
