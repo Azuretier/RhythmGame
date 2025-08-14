@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import "./globals.css"; //apply style
 import React from 'react'
 
+import RainEffect from "@/components/RainEffect";
+
 import Provider from './provider';
 
 const geistSans = localFont({
@@ -34,7 +36,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       <meta name="theme-color" content="#ffbd43"></meta>
       <link rel="icon" href="/favicon.ico" />
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Provider>{children}</Provider>
+        <Provider>
+          <RainEffect />
+          {children}
+        </Provider>
       </body>
     </html>
   );
