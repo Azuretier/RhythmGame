@@ -3,8 +3,6 @@ import localFont from "next/font/local";
 import "./globals.css"; //apply style
 import React from 'react'
 
-import RainEffect from "@/components/RainEffect";
-
 import Provider from './provider';
 
 const geistSans = localFont({
