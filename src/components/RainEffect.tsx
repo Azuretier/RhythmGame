@@ -1,80 +1,115 @@
 "use client";
+
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import fragmentShader from "@/shaders/rain.frag"; // Import the fragment shader
 
-export default function RainEffect() {
-  const ref = useRef<HTMLDivElement>(null);
+type RainEffectProps = {
+  /** 0.0–1.0: overall density of rain */
+  intensity?: number;
+  /** 0.0–5.0: rate the streaks move downward */
+  speed?: number;
+  /** brightness multiplier of the streaks */
+  brightness?: number;
+  /** scale of streak noise (bigger = chunkier rain) */
+  scale?: number;
+  /** z-index for the canvas overlay */
+  zIndex?: number | string;
+};
+
+export default function RainEffect({
+  intensity = 0.5,
+  speed = 1.5,
+  brightness = 0.9,
+  scale = 1.0,
+  zIndex = 30,
+}: RainEffectProps) {
+  const mountRef = useRef<HTMLDivElement | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const startTimeRef = useRef<number>(performance.now());
 
   useEffect(() => {
+    const mount = mountRef.current!;
+    // Scene & camera (fullscreen quad via ortho cam)
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    // Renderer with transparent background so rain overlays UI
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+    rendererRef.current = renderer;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.domElement.style.position = "fixed";
-    renderer.domElement.style.top = "0";
-    renderer.domElement.style.left = "0";
-    renderer.domElement.style.zIndex = "9999";
-    renderer.domElement.style.pointerEvents = "none";
-    ref.current?.appendChild(renderer.domElement);
-
-    const loader = new THREE.TextureLoader();
-    const rainTexture = loader.load('/raindrop.png'); // small streak texture
-
-    const rainCount = 20000;
-    const positions = new Float32Array(rainCount * 3);
-    const velocities = new Float32Array(rainCount);
-
-    for (let i = 0; i < rainCount; i++) {
-      positions.set([
-        (Math.random() - 0.5) * 50,
-        Math.random() * 100 - 50,
-        (Math.random() - 0.5) * 50
-      ], i * 3);
-      velocities[i] = - (0.1 + Math.random() * 0.5);
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute("velocity", new THREE.BufferAttribute(velocities, 1));
-
-    const material = new THREE.PointsMaterial({
-      color: 0xaaaaaa,
-      size: 0.7,
-      transparent: true,
-      map: rainTexture,
-      depthWrite: false,
-      opacity: 0.6,
+    Object.assign(renderer.domElement.style, {
+      position: "fixed",
+      inset: "0",
+      width: "100vw",
+      height: "100vh",
+      pointerEvents: "none",
+      zIndex: String(zIndex),
     });
+    mount.appendChild(renderer.domElement);
 
-    const rain = new THREE.Points(geometry, material);
-    scene.add(rain);
-
-    function animate() {
-      const pos = geometry.attributes.position.array as Float32Array;
-      const vel = geometry.attributes.velocity.array as Float32Array;
-      for (let i = 0; i < rainCount; i++) {
-        pos[i * 3 + 1] += vel[i];
-        if (pos[i * 3 + 1] < -50) pos[i * 3 + 1] = 50;
+    // Vertex shader: pass UVs and draw a plane
+    const vertexShader = /* glsl */ `
+      varying vec2 vUv;
+      void main(){
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
       }
-      geometry.attributes.position.needsUpdate = true;
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    }
-    animate();
+    `;
 
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    const uniforms = {
+      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_time: { value: 0 },
+      u_intensity: { value: intensity },
+      u_speed: { value: speed },
+      u_brightness: { value: brightness },
+      u_scale: { value: scale },
+    };
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
     });
+    materialRef.current = material;
+
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+    scene.add(quad);
+
+    const onResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      renderer.setSize(w, h);
+      (material.uniforms.u_resolution.value as THREE.Vector2).set(w, h);
+    };
+    window.addEventListener("resize", onResize);
+
+    const loop = () => {
+      const t = (performance.now() - startTimeRef.current) / 1000;
+      material.uniforms.u_time.value = t;
+      renderer.render(scene, camera);
+      frameRef.current = requestAnimationFrame(loop);
+    };
+    loop();
 
     return () => {
-      ref.current?.removeChild(renderer.domElement);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
+      window.removeEventListener("resize", onResize);
+      scene.clear();
+      quad.geometry.dispose();
+      material.dispose();
       renderer.dispose();
+      if (renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
     };
-  }, []);
+  }, [intensity, speed, brightness, scale, zIndex]);
 
-  return <div ref={ref} />;
+  return <div ref={mountRef} />;
 }
