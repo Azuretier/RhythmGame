@@ -12,7 +12,7 @@ export default function RainEffect() {
     let camera: THREE.OrthographicCamera;
     let renderer: THREE.WebGLRenderer;
     let material: THREE.ShaderMaterial;
-    let settings = { fps: 30 };
+    const settings = { fps: 30 };
 
     async function init() {
       // Renderer
