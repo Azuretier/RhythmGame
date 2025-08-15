@@ -6,7 +6,7 @@ export function RainEffect() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let clock = new THREE.Clock();
+    const clock = new THREE.Clock();
     let scene: THREE.Scene;
     let camera: THREE.OrthographicCamera;
     let renderer: THREE.WebGLRenderer;
