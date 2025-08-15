@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export default function RainEffect() {
+export function RainEffect() {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
