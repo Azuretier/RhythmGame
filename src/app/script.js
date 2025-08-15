@@ -63,7 +63,7 @@ async function init() {
   scene.add(quad);
 }
 
-window.addEventListener("resize", function (e) {
+window.addEventListener("resize", function () {
   renderer.setSize(window.innerWidth, window.innerHeight, 2);
 
   material.uniforms.u_resolution.value = new THREE.Vector2(window.innerWidth, window.innerHeight);
@@ -84,82 +84,6 @@ function render() {
 init();
 render();
 createWebUI();
-
-//lively
-function livelyPropertyListener(name, val) {
-  switch (name) {
-    case "blurIntensity":
-      material.uniforms.u_blur_intensity.value = val / 100;
-      break;
-    case "blurQuality":
-      material.uniforms.u_blur_iterations.value = [1, 16, 32, 64][val];
-      break;
-    case "rainIntensity":
-      material.uniforms.u_intensity.value = val / 100;
-      break;
-    case "rainSpeed":
-      material.uniforms.u_speed.value = val / 100;
-      break;
-    case "brightness":
-      material.uniforms.u_brightness.value = val / 100;
-      break;
-    case "rainNormal":
-      material.uniforms.u_normal.value = val / 100;
-      break;
-    case "rainZoom":
-      material.uniforms.u_zoom.value = val / 100;
-      break;
-    case "mediaSelect":
-      {
-        let ext = getExtension(val);
-        disposeVideoElement(videoElement);
-        material.uniforms.u_tex0.value?.dispose();
-        if (ext == "jpg" || ext == "jpeg" || ext == "png") {
-          new THREE.TextureLoader().load(val, function (tex) {
-            material.uniforms.u_tex0.value = tex;
-            material.uniforms.u_tex0_resolution.value = new THREE.Vector2(tex.image.width, tex.image.height);
-          });
-        } else if (ext == "webm") {
-          videoElement = createVideoElement(val);
-          let videoTexture = new THREE.VideoTexture(videoElement);
-          videoElement.addEventListener(
-            "loadedmetadata",
-            function (e) {
-              material.uniforms.u_tex0_resolution.value = new THREE.Vector2(
-                videoTexture.image.videoWidth,
-                videoTexture.image.videoHeight
-              );
-            },
-            false
-          );
-          material.uniforms.u_tex0.value = videoTexture;
-        }
-      }
-      break;
-    case "mediaScaling":
-      material.uniforms.u_texture_fill.value = [false, true][val];
-      break;
-    case "animateChk":
-      material.uniforms.u_panning.value = val;
-      break;
-    case "lightningChk":
-      material.uniforms.u_lightning.value = val;
-      break;
-    case "postProcessingChk":
-      material.uniforms.u_post_processing.value = val;
-      break;
-    case "parallaxIntensity":
-      settings.parallaxVal = val;
-      break;
-    case "fpsLock":
-      settings.fps = val ? 30 : 60;
-      break;
-    case "debug":
-      if (val) gui.show();
-      else gui.hide();
-      break;
-  }
-}
 
 //web
 function createWebUI() {
@@ -213,7 +137,7 @@ function createWebUI() {
   gui.close();
 }
 
-let toggle = false;
+//let toggle = false;
 
 document.getElementById("filePicker").addEventListener("change", function () {
   if (this.files[0] === undefined) return;
@@ -234,7 +158,7 @@ document.getElementById("filePicker").addEventListener("change", function () {
     let videoTexture = new THREE.VideoTexture(videoElement);
     videoElement.addEventListener(
       "loadedmetadata",
-      function (e) {
+      function () {
         material.uniforms.u_tex0_resolution.value = new THREE.Vector2(
           videoTexture.image.videoWidth,
           videoTexture.image.videoHeight
