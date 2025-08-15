@@ -8,7 +8,6 @@ uniform float u_intensity;
 
 varying vec2 vUv;
 
-// Hash & noise helpers
 float hash(float n) { return fract(sin(n) * 43758.5453123); }
 float noise(vec2 p) {
     vec2 i = floor(p);
@@ -20,22 +19,20 @@ float noise(vec2 p) {
 
 void main() {
     vec2 uv = vUv * u_resolution.xy / min(u_resolution.x, u_resolution.y);
-
-    // Move rain downward
     float t = u_time * u_speed * 60.0;
     uv.y += t;
 
-    // Create multiple layers of rain
     float drops = 0.0;
     for (float i = 0.0; i < 3.0; i++) {
         vec2 p = uv * (1.5 + i * 0.5);
-        p.y += i * 100.0; // layer offset
+        p.y += i * 100.0;
         float n = noise(p);
         drops += smoothstep(0.8, 1.0, n) * (1.0 - i * 0.3);
     }
 
-    // Apply intensity & brightness
-    vec3 col = vec3(drops * u_intensity) * u_brightness;
+    // alpha controls transparency
+    float alpha = drops * u_intensity;
+    vec3 col = vec3(0.6, 0.7, 1.0) * u_brightness * drops;
 
-    gl_FragColor = vec4(col, drops);
+    gl_FragColor = vec4(col, alpha);
 }
