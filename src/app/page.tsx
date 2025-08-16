@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { motion, animate } from "framer-motion"
 import { ThemeToggle } from '@/components/sunmoon';
-//import { RainEffect } from '@/components/realistic-rain';
+import { RainEffect } from '@/components/realistic-rain';
 import {
   FaBirthdayCake,
   FaUserGraduate,
@@ -73,6 +73,7 @@ const Main = () => {
 
   return (
     <main className="bg-[url('/mnse_1.png')] bg-cover bg-center bg-no-repeat backdrop-blur grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
+      <RainEffect />
       <div id="container"></div>
       <motion.div className="fade-up grid bg-black/70 p-6 rounded-lg items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
         <div className="flex h-50 w-50 items-center justify-start row-span-2">
