@@ -234,7 +234,7 @@ export default function RainEffect() {
             }
             col *= 1. - dot(UV -= .5, UV) * 1.; // vignette
 
-            gl_FragColor = vec4(col * u_brightness, 1);
+            gl_FragColor = vec4(1.0, 0.0, 0.0, 0.5);
         }
       `,
       transparent: true, // allow background through
