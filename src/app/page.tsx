@@ -30,13 +30,14 @@ const Main = () => {
   const [textIndex, setTextIndex] = useState(0)
   const [typing, setTyping] = useState(true)
   const [isLoaded, setIsLoaded] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(true);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
+  const [transitionStarted, setTransitionStarted] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (showOverlay) {
-      setTimeout(() => setShowOverlay(false), 400); 
+    if (showLoadingScreen) {
+      setTimeout(() => {setShowLoadingScreen(false), setTransitionStarted(true)}, 400); 
       // timeout runs on its own line, so it won't block the rest of the code
     }else {
       const elements = document.querySelectorAll(".fade-up");
@@ -49,7 +50,7 @@ const Main = () => {
         }
       });
     }
-  }, [showOverlay, isLoaded]);
+  }, [showLoadingScreen, isLoaded]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
@@ -79,10 +80,15 @@ const Main = () => {
   }, [displayedText, typing, textIndex, texts])
 
   return (
-    <WipeTransition isBackgroundLoaded={isLoaded}>
-      {/* Loading overlay */}
     <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
-      {showOverlay && (
+      {!transitionStarted && (
+        <div
+          className={`fixed inset-0 bg-black z-40 transition-transform duration-1000 ${
+            transitionStarted ? "-translate-y-full" : "translate-y-0"
+          }`}
+        ></div>
+      )}
+      {showLoadingScreen && (
         <div className="flex flex-col items-center gap-4 fixed inset-0 bg-black flex items-center justify-center z-50 transition-opacity duration-700">
           <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
           <span className="text-white text-2xl">Loading...</span>
@@ -166,7 +172,6 @@ const Main = () => {
         <ThemeToggle />
       </div>
     </main>
-    </WipeTransition>
   )
 }
 
