@@ -95,6 +95,7 @@ export default function RainEffect() {
 
   return (
     <>
+      {/* Loading screen overlay */}
       {showOverlay && (
         <div
           className={`fixed inset-0 z-50 flex items-center justify-center bg-black text-white transition-opacity duration-1000 ${
@@ -107,6 +108,7 @@ export default function RainEffect() {
           </div>
         </div>
       )}
+
       <div ref={containerRef} />
     </>
   );
