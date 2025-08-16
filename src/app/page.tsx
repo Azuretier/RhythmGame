@@ -35,7 +35,7 @@ const Main = () => {
     if (!isLoaded) return;
 
     if (showOverlay) {
-      setTimeout(() => setShowOverlay(false), 1000); 
+      setTimeout(() => setShowOverlay(false), 400); 
       // timeout runs on its own line, so it won't block the rest of the code
     }else {
       const elements = document.querySelectorAll(".fade-up");
