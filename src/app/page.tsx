@@ -33,19 +33,22 @@ const Main = () => {
 
   useEffect(() => {
     if (!isLoaded) return;
-    //setTimeout(() => setShowOverlay(false), 1000); // fade out loading
-    setShowOverlay(false)
 
-    const elements = document.querySelectorAll(".fade-up");
-    elements.forEach((el, index) => {
-      if (el instanceof HTMLElement) {
-        el.style.opacity = "0";
-        setTimeout(() => {
-          animate(el, { opacity: [0, 1], y: [50, 0] }, { type: "spring" });
-        }, index * 150);
-      }
-    });
-  }, [isLoaded]);
+    if (showOverlay) {
+      setTimeout(() => setShowOverlay(false), 1000); 
+      // timeout runs on its own line, so it won't block the rest of the code
+    }else {
+      const elements = document.querySelectorAll(".fade-up");
+      elements.forEach((el, index) => {
+        if (el instanceof HTMLElement) {
+          el.style.opacity = "0";
+          setTimeout(() => {
+            animate(el, { opacity: [0, 1], y: [50, 0] }, { type: "spring" });
+          }, index * 150);
+        }
+      });
+    }
+  }, [showOverlay, isLoaded]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
