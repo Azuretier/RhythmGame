@@ -3,31 +3,33 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function WipeTransition({ children }: { children: React.ReactNode }) {
-  const [isLoaded, setIsLoaded] = useState(false);
+type Props = {
+  children: React.ReactNode;
+  isBackgroundLoaded: boolean; // 🔑 we pass this from RainEffect
+};
+
+export default function WipeTransition({ children, isBackgroundLoaded}: Props) {
   const [showOverlay, setShowOverlay] = useState(true);
 
   useEffect(() => {
-    // Simulate background (rain shader) load finished
-    const timer = setTimeout(() => {
-      setIsLoaded(true);
-      setTimeout(() => setShowOverlay(false), 800); // wait before wiping
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
+    if (isBackgroundLoaded) {
+      // start wipe after background finishes loading
+      const timer = setTimeout(() => {
+        setShowOverlay(false);
+      }, 500); // small delay before wipe starts
+      return () => clearTimeout(timer);
+    }
+  }, [isBackgroundLoaded]);
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Website content */}
       {children}
 
-      {/* Wipe Transition */}
       <AnimatePresence>
         {showOverlay && (
           <motion.div
             initial={{ y: 0 }}
-            animate={{ y: "-100%" }} // wipe upward
+            animate={{ y: "-100%" }}
             exit={{ y: "-100%" }}
             transition={{ duration: 1, ease: "easeInOut" }}
             className="fixed inset-0 bg-black z-[9999]"

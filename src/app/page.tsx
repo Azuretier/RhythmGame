@@ -79,7 +79,8 @@ const Main = () => {
   }, [displayedText, typing, textIndex, texts])
 
   return (
-    <WipeTransition>
+    <WipeTransition isBackgroundLoaded={isLoaded}>
+      {/* Loading overlay */}
     <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
       {showOverlay && (
         <div className="flex flex-col items-center gap-4 fixed inset-0 bg-black flex items-center justify-center z-50 transition-opacity duration-700">
