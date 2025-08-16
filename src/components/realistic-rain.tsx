@@ -41,8 +41,24 @@ export default function RainEffect() {
         }
       `,
       fragmentShader: `
+        precision mediump float;
+
+        uniform float u_time;
+        uniform vec2 u_resolution;
+
         void main() {
-          gl_FragColor = vec4(1.0, 0.0, 0.0, 0.5); // semi-transparent red
+          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+
+          // Make vertical streaks
+          float streaks = step(0.95, fract(uv.x * 20.0 + u_time * 2.0));
+
+          // Animate falling
+          float rain = smoothstep(0.0, 0.1, fract(uv.y + u_time * 0.5));
+
+          // Combine
+          float alpha = streaks * rain;
+
+          gl_FragColor = vec4(vec3(0.6, 0.7, 0.9), alpha);
         }
       `,
       transparent: true, // allow background through
