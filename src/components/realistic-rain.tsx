@@ -2,31 +2,37 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
-export function RainEffect() {
-  const mountRef = useRef<HTMLDivElement>(null);
+export default function RainEffect() {
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!ref.current) return;
+
+    // Scene + Camera
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
+    // Renderer with transparent background
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0x000000, 0); // transparent
     renderer.domElement.style.position = "fixed";
     renderer.domElement.style.top = "0";
     renderer.domElement.style.left = "0";
-    renderer.domElement.style.pointerEvents = "none";
-    renderer.domElement.style.zIndex = "9999";
-    mountRef.current?.appendChild(renderer.domElement);
+    renderer.domElement.style.width = "100%";
+    renderer.domElement.style.height = "100%";
+    renderer.domElement.style.zIndex = "9999"; // on top
+    renderer.domElement.style.pointerEvents = "none"; // allow clicking through
+    ref.current.appendChild(renderer.domElement);
 
-    const uniforms = {
-      u_time: { value: 0 },
-      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    };
-
+    // Shader
     const material = new THREE.ShaderMaterial({
-      uniforms,
-      transparent: true,
+      uniforms: {
+        u_time: { value: 0 },
+        u_resolution: {
+          value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+        },
+      },
       vertexShader: `
         varying vec2 vUv;
         void main() {
@@ -47,40 +53,50 @@ export function RainEffect() {
         void main() {
           vec2 uv = vUv;
 
-          // stretch vertically
+          // Stretch vertically
           uv.y *= 3.0;
 
-          // animate downward
+          // Animate downward
           uv.y += u_time * 2.0;
 
-          // random drops
+          // Randomize drops
           float drops = step(0.98, rand(floor(uv * 20.0)));
 
-          // fade drop intensity
+          // Fade intensity
           float alpha = smoothstep(0.5, 0.0, fract(uv.y));
 
-          vec3 col = mix(vec3(0.1,0.1,0.15), vec3(0.6,0.6,1.0), drops * alpha);
-          gl_FragColor = vec4(col, 1.0);
+          vec3 col = mix(vec3(0.0,0.0,0.0,1.0), vec3(0.6,0.6,1.0), drops * alpha);
+          gl_FragColor = vec4(col, drops * alpha);
         }
       `,
+      transparent: true, // allow background through
     });
 
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
     scene.add(quad);
 
     const clock = new THREE.Clock();
+
     function animate() {
-      uniforms.u_time.value = clock.getElapsedTime();
+      material.uniforms.u_time.value = clock.getElapsedTime();
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
     animate();
 
+    window.addEventListener("resize", () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      material.uniforms.u_resolution.value.set(
+        window.innerWidth,
+        window.innerHeight
+      );
+    });
+
     return () => {
-      mountRef.current?.removeChild(renderer.domElement);
+      ref.current?.removeChild(renderer.domElement);
       renderer.dispose();
     };
   }, []);
 
-  return <div ref={mountRef} />;
+  return <div ref={ref} />;
 }
