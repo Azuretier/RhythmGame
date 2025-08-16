@@ -10,22 +10,24 @@ export default function RainEffect() {
 
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const renderer = new THREE.WebGLRenderer({ alpha: true }); // transparent
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0);
     renderer.domElement.style.position = "fixed";
     renderer.domElement.style.top = "0";
     renderer.domElement.style.left = "0";
-    renderer.domElement.style.width = "100%";
-    renderer.domElement.style.height = "100%";
-    renderer.domElement.style.pointerEvents = "none"; // clicks pass through
-    renderer.domElement.style.zIndex = "9999";    
+    renderer.domElement.style.zIndex = "9999";
+    renderer.domElement.style.pointerEvents = "none";
     containerRef.current.appendChild(renderer.domElement);
 
-    // uniforms: no PNG background now
+    const textureLoader = new THREE.TextureLoader();
+    const tex0 = textureLoader.load("/media/image.jpg");
+
+    // All uniforms must be defined here
     const uniforms: Record<string, any> = {
-      u_time: { value: 0.0 },
+      u_tex0: { value: tex0 },
+      u_tex0_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
       u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_time: { value: 0.0 },
       u_speed: { value: 0.5 },
       u_intensity: { value: 0.7 },
       u_normal: { value: 0.5 },
@@ -40,7 +42,7 @@ export default function RainEffect() {
     };
 
     async function loadShader() {
-      const fragShader = await fetch("/shaders/rain.frag").then((res) => res.text());
+      const fragShader = await fetch("/shaders/rain.frag").then(res => res.text());
 
       const material = new THREE.ShaderMaterial({
         uniforms,
@@ -52,7 +54,7 @@ export default function RainEffect() {
           }
         `,
         fragmentShader: fragShader,
-        transparent: true, // allow page content behind
+        transparent: true,
       });
 
       const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);

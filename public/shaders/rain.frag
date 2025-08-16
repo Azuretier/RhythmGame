@@ -157,9 +157,7 @@ void main() {
     vec2 n = vec2(cx - c.x, cy - c.x);		// expensive normals
     #endif
 
-    // Just use the rain intensity (c.x) as brightness
-    vec3 col = vec3(0.6, 0.7, 0.8) * c.x; // bluish-white rain
-
+    vec3 col = texture2D(u_tex0, UV + n).rgb;
     vec4 texCoord = vec4(UV.x + n.x, UV.y + n.y, 0, 1.0 * 25. * 0.01 / 7.);
 
     if(u_blur_iterations != 1) {
@@ -193,6 +191,5 @@ void main() {
     }
     col *= 1. - dot(UV -= .5, UV) * 1.; // vignette
 
-    gl_FragColor = vec4(col, c.x * 0.8); // semi-transparent
-
+    gl_FragColor = vec4(col * u_brightness, 1);
 }
