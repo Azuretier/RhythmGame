@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { motion, animate } from "framer-motion"
 import { ThemeToggle } from '@/components/sunmoon';
-import RainEffect from '@/components/realistic-rain';
+import RainEffect from '@/components/realistic-rain2';
 import {
   FaBirthdayCake,
   FaUserGraduate,
