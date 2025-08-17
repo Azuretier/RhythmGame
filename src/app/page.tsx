@@ -32,16 +32,20 @@ const Main = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const [transitionStarted, setTransitionStarted] = useState(false);
-  const [transitionComplete, setTransitionComplete] = useState(false);
+  const [transitionDisplayed, setTransitionDisplayed] = useState(true);
+  const [fadeUpAnimationStarted, setFadeUpAnimationStarted] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (showLoadingScreen && !transitionComplete) {
-      setTimeout(() => {setShowLoadingScreen(false); setTransitionStarted(true); setTimeout(() => setTransitionComplete(true), 1200);}, 400); 
-      // timeout runs on its own line, so it won't block the rest of the code
-    }
-  }, [showLoadingScreen, isLoaded]);
+    setTimeout(() => {
+      setShowLoadingScreen(false);
+      setTransitionStarted(true);
+      setTimeout(() => setTransitionDisplayed(false), 1100);
+      setTimeout(() => setFadeUpAnimationStarted(true), 800);
+    }, 400); 
+    // timeout runs on its own line, so it won't block the rest of the code
+  }, [isLoaded]);
 
   useEffect(() => {
     const elements = document.querySelectorAll(".fade-up");
@@ -50,14 +54,14 @@ const Main = () => {
       if (!(el instanceof HTMLElement)) return;
       el.style.opacity = "0";
 
-      if (transitionComplete) {
+      if (fadeUpAnimationStarted) {
         setTimeout(() => {
           animate(el, { opacity: [0, 1], y: [50, 0] }, { type: "spring" });
         }, index * 150);
       }
     });
 
-  }, [transitionComplete]);
+  }, [fadeUpAnimationStarted]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout
@@ -88,7 +92,7 @@ const Main = () => {
 
   return (
     <main className="grid grid-cols-12 grid-rows-7 grid-flow-row items-center justify-center h-screen">
-      {!transitionComplete && (
+      {transitionDisplayed && (
         <div
           className={`fixed inset-0 bg-black z-40 transition-transform duration-1000 ${
             transitionStarted ? "-translate-y-full" : "translate-y-0"
