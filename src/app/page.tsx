@@ -145,7 +145,7 @@ const Main = () => {
           <p className="text-2xl font-bold">Azure</p>
           <p className="text-sm text-gray-500">He/Him</p>
         </div>
-        <div className="grid row-span-2 text-lg font-sanserif row-start-5">
+        <div className="grid row-span-2 text-lg font-sanserif row-start-4">
           <div className="grid justify-start gap-2 grid-flow-col items-center">
             <FaBirthdayCake />
             <p>200X/2/18</p>
