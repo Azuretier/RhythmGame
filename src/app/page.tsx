@@ -119,7 +119,7 @@ const Main = () => {
         </div>
       )}
       <RainEffect onLoaded={() => setIsLoaded(true)} />
-      <motion.div className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
+      <motion.div className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-6 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
         <div className="flex items-center justify-start row-span-2 w-32 h-32 rounded-full overflow-hidden shadow-lg">
           <AnimatePresence mode="wait">
             <motion.img
@@ -136,11 +136,11 @@ const Main = () => {
             />
           </AnimatePresence>
         </div>
-        <div className="grid col-span-3 row-start-2 items-center">
+        <div className="grid row-start-3 items-center">
           <p className="text-2xl font-bold">Azuretier</p>
           <p className="text-sm text-gray-500">@09xgg</p>
         </div>
-        <div className="grid text-lg font-sanserif col-span-3 row-start-4">
+        <div className="grid text-lg font-sanserif row-start-5">
           <div className="grid justify-start gap-2 grid-flow-col items-center">
             <FaBirthdayCake />
             <p>200X/2/18</p>
