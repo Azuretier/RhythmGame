@@ -21,10 +21,13 @@ import Image from "next/image"
 const Main = () => {
   const texts = [
     "Life is like a paper airplane, isn't it?",
-    "Keep flying high!",
-    "Every day is a new flight.",
-    "Catch the wind and soar!",
+    "I make my world myself",
   ]
+
+  const images = [
+    "/profile_image/azure.png",
+    "/profile_image/original_azure.png",
+  ];
 
   const [displayedText, setDisplayedText] = useState("")
   const [textIndex, setTextIndex] = useState(0)
@@ -34,6 +37,17 @@ const Main = () => {
   const [transitionStarted, setTransitionStarted] = useState(false);
   const [transitionDisplayed, setTransitionDisplayed] = useState(true);
   const [fadeUpAnimationStarted, setFadeUpAnimationStarted] = useState(false);
+
+  const [profImageIndex, setProfImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProfImageIndex((prev) => (prev + 1) % images.length);
+    }, 3000); // change every 3 seconds
+
+    return () => clearInterval(interval); // cleanup on unmount
+  }, []);
+
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -108,14 +122,13 @@ const Main = () => {
       <RainEffect onLoaded={() => setIsLoaded(true)} />
       <motion.div className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
         <div className="flex h-50 w-50 items-center justify-start row-span-2">
-          <Image src="/azure.png" alt="avatar" width={200} height={200} />
+          <Image src={images[profImageIndex]} alt="Profile Avatar" width={128} height={128} className="w-32 h-32 rounded-full object-cover shadow-lg transition-opacity duration-700"/>
         </div>
         <div className="grid col-span-3 row-start-3 items-center">
           <p className="text-3xl font-black">Azure</p>
-          <p className="text-gray-500 font-black">あずれーと</p>
-          <p className="text-gray-500 font-normal text-lg">I make my world myself</p>
+          <p className="text-lg font-black">He/Him</p>
         </div>
-        <div className="grid text-gray-500 col-span-3 row-start-4 font-sanserif">
+        <div className="grid text-lg col-span-3 row-start-4 font-sanserif">
           <div className="grid justify-start gap-2 grid-flow-col items-center">
             <FaBirthdayCake />
             <p>200X/2/18</p>
