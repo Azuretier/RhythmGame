@@ -37,20 +37,18 @@ const Main = () => {
   useEffect(() => {
     if (!isLoaded) return;
 
-    if (showLoadingScreen) {
+    if (showLoadingScreen && !transitionComplete) {
       setTimeout(() => {setShowLoadingScreen(false); setTransitionStarted(true); setTimeout(() => setTransitionComplete(true), 1200);}, 400); 
       // timeout runs on its own line, so it won't block the rest of the code
     }else {
-      if (transitionComplete) {
-        const elements = document.querySelectorAll(".fade-up");
-        elements.forEach((el, index) => {
-          if (el instanceof HTMLElement) {
-            el.style.opacity = "0";
-            setTimeout(() => {
-              animate(el, { opacity: [0, 1], y: [50, 0] }, { type: "spring" })}, index * 150);
-          }
-        });
-      }
+      const elements = document.querySelectorAll(".fade-up");
+      elements.forEach((el, index) => {
+        if (el instanceof HTMLElement) {
+          el.style.opacity = "0";
+          setTimeout(() => {
+            animate(el, { opacity: [0, 1], y: [50, 0] }, { type: "spring" })}, index * 150);
+        }
+      });
     }
   }, [showLoadingScreen, isLoaded, transitionComplete]);
 
