@@ -2,10 +2,9 @@
 
 // for a commit for vercel api.  
 import { useEffect, useState } from "react"
-import { motion, animate } from "framer-motion"
+import { motion, animate, AnimatePresence } from "framer-motion"
 import { ThemeToggle } from '@/components/sunmoon';
 import RainEffect from '@/components/realistic-rain2';
-import WipeTransition from '@/components/WipeTransition';
 import {
   FaBirthdayCake,
   FaUserGraduate,
@@ -43,7 +42,7 @@ const Main = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setProfImageIndex((prev) => (prev + 1) % images.length);
-    }, 3000); // change every 3 seconds
+    }, 10000); // Change image every 10 seconds
 
     return () => clearInterval(interval); // cleanup on unmount
   }, []);
@@ -121,14 +120,29 @@ const Main = () => {
       )}
       <RainEffect onLoaded={() => setIsLoaded(true)} />
       <motion.div className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-4 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
-        <div className="flex h-50 w-50 items-center justify-start row-span-2">
-          <Image src={images[profImageIndex]} alt="Profile Avatar" width={128} height={128} className="w-32 h-32 rounded-full object-cover shadow-lg transition-opacity duration-700"/>
+        <div className="flex items-center justify-start row-span-2 w-32 h-32 relative rounded-full overflow-hidden shadow-lg">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={images[profImageIndex]} // Use key to trigger re-render on image change
+              src={images[profImageIndex]}
+              alt="Profile Avatar"
+              className="absolute inset-0 w-full h-full object-cover"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1 }}
+            />
+          </AnimatePresence>
+        </div>
+        <div className="grid col-span-3 row-start-2 items-center">
+          <p className="text-2xl font-bold">Azuretier</p>
+          <p className="text-sm text-gray-500">@09xgg</p>
         </div>
         <div className="grid col-span-3 row-start-3 items-center">
           <p className="text-3xl font-black">Azure</p>
           <p className="text-lg font-black">He/Him</p>
         </div>
-        <div className="grid text-lg col-span-3 row-start-4 font-sanserif">
+        <div className="grid text-lg font-sanserif col-span-3 row-start-4">
           <div className="grid justify-start gap-2 grid-flow-col items-center">
             <FaBirthdayCake />
             <p>200X/2/18</p>
@@ -139,7 +153,7 @@ const Main = () => {
           </div>
           <div className="grid justify-start gap-2 grid-flow-col items-center">
             <FaPaperPlane />
-            <div className="grid grid-rows-1 grid-flow-col justify-start">
+            <div className="grid font-Arial grid-rows-1 grid-flow-col justify-start">
               <span>{displayedText}</span>
               <span className="blinking">|</span>
             </div>
