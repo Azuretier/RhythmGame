@@ -123,7 +123,7 @@ const Main = () => {
         </div>
       )}
       <RainEffect onLoaded={() => setIsLoaded(true)} />
-      <motion.div className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-6 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
+      <motion.div className="fade-up grid backdrop-blur-xl transition-transform duration-300 hover:scale-110 bg-[var(--widget-bg)] border border-[var(--widget-border)] p-6 rounded-lg items-center grid-cols-1 grid-rows-6 row-start-3 col-start-2 row-span-3 col-span-3 h-full">
         <div className="flex items-center justify-start row-span-2 w-32 h-32 rounded-full overflow-hidden shadow-lg">
           <AnimatePresence mode="wait">
             <motion.img
@@ -163,7 +163,7 @@ const Main = () => {
         </div>
       </motion.div>
       <div className="grid rounded-xl grid-rows-7 grid-cols-9 row-start-3 col-start-6 row-span-3 col-span-6 h-full">
-        <motion.a href="https://x.com/09xgg" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
+        <motion.a href="https://x.com/09xgg" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl transition-transform duration-300 hover:scale-110 bg-[var(--widget-bg)] gap-3 p-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
             <FaXTwitter size={48} />
           </div>
@@ -174,7 +174,7 @@ const Main = () => {
             </section>
           </div>
         </motion.a>
-        <motion.a href="https://github.com/Azuretier" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
+        <motion.a href="https://github.com/Azuretier" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl transition-transform duration-300 hover:scale-110 bg-[var(--widget-bg)] gap-3 p-6 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-black dark:hover:border-gray-300 rounded-lg row-span-3 col-span-4">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-black">
             <FaGithub size={48} />
           </div>
@@ -185,7 +185,7 @@ const Main = () => {
             </section>
           </div>
         </motion.a>
-        <motion.a className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 row-start-5 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
+        <motion.a className="fade-up grid backdrop-blur-xl transition-transform duration-300 hover:scale-110 bg-[var(--widget-bg)] gap-3 p-6 row-start-5 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(88,101,242)] rounded-lg row-span-3 col-span-4">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-white bg-[rgb(88,101,242)] drop-shadow-md">
             <FaDiscord size={48} />
           </div>
@@ -196,7 +196,7 @@ const Main = () => {
             </section>
           </div>
         </motion.a>
-        <motion.a href="https://youtube.com/@Azuret" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 row-start-5 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4">
+        <motion.a href="https://youtube.com/@Azuret" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl transition-transform duration-300 hover:scale-110 bg-[var(--widget-bg)] gap-3 p-6 row-start-5 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-[rgb(255,0,0)] bg-white drop-shadow-md">
             <FaYoutube size={48} />
           </div>
