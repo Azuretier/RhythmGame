@@ -172,7 +172,7 @@ const Main = () => {
       </motion.div>
 
       {/* Social Widgets */}
-      <div className="grid rounded-xl grid-rows-7 grid-cols-9 row-start-3 col-start-6 row-span-3 col-span-6 h-full gap-4">
+      <div className="grid rounded-xl grid-rows-7 grid-cols-9 row-start-3 col-start-6 row-span-3 col-span-6 h-full">
         <motion.a
           href="https://x.com/09xgg"
           target="_blank"
