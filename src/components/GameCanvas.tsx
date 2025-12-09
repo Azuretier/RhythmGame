@@ -14,12 +14,15 @@ export function GameCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    const context = canvas.getContext("webgpu")!;
-    context.configure({ 
-      device,
-      format: navigator.gpu.getPreferredCanvasFormat(),
-      alphaMode: "premultiplied"
-    });
+    const context = canvas.getContext("webgpu") as any;
+
+    if (context) {
+      context.configure({ 
+        device,
+        format: navigator.gpu.getPreferredCanvasFormat(),
+        alphaMode: "premultiplied"
+      });
+    }
 
     const renderer = createRenderer(device, canvas.width, canvas.height);
     let raf: number;
