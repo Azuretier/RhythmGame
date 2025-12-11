@@ -1,136 +1,117 @@
 /* --- UTILITIES --- */
 .fullScreen {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
 }
-
 .flexCenter {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-
 .hidden { display: none !important; }
 
 /* --- BACKGROUNDS --- */
+.bgPanorama {
+  /* Classic Console Edition Panorama */
+  background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), 
+              url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center fixed;
+  background-size: cover;
+  z-index: 50;
+}
+
 .bgDirt {
   background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
               url('https://www.transparenttextures.com/patterns/cubes.png'), #2e2e2e;
 }
 
-/* --- TITLE SCREEN --- */
-.title {
-  font-family: var(--font-pixel); font-size: 5rem; margin-bottom: 1rem;
-  text-shadow: 4px 4px 0 #000; letter-spacing: 2px;
+/* --- TITLE SCREEN (Restored) --- */
+.logoContainer {
+  position: relative; margin-bottom: 2rem; text-align: center; margin-top: -50px;
 }
-.subtitle { color: #fdd835; font-family: monospace; margin-bottom: 2rem; }
-.heading { font-family: var(--font-pixel); font-size: 3rem; margin-bottom: 1.5rem; }
 
-/* --- LOADING SCREEN (Console Edition Style) --- */
+.gameLogo {
+  font-family: var(--font-pixel); font-size: 6rem; color: #c6c6c6;
+  text-shadow: 0px 4px 0px #555, 0px 8px 0px #333, 4px 4px 0px #222, 4px 8px 0px #111;
+  letter-spacing: 2px; line-height: 1; margin: 0; position: relative; z-index: 2;
+}
+
+.gameSubtitle {
+  font-family: var(--font-pixel); font-size: 1.5rem; color: #fff;
+  text-shadow: 2px 2px 0 #000; margin-top: 5px; letter-spacing: 1px; text-transform: uppercase;
+}
+
+.splashText {
+  position: absolute; top: 40px; right: -80px;
+  font-family: var(--font-pixel); font-size: 1.8rem; color: #ffff55;
+  text-shadow: 3px 3px 0 #3f3f00; transform: rotate(-20deg);
+  animation: splashBounce 0.6s infinite alternate; z-index: 10; white-space: nowrap;
+}
+
+@keyframes splashBounce {
+  0%, 100% { transform: scale(1) rotate(-20deg); }
+  50% { transform: scale(1.1) rotate(-20deg); }
+}
+
+.menuContainer {
+  display: flex; flex-direction: column; gap: 8px; width: 400px; z-index: 10;
+}
+
+.consoleBtn {
+  position: relative; width: 100%; padding: 12px 0;
+  font-family: var(--font-pixel); font-size: 1.5rem; color: #fff; text-align: center;
+  background-color: #777; /* Stone Grey */
+  border: 4px solid;
+  border-top-color: #888; border-left-color: #888;
+  border-right-color: #444; border-bottom-color: #444;
+  box-shadow: 0 4px 0 #222; cursor: pointer; text-shadow: 2px 2px 0 #222;
+}
+
+.consoleBtn:hover:not(:disabled) {
+  background-color: #888; border-color: #fff; z-index: 2;
+}
+.consoleBtn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #222; }
+.consoleBtn:disabled { color: #aaa; background-color: #555; border-color: #666; cursor: not-allowed; }
+
+.bottomHint {
+  position: absolute; bottom: 30px; left: 40px;
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-sans); font-size: 1.2rem; color: #fff; text-shadow: 2px 2px 0 #000;
+}
+
+.xButton {
+  width: 28px; height: 28px; background: #444; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.xMark { color: #64b5f6; font-weight: bold; font-family: sans-serif; font-size: 16px; margin-top: 1px; }
+
+/* --- LOADING SCREEN --- */
 .loadingScreen {
   z-index: 100;
-  /* Use panorama with blur */
   background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center fixed;
   background-size: cover;
 }
-
 .loadingOverlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.3); /* Slight dim */
-  backdrop-filter: blur(8px); /* The console blur effect */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* Top, Middle, Bottom */
-  align-items: center;
-  padding: 60px 0;
+  background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(8px);
+  display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 60px 0;
 }
+.loadingLogo { font-family: var(--font-pixel); font-size: 4rem; color: #fff; text-shadow: 4px 4px 0 #333; margin-top: 20px; }
+.loadingCenter { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
+.loadingStatus { font-family: var(--font-pixel); font-size: 2rem; text-shadow: 2px 2px 0 #000; margin-bottom: 15px; }
+.loadingSubText { width: 60%; text-align: left; font-family: var(--font-sans); font-size: 1rem; color: #ddd; margin-bottom: 5px; text-shadow: 1px 1px 0 #000; }
+.progressTrack { width: 60%; height: 20px; background: #555; border: 2px solid #888; padding: 2px; box-shadow: 2px 2px 0 #000; }
+.progressFill { height: 100%; background: #33bb33; width: 0%; box-shadow: inset 0 2px 0 rgba(255,255,255,0.3); transition: width 0.2s linear; }
+.tipBox { width: 70%; background: rgba(0, 0, 0, 0.5); border: 2px solid #fff; border-radius: 4px; padding: 25px; text-align: center; font-family: var(--font-pixel); font-size: 1.4rem; color: #fff; text-shadow: 1px 1px 0 #000; margin-bottom: 40px; }
 
-.loadingLogo {
-  font-family: var(--font-pixel);
-  font-size: 4rem;
-  color: #fff;
-  text-shadow: 4px 4px 0 #333;
-  margin-top: 20px;
-}
-
-.loadingCenter {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 40px;
-}
-
-.loadingStatus {
-  font-family: var(--font-pixel);
-  font-size: 2rem;
-  text-shadow: 2px 2px 0 #000;
-  margin-bottom: 15px;
-}
-
-.loadingSubText {
-  width: 60%;
-  text-align: left;
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  color: #ddd;
-  margin-bottom: 5px;
-  text-shadow: 1px 1px 0 #000;
-}
-
-.progressTrack {
-  width: 60%;
-  height: 20px;
-  background: #555;
-  border: 2px solid #888;
-  padding: 2px;
-  box-shadow: 2px 2px 0 #000;
-}
-
-.progressFill {
-  height: 100%;
-  background: #33bb33; /* Minecraft Green */
-  width: 0%;
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.3);
-  transition: width 0.2s linear;
-}
-
-.tipBox {
-  width: 70%;
-  background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-  border: 2px solid #fff;
-  border-radius: 4px;
-  padding: 25px;
-  text-align: center;
-  font-family: var(--font-pixel);
-  font-size: 1.4rem;
-  color: #fff;
-  text-shadow: 1px 1px 0 #000;
-  margin-bottom: 40px;
-}
-
-/* --- BUTTONS --- */
-.btn {
-  background: #777; border: 3px solid #fff; color: #fff;
-  font-family: var(--font-pixel); font-size: 1.5rem; padding: 10px 30px;
-  width: 300px; margin: 10px; cursor: pointer; box-shadow: 0 4px 0 #333;
-  text-shadow: 2px 2px #000; transition: transform 0.1s; text-align: center;
-}
-.btn:hover:not(:disabled) { background: #888; transform: translateY(-2px); box-shadow: 0 6px 0 #333; }
-.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 #333; }
-.btn:disabled { background: #444; border-color: #666; color: #888; cursor: not-allowed; transform: none; }
-.btnPrimary { background: #4CAF50; border-color: #81C784; }
-.btnPrimary:hover:not(:disabled) { background: #56bb5b; }
-.btnDanger { background: #d32f2f; border-color: #ef5350; }
-
-/* --- LISTS --- */
+/* --- SELECT WORLD & GENERIC --- */
+.heading { font-family: var(--font-pixel); font-size: 3rem; margin-bottom: 1.5rem; text-shadow: 2px 2px 0 #000; }
 .listContainer { width: 600px; height: 300px; background: rgba(0,0,0,0.6); border: 3px solid #777; overflow-y: auto; margin-bottom: 20px; padding: 10px; }
-.worldRow { background: #444; border: 2px solid #555; margin-bottom: 8px; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.worldRow:hover { background: #555; border-color: white; }
+.worldRow { background: #444; border: 2px solid #555; margin-bottom: 8px; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: #ddd; font-family: var(--font-pixel); }
+.worldRow:hover { background: #555; border-color: white; color: white; }
 .worldRowSelected { background: #2E7D32; border-color: #4CAF50; }
 
-/* --- MODALS --- */
 .bgOverlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 60; }
-.modalBox { background: #222; border: 4px solid #fff; padding: 40px; text-align: center; width: 450px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
-.input { width: 100%; background: #333; border: 2px solid #777; padding: 10px; color: white; font-family: var(--font-pixel); font-size: 1.5rem; text-align: center; margin-bottom: 20px; outline: none; }
+.modalBox { background: #c6c6c6; border: 4px solid #fff; outline: 4px solid #000; padding: 20px; text-align: center; width: 450px; color: #222; font-family: var(--font-pixel); }
+.input { width: 100%; background: #000; border: 2px solid #888; padding: 10px; color: white; font-family: var(--font-pixel); font-size: 1.5rem; text-align: center; margin-bottom: 20px; outline: none; }
 .row { display: flex; gap: 10px; justify-content: center; }
 
 /* --- HUD --- */
