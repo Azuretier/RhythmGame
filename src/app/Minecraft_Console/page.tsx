@@ -3,11 +3,11 @@
 import dynamic from 'next/dynamic';
 import Head from 'next/head';
 // Import the CSS module
-import '../styles/VoxelWorld.module.css';
+import '@/styles/VoxelWorld.module.css';
 
 // Dynamically import the VoxelWorld component with SSR disabled.
 // This is CRITICAL for Three.js/browser-specific code.
-const DynamicVoxelWorld = dynamic(() => import('../components/VoxelWorld'), {
+const DynamicVoxelWorld = dynamic(() => import('@/components/VoxelWorld'), {
   ssr: false,
 });
 
