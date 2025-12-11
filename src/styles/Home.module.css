@@ -14,146 +14,211 @@
   justify-content: center;
 }
 
-.hidden {
-  display: none !important;
-}
+.hidden { display: none !important; }
 
 /* --- BACKGROUNDS --- */
-.bgDirt {
-  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
-              url('https://www.transparenttextures.com/patterns/cubes.png'), 
-              #2e2e2e;
+.bgPanorama {
+  /* Using a Minecraft-like panorama image */
+  background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+              url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center fixed; 
+  background-size: cover;
+  filter: blur(0px); /* Keep sharp or slight blur */
   z-index: 50;
 }
 
 .bgOverlay {
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(5px);
   z-index: 60;
 }
 
-.bgLoading {
-  background: #000;
-  z-index: 100;
-}
+.bgLoading { background: #000; z-index: 100; }
 
-/* --- TYPOGRAPHY --- */
-.title {
-  font-family: var(--font-pixel);
-  font-size: 5rem;
-  margin-bottom: 1rem;
-  text-shadow: 4px 4px 0 #000;
-  letter-spacing: 2px;
-}
-
-.subtitle {
-  color: #fdd835; /* Minecraft Yellow */
-  font-family: monospace;
+/* --- LOGO SECTION --- */
+.logoContainer {
+  position: relative;
   margin-bottom: 2rem;
+  text-align: center;
+  margin-top: -50px; /* Push slightly up */
 }
 
-.heading {
+.gameLogo {
   font-family: var(--font-pixel);
-  font-size: 3rem;
-  margin-bottom: 1.5rem;
+  font-size: 6rem;
+  color: #c6c6c6; /* Light grey face */
+  text-shadow: 
+    0px 4px 0px #555, /* 3D Depth */
+    0px 8px 0px #333,
+    4px 4px 0px #222,
+    4px 8px 0px #111,
+    0px 0px 10px rgba(0,0,0,0.5);
+  letter-spacing: 2px;
+  line-height: 1;
+  margin: 0;
+  position: relative;
+  z-index: 2;
 }
 
-/* --- BUTTONS --- */
-.btn {
-  background: #777;
-  border: 3px solid #fff;
-  color: #fff;
+.gameSubtitle {
   font-family: var(--font-pixel);
   font-size: 1.5rem;
-  padding: 10px 30px;
-  width: 300px;
-  margin: 10px;
-  cursor: pointer;
-  box-shadow: 0 4px 0 #333;
-  text-shadow: 2px 2px #000;
-  transition: transform 0.1s;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  margin-top: 5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.splashText {
+  position: absolute;
+  top: 40px;
+  right: -80px;
+  font-family: var(--font-pixel);
+  font-size: 1.8rem;
+  color: #ffff55; /* Minecraft Yellow */
+  text-shadow: 3px 3px 0 #3f3f00;
+  transform: rotate(-20deg);
+  animation: splashBounce 0.6s infinite alternate;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* --- CONSOLE MENU BUTTONS --- */
+.menuContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Tight gap like console */
+  width: 400px;
+  z-index: 10;
+}
+
+.consoleBtn {
+  position: relative;
+  width: 100%;
+  padding: 12px 0;
+  font-family: var(--font-pixel);
+  font-size: 1.5rem;
+  color: #fff;
   text-align: center;
+  background-color: #666; /* Stone Grey */
+  border: 4px solid;
+  /* Bevel Effect */
+  border-top-color: #888; 
+  border-left-color: #888;
+  border-right-color: #444;
+  border-bottom-color: #444;
+  box-shadow: 0 4px 0 #222;
+  cursor: pointer;
+  text-shadow: 2px 2px 0 #222;
+  transition: transform 0.05s;
 }
 
-.btn:hover:not(:disabled) {
-  background: #888;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #333;
-}
-
-.btn:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 0 0 #333;
-}
-
-.btn:disabled {
-  background: #444;
-  border-color: #666;
-  color: #888;
+.consoleBtn:disabled {
+  color: #aaa;
+  background-color: #555;
+  border-color: #666 #333 #333 #666;
   cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
 }
 
-.btnPrimary {
-  background: #4CAF50;
-  border-color: #81C784;
-}
-.btnPrimary:hover:not(:disabled) {
-  background: #56bb5b;
-}
-
-.btnDanger {
-  background: #d32f2f;
-  border-color: #ef5350;
+/* Hover/Focus State - Mimics Console Selection */
+.consoleBtn:hover:not(:disabled),
+.consoleBtn:focus:not(:disabled) {
+  background-color: #777;
+  border-color: #fff; /* White border on select */
+  z-index: 2;
+  outline: none;
 }
 
-/* --- LISTS & MODALS --- */
+.consoleBtn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #222;
+}
+
+/* --- BOTTOM HINT --- */
+.bottomHint {
+  position: absolute;
+  bottom: 30px;
+  left: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 1.2rem;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.xButton {
+  width: 28px;
+  height: 28px;
+  background: #444;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.xMark {
+  color: #64b5f6; /* PlayStation Blue */
+  font-weight: bold;
+  font-family: sans-serif;
+  font-size: 16px;
+  margin-top: 1px;
+}
+
+/* --- LISTS & MODALS (Re-styled for Console Look) --- */
 .listContainer {
   width: 600px;
-  height: 300px;
+  height: 350px;
   background: rgba(0, 0, 0, 0.6);
-  border: 3px solid #777;
+  border: 4px solid #888;
   overflow-y: auto;
   margin-bottom: 20px;
   padding: 10px;
 }
 
 .worldRow {
-  background: #444;
+  background: #333;
   border: 2px solid #555;
-  margin-bottom: 8px;
-  padding: 10px 20px;
+  margin-bottom: 5px;
+  padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  transition: background 0.1s;
+  font-family: var(--font-pixel);
+  color: #bbb;
 }
 
 .worldRow:hover {
-  background: #555;
-  border-color: white;
+  background: #444;
+  border-color: #fff;
+  color: #fff;
 }
 
 .worldRowSelected {
-  background: #2E7D32;
-  border-color: #4CAF50;
+  background: #333;
+  border: 2px solid #4CAF50; /* Green border for selection */
 }
 
+/* --- GENERIC --- */
 .modalBox {
-  background: #222;
+  background: #c6c6c6; /* Light grey dialog */
   border: 4px solid #fff;
-  padding: 40px;
+  outline: 4px solid #000;
+  padding: 20px;
   text-align: center;
   width: 450px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  color: #222;
+  font-family: var(--font-pixel);
 }
 
 .input {
   width: 100%;
-  background: #333;
-  border: 2px solid #777;
+  background: #000;
+  border: 2px solid #888;
   padding: 10px;
   color: white;
   font-family: var(--font-pixel);
@@ -162,12 +227,7 @@
   margin-bottom: 20px;
   outline: none;
 }
-.input:focus {
-  border-color: #4CAF50;
-  background: #1a1a1a;
-}
 
-/* --- SPINNER --- */
 .spinner {
   border: 8px solid #333;
   border-top: 8px solid #4CAF50;
@@ -178,68 +238,10 @@
   margin-bottom: 20px;
 }
 
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-/* --- HUD --- */
-.hudLayer {
-  pointer-events: none;
-  z-index: 10;
-}
-
-.crosshair {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  background: white;
-  transform: translate(-50%, -50%);
-  border: 1px solid rgba(0,0,0,0.5);
-}
-
-.coords {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0,0,0,0.5);
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 12px;
-  color: #ddd;
-}
-
-.hotbar {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 8px;
-  background: rgba(0,0,0,0.5);
-  padding: 8px;
-  border-radius: 8px;
-  pointer-events: auto;
-}
-
-.slot {
-  width: 48px;
-  height: 48px;
-  border: 3px solid #555;
-  background: #333;
-  cursor: pointer;
-  transition: transform 0.1s;
-}
-
-.slotActive {
-  border-color: #fff;
-  transform: scale(1.15);
-  box-shadow: 0 0 10px rgba(255,255,255,0.5);
-}
-
-/* Helper flex row */
-.row {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
+/* --- HUD & HOTBAR --- */
+.hudLayer { pointer-events: none; z-index: 10; }
+.crosshair { position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; background: rgba(255,255,255,0.8); transform: translate(-50%, -50%); border: 1px solid #000; }
+.hotbar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; background: rgba(0,0,0,0.4); padding: 4px; border-radius: 4px; pointer-events: auto; }
+.slot { width: 48px; height: 48px; border: 2px solid #555; background: #222; cursor: pointer; transition: transform 0.1s; }
+.slotActive { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 5px rgba(255,255,255,0.5); }
+.coords { position: absolute; top: 10px; left: 10px; font-family: monospace; font-size: 14px; color: #fff; text-shadow: 1px 1px 0 #000; }

@@ -57,4 +57,9 @@
     50% { opacity: 0; }
     100% { opacity: 1; }
   }
+  
+  @keyframes splashBounce {
+  0%, 100% { transform: scale(1) rotate(-20deg); }
+  50% { transform: scale(1.1) rotate(-20deg); }
+}
 }
