@@ -5,7 +5,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Critical: Hides the blurred edges sticking out */
+  overflow: hidden;
+  background-color: #1a1a1a; /* Fallback color */
 }
 
 .flexCenter {
@@ -19,37 +20,49 @@
 
 /* --- BACKGROUND SYSTEM --- */
 
-/* 1. The Moving Image */
+/* 1. The Moving Panorama */
 .panorama {
   position: absolute;
   top: -10%;
   left: -10%;
   width: 120%;
   height: 120%;
-  background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center;
+  
+  /* PRIORITY 1: Local Image in public/ folder */
+  background-image: url('/panorama.jpg');
+  
+  /* PRIORITY 2: External Backup (If local fails) */
+  background-image: url('/panorama.jpg'), url('https://assets.codepen.io/104338/minecraft-panorama.jpg');
+  
+  /* PRIORITY 3: CSS Fallback (Sky Blue) if no images load */
+  background-color: #5b87e5; 
+  
+  background-repeat: no-repeat;
+  background-position: center center;
   background-size: cover;
   
-  /* The Console Style Look */
-  filter: blur(6px); /* Heavy blur typical of menus */
-  animation: panoramaMove 120s linear infinite alternate; /* Slow, majestic movement */
+  /* Console Edition Blur Effect */
+  filter: blur(6px); 
+  animation: panoramaMove 120s linear infinite alternate;
   z-index: 0;
 }
 
-/* 2. The Dark Edges (Vignette) */
+/* 2. The Vignette (Dark Edges) */
 .vignette {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);
-  z-index: 1; /* Sits on top of image, below UI */
+  /* Darken edges to make text pop */
+  background: radial-gradient(circle, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.7) 100%);
+  z-index: 1; 
 }
 
-/* 3. The Content Container */
+/* 3. Content Container */
 .menuLayer {
   position: relative;
-  z-index: 10; /* Sharp content on top */
+  z-index: 10;
   width: 100%;
   height: 100%;
   display: flex;
@@ -60,7 +73,15 @@
 
 @keyframes panoramaMove {
   0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-5%, -2%) scale(1.1); } /* Subtle zoom and pan */
+  100% { transform: translate(-5%, -2%) scale(1.1); }
+}
+
+/* --- DIRT BACKGROUND (Fallback / Title) --- */
+.bgDirt {
+  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+              url('https://www.transparenttextures.com/patterns/cubes.png'), 
+              #2e2e2e;
+  z-index: 50;
 }
 
 /* --- LOGO SECTION --- */
@@ -70,7 +91,6 @@
   margin-top: -60px;
   margin-bottom: 20px;
   z-index: 60;
-  /* Slight float animation for the whole logo */
   animation: logoFloat 4s ease-in-out infinite;
 }
 
@@ -120,7 +140,7 @@
   z-index: 70;
 }
 
-/* --- MENU BUTTONS (Nintendo Switch Style) --- */
+/* --- MENU BUTTONS --- */
 .menuContainer {
   display: flex;
   flex-direction: column;
@@ -137,7 +157,7 @@
   font-family: var(--font-pixel);
   font-size: 1.4rem;
   color: #e0e0e0;
-  background-color: #767676; /* Stone Grey */
+  background-color: #767676;
   border: 2px solid #000;
   box-shadow: 
     inset 2px 2px 0 rgba(255,255,255,0.4),
@@ -153,8 +173,8 @@
 .switchBtn:hover:not(:disabled) {
   background-color: #858585;
   color: #ffff55;
-  border: 4px solid #aaaaff; /* Selection Blue/White Glow */
-  margin: -2px; /* Offset border thickness */
+  border: 4px solid #aaaaff;
+  margin: -2px;
   z-index: 10;
   line-height: 40px;
   text-shadow: 2px 2px 0 #3f3f00;
@@ -226,7 +246,8 @@
 .row { display: flex; gap: 10px; justify-content: center; }
 
 /* --- LOADING --- */
-.loadingScreen { z-index: 100; background: url('https://assets.codepen.io/104338/minecraft-panorama.jpg') no-repeat center center fixed; background-size: cover; }
+.loadingScreen { z-index: 100; background: #222; }
+/* Loading uses the same panorama class, just ensure it's visible */
 .loadingOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-shadow: 2px 2px 0 #000; font-family: var(--font-pixel); }
 .loadingLogo { font-family: var(--font-pixel); font-size: 4rem; color: #fff; text-shadow: 4px 4px 0 #333; margin-top: 20px; }
 .loadingCenter { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
