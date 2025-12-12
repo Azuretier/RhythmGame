@@ -162,17 +162,23 @@ export default function Home() {
 
   return (
     <main className={styles.fullScreen}>
+      {/* 
+          1. PERSISTENT BACKGROUND LAYER 
+          We use CSS class 'hidden' instead of conditional rendering ({ view === ... })
+          This keeps the Three.js instance alive and rotating even when navigating screens.
+      */}
+      <div className={(view === 'title' || view === 'worlds') ? '' : styles.hidden}>
+        <PanoramaBackground /> 
+        <div className={styles.vignette}></div>
+      </div>
+
+      {/* 2. GAME CONTAINER (Always mounted, controlled by engine) */}
       <div ref={containerRef} className={styles.fullScreen} style={{ zIndex: 0 }} />
 
-      {/* --- TITLE SCREEN (NINTENDO SWITCH STYLE) --- */}
+      {/* --- TITLE SCREEN UI --- */}
       {view === 'title' && (
         <div className={styles.fullScreen}>
-          
-          {/* BACKGROUND LAYERS */}
-          <PanoramaBackground /> 
-          <div className={styles.vignette}></div>
-
-          {/* CONTENT */}
+          {/* No background here, it's provided by the persistent layer above */}
           <div className={styles.menuLayer}>
             
             <div className={styles.logoContainer}>
@@ -225,11 +231,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- WORLD SELECT --- */}
+      {/* --- WORLD SELECT UI --- */}
       {view === 'worlds' && (
         <div className={styles.fullScreen}>
-          <PanoramaBackground /> 
-          <div className={styles.vignette}></div>
+          {/* Background provided by persistent layer */}
           
           <div className={styles.menuLayer}>
             <h1 className={styles.logoMain} style={{fontSize: '4rem', marginTop: 20}}>SELECT WORLD</h1>
