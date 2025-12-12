@@ -460,7 +460,12 @@ export class VoxelEngine {
     private onMouseDown = (e: MouseEvent) => {
         if (!this.isRunning || this.isPaused || this.isInventoryOpen) return;
         this.raycaster.setFromCamera(new THREE.Vector2(0,0), this.camera);
-        const meshes = Array.from(this.chunks.values()).map(c => c.mesh).filter((m): m is THREE.Mesh => m !== null);
+        
+        // 1. Get meshes from chunks
+        const meshes = Array.from(this.chunks.values())
+                            .map(c => c.mesh)
+                            .filter((m): m is THREE.Mesh => m !== null);
+        
         const hits = this.raycaster.intersectObjects(meshes);
         if(hits.length === 0 || hits[0].distance > 60) return;
 
@@ -472,20 +477,39 @@ export class VoxelEngine {
         const hitZ = Math.floor((p.z - n.z * 0.1) / BLOCK_SIZE);
 
         if(e.button === 0) { 
+            // BREAK BLOCK
             this.modifyBlock(hitX, hitY, hitZ, 'air');
         } else if(e.button === 2) { 
+            // PLACE BLOCK
+            
+            // --- FIX START ---
+            // Get the block from the global variable synced by React
+            const selectedBlock = (window as any).__SELECTED_BLOCK__;
+
+            // If nothing is selected (empty hand), DO NOT place anything.
+            // Previously: || 'grass' caused the bug.
+            if (!selectedBlock) return; 
+            // --- FIX END ---
+
             const placeX = Math.floor((p.x + n.x * 0.1) / BLOCK_SIZE);
             const placeY = Math.floor((p.y + n.y * 0.1) / BLOCK_SIZE);
             const placeZ = Math.floor((p.z + n.z * 0.1) / BLOCK_SIZE);
             
-            // Accurate Intersection Check for Placement
+            // Player Collision Check
             const px = this.camera.position.x;
             const py = this.camera.position.y;
             const pz = this.camera.position.z;
             
+            // AABB Check (Block vs Player)
             const bMinX = placeX * BLOCK_SIZE; const bMaxX = bMinX + BLOCK_SIZE;
             const bMinY = placeY * BLOCK_SIZE; const bMaxY = bMinY + BLOCK_SIZE;
             const bMinZ = placeZ * BLOCK_SIZE; const bMaxZ = bMinZ + BLOCK_SIZE;
+
+            // Player size definitions (must match those at top of file)
+            const PLAYER_WIDTH = 0.6 * BLOCK_SIZE; 
+            const PLAYER_HEIGHT = 1.8 * BLOCK_SIZE; 
+            const PLAYER_HALF_W = PLAYER_WIDTH / 2;
+            const EYE_HEIGHT = 1.6 * BLOCK_SIZE; 
 
             const pMinX = px - PLAYER_HALF_W; const pMaxX = px + PLAYER_HALF_W;
             const pMinY = py - EYE_HEIGHT; const pMaxY = py + (PLAYER_HEIGHT - EYE_HEIGHT);
@@ -495,7 +519,6 @@ export class VoxelEngine {
                 return; // Trying to place inside player
             }
 
-            const selectedBlock = (window as any).__SELECTED_BLOCK__ || 'grass';
             this.modifyBlock(placeX, placeY, placeZ, selectedBlock);
         }
     }

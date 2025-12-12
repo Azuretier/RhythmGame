@@ -131,7 +131,7 @@ export default function Home() {
                 (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); }, // This is throttled in Engine now
                 params
             );
-            (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
+            (window as any).__SELECTED_BLOCK__ = hotbar[selectedSlot];
             engineRef.current.setSensitivity(sensitivity / 10000);
             setView('game'); setShowPreGame(true); setPaused(false); setPauseMenuState('main');
         }
@@ -192,7 +192,10 @@ export default function Home() {
     return () => document.removeEventListener('pointerlockchange', handleLock);
   }, [view, showPreGame, inventoryOpen]); // inventoryOpen dependency is crucial here
 
-  useEffect(() => { (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot]; }, [selectedSlot]);
+  useEffect(() => { 
+      // This immediately updates the global variable whenever the hotbar or selection changes
+      (window as any).__SELECTED_BLOCK__ = hotbar[selectedSlot]; 
+  }, [selectedSlot, hotbar]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
