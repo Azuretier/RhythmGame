@@ -1,157 +1,331 @@
-/* --- UTILITIES --- */
+/* src/styles/Home.module.css */
+
 .fullScreen {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;
-}
-.flexCenter {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.hidden { display: none !important; }
-
-/* --- BACKGROUNDS --- */
-.panorama {
-  position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
-  background: url('/media/panorama.png') no-repeat center center;
-  background-size: cover;
-  filter: blur(6px);
-  animation: panoramaMove 120s linear infinite alternate;
-  z-index: 0;
-}
-.vignette {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);
-  z-index: 1;
-}
-.menuLayer {
-  position: relative; z-index: 10; width: 100%; height: 100%;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-@keyframes panoramaMove {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-5%, -2%) scale(1.1); }
-}
-
-/* --- LOGO --- */
-.logoContainer {
-  position: relative; text-align: center; margin-top: -60px; margin-bottom: 20px; z-index: 60;
-  animation: logoFloat 4s ease-in-out infinite;
-}
-@keyframes logoFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
-.logoMain {
-  font-family: 'VT323', monospace; font-size: 7rem; color: #c6c6c6; margin: 0; line-height: 0.8; letter-spacing: -2px;
-  text-shadow: 0px 4px 0 #5f5f5f, 0px 8px 0 #3f3f3f, 4px 4px 0 #282828, 4px 8px 0 #181818;
-  transform: scaleY(1.2);
-}
-.logoSub {
-  font-family: var(--font-pixel); font-size: 2rem; color: white; text-transform: uppercase; margin-top: 15px; letter-spacing: 1px;
-  text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000, 0px 4px 0 #000;
-}
-.splashText {
-  position: absolute; top: 60px; right: -100px; font-family: var(--font-pixel); font-size: 1.8rem; color: #ffff55;
-  text-shadow: 2px 2px 0 #3f3f00; width: 300px; text-align: center;
-  animation: splashAnim 0.6s infinite alternate; z-index: 70;
-}
-@keyframes splashAnim { 0% { transform: scale(1) rotate(-20deg); } 50% { transform: scale(1.05) rotate(-20deg); } 100% { transform: scale(1) rotate(-20deg); } }
-
-/* --- HUD --- */
-.hudLayer { pointer-events: none; z-index: 10; }
-.crosshair { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; transform: translate(-50%, -50%); mix-blend-mode: difference; }
-.crosshair::before { content: ''; position: absolute; top: 9px; left: 0; width: 20px; height: 2px; background: white; box-shadow: 0 0 1px rgba(0,0,0,0.5); }
-.crosshair::after { content: ''; position: absolute; left: 9px; top: 0; height: 20px; width: 2px; background: white; box-shadow: 0 0 1px rgba(0,0,0,0.5); }
-.coords { position: absolute; top: 10px; left: 10px; font-family: var(--font-pixel); font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 0 #000; }
-.hotbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 2px; pointer-events: auto; }
-.slot { width: 48px; height: 48px; border: 3px solid #555; background: #333; cursor: pointer; transition: transform 0.1s; }
-.slotActive { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-
-/* --- BUTTONS & MENUS --- */
-.menuContainer { display: flex; flex-direction: column; gap: 8px; width: 450px; z-index: 60; margin-top: 20px; }
-.switchBtn {
-  position: relative; width: 100%; height: 48px; font-family: var(--font-pixel); font-size: 1.4rem; color: #e0e0e0; background-color: #767676; border: 2px solid #000;
-  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.4), inset -2px -2px 0 rgba(0,0,0,0.4), 0 4px 0 #000;
-  cursor: pointer; text-align: center; line-height: 44px; text-shadow: 2px 2px 0 #383838; transition: transform 0.05s;
-}
-.switchBtn:hover:not(:disabled) { background-color: #858585; color: #ffff55; border: 4px solid #aaaaff; margin: -2px; z-index: 10; line-height: 40px; text-shadow: 2px 2px 0 #3f3f00; }
-.switchBtn:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0 0 #000; }
-.switchBtn:disabled { color: #aaa; background-color: #555; cursor: not-allowed; }
-.downloadBtn { height: 70px; line-height: 1.2; font-size: 1.1rem; white-space: pre-wrap; padding: 5px 20px; display: flex; align-items: center; justify-content: center; margin-top: 10px; }
-
-/* --- CUSTOM SLIDER (RESTORED) --- */
-.sliderContainer {
-  width: 100%;
-  position: relative;
-  height: 48px;
-  background: #555;
-  border: 2px solid #000;
-  border-top-color: #333;
-  border-left-color: #333;
-  border-bottom-color: #888;
-  border-right-color: #888;
-  margin-top: 5px;
-  margin-bottom: 5px;
-}
-
-.sliderInput {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 100%;
-  background: transparent;
   position: absolute;
   top: 0;
   left: 0;
-  margin: 0;
-  z-index: 2;
-  cursor: pointer;
-}
-.sliderInput::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 44px;
-  width: 24px;
-  background: #888;
-  border: 2px solid #000;
-  border-top-color: #aaa;
-  border-left-color: #aaa;
-  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.5);
-  cursor: pointer;
-}
-.sliderInput:hover::-webkit-slider-thumb {
-  background: #999;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* Label over slider */
-.sliderLabel {
+.hidden {
+  display: none !important;
+}
+
+/* --- Vignette & Background --- */
+.vignette {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  color: #fff;
-  text-shadow: 2px 2px 0 #000;
+  box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
   pointer-events: none;
   z-index: 1;
-  font-family: var(--font-pixel);
-  font-size: 1.4rem;
 }
 
-/* --- MODALS & LISTS --- */
-.bgOverlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 60; }
-.modalBox { background: #c6c6c6; border: 2px solid #fff; outline: 2px solid #000; padding: 20px; text-align: center; width: 450px; color: #222; font-family: var(--font-pixel); }
-.input { width: 95%; background: #000; border: 2px solid #aaa; padding: 10px; color: white; font-family: var(--font-pixel); font-size: 1.5rem; text-align: center; margin-bottom: 20px; outline: none; }
-.row { display: flex; gap: 10px; justify-content: center; }
-.listContainer { width: 600px; height: 300px; background: rgba(0,0,0,0.6); border: 2px solid #888; overflow-y: auto; margin-bottom: 20px; padding: 10px; }
-.worldRow { background: #333; border: 2px solid #555; padding: 10px; margin-bottom: 5px; cursor: pointer; color:#ddd; font-family: var(--font-pixel); display: flex; justify-content: space-between; }
-.worldRow:hover { border-color: #fff; background: #444; }
-.worldRowSelected { border: 4px solid #aaaaff; margin: -2px; z-index:10; background: #444; }
+/* --- Flex Utilities --- */
+.flexCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
-/* --- LOADING --- */
-.loadingScreen { z-index: 100; }
-.loadingOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-shadow: 2px 2px 0 #000; font-family: var(--font-pixel); }
-.loadingLogo { font-family: var(--font-pixel); font-size: 4rem; color: #fff; text-shadow: 4px 4px 0 #333; margin-top: 20px; }
-.loadingCenter { width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
-.loadingStatus { font-family: var(--font-pixel); font-size: 2rem; text-shadow: 2px 2px 0 #000; margin-bottom: 15px; }
-.loadingSubText { width: 60%; text-align: left; font-family: var(--font-sans); font-size: 1rem; color: #ddd; margin-bottom: 5px; text-shadow: 1px 1px 0 #000; }
-.progressTrack { width: 60%; height: 20px; background: #555; border: 2px solid #888; padding: 2px; box-shadow: 2px 2px 0 #000; }
-.progressFill { height: 100%; background: #33bb33; width: 0%; box-shadow: inset 0 2px 0 rgba(255,255,255,0.3); transition: width 0.2s linear; }
-.tipBox { width: 70%; background: rgba(0, 0, 0, 0.5); border: 2px solid #fff; border-radius: 4px; padding: 25px; text-align: center; font-family: var(--font-pixel); font-size: 1.4rem; color: #fff; text-shadow: 1px 1px 0 #000; margin-bottom: 40px; }
+/* --- Menu Layers --- */
+.menuLayer {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  color: white;
+  font-family: 'Minecraftia', 'Consolas', monospace;
+}
 
-/* --- FOOTER --- */
-.footerBar { position: absolute; bottom: 30px; left: 40px; display: flex; gap: 30px; z-index: 60; font-family: var(--font-pixel); font-size: 1.4rem; color: #fff; text-shadow: 2px 2px 0 #000; }
-.footerItem { display: flex; align-items: center; gap: 10px; }
-.btnIcon { width: 28px; height: 28px; background: #333; border-radius: 50%; border: 2px solid #bbb; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-family: sans-serif; color: #fff; box-shadow: 0 3px 0 #000; }
+.bgOverlay {
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 20;
+}
+
+/* --- Logo Section --- */
+.logoContainer {
+  margin-top: 5vh;
+  text-align: center;
+}
+
+.logoMain {
+  font-size: 5rem;
+  color: #dcdcdc;
+  text-shadow: 4px 4px 0px #3f3f3f, 6px 6px 0px #000;
+  margin: 0;
+  font-weight: bold;
+  letter-spacing: -2px;
+}
+
+.logoSub {
+  font-size: 1.5rem;
+  color: #ff3333;
+  text-shadow: 2px 2px 0 #330000;
+  margin-top: -10px;
+}
+
+.splashText {
+  color: #ffff00;
+  font-size: 1.2rem;
+  transform: rotate(-20deg);
+  margin-top: 10px;
+  margin-left: 100px;
+  text-shadow: 1px 1px 0 #3f3f00;
+  animation: bounce 0.5s infinite alternate;
+}
+
+@keyframes bounce { from { transform: scale(1) rotate(-20deg); } to { transform: scale(1.1) rotate(-20deg); } }
+
+/* --- Menu Buttons --- */
+.menuContainer {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 400px;
+}
+
+.switchBtn {
+  background: #757575;
+  /* Fixed Borders: always 2px to prevent hover jump */
+  border: 2px solid #000;
+  border-top: 2px solid #a8a8a8;
+  border-left: 2px solid #a8a8a8;
+  color: #fff;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 1.2rem;
+  text-shadow: 1px 1px 0 #000;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  box-sizing: border-box; /* Ensures padding/border doesn't grow width */
+}
+
+.switchBtn:hover {
+  background: #5fa53f; /* Minecraft Green Hover */
+  border-color: #fff; /* Changes color only, width stays 2px */
+}
+
+.switchBtn:disabled {
+  color: #aaa;
+  background: #333;
+  cursor: not-allowed;
+}
+
+.downloadBtn {
+  background: #4a4a4a;
+  font-size: 0.9rem;
+  text-align: center;
+  color: #aaa;
+}
+
+/* --- Footer Bar (Nintendo Style) --- */
+.footerBar {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 50px;
+  gap: 30px;
+}
+
+.footerItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.btnIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  box-shadow: 2px 2px 0 #000;
+  font-family: sans-serif;
+}
+
+/* --- Loading Screen --- */
+.loadingScreen {
+  background: #2e211b; /* Dirt bg color */
+  background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+  z-index: 50;
+  color: white;
+}
+
+.loadingOverlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.loadingLogo {
+  font-size: 3rem;
+  margin-bottom: 50px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.loadingCenter {
+  width: 60%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.progressTrack {
+  height: 20px;
+  background: #000;
+  border: 2px solid #555;
+  margin-top: 10px;
+}
+
+.progressFill {
+  height: 100%;
+  background: #5fa53f;
+  transition: width 0.3s ease;
+}
+
+.tipBox {
+  margin-top: 50px;
+  color: #aaa;
+  font-style: italic;
+}
+
+/* --- World List --- */
+.listContainer {
+  background: rgba(0,0,0,0.5);
+  width: 600px;
+  height: 400px;
+  overflow-y: auto;
+  border: 2px solid #fff;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.worldRow {
+  padding: 15px;
+  /* FIX: Reserve space for the 2px border so it doesn't jump on hover */
+  border: 2px solid transparent; 
+  border-bottom: 2px solid #555;
+  
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+  box-sizing: border-box; /* Important for border calculation */
+}
+
+.worldRow:hover, .worldRowSelected {
+  background: rgba(255, 255, 255, 0.2);
+  /* Hover uses 2px border. Since base has 2px transparent, size doesn't change */
+  border: 2px solid #fff; 
+}
+
+.row {
+  display: flex;
+  gap: 20px;
+}
+
+/* --- Create Modal --- */
+.modalBox {
+  background: #333;
+  padding: 40px;
+  border: 4px solid #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+}
+
+.input {
+  width: 300px;
+  padding: 10px;
+  font-size: 1.2rem;
+  background: #000;
+  color: #fff;
+  border: 2px solid #888;
+  margin-bottom: 20px;
+  font-family: inherit;
+}
+
+/* --- Options / Sliders --- */
+.sliderContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 300px;
+}
+
+.sliderInput {
+    width: 100%;
+    margin-bottom: 10px;
+    accent-color: #5fa53f;
+}
+
+.sliderLabel {
+    color: white;
+    text-shadow: 1px 1px 0 #000;
+}
+
+/* --- HUD (Heads Up Display) --- */
+.hudLayer {
+  pointer-events: none;
+  z-index: 100;
+}
+
+.crosshair {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.8);
+  transform: translate(-50%, -50%);
+}
+
+.coords {
+  position: absolute;
+  top: 10px; left: 10px;
+  color: #fff;
+  font-family: monospace;
+  text-shadow: 1px 1px 0 #000;
+  font-size: 1.2rem;
+}
+
+.hotbar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  background: rgba(0,0,0,0.4);
+  padding: 5px;
+  border-radius: 4px;
+  gap: 4px;
+}
+
+.slot {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #555;
+  transition: transform 0.1s;
+}
+
+.slotActive {
+  border-color: #fff;
+  transform: scale(1.1); /* Transform does not affect layout flow */
+  box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
