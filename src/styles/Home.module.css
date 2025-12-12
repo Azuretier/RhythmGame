@@ -183,6 +183,7 @@
 
 .worldRow {
   background: #333;
+  font-size: 1.4rem;
   /* FIX: Consistent border width */
   border: 2px solid #555;
   padding: 10px;
