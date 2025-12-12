@@ -11,30 +11,34 @@ export default function PanoramaBackground() {
 
     // 1. Setup Scene
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    // Adjusted FOV to 80 for a better wide-angle look
+    const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
     
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. Geometry (Inverted Sphere)
-    const geometry = new THREE.SphereGeometry(500, 60, 40);
+    // 2. Geometry: SWITCHED TO CYLINDER
+    // RadiusTop, RadiusBottom, Height, Segments
+    // Height (300) is tuned to fit the aspect ratio of the Minecraft strip image
+    const geometry = new THREE.CylinderGeometry(500, 500, 300, 60);
     geometry.scale(-1, 1, 1); // Invert so we see inside
 
-    // 3. Load Texture (Using External URL to fix 404)
+    // 3. Load Texture
     const textureLoader = new THREE.TextureLoader();
-    
-    // FALLBACK: Use this reliable external Minecraft panorama
-    const textureURL = 'media/mnsw_panorama.png';
-
     const texture = textureLoader.load(
-      textureURL,
-      () => console.log("✅ Texture loaded successfully!"),
+      "/media/mnsw_panorama.png",
       undefined,
-      (err) => console.error("❌ Texture failed again:", err)
+      undefined,
+      (err) => console.error("Texture error:", err)
     );
     
+    // Set wrapping to ensure it loops seamlessly horizontally
+    texture.wrapS = THREE.RepeatWrapping; 
+    texture.wrapT = THREE.ClampToEdgeWrapping; // Prevents vertical tiling artifacts
+    texture.repeat.set(1, 1);
+
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.generateMipmaps = false; 
@@ -46,7 +50,7 @@ export default function PanoramaBackground() {
     // 4. Animation
     const animate = () => {
       requestAnimationFrame(animate);
-      mesh.rotation.y += 0.0006; 
+      mesh.rotation.y += 0.0006; // Rotate cylinder
       renderer.render(scene, camera);
     };
     animate();
