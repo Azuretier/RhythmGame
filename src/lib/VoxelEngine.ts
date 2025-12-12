@@ -14,7 +14,7 @@ const COLORS: Record<string, number> = {
 export class VoxelEngine {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
-    private renderer: THREE.WebGLRenderer;
+    public renderer: THREE.WebGLRenderer; // Made public for disposal check
     private raycaster: THREE.Raycaster;
     
     private objects: THREE.Object3D[] = [];
@@ -39,37 +39,40 @@ export class VoxelEngine {
         this.worldPath = worldPath;
         this.updateHUD = updateHUD;
 
+        // 1. Scene Setup
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x87CEEB);
+        this.scene.background = new THREE.Color(0x87CEEB); // Sky Blue
         this.scene.fog = new THREE.Fog(0x87CEEB, 20, 400);
 
+        // 2. Camera
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.set(0, 50, 0);
 
+        // 3. Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
         container.appendChild(this.renderer.domElement);
 
-        this.setupLights();
+        // 4. Lighting
+        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+        this.scene.add(ambient);
+        const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+        sun.position.set(50, 100, 50);
+        this.scene.add(sun);
+
         this.raycaster = new THREE.Raycaster();
 
-        // Bind events
+        // 5. Events
         window.addEventListener('resize', this.onResize);
         document.addEventListener('keydown', this.onKeyDown);
         document.addEventListener('keyup', this.onKeyUp);
         document.body.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mousedown', this.onMouseDown);
 
+        // 6. Start
         this.connectToFirebase();
         this.animate();
-    }
-
-    private setupLights() {
-        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-        this.scene.add(ambient);
-        const sun = new THREE.DirectionalLight(0xffffff, 0.8);
-        sun.position.set(50, 100, 50);
-        this.scene.add(sun);
     }
 
     private connectToFirebase() {
@@ -105,48 +108,63 @@ export class VoxelEngine {
     }
 
     private animate = () => {
-        if (!this.renderer) return; // Disposed
+        if (!this.renderer) return; // Stop if disposed
+        
         requestAnimationFrame(this.animate);
 
+        const time = performance.now();
+        
+        // --- PHYSICS LOGIC ---
+        // Only run physics if game is Running AND Not Paused
         if (this.isRunning && !this.isPaused) {
-            const time = performance.now();
             const delta = Math.min((time - this.prevTime) / 1000, 0.1);
             this.physics(delta);
-            this.prevTime = time;
             this.updateHUD(Math.round(this.camera.position.x), Math.round(this.camera.position.y), Math.round(this.camera.position.z));
-        } else {
-            this.prevTime = performance.now();
         }
+        
+        // Always update time to prevent huge delta jumps on resume
+        this.prevTime = time;
+
+        // --- RENDER LOGIC ---
+        // FIX: Always render the scene, even if paused/waiting!
         this.renderer.render(this.scene, this.camera);
     };
 
     private physics(delta: number) {
+        // Friction
         const damping = Math.exp(-(this.onGround ? 10.0 : 2.0) * delta);
         this.velocity.x *= damping;
         this.velocity.z *= damping;
-        this.velocity.y -= 500 * delta;
+        this.velocity.y -= 500 * delta; // Gravity
 
+        // Input Direction
         const direction = new THREE.Vector3();
         direction.set(Number(this.moveState.right) - Number(this.moveState.left), 0, Number(this.moveState.bwd) - Number(this.moveState.fwd));
         direction.normalize();
 
+        // Apply Force
         if (this.moveState.fwd || this.moveState.bwd || this.moveState.left || this.moveState.right) {
             const camDir = new THREE.Vector3();
             this.camera.getWorldDirection(camDir); camDir.y = 0; camDir.normalize();
             const camRight = new THREE.Vector3();
             camRight.crossVectors(camDir, this.camera.up).normalize();
+            
             const moveVec = new THREE.Vector3().addScaledVector(camDir, -direction.z).addScaledVector(camRight, direction.x);
             moveVec.normalize();
+            
             const speed = this.onGround ? 2000 : 500;
             this.velocity.addScaledVector(moveVec, speed * delta);
         }
 
+        // X Movement
         this.camera.position.x += this.velocity.x * delta;
         if (this.checkCollide()) { this.camera.position.x -= this.velocity.x * delta; this.velocity.x = 0; }
 
+        // Z Movement
         this.camera.position.z += this.velocity.z * delta;
         if (this.checkCollide()) { this.camera.position.z -= this.velocity.z * delta; this.velocity.z = 0; }
 
+        // Y Movement
         this.onGround = false;
         this.camera.position.y += this.velocity.y * delta;
         if (this.checkCollide()) {
@@ -155,6 +173,7 @@ export class VoxelEngine {
             this.velocity.y = 0;
         }
 
+        // Void Respawn
         if (this.camera.position.y < -100) {
             this.velocity.set(0, 0, 0);
             this.camera.position.set(0, 100, 0);
@@ -167,6 +186,7 @@ export class VoxelEngine {
         const footY = this.camera.position.y - 18;
 
         for (const o of this.objects) {
+            // Optimization: Skip far blocks
             if (Math.abs(o.position.x - this.camera.position.x) > 15) continue;
             if (Math.abs(o.position.z - this.camera.position.z) > 15) continue;
             if (Math.abs(o.position.y - this.camera.position.y) > 25) continue;
@@ -185,7 +205,6 @@ export class VoxelEngine {
         return false;
     }
 
-    // --- Input Handlers ---
     private onKeyDown = (e: KeyboardEvent) => {
         if (!this.isRunning) return;
         switch (e.code) {
@@ -208,7 +227,6 @@ export class VoxelEngine {
 
     private onMouseMove = (e: MouseEvent) => {
         if (!this.isRunning || this.isPaused) return;
-        // Access a global or static sensitivity if needed, or pass it in
         const sensitivity = 0.002; 
         const euler = new THREE.Euler(0, 0, 0, 'YXZ');
         euler.setFromQuaternion(this.camera.quaternion);
@@ -237,10 +255,11 @@ export class VoxelEngine {
             const by = pos.y + n.y * BLOCK_SIZE;
             const bz = pos.z + n.z * BLOCK_SIZE;
 
+            // Simple anti-stuck check
             if (Math.abs(bx - this.camera.position.x) < 5 && Math.abs(bz - this.camera.position.z) < 5 && by > this.camera.position.y - 20 && by < this.camera.position.y + 5) return;
 
             const newKey = `${bx}_${by}_${bz}`;
-            const selectedBlock = (window as any).__SELECTED_BLOCK__ || 'grass'; // Quick hack for bridge
+            const selectedBlock = (window as any).__SELECTED_BLOCK__ || 'grass';
             setDoc(doc(db, `${this.worldPath}/blocks`, newKey), {
                 x: bx, y: by, z: bz, type: selectedBlock
             });
@@ -260,7 +279,12 @@ export class VoxelEngine {
         document.removeEventListener('keyup', this.onKeyUp);
         document.body.removeEventListener('mousemove', this.onMouseMove);
         document.removeEventListener('mousedown', this.onMouseDown);
-        this.container.removeChild(this.renderer.domElement);
+        
+        // React strict mode safety
+        if(this.container.contains(this.renderer.domElement)) {
+            this.container.removeChild(this.renderer.domElement);
+        }
+        
         this.renderer.dispose();
     }
 }
