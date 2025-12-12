@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
-import { collection, query, orderBy, getDocs, setDoc, getDoc, doc } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, setDoc, doc } from "firebase/firestore";
 import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
 import PanoramaBackground from "@/components/PanoramaBackground";
 import styles from "@/styles/Home.module.css";
@@ -23,6 +23,9 @@ const TIPS = [
   "Water and lava are dangerous.", "Crops grow faster near water.",
   "Wolves can be tamed with bones.", "Shift-click to move items quickly."
 ];
+
+// Key for LocalStorage
+const SETTINGS_KEY = "voxel_verse_options_v1";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -46,7 +49,7 @@ export default function Home() {
   
   const [pauseMenuState, setPauseMenuState] = useState<'main' | 'options'>('main');
   
-  // SETTINGS STATE
+  // SETTINGS STATE (Default Values)
   const [options, setOptions] = useState({
     splitScreen: false,
     autoJump: false,
@@ -54,79 +57,52 @@ export default function Home() {
     viewRolling: true,
     hints: true,
     deathMessages: true,
-    sensitivity: 100, // 100%
-    difficulty: 1 // 0: Peaceful, 1: Easy, 2: Normal, 3: Hard
+    sensitivity: 100, // Default 100%
+    difficulty: 1
   });
   
   const [selectedOptionRow, setSelectedOptionRow] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VoxelEngine | null>(null);
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 1. Auth & Initial Load
+  // 1. Auth Init
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
-      if (u) {
-        setUser(u);
-        loadSettings(u.uid); // Load settings when user connects
-      } else {
-        signInAnonymously(auth);
-      }
+      if (u) setUser(u);
+      else signInAnonymously(auth);
     });
     return () => unsub();
   }, []);
 
-  // 2. Load Settings from Firebase
-  const loadSettings = async (uid: string) => {
-    try {
-      const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
-      const docRef = doc(db, `artifacts/${appId}/users/${uid}/settings/game`);
-      const snapshot = await getDoc(docRef);
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        // Merge saved data with default state to ensure all keys exist
-        setOptions(prev => ({ ...prev, ...data }));
-        console.log("Settings loaded:", data);
+  // 2. Load Settings from LocalStorage on Mount
+  useEffect(() => {
+    const saved = localStorage.getItem(SETTINGS_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Merge saved settings with defaults to ensure all keys exist
+        setOptions(prev => ({ ...prev, ...parsed }));
+      } catch (e) {
+        console.error("Failed to load settings:", e);
       }
-    } catch (e) {
-      console.error("Failed to load settings:", e);
     }
-  };
+  }, []);
 
-  // 3. Auto-Save Settings (Debounced)
+  // 3. Save Settings & Sync Engine on Change
   useEffect(() => {
-    if (!user) return;
+    // Save to LocalStorage whenever options change
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(options));
 
-    // Clear previous timer if options change quickly (e.g. sliding slider)
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-
-    saveTimeoutRef.current = setTimeout(async () => {
-        try {
-            const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID;
-            const docRef = doc(db, `artifacts/${appId}/users/${user.uid}/settings/game`);
-            await setDoc(docRef, options, { merge: true });
-            console.log("Settings saved.");
-        } catch (e) {
-            console.error("Failed to save settings:", e);
-        }
-    }, 1000); // Wait 1 second after last change before saving
-
-    return () => {
-        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    };
-  }, [options, user]);
-
-  // 4. Sync Sensitivity with Engine
-  useEffect(() => {
+    // Update Engine Sensitivity
     if (engineRef.current) {
         // Map 0-200% to 0.000-0.004 (approx)
         engineRef.current.setSensitivity((options.sensitivity / 100) * 0.002);
     }
-  }, [options.sensitivity]);
+  }, [options]);
 
   const toggleSetting = (key: keyof typeof options) => {
-    setOptions(prev => ({ ...prev, [key]: !prev[key as keyof typeof options] }));
+    setOptions(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const startLoadingSequence = (callback: () => void) => {
@@ -185,7 +161,7 @@ export default function Home() {
         if (containerRef.current) {
             engineRef.current = new VoxelEngine(containerRef.current, worldPath, (x, y, z) => { setCoords(`${x}, ${y}, ${z}`); });
             (window as any).__SELECTED_BLOCK__ = HOTBAR_ITEMS[selectedSlot];
-            // Apply loaded settings immediately
+            // Apply loaded sensitivity immediately
             engineRef.current.setSensitivity((options.sensitivity / 100) * 0.002);
             setView('game');
             setShowPreGame(true);
@@ -369,99 +345,78 @@ export default function Home() {
           {pauseMenuState === 'options' && (
             <div className={styles.optionsBox}>
                 
-                {/* 1. Vertical Splitscreen */}
                 <div 
                     className={`${styles.optionRow} ${selectedOptionRow === 0 ? styles.selected : ''} ${options.splitScreen ? styles.checked : ''}`}
                     onMouseEnter={() => setSelectedOptionRow(0)}
                     onClick={() => toggleSetting('splitScreen')}
                 >
-                    <div className={styles.checkbox}>
-                        <span className={styles.checkmark}>✓</span>
-                    </div>
+                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
                     <span>Vertical Splitscreen</span>
                 </div>
 
-                {/* 2. Auto Jump */}
                 <div 
                     className={`${styles.optionRow} ${selectedOptionRow === 1 ? styles.selected : ''} ${options.autoJump ? styles.checked : ''}`}
                     onMouseEnter={() => setSelectedOptionRow(1)}
                     onClick={() => toggleSetting('autoJump')}
                 >
-                    <div className={styles.checkbox}>
-                        <span className={styles.checkmark}>✓</span>
-                    </div>
+                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
                     <span>Auto Jump</span>
                 </div>
 
-                {/* 3. View Bobbing */}
                 <div 
                     className={`${styles.optionRow} ${selectedOptionRow === 2 ? styles.selected : ''} ${options.viewBobbing ? styles.checked : ''}`}
                     onMouseEnter={() => setSelectedOptionRow(2)}
                     onClick={() => toggleSetting('viewBobbing')}
                 >
-                    <div className={styles.checkbox}>
-                        <span className={styles.checkmark}>✓</span>
-                    </div>
+                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
                     <span>View Bobbing</span>
                 </div>
 
-                {/* 4. Flying View Rolling */}
                 <div 
                     className={`${styles.optionRow} ${selectedOptionRow === 3 ? styles.selected : ''} ${options.viewRolling ? styles.checked : ''}`}
                     onMouseEnter={() => setSelectedOptionRow(3)}
                     onClick={() => toggleSetting('viewRolling')}
                 >
-                    <div className={styles.checkbox}>
-                        <span className={styles.checkmark}>✓</span>
-                    </div>
+                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
                     <span>Flying View Rolling</span>
                 </div>
 
-                {/* 5. Hints */}
                 <div 
                     className={`${styles.optionRow} ${selectedOptionRow === 4 ? styles.selected : ''} ${options.hints ? styles.checked : ''}`}
                     onMouseEnter={() => setSelectedOptionRow(4)}
                     onClick={() => toggleSetting('hints')}
                 >
-                    <div className={styles.checkbox}>
-                        <span className={styles.checkmark}>✓</span>
-                    </div>
+                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
                     <span>Hints</span>
                 </div>
 
-                {/* 6. Death Messages */}
                 <div 
                     className={`${styles.optionRow} ${selectedOptionRow === 5 ? styles.selected : ''} ${options.deathMessages ? styles.checked : ''}`}
                     onMouseEnter={() => setSelectedOptionRow(5)}
                     onClick={() => toggleSetting('deathMessages')}
                 >
-                    <div className={styles.checkbox}>
-                        <span className={styles.checkmark}>✓</span>
-                    </div>
+                    <div className={styles.checkbox}><span className={styles.checkmark}>✓</span></div>
                     <span>Death Messages</span>
                 </div>
 
-                {/* 7. Sensitivity Slider */}
-                <div className={styles.consoleSliderContainer} onMouseEnter={() => setSelectedOptionRow(null)}>
+                {/* SENSITIVITY SLIDER */}
+                <div className={styles.consoleSliderContainer}>
                     <input 
                         type="range" min="1" max="200" value={options.sensitivity}
                         onChange={(e) => setOptions({...options, sensitivity: parseInt(e.target.value)})}
                         className={styles.consoleSliderInput}
                     />
-                    <div className={styles.sliderText}>Game Sensitivity: {options.sensitivity}%</div>
+                    <div className={styles.sliderLabel}>Game Sensitivity: {options.sensitivity}%</div>
                 </div>
 
-                {/* 8. Difficulty Slider */}
-                <div className={styles.consoleSliderContainer} onMouseEnter={() => setSelectedOptionRow(null)}>
+                {/* DIFFICULTY SLIDER */}
+                <div className={styles.consoleSliderContainer}>
                     <input 
                         type="range" min="0" max="3" value={options.difficulty}
-                        onChange={(e) => {
-                           const val = parseInt(e.target.value);
-                           setOptions({...options, difficulty: val});
-                       }}
-                       className={styles.consoleSliderInput}
+                        onChange={(e) => setOptions({...options, difficulty: parseInt(e.target.value)})}
+                        className={styles.consoleSliderInput}
                     />
-                    <div className={styles.sliderText}>Difficulty: {getDiffText(options.difficulty)}</div>
+                    <div className={styles.sliderLabel}>Difficulty: {getDiffText(options.difficulty)}</div>
                 </div>
 
             </div>
