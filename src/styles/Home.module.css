@@ -257,8 +257,57 @@
 .tipBox { width: 70%; background: rgba(0, 0, 0, 0.5); border: 2px solid #fff; border-radius: 4px; padding: 25px; text-align: center; font-family: var(--font-pixel); font-size: 1.4rem; color: #fff; text-shadow: 1px 1px 0 #000; margin-bottom: 40px; }
 
 /* --- HUD --- */
-.hudLayer { pointer-events: none; z-index: 10; }
-.crosshair { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; background: url('https://i.imgur.com/8k9V5b3.png') no-repeat center; background-size: contain; transform: translate(-50%, -50%); opacity: 0.8; }
+.hudLayer { 
+  pointer-events: none; 
+  z-index: 10; 
+}
+
+/* UPDATED CROSSHAIR STYLE */
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  /* Optional: This makes the crosshair invert colors based on background (like real Minecraft) */
+  mix-blend-mode: difference; 
+}
+
+/* Horizontal Line */
+.crosshair::before {
+  content: '';
+  position: absolute;
+  top: 9px; /* (20px height - 2px thickness) / 2 */
+  left: 0;
+  width: 20px;
+  height: 2px;
+  background: white;
+  box-shadow: 0 0 1px rgba(0,0,0,0.5); /* Slight shadow for visibility */
+}
+
+/* Vertical Line */
+.crosshair::after {
+  content: '';
+  position: absolute;
+  left: 9px; /* (20px width - 2px thickness) / 2 */
+  top: 0;
+  height: 20px;
+  width: 2px;
+  background: white;
+  box-shadow: 0 0 1px rgba(0,0,0,0.5); /* Slight shadow for visibility */
+}
+
+.hotbar { 
+  position: absolute; 
+  bottom: 10px; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  display: flex; 
+  gap: 2px; 
+  padding: 2px; 
+  pointer-events: auto; 
+}
 .hotbar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 2px; pointer-events: auto; }
 .slot { width: 40px; height: 40px; border: 2px solid #333; background: #222; cursor: pointer; }
 .slotActive { border-color: #fff; transform: scale(1.1); box-shadow: 0 0 10px white; }
