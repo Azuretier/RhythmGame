@@ -3,8 +3,8 @@ import { ExternalLink, Mail, Github, Youtube, Instagram, MessageSquare, Sparkles
 // --- DATA CONFIGURATION ---
 // You can move this to a separate file later, but it's here for easy setup!
 const USER_DATA = {
-  name: "Your Name",
-  title: "Creative Developer & Digital Artist",
+  name: "Daichi Azu",
+  title: "Artist / Performer / Explorer",
   bio: "Turning wild ideas into interactive digital reality. Specializing in high-energy web experiences and colorful brand identities.",
   email: "hello@yourname.com",
   socials: [
