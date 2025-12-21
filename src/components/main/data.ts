@@ -18,7 +18,7 @@ export const USER_DATA = {
     },
     { 
       name: "Instagram", 
-      href: "https://www.instagram.com/rrrrrrrrrrvq", 
+      href: "https://www.instagram.com/rrrrrrrrrrvq/", 
       type: "link" 
     },
     { 
