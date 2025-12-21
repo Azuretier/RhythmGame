@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState } from 'react'
 
-const OrgButton = () => {
+const Button = () => {
     const [value, setState] = useState(0)
 
     const Plus = () =>{
@@ -13,4 +13,4 @@ const OrgButton = () => {
     )
 }
 
-export default OrgButton
+export { Button };
