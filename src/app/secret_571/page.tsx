@@ -5,7 +5,7 @@ import { auth, db } from "@/lib/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { collection, query, orderBy, getDocs, setDoc, doc, getDoc } from "firebase/firestore";
 import { VoxelEngine, BlockType } from "@/lib/VoxelEngine";
-import PanoramaBackground from "@/components/PanoramaBackground";
+import PanoramaBackground from "@/components/MNSW/PanoramaBackground";
 import styles from "@/styles/Home.module.css";
 
 const COLORS: Record<string, string> = {
