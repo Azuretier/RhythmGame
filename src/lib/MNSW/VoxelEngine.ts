@@ -22,6 +22,19 @@ const PLAYER_HEIGHT = 1.8 * BLOCK_SIZE; // 1.8 blocks high
 const PLAYER_HALF_W = PLAYER_WIDTH / 2;
 const EYE_HEIGHT = 1.6 * BLOCK_SIZE; // Eyes are near top
 
+const COLORS: Record<string, { r: number, g: number, b: number }> = {
+    grass: { r: 0.2, g: 0.5, b: 0.2 },
+    dirt: { r: 0.4, g: 0.3, b: 0.2 },
+    stone: { r: 0.5, g: 0.5, b: 0.5 },
+    wood: { r: 0.4, g: 0.3, b: 0.1 },
+    brick: { r: 0.6, g: 0.3, b: 0.2 },
+    leaves: { r: 0.1, g: 0.4, b: 0.1 },
+    water: { r: 0.2, g: 0.4, b: 0.8 },
+    obsidian: { r: 0.1, g: 0.0, b: 0.2 },
+    sand: { r: 0.8, g: 0.8, b: 0.5 },
+    air: { r: 0, g: 0, b: 0 }
+};
+
 const MATERIALS: Record<string, THREE.MeshStandardMaterial> = {};
 
 // Helper to init materials
@@ -309,7 +322,10 @@ export class VoxelEngine {
             const wx = x * BLOCK_SIZE + chunk.cx * CHUNK_SIZE * BLOCK_SIZE;
             const wy = y * BLOCK_SIZE;
             const wz = z * BLOCK_SIZE + chunk.cz * CHUNK_SIZE * BLOCK_SIZE;
-            const mat = MATERIALS[type] || MATERIALS.dirt;
+            
+            // --- FIX: Use simple COLORS object ---
+            const col = COLORS[type] || COLORS.dirt;
+            
             const s = HALF_BLOCK;
             const faces = [
                 { dir: [1, 0, 0], pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ], check: [x+1, y, z] },
@@ -323,7 +339,7 @@ export class VoxelEngine {
                 if (isSolid(face.check[0], face.check[1], face.check[2])) continue;
                 for (const v of face.pos) {
                     vertices.push(wx + v[0] + HALF_BLOCK, wy + v[1] + HALF_BLOCK, wz + v[2] + HALF_BLOCK);
-                    colors.push(mat.color.r, mat.color.g, mat.color.b);
+                    colors.push(col.r, col.g, col.b);
                     normals.push(face.dir[0], face.dir[1], face.dir[2]);
                 }
                 const a = vertCount, b = vertCount + 1, c = vertCount + 2, d = vertCount + 3;
@@ -337,7 +353,11 @@ export class VoxelEngine {
         geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
         geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
         geometry.setIndex(indices);
+        
         chunk.mesh = new THREE.Mesh(geometry, this.matOpaque);
+        chunk.mesh.castShadow = true;
+        chunk.mesh.receiveShadow = true;
+        
         this.scene.add(chunk.mesh);
         chunk.isDirty = false;
     }
