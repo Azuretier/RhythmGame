@@ -415,7 +415,7 @@ export class VoxelEngine {
             this.prevTime = performance.now();
         }
         
-        this.renderer.render(this.scene, this.camera);
+        this.composer.render();
     };
 
     // --- PHYSICS ENGINE ---
