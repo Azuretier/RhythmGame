@@ -1,191 +1,176 @@
-import { ExternalLink, Mail, Github, Youtube, Instagram, MessageSquare, Sparkles, Globe, Palette } from "lucide-react";
+import { Github, Youtube, Instagram, MessageSquare, ExternalLink, Mail, MapPin, Sparkles, Heart } from "lucide-react";
 
-// --- DATA CONFIGURATION ---
-// You can move this to a separate file later, but it's here for easy setup!
 const USER_DATA = {
-  name: "Azuretier",
-  title: "Creator / Enjoyer",
-  bio: "Turning wild ideas into interactive digital reality. Specializing in high-energy web experiences and colorful brand identities.",
+  name: "Your Name",
+  handle: "@username",
+  bio: "Creative developer making cute and functional things. Lover of minimalist design and open-source.",
+  location: "Earth / Internet",
   email: "hello@yourname.com",
   socials: [
-    { name: "GitHub", href: "https://github.com/Azuretier", type: "link" },
-    { name: "YouTube", href: "https://www.youtube.com/@azuchan_a", type: "link" },
-    { name: "Instagram", href: "https://www.instagram.com/rrrrrrrrrrvq/", type: "link" },
-    { name: "Discord: @daichi_a", href: "#", type: "static" }, // Non-interactable
+    { name: "GitHub", href: "https://github.com/yourusername", color: "text-zinc-800" },
+    { name: "YouTube", href: "https://youtube.com/@yourchannel", color: "text-red-500" },
+    { name: "Instagram", href: "https://instagram.com/yourhandle", color: "text-pink-500" },
   ],
   projects: [
     {
-      title: "Neon Dreams Interface",
-      description: "A cyberpunk-inspired dashboard with real-time data visualization.",
-      tags: ["Next.js", "Three.js"],
+      title: "Project Sakura",
+      date: "Dec 2025",
+      description: "A minimalist dashboard inspired by seasonal colors and soft aesthetics.",
+      tags: ["Next.js", "Tailwind"],
       link: "#",
-      image: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000&auto=format&fit=crop",
-      color: "from-blue-400 to-indigo-600"
+      image: "https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=1000&auto=format&fit=crop"
     },
     {
-      title: "Abstract Geometry",
-      description: "A collection of generated art pieces exploring color theory.",
-      tags: ["Creative Coding", "Canvas"],
+      title: "Dreamscape UI",
+      date: "Nov 2025",
+      description: "Experimental UI kit featuring glassmorphism and pastel gradients.",
+      tags: ["Design", "React"],
       link: "#",
-      image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop",
-      color: "from-pink-400 to-rose-600"
+      image: "https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000&auto=format&fit=crop"
     },
     {
-      title: "Cloud Hub",
-      description: "A community platform for digital creators to share assets.",
-      tags: ["React", "Firebase"],
+      title: "Moe Components",
+      date: "Oct 2025",
+      description: "A library of cute React components for modern web applications.",
+      tags: ["TypeScript", "CSS"],
       link: "#",
-      image: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=1000&auto=format&fit=crop",
-      color: "from-amber-400 to-orange-600"
+      image: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000&auto=format&fit=crop"
     }
   ]
 };
 
 export default function Home() {
   return (
-    // The main container with the moving gradient background defined in your CSS
-    <main className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-gradient-flow p-4 md:p-12 lg:p-20 selection:bg-yellow-300">
+    // Soft Cream/Pastel Background
+    <main className="min-h-screen bg-[#fdfcf0] text-zinc-700 selection:bg-orange-100 p-4 md:p-8 lg:p-12 font-sans">
       
-      {/* --- GLASS CARD CONTAINER --- */}
-      <div className="max-w-5xl mx-auto bg-white/20 backdrop-blur-2xl rounded-[3rem] shadow-2xl border border-white/30 overflow-hidden transition-all duration-700 hover:shadow-indigo-500/20">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        <div className="p-8 md:p-16">
+        {/* --- LEFT SIDEBAR (The Hub) --- */}
+        <aside className="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
           
-          {/* --- HERO SECTION --- */}
-          <header className="flex flex-col items-center text-center space-y-8 mb-20">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-yellow-400 rounded-full blur-xl opacity-60 animate-pulse"></div>
-              <div className="relative h-28 w-28 rounded-full bg-white p-1 shadow-2xl">
-                <div className="h-full w-full rounded-full bg-gradient-to-tr from-zinc-100 to-zinc-300 flex items-center justify-center text-4xl shadow-inner">
-                  ✨
+          {/* Profile Card */}
+          <div className="bg-white rounded-[2rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-orange-50/50">
+            <div className="relative w-24 h-24 mb-6 group">
+              <div className="absolute inset-0 bg-orange-200 rounded-3xl rotate-6 group-hover:rotate-12 transition-transform"></div>
+              <div className="relative w-full h-full bg-white rounded-3xl border-2 border-orange-100 flex items-center justify-center text-3xl overflow-hidden shadow-inner">
+                 🧸 {/* Replace with <img /> for your headshot */}
+              </div>
+            </div>
+            
+            <h1 className="text-2xl font-bold text-zinc-800">{USER_DATA.name}</h1>
+            <p className="text-sm text-orange-400 font-bold mb-4">{USER_DATA.handle}</p>
+            <p className="text-zinc-500 leading-relaxed mb-6 text-sm">{USER_DATA.bio}</p>
+            
+            <div className="space-y-3 pt-4 border-t border-zinc-50">
+              <div className="flex items-center gap-3 text-sm text-zinc-400">
+                <MapPin size={16} /> {USER_DATA.location}
+              </div>
+              <div className="flex items-center gap-3 text-sm text-zinc-400">
+                <Sparkles size={16} className="text-orange-300" /> Available for Hire
+              </div>
+            </div>
+          </div>
+
+          {/* Social Links Hub */}
+          <div className="bg-white rounded-[2rem] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-orange-50/50 space-y-2">
+            <h3 className="px-2 text-xs font-black uppercase tracking-widest text-zinc-300 mb-4">Connect</h3>
+            {USER_DATA.socials.map((social) => (
+              <a 
+                key={social.name}
+                href={social.href}
+                target="_blank"
+                className="flex items-center justify-between p-3 rounded-2xl hover:bg-orange-50 transition-colors group"
+              >
+                <div className="flex items-center gap-3 font-bold text-sm">
+                   {social.name === "GitHub" && <Github size={18} />}
+                   {social.name === "YouTube" && <Youtube size={18} />}
+                   {social.name === "Instagram" && <Instagram size={18} />}
+                   {social.name}
                 </div>
-              </div>
+                <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 text-orange-200 transition-opacity" />
+              </a>
+            ))}
+
+            {/* STATIC DISCORD TAG */}
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-zinc-50 text-zinc-400 cursor-default grayscale hover:grayscale-0 transition-all">
+              <MessageSquare size={18} />
+              <span className="font-bold text-sm">Discord: @yourusername</span>
             </div>
+          </div>
 
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/30 backdrop-blur-md border border-white/40 text-white text-xs font-black uppercase tracking-[0.2em] animate-shimmer">
-                <Sparkles size={14} /> Open for Freelance 2025
-              </div>
-              <h1 className="text-5xl md:text-7xl font-black text-white drop-shadow-lg tracking-tighter">
-                {USER_DATA.name}
-              </h1>
-              <p className="text-xl md:text-2xl text-white/80 font-medium max-w-2xl mx-auto leading-relaxed">
-                {USER_DATA.bio}
-              </p>
-            </div>
-          </header>
+          {/* Contact Button */}
+          <a 
+            href={`mailto:${USER_DATA.email}`}
+            className="flex items-center justify-center gap-2 w-full p-4 bg-orange-400 text-white rounded-[1.5rem] font-bold shadow-lg shadow-orange-200 hover:bg-orange-500 hover:-translate-y-1 transition-all active:scale-95"
+          >
+            <Mail size={18} /> Say Hello!
+          </a>
+        </aside>
 
-          {/* --- SOCIAL HUB (The Links) --- */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-24">
-            {USER_DATA.socials.map((social) => {
-              const isLink = social.type === "link";
-              
-              // Helper to get brand-specific icons and colors
-              const getBrandStyles = (name: string) => {
-                if (name.includes("GitHub")) return { icon: <Github />, bg: "hover:bg-zinc-900", border: "border-white/40" };
-                if (name.includes("YouTube")) return { icon: <Youtube />, bg: "hover:bg-red-600", border: "border-red-200/50" };
-                if (name.includes("Instagram")) return { icon: <Instagram />, bg: "hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-600", border: "border-pink-200/50" };
-                if (name.includes("Discord")) return { icon: <MessageSquare />, bg: "bg-white/10 opacity-60 cursor-default", border: "border-white/10" };
-                return { icon: <Globe />, bg: "hover:bg-indigo-600", border: "border-white/40" };
-              };
+        {/* --- MAIN CONTENT (Portfolio Feed) --- */}
+        <section className="lg:col-span-8 space-y-8">
+          
+          <div className="flex items-center justify-between px-4">
+            <h2 className="text-xl font-black text-zinc-800 uppercase tracking-tighter">Selected Works</h2>
+            <div className="h-1 w-12 bg-orange-200 rounded-full"></div>
+          </div>
 
-              const brand = getBrandStyles(social.name);
-
-              if (isLink) {
-                return (
-                  <a
-                    key={social.name}
-                    href={social.href}
-                    target="_blank"
-                    className={`flex items-center justify-center gap-3 p-5 rounded-2xl border ${brand.border} bg-white/10 backdrop-blur-md text-white font-bold transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${brand.bg}`}
-                  >
-                    {brand.icon}
-                    {social.name}
-                  </a>
-                );
-              } else {
-                return (
-                  <div
-                    key={social.name}
-                    className={`flex items-center justify-center gap-3 p-5 rounded-2xl border ${brand.border} ${brand.bg} text-white/70 font-bold`}
-                  >
-                    {brand.icon}
-                    {social.name}
-                  </div>
-                );
-              }
-            })}
-          </section>
-
-          {/* --- PORTFOLIO GRID --- */}
-          <section>
-            <div className="flex items-center gap-6 mb-12">
-              <h2 className="text-4xl font-black text-white">Portfolio</h2>
-              <div className="h-1 flex-1 bg-gradient-to-r from-white/40 to-transparent rounded-full"></div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {USER_DATA.projects.map((project, idx) => (
-                <div 
-                  key={project.title} 
-                  className="group relative bg-white/10 backdrop-blur-md rounded-[2rem] p-4 border border-white/20 hover:bg-white/20 transition-all duration-500 animate-float"
-                  style={{ animationDelay: `${idx * 0.2}s` }}
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-2xl mb-6 shadow-inner">
-                    <img 
-                      src={project.image} 
-                      alt={project.title}
-                      className="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-700"
-                    />
-                    <div className={`absolute inset-0 bg-gradient-to-t ${project.color} opacity-0 group-hover:opacity-40 transition-opacity duration-500`}></div>
-                  </div>
-                  
-                  <div className="space-y-3">
+          {USER_DATA.projects.map((project) => (
+            <div 
+              key={project.title}
+              className="bg-white rounded-[2.5rem] overflow-hidden shadow-[0_8px_40px_rgb(0,0,0,0.03)] border border-orange-50/30 group hover:shadow-orange-200/20 transition-all duration-500"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-5 items-stretch">
+                {/* Project Image */}
+                <div className="md:col-span-2 relative overflow-hidden h-48 md:h-auto">
+                  <img 
+                    src={project.image} 
+                    alt={project.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                </div>
+                
+                {/* Project Info */}
+                <div className="md:col-span-3 p-8 flex flex-col justify-center">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-bold text-orange-300 uppercase tracking-widest">{project.date}</span>
                     <div className="flex gap-2">
                       {project.tags.map(tag => (
-                        <span key={tag} className="text-[10px] font-black uppercase tracking-tighter bg-white/20 text-white px-2 py-1 rounded-md">
+                        <span key={tag} className="text-[10px] bg-zinc-50 text-zinc-400 px-2 py-0.5 rounded-full border border-zinc-100">
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <h3 className="text-2xl font-black text-white tracking-tight">{project.title}</h3>
-                    <p className="text-white/70 text-sm leading-relaxed mb-6">{project.description}</p>
-                    
-                    <a 
-                      href={project.link} 
-                      className="flex items-center justify-center w-full py-3 bg-white text-zinc-900 rounded-xl font-black text-sm transition-all hover:bg-yellow-300 hover:scale-95"
-                    >
-                      View Live <ExternalLink size={14} className="ml-2" />
-                    </a>
                   </div>
+                  
+                  <h3 className="text-2xl font-bold text-zinc-800 mb-2 group-hover:text-orange-400 transition-colors">
+                    {project.title}
+                  </h3>
+                  <p className="text-zinc-500 text-sm leading-relaxed mb-6">
+                    {project.description}
+                  </p>
+                  
+                  <a 
+                    href={project.link}
+                    target="_blank"
+                    className="inline-flex items-center gap-2 text-sm font-black text-zinc-900 group-hover:gap-4 transition-all"
+                  >
+                    View Project <ExternalLink size={14} className="text-orange-300" />
+                  </a>
                 </div>
-              ))}
-            </div>
-          </section>
-
-          {/* --- VIBRANT CALL TO ACTION --- */}
-          <footer className="mt-32">
-            <div className="relative group p-1 rounded-[3rem] bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-600 animate-gradient-flow">
-              <div className="bg-zinc-900 rounded-[2.9rem] p-12 text-center space-y-8">
-                <h2 className="text-4xl md:text-5xl font-black text-white">Need a creative partner?</h2>
-                <p className="text-zinc-400 text-lg max-w-lg mx-auto font-medium">
-                  I'm currently looking for new projects and interesting people to collaborate with.
-                </p>
-                <a
-                  href={`mailto:${USER_DATA.email}`}
-                  className="inline-flex items-center gap-3 px-10 py-5 bg-white text-zinc-900 rounded-full font-black text-xl transition-all hover:scale-110 hover:rotate-2 shadow-2xl hover:bg-yellow-300"
-                >
-                  <Mail /> Hire Me Now
-                </a>
               </div>
             </div>
-            
-            <p className="mt-12 text-center text-white/30 font-bold uppercase tracking-[0.3em] text-xs">
-              &copy; {new Date().getFullYear()} {USER_DATA.name} &bull; Built for 2025
-            </p>
-          </footer>
+          ))}
 
-        </div>
+          {/* Footer inside the feed area */}
+          <footer className="py-12 text-center">
+            <div className="inline-flex items-center gap-2 px-6 py-2 bg-white rounded-full text-xs font-bold text-zinc-300 border border-zinc-50">
+              Made with <Heart size={12} className="text-orange-200 fill-orange-200" /> and Vercel
+            </div>
+          </footer>
+        </section>
+
       </div>
     </main>
   );
