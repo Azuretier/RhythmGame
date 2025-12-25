@@ -193,14 +193,14 @@ const Main = () => {
             </section>
           </div>
         </motion.a>
-        <motion.a href="https://youtube.com/@Azuret" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 row-start-5 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4">
+        <motion.a href="https://youtube.com/@azuchan_a" target="_blank" rel="noopener noreferrer" className="fade-up grid backdrop-blur-xl bg-[var(--widget-bg)] gap-3 p-6 row-start-5 col-start-6 border border-[var(--widget-border)] shadow-md transition-colors hover:border-[rgb(255,0,0)] rounded-lg row-span-3 col-span-4">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl text-[rgb(255,0,0)] bg-white drop-shadow-md">
             <FaYoutube size={48} />
           </div>
           <div className="grid">
             <p>YouTube</p>
             <section className='flex items-center gap-1'>
-              <p className="text-sm text-gray-500">@Azuret</p>
+              <p className="text-sm text-gray-500">@azuchan_a</p>
             </section>
           </div>
         </motion.a>
