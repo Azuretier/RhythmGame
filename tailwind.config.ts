@@ -13,7 +13,8 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         border: "var(--border)",
-        subtext: "var(--subtext)"
+        subtext: "var(--subtext)",
+        instagram: "var(--instagram-gradient)"
       }
     },
     fontFamily: {
