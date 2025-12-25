@@ -18,7 +18,7 @@ const config: Config = {
       backgroundImage: {
         // This maps 'bg-instagram' to your CSS variable
         'instagram-gradient': "var(--instagram-gradient)",
-      },
+      }
     },
     fontFamily: {
       pixel: ["var(--font-pixel)"], 
