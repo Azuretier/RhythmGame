@@ -181,7 +181,7 @@ const Main = () => {
 
 const SnsWidget = ({ href, icon: Icon, label, username, gradient, isStatic }: any) => {
   const content = (
-    <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] opacity-90 backdrop-blur-md p-6 h-full flex flex-col justify-center gap-3`}>
+    <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-center gap-3`}>
         <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg ${gradient}`}>
           <Icon size={32} />
         </div>
@@ -193,7 +193,7 @@ const SnsWidget = ({ href, icon: Icon, label, username, gradient, isStatic }: an
   );
 
   return (
-    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} ${gradient} opacity-20 hover:opacity-100 transition-all cursor-pointer`}>
+    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} ${gradient} opacity-90 bg-opacity-20 hover:opacity-100 transition-all cursor-pointer`}>
       {isStatic ? content : <a href={href} target="_blank" rel="noopener noreferrer" className="block h-full">{content}</a>}
     </div>
   );
