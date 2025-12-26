@@ -49,7 +49,7 @@ export const SNS_LINKS: SnsData[] = [
     username: "@rrrrrrrrrrvq", 
     href: "https://instagram.com/rrrrrrrrrrvq", 
     icon: FaInstagram, 
-    gradient: "from-purple-500 to-pink-500" 
+    gradient: "bg-gradient-to-br from-purple-500 to-pink-500" 
   },
   { 
     id: "github",
@@ -57,7 +57,7 @@ export const SNS_LINKS: SnsData[] = [
     username: "Azuretier", 
     href: "https://github.com/Azuretier", 
     icon: FaGithub, 
-    gradient: "from-gray-700 to-black" 
+    gradient: "bg-gradient-to-br from-gray-700 to-black" 
   },
   { 
     id: "discord",
@@ -65,7 +65,7 @@ export const SNS_LINKS: SnsData[] = [
     username: "@daichi_a", 
     href: "#", 
     icon: FaDiscord, 
-    gradient: "from-indigo-500 to-blue-600",
+    gradient: "bg-gradient-to-br from-indigo-500 to-blue-600",
     isStatic: true 
   },
   { 
@@ -74,7 +74,7 @@ export const SNS_LINKS: SnsData[] = [
     username: "@azuchan_a", 
     href: "https://youtube.com/@azuchan_a", 
     icon: FaYoutube, 
-    gradient: "from-red-600 to-red-400" 
+    gradient: "bg-gradient-to-br from-red-600 to-red-400" 
   },
 ];
 
