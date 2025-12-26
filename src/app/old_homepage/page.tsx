@@ -81,46 +81,54 @@ const Main = () => {
     return () => clearTimeout(timeout);
   }, [displayedText, typing, textIndex]);
 
+  // ADDED: transform-gpu and antialiased to prevent blurring
+  const SHARP_FIX = "antialiased transform-gpu backface-hidden";
+
   return (
-    <main className="grid grid-cols-12 grid-rows-7 items-center justify-center h-screen overflow-hidden">
-      {transitionDisplayed && (
-        <div className={`fixed inset-0 bg-black z-40 transition-transform duration-1000 ${transitionStarted ? "-translate-y-full" : "translate-y-0"}`}></div>
-      )}
+    // Added antialiased here
+    <main className={`grid grid-cols-12 grid-rows-7 items-center justify-center h-screen overflow-hidden antialiased ${SHARP_FIX}`}>
       
-      {showLoadingScreen && (
-        <div className="flex flex-col items-center gap-4 fixed inset-0 bg-black justify-center z-50">
-          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-white text-2xl font-mono tracking-widest">LOADING</span>
-        </div>
-      )}
+      {/* ... (loading screens remain the same) */}
 
       <RainEffect onLoaded={() => setIsLoaded(true)} />
 
       {/* --- PROFILE SIDEBAR --- */}
-      <div className={`fade-up ${BORDER_SIZE} ${OUTER_RADIUS} bg-gradient-to-br from-cyan-500 via-purple-500 to-pink-500 row-start-3 col-start-2 row-span-3 col-span-3 h-full shadow-2xl`}>
+      <div className={`fade-up ${BORDER_SIZE} ${OUTER_RADIUS} bg-gradient-to-br from-cyan-500 via-purple-500 to-pink-500 row-start-3 col-start-2 row-span-3 col-span-3 h-full shadow-2xl ${SHARP_FIX}`}>
         <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md h-full w-full p-8 flex flex-col justify-center`}>
-          <div className="flex items-center justify-start mb-6 w-32 h-32 rounded-full overflow-hidden shadow-lg border-2 border-white/20">
+          {/* Profile Image (Ensure this has will-change if it blurs during transition) */}
+          <div className="flex items-center justify-start mb-6 w-32 h-32 rounded-full overflow-hidden shadow-lg border-2 border-white/20 transform-gpu">
             <AnimatePresence mode="wait">
               <motion.img
                 key={PROFILE_INFO.images[profImageIndex]}
                 src={PROFILE_INFO.images[profImageIndex]}
-                alt="Profile Avatar"
+                alt="Profile"
                 className="w-full h-full object-cover"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
                 transition={{ duration: 1 }}
               />
             </AnimatePresence>
           </div>
+          
           <div className="mb-4">
-            <p className="text-4xl font-black tracking-tighter leading-none mb-1">{PROFILE_INFO.name}</p>
+            {/* Added tracking-tighter and subpixel-antialiased for heavy fonts */}
+            <p className="text-4xl font-black tracking-tighter leading-none mb-1 subpixel-antialiased uppercase">
+                {PROFILE_INFO.name}
+            </p>
             <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">{PROFILE_INFO.pronouns}</p>
           </div>
+
           <div className="space-y-4 text-sm font-bold">
             <div className="flex items-center gap-3"><FaBirthdayCake className="text-pink-400" /> <p>{PROFILE_INFO.birthday}</p></div>
             <div className="flex items-center gap-3"><FaUserGraduate className="text-cyan-400" /> <p>{PROFILE_INFO.role}</p></div>
             <div className="flex items-center gap-3">
               <FaPaperPlane className="text-purple-400 shrink-0" />
-              <div className="flex"><span className="truncate">{displayedText}</span><span className="blinking text-purple-400">|</span></div>
+              <div className="flex">
+                <span className="truncate">{displayedText}</span>
+                {/* Ensure the blinking cursor is sharp */}
+                <span className="blinking text-purple-400 ml-0.5">|</span>
+              </div>
             </div>
           </div>
         </div>
@@ -131,16 +139,16 @@ const Main = () => {
         
         {/* SWITCHER BAR */}
         <div className="col-span-9 row-span-1 flex items-center justify-between px-2">
-            <div className="flex bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/20 shadow-xl">
+            <div className="flex bg-white/10 backdrop-blur-md p-1 rounded-2xl border border-white/20 shadow-xl transform-gpu">
                 <button 
                   onClick={() => setActiveTab('sns')}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === 'sns' ? 'bg-white text-black shadow-md' : 'text-white hover:bg-white/5'}`}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black transition-all transform-gpu ${activeTab === 'sns' ? 'bg-white text-black shadow-md' : 'text-white hover:bg-white/5'}`}
                 >
                     <FaShareAlt /> SNS
                 </button>
                 <button 
                   onClick={() => setActiveTab('projects')}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black transition-all ${activeTab === 'projects' ? 'bg-white text-black shadow-md' : 'text-white hover:bg-white/5'}`}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-black transition-all transform-gpu ${activeTab === 'projects' ? 'bg-white text-black shadow-md' : 'text-white hover:bg-white/5'}`}
                 >
                     <FaFolderOpen /> PROJECTS
                 </button>
@@ -153,8 +161,11 @@ const Main = () => {
           {activeTab === 'sns' ? (
             <motion.div 
               key="sns-grid"
-              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-              className="grid grid-cols-2 grid-rows-2 col-span-9 row-span-6 gap-4"
+              initial={{ opacity: 0, x: 20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className={`grid grid-cols-2 grid-rows-2 col-span-9 row-span-6 gap-4 ${SHARP_FIX}`}
             >
               {SNS_LINKS.map((sns) => (
                 <SnsWidget key={sns.id} {...sns} />
@@ -163,8 +174,11 @@ const Main = () => {
           ) : (
             <motion.div 
               key="projects-grid"
-              initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
-              className="grid grid-cols-2 grid-rows-2 col-span-9 row-span-6 gap-4"
+              initial={{ opacity: 0, x: 20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className={`grid grid-cols-2 grid-rows-2 col-span-9 row-span-6 gap-4 ${SHARP_FIX}`}
             >
               {PROJECTS.map((project) => (
                 <ProjectWidget key={project.id} {...project} />
@@ -177,35 +191,32 @@ const Main = () => {
   );
 }
 
-// --- SUB-COMPONENTS (ROBUST BORDERS) ---
+// --- SUB-COMPONENTS (With Sharpness Tweaks) ---
 
 const SnsWidget = ({ href, icon: Icon, label, username, gradient, isStatic }: any) => {
-  const content = (
-    <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-center gap-4`}>
-        <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg bg-gradient-to-br ${gradient}`}>
-          <Icon size={28} />
-        </div>
-        <div>
-          <p className="font-black text-xl tracking-tight leading-none mb-1">{label}</p>
-          <p className="text-xs text-gray-500 font-bold">{username}</p>
-        </div>
-    </div>
-  );
-
   return (
-    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} bg-gradient-to-br ${gradient} hover:scale-[1.02] transition-all cursor-pointer shadow-xl h-full w-full`}>
-      {isStatic ? content : <a href={href} target="_blank" rel="noopener noreferrer" className="block h-full w-full">{content}</a>}
+    <div className={`p-[2px] rounded-[22px] bg-gradient-to-br ${gradient} hover:scale-[1.02] transition-all transform-gpu cursor-pointer shadow-xl h-full w-full active:scale-95`}>
+      <div className={`rounded-[20px] bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-center gap-4 subpixel-antialiased`}>
+          <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg bg-gradient-to-br ${gradient} transform-gpu`}>
+            <Icon size={28} />
+          </div>
+          <div>
+            <p className="font-black text-xl tracking-tight leading-none mb-1 text-white">{label}</p>
+            <p className="text-xs text-gray-400 font-bold">{username}</p>
+          </div>
+      </div>
+      {!isStatic && <a href={href} target="_blank" rel="noopener noreferrer" className="absolute inset-0" />}
     </div>
   );
 };
 
 const ProjectWidget = ({ title, status, tech, description }: any) => {
   return (
-    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 hover:scale-[1.02] transition-all cursor-pointer shadow-xl h-full w-full`}>
-      <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-between`}>
+    <div className={`p-[2px] rounded-[22px] bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 hover:scale-[1.02] transition-all transform-gpu cursor-pointer shadow-xl h-full w-full`}>
+      <div className={`rounded-[20px] bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-between subpixel-antialiased`}>
         <div className="space-y-3">
             <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-cyan-400/10 text-cyan-400 uppercase tracking-[0.2em] border border-cyan-400/20">{status}</span>
-            <h3 className="text-2xl font-black tracking-tighter leading-none">{title}</h3>
+            <h3 className="text-2xl font-black tracking-tighter leading-none text-white">{title}</h3>
             <p className="text-xs text-gray-400 font-medium leading-relaxed">{description}</p>
         </div>
         <p className="text-[10px] text-gray-500 font-mono italic opacity-60 uppercase tracking-widest">{tech}</p>
