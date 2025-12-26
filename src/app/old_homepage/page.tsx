@@ -181,7 +181,7 @@ const Main = () => {
 
 const SnsWidget = ({ href, icon: Icon, label, username, gradient, isStatic }: any) => {
   const content = (
-    <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-center gap-3`}>
+    <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] opacity-90 backdrop-blur-md p-6 h-full flex flex-col justify-center gap-3`}>
         <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-white shadow-lg ${gradient}`}>
           <Icon size={32} />
         </div>
