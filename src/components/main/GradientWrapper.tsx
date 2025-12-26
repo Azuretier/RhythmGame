@@ -20,9 +20,9 @@ export default function GradientMotionLink({
   return (
     <motion.a
       {...props}
-      className={`group absolute backdrop-blur-xl inset-0 hover:bg-gradient-to-r ${gradient} ${rounded} transition-colors duration-300 ${className}`}
+      className={`hover:bg-gradient-to-r ${gradient} ${className}`}
     >
-      <div className={`relative backdrop-blur-xl bg-white dark:bg-slate-900 h-full w-full ${rounded}`}>
+      <div className={`relative backdrop-blur-xl ${className} p-1`}>
         {children}
       </div>
     </motion.a>
