@@ -75,6 +75,7 @@
   .dark {
     --background: #000000;
     --foreground: #ffffff;
+    --border: #27272a;
 
     /* macOS widget style (dark theme) */
     --widget-bg: rgba(0, 0, 0, 0.6);
@@ -109,16 +110,5 @@
     0% { opacity: 1; }
     50% { opacity: 0; }
     100% { opacity: 1; }
-  }
-  
-  @keyframes splashAnim {
-    0% { transform: scale(1) rotate(-20deg); }
-    50% { transform: scale(1.05) rotate(-20deg); }
-    100% { transform: scale(1) rotate(-20deg); }
-  }
-
-  @keyframes panoramaPan {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 100% 50%; }
   }
 }
