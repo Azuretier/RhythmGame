@@ -65,7 +65,7 @@ export const SNS_LINKS: SnsData[] = [
     username: "@daichi_a", 
     href: "#", 
     icon: FaDiscord, 
-    gradient: "bg-gradient-to-br from-indigo-500 to-blue-600",
+    gradient: "bg-gradient-to-br from-indigo-500/50 to-blue-600/50",
     isStatic: true 
   },
   { 
@@ -74,7 +74,7 @@ export const SNS_LINKS: SnsData[] = [
     username: "@azuchan_a", 
     href: "https://youtube.com/@azuchan_a", 
     icon: FaYoutube, 
-    gradient: "bg-gradient-to-br from-red-600 to-red-400" 
+    gradient: "bg-gradient-to-br from-red-600/20 to-red-400/20" 
   },
 ];
 
