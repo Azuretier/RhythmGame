@@ -193,7 +193,7 @@ const SnsWidget = ({ href, icon: Icon, label, username, gradient, isStatic }: an
   );
 
   return (
-    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} ${gradient} opacity-90 hover:opacity-100 transition-all hover:scale-[1.02] cursor-pointer`}>
+    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} ${gradient} opacity-90 hover:opacity-100 transition-all cursor-pointer`}>
       {isStatic ? content : <a href={href} target="_blank" rel="noopener noreferrer" className="block h-full">{content}</a>}
     </div>
   );
@@ -201,7 +201,7 @@ const SnsWidget = ({ href, icon: Icon, label, username, gradient, isStatic }: an
 
 const ProjectWidget = ({ title, status, tech, description }: any) => {
   return (
-    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 hover:scale-[1.02] transition-all cursor-pointer shadow-xl h-full w-full`}>
+    <div className={`${BORDER_SIZE} ${OUTER_RADIUS} bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 transition-all cursor-pointer shadow-xl h-full w-full`}>
       <div className={`${INNER_RADIUS} bg-[var(--widget-bg)] backdrop-blur-md p-6 h-full flex flex-col justify-between`}>
         <div className="space-y-3">
             <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-cyan-400/10 text-cyan-400 uppercase tracking-[0.2em] border border-cyan-400/20">{status}</span>
