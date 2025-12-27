@@ -15,17 +15,21 @@ const config: Config = {
         foreground: "var(--foreground)",
         border: "var(--border)",
         subtext: "var(--subtext)",
+        "instagram-icon": "var(--instagram-icon)",
         "youtube-bg": "var(--youtube-bg)",
+        "youtube-icon-bg": "var(--youtube-icon-bg)",
         "youtube-icon": "var(--youtube-icon)",
         "discord-bg": "var(--discord-bg)",
+        "discord-icon-bg": "var(--discord-icon-bg)",
         "discord-icon": "var(--discord-icon)",
         "github-bg": "var(--github-bg)",
+        "github-icon-bg": "var(--github-icon-bg)",
         "github-icon": "var(--github-icon)",
       },
       backgroundImage: {
         // This maps 'bg-instagram' to your CSS variable
         'instagram-bg': "var(--instagram-bg-gradient)",
-        'instagram-icon': "var(--instagram-icon-gradient)",
+        'instagram-icon-bg': "var(--instagram-icon-bg-gradient)",
       }
     },
     fontFamily: {

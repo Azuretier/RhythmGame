@@ -181,28 +181,33 @@ const Main = () => {
 
 const SnsWidget = ({ href, icon: Icon, label, username, isStatic }: any) => {
 
-  const brandStyles: Record<string, { icon: string; bg: string }> = {
+  const brandStyles: Record<string, { iconBg: string; icon: string; bg: string }> = {
     youtube: { 
-      icon: "bg-youtube-icon", 
+      iconBg: "bg-youtube-icon-bg", 
+      icon: "text-youtube-icon",
       bg: "bg-youtube-bg" 
     },
     github: { 
-      icon: "bg-github-icon", 
+      iconBg: "bg-github-icon-bg", 
+      icon: "text-github-icon",
       bg: "bg-github-bg" 
     },
     instagram: { 
-      icon: "bg-instagram-icon", 
+      iconBg: "bg-instagram-icon-bg", 
+      icon: "text-instagram-icon", 
       bg: "bg-instagram-bg" 
     },
     discord: { 
-      icon: "bg-discord-icon", 
+      iconBg: "bg-discord-icon-bg", 
+      icon: "text-discord-icon",
       bg: "bg-discord-bg" 
     },
   };
 
   // 2. Fallback logic
   const activeBrand = brandStyles[label.toLowerCase()] || { 
-    icon: "bg-gray-500", 
+    iconBg: "bg-gray-500", 
+    icon: "text-gray-500",
     bg: "bg-gray-200" 
   };
 
