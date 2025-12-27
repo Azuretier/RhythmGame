@@ -66,14 +66,19 @@
     /* macOS widget style (light theme) */
     --widget-bg: rgba(255, 255, 255, 0.7);
     --widget-border: rgba(255, 255, 255, 0.3);
+
     --instagram-bg-gradient: linear-gradient(135deg, rgba(244, 63, 94, 0.8) 0%, rgba(219, 39, 119, 0.8) 100%);
-    --instagram-icon-gradient: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    --instagram-icon-bg-gradient: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+    --instagram-icon: rgba(255, 255, 255, 1);
     --youtube-bg: rgba(255, 0, 0, 1);
+    --youtube-icon-bg: rgba(255, 255, 255, 1);
     --youtube-icon: rgba(255, 0, 0, 1);
     --discord-bg: rgba(88, 101, 242, 1);
-    --discord-icon: rgba(88, 101, 242, 1);
+    --discord-icon-bg: rgba(88, 101, 242, 1);
+    --discord-icon: rgba(255, 255, 255, 1);
     --github-bg: rgba(24, 23, 23, 1);
-    --github-icon: rgba(24, 23, 23, 1);
+    --github-icon-bg: rgba(24, 23, 23, 1);
+    --github-icon: rgba(255, 255, 255, 1);
     --font-pixel: 'VT323', monospace;
     --font-logo: 'Russo One', sans-serif; /* Thicker font for the logo base */
   }
