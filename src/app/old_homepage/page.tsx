@@ -197,7 +197,7 @@ const SnsWidget = ({ href, icon: Icon, label, username, isStatic }: any) => {
     instagram: { 
       iconBg: "bg-instagram-icon-bg", 
       icon: "text-[var(--instagram-icon)]", 
-      widgetMain: "bg-instagram-bg",
+      widgetMain: "bg-instagram-widget-main",
       widgetInner: "bg-[var(--instagram-widget-inner)]"
     },
     discord: { 
