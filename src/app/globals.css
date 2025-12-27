@@ -125,6 +125,15 @@
 }
 
 @layer utilities {
+    .osu-slant {
+    /* Creates the classic osu! parallelogram shape */
+    clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);
+  }
+
+  .osu-glow-pink {
+    box-shadow: 0 0 15px 2px rgba(255, 102, 170, 0.6);
+  }
+
   .text-balance {
     text-wrap: balance;
   }
@@ -138,5 +147,21 @@
     0% { opacity: 1; }
     50% { opacity: 0; }
     100% { opacity: 1; }
+  }
+
+  /* Entry animation for the sliding stack */
+  @keyframes osuSlideIn {
+    from { 
+      opacity: 0; 
+      transform: translateX(100px) skewX(-10deg); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateX(0) skewX(0); 
+    }
+  }
+
+  .animate-osu-item {
+    animation: osuSlideIn 0.5s ease-out forwards;
   }
 }
