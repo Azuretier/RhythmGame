@@ -68,12 +68,12 @@
     --widget-border: rgba(255, 255, 255, 0.3);
     --instagram-bg-gradient: linear-gradient(135deg, rgba(244, 63, 94, 0.8) 0%, rgba(219, 39, 119, 0.8) 100%);
     --instagram-icon-gradient: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
-    --youtube-bg-gradient: #FF0000;
-    --youtube-icon-gradient: #FF0000;
-    --discord-bg-gradient: #5865F2;
-    --discord-icon-gradient: #5865F2;
-    --github-bg-gradient: #181717;
-    --github-icon-gradient: #181717;
+    --youtube-bg-gradient: rgba(255, 0, 0, 1);
+    --youtube-icon-gradient: rgba(255, 0, 0, 1);
+    --discord-bg-gradient: rgba(88, 101, 242, 1);
+    --discord-icon-gradient: rgba(88, 101, 242, 1);
+    --github-bg-gradient: rgba(24, 23, 23, 1);
+    --github-icon-gradient: rgba(24, 23, 23, 1);
     --font-pixel: 'VT323', monospace;
     --font-logo: 'Russo One', sans-serif; /* Thicker font for the logo base */
   }
