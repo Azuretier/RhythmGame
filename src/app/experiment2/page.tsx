@@ -43,7 +43,7 @@ const VISITOR_DATA = {
 
 const NEWS_HEADLINES = [
   "Breaking: New web framework announced at conference today",
-  "Portfolio redesign receives 10K+ visits in first week",
+  "My meta: 顔面最可愛い幸せ𝓪𝓷𝓰𝓮𝓵...",
   "Latest project reaches 100% completion milestone",
 ];
 
