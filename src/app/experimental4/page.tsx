@@ -564,7 +564,7 @@ const Main = () => {
 
   useEffect(() => {
     if (!isLoaded) return;
-    loadSettings().finally(() => setSettingsLoading(false));
+    loadSettings();
   }, [isLoaded]);
 
   useEffect(() => {
