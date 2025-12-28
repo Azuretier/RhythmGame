@@ -385,6 +385,18 @@ const Main = () => {
               <TerminalWindow />
             </WindowFrame>
           )}
+
+          {openWindows.includes('settings') && (
+          <WindowFrame
+            title="Settings"
+            id="settings"
+            onClose={() => closeWindow('settings')}
+            isActive={activeWindow === 'settings'}
+            onFocus={() => setActiveWindow('settings')}
+          >
+            <SettingsWindow />
+          </WindowFrame>
+          )}
         </AnimatePresence>
 
         {/* Taskbar */}
@@ -673,6 +685,228 @@ const TerminalWindow = () => {
         </motion.div>
       ))}
       <span className="text-green-400 animate-pulse">█</span>
+    </div>
+  );
+};
+
+const SettingsWindow = () => {
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [notifications, setNotifications] = useState(true);
+  const [autoSave, setAutoSave] = useState(true);
+  const [language, setLanguage] = useState('en');
+  const [theme, setTheme] = useState('purple');
+  const [rainIntensity, setRainIntensity] = useState(150);
+  const [newsSpeed, setNewsSpeed] = useState(5);
+
+  const themes = [
+    { id: 'purple', name: 'Purple Dream', gradient: 'from-purple-500 to-pink-500' },
+    { id: 'blue', name: 'Ocean Blue', gradient: 'from-blue-500 to-cyan-500' },
+    { id: 'green', name: 'Forest Green', gradient: 'from-green-500 to-emerald-500' },
+    { id: 'orange', name: 'Sunset Orange', gradient: 'from-orange-500 to-red-500' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Appearance Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-black text-white flex items-center gap-2">
+          <Sun className="text-yellow-400" size={24} />
+          Appearance
+        </h3>
+        
+        {/* Dark Mode Toggle */}
+        <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 flex items-center justify-between">
+          <div>
+            <p className="text-white font-medium">Dark Mode</p>
+            <p className="text-gray-400 text-sm">Use dark theme across the interface</p>
+          </div>
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`relative w-14 h-8 rounded-full transition-colors ${
+              isDarkMode ? 'bg-purple-500' : 'bg-gray-600'
+            }`}
+          >
+            <motion.div
+              className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full"
+              animate={{ x: isDarkMode ? 24 : 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          </button>
+        </div>
+
+        {/* Theme Selection */}
+        <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10">
+          <p className="text-white font-medium mb-3">Color Theme</p>
+          <div className="grid grid-cols-2 gap-3">
+            {themes.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTheme(t.id)}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  theme === t.id
+                    ? 'border-white bg-white/10'
+                    : 'border-white/10 hover:border-white/30'
+                }`}
+              >
+                <div className={`w-full h-8 rounded bg-gradient-to-r ${t.gradient} mb-2`}></div>
+                <p className="text-white text-sm font-medium">{t.name}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-black text-white flex items-center gap-2">
+          <MessageCircle className="text-blue-400" size={24} />
+          Notifications
+        </h3>
+        
+        <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 flex items-center justify-between">
+          <div>
+            <p className="text-white font-medium">Enable Notifications</p>
+            <p className="text-gray-400 text-sm">Receive updates and alerts</p>
+          </div>
+          <button
+            onClick={() => setNotifications(!notifications)}
+            className={`relative w-14 h-8 rounded-full transition-colors ${
+              notifications ? 'bg-purple-500' : 'bg-gray-600'
+            }`}
+          >
+            <motion.div
+              className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full"
+              animate={{ x: notifications ? 24 : 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Effects Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-black text-white flex items-center gap-2">
+          <Sparkles className="text-purple-400" size={24} />
+          Visual Effects
+        </h3>
+
+        {/* Rain Intensity Slider */}
+        <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-white font-medium">Rain Effect Intensity</p>
+            <span className="text-purple-400 font-bold">{rainIntensity}</span>
+          </div>
+          <input
+            type="range"
+            min="50"
+            max="300"
+            value={rainIntensity}
+            onChange={(e) => setRainIntensity(Number(e.target.value))}
+            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${((rainIntensity - 50) / 250) * 100}%, rgba(255,255,255,0.1) ${((rainIntensity - 50) / 250) * 100}%, rgba(255,255,255,0.1) 100%)`
+            }}
+          />
+        </div>
+
+        {/* News Speed Slider */}
+        <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-white font-medium">News Rotation Speed (seconds)</p>
+            <span className="text-purple-400 font-bold">{newsSpeed}s</span>
+          </div>
+          <input
+            type="range"
+            min="3"
+            max="10"
+            value={newsSpeed}
+            onChange={(e) => setNewsSpeed(Number(e.target.value))}
+            className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, rgb(168, 85, 247) 0%, rgb(168, 85, 247) ${((newsSpeed - 3) / 7) * 100}%, rgba(255,255,255,0.1) ${((newsSpeed - 3) / 7) * 100}%, rgba(255,255,255,0.1) 100%)`
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Language & Region */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-black text-white flex items-center gap-2">
+          <Globe className="text-green-400" size={24} />
+          Language & Region
+        </h3>
+        
+        <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10">
+          <p className="text-white font-medium mb-3">Language</p>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="w-full bg-slate-800 text-white p-3 rounded-lg border border-white/10 focus:border-purple-500 focus:outline-none"
+          >
+            <option value="en">English</option>
+            <option value="ja">日本語 (Japanese)</option>
+            <option value="es">Español (Spanish)</option>
+            <option value="fr">Français (French)</option>
+            <option value="de">Deutsch (German)</option>
+            <option value="zh">中文 (Chinese)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* System Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-black text-white flex items-center gap-2">
+          <Settings className="text-red-400" size={24} />
+          System
+        </h3>
+        
+        <div className="bg-slate-900/50 p-4 rounded-lg border border-white/10 flex items-center justify-between">
+          <div>
+            <p className="text-white font-medium">Auto-save Settings</p>
+            <p className="text-gray-400 text-sm">Automatically save changes</p>
+          </div>
+          <button
+            onClick={() => setAutoSave(!autoSave)}
+            className={`relative w-14 h-8 rounded-full transition-colors ${
+              autoSave ? 'bg-purple-500' : 'bg-gray-600'
+            }`}
+          >
+            <motion.div
+              className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full"
+              animate={{ x: autoSave ? 24 : 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          </button>
+        </div>
+
+        {/* Reset Button */}
+        <button className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold py-3 px-4 rounded-lg border border-red-500/50 transition-all flex items-center justify-center gap-2">
+          <X size={20} />
+          Reset to Default Settings
+        </button>
+
+        {/* Save Button */}
+        <button className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg">
+          Save Changes
+        </button>
+      </div>
+
+      {/* About Section */}
+      <div className="bg-slate-900/50 p-6 rounded-lg border border-white/10">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center">
+            <Sparkles className="text-white" size={32} />
+          </div>
+          <div>
+            <h4 className="text-white font-black text-lg">Portfolio v2.0</h4>
+            <p className="text-gray-400 text-sm">Built with React & Tailwind CSS</p>
+          </div>
+        </div>
+        <div className="text-gray-400 text-xs space-y-1">
+          <p>© 2024 Your Name. All rights reserved.</p>
+          <p>Last updated: December 2024</p>
+        </div>
+      </div>
     </div>
   );
 };
