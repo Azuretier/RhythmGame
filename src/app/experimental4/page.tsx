@@ -532,13 +532,15 @@ const Main = () => {
   }, []);
 
   const loadSettings = useCallback(async () => {
+    console.log("Loaded settings:1");
     if (!user) return;
+    console.log("Loaded settings:2");
     const { doc, getDoc } = await import('firebase/firestore');
     const { db } = await import('@/lib/portfolio/firebase');
     const docSnap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/user_settings/${user.uid}`));
     if (docSnap.exists()) {
       const data = docSnap.data();
-      console.log("Loaded settings:", data);
+      console.log("Loaded settings3:", data);
       setTheme(data.theme || 'purple');
       setRainIntensity(data.rainIntensity || 150);
       setNewsSpeed(data.newsSpeed || 5);
