@@ -538,6 +538,7 @@ const Main = () => {
     const docSnap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/user_settings/${user.uid}`));
     if (docSnap.exists()) {
       const data = docSnap.data();
+      console.log("Loaded settings:", data);
       setTheme(data.theme || 'purple');
       setRainIntensity(data.rainIntensity || 150);
       setNewsSpeed(data.newsSpeed || 5);
