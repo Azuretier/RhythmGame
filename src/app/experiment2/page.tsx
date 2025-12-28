@@ -209,7 +209,7 @@ const Main = () => {
         <RainEffect onLoaded={() => setIsLoaded(true)} />
 
         {/* Clock and News Overlay */}
-        <div className="absolute align-middle left-16 z-10 space-y-4">
+        <div className="absolute inset-y-24 left-16 z-10 space-y-4">
           {/* Large Clock */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
