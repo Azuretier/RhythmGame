@@ -25,7 +25,7 @@ export default function RainEffect({ onLoaded }: RainEffectProps) {
 
     const textureLoader = new THREE.TextureLoader();
     const tex0 = textureLoader.load(
-      "/media/image.jpg", // your background image path
+      "/media/panorama.png", // your background image path
       (tex) => {
         uniforms.u_tex0.value = tex;
         uniforms.u_tex0_resolution.value.set(tex.image.width, tex.image.height);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Cake, GraduationCap, Send, Folder, Share2, ChevronRight, Star, Github, Youtube, Instagram, MessageCircle, Sun, Moon, MapPin, Mail, Globe, Sparkles, TrendingUp, Clock, ExternalLink, User, BarChart3, Terminal, Settings, X, Minimize2, Maximize2, FolderOpen, Image as ImageIcon, Music, Film } from "lucide-react"
+import RainEffect from '@/components/main/realistic-rain';
 
 // --- MOCK DATA ---
 const PROFILE_INFO = {
@@ -48,6 +49,7 @@ const NEWS_HEADLINES = [
 
 const Main = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [time, setTime] = useState(new Date());
   const [openWindows, setOpenWindows] = useState<string[]>([]);
@@ -116,10 +118,12 @@ const Main = () => {
   };
 
   const desktopIcons = [
-    { id: 'profile', icon: User, label: 'Profile', color: 'from-blue-500 to-blue-600' },
-    { id: 'social', icon: Share2, label: 'Social', color: 'from-purple-500 to-purple-600' },
-    { id: 'projects', icon: FolderOpen, label: 'Projects', color: 'from-green-500 to-green-600' },
-    { id: 'analytics', icon: BarChart3, label: 'Analytics', color: 'from-orange-500 to-orange-600' },
+    { id: 'profile', icon: User, label: 'Profile', color: 'bg-blue-500' },
+    { id: 'social', icon: Share2, label: 'Social', color: 'bg-purple-500' },
+    { id: 'projects', icon: FolderOpen, label: 'Projects', color: 'bg-green-500' },
+    { id: 'analytics', icon: BarChart3, label: 'Analytics', color: 'bg-orange-500' },
+    { id: 'terminal', icon: Terminal, label: 'Terminal', color: 'bg-gray-700' },
+    { id: 'settings', icon: Settings, label: 'Settings', color: 'bg-red-500' },
   ];
 
   return (
@@ -199,10 +203,10 @@ const Main = () => {
       <motion.main
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoading ? 0 : 1 }}
-        className="relative w-full h-screen overflow-hidden bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900"
+        className="relative w-full h-screen overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950"
       >
         {/* Rain Effect Canvas */}
-        <RainCanvas />
+        <RainEffect onLoaded={() => setIsLoaded(true)} />
 
         {/* Clock and News Overlay */}
         <div className="absolute top-8 left-8 z-10 space-y-4">
@@ -255,22 +259,19 @@ const Main = () => {
         </div>
 
         {/* Desktop Icons */}
-        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex gap-6 z-10">
-          {desktopIcons.map((icon, index) => (
+        <div className="absolute top-6 left-6 grid grid-cols-1 gap-6">
+          {desktopIcons.map((icon) => (
             <motion.button
               key={icon.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 + index * 0.1 }}
-              whileHover={{ scale: 1.1, y: -5 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => openWindow(icon.id)}
-              className="group flex flex-col items-center gap-3"
+              className="group flex flex-col items-center gap-2"
             >
-              <div className={`bg-gradient-to-br ${icon.color} p-5 rounded-2xl shadow-2xl border-2 border-white/20 group-hover:border-white/40 transition-all backdrop-blur-sm`}>
-                <icon.icon className="text-white" size={36} />
+              <div className={`${icon.color} p-4 rounded-lg shadow-lg border-2 border-white/20 group-hover:border-white/40 transition-all`}>
+                <icon.icon className="text-white" size={32} />
               </div>
-              <span className="text-white text-sm font-bold bg-black/50 px-4 py-2 rounded-lg backdrop-blur-sm">
+              <span className="text-white text-sm font-bold bg-black/50 px-3 py-1 rounded backdrop-blur-sm">
                 {icon.label}
               </span>
             </motion.button>
@@ -372,84 +373,78 @@ const Main = () => {
               <AnalyticsWindow />
             </WindowFrame>
           )}
+
+          {openWindows.includes('terminal') && (
+            <WindowFrame
+              title="Terminal"
+              id="terminal"
+              onClose={() => closeWindow('terminal')}
+              isActive={activeWindow === 'terminal'}
+              onFocus={() => setActiveWindow('terminal')}
+            >
+              <TerminalWindow />
+            </WindowFrame>
+          )}
         </AnimatePresence>
+
+        {/* Taskbar */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-slate-900/95 backdrop-blur-md border-t border-white/10 flex items-center px-4 gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="p-3 bg-blue-600 rounded-lg shadow-lg"
+          >
+            <Sparkles className="text-white" size={24} />
+          </motion.button>
+
+          <div className="flex-1 flex gap-2">
+            {openWindows.map((windowId) => {
+              const icon = desktopIcons.find(i => i.id === windowId);
+              return (
+                <button
+                  key={windowId}
+                  onClick={() => setActiveWindow(windowId)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    activeWindow === windowId
+                      ? 'bg-white/20 border-2 border-white/30'
+                      : 'bg-white/5 border-2 border-transparent hover:bg-white/10'
+                  }`}
+                >
+                  {icon && <icon.icon className="text-white" size={18} />}
+                  <span className="text-white text-sm font-medium">{icon?.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-white text-sm font-mono">
+              {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            <div className="text-white/60 text-xs">
+              {time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </div>
+          </div>
+        </div>
       </motion.main>
     </>
   );
 };
 
-// Rain Canvas Component
-const RainCanvas = () => {
-  useEffect(() => {
-    const canvas = document.getElementById('rainCanvas') as HTMLCanvasElement;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const drops: any[] = [];
-    const dropCount = 150;
-
-    for (let i = 0; i < dropCount; i++) {
-      drops.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        length: Math.random() * 20 + 10,
-        speed: Math.random() * 5 + 5,
-        opacity: Math.random() * 0.5 + 0.3,
-      });
-    }
-
-    function animate() {
-      ctx!.clearRect(0, 0, canvas.width, canvas.height);
-      
-      drops.forEach(drop => {
-        ctx!.strokeStyle = `rgba(255, 255, 255, ${drop.opacity})`;
-        ctx!.lineWidth = 1;
-        ctx!.beginPath();
-        ctx!.moveTo(drop.x, drop.y);
-        ctx!.lineTo(drop.x, drop.y + drop.length);
-        ctx!.stroke();
-
-        drop.y += drop.speed;
-
-        if (drop.y > canvas.height) {
-          drop.y = -drop.length;
-          drop.x = Math.random() * canvas.width;
-        }
-      });
-
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return <canvas id="rainCanvas" className="absolute inset-0 pointer-events-none opacity-60" />;
-};
-
 // Window Frame Component
 const WindowFrame = ({ title, id, onClose, isActive, onFocus, children }: any) => {
-  const [position, setPosition] = useState({ x: window.innerWidth / 2 - 350, y: window.innerHeight / 2 - 300 });
+  const [position, setPosition] = useState({ x: 100 + Math.random() * 200, y: 50 + Math.random() * 100 });
+  const [isDragging, setIsDragging] = useState(false);
 
   return (
     <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
+      initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.9, opacity: 0 }}
+      exit={{ scale: 0.8, opacity: 0 }}
       drag
       dragMomentum={false}
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={() => setIsDragging(false)}
       onMouseDown={onFocus}
       style={{
         position: 'absolute',
@@ -457,7 +452,7 @@ const WindowFrame = ({ title, id, onClose, isActive, onFocus, children }: any) =
         top: position.y,
         zIndex: isActive ? 50 : 40,
       }}
-      className={`bg-slate-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border-2 ${isActive ? 'border-purple-500' : 'border-white/10'} overflow-hidden`}
+      className={`bg-slate-800 rounded-lg shadow-2xl border-2 ${isActive ? 'border-blue-500' : 'border-white/10'} overflow-hidden`}
     >
       {/* Title Bar */}
       <div className="bg-slate-900/90 px-6 py-4 flex items-center justify-between cursor-move border-b border-white/10">
@@ -647,6 +642,40 @@ const AnalyticsWindow = () => (
     </div>
   </div>
 );
+
+// Terminal Window
+const TerminalWindow = () => {
+  const [lines] = useState([
+    '$ whoami',
+    'developer@portfolio',
+    '$ ls -la',
+    'drwxr-xr-x  profile.txt',
+    'drwxr-xr-x  projects/',
+    'drwxr-xr-x  social/',
+    '-rw-r--r--  README.md',
+    '$ cat README.md',
+    'Welcome to my portfolio!',
+    'Feel free to explore around.',
+    '$'
+  ]);
+
+  return (
+    <div className="bg-black rounded-lg p-6 font-mono text-sm">
+      {lines.map((line, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: i * 0.1 }}
+          className={line.startsWith('$') ? 'text-green-400' : 'text-white/80'}
+        >
+          {line}
+        </motion.div>
+      ))}
+      <span className="text-green-400 animate-pulse">█</span>
+    </div>
+  );
+};
 
 const StatCard = ({ label, value, icon: Icon, color }: any) => (
   <div className="bg-slate-900/50 p-6 rounded-lg border border-white/10">
