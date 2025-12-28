@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { auth, db } from "@/lib/firebase";
+import { auth, db } from "@/lib/MNSW/firebase";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { collection, query, orderBy, getDocs, setDoc, doc, getDoc } from "firebase/firestore";
 import { VoxelEngine, BlockType } from "@/lib/MNSW/VoxelEngine";

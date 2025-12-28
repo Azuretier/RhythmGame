@@ -1,13 +1,30 @@
+// ============================================
+// UPDATED realistic-rain.tsx
+// Replace your existing file with this version
+// Location: @/components/main/realistic-rain.tsx
+// ============================================
+
 "use client";
-import { useEffect, useRef} from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 interface RainEffectProps {
-  onLoaded: () => void; // notify parent when ready
+  onLoaded: () => void;
+  intensity?: number; // NEW: Accept intensity from settings (50-300)
 }
 
-export default function RainEffect({ onLoaded }: RainEffectProps) {
+export default function RainEffect({ onLoaded, intensity = 150 }: RainEffectProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const uniformsRef = useRef<Record<string, any> | null>(null);
+
+  // Update intensity when prop changes
+  useEffect(() => {
+    if (uniformsRef.current) {
+      // Map intensity (50-300) to shader intensity (0.1-0.8)
+      const mappedIntensity = 0.1 + ((intensity - 50) / 250) * 0.7;
+      uniformsRef.current.u_intensity.value = mappedIntensity;
+    }
+  }, [intensity]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -25,7 +42,7 @@ export default function RainEffect({ onLoaded }: RainEffectProps) {
 
     const textureLoader = new THREE.TextureLoader();
     const tex0 = textureLoader.load(
-      "/media/image.jpg", // your background image path
+      "/media/image.jpg",
       (tex) => {
         uniforms.u_tex0.value = tex;
         uniforms.u_tex0_resolution.value.set(tex.image.width, tex.image.height);
@@ -33,24 +50,29 @@ export default function RainEffect({ onLoaded }: RainEffectProps) {
       }
     );
 
-    // All uniforms must be defined here
+    // Map initial intensity (50-300) to shader intensity (0.1-0.8)
+    const initialMappedIntensity = 0.1 + ((intensity - 50) / 250) * 0.7;
+
     const uniforms: Record<string, any> = {
       u_tex0: { value: tex0 },
-      u_time: { value: 0,},
-      u_intensity: { value: 0.4},
-      u_speed: { value: 0.25},
-      u_brightness: { value: 0.8},
-      u_normal: { value: 0.5},
-      u_zoom: { value: 2.61},
-      u_blur_intensity: { value: 0.5},
-      u_blur_iterations: { value: 16},
-      u_panning: { value: false},
-      u_post_processing: { value: true},
-      u_lightning: { value: false},
-      u_texture_fill: { value: true},
-      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
-      u_tex0_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight)},
+      u_time: { value: 0 },
+      u_intensity: { value: initialMappedIntensity }, // Use mapped intensity
+      u_speed: { value: 0.25 },
+      u_brightness: { value: 0.8 },
+      u_normal: { value: 0.5 },
+      u_zoom: { value: 2.61 },
+      u_blur_intensity: { value: 0.5 },
+      u_blur_iterations: { value: 16 },
+      u_panning: { value: false },
+      u_post_processing: { value: true },
+      u_lightning: { value: false },
+      u_texture_fill: { value: true },
+      u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_tex0_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
     };
+
+    // Store reference for external updates
+    uniformsRef.current = uniforms;
 
     async function loadShader() {
       const fragShader = await fetch("/shaders/rain.frag").then(res => res.text());
@@ -83,16 +105,22 @@ export default function RainEffect({ onLoaded }: RainEffectProps) {
 
     loadShader();
 
-    window.addEventListener("resize", () => {
+    const handleResize = () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
-    });
+    };
+
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      containerRef.current?.removeChild(renderer.domElement);
+      window.removeEventListener("resize", handleResize);
+      if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
       renderer.dispose();
+      uniformsRef.current = null;
     };
-  }, []);
+  }, []); // Only run once on mount
 
-  return <div ref={containerRef} />
+  return <div ref={containerRef} />;
 }

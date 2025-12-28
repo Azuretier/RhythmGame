@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/MNSW/firebase';
 import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
 import { createTextureAtlas, BLOCK_IDS, TOTAL_BLOCKS } from './TextureUtils';
 
