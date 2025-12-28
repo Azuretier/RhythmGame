@@ -536,12 +536,15 @@ const Main = () => {
   const loadSettings = useCallback(async () => {
     console.log("Load Settings called");
     if (!user) return;
+    console.log("Load Settings called 2");
     const { doc, getDoc } = await import('firebase/firestore');
     const { db } = await import('@/lib/portfolio/firebase');
+    console.log("Load Settings called 3");
     const docSnap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/user_settings/${user.uid}`));
+    console.log("Load Settings called 4");
     if (docSnap.exists()) {
       const data = docSnap.data();
-      console.log("Snap data:", data);
+      console.log("Load Settings called 555");
       setTheme(data.theme || 'purple');
       setRainIntensity(data.rainIntensity || 150);
       setNewsSpeed(data.newsSpeed || 5);
