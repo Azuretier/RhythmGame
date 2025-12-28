@@ -566,11 +566,6 @@ const Main = () => {
     }, [theme, rainIntensity, newsSpeed, isDarkMode, notifications, language, user]);
 
   useEffect(() => {
-    if (!isLoaded) return;
-    loadSettings();
-  }, [isLoaded]);
-
-  useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
