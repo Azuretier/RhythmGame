@@ -532,26 +532,36 @@ const Main = () => {
     return () => unsub();
   }, []);
 
-  const loadSettings = useCallback(async () => {
-    console.log("Load Settings called 1");
-    if (!user) return;
-    console.log("Load Settings called 2");
+  // Inside your Main component, update the loadSettings useCallback:
+const loadSettings = useCallback(async () => {
+  if (!user) return;
+  
+  setSettingsLoading(true);
+  try {
     const { doc, getDoc } = await import('firebase/firestore');
     const { db } = await import('@/lib/portfolio/firebase');
-    console.log("Load Settings called 3");
-    const docSnap = await getDoc(doc(db, `artifacts/${process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID}/user_settings/${user.uid}`));
-    console.log("Load Settings called 4");
+    
+    // Ensure the path is correct - check your .env if this returns undefined
+    const appId = process.env.NEXT_PUBLIC_MNSW_FIREBASE_APP_ID;
+    const docRef = doc(db, `artifacts/${appId}/user_settings/${user.uid}`);
+    const docSnap = await getDoc(docRef);
+
     if (docSnap.exists()) {
       const data = docSnap.data();
-      console.log("Load Settings called 555");
-      setTheme(data.theme || 'purple');
-      setRainIntensity(data.rainIntensity || 150);
-      setNewsSpeed(data.newsSpeed || 5);
-      setIsDarkMode(data.isDarkMode || true);
-      setNotifications(data.notifications || true);
-      setLanguage(data.language || 'en');
+      if (data.theme) setTheme(data.theme);
+      if (data.rainIntensity) setRainIntensity(data.rainIntensity);
+      if (data.newsSpeed) setNewsSpeed(data.newsSpeed);
+      if (data.isDarkMode !== undefined) setIsDarkMode(data.isDarkMode);
+      if (data.notifications !== undefined) setNotifications(data.notifications);
+      if (data.language) setLanguage(data.language);
+      console.log("Settings loaded successfully");
     }
-  }, [isLoading]);
+  } catch (error) {
+    console.error("Error loading settings:", error);
+  } finally {
+    setSettingsLoading(false);
+  }
+}, [user]); // Only recreate if user object changes
 
   const saveSettings = useCallback(async () => {
     if (!user) return;
@@ -568,6 +578,13 @@ const Main = () => {
         }, { merge: true });
     }, [theme, rainIntensity, newsSpeed, isDarkMode, notifications, language]);
 
+  // Add this effect below your other useEffects
+  useEffect(() => {
+    if (user) {
+      loadSettings();
+    }
+  }, [user, loadSettings]);
+
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -581,19 +598,28 @@ const Main = () => {
   }, [newsSpeed]);
 
   // Modern loading animation
+  // Update your loading progress useEffect:
   useEffect(() => {
     const interval = setInterval(() => {
       setLoadingProgress((prev) => {
+        // If we've reached 90% but settings are still fetching, hang at 90
+        if (prev >= 90 && settingsLoading) {
+          return 90;
+        }
+        
         if (prev >= 100) {
           clearInterval(interval);
-          setTimeout(() => setIsLoading(false), 300);
+          // Only hide the loading screen if settings have finished loading
+          if (!settingsLoading) {
+            setTimeout(() => setIsLoading(false), 300);
+          }
           return 100;
         }
         return prev + 1;
       });
     }, 30);
     return () => clearInterval(interval);
-  }, []);
+  }, [settingsLoading]); // Add settingsLoading as dependency
 
   // Initialize window position only once when opening
   const getWindowPosition = (windowId: string): WindowPosition => {
