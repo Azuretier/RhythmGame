@@ -508,14 +508,15 @@ const Main = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [time, setTime] = useState(new Date());
-  const [openWindows, setOpenWindows] = useState<string[]>([]);
+
+  const [openWindows, setOpenWindows] = useState<string[]>([]); // Acts as our Z-index stack
   const [activeWindow, setActiveWindow] = useState<string | null>(null);
+  const [windowPositions, setWindowPositions] = useState<Record<string, WindowPosition>>({});
   const [selectedSns, setSelectedSns] = useState(0);
   const [selectedProject, setSelectedProject] = useState(0);
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
 
   // Store window positions to prevent teleporting
-  const [windowPositions, setWindowPositions] = useState<Record<string, WindowPosition>>({});
 
   const currentTheme = THEMES[theme as keyof typeof THEMES] || THEMES.purple;
 
@@ -635,45 +636,46 @@ const loadSettings = useCallback(async () => {
 
   const openWindow = (windowId: string) => {
     setOpenWindows((prev) => {
+      // If window is already open, just bring it to the front of the stack
       if (prev.includes(windowId)) {
-        // Bring to front if already open
+        setActiveWindow(windowId);
         return [...prev.filter((id) => id !== windowId), windowId];
       }
-      
-      // Assign a PERMANENT position immediately upon opening
-      setWindowPositions((prevPos) => {
-        if (prevPos[windowId]) return prevPos; // Already has a saved position
-        
-        // Calculate a unique offset once
-        const offset = Object.keys(prevPos).length * 30;
+
+      // Initialize position ONLY if it doesn't exist yet
+      setWindowPositions((positions) => {
+        if (positions[windowId]) return positions;
+        // Staggering effect based on how many windows exist right now
+        const stagger = Object.keys(positions).length * 30;
         return {
-          ...prevPos,
-          [windowId]: { x: 100 + offset, y: 50 + offset }
+          ...positions,
+          [windowId]: { x: 100 + stagger, y: 80 + stagger },
         };
       });
 
+      setActiveWindow(windowId);
       return [...prev, windowId];
     });
-    setActiveWindow(windowId);
   };
 
+  // 3. Robust Close Function
   const closeWindow = (windowId: string) => {
-    setOpenWindows(prev => {
-      const nextWindows = prev.filter(id => id !== windowId);
+    setOpenWindows((prev) => {
+      const newStack = prev.filter((id) => id !== windowId);
       
-      // Focus management: If we closed the active window, focus the next one in the stack
+      // Logic: If the closed window was active, focus the next one in the stack
       if (activeWindow === windowId) {
-        setActiveWindow(nextWindows.length > 0 ? nextWindows[nextWindows.length - 1] : null);
+        setActiveWindow(newStack.length > 0 ? newStack[newStack.length - 1] : null);
       }
-      
-      return nextWindows;
+      return newStack;
     });
   };
 
-  const updateWindowPosition = (windowId: string, position: WindowPosition) => {
-    setWindowPositions(prev => ({
+  // 4. Stable Position Update
+  const updateWindowPosition = (windowId: string, x: number, y: number) => {
+    setWindowPositions((prev) => ({
       ...prev,
-      [windowId]: position
+      [windowId]: { x, y },
     }));
   };
 
@@ -882,167 +884,120 @@ const loadSettings = useCallback(async () => {
           ))}
         </div>
 
-        {/* Windows with Scrollable Content */}
+        {/* Dynamic Windows Rendering */}
         <AnimatePresence>
-          {openWindows.includes('profile') && (
-            <WindowFrame
-              title={t('profile')}
-              id="profile"
-              onClose={() => closeWindow('profile')}
-              isActive={activeWindow === 'profile'}
-              onFocus={() => setActiveWindow('profile')}
-              theme={currentTheme}
-              isDarkMode={isDarkMode}
-              position={windowPositions['profile'] || { x: 100, y: 50 }} 
-              onPositionChange={(pos) => updateWindowPosition('profile', pos)}
-            >
-              <ProfileWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />
-            </WindowFrame>
-          )}
+          {openWindows.map((windowId) => {
+            // Determine which content to show based on windowId
+            let content;
+            let title = t(windowId);
+            let isLarge = false;
+            let isScrollable = false;
 
-          {openWindows.includes('social') && (
-            <WindowFrame
-              title={t('social')}
-              id="social"
-              onClose={() => closeWindow('social')}
-              isActive={activeWindow === 'social'}
-              onFocus={() => setActiveWindow('social')}
-              theme={currentTheme}
-              isDarkMode={isDarkMode}
-              position={windowPositions['social'] || { x: 100, y: 50 }}
-              onPositionChange={(pos) => updateWindowPosition('social', pos)}
-            >
-              <div className="relative h-[500px] flex items-center justify-center pt-4" onWheel={handleSnsScroll}>
-                {SNS_LINKS.map((sns, index) => {
-                  const offset = index - selectedSns;
-                  const isSelected = index === selectedSns;
-                  
-                  return (
-                    <div
-                      key={sns.id}
-                      className="absolute transition-all duration-300 ease-out cursor-pointer"
-                      style={{
-                        left: '50%',
-                        top: '55%',
-                        transform: `translateX(-50%) translateY(calc(-50% + ${offset * 140}px)) scale(${isSelected ? 1 : 0.85})`,
-                        opacity: Math.abs(offset) > 2 ? 0 : 1 - Math.abs(offset) * 0.3,
-                        zIndex: 100 - Math.abs(offset),
-                        pointerEvents: Math.abs(offset) > 2 ? 'none' : 'auto',
-                      }}
-                      onClick={() => setSelectedSns(index)}
-                    >
-                      <SnsWidget {...sns} isSelected={isSelected} />
-                    </div>
-                  );
-                })}
-              </div>
-            </WindowFrame>
-          )}
+            switch (windowId) {
+              case 'profile':
+                content = <ProfileWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />;
+                break;
+              case 'social':
+                content = (
+                  <div className="relative h-[500px] flex items-center justify-center pt-4" onWheel={handleSnsScroll}>
+                    {SNS_LINKS.map((sns, index) => {
+                      const offset = index - selectedSns;
+                      const isSelected = index === selectedSns;
+                      return (
+                        <div
+                          key={sns.id}
+                          className="absolute transition-all duration-300 ease-out cursor-pointer"
+                          style={{
+                            left: '50%',
+                            top: '55%',
+                            transform: `translateX(-50%) translateY(calc(-50% + ${offset * 140}px)) scale(${isSelected ? 1 : 0.85})`,
+                            opacity: Math.abs(offset) > 2 ? 0 : 1 - Math.abs(offset) * 0.3,
+                            zIndex: 100 - Math.abs(offset),
+                            pointerEvents: Math.abs(offset) > 2 ? 'none' : 'auto',
+                          }}
+                          onClick={() => setSelectedSns(index)}
+                        >
+                          <SnsWidget {...sns} isSelected={isSelected} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+                break;
+              case 'projects':
+                title = t('projects');
+                content = (
+                  <div 
+                    className="relative h-[500px] flex items-center justify-center pt-4" 
+                    onWheel={handleProjectScroll}
+                  >
+                    {PROJECTS.map((project, index) => {
+                      const offset = index - selectedProject;
+                      const isSelected = index === selectedProject;
+                      
+                      return (
+                        <div
+                          key={project.id}
+                          className="absolute transition-all duration-300 ease-out cursor-pointer"
+                          style={{
+                            left: '50%',
+                            top: '55%',
+                            transform: `translateX(-50%) translateY(calc(-50% + ${offset * 140}px)) scale(${isSelected ? 1 : 0.85})`,
+                            opacity: Math.abs(offset) > 2 ? 0 : 1 - Math.abs(offset) * 0.3,
+                            zIndex: 100 - Math.abs(offset),
+                            pointerEvents: Math.abs(offset) > 2 ? 'none' : 'auto',
+                          }}
+                          onClick={() => setSelectedProject(index)}
+                        >
+                          <ProjectWidget {...project} isSelected={isSelected} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+                break;
+              case 'analytics':
+                content = <AnalyticsWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />;
+                break;
+              case 'azure-docs':
+                title = "Azure Supporter Documentation";
+                content = <AzureDocsWindow theme={currentTheme} isDarkMode={isDarkMode} />;
+                isLarge = true;
+                break;
+              case 'terminal':
+                content = <TerminalWindow />;
+                break;
+              case 'settings':
+                content = <SettingsWindow theme={currentTheme} />;
+                isScrollable = true;
+                break;
+              default:
+                return null;
+            }
 
-          {openWindows.includes('projects') && (
-            <WindowFrame
-              title={t('projects')}
-              id="projects"
-              onClose={() => closeWindow('projects')}
-              isActive={activeWindow === 'projects'}
-              onFocus={() => setActiveWindow('projects')}
-              theme={currentTheme}
-              isDarkMode={isDarkMode}
-              position={windowPositions['projects'] || { x: 100, y: 50 }}
-              onPositionChange={(pos) => updateWindowPosition('projects', pos)}
-            >
-              <div className="relative h-[500px] flex items-center justify-center pt-4" onWheel={handleProjectScroll}>
-                {PROJECTS.map((project, index) => {
-                  const offset = index - selectedProject;
-                  const isSelected = index === selectedProject;
-                  
-                  return (
-                    <div
-                      key={project.id}
-                      className="absolute transition-all duration-300 ease-out cursor-pointer"
-                      style={{
-                        left: '50%',
-                        top: '55%',
-                        transform: `translateX(-50%) translateY(calc(-50% + ${offset * 140}px)) scale(${isSelected ? 1 : 0.85})`,
-                        opacity: Math.abs(offset) > 2 ? 0 : 1 - Math.abs(offset) * 0.3,
-                        zIndex: 100 - Math.abs(offset),
-                        pointerEvents: Math.abs(offset) > 2 ? 'none' : 'auto',
-                      }}
-                      onClick={() => setSelectedProject(index)}
-                    >
-                      <ProjectWidget {...project} isSelected={isSelected} />
-                    </div>
-                  );
-                })}
-              </div>
-            </WindowFrame>
-          )}
-
-          {openWindows.includes('analytics') && (
-            <WindowFrame
-              title={t('analytics')}
-              id="analytics"
-              onClose={() => closeWindow('analytics')}
-              isActive={activeWindow === 'analytics'}
-              onFocus={() => setActiveWindow('analytics')}
-              theme={currentTheme}
-              isDarkMode={isDarkMode}
-              position={windowPositions['analytics'] || { x: 100, y: 50 }}
-              onPositionChange={(pos) => updateWindowPosition('analytics', pos)}
-            >
-              <AnalyticsWindow theme={currentTheme} isDarkMode={isDarkMode} t={t} />
-            </WindowFrame>
-          )}
-
-          {openWindows.includes('azure-docs') && (
-            <WindowFrame
-              title="Azure Supporter Documentation"
-              id="azure-docs"
-              onClose={() => closeWindow('azure-docs')}
-              isActive={activeWindow === 'azure-docs'}
-              onFocus={() => setActiveWindow('azure-docs')}
-              theme={currentTheme}
-              isDarkMode={isDarkMode}
-              large
-              position={windowPositions['azure-docs'] || { x: 50, y: 30 }}
-              onPositionChange={(pos) => updateWindowPosition('azure-docs', pos)}
-            >
-              <AzureDocsWindow theme={currentTheme} isDarkMode={isDarkMode} />
-            </WindowFrame>
-          )}
-
-          {openWindows.includes('terminal') && (
-            <WindowFrame
-              title={t('terminal')}
-              id="terminal"
-              onClose={() => closeWindow('terminal')}
-              isActive={activeWindow === 'terminal'}
-              onFocus={() => setActiveWindow('terminal')}
-              theme={currentTheme}
-              isDarkMode={isDarkMode}
-              position={windowPositions['terminal'] || { x: 100, y: 50 }}
-              onPositionChange={(pos) => updateWindowPosition('terminal', pos)}
-            >
-              <TerminalWindow />
-            </WindowFrame>
-          )}
-
-          {openWindows.includes('settings') && (
-          <WindowFrame
-            title={t('settings')}
-            id="settings"
-            onClose={() => closeWindow('settings')}
-            isActive={activeWindow === 'settings'}
-            onFocus={() => setActiveWindow('settings')}
-            theme={currentTheme}
-            isDarkMode={isDarkMode}
-            position={windowPositions['settings'] || { x: 100, y: 50 }}
-            onPositionChange={(pos) => updateWindowPosition('settings', pos)}
-            scrollable
-          >
-            <SettingsWindow theme={currentTheme} />
-          </WindowFrame>
-          )}
+            return (
+              <WindowFrame
+                key={windowId}
+                id={windowId}
+                title={title}
+                onClose={() => closeWindow(windowId)}
+                isActive={activeWindow === windowId}
+                onFocus={() => {
+                  setActiveWindow(windowId);
+                  // Re-order stack on focus to bring to front
+                  setOpenWindows(prev => [...prev.filter(id => id !== windowId), windowId]);
+                }}
+                theme={currentTheme}
+                isDarkMode={isDarkMode}
+                large={isLarge}
+                scrollable={isScrollable}
+                position={windowPositions[windowId] || { x: 100, y: 100 }}
+                onPositionChange={(x, y) => updateWindowPosition(windowId, x, y)}
+              >
+                {content}
+              </WindowFrame>
+            );
+          })}
         </AnimatePresence>
 
         {/* Taskbar */}
@@ -1101,7 +1056,6 @@ const loadSettings = useCallback(async () => {
   );
 };
 
-// Window Frame Component - Updated with position prop
 interface WindowFrameProps {
   title: string;
   id: string;
@@ -1114,18 +1068,18 @@ interface WindowFrameProps {
   large?: boolean;
   scrollable?: boolean;
   position: WindowPosition;
-  onPositionChange: (pos: WindowPosition) => void;
+  onPositionChange: (x: number, y: number) => void;
 }
 
-const WindowFrame = ({ 
-  title, 
-  id, 
-  onClose, 
-  isActive, 
-  onFocus, 
-  children, 
-  theme, 
-  isDarkMode, 
+const WindowFrame = ({
+  title,
+  id,
+  onClose,
+  isActive,
+  onFocus,
+  children,
+  theme,
+  isDarkMode,
   large = false,
   scrollable = false,
   position,
@@ -1133,41 +1087,61 @@ const WindowFrame = ({
 }: WindowFrameProps) => {
   return (
     <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
+      initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.8, opacity: 0 }}
+      exit={{ scale: 0.9, opacity: 0 }}
       drag
       dragMomentum={false}
+      // THE FIX: Calculate absolute position relative to where drag ended
       onDragEnd={(e, info) => {
-        onPositionChange({
-          x: position.x,
-          y: position.y,
-        });
+        onPositionChange(position.x + info.offset.x, position.y + info.offset.y);
       }}
-      onMouseDown={onFocus}
+      onPointerDown={onFocus}
       style={{
         position: 'absolute',
         left: position.x,
         top: position.y,
-        zIndex: isActive ? 50 : 40,
+        zIndex: isActive ? 50 : 10, // Stacking handled by zIndex + array order
       }}
-      className={`${isDarkMode ? 'bg-slate-800' : 'bg-white'} rounded-lg shadow-2xl border-2 ${isActive ? `border-${theme.accent}` : isDarkMode ? 'border-white/10' : 'border-slate-200'} overflow-hidden`}
+      className={`${isDarkMode ? 'bg-slate-800' : 'bg-white'} rounded-lg shadow-2xl border-2 ${
+        isActive ? `border-${theme.accent}` : isDarkMode ? 'border-white/10' : 'border-slate-200'
+      } overflow-hidden flex flex-col`}
     >
-      {/* Title Bar */}
-      <div className={`bg-gradient-to-r ${isActive ? theme.gradient : isDarkMode ? 'from-slate-900 to-slate-800' : 'from-slate-100 to-slate-200'} px-6 py-4 flex items-center justify-between cursor-move border-b ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
-        <span className={`${isActive || isDarkMode ? 'text-white' : 'text-slate-700'} font-bold text-sm`}>{title}</span>
-        <div className="flex gap-2">
-          <button className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors"></button>
-          <button className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-600 transition-colors"></button>
+      {/* Title Bar (Drag Handle) */}
+      <div
+        className={`bg-gradient-to-r ${
+          isActive ? theme.gradient : isDarkMode ? 'from-slate-900 to-slate-800' : 'from-slate-100 to-slate-200'
+        } px-4 py-3 flex items-center justify-between cursor-grab active:cursor-grabbing border-b ${
+          isDarkMode ? 'border-white/10' : 'border-slate-200'
+        }`}
+      >
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className={`${isActive || isDarkMode ? 'text-white' : 'text-slate-700'} font-bold text-sm truncate`}>
+            {title}
+          </span>
+        </div>
+        <div className="flex gap-2 flex-shrink-0 ml-4">
+          <button className="w-3 h-3 rounded-full bg-yellow-500 hover:opacity-80 transition-opacity" />
+          <button className="w-3 h-3 rounded-full bg-green-500 hover:opacity-80 transition-opacity" />
           <button
-            onClick={onClose}
-            className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 transition-colors"
-          ></button>
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent focusing when closing
+              onClose();
+            }}
+            className="w-3 h-3 rounded-full bg-red-500 hover:opacity-80 transition-opacity"
+          />
         </div>
       </div>
 
-      {/* Content */}
-      <div className={`p-6 ${large ? 'min-w-[900px] max-h-[80vh] overflow-y-auto' : scrollable ? 'min-w-[700px] max-h-[70vh] overflow-y-auto' : 'min-w-[700px]'}`}>
+      {/* Content Area */}
+      <div
+        onPointerDown={(e) => e.stopPropagation()} // Crucial: allow clicking content without dragging
+        className={`p-6 ${
+          large ? 'w-[900px] h-[600px]' : 'w-[700px]'
+        } ${
+          large || scrollable ? 'overflow-y-auto overflow-x-hidden' : ''
+        } max-h-[80vh]`}
+      >
         {children}
       </div>
     </motion.div>
