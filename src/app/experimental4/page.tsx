@@ -792,7 +792,7 @@ const loadSettings = useCallback(async () => {
 // 7. BLOG & SNS WINDOW
 // ============================================
 
-  const BlogWindow = ({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
+  const BlogWindow = memo(({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
     const [activeTab, setActiveTab] = useState<'blog' | 'feed'>('blog');
     const [selectedPost, setSelectedPost] = useState<typeof BLOG_POSTS[0] | null>(null);
 
@@ -944,7 +944,7 @@ const loadSettings = useCallback(async () => {
         </AnimatePresence>
       </div>
     );
-  };
+  });
 
 // ============================================
 // 8. UPDATED TERMINAL WINDOW (with fun commands)
