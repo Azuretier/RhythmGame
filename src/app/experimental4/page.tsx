@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, createContext, useContext, useRef, useCallback } from "react"
+import { useEffect, useState, createContext, useContext, useRef, useCallback, memo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { Disc3, MessageSquare } from "lucide-react"
@@ -955,7 +955,7 @@ const loadSettings = useCallback(async () => {
   type: TerminalLineType;
 }
 
-  const TerminalWindow = () => {
+  const TerminalWindow = memo(() => {
     const [lines, setLines] = useState<TerminalLine[]>([
       { content: "Welcome to Portfolio Terminal v2.0", type: 'info' },
       { content: "Type 'help' for available commands", type: 'output' },
@@ -1108,7 +1108,7 @@ const loadSettings = useCallback(async () => {
         )}
       </div>
     );
-  };
+  });
 
   const settingsValue: SettingsContextType = {
     theme, setTheme,
@@ -1743,40 +1743,6 @@ const AnalyticsWindow = ({ theme, isDarkMode, t }: { theme: any; isDarkMode: boo
     </div>
   </div>
 );
-
-// Terminal Window
-const TerminalWindow = () => {
-  const [lines] = useState([
-    '$ whoami',
-    'developer@portfolio',
-    '$ ls -la',
-    'drwxr-xr-x  profile.txt',
-    'drwxr-xr-x  projects/',
-    'drwxr-xr-x  social/',
-    '-rw-r--r--  README.md',
-    '$ cat README.md',
-    'Welcome to my portfolio!',
-    'Feel free to explore around.',
-    '$'
-  ]);
-
-  return (
-    <div className="bg-black rounded-lg p-6 font-mono text-sm">
-      {lines.map((line, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: i * 0.1 }}
-          className={line.startsWith('$') ? 'text-green-400' : 'text-white/80'}
-        >
-          {line}
-        </motion.div>
-      ))}
-      <span className="text-green-400 animate-pulse">█</span>
-    </div>
-  );
-};
 
 // Azure Supporter Documentation Window
 const AzureDocsWindow = ({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
