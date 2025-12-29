@@ -366,7 +366,7 @@ const loadSettings = useCallback(async () => {
         {/* User Profile Header */}
         <div className={`flex items-center gap-4 p-4 ${isDarkMode ? 'bg-slate-900/80' : 'bg-slate-100'} rounded-xl border ${isDarkMode ? 'border-white/10' : 'border-slate-200'}`}>
           <div className="relative">
-            <img src="/api/placeholder/64/64" alt="User" className="w-16 h-16 rounded-xl object-cover" />
+            <img src="/profile_image/doll.jpg" alt="User" className="w-16 h-16 rounded-xl object-cover" />
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900"></div>
           </div>
           <div className="flex-1">
@@ -1370,11 +1370,13 @@ const loadSettings = useCallback(async () => {
               case 'music':
                 title = "Music Player";
                 content = <MusicPlayerWindow theme={currentTheme} isDarkMode={isDarkMode} />;
+                isScrollable = true;
                 break;
 
               case 'discord':
                 title = "Discord";
                 content = <DiscordWindow theme={currentTheme} isDarkMode={isDarkMode} />;
+                isScrollable = true;
                 break;
               case 'live-chat':
                 title = "Live Chat";
