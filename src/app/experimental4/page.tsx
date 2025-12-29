@@ -634,25 +634,37 @@ const loadSettings = useCallback(async () => {
   };
 
   const openWindow = (windowId: string) => {
-    if (!openWindows.includes(windowId)) {
-      // Set position only when first opening
+    setOpenWindows(prev => {
+      // If already open, just move it to the end of the array (top of stack)
+      if (prev.includes(windowId)) {
+        return [...prev.filter(id => id !== windowId), windowId];
+      }
+      
+      // If opening for the first time, set a default position
       if (!windowPositions[windowId]) {
-        setWindowPositions(prev => ({
-          ...prev,
-          [windowId]: getWindowPosition(windowId)
+        const offset = prev.length * 30;
+        setWindowPositions(pos => ({
+          ...pos,
+          [windowId]: { x: 100 + offset, y: 50 + offset }
         }));
       }
-      setOpenWindows(prev => [...prev, windowId]);
-    }
+      
+      return [...prev, windowId];
+    });
     setActiveWindow(windowId);
   };
 
   const closeWindow = (windowId: string) => {
-    setOpenWindows(prev => prev.filter(w => w !== windowId));
-    if (activeWindow === windowId) {
-      const remainingWindows = openWindows.filter(w => w !== windowId);
-      setActiveWindow(remainingWindows[remainingWindows.length - 1] || null);
-    }
+    setOpenWindows(prev => {
+      const nextWindows = prev.filter(id => id !== windowId);
+      
+      // Focus management: If we closed the active window, focus the next one in the stack
+      if (activeWindow === windowId) {
+        setActiveWindow(nextWindows.length > 0 ? nextWindows[nextWindows.length - 1] : null);
+      }
+      
+      return nextWindows;
+    });
   };
 
   const updateWindowPosition = (windowId: string, position: WindowPosition) => {
@@ -1043,18 +1055,30 @@ const loadSettings = useCallback(async () => {
           <div className="flex-1 flex gap-2">
             {openWindows.map((windowId) => {
               const icon = desktopIcons.find(i => i.id === windowId);
+              const active = activeWindow === windowId;
+              
               return (
                 <button
                   key={windowId}
-                  onClick={() => setActiveWindow(windowId)}
+                  onClick={() => {
+                    if (active) {
+                      // Optional: Minimize logic here, or just keep focus
+                    } else {
+                      setActiveWindow(windowId);
+                      // Move to end of array to bring to front
+                      setOpenWindows(prev => [...prev.filter(id => id !== windowId), windowId]);
+                    }
+                  }}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    activeWindow === windowId
+                    active
                       ? `${isDarkMode ? 'bg-white/20 border-white/30' : 'bg-slate-200 border-slate-300'} border-2`
                       : `${isDarkMode ? 'bg-white/5 hover:bg-white/10' : 'bg-slate-100 hover:bg-slate-200'} border-2 border-transparent`
                   }`}
                 >
                   {icon && <icon.icon className={isDarkMode ? 'text-white' : 'text-slate-700'} size={18} />}
-                  <span className={`${isDarkMode ? 'text-white' : 'text-slate-700'} text-sm font-medium`}>{icon?.label}</span>
+                  <span className={`${isDarkMode ? 'text-white' : 'text-slate-700'} text-sm font-medium`}>
+                    {icon?.label}
+                  </span>
                 </button>
               );
             })}
