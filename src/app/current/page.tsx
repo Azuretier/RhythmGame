@@ -76,9 +76,9 @@ const Main = () => {
   );
 
   // Translation function
-  const t = (key: string): string => {
+  const t = useCallback((key: string): string => {
     return TRANSLATIONS[language]?.[key] || TRANSLATIONS['en'][key] || key;
-  };
+  }, [language]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
