@@ -1,62 +1,68 @@
 // ============================================
-// UPDATED realistic-rain.tsx
-// Replace your existing file with this version
+// FIXED realistic-rain.tsx
+// Fixes: GL_INVALID_OPERATION: glTexStorage2D: Texture is immutable
 // Location: @/components/main/realistic-rain.tsx
 // ============================================
 
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, memo } from "react";
 import * as THREE from "three";
 
 interface RainEffectProps {
   onLoaded: () => void;
-  intensity?: number; // NEW: Accept intensity from settings (50-300)
+  intensity?: number;
 }
 
-export default function RainEffect({ onLoaded, intensity = 150 }: RainEffectProps) {
+const RainEffect = memo(({ onLoaded, intensity = 150 }: RainEffectProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const uniformsRef = useRef<Record<string, any> | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const isInitializedRef = useRef(false);
 
-  // Update intensity when prop changes
+  // Update intensity when prop changes (without re-creating the scene)
   useEffect(() => {
-    if (uniformsRef.current) {
-      // Map intensity (50-300) to shader intensity (0.1-0.8)
+    if (uniformsRef.current && isInitializedRef.current) {
       const mappedIntensity = 0.1 + ((intensity - 50) / 250) * 0.7;
       uniformsRef.current.u_intensity.value = mappedIntensity;
     }
   }, [intensity]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    // Prevent multiple initializations
+    if (isInitializedRef.current || !containerRef.current) return;
+    isInitializedRef.current = true;
 
+    const container = containerRef.current;
+
+    // Scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    
+    // Renderer setup with specific settings to prevent texture issues
+    const renderer = new THREE.WebGLRenderer({ 
+      alpha: true,
+      antialias: false,
+      powerPreference: "high-performance",
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.domElement.style.position = "fixed";
     renderer.domElement.style.top = "0";
     renderer.domElement.style.left = "0";
     renderer.domElement.style.zIndex = "-1";
     renderer.domElement.style.pointerEvents = "none";
-    containerRef.current.appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
 
-    const textureLoader = new THREE.TextureLoader();
-    const tex0 = textureLoader.load(
-      "/media/image.jpg",
-      (tex) => {
-        uniforms.u_tex0.value = tex;
-        uniforms.u_tex0_resolution.value.set(tex.image.width, tex.image.height);
-        onLoaded();
-      }
-    );
-
-    // Map initial intensity (50-300) to shader intensity (0.1-0.8)
+    // Map initial intensity
     const initialMappedIntensity = 0.1 + ((intensity - 50) / 250) * 0.7;
 
+    // Create uniforms first (without texture)
     const uniforms: Record<string, any> = {
-      u_tex0: { value: tex0 },
+      u_tex0: { value: null },
       u_time: { value: 0 },
-      u_intensity: { value: initialMappedIntensity }, // Use mapped intensity
+      u_intensity: { value: initialMappedIntensity },
       u_speed: { value: 0.25 },
       u_brightness: { value: 0.8 },
       u_normal: { value: 0.5 },
@@ -68,59 +74,159 @@ export default function RainEffect({ onLoaded, intensity = 150 }: RainEffectProp
       u_lightning: { value: false },
       u_texture_fill: { value: true },
       u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-      u_tex0_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+      u_tex0_resolution: { value: new THREE.Vector2(1, 1) },
     };
 
-    // Store reference for external updates
     uniformsRef.current = uniforms;
 
-    async function loadShader() {
-      const fragShader = await fetch("/shaders/rain.frag").then(res => res.text());
-
-      const material = new THREE.ShaderMaterial({
-        uniforms,
-        vertexShader: `
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: fragShader,
-        transparent: true,
-      });
-
-      const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
-      scene.add(quad);
-
-      const clock = new THREE.Clock();
-
-      function animate() {
-        uniforms.u_time.value = clock.getElapsedTime();
-        renderer.render(scene, camera);
-        requestAnimationFrame(animate);
+    // Load texture with proper settings
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load(
+      "/media/image.jpg",
+      (texture) => {
+        // Set texture properties BEFORE assigning to uniform
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.generateMipmaps = false;
+        
+        // Now assign to uniform
+        uniforms.u_tex0.value = texture;
+        uniforms.u_tex0_resolution.value.set(
+          texture.image.width || window.innerWidth,
+          texture.image.height || window.innerHeight
+        );
+        
+        onLoaded();
+      },
+      undefined,
+      (error) => {
+        console.warn("Failed to load rain texture, using fallback:", error);
+        // Create a fallback texture
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#1a1a2e';
+          ctx.fillRect(0, 0, 1, 1);
+        }
+        const fallbackTexture = new THREE.CanvasTexture(canvas);
+        fallbackTexture.minFilter = THREE.LinearFilter;
+        fallbackTexture.magFilter = THREE.LinearFilter;
+        fallbackTexture.generateMipmaps = false;
+        
+        uniforms.u_tex0.value = fallbackTexture;
+        uniforms.u_tex0_resolution.value.set(1, 1);
+        onLoaded();
       }
-      animate();
+    );
+
+    // Load and setup shader
+    async function loadShader() {
+      try {
+        const fragShader = await fetch("/shaders/rain.frag").then(res => {
+          if (!res.ok) throw new Error("Shader not found");
+          return res.text();
+        });
+
+        const material = new THREE.ShaderMaterial({
+          uniforms,
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: fragShader,
+          transparent: true,
+          depthTest: false,
+          depthWrite: false,
+        });
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const quad = new THREE.Mesh(geometry, material);
+        scene.add(quad);
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+          if (!rendererRef.current) return;
+          
+          uniforms.u_time.value = clock.getElapsedTime();
+          renderer.render(scene, camera);
+          animationFrameRef.current = requestAnimationFrame(animate);
+        }
+        
+        animate();
+      } catch (error) {
+        console.warn("Failed to load rain shader:", error);
+        onLoaded();
+      }
     }
 
     loadShader();
 
+    // Handle resize
     const handleResize = () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+      if (!rendererRef.current) return;
+      
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      
+      rendererRef.current.setSize(width, height);
+      uniforms.u_resolution.value.set(width, height);
     };
 
     window.addEventListener("resize", handleResize);
 
+    // Cleanup function
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (containerRef.current && renderer.domElement.parentNode === containerRef.current) {
-        containerRef.current.removeChild(renderer.domElement);
+      
+      // Cancel animation frame
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
-      renderer.dispose();
+
+      // Dispose of Three.js resources
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+        
+        // Remove canvas from DOM
+        if (container && rendererRef.current.domElement.parentNode === container) {
+          container.removeChild(rendererRef.current.domElement);
+        }
+        
+        rendererRef.current = null;
+      }
+
+      // Dispose texture
+      if (uniformsRef.current?.u_tex0?.value) {
+        uniformsRef.current.u_tex0.value.dispose();
+      }
+
+      // Dispose geometry and material from scene
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry?.dispose();
+          if (object.material instanceof THREE.Material) {
+            object.material.dispose();
+          }
+        }
+      });
+
       uniformsRef.current = null;
+      isInitializedRef.current = false;
     };
-  }, []); // Only run once on mount
+  }, []); // Empty dependency array - only run once
 
   return <div ref={containerRef} />;
-}
+});
+
+RainEffect.displayName = 'RainEffect';
+
+export default RainEffect;
