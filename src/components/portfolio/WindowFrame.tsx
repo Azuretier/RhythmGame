@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { memo, useState } from "react";
-import { X, Minus, Maximize2, Square } from "lucide-react";
+import { X, Minus, Square } from "lucide-react";
 
 interface WindowPosition {
   x: number;
@@ -45,26 +45,20 @@ const WindowFrame = memo(({
 
   return (
     <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
+      initial={{ scale: 0.9, opacity: 0 }}
       animate={{ 
         scale: 1, 
         opacity: 1,
-        // If maximized, take full screen (with some padding)
-        ...(isMaximized ? {
-          x: 0,
-          y: 0,
-          width: '100vw',
-          height: 'calc(100vh - 64px)', // Leave room for taskbar
-        } : {})
       }}
-      exit={{ scale: 0.8, opacity: 0 }}
+      exit={{ scale: 0.9, opacity: 0 }}
+      transition={{ duration: 0.15 }}
       drag={!isMaximized}
       dragMomentum={false}
       onDragEnd={(e, info) => {
         if (!isMaximized) {
           onPositionChange(
-            position.x,
-            position.y,
+            position.x + info.offset.x,
+            position.y + info.offset.y
           );
         }
       }}
@@ -73,12 +67,13 @@ const WindowFrame = memo(({
         position: isMaximized ? 'fixed' : 'absolute',
         left: isMaximized ? 0 : position.x,
         top: isMaximized ? 0 : position.y,
+        width: isMaximized ? '100vw' : 'auto',
+        height: isMaximized ? 'calc(100vh - 64px)' : 'auto',
         zIndex: isActive ? 50 : 40,
       }}
       className={`
-        ${isDarkMode ? 'bg-slate-800/95' : 'bg-white/95'} 
+        ${isDarkMode ? 'bg-slate-800' : 'bg-white'} 
         backdrop-blur-xl
-        rounded-xl 
         shadow-2xl 
         border 
         ${isActive 
@@ -86,68 +81,62 @@ const WindowFrame = memo(({
           : isDarkMode ? 'border-white/10' : 'border-slate-200'
         } 
         overflow-hidden
-        ${isMaximized ? 'rounded-none' : ''}
+        ${isMaximized ? 'rounded-none' : 'rounded-xl'}
       `}
     >
       {/* Title Bar */}
       <div 
         className={`
-          ${isDarkMode ? 'bg-slate-900/90' : 'bg-slate-100/90'}
-          px-4 py-3
-          flex items-center
+          ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'}
+          px-4 py-2
+          flex items-center justify-between
           cursor-move 
           border-b 
           ${isDarkMode ? 'border-white/10' : 'border-slate-200'}
           select-none
         `}
       >
-        {/* Window Controls - Left Side (macOS style) */}
-        <div className="flex items-center gap-2">
-          {/* Close Button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            onMouseEnter={() => setHoveredButton('close')}
-            onMouseLeave={() => setHoveredButton(null)}
-            className={`
-              w-3.5 h-3.5 rounded-full 
-              flex items-center justify-center
-              transition-all duration-150
-              ${hoveredButton === 'close' 
-                ? 'bg-red-500 scale-110' 
-                : isDarkMode ? 'bg-slate-600' : 'bg-slate-300'
-              }
-              group
-            `}
-          >
-            {hoveredButton === 'close' && (
-              <X size={8} className="text-red-900" strokeWidth={3} />
-            )}
-          </button>
+        {/* Title - Left Side */}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <span className={`
+            ${isDarkMode ? 'text-white/80' : 'text-slate-700'} 
+            font-medium text-sm
+            truncate
+          `}>
+            {title}
+          </span>
+        </div>
 
+        {/* Window Controls - Right Side */}
+        <div className="flex items-center">
           {/* Minimize Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // Could implement minimize to taskbar
+              // Minimize functionality - could minimize to taskbar
             }}
             onMouseEnter={() => setHoveredButton('minimize')}
             onMouseLeave={() => setHoveredButton(null)}
             className={`
-              w-3.5 h-3.5 rounded-full 
+              w-11 h-8
               flex items-center justify-center
-              transition-all duration-150
+              transition-colors duration-150
               ${hoveredButton === 'minimize' 
-                ? 'bg-yellow-500 scale-110' 
-                : isDarkMode ? 'bg-slate-600' : 'bg-slate-300'
+                ? 'bg-yellow-500' 
+                : 'bg-transparent hover:bg-white/10'
               }
             `}
           >
-            {hoveredButton === 'minimize' && (
-              <Minus size={8} className="text-yellow-900" strokeWidth={3} />
-            )}
+            <Minus 
+              size={16} 
+              className={`
+                transition-colors duration-150
+                ${hoveredButton === 'minimize' 
+                  ? 'text-yellow-900' 
+                  : isDarkMode ? 'text-white/70' : 'text-slate-500'
+                }
+              `}
+            />
           </button>
 
           {/* Maximize Button */}
@@ -159,43 +148,70 @@ const WindowFrame = memo(({
             onMouseEnter={() => setHoveredButton('maximize')}
             onMouseLeave={() => setHoveredButton(null)}
             className={`
-              w-3.5 h-3.5 rounded-full 
+              w-11 h-8
               flex items-center justify-center
-              transition-all duration-150
+              transition-colors duration-150
               ${hoveredButton === 'maximize' 
-                ? 'bg-green-500 scale-110' 
-                : isDarkMode ? 'bg-slate-600' : 'bg-slate-300'
+                ? 'bg-green-500' 
+                : 'bg-transparent hover:bg-white/10'
               }
             `}
           >
-            {hoveredButton === 'maximize' && (
-              <Maximize2 size={7} className="text-green-900" strokeWidth={3} />
-            )}
+            <Square 
+              size={14} 
+              className={`
+                transition-colors duration-150
+                ${hoveredButton === 'maximize' 
+                  ? 'text-green-900' 
+                  : isDarkMode ? 'text-white/70' : 'text-slate-500'
+                }
+              `}
+            />
+          </button>
+
+          {/* Close Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            onMouseEnter={() => setHoveredButton('close')}
+            onMouseLeave={() => setHoveredButton(null)}
+            className={`
+              w-11 h-8
+              flex items-center justify-center
+              transition-colors duration-150
+              ${hoveredButton === 'close' 
+                ? 'bg-red-500' 
+                : 'bg-transparent hover:bg-white/10'
+              }
+            `}
+          >
+            <X 
+              size={16} 
+              className={`
+                transition-colors duration-150
+                ${hoveredButton === 'close' 
+                  ? 'text-white' 
+                  : isDarkMode ? 'text-white/70' : 'text-slate-500'
+                }
+              `}
+            />
           </button>
         </div>
-
-        {/* Title - Centered */}
-        <div className="flex-1 flex justify-center">
-          <span className={`
-            ${isDarkMode ? 'text-white/80' : 'text-slate-600'} 
-            font-medium text-sm
-            truncate max-w-[300px]
-          `}>
-            {title}
-          </span>
-        </div>
-
-        {/* Spacer to balance the layout */}
-        <div className="w-[68px]"></div>
       </div>
 
       {/* Content */}
       <div className={`
         p-6 
-        ${large ? 'min-w-[900px] max-h-[80vh] overflow-y-auto' : ''} 
-        ${scrollable ? 'min-w-[700px] max-h-[70vh] overflow-y-auto' : ''} 
-        ${!large && !scrollable ? 'min-w-[700px]' : ''}
-        ${isMaximized ? 'min-w-0 w-full h-[calc(100vh-64px-48px)] max-h-none' : ''}
+        ${isMaximized 
+          ? 'w-full h-[calc(100vh-64px-40px)] max-h-none overflow-y-auto' 
+          : large 
+            ? 'min-w-[900px] max-h-[80vh] overflow-y-auto' 
+            : scrollable 
+              ? 'min-w-[700px] max-h-[70vh] overflow-y-auto' 
+              : 'min-w-[700px]'
+        }
       `}>
         {children}
       </div>
