@@ -63,8 +63,8 @@ const WindowFrame = memo(({
       onDragEnd={(e, info) => {
         if (!isMaximized) {
           onPositionChange(
-            position.x + info.offset.x,
-            position.y + info.offset.y
+            position.x,
+            position.y,
           );
         }
       }}
