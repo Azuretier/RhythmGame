@@ -1,8 +1,7 @@
 // ============================================
 // FIXED WindowFrame Component
-// - Smooth dragging
-// - Exit fullscreen when dragging
-// - Single click actions work on non-focused windows
+// - Cursor stays on title bar when exiting fullscreen via drag
+// - Smooth dragging with motion values
 // ============================================
 
 import { motion, useMotionValue } from "framer-motion";
@@ -53,7 +52,9 @@ const WindowFrame = memo(({
   const y = useMotionValue(position.y);
   
   const savedPositionRef = useRef<WindowPosition>({ x: position.x, y: position.y });
+  const dragStartCursorRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const wasMaximizedRef = useRef(false);
+  const windowWidthRef = useRef(700); // Default min-width
 
   // Sync motion values with position prop
   useEffect(() => {
@@ -89,30 +90,51 @@ const WindowFrame = memo(({
     action();
   };
 
-  const handleDragStart = () => {
-    // If maximized, exit fullscreen and position window at cursor
+  const handleDragStart = (event: any) => {
+    // Store cursor position relative to window when drag starts
+    const cursorX = event.clientX || event.touches?.[0]?.clientX || 0;
+    const cursorY = event.clientY || event.touches?.[0]?.clientY || 0;
+    
     if (isMaximized) {
+      // Calculate where cursor is as a percentage of screen width
+      const screenWidth = window.innerWidth;
+      const cursorPercentX = cursorX / screenWidth;
+      
+      // Store this to position window correctly when exiting fullscreen
+      dragStartCursorRef.current = { 
+        x: cursorPercentX,
+        y: cursorY 
+      };
+      
       wasMaximizedRef.current = true;
       setIsMaximized(false);
+    } else {
+      dragStartCursorRef.current = { x: cursorX, y: cursorY };
     }
   };
 
   const handleDrag = (event: any, info: any) => {
-    // If we just exited fullscreen, reposition window centered under cursor
+    // If we just exited fullscreen, reposition window so cursor stays on title bar
     if (wasMaximizedRef.current) {
       wasMaximizedRef.current = false;
       
-      // Get cursor position
+      // Get current cursor position
       const cursorX = event.clientX || event.touches?.[0]?.clientX || 0;
       const cursorY = event.clientY || event.touches?.[0]?.clientY || 0;
       
-      // Center window under cursor (assume ~350px as half of min-width 700px)
-      const newX = cursorX - 350;
-      const newY = cursorY - 20;
+      // Use the stored percentage to calculate where on the restored window the cursor should be
+      // This keeps the cursor at the same relative position on the title bar
+      const windowWidth = windowWidthRef.current;
+      const offsetX = dragStartCursorRef.current.x * windowWidth;
+      
+      // Position window so cursor is at the same relative X position on the title bar
+      const newX = cursorX - offsetX;
+      const newY = cursorY - 20; // 20px = roughly middle of title bar height (40px)
       
       x.set(Math.max(0, newX));
       y.set(Math.max(0, newY));
       
+      // Update saved position
       savedPositionRef.current = { x: Math.max(0, newX), y: Math.max(0, newY) };
     }
   };
@@ -132,6 +154,11 @@ const WindowFrame = memo(({
 
   return (
     <motion.div
+      ref={(el) => {
+        if (el) {
+          windowWidthRef.current = el.offsetWidth || 700;
+        }
+      }}
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ 
         scale: 1, 
