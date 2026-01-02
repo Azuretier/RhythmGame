@@ -1,12 +1,6 @@
-// ============================================
-// FIXED WindowFrame Component
-// - Exit fullscreen when dragging the title bar
-// - Single click actions work on non-focused windows
-// ============================================
-
 import { motion } from "framer-motion";
 import { memo, useState, useRef } from "react";
-import { X, Square, ChevronDown } from "lucide-react";
+import { X, Minus, Square, ChevronDown } from "lucide-react";
 
 interface WindowPosition {
   x: number;
@@ -46,11 +40,8 @@ const WindowFrame = memo(({
 }: WindowFrameProps) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [hoveredButton, setHoveredButton] = useState<'close' | 'hide' | 'maximize' | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   
-  // Store the size before maximizing to restore position properly
   const savedPositionRef = useRef<WindowPosition>({ x: position.x, y: position.y });
-  const windowRef = useRef<HTMLDivElement>(null);
 
   const handleMaximize = () => {
     if (!isMaximized) {
@@ -67,74 +58,49 @@ const WindowFrame = memo(({
     }
   };
 
+  // Focus and perform action in one click
   const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     e.preventDefault();
+    // Focus first, then immediately perform action
     if (!isActive) {
       onFocus();
     }
     action();
   };
 
-  const handleDragStart = () => {
-    setIsDragging(true);
-    
-    // If maximized, exit fullscreen when starting to drag
-    if (isMaximized) {
-      setIsMaximized(false);
-      // Position window so the cursor is in the center of the title bar
-      // This mimics Windows/macOS behavior
-    }
-  };
-
-  const handleDragEnd = (e: any, info: any) => {
-    setIsDragging(false);
-    
-    // Update position with drag offset
-    const newX = position.x + info.offset.x;
-    const newY = position.y + info.offset.y;
-    
-    onPositionChange(newX, newY);
-    
-    // Snap to fullscreen if dragged to top edge
-    if (newY <= 0) {
-      savedPositionRef.current = { x: newX, y: 50 }; // Save a reasonable position
-      setIsMaximized(true);
-    }
-  };
-
-  // Calculate position when exiting fullscreen via drag
-  const getPosition = () => {
-    if (isMaximized && !isDragging) {
-      return { x: 0, y: 0 };
-    }
-    return { x: position.x, y: position.y };
-  };
-
-  const currentPos = getPosition();
-
   return (
     <motion.div
-      ref={windowRef}
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ 
         scale: 1, 
         opacity: 1,
+        x: isMaximized ? -position.x : 0,
+        y: isMaximized ? -position.y : 0,
       }}
       exit={{ scale: 0.9, opacity: 0 }}
       transition={{ duration: 0.15 }}
-      drag
+      drag={!isMaximized}
       dragMomentum={false}
-      dragListener={false} // We'll handle drag manually on title bar
+      onDragEnd={(e, info) => {
+        if (!isMaximized) {
+          onPositionChange(
+            position.x,
+            position.y,
+          );
+        }
+      }}
+      // Only focus on mousedown for the title bar drag area, not the whole window
       onMouseDown={(e) => {
+        // Don't prevent focus, but don't block button clicks
         if (!isActive) {
           onFocus();
         }
       }}
       style={{
-        position: isMaximized ? 'fixed' : 'absolute',
-        left: isMaximized ? 0 : position.x,
-        top: isMaximized ? 0 : position.y,
+        position: 'absolute',
+        left: position.x,
+        top: position.y,
         width: isMaximized ? '100vw' : 'auto',
         height: isMaximized ? 'calc(100vh - 64px)' : 'auto',
         zIndex: isActive ? 50 : 40,
@@ -152,29 +118,8 @@ const WindowFrame = memo(({
         ${isMaximized ? 'rounded-none' : 'rounded-xl'}
       `}
     >
-      {/* Title Bar - Draggable */}
-      <motion.div 
-        drag
-        dragMomentum={false}
-        dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-        dragElastic={0}
-        onDragStart={handleDragStart}
-        onDrag={(e, info) => {
-          // If was maximized, update position based on drag
-          if (!isMaximized) return;
-          
-          // Get cursor position for smooth transition out of fullscreen
-          const cursorX = (e as MouseEvent).clientX;
-          const cursorY = (e as MouseEvent).clientY;
-          
-          // Calculate new position - center the window under cursor
-          const windowWidth = windowRef.current?.offsetWidth || 700;
-          const newX = cursorX - windowWidth / 2;
-          const newY = cursorY - 20; // Offset for title bar
-          
-          onPositionChange(Math.max(0, newX), Math.max(0, newY));
-        }}
-        onDragEnd={handleDragEnd}
+      {/* Title Bar */}
+      <div 
         className={`
           ${isDarkMode ? 'bg-slate-900' : 'bg-slate-100'}
           pl-4 pr-0
@@ -271,9 +216,9 @@ const WindowFrame = memo(({
             />
           </button>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Content */}
+      {/* Content - Also handle focus on click */}
       <div 
         className={`
           p-6 
