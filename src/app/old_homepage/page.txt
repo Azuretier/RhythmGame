@@ -5,9 +5,6 @@ import { motion, animate, AnimatePresence } from "framer-motion"
 import { ThemeToggle } from '@/components/main/sunmoon';
 import RainEffect from '@/components/main/realistic-rain';
 
-// --- IMPORT YOUR DATA ---
-import { PROFILE_INFO, SNS_LINKS, PROJECTS } from "@/data/old_homepage/data";
-
 import {
   FaBirthdayCake, FaUserGraduate, FaPaperPlane,
   FaFolderOpen, FaShareAlt
