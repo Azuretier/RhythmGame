@@ -2,9 +2,9 @@ import React from 'react';
 import { Github, Youtube, Instagram, MessageSquare, ExternalLink } from 'lucide-react';
 
 const SNS_LINKS = [
-  { name: 'GitHub', icon: <Github />, url: 'https://github.com/azuret', color: 'hover:text-white' },
+  { name: 'GitHub', icon: <Github />, url: 'https://github.com/Azuretier', color: 'hover:text-white' },
   { name: 'YouTube', icon: <Youtube />, url: 'https://youtube.com/@azuret', color: 'hover:text-red-500' },
-  { name: 'Instagram', icon: <Instagram />, url: 'https://instagram.com/azuret', color: 'hover:text-pink-500' },
+  { name: 'Instagram', icon: <Instagram />, url: '#', color: 'hover:text-pink-500' },
   { name: 'Discord', icon: <MessageSquare />, url: '#', color: 'hover:text-indigo-400' },
 ];
 
