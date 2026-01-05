@@ -13,12 +13,22 @@ const nextConfig = {
         },
       ];
     },
-    webpack(config) {
+    webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.(glsl|vs|fs|vert|frag)$/,
       exclude: /node_modules/,
       use: ['raw-loader'],
     });
+    
+    // Handle discord.js modules that should only run on server
+    if (isServer) {
+      config.externals.push({
+        bufferutil: 'bufferutil',
+        'utf-8-validate': 'utf-8-validate',
+        'zlib-sync': 'zlib-sync',
+      });
+    }
+    
     return config;
   },
   eslint: {
