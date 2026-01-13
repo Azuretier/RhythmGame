@@ -7,7 +7,7 @@ export function normalizeDisplayName(displayName: string): string {
   return displayName
     .trim()
     .normalize('NFKC')
-    .toLocaleLowerCase();
+    .toLowerCase(); // Use toLowerCase() for consistent Unicode behavior across locales
 }
 
 /**

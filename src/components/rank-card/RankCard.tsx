@@ -17,7 +17,7 @@ export default function RankCard({
 }: RankCardProps) {
   // Calculate progress percentage
   const totalXpForLevel = xp + xpToNext;
-  const progressPercentage = (xp / totalXpForLevel) * 100;
+  const progressPercentage = totalXpForLevel > 0 ? (xp / totalXpForLevel) * 100 : 0;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">

@@ -83,7 +83,7 @@ Required fields:
 **Important**: We strongly recommend adding a `displayNameKey` field to your member documents for efficient and accurate lookups. This should be the normalized version of `displayName`:
 
 ```javascript
-displayNameKey = displayName.trim().normalize('NFKC').toLocaleLowerCase()
+displayNameKey = displayName.trim().normalize('NFKC').toLowerCase()
 ```
 
 ### Rank Cards Collection
@@ -119,7 +119,7 @@ The system properly handles unicode display names through:
 1. **URL Decoding**: `decodeURIComponent()`
 2. **Trimming**: `.trim()`
 3. **Normalization**: `.normalize('NFKC')`
-4. **Case folding**: `.toLocaleLowerCase()`
+4. **Case folding**: `.toLowerCase()`
 
 This ensures that names like "あずれ", "Azüré", or "𝓐𝔃𝓾𝓻𝓮" are handled correctly.
 

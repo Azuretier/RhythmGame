@@ -40,13 +40,15 @@ export default function RankCardPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
     const initializeRankCard = async () => {
       try {
         // Decode and normalize the display name
         const encodedName = params.user_discord_display_name;
         const decodedName = decodeURIComponent(encodedName);
         const displayNameOriginal = decodedName.trim().normalize('NFKC');
-        const displayNameKey = normalizeDisplayName(displayNameOriginal);
+        const displayNameKey = normalizeDisplayName(decodedName); // Normalize from decoded name
         const cardId = generateCardId(params.guild_id, displayNameKey);
 
         // Call ensure endpoint to create/update the rank card
@@ -66,7 +68,7 @@ export default function RankCardPage({ params }: PageProps) {
         // Subscribe to real-time updates
         const rankCardRef = doc(db, `guilds/${params.guild_id}/rankCards/${cardId}`);
         
-        const unsubscribe = onSnapshot(
+        unsubscribe = onSnapshot(
           rankCardRef,
           (snapshot) => {
             if (snapshot.exists()) {
@@ -84,8 +86,6 @@ export default function RankCardPage({ params }: PageProps) {
             setLoading(false);
           }
         );
-
-        return () => unsubscribe();
       } catch (err) {
         console.error('Error initializing rank card:', err);
         setError(err instanceof Error ? err.message : 'An unexpected error occurred');
@@ -94,6 +94,8 @@ export default function RankCardPage({ params }: PageProps) {
     };
 
     initializeRankCard();
+
+    return () => unsubscribe?.();
   }, [params.guild_id, params.user_discord_display_name]);
 
   // Show loading screen

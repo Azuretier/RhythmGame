@@ -9,7 +9,7 @@ interface Member {
   xp: number;
   rankName?: string;
   avatarUrl?: string;
-  avaterUrl?: string; // Support typo
+  avaterUrl?: string; // Support legacy typo in existing data
 }
 
 interface RankCard {
@@ -110,9 +110,11 @@ export async function POST(
     const memberData = memberDoc.data() as Member;
     
     // Calculate XP to next level (simple formula: level * 100)
-    const xpToNext = (memberData.level + 1) * 100 - memberData.xp;
+    // Ensure xpToNext is never negative
+    const xpToNext = Math.max(0, (memberData.level + 1) * 100 - memberData.xp);
     
-    // Support both avatarUrl and avaterUrl (typo)
+    // Support both avatarUrl and avaterUrl (legacy typo)
+    // Prefer avatarUrl if both are present
     const avatarUrl = memberData.avatarUrl || memberData.avaterUrl;
     
     const readyCard: RankCard = {
