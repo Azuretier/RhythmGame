@@ -81,6 +81,7 @@ export default function MessengerUI() {
 
   const handleNavigate = () => {
     if (routingIntent?.destination) {
+      // Use window.location for same-tab external navigation
       window.location.href = routingIntent.destination.url;
     }
   };

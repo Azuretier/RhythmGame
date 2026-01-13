@@ -41,7 +41,7 @@ export function parseIntent(input: string): IntentResult {
   }
 
   // Check each destination
-  for (const [key, dest] of Object.entries(destinations)) {
+  for (const dest of Object.values(destinations)) {
     const matched = dest.keywords.some((keyword) => {
       // Match if keyword is in the message
       return normalized.includes(keyword);

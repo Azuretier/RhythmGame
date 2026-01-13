@@ -116,8 +116,8 @@ const WebGLRenderer = memo(({ onLoaded }: WebGLRendererProps) => {
       if (rendererRef.current) {
         rendererRef.current.dispose();
 
-        if (container && rendererRef.current.domElement.parentNode === container) {
-          container.removeChild(rendererRef.current.domElement);
+        if (rendererRef.current.domElement.parentNode === container) {
+          rendererRef.current.domElement.remove();
         }
 
         rendererRef.current = null;
