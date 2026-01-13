@@ -35,39 +35,13 @@ export function parseIntent(userInput: string): IntentResult {
     unknown: 0,
   };
 
-  // Check X/Twitter keywords
-  INTENT_KEYWORDS.x.forEach((keyword) => {
-    if (input.includes(keyword)) {
-      scores.x += 1;
-    }
-  });
-
-  // Check YouTube keywords
-  INTENT_KEYWORDS.youtube.forEach((keyword) => {
-    if (input.includes(keyword)) {
-      scores.youtube += 1;
-    }
-  });
-
-  // Check Discord keywords
-  INTENT_KEYWORDS.discord.forEach((keyword) => {
-    if (input.includes(keyword)) {
-      scores.discord += 1;
-    }
-  });
-
-  // Check GitHub keywords
-  INTENT_KEYWORDS.github.forEach((keyword) => {
-    if (input.includes(keyword)) {
-      scores.github += 1;
-    }
-  });
-
-  // Check Instagram keywords
-  INTENT_KEYWORDS.instagram.forEach((keyword) => {
-    if (input.includes(keyword)) {
-      scores.instagram += 1;
-    }
+  // Calculate scores by checking keywords
+  Object.entries(INTENT_KEYWORDS).forEach(([destination, keywords]) => {
+    keywords.forEach((keyword) => {
+      if (input.includes(keyword)) {
+        scores[destination as Exclude<IntentDestination, "unknown">] += 1;
+      }
+    });
   });
 
   // Find the highest scoring destination
@@ -139,6 +113,7 @@ export function parseIntent(userInput: string): IntentResult {
   return {
     destination: "unknown",
     confidence: 0,
-    message: "I can help you find me on:\n• X (Twitter)\n• YouTube\n• Discord\n• GitHub\n• Instagram\n\nJust ask!",
+    message:
+      "I can help you find me on:\n• X (Twitter)\n• YouTube\n• Discord\n• GitHub\n• Instagram\n\nJust ask!",
   };
 }

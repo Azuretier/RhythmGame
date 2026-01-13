@@ -1,16 +1,18 @@
 "use client";
 
-import { memo } from "react";
+import { useEffect, memo } from "react";
 
 interface StaticBackgroundProps {
   onLoaded?: () => void;
 }
 
 const StaticBackground = memo(({ onLoaded }: StaticBackgroundProps) => {
-  // Trigger onLoaded immediately since it's static
-  if (onLoaded) {
-    setTimeout(onLoaded, 0);
-  }
+  // Call onLoaded after component mounts
+  useEffect(() => {
+    if (onLoaded) {
+      onLoaded();
+    }
+  }, [onLoaded]);
 
   return (
     <div
