@@ -77,3 +77,31 @@ npm run dev
 
 Visit `http://localhost:3000/azure-supporter` to use the role selection feature.
 
+## Rank Card Feature
+
+The rank card feature allows viewing member rank information in real-time with Unicode display name support.
+
+### Setup
+
+1. **Configure Firebase Admin SDK** (required for server-side Firestore writes):
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Navigate to Project Settings → Service Accounts
+   - Click "Generate New Private Key"
+   - Copy the entire JSON content
+   - Add it to your `.env` file as `FIREBASE_SERVICE_ACCOUNT_JSON` (single-line string)
+
+2. **Firestore Data Structure**:
+   - Members collection: `guilds/{guildId}/members`
+   - Members should have: `displayName`, `displayNameKey` (lowercase NFKC), `xp`, `level`, `rankName`, `avatarUrl` (or `avaterUrl`)
+   - Rank cards collection: `guilds/{guildId}/rankCards` (auto-generated)
+
+### Usage
+
+Visit: `/guilds/{guild_id}/rank-card/{user_discord_display_name}`
+
+The page will:
+- Decode and normalize Unicode display names
+- Query Firestore for matching members
+- Subscribe to real-time updates via `onSnapshot`
+- Display a modern glass-morphic rank card with XP progress
+
