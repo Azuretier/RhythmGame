@@ -26,8 +26,15 @@ const config: Config = {
         'instagram-icon-bg': "var(--instagram-icon-bg)",
       },
       animation: {
-      'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-    }
+        'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'shimmer': 'shimmer 2s infinite',
+      },
+      keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+      },
     },
     fontFamily: {
       pixel: ["var(--font-pixel)"], 
