@@ -17,7 +17,8 @@ interface HTMLCanvasElement {
   getContext(contextId: "webgpu"): GPUCanvasContext | null;
 }
 
-// WebGPU type definitions (minimal subset)
+// WebGL/WebGPU type definitions (minimal subset for compatibility)
+// Note: Currently using WebGL for rendering, WebGPU types included for future upgrade
 interface Navigator {
   gpu?: GPU;
 }

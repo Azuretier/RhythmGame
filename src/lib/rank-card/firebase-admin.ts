@@ -18,7 +18,7 @@ export function getAdminApp(): App {
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   
   if (!serviceAccountJson) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set');
+    throw new Error('Firebase Admin configuration is missing');
   }
 
   try {
