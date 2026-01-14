@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { UIVersion, VERSION_METADATA } from "@/lib/version/types";
+import { UIVersion, VERSION_METADATA, UI_VERSIONS } from "@/lib/version/types";
 import { MessageCircle, Heart } from "lucide-react";
 
 interface VersionSelectorProps {
@@ -58,7 +58,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
             </motion.p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {(['1.0.0', '1.0.1'] as UIVersion[]).map((version, index) => {
+              {UI_VERSIONS.map((version, index) => {
                 const metadata = VERSION_METADATA[version];
                 return (
                   <motion.button

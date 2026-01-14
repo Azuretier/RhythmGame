@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings, X } from "lucide-react";
-import { UIVersion, VERSION_METADATA } from "@/lib/version/types";
+import { UIVersion, VERSION_METADATA, UI_VERSIONS } from "@/lib/version/types";
 import { setSelectedVersion, getSelectedVersion } from "@/lib/version/storage";
 
 export default function VersionSwitcher() {
@@ -70,7 +70,7 @@ export default function VersionSwitcher() {
 
                 {/* Version options */}
                 <div className="p-6 space-y-3">
-                  {(['1.0.0', '1.0.1'] as UIVersion[]).map((version) => {
+                  {UI_VERSIONS.map((version, index) => {
                     const metadata = VERSION_METADATA[version];
                     const isActive = currentVersion === version;
 

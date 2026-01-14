@@ -2,11 +2,18 @@
  * Version storage utilities for localStorage and cookies
  */
 
-import { UIVersion } from './types';
+import { UIVersion, UI_VERSIONS } from './types';
 
 const STORAGE_KEY = 'azuret_app_version';
 const COOKIE_NAME = 'azuret_app_version';
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year in seconds
+
+/**
+ * Type guard to check if a string is a valid UIVersion
+ */
+function isValidUIVersion(value: string): value is UIVersion {
+  return UI_VERSIONS.includes(value as UIVersion);
+}
 
 /**
  * Get the selected UI version from storage
@@ -20,7 +27,7 @@ export function getSelectedVersion(): UIVersion | null {
   // Check localStorage
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === '1.0.0' || stored === '1.0.1') {
+    if (stored && isValidUIVersion(stored)) {
       return stored;
     }
   } catch (error) {
@@ -34,7 +41,7 @@ export function getSelectedVersion(): UIVersion | null {
       const [name, value] = cookie.trim().split('=');
       if (name === COOKIE_NAME) {
         const decoded = decodeURIComponent(value);
-        if (decoded === '1.0.0' || decoded === '1.0.1') {
+        if (isValidUIVersion(decoded)) {
           // Sync to localStorage
           localStorage.setItem(STORAGE_KEY, decoded);
           return decoded;
