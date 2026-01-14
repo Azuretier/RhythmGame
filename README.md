@@ -25,31 +25,35 @@ Your selection is saved for reference purposes, but you'll be prompted to select
 
 ## Features
 
-### 1. Multiplayer Score Attack Game (`/play`)
+### 1. Multiplayer Game (`/play`)
 
-A real-time multiplayer game where players compete to achieve the highest score within a time limit.
+A real-time multiplayer game with host/join functionality and synchronized gameplay.
 
 #### Key Features
-- **Room System**: Create or join game rooms with shareable room codes
-- **Real-time Multiplayer**: WebSocket-based communication via Socket.IO
-- **Live Scoreboard**: Real-time score updates for all players
-- **Synchronized Gameplay**: Countdown timer and synchronized game start
-- **Anti-cheat**: Server-side score validation and rate limiting
-- **Mobile-Friendly**: Responsive design works on all devices
+- **Room System**: Create or join game rooms with shareable 6-character room codes
+- **Real-time Multiplayer**: WebSocket-based communication using `ws` library
+- **Host/Join Flow**: Host controls game start, players mark themselves ready
+- **Live Player List**: See all connected players and their ready status
+- **Message Relay**: Room-scoped message broadcasting for game state
+- **Disconnect Handling**: Automatic host migration when host leaves
+- **Origin Validation**: Security through origin whitelist
+- **Separated Architecture**: Frontend on Vercel, WebSocket server on Railway
 
 #### How to Play
 1. Visit `/play` and enter your player name
 2. **Create Room**: Start a new game and share the 6-character room code with friends
 3. **Join Room**: Enter a room code to join an existing game
-4. **Lobby**: Wait for all players to join. Host can start the game when ready
-5. **Gameplay**: Click/tap as fast as you can to score points (60 seconds)
-6. **Leaderboard**: View final rankings and celebrate the winner!
+4. **Lobby**: Wait for all players to join and mark themselves ready
+5. **Host**: Start the game when all players are ready
+6. **Gameplay**: Implement custom game logic using the relay system
 
 #### Technical Details
-- **Server**: Custom Next.js server with Socket.IO integration
-- **Client**: React hooks for real-time game state management
-- **Security**: Rate limiting (max 10 events/second), server-side score aggregation
-- **State Management**: Room states (lobby → countdown → active → finished)
+- **Frontend**: Next.js on Vercel, connects via WebSocket client
+- **Backend**: Standalone WebSocket server using `ws`, deployable to Railway
+- **Protocol**: JSON messages with `type` field for routing
+- **Security**: Origin validation, room code validation, payload sanitization
+
+**📖 Deployment Guide**: See [MULTIPLAYER_DEPLOYMENT.md](./MULTIPLAYER_DEPLOYMENT.md) for step-by-step instructions on deploying to Vercel + Railway.
 
 ### 2. Interactive Homepage (`/`)
 
@@ -163,39 +167,134 @@ Your bot needs these permissions in the Discord server:
 # Install dependencies
 npm install
 
-# Run development server (with Socket.IO support)
+# Run Next.js development server
 npm run dev
+
+# Run multiplayer WebSocket server (separate terminal)
+npm run multiplayer
 
 # Build for production
 npm run build
 
-# Start production server
+# Start Next.js production server
 npm start
 ```
 
-The development and production servers now use a custom Next.js server with Socket.IO support for real-time multiplayer functionality.
-
 **Available Routes:**
 - `http://localhost:3000/` - Interactive homepage
-- `http://localhost:3000/play` - Multiplayer Score Attack game
+- `http://localhost:3000/play` - Multiplayer game with WebSocket
 - `http://localhost:3000/azure-supporter` - Discord role selection
 - `http://localhost:3000/current` - Portfolio page
 
+### Deployment Configuration
+
+The multiplayer system uses a **separated architecture** for optimal deployment:
+
+#### Architecture Overview
+- **Frontend (Next.js)**: Deploy to **Vercel** (or any static host)
+- **WebSocket Server**: Deploy to **Railway** (or any Node.js host)
+- **Communication**: Frontend connects to WebSocket server via `NEXT_PUBLIC_MULTIPLAYER_URL`
+
+#### Required Environment Variables
+
+**For Vercel (Frontend):**
+```env
+NEXT_PUBLIC_MULTIPLAYER_URL=wss://your-railway-app.railway.app
+```
+
+**For Railway (WebSocket Server):**
+```env
+PORT=3001  # Railway sets this automatically
+ALLOWED_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:3000
+```
+
+#### Local Development Setup
+
+1. **Start the WebSocket server** (in one terminal):
+   ```bash
+   npm run multiplayer
+   ```
+   Server runs on `ws://localhost:3001`
+
+2. **Set environment variable** for Next.js:
+   ```bash
+   # In .env.local
+   NEXT_PUBLIC_MULTIPLAYER_URL=ws://localhost:3001
+   ```
+
+3. **Start Next.js** (in another terminal):
+   ```bash
+   npm run dev
+   ```
+   Frontend runs on `http://localhost:3000`
+
+4. **Visit** `http://localhost:3000/play` to test multiplayer
+
+#### Deploying to Production
+
+**Step 1: Deploy WebSocket Server to Railway**
+
+1. Create a new project on [Railway](https://railway.app)
+2. Connect your GitHub repository
+3. Set the start command: `npm run multiplayer`
+4. Add environment variables:
+   ```
+   ALLOWED_ORIGINS=https://your-vercel-app.vercel.app,http://localhost:3000
+   ```
+5. Railway will automatically set the `PORT` variable
+6. Note your Railway URL (e.g., `your-app.railway.app`)
+
+**Step 2: Deploy Frontend to Vercel**
+
+1. Create a new project on [Vercel](https://vercel.com)
+2. Connect your GitHub repository
+3. Add environment variable:
+   ```
+   NEXT_PUBLIC_MULTIPLAYER_URL=wss://your-railway-app.railway.app
+   ```
+4. Deploy! Vercel will build and deploy your Next.js app
+
+**Step 3: Update Origins**
+
+After getting your Vercel URL, update Railway's `ALLOWED_ORIGINS`:
+```
+ALLOWED_ORIGINS=https://your-actual-vercel-url.vercel.app
+```
+
+#### Alternative Deployment Options
+
+**Single Server Deployment (Railway/VPS):**
+- Deploy both Next.js and WebSocket server on the same host
+- Use `npm start` for Next.js (includes old Socket.IO server)
+- Use `npm run multiplayer` for the new WebSocket server
+- Set `NEXT_PUBLIC_MULTIPLAYER_URL=ws://localhost:3001` or your domain
+
+**Docker Deployment:**
+```dockerfile
+# Dockerfile for WebSocket server
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3001
+CMD ["npm", "run", "multiplayer"]
+```
+
 ### Deployment Notes
 
-When deploying to production:
+**Platform Compatibility:**
+- ✅ **Vercel + Railway**: **Recommended** - Separated architecture, optimal performance
+- ✅ **Railway Only**: Single host for both frontend and WebSocket server
+- ✅ **VPS/Dedicated Server**: Full control, run both services
+- ✅ **AWS/Azure/GCP**: Container or serverless deployment
+- ✅ **Heroku**: Supported with custom buildpacks
 
-1. **Socket.IO Configuration**: The custom server (`server.ts`) is required for multiplayer functionality
-2. **Port Configuration**: Set `PORT` environment variable for custom port (default: 3000)
-3. **Node.js Runtime**: Ensure your hosting platform supports Node.js custom servers
-4. **WebSocket Support**: Verify your hosting platform supports WebSocket connections
-
-**Deployment Platforms:**
-- ✅ **Railway**: **Recommended** - One-click deploy, 24/7 uptime, WebSocket support ([See detailed guide](./RAILWAY_DEPLOYMENT.md))
-- ✅ **VPS/Dedicated Server**: Fully supported (run with `npm start`)
-- ✅ **Heroku**: Supported with custom server
-- ✅ **AWS/Azure/GCP**: Supported with containerization or Node.js runtime
-- ⚠️ **Vercel**: Multiplayer features require serverless WebSocket alternative
+**Important Notes:**
+1. Use `wss://` (not `ws://`) in production for secure WebSocket connections
+2. Ensure CORS/Origin validation is properly configured
+3. WebSocket server needs to listen on `0.0.0.0` for Railway
+4. Frontend and backend can be deployed independently
 
 **📖 Railway 24/7 Deployment Guide**: See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete Railway deployment instructions.
 
@@ -207,13 +306,17 @@ When deploying to production:
     /play              # Multiplayer game page
     /api               # API routes
   /components
-    /game              # Game UI components
+    /game              # Game UI components (legacy)
   /hooks
-    /useGameSocket.ts  # Socket.IO client hook
+    /useMultiplayer.ts # WebSocket client hook
+    /useGameSocket.ts  # Socket.IO client hook (legacy)
   /lib
-    /game              # Game logic and state management
+    /multiplayer       # Multiplayer room management
+    /game              # Game logic (legacy)
   /types
-    /game.ts           # TypeScript type definitions
+    /multiplayer.ts    # Multiplayer protocol types
+    /game.ts           # Game types (legacy)
+/multiplayer-server.ts # Standalone WebSocket server
 /server.ts             # Custom Next.js + Socket.IO server
 ```
 

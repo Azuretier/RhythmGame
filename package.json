@@ -6,10 +6,12 @@
     "dev": "ts-node --project tsconfig.server.json server.ts",
     "build": "next build",
     "start": "ts-node --project tsconfig.server.json server.ts",
-    "lint": "next lint"
+    "lint": "next lint",
+    "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",
+    "@types/ws": "^8.18.1",
     "bufferutil": "^4.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -28,6 +30,7 @@
     "tailwind-merge": "^2.5.4",
     "three": "^0.179.1",
     "utf-8-validate": "^6.0.6",
+    "ws": "^8.19.0",
     "zlib-sync": "^0.1.10"
   },
   "devDependencies": {
