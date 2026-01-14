@@ -47,7 +47,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   if (profile.roles.length > 0) {
     embed.addFields({
       name: '🎭 Custom Roles',
-      value: profile.roles.slice(0, 5).map(r => `\`${r}\``).join(', ') + (profile.roles.length > 5 ? '...' : ''),
+      value: profile.roles.slice(0, 5).map((r: string) => `\`${r}\``).join(', ') + (profile.roles.length > 5 ? '...' : ''),
       inline: false
     });
   }

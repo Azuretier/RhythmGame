@@ -5,8 +5,8 @@
 
 import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
-import type { UserProfile, UserRuleProgress, XPCooldown, GuildConfig } from '../../src/lib/discord-community/types';
-import { calculateLevel, getRankForLevel } from '../../src/lib/discord-community/types';
+import type { UserProfile, UserRuleProgress, XPCooldown, GuildConfig } from '../types/discord-community';
+import { calculateLevel, getRankForLevel } from '../types/discord-community';
 
 let adminApp: App | null = null;
 let adminDb: Firestore | null = null;

@@ -37,6 +37,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# discord bot build
+/apps/discord-bot/dist
+
 #/public/
 # Allow shaders directory
 #!/public/shaders/

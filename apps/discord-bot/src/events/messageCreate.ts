@@ -30,7 +30,7 @@ export default {
           allowedMentions: { repliedUser: false }
         });
 
-        if (result.rankChanged) {
+        if (result.rankChanged && message.channel.isSendable()) {
           await message.channel.send({
             content: `👑 ${message.author} has achieved the rank of **${result.profile!.rank.toUpperCase()}**! 👑`
           });

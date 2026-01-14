@@ -26,7 +26,7 @@ export class KVService {
         throw new Error(`Failed to fetch profile: ${response.statusText}`);
       }
 
-      return await response.json();
+      return await response.json() as UserProfile | null;
     } catch (error) {
       logger.error('Error fetching user profile', error);
       return null;
@@ -68,7 +68,7 @@ export class KVService {
         throw new Error(`Failed to fetch keys: ${response.statusText}`);
       }
 
-      const keys = await response.json();
+      const keys = await response.json() as string[];
       return keys.map((key: string) => key.replace('user-profile-', ''));
     } catch (error) {
       logger.error('Error fetching user IDs', error);
