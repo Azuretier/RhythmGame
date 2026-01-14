@@ -1,24 +1,25 @@
 /**
- * Version types for the application
+ * UI Version type definitions
  */
 
-export type AppVersion = '1.0.0' | '1.0.1';
+export const UI_VERSIONS = ['1.0.0', '1.0.1'] as const;
+export type UIVersion = typeof UI_VERSIONS[number];
 
-export interface VersionInfo {
-  id: AppVersion;
+export interface UIVersionMetadata {
+  version: UIVersion;
   name: string;
   description: string;
 }
 
-export const VERSIONS: Record<AppVersion, VersionInfo> = {
+export const VERSION_METADATA: Record<UIVersion, UIVersionMetadata> = {
   '1.0.0': {
-    id: '1.0.0',
-    name: 'Discord-like UI',
-    description: 'Interactive homepage with Discord-like messenger UI and GPU-rendered background'
+    version: '1.0.0',
+    name: 'Discord UI',
+    description: 'Discord-like messenger interface with social navigation',
   },
   '1.0.1': {
-    id: '1.0.1',
-    name: 'Patreon User UI',
-    description: 'Portfolio interface with advanced window management and customizable themes'
-  }
+    version: '1.0.1',
+    name: 'Patreon UI',
+    description: 'Patreon-style creator layout with profile and content feed',
+  },
 };

@@ -35,6 +35,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/public/
+#/public/
 # Allow shaders directory
-!/public/shaders/
+#!/public/shaders/

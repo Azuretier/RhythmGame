@@ -5,11 +5,16 @@ import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import LoadingScreen from "./LoadingScreen";
-import MessengerUI from "./MessengerUI";
-import VersionSelector from "@/components/version/VersionSelector";
-import FloatingVersionSwitcher from "@/components/version/FloatingVersionSwitcher";
-import { useVersion } from "@/lib/version/context";
-import type { AppVersion } from "@/lib/version/types";
+import VersionSelector from "../version/VersionSelector";
+import VersionSwitcher from "../version/VersionSwitcher";
+import { UIVersion } from "@/lib/version/types";
+import {
+  getSelectedVersion,
+  setSelectedVersion,
+  hasVersionSelection,
+} from "@/lib/version/storage";
+import V1_0_0_UI from "./v1.0.0/V1_0_0_UI";
+import V1_0_1_UI from "./v1.0.1/V1_0_1_UI";
 
 // Dynamically import background to avoid SSR issues
 const WebGLBackground = dynamic(() => import("./WebGLBackground"), {
@@ -24,11 +29,21 @@ export default function InteractiveHomepage() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Initializing");
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
+  const [selectedVersion, setSelectedVersionState] = useState<UIVersion | null>(
+    null
+  );
+  const [showVersionSelector, setShowVersionSelector] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     async function initialize() {
+      // Check if version is already selected
+      const version = getSelectedVersion();
+      if (version) {
+        setSelectedVersionState(version);
+      }
+
       // Detect GPU capability
       setStatus("Detecting capabilities");
       setProgress(20);
@@ -70,8 +85,10 @@ export default function InteractiveHomepage() {
       setTimeout(() => {
         setLoading(false);
         // Show version selector if no version is selected
-        if (!isVersionSelected) {
-          setShowVersionSelector(true);
+        if (!hasVersionSelection()) {
+          setTimeout(() => {
+            setShowVersionSelector(true);
+          }, 300);
         }
       }, 800);
     }
@@ -93,6 +110,23 @@ export default function InteractiveHomepage() {
     setBackgroundLoaded(true);
   };
 
+  const handleVersionSelect = (version: UIVersion) => {
+    setSelectedVersion(version);
+    setSelectedVersionState(version);
+    setShowVersionSelector(false);
+  };
+
+  const renderVersionUI = () => {
+    switch (selectedVersion) {
+      case "1.0.0":
+        return <V1_0_0_UI />;
+      case "1.0.1":
+        return <V1_0_1_UI />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       {/* Background shader */}
@@ -103,18 +137,16 @@ export default function InteractiveHomepage() {
         {loading && <LoadingScreen progress={progress} status={status} />}
       </AnimatePresence>
 
-      {/* Version selector - shown after loading if no version selected */}
-      <AnimatePresence mode="wait">
-        {!loading && showVersionSelector && (
-          <VersionSelector onSelect={handleVersionSelect} />
-        )}
-      </AnimatePresence>
+      {/* Version selector (first time only) */}
+      {!loading && showVersionSelector && (
+        <VersionSelector onSelect={handleVersionSelect} />
+      )}
 
-      {/* Main messenger UI - shown if v1.0.0 is selected or already selected */}
-      {!loading && !showVersionSelector && currentVersion === '1.0.0' && (
+      {/* Main UI based on selected version */}
+      {!loading && !showVersionSelector && selectedVersion && (
         <>
-          <MessengerUI />
-          <FloatingVersionSwitcher />
+          {renderVersionUI()}
+          <VersionSwitcher />
         </>
       )}
     </>
