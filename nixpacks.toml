@@ -1,0 +1,21 @@
+# Nixpacks configuration for Railway deployment
+# Optimized for Next.js + Socket.IO custom server
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "python3"]
+
+[phases.install]
+cmds = [
+  "npm ci --prefer-offline --no-audit"
+]
+
+[phases.build]
+cmds = [
+  "npm run build"
+]
+
+[start]
+cmd = "npm start"
+
+[variables]
+NODE_ENV = "production"

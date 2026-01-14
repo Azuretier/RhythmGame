@@ -179,10 +179,13 @@ When deploying to production:
 4. **WebSocket Support**: Verify your hosting platform supports WebSocket connections
 
 **Deployment Platforms:**
+- ✅ **Railway**: **Recommended** - One-click deploy, 24/7 uptime, WebSocket support ([See detailed guide](./RAILWAY_DEPLOYMENT.md))
 - ✅ **VPS/Dedicated Server**: Fully supported (run with `npm start`)
-- ✅ **Heroku/Railway**: Supported with custom server
-- ✅ **Vercel**: Multiplayer features require serverless WebSocket alternative
+- ✅ **Heroku**: Supported with custom server
 - ✅ **AWS/Azure/GCP**: Supported with containerization or Node.js runtime
+- ⚠️ **Vercel**: Multiplayer features require serverless WebSocket alternative
+
+**📖 Railway 24/7 Deployment Guide**: See [RAILWAY_DEPLOYMENT.md](./RAILWAY_DEPLOYMENT.md) for complete Railway deployment instructions.
 
 ### Project Structure
 
