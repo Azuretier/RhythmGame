@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import type {
-  ServerToClientEvents,
-  ClientToServerEvents,
-  Player,
+import {
   RoomState,
-  ScoreEvent,
+  type ServerToClientEvents,
+  type ClientToServerEvents,
+  type Player,
+  type ScoreEvent,
 } from '@/types/game';
 
 type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;

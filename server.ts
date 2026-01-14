@@ -121,15 +121,21 @@ app.prepare().then(() => {
 
         // Emit game started after countdown
         setTimeout(() => {
-          io.to(roomId).emit('game:started');
-          io.to(roomId).emit('room:state-changed', 'active');
+          const currentRoom = gameManager.getRoom(roomId);
+          if (currentRoom) {
+            io.to(roomId).emit('game:started');
+            io.to(roomId).emit('room:state-changed', currentRoom.state);
+          }
         }, 3000);
 
         // Emit game finished after game duration
         setTimeout(() => {
-          const leaderboard = gameManager.getLeaderboard(roomId);
-          io.to(roomId).emit('game:finished', leaderboard);
-          io.to(roomId).emit('room:state-changed', 'finished');
+          const currentRoom = gameManager.getRoom(roomId);
+          if (currentRoom) {
+            const leaderboard = gameManager.getLeaderboard(roomId);
+            io.to(roomId).emit('game:finished', leaderboard);
+            io.to(roomId).emit('room:state-changed', currentRoom.state);
+          }
         }, (3 + room.gameDuration) * 1000);
 
         console.log(`Game started in room ${roomId}`);
