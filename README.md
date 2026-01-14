@@ -1,12 +1,44 @@
-# azuret.net
+# Azuret.me
+
 様々なページあるので現在の用途を説明.
 Explaining current situation below since there are several pages.
+
 ```cmd
+azuret.net/: Interactive homepage with Discord-like messenger UI and GPU-rendered background
 azuret.net/current: Storing my portfolio (currently in working) 現在制作中（わら）ポートフォリオだぅ
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
+azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system with real-time Firebase data
 ```
 
-## Discord Role Selection Setup
+## Features
+
+### 1. Interactive Homepage (`/`)
+
+The homepage features a modern interactive experience with:
+
+- **GPU-Accelerated Background**: WebGL shader rendering with atmospheric effects, city silhouettes, and fog
+- **Loading Screen**: Smooth animated loading experience with progress indicators
+- **Discord-like Messenger UI**: Chat interface where you can interact with Azur
+- **Intent Router**: Type messages to find social media links (X, YouTube, Discord, GitHub, Instagram)
+
+**Customizing Social Links**: Edit `/src/lib/intent/parser.ts` to customize your social media links.
+
+**Documentation**: See [HOMEPAGE_GUIDE.md](./HOMEPAGE_GUIDE.md) for detailed setup and customization instructions.
+
+### 2. Discord Rank Card System
+
+Display real-time Discord rank cards for server members:
+
+- **Real-time Updates**: Firebase Firestore integration for live data
+- **Smart Matching**: Handles member lookup with normalization
+- **Beautiful UI**: Glass-morphism design with gradients
+- **Unique URLs**: Each member gets a persistent rank card URL
+
+**URL Format**: `/guilds/[guild_id]/rank-card/[display_name]`
+
+**Documentation**: See [RANK_CARD_SETUP.md](./RANK_CARD_SETUP.md) for setup instructions.
+
+### 3. Discord Role Selection (`/azure-supporter`)
 
 The `/azure-supporter` page allows users to select EN or JP roles which are synced to your Discord server.
 
