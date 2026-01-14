@@ -4,7 +4,7 @@
 Explaining current situation below since there are several pages.
 
 ```cmd
-azuret.net/: Interactive homepage with Discord-like messenger UI and GPU-rendered background
+azuret.net/: Interactive homepage with UI version selection (Discord-like or Patreon-style)
 azuret.net/current: Storing my portfolio (currently in working) 現在制作中（わら）ポートフォリオだぅ
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
 azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system with real-time Firebase data
@@ -14,16 +14,34 @@ azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system 
 
 ### 1. Interactive Homepage (`/`)
 
-The homepage features a modern interactive experience with:
+The homepage features a modern interactive experience with **user-selectable UI versions**:
 
+#### UI Version Selection
+- **v1.0.0 - Discord UI**: Discord-like messenger interface with intent-based social navigation
+- **v1.0.1 - Patreon UI**: Patreon-style creator layout with profile card and content feed
+- **First Visit**: Choose your preferred UI version after the loading screen
+- **Persistent**: Your choice is saved and automatically loaded on return visits
+- **Switchable**: Change versions anytime using the floating settings button
+
+**Documentation**: See [VERSION_SELECTION_GUIDE.md](./VERSION_SELECTION_GUIDE.md) for details.
+
+#### Common Features (All Versions)
 - **GPU-Accelerated Background**: WebGL shader rendering with atmospheric effects, city silhouettes, and fog
 - **Loading Screen**: Smooth animated loading experience with progress indicators
+- **Modern Design**: Glassmorphism UI with gradients and animations
+
+#### v1.0.0 - Discord UI
 - **Discord-like Messenger UI**: Chat interface where you can interact with Azur
 - **Intent Router**: Type messages to find social media links (X, YouTube, Discord, GitHub, Instagram)
 
 **Customizing Social Links**: Edit `/src/lib/intent/parser.ts` to customize your social media links.
 
 **Documentation**: See [HOMEPAGE_GUIDE.md](./HOMEPAGE_GUIDE.md) for detailed setup and customization instructions.
+
+#### v1.0.1 - Patreon UI
+- **Profile Card**: Avatar, bio, stats, and support button
+- **Content Feed**: Recent posts with likes and engagement
+- **Social Links**: Quick access to all social media platforms
 
 ### 2. Discord Rank Card System
 
