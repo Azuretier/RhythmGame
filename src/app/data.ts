@@ -14,7 +14,7 @@ export const AZURET_DATA = {
   role: "Full-stack Developer & Digital Architect",
   discord: {
     tag: "daichi_a",
-    url: "https://discord.gg/z5Q2MSFWuu"
+    url: "https://discord.gg/wPaRjH76"
   },
   socials: [
     { 
@@ -27,7 +27,7 @@ export const AZURET_DATA = {
     { 
       name: 'YouTube', 
       icon: Youtube, 
-      url: 'https://youtube.com/@azuret', 
+      url: 'https://youtube.com/@azuretya', 
       color: 'hover:text-red-500',
       username: '@Azuret'
     },
