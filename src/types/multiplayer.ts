@@ -118,6 +118,11 @@ export interface ErrorMessage {
   code?: string;
 }
 
+export interface ConnectedMessage {
+  type: 'connected';
+  playerId: string;
+}
+
 export type ServerMessage =
   | RoomCreatedMessage
   | JoinedRoomMessage
@@ -127,7 +132,8 @@ export type ServerMessage =
   | PlayerReadyMessage
   | GameStartedMessage
   | RelayedMessage
-  | ErrorMessage;
+  | ErrorMessage
+  | ConnectedMessage;
 
 // Configuration
 export const MULTIPLAYER_CONFIG = {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import type {
+import {
   ClientMessage,
   ServerMessage,
   MultiplayerPlayer,
@@ -65,9 +65,8 @@ export function useMultiplayer(wsUrl?: string): UseMultiplayerReturn {
 
       switch (message.type) {
         case 'connected':
-          // Special case: server sends player ID on connection
-          setPlayerId((message as any).playerId);
-          console.log('Connected with player ID:', (message as any).playerId);
+          setPlayerId(message.playerId);
+          console.log('Connected with player ID:', message.playerId);
           break;
 
         case 'room_created':

@@ -318,7 +318,7 @@ const server = createServer((req, res) => {
 // Create WebSocket server
 const wss = new WebSocketServer({ 
   server,
-  verifyClient: (info) => {
+  verifyClient: (info: { req: IncomingMessage; origin: string; secure: boolean }) => {
     const isValid = validateOrigin(info.req);
     if (!isValid) {
       console.log(`Rejected connection from origin: ${info.req.headers.origin}`);
@@ -334,7 +334,8 @@ wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
   console.log(`Player ${playerId} connected from ${request.socket.remoteAddress}`);
 
   // Send player ID to client
-  ws.send(JSON.stringify({ type: 'connected', playerId }));
+  const connectedMsg: ServerMessage = { type: 'connected', playerId };
+  ws.send(JSON.stringify(connectedMsg));
 
   ws.on('message', (data: Buffer) => {
     try {
