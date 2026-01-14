@@ -2,7 +2,7 @@
 # Optimized for Next.js + Socket.IO custom server
 
 [phases.setup]
-nixPkgs = ["nodejs_20", "python3"]
+nixPkgs = ["nodejs_20", "python3", "gcc", "gnumake"]
 
 [phases.install]
 cmds = [
