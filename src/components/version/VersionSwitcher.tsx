@@ -102,7 +102,7 @@ export default function VersionSwitcher() {
                               {metadata.description}
                             </p>
                             <span className="text-xs text-gray-500 font-mono mt-2 block">
-                              v{metadata.version}
+                              v{metadata.id}
                             </span>
                           </div>
                         </div>

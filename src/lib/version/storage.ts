@@ -108,3 +108,8 @@ export function clearSelectedVersion(): void {
     console.warn('Failed to clear cookie:', error);
   }
 }
+
+/**
+ * Alias for setSelectedVersion for backward compatibility
+ */
+export const setStoredVersion = setSelectedVersion;

@@ -91,7 +91,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
 
                       {/* Version */}
                       <span className="text-sm text-gray-500 font-mono">
-                        v{metadata.version}
+                        v{metadata.id}
                       </span>
 
                       {/* Description */}
