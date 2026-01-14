@@ -31,7 +31,7 @@ interface RankCard {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { guild_id: string } }
+  { params }: { params: Promise<{ guild_id: string }> }
 ) {
   try {
     const { displayNameOriginal } = await request.json();
@@ -43,7 +43,7 @@ export async function POST(
       );
     }
 
-    const guildId = params.guild_id;
+    const { guild_id: guildId } = await params;
     const displayNameKey = normalizeDisplayName(displayNameOriginal);
     const cardId = generateCardId(guildId, displayNameKey);
 
