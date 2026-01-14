@@ -5,12 +5,7 @@ export default function RankCardLoading() {
         {/* Glass card with shimmer effect */}
         <div className="relative overflow-hidden rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl">
           {/* Animated gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" 
-               style={{
-                 backgroundSize: '200% 100%',
-                 animation: 'shimmer 2s infinite',
-               }}
-          />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
           
           {/* Content */}
           <div className="relative p-8">
@@ -46,21 +41,6 @@ export default function RankCardLoading() {
           </p>
         </div>
       </div>
-      
-      <style jsx>{`
-        @keyframes shimmer {
-          0% {
-            background-position: -200% 0;
-          }
-          100% {
-            background-position: 200% 0;
-          }
-        }
-        
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-      `}</style>
     </div>
   );
 }
