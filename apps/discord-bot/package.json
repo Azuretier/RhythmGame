@@ -1,0 +1,35 @@
+{
+  "name": "@azuret/discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot for Azure Community with XP tracking, role management, and Firestore integration",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "deploy-commands": "tsx src/deploy-commands.ts"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "community",
+    "xp",
+    "leveling"
+  ],
+  "author": "Azure Community",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^13.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
