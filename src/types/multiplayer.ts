@@ -56,7 +56,7 @@ export interface StartGameMessage {
 
 export interface RelayMessage {
   type: 'relay';
-  payload: any;
+  payload: any; // Intentionally generic - games can send custom data structures
 }
 
 export type ClientMessage =
@@ -109,7 +109,7 @@ export interface GameStartedMessage {
 export interface RelayedMessage {
   type: 'relayed';
   fromPlayerId: string;
-  payload: any;
+  payload: any; // Intentionally generic - games can send custom data structures
 }
 
 export interface ErrorMessage {

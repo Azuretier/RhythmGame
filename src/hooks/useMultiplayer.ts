@@ -243,6 +243,7 @@ export function useMultiplayer(wsUrl?: string): UseMultiplayerReturn {
 
   /**
    * Send a relay message to other players in the room
+   * Payload can be any game-specific data structure
    */
   const sendRelay = useCallback((payload: any) => {
     sendMessage({

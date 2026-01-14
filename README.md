@@ -52,8 +52,8 @@ A real-time multiplayer game with host/join functionality and synchronized gamep
 - **Backend**: Standalone WebSocket server using `ws`, deployable to Railway
 - **Protocol**: JSON messages with `type` field for routing
 - **Security**: Origin validation, room code validation, payload sanitization
-- **Security**: Rate limiting (max 10 events/second), server-side score aggregation
-- **State Management**: Room states (lobby → countdown → active → finished)
+
+**📖 Deployment Guide**: See [MULTIPLAYER_DEPLOYMENT.md](./MULTIPLAYER_DEPLOYMENT.md) for step-by-step instructions on deploying to Vercel + Railway.
 
 ### 2. Interactive Homepage (`/`)
 
