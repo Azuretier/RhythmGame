@@ -6,6 +6,7 @@ import { UIVersion, DEFAULT_VERSION } from './types';
 
 const STORAGE_KEY = 'azuret_ui_version';
 const COOKIE_NAME = 'azuret_ui_version';
+const COOKIE_MAX_AGE = 31536000; // 1 year in seconds
 
 /**
  * Get the selected version from localStorage
@@ -38,7 +39,7 @@ export function setSelectedVersion(version: UIVersion): void {
   try {
     localStorage.setItem(STORAGE_KEY, version);
     // Also set a cookie for SSR/initial routing
-    document.cookie = `${COOKIE_NAME}=${version}; path=/; max-age=31536000; SameSite=Lax`;
+    document.cookie = `${COOKIE_NAME}=${version}; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
   } catch (error) {
     console.error('Error saving version:', error);
   }

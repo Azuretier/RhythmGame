@@ -15,7 +15,6 @@ interface Post {
 
 export default function PatreonUI() {
   const destinations = getAvailableDestinations();
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const posts: Post[] = [
     {

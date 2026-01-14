@@ -4,7 +4,7 @@
 Explaining current situation below since there are several pages.
 
 ```cmd
-azuret.net/: Interactive homepage with Discord-like messenger UI and GPU-rendered background
+azuret.net/: Interactive homepage with customizable UI versions and GPU-rendered background
 azuret.net/current: Storing my portfolio (currently in working) 現在制作中（わら）ポートフォリオだぅ
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
 azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system with real-time Firebase data
@@ -14,12 +14,16 @@ azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system 
 
 ### 1. Interactive Homepage (`/`)
 
-The homepage features a modern interactive experience with:
+The homepage features a modern interactive experience with customizable UI versions:
 
+- **Version Selection System**: Choose between multiple UI versions on first visit
+  - **v1.0.0 - Discord-like UI**: Interactive messenger interface with Discord-inspired design
+  - **v1.0.1 - Patreon User UI**: Clean and elegant Patreon-inspired user interface
 - **GPU-Accelerated Background**: WebGL shader rendering with atmospheric effects, city silhouettes, and fog
 - **Loading Screen**: Smooth animated loading experience with progress indicators
-- **Discord-like Messenger UI**: Chat interface where you can interact with Azur
-- **Intent Router**: Type messages to find social media links (X, YouTube, Discord, GitHub, Instagram)
+- **Version Switcher**: Mobile-friendly floating button to switch between UI versions anytime
+- **Persistent Selection**: Your UI version choice is saved in localStorage and cookies
+- **Intent Router** (v1.0.0): Type messages to find social media links (X, YouTube, Discord, GitHub, Instagram)
 
 **Customizing Social Links**: Edit `/src/lib/intent/parser.ts` to customize your social media links.
 
