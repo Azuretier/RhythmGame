@@ -8,6 +8,7 @@ import LoadingScreen from "./LoadingScreen";
 import VersionSelector from "../version/VersionSelector";
 import VersionSwitcher from "../version/VersionSwitcher";
 import { UIVersion } from "@/lib/version/types";
+import { useVersion } from "@/lib/version/context";
 import {
   getSelectedVersion,
   setSelectedVersion,
@@ -32,7 +33,6 @@ export default function InteractiveHomepage() {
   const [selectedVersion, setSelectedVersionState] = useState<UIVersion | null>(
     null
   );
-  const [showVersionSelector, setShowVersionSelector] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -94,8 +94,14 @@ export default function InteractiveHomepage() {
     }
   }, [backgroundLoaded, progress, isVersionSelected]);
 
-  const handleVersionSelect = (version: AppVersion) => {
+  const handleVersionSelect = (version: UIVersion) => {
+    // Persist selection via storage
+    setSelectedVersion(version);
+    // Update local state
+    setSelectedVersionState(version);
+    // Update context
     setVersion(version);
+    // Hide the selector
     setShowVersionSelector(false);
     
     // Route to appropriate page based on version
@@ -108,12 +114,6 @@ export default function InteractiveHomepage() {
   const handleBackgroundLoaded = () => {
     console.log("Background loaded");
     setBackgroundLoaded(true);
-  };
-
-  const handleVersionSelect = (version: UIVersion) => {
-    setSelectedVersion(version);
-    setSelectedVersionState(version);
-    setShowVersionSelector(false);
   };
 
   const renderVersionUI = () => {
