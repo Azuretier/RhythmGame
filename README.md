@@ -10,6 +10,18 @@ azuret.net/azure-supporter: my discord bot developing page with role selection é
 azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system with real-time Firebase data
 ```
 
+## Version Selection
+
+When you first visit the homepage, you'll be presented with a version selector after the loading screen. You can choose between:
+
+- **v1.0.0 - Discord-like UI**: Interactive homepage with Discord-like messenger UI and GPU-rendered background
+- **v1.0.1 - Patreon User UI**: Portfolio interface with advanced window management and customizable themes
+
+Your selection is saved in localStorage and will be remembered for future visits. You can change your selected version at any time:
+
+- On the **Discord-like UI** (v1.0.0): Click the floating settings button in the bottom-right corner
+- On the **Patreon User UI** (v1.0.1): Open the Settings window and use the Version Selection section
+
 ## Features
 
 ### 1. Interactive Homepage (`/`)

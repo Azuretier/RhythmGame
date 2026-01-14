@@ -11,6 +11,9 @@ import RainEffect from '@/components/main/realistic-rain';
 import WindowFrame from "@/components/portfolio/WindowFrame";
 import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
 import { TerminalLineType, TRANSLATIONS, SNS_LINKS, MUSIC_TRACKS, THEMES, PROFILE_INFO, DISCORD_SERVERS, PROJECTS, VISITOR_DATA, NEWS_HEADLINES, AZURE_DOCS, BLOG_POSTS, TERMINAL_COMMANDS } from "@/components/portfolio/data";
+import { useVersion } from '@/lib/version/context';
+import { VERSIONS, type AppVersion } from '@/lib/version/types';
+import { useRouter } from 'next/navigation';
 
 // --- SETTINGS CONTEXT ---
 interface SettingsContextType {
@@ -1369,6 +1372,83 @@ const AzureDocsWindow = memo(({ theme, isDarkMode }: { theme: any; isDarkMode: b
   );
 });
 
+// Version Switcher Section Component
+const VersionSwitcherSection = memo(({ theme, isDarkMode }: { theme: any; isDarkMode: boolean }) => {
+  const router = useRouter();
+  const { currentVersion, setVersion } = useVersion();
+
+  const handleVersionChange = (version: AppVersion) => {
+    setVersion(version);
+    
+    // Navigate to the appropriate page
+    if (version === '1.0.0') {
+      router.push('/');
+    } else if (version === '1.0.1') {
+      // Already on /current, just reload or stay
+      window.location.reload();
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <h3 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'} flex items-center gap-2`}>
+        <Layers className="text-cyan-400" size={24} />
+        Version Selection
+      </h3>
+      
+      <div className="grid grid-cols-1 gap-3">
+        {Object.values(VERSIONS).map((version) => {
+          const isSelected = currentVersion === version.id;
+          
+          return (
+            <button
+              key={version.id}
+              onClick={() => handleVersionChange(version.id)}
+              className={`
+                ${isDarkMode ? 'bg-slate-900/50' : 'bg-slate-100'} 
+                p-4 rounded-lg border transition-all text-left
+                ${isSelected 
+                  ? `border-2 ${isDarkMode ? 'border-cyan-400' : 'border-cyan-600'} shadow-lg`
+                  : `${isDarkMode ? 'border-white/10 hover:border-white/30' : 'border-slate-200 hover:border-slate-300'}`
+                }
+              `}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-cyan-400 font-mono font-bold text-sm">
+                    v{version.id}
+                  </span>
+                  {isSelected && (
+                    <div className="flex items-center gap-1 bg-cyan-500/20 px-2 py-0.5 rounded-full">
+                      <Check size={12} className="text-cyan-400" />
+                      <span className="text-cyan-400 text-xs font-medium">Active</span>
+                    </div>
+                  )}
+                </div>
+                {!isSelected && (
+                  <ArrowRight className={isDarkMode ? 'text-white/40' : 'text-slate-400'} size={18} />
+                )}
+              </div>
+              <h4 className={`${isDarkMode ? 'text-white' : 'text-slate-900'} font-bold mb-1`}>
+                {version.name}
+              </h4>
+              <p className={`${isDarkMode ? 'text-white/60' : 'text-slate-600'} text-sm`}>
+                {version.description}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+      
+      <p className={`${isDarkMode ? 'text-gray-500' : 'text-slate-400'} text-xs`}>
+        Changing the version will reload the page with the selected interface.
+      </p>
+    </div>
+  );
+});
+
+VersionSwitcherSection.displayName = 'VersionSwitcherSection';
+
 // Settings Window with all functional controls (UPDATED VERSION)
 const SettingsWindow = memo(({ theme }: { theme: any }) => {
   const settings = useSettings();
@@ -1575,6 +1655,9 @@ const SettingsWindow = memo(({ theme }: { theme: any }) => {
           />
         </div>
       </div>
+
+      {/* Version Selection Section */}
+      <VersionSwitcherSection theme={theme} isDarkMode={settings.isDarkMode} />
 
       {/* System Section */}
       <div className="space-y-4">

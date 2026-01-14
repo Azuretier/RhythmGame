@@ -4,6 +4,7 @@ import "./globals.css"; //apply style
 import React from 'react'
 
 import Provider from './provider';
+import { VersionProvider } from '@/lib/version/context';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -36,9 +37,11 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Provider>
-          {children}
-        </Provider>
+        <VersionProvider>
+          <Provider>
+            {children}
+          </Provider>
+        </VersionProvider>
       </body>
     </html>
   );
