@@ -29,6 +29,10 @@ export interface RoomStateData {
   maxPlayers: number;
 }
 
+export interface PongMessage {
+  type: 'pong';
+}
+
 // Client to Server Messages
 export interface CreateRoomMessage {
   type: 'create_room';
@@ -60,6 +64,7 @@ export interface RelayMessage {
 }
 
 export type ClientMessage =
+  | PongMessage
   | CreateRoomMessage
   | JoinRoomMessage
   | LeaveRoomMessage

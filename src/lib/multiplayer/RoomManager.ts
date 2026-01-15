@@ -2,7 +2,8 @@
 export interface Player {
   id: string;
   name: string;
-  ready: boolean;
+  isHost: boolean;
+  isReady: boolean;
   connected: boolean;
   lastSeen: number;
 }
@@ -14,13 +15,15 @@ export interface Room {
   status: 'waiting' | 'playing' | 'finished';
   createdAt: number;
   gameStartedAt?: number;
+  maxPlayers: number;
 }
 
 export interface RoomState {
-  code: string;
+  roomCode: string;
   hostId: string;
   players: Player[];
-  status: string;
+  phase: 'lobby' | 'ready' | 'playing' | 'finished';
+  maxPlayers: number;
 }
 
 /**
@@ -100,8 +103,9 @@ export class MultiplayerRoomManager {
     
     const player: Player = {
       id: playerId,
-      name: (playerName || 'Player').slice(0, 20), // Limit name length
-      ready: false,
+      name: (playerName || 'Player').slice(0, 20),
+      isHost: true, // Add this - creator is always host
+      isReady: false,
       connected: true,
       lastSeen: now,
     };
@@ -112,6 +116,7 @@ export class MultiplayerRoomManager {
       players: [player],
       status: 'waiting',
       createdAt: now,
+      maxPlayers: 2,
     };
 
     this.rooms.set(roomCode, room);
@@ -154,7 +159,8 @@ export class MultiplayerRoomManager {
     const player: Player = {
       id: playerId,
       name: (playerName || 'Player').slice(0, 20),
-      ready: false,
+      isHost: false, // Add this - joiners are not host
+      isReady: false,
       connected: true,
       lastSeen: Date.now(),
     };
@@ -184,8 +190,10 @@ export class MultiplayerRoomManager {
     player.lastSeen = Date.now();
 
     // Update host if needed
-    if (room.hostId === oldPlayerId) {
-      room.hostId = newPlayerId;
+    if (room.hostId === oldPlayerId && room.players.length > 0) {
+      const newHost = room.players[0];
+      room.hostId = newHost.id;
+      newHost.isHost = true; // Add this - mark new host
     }
 
     // Update mapping
@@ -281,7 +289,7 @@ export class MultiplayerRoomManager {
       return { success: false, error: 'プレイヤーが見つかりません' };
     }
 
-    player.ready = ready;
+    player.isReady = ready;
     player.lastSeen = Date.now();
     return { success: true };
   }
@@ -308,7 +316,7 @@ export class MultiplayerRoomManager {
       return { success: false, error: '2人のプレイヤーが必要です' };
     }
 
-    const notReadyPlayers = room.players.filter(p => !p.ready);
+    const notReadyPlayers = room.players.filter(p => !p.isReady);
     if (notReadyPlayers.length > 0) {
       return { success: false, error: '全員が準備完了する必要があります' };
     }
@@ -338,7 +346,7 @@ export class MultiplayerRoomManager {
     room.status = 'waiting';
     room.gameStartedAt = undefined;
     room.players.forEach(p => {
-      p.ready = false;
+      p.isReady = false;
     });
 
     return true;
@@ -355,13 +363,18 @@ export class MultiplayerRoomManager {
     }
 
     return {
-      code: room.code,
+      roomCode: room.code,
       hostId: room.hostId,
       players: room.players.map(p => ({
-        ...p,
-        // Don't expose lastSeen to clients
+        id: p.id,
+        name: p.name,
+        isHost: p.isHost,
+        isReady: p.isReady,
+        connected: p.connected,
+        lastSeen: p.lastSeen,
       })),
-      status: room.status,
+      phase: room.status as 'lobby' | 'ready' | 'playing' | 'finished',
+      maxPlayers: room.maxPlayers,
     };
   }
 

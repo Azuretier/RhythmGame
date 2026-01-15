@@ -162,7 +162,7 @@ function handleMessage(playerId: string, data: string): void {
         if (roomState) {
           sendToPlayer(playerId, {
             type: 'room_state',
-            roomState,
+            roomState: roomState as any,
           });
         }
 
@@ -217,7 +217,11 @@ function handleMessage(playerId: string, data: string): void {
           message.roomCode,
           {
             type: 'player_joined',
-            player: result.player!,
+            player: {
+              ...result.player!,
+              isHost: result.player!.isHost ?? false,
+              isReady: result.player!.isReady ?? false,
+            },
           },
           playerId
         );
@@ -227,7 +231,7 @@ function handleMessage(playerId: string, data: string): void {
         if (updatedState) {
           broadcastToRoom(message.roomCode, {
             type: 'room_state',
-            roomState: updatedState,
+            roomState: updatedState as any,
           });
         }
 
@@ -270,7 +274,7 @@ function handleMessage(playerId: string, data: string): void {
           type: 'reconnected',
           roomCode: room.code,
           playerId,
-          roomState,
+          roomState: roomState as any,
           reconnectToken: newReconnectToken,
         } as any);
 
@@ -298,7 +302,7 @@ function handleMessage(playerId: string, data: string): void {
             if (roomState) {
               broadcastToRoom(result.roomCode, {
                 type: 'room_state',
-                roomState,
+                roomState: roomState as any,
               });
             }
           }
@@ -329,7 +333,7 @@ function handleMessage(playerId: string, data: string): void {
           if (roomState) {
             broadcastToRoom(roomCode, {
               type: 'room_state',
-              roomState,
+              roomState: roomState as any,
             });
           }
         }
@@ -361,7 +365,7 @@ function handleMessage(playerId: string, data: string): void {
           if (roomState) {
             broadcastToRoom(roomCode, {
               type: 'room_state',
-              roomState,
+              roomState: roomState as any,
             });
           }
 
