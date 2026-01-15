@@ -3,6 +3,24 @@ const nextConfig = {
     async headers() {
       return [
         {
+          // Specific rule for rhythmia-nexus.html to prevent caching
+          source: '/rhythmia-nexus.html',
+          headers: [
+            {
+              key: 'Cache-Control',
+              value: 'no-cache, no-store, must-revalidate',
+            },
+            {
+              key: 'Pragma',
+              value: 'no-cache',
+            },
+            {
+              key: 'Expires',
+              value: '0',
+            },
+          ],
+        },
+        {
           source: '/(.*)', // 画像のパス
           headers: [
             {
