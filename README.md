@@ -7,9 +7,20 @@ Explaining current situation below since there are several pages.
 azuret.net/: Interactive homepage with UI version selection (Discord-like or Patreon-style)
 azuret.net/current: Storing my portfolio (currently in working) 現在制作中（わら）ポートフォリオだぅ
 azuret.net/azure-supporter: my discord bot developing page with role selection 開発中discord botぺージ（
+azuret.net/azure-community/[userId]: Discord community user profiles with XP, levels, and stats
 azuret.net/guilds/[guild_id]/rank-card/[display_name]: Discord rank card system with real-time Firebase data
 azuret.net/play: Multiplayer Score Attack game with real-time WebSocket gameplay
 ```
+
+## Discord Community Integration
+
+**NEW**: Azure Community Discord bot and profile system integrated into Azuret.me!
+
+- **Discord Bot** - Track XP, levels, roles, and rules agreement
+- **User Profiles** - View profiles at `/azure-community/[userId]`
+- **Firestore Backend** - Real-time data sync between bot and web
+
+See [DISCORD_COMMUNITY_SETUP.md](./DISCORD_COMMUNITY_SETUP.md) for setup instructions.
 
 ## Version Selection
 
