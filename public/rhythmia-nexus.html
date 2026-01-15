@@ -1518,10 +1518,25 @@
             };
         }
 
+        function spawnNextPiece() {
+            piece = nextPiece;
+            nextPiece = randomPiece();
+            piecePos = { x: Math.floor(W/2) - 1, y: 0 };
+
+            rebuildActivePiece();
+            drawNext();
+            drawBoard();
+
+            // Game over only if the NEW piece cannot spawn on the CURRENT board
+            if (collision(piece, piecePos.x, piecePos.y)) {
+                endGame();
+            }
+        }
+
         function lock() {
             const onBeat = beatPhase > 0.75 || beatPhase < 0.15;
             let mult = 1;
-            
+
             if (onBeat) {
                 mult = 2;
                 combo++;
@@ -1532,9 +1547,10 @@
             } else {
                 combo = 0;
             }
-            
+
             updateCombo();
-            
+
+            // lock current piece into board
             piece.shape.forEach((row, py) => {
                 row.forEach((val, px) => {
                     if (val) {
@@ -1545,11 +1561,12 @@
                     }
                 });
             });
-            
+
+            // compute clears
             let cleared = 0;
             const newBoard = [];
             const clearingRows = [];
-            
+
             board.forEach((row, y) => {
                 if (row.every(c => c !== null)) {
                     cleared++;
@@ -1558,50 +1575,48 @@
                     newBoard.push(row);
                 }
             });
-            
+
             if (cleared > 0) {
+                // animate clearing
                 const cells = boardEl.children;
                 clearingRows.forEach(y => {
                     for (let x = 0; x < W; x++) {
                         cells[y * W + x].classList.add('clearing');
                     }
                 });
-                
+
+                // ✅ IMPORTANT: delay board replacement AND spawning until after animation
                 setTimeout(() => {
                     while (newBoard.length < H) newBoard.unshift(Array(W).fill(null));
                     board = newBoard;
-                    
+
                     const pts = [0, 100, 300, 500, 800][cleared] * (level + 1) * mult * Math.max(1, combo);
                     score += pts;
                     lines += cleared;
-                    
+
                     enemyHP = Math.max(0, enemyHP - cleared * 8 * mult);
                     enemyFill.style.width = enemyHP + '%';
-                    
-                    if (enemyHP <= 0) {
-                        nextWorld();
-                    }
-                    
+
+                    if (enemyHP <= 0) nextWorld();
+
                     level = Math.floor(lines / 10);
                     updateScore();
                     playLineClear(cleared);
+
                     boardWrap.classList.add('shake');
                     setTimeout(() => boardWrap.classList.remove('shake'), 200);
-                    
+
                     drawBoard();
+
+                    // ✅ spawn after board is actually cleared
+                    spawnNextPiece();
                 }, 300);
+
+                return; // ✅ prevent immediate spawn below
             }
-            
-            piece = nextPiece;
-            nextPiece = randomPiece();
-            piecePos = { x: Math.floor(W/2) - 1, y: 0 };
-            rebuildActivePiece();
-            drawNext();
-            drawBoard();
-            
-            if (collision(piece, piecePos.x, piecePos.y)) {
-                endGame();
-            }
+
+            // no clear => spawn immediately
+            spawnNextPiece();
         }
 
         function move(dx, dy) {
@@ -1757,6 +1772,13 @@
 
         function endGame() {
             gameOver = true;
+
+            // ✅ ADD: stop RAF loop immediately when game ends
+            if (beatRafId !== null) {
+                cancelAnimationFrame(beatRafId);
+                beatRafId = null;
+            }
+
             clearInterval(dropTimer);
             clearInterval(beatTimer);
             $('final-score').textContent = score.toLocaleString() + ' pts';
