@@ -1,89 +1,121 @@
-import {
-  MultiplayerPlayer,
-  RoomPhase,
-  RoomStateData,
-  MULTIPLAYER_CONFIG,
-} from '../../types/multiplayer';
-
-interface Room {
-  code: string;
-  hostId: string;
-  players: Map<string, MultiplayerPlayer>;
-  phase: RoomPhase;
-  maxPlayers: number;
+// Types
+export interface Player {
+  id: string;
+  name: string;
+  ready: boolean;
+  connected: boolean;
+  lastSeen: number;
 }
 
+export interface Room {
+  code: string;
+  hostId: string;
+  players: Player[];
+  status: 'waiting' | 'playing' | 'finished';
+  createdAt: number;
+  gameStartedAt?: number;
+}
+
+export interface RoomState {
+  code: string;
+  hostId: string;
+  players: Player[];
+  status: string;
+}
+
+/**
+ * Manages multiplayer game rooms with stability features
+ */
 export class MultiplayerRoomManager {
   private rooms: Map<string, Room> = new Map();
-  private roomCodeToId: Map<string, string> = new Map();
-  private playerToRoomCode: Map<string, string> = new Map();
+  private playerToRoom: Map<string, string> = new Map();
+  
+  // Room cleanup interval (5 minutes for empty/stale rooms)
+  private readonly ROOM_TIMEOUT = 5 * 60 * 1000;
+  private cleanupInterval: NodeJS.Timeout;
+
+  constructor() {
+    // Periodically clean up stale rooms
+    this.cleanupInterval = setInterval(() => this.cleanupStaleRooms(), 60000);
+  }
 
   /**
-   * Generate a unique room code using base32-like uppercase chars
+   * Clean up empty or stale rooms
+   */
+  private cleanupStaleRooms(): void {
+    const now = Date.now();
+    const toDelete: string[] = [];
+
+    this.rooms.forEach((room, code) => {
+      // Remove rooms with no players that are older than timeout
+      if (room.players.length === 0 && now - room.createdAt > this.ROOM_TIMEOUT) {
+        toDelete.push(code);
+      }
+      // Remove finished games after timeout
+      if (room.status === 'finished' && now - (room.gameStartedAt || room.createdAt) > this.ROOM_TIMEOUT) {
+        toDelete.push(code);
+      }
+    });
+
+    toDelete.forEach(code => {
+      this.rooms.delete(code);
+      console.log(`[CLEANUP] Removed stale room ${code}`);
+    });
+  }
+
+  /**
+   * Generate a random 4-character room code
    */
   private generateRoomCode(): string {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Avoid ambiguous chars
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code: string;
     let attempts = 0;
-    const maxAttempts = 100;
-
     do {
-      code = Array.from(
-        { length: MULTIPLAYER_CONFIG.ROOM_CODE_LENGTH },
-        () => chars.charAt(Math.floor(Math.random() * chars.length))
-      ).join('');
-      attempts++;
-      if (attempts > maxAttempts) {
-        throw new Error('Failed to generate unique room code');
+      code = '';
+      for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-    } while (this.roomCodeToId.has(code));
-
+      attempts++;
+      if (attempts > 100) {
+        // Fallback to longer code if too many collisions
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+    } while (this.rooms.has(code));
     return code;
   }
 
   /**
-   * Validate room code format
+   * Get total room count
    */
-  private isValidRoomCode(code: string): boolean {
-    if (!code || typeof code !== 'string') return false;
-    if (code.length !== MULTIPLAYER_CONFIG.ROOM_CODE_LENGTH) return false;
-    const validChars = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]+$/;
-    return validChars.test(code);
+  getRoomCount(): number {
+    return this.rooms.size;
   }
 
   /**
    * Create a new room
    */
-  createRoom(
-    playerId: string,
-    playerName: string
-  ): { roomCode: string; player: MultiplayerPlayer } {
-    // Clean player name
-    const cleanName = (playerName || 'Player').trim().slice(0, 20);
-
-    // Remove player from any existing room
-    this.removePlayerFromRoom(playerId);
-
+  createRoom(playerId: string, playerName: string): { roomCode: string; player: Player } {
     const roomCode = this.generateRoomCode();
-    const player: MultiplayerPlayer = {
+    const now = Date.now();
+    
+    const player: Player = {
       id: playerId,
-      name: cleanName,
-      isHost: true,
-      isReady: false,
+      name: (playerName || 'Player').slice(0, 20), // Limit name length
+      ready: false,
       connected: true,
+      lastSeen: now,
     };
 
     const room: Room = {
       code: roomCode,
       hostId: playerId,
-      players: new Map([[playerId, player]]),
-      phase: RoomPhase.LOBBY,
-      maxPlayers: MULTIPLAYER_CONFIG.DEFAULT_MAX_PLAYERS,
+      players: [player],
+      status: 'waiting',
+      createdAt: now,
     };
 
     this.rooms.set(roomCode, room);
-    this.roomCodeToId.set(roomCode, roomCode);
-    this.playerToRoomCode.set(playerId, roomCode);
+    this.playerToRoom.set(playerId, roomCode);
 
     return { roomCode, player };
   }
@@ -95,192 +127,241 @@ export class MultiplayerRoomManager {
     roomCode: string,
     playerId: string,
     playerName: string
-  ): { success: boolean; player?: MultiplayerPlayer; room?: Room; error?: string } {
-    // Validate room code format
-    if (!this.isValidRoomCode(roomCode)) {
-      return { success: false, error: 'Invalid room code format' };
-    }
+  ): { success: boolean; error?: string; player?: Player } {
+    const normalizedCode = roomCode.toUpperCase().trim();
+    const room = this.rooms.get(normalizedCode);
 
-    const room = this.rooms.get(roomCode);
     if (!room) {
-      return { success: false, error: 'Room not found' };
+      return { success: false, error: 'ルームが見つかりません' };
     }
 
-    if (room.phase !== RoomPhase.LOBBY) {
-      return { success: false, error: 'Game already in progress' };
+    if (room.status !== 'waiting') {
+      return { success: false, error: 'ゲームは既に開始しています' };
     }
 
-    if (room.players.size >= room.maxPlayers) {
-      return { success: false, error: 'Room is full' };
+    if (room.players.length >= 2) {
+      return { success: false, error: 'ルームが満員です' };
     }
 
-    // Check if player is already in the room
-    if (room.players.has(playerId)) {
-      return { success: false, error: 'Already in this room' };
+    // Check if player is already in this room
+    const existingPlayer = room.players.find(p => p.id === playerId);
+    if (existingPlayer) {
+      existingPlayer.connected = true;
+      existingPlayer.lastSeen = Date.now();
+      return { success: true, player: existingPlayer };
     }
 
-    // Remove player from any other room
-    this.removePlayerFromRoom(playerId);
-
-    // Clean player name
-    const cleanName = (playerName || 'Player').trim().slice(0, 20);
-
-    const player: MultiplayerPlayer = {
+    const player: Player = {
       id: playerId,
-      name: cleanName,
-      isHost: false,
-      isReady: false,
+      name: (playerName || 'Player').slice(0, 20),
+      ready: false,
       connected: true,
+      lastSeen: Date.now(),
     };
 
-    room.players.set(playerId, player);
-    this.playerToRoomCode.set(playerId, roomCode);
+    room.players.push(player);
+    this.playerToRoom.set(playerId, normalizedCode);
 
-    return { success: true, player, room };
+    return { success: true, player };
   }
 
   /**
-   * Set player ready status
+   * Transfer player ID (for reconnection)
    */
-  setPlayerReady(
-    playerId: string,
-    ready: boolean
-  ): { success: boolean; room?: Room; error?: string } {
-    const roomCode = this.playerToRoomCode.get(playerId);
+  transferPlayer(oldPlayerId: string, newPlayerId: string): boolean {
+    const roomCode = this.playerToRoom.get(oldPlayerId);
+    if (!roomCode) return false;
+
+    const room = this.rooms.get(roomCode);
+    if (!room) return false;
+
+    const player = room.players.find(p => p.id === oldPlayerId);
+    if (!player) return false;
+
+    // Update player ID
+    player.id = newPlayerId;
+    player.connected = true;
+    player.lastSeen = Date.now();
+
+    // Update host if needed
+    if (room.hostId === oldPlayerId) {
+      room.hostId = newPlayerId;
+    }
+
+    // Update mapping
+    this.playerToRoom.delete(oldPlayerId);
+    this.playerToRoom.set(newPlayerId, roomCode);
+
+    return true;
+  }
+
+  /**
+   * Remove a player from their room
+   */
+  removePlayerFromRoom(playerId: string): { roomCode?: string; room?: Room } {
+    const roomCode = this.playerToRoom.get(playerId);
     if (!roomCode) {
-      return { success: false, error: 'Not in a room' };
+      return {};
     }
 
     const room = this.rooms.get(roomCode);
     if (!room) {
-      return { success: false, error: 'Room not found' };
+      this.playerToRoom.delete(playerId);
+      return {};
     }
 
-    const player = room.players.get(playerId);
+    room.players = room.players.filter(p => p.id !== playerId);
+    this.playerToRoom.delete(playerId);
+
+    // If room is empty, mark for cleanup but don't delete immediately
+    // (allows for reconnection)
+    if (room.players.length === 0) {
+      // Room will be cleaned up by cleanupStaleRooms
+      return { roomCode };
+    }
+
+    // If host left, transfer host to remaining player
+    if (room.hostId === playerId && room.players.length > 0) {
+      room.hostId = room.players[0].id;
+    }
+
+    // If game was in progress and only one player left, end the game
+    if (room.status === 'playing' && room.players.length < 2) {
+      room.status = 'finished';
+    }
+
+    return { roomCode, room };
+  }
+
+  /**
+   * Mark a player as disconnected (but don't remove immediately)
+   */
+  markPlayerDisconnected(playerId: string): { roomCode?: string; room?: Room } {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) {
+      return {};
+    }
+
+    const room = this.rooms.get(roomCode);
+    if (!room) {
+      return {};
+    }
+
+    const player = room.players.find(p => p.id === playerId);
+    if (player) {
+      player.connected = false;
+      player.lastSeen = Date.now();
+    }
+
+    // For now, remove disconnected players immediately
+    // In production, you might want to keep them for a grace period
+    return this.removePlayerFromRoom(playerId);
+  }
+
+  /**
+   * Set a player's ready status
+   */
+  setPlayerReady(playerId: string, ready: boolean): { success: boolean; error?: string } {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) {
+      return { success: false, error: 'ルームに参加していません' };
+    }
+
+    const room = this.rooms.get(roomCode);
+    if (!room) {
+      return { success: false, error: 'ルームが見つかりません' };
+    }
+
+    if (room.status !== 'waiting') {
+      return { success: false, error: 'ゲームは既に開始しています' };
+    }
+
+    const player = room.players.find(p => p.id === playerId);
     if (!player) {
-      return { success: false, error: 'Player not found in room' };
+      return { success: false, error: 'プレイヤーが見つかりません' };
     }
 
-    player.isReady = ready;
-    return { success: true, room };
+    player.ready = ready;
+    player.lastSeen = Date.now();
+    return { success: true };
   }
 
   /**
-   * Start game (host only)
+   * Start the game (host only)
    */
-  startGame(playerId: string): { success: boolean; room?: Room; error?: string } {
-    const roomCode = this.playerToRoomCode.get(playerId);
+  startGame(playerId: string): { success: boolean; error?: string } {
+    const roomCode = this.playerToRoom.get(playerId);
     if (!roomCode) {
-      return { success: false, error: 'Not in a room' };
+      return { success: false, error: 'ルームに参加していません' };
     }
 
     const room = this.rooms.get(roomCode);
     if (!room) {
-      return { success: false, error: 'Room not found' };
+      return { success: false, error: 'ルームが見つかりません' };
     }
 
     if (room.hostId !== playerId) {
-      return { success: false, error: 'Only host can start the game' };
+      return { success: false, error: 'ホストのみがゲームを開始できます' };
     }
 
-    if (room.phase !== RoomPhase.LOBBY) {
-      return { success: false, error: 'Game already started' };
+    if (room.players.length < 2) {
+      return { success: false, error: '2人のプレイヤーが必要です' };
     }
 
-    // Check if all players are ready (except host)
-    const nonHostPlayers = Array.from(room.players.values()).filter(
-      (p) => !p.isHost
-    );
-    const allReady = nonHostPlayers.every((p) => p.isReady);
-
-    if (!allReady && nonHostPlayers.length > 0) {
-      return { success: false, error: 'Not all players are ready' };
+    const notReadyPlayers = room.players.filter(p => !p.ready);
+    if (notReadyPlayers.length > 0) {
+      return { success: false, error: '全員が準備完了する必要があります' };
     }
 
-    room.phase = RoomPhase.PLAYING;
-    return { success: true, room };
+    room.status = 'playing';
+    room.gameStartedAt = Date.now();
+    return { success: true };
   }
 
   /**
-   * Remove player from their current room
+   * End the game
    */
-  removePlayerFromRoom(playerId: string): { roomCode?: string; room?: Room } {
-    const roomCode = this.playerToRoomCode.get(playerId);
-    if (!roomCode) {
-      return {};
-    }
-
+  endGame(roomCode: string): void {
     const room = this.rooms.get(roomCode);
-    if (!room) {
-      this.playerToRoomCode.delete(playerId);
-      return {};
+    if (room) {
+      room.status = 'finished';
     }
-
-    room.players.delete(playerId);
-    this.playerToRoomCode.delete(playerId);
-
-    // Handle host migration or room deletion
-    if (room.hostId === playerId) {
-      if (room.players.size > 0) {
-        // Migrate host to next player
-        const newHost = Array.from(room.players.values())[0];
-        newHost.isHost = true;
-        room.hostId = newHost.id;
-        console.log(`Host migrated to ${newHost.name} in room ${roomCode}`);
-      } else {
-        // Room is empty, delete it
-        this.rooms.delete(roomCode);
-        this.roomCodeToId.delete(roomCode);
-        console.log(`Room ${roomCode} deleted (empty)`);
-        return { roomCode };
-      }
-    }
-
-    return { roomCode, room };
   }
 
   /**
-   * Mark player as disconnected
+   * Reset room for rematch
    */
-  markPlayerDisconnected(playerId: string): { roomCode?: string; room?: Room } {
-    const roomCode = this.playerToRoomCode.get(playerId);
-    if (!roomCode) {
-      return {};
-    }
-
+  resetRoom(roomCode: string): boolean {
     const room = this.rooms.get(roomCode);
-    if (!room) {
-      return {};
-    }
+    if (!room) return false;
 
-    const player = room.players.get(playerId);
-    if (player) {
-      player.connected = false;
-    }
+    room.status = 'waiting';
+    room.gameStartedAt = undefined;
+    room.players.forEach(p => {
+      p.ready = false;
+    });
 
-    // If it's the host in lobby, remove them immediately
-    if (room.hostId === playerId && room.phase === RoomPhase.LOBBY) {
-      return this.removePlayerFromRoom(playerId);
-    }
-
-    return { roomCode, room };
+    return true;
   }
 
   /**
-   * Get room state for serialization
+   * Get room state
    */
-  getRoomState(roomCode: string): RoomStateData | null {
-    const room = this.rooms.get(roomCode);
+  getRoomState(roomCode: string): RoomState | null {
+    const normalizedCode = roomCode.toUpperCase().trim();
+    const room = this.rooms.get(normalizedCode);
     if (!room) {
       return null;
     }
 
     return {
-      roomCode: room.code,
+      code: room.code,
       hostId: room.hostId,
-      players: Array.from(room.players.values()),
-      phase: room.phase,
-      maxPlayers: room.maxPlayers,
+      players: room.players.map(p => ({
+        ...p,
+        // Don't expose lastSeen to clients
+      })),
+      status: room.status,
     };
   }
 
@@ -288,7 +369,7 @@ export class MultiplayerRoomManager {
    * Get room by player ID
    */
   getRoomByPlayerId(playerId: string): Room | null {
-    const roomCode = this.playerToRoomCode.get(playerId);
+    const roomCode = this.playerToRoom.get(playerId);
     if (!roomCode) {
       return null;
     }
@@ -299,10 +380,34 @@ export class MultiplayerRoomManager {
    * Get all player IDs in a room
    */
   getPlayerIdsInRoom(roomCode: string): string[] {
-    const room = this.rooms.get(roomCode);
+    const normalizedCode = roomCode.toUpperCase().trim();
+    const room = this.rooms.get(normalizedCode);
     if (!room) {
       return [];
     }
-    return Array.from(room.players.keys());
+    return room.players.filter(p => p.connected).map(p => p.id);
+  }
+
+  /**
+   * Update player's last seen timestamp
+   */
+  updatePlayerActivity(playerId: string): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room) return;
+
+    const player = room.players.find(p => p.id === playerId);
+    if (player) {
+      player.lastSeen = Date.now();
+    }
+  }
+
+  /**
+   * Cleanup on shutdown
+   */
+  destroy(): void {
+    clearInterval(this.cleanupInterval);
   }
 }
