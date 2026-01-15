@@ -59,13 +59,29 @@ export interface RelayMessage {
   payload: any; // Intentionally generic - games can send custom data structures
 }
 
+export interface PongMessage {
+  type: 'pong';
+}
+
+export interface ReconnectMessage {
+  type: 'reconnect';
+  reconnectToken: string;
+}
+
+export interface SyncRequestMessage {
+  type: 'sync_request';
+}
+
 export type ClientMessage =
   | CreateRoomMessage
   | JoinRoomMessage
   | LeaveRoomMessage
   | SetReadyMessage
   | StartGameMessage
-  | RelayMessage;
+  | RelayMessage
+  | PongMessage
+  | ReconnectMessage
+  | SyncRequestMessage;
 
 // Server to Client Messages
 export interface RoomCreatedMessage {
