@@ -1185,7 +1185,7 @@
     <div id="title-screen">
         <h1>RHYTHMIA</h1>
         <p>リズムに乗ってブロックを積め！</p>
-        <button id="start-btn">▶ START</button>
+        <button id="title-start-btn">▶ START</button>
     </div>
 
     <div id="game" style="display:none;">
@@ -1267,7 +1267,7 @@
     <div id="gameover">
         <h2>GAME OVER</h2>
         <div id="final-score">0</div>
-        <button id="restart-btn" style="padding:15px 40px;font-size:1.2rem;background:linear-gradient(135deg,var(--c1),var(--c2));border:none;border-radius:30px;color:white;cursor:pointer;">もう一度</button>
+        <button id="retry-btn" style="padding:15px 40px;font-size:1.2rem;background:linear-gradient(135deg,var(--c1),var(--c2));border:none;border-radius:30px;color:white;cursor:pointer;">もう一度</button>
     </div>
 
     <script>
@@ -1294,6 +1294,7 @@
         let worldIdx, enemyHP, gameOver, paused;
         let beatPhase, lastBeat, audioCtx;
         let dropTimer, beatTimer;
+        let beatRafId = null;
         let cellSize = 20;
         let gapSize = 1;
 
@@ -1522,12 +1523,9 @@
             piece = nextPiece;
             nextPiece = randomPiece();
             piecePos = { x: Math.floor(W/2) - 1, y: 0 };
-
             rebuildActivePiece();
             drawNext();
             drawBoard();
-
-            // Game over only if the NEW piece cannot spawn on the CURRENT board
             if (collision(piece, piecePos.x, piecePos.y)) {
                 endGame();
             }
@@ -1607,15 +1605,11 @@
                     setTimeout(() => boardWrap.classList.remove('shake'), 200);
 
                     drawBoard();
-
-                    // ✅ spawn after board is actually cleared
                     spawnNextPiece();
                 }, 300);
-
-                return; // ✅ prevent immediate spawn below
+                return;
             }
-
-            // no clear => spawn immediately
+            
             spawnNextPiece();
         }
 
@@ -1716,6 +1710,16 @@
         }
 
         function startGame() {
+            // Cancel previous RAF loop if exists
+            if (beatRafId !== null) {
+                cancelAnimationFrame(beatRafId);
+            }
+            
+            // Reset beat state
+            beatPhase = 0;
+            lastBeat = Date.now();
+            beatFill.style.width = '0%';
+            
             board = Array(H).fill().map(() => Array(W).fill(null));
             score = 0;
             combo = 0;
@@ -1758,14 +1762,14 @@
                 }
             }, 500);
             
-            requestAnimationFrame(function updateBeat() {
+            beatRafId = requestAnimationFrame(function updateBeat() {
                 if (!gameOver) {
                     const world = WORLDS[worldIdx];
                     const interval = 60000 / world.bpm;
                     const elapsed = Date.now() - lastBeat;
                     beatPhase = (elapsed % interval) / interval;
                     beatFill.style.width = (beatPhase * 100) + '%';
-                    requestAnimationFrame(updateBeat);
+                    beatRafId = requestAnimationFrame(updateBeat);
                 }
             });
         }
@@ -1781,17 +1785,21 @@
 
             clearInterval(dropTimer);
             clearInterval(beatTimer);
+            if (beatRafId !== null) {
+                cancelAnimationFrame(beatRafId);
+                beatRafId = null;
+            }
             $('final-score').textContent = score.toLocaleString() + ' pts';
             $('gameover').classList.add('show');
             playTone(131, 0.5, 'sawtooth');
         }
 
-        $('start-btn').onclick = () => {
+        $('title-start-btn').onclick = () => {
             initAudio();
             startGame();
         };
         
-        $('restart-btn').onclick = () => {
+        $('retry-btn').onclick = () => {
             startGame();
         };
 
