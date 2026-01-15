@@ -444,7 +444,7 @@ function handleDisconnect(playerId: string, reason: string = 'disconnect'): void
       if (roomState) {
         broadcastToRoom(result.roomCode, {
           type: 'room_state',
-          roomState,
+          roomState: roomState as any,
         });
       }
     }

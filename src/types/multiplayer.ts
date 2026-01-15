@@ -29,6 +29,15 @@ export interface RoomStateData {
   maxPlayers: number;
 }
 
+export interface ReconnectMessage {
+  type: 'reconnect';
+  reconnectToken: string;
+}
+
+export interface SyncRequestMessage {
+  type: 'sync_request';
+}
+
 export interface PongMessage {
   type: 'pong';
 }
@@ -64,6 +73,8 @@ export interface RelayMessage {
 }
 
 export type ClientMessage =
+  | ReconnectMessage
+  | SyncRequestMessage
   | PongMessage
   | CreateRoomMessage
   | JoinRoomMessage
