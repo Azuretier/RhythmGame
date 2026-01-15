@@ -1295,6 +1295,7 @@
         let beatPhase, lastBeat, audioCtx;
         let dropTimer, beatTimer;
         let beatRafId = null;
+        let lockTimeoutId = null;
         let cellSize = 20;
         let gapSize = 1;
 
@@ -1532,6 +1533,8 @@
         }
 
         function lock() {
+            if (!piece) return; // Guard against multiple lock calls
+            
             const onBeat = beatPhase > 0.75 || beatPhase < 0.15;
             let mult = 1;
             
@@ -1548,12 +1551,20 @@
             
             updateCombo();
             
-            piece.shape.forEach((row, py) => {
+            // Store piece reference before clearing
+            const lockedPiece = piece;
+            const lockedPos = { ...piecePos };
+            
+            // Clear piece immediately to prevent race conditions with dropTimer
+            piece = null;
+            activePieceEl.innerHTML = '';
+            
+            lockedPiece.shape.forEach((row, py) => {
                 row.forEach((val, px) => {
                     if (val) {
-                        const by = piecePos.y + py, bx = piecePos.x + px;
+                        const by = lockedPos.y + py, bx = lockedPos.x + px;
                         if (by >= 0 && by < H) {
-                            board[by][bx] = { color: piece.color };
+                            board[by][bx] = { color: lockedPiece.color };
                         }
                     }
                 });
@@ -1637,6 +1648,12 @@
         function hardDrop() {
             if (gameOver || paused || !piece) return;
             
+            // Cancel any pending lock timeout to prevent double-locking
+            if (lockTimeoutId !== null) {
+                clearTimeout(lockTimeoutId);
+                lockTimeoutId = null;
+            }
+            
             activePieceEl.classList.add('dropping');
             while (!collision(piece, piecePos.x, piecePos.y + 1)) {
                 piecePos.y++;
@@ -1644,7 +1661,10 @@
             playTone(196, 0.1, 'sawtooth');
             drawActivePiece(true);
             drawBoard();
-            setTimeout(lock, 30);
+            lockTimeoutId = setTimeout(() => {
+                lockTimeoutId = null;
+                lock();
+            }, 30);
         }
 
         function showJudgment(text, color) {
@@ -1710,6 +1730,12 @@
             // Cancel previous RAF loop if exists
             if (beatRafId !== null) {
                 cancelAnimationFrame(beatRafId);
+            }
+            
+            // Cancel any pending lock timeout
+            if (lockTimeoutId !== null) {
+                clearTimeout(lockTimeoutId);
+                lockTimeoutId = null;
             }
             
             // Reset beat state
@@ -1778,6 +1804,10 @@
             if (beatRafId !== null) {
                 cancelAnimationFrame(beatRafId);
                 beatRafId = null;
+            }
+            if (lockTimeoutId !== null) {
+                clearTimeout(lockTimeoutId);
+                lockTimeoutId = null;
             }
             $('final-score').textContent = score.toLocaleString() + ' pts';
             $('gameover').classList.add('show');
@@ -2017,10 +2047,10 @@
 
         .mode-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 20px;
             width: 100%;
-            max-width: 600px;
+            max-width: 700px;
         }
 
         .mode-card {
@@ -2039,6 +2069,14 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(255,215,0,0.2);
         }
 
+        .mode-card.online {
+            border-color: var(--p1-color);
+        }
+        .mode-card.online:hover {
+            border-color: var(--p1-color);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px var(--p1-glow);
+        }
+
         .mode-icon {
             font-size: 3rem;
             margin-bottom: 15px;
@@ -2051,10 +2089,275 @@
             margin-bottom: 8px;
         }
 
+        .mode-card.online .mode-title {
+            color: var(--p1-color);
+        }
+
         .mode-desc {
             font-size: 0.8rem;
             color: rgba(255,255,255,0.5);
             font-family: sans-serif;
+        }
+
+        /* Online Lobby Screen */
+        .online-lobby {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+            padding: 20px;
+        }
+        .online-lobby.active { display: flex; }
+
+        .online-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--p1-color);
+            text-shadow: 0 0 30px var(--p1-glow);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #666;
+            transition: background 0.3s;
+        }
+        .status-dot.connected { background: #4ade80; box-shadow: 0 0 10px #4ade80; }
+        .status-dot.connecting { background: #fbbf24; animation: blink 1s infinite; }
+        .status-dot.error { background: #ef4444; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .online-options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .online-btn {
+            padding: 20px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            border: 2px solid var(--p1-color);
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(78,205,196,0.2), rgba(78,205,196,0.05));
+            color: var(--p1-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .online-btn:hover {
+            background: linear-gradient(135deg, rgba(78,205,196,0.4), rgba(78,205,196,0.1));
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px var(--p1-glow);
+        }
+
+        .online-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .room-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .room-input {
+            padding: 15px 25px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            text-align: center;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            color: white;
+            width: 200px;
+        }
+
+        .room-input:focus {
+            outline: none;
+            border-color: var(--p1-color);
+            box-shadow: 0 0 20px var(--p1-glow);
+        }
+
+        .room-input::placeholder {
+            color: rgba(255,255,255,0.3);
+            letter-spacing: 0.1em;
+        }
+
+        .name-input {
+            padding: 12px 20px;
+            font-family: sans-serif;
+            font-size: 1rem;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            width: 200px;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Waiting Room */
+        .waiting-room {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+        }
+        .waiting-room.active { display: flex; }
+
+        .room-code-display {
+            text-align: center;
+        }
+
+        .room-code-label {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 10px;
+        }
+
+        .room-code {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 0.5em;
+            color: var(--gold);
+            text-shadow: 0 0 30px var(--gold);
+        }
+
+        .players-list {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .player-slot {
+            padding: 20px 30px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .player-slot.ready {
+            border-color: #4ade80;
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+        }
+
+        .player-slot.p1 { border-color: var(--p1-color); }
+        .player-slot.p2 { border-color: var(--p2-color); }
+
+        .player-slot-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .player-slot-status {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .player-slot.ready .player-slot-status {
+            color: #4ade80;
+        }
+
+        .waiting-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .ready-btn {
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ready-btn.not-ready {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: #000;
+        }
+
+        .ready-btn.is-ready {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #000;
+        }
+
+        .start-btn {
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gold), #FF6B35);
+            border: none;
+            border-radius: 30px;
+            color: #000;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .start-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .start-btn:not(:disabled):hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--gold);
         }
 
         .battle-container {
@@ -2433,6 +2736,26 @@
             z-index: 150;
         }
 
+        .error-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background: rgba(239, 68, 68, 0.9);
+            border-radius: 8px;
+            color: white;
+            font-family: sans-serif;
+            z-index: 300;
+            display: none;
+        }
+        .error-toast.show { display: block; animation: slideUp 0.3s ease-out; }
+
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
         @media (max-width: 768px) {
             .battle-area {
                 flex-direction: column;
@@ -2471,6 +2794,69 @@
                 <div class="mode-title">VS CPU</div>
                 <div class="mode-desc">AIと対戦</div>
             </div>
+            <div class="mode-card online" onclick="showOnlineLobby()">
+                <div class="mode-icon">🌐</div>
+                <div class="mode-title">ONLINE</div>
+                <div class="mode-desc">オンラインで対戦</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Lobby -->
+    <div class="online-lobby" id="onlineLobby">
+        <button class="back-btn" onclick="backToMainLobby()">← 戻る</button>
+        
+        <h2 class="online-title">🌐 ONLINE BATTLE</h2>
+        
+        <div class="connection-status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">未接続</span>
+        </div>
+
+        <div class="room-input-group">
+            <input type="text" class="name-input" id="playerNameInput" placeholder="あなたの名前" maxlength="12">
+        </div>
+
+        <div class="online-options">
+            <button class="online-btn" id="createRoomBtn" onclick="createRoom()">
+                🏠 ルームを作成
+            </button>
+            <div class="room-input-group">
+                <input type="text" class="room-input" id="roomCodeInput" placeholder="CODE" maxlength="4">
+                <button class="online-btn" id="joinRoomBtn" onclick="joinRoom()">
+                    🔍 ルームを検索
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waiting Room -->
+    <div class="waiting-room" id="waitingRoom">
+        <button class="back-btn" onclick="leaveRoom()">← 退出</button>
+
+        <div class="room-code-display">
+            <div class="room-code-label">ルームコード</div>
+            <div class="room-code" id="displayRoomCode">----</div>
+        </div>
+
+        <div class="players-list" id="playersList">
+            <div class="player-slot p1" id="slot1">
+                <div class="player-slot-name">待機中...</div>
+                <div class="player-slot-status">---</div>
+            </div>
+            <div class="player-slot p2" id="slot2">
+                <div class="player-slot-name">待機中...</div>
+                <div class="player-slot-status">---</div>
+            </div>
+        </div>
+
+        <div class="waiting-actions">
+            <button class="ready-btn not-ready" id="readyBtn" onclick="toggleReady()">
+                ✓ 準備完了
+            </button>
+            <button class="start-btn" id="startGameBtn" onclick="startOnlineGame()" disabled>
+                ▶ ゲーム開始
+            </button>
         </div>
     </div>
 
@@ -2478,12 +2864,12 @@
         <div class="battle-header">
             <div class="vs-display">
                 <div class="player-tag p1">
-                    <span class="player-name">PLAYER 1</span>
+                    <span class="player-name" id="p1NameDisplay">PLAYER 1</span>
                     <span class="player-score" id="p1Score">0</span>
                 </div>
                 <div class="vs-icon">⚔️</div>
                 <div class="player-tag p2">
-                    <span class="player-name" id="p2Name">PLAYER 2</span>
+                    <span class="player-name" id="p2NameDisplay">PLAYER 2</span>
                     <span class="player-score" id="p2Score">0</span>
                 </div>
             </div>
@@ -2522,7 +2908,7 @@
             </div>
         </div>
 
-        <div class="controls-hint">
+        <div class="controls-hint" id="controlsHint">
             <div class="control-group">
                 <span>P1 (WASD)</span>
                 <div class="key-hint">
@@ -2551,10 +2937,12 @@
             </div>
         </div>
         <div class="result-buttons">
-            <button class="result-btn primary" onclick="startBattle(lastMode)">🔄 REMATCH</button>
+            <button class="result-btn primary" onclick="handleRematch()">🔄 REMATCH</button>
             <button class="result-btn secondary" onclick="backToLobby()">← LOBBY</button>
         </div>
     </div>
+
+    <div class="error-toast" id="errorToast"></div>
 
     <script>
         const W = 10, H = 20;
@@ -2569,17 +2957,47 @@
             [[0,0,1],[1,1,1]]
         ];
 
+        // Game state
         let audioCtx;
         let lastMode = 'local';
         let gameRunning = false;
         let isAI = false;
+        let isOnline = false;
         let aiTimer;
+
+        // Online state
+        let ws = null;
+        let myPlayerId = null;
+        let roomCode = null;
+        let isHost = false;
+        let isReady = false;
+        let roomPlayers = [];
+        let myPlayerSlot = null; // 'p1' or 'p2'
+        
+        // Stability features
+        let reconnectToken = null;
+        let reconnectAttempts = 0;
+        let reconnectTimer = null;
+        let heartbeatTimer = null;
+        let lastServerTime = 0;
+        let messageQueue = [];
+        let isReconnecting = false;
+
+        // ⚠️ IMPORTANT: Replace with your Railway WebSocket URL
+        // Format: wss://your-app-name.up.railway.app
+        const WS_URL = 'wss://YOUR-RAILWAY-APP.up.railway.app';
+        
+        // Stability settings
+        const MAX_RECONNECT_ATTEMPTS = 5;
+        const RECONNECT_DELAY_BASE = 1000;
+        const HEARTBEAT_INTERVAL = 25000;
 
         const players = {
             p1: { board: null, piece: null, piecePos: null, nextPiece: null, score: 0, garbage: 0, dropTimer: null },
             p2: { board: null, piece: null, piecePos: null, nextPiece: null, score: 0, garbage: 0, dropTimer: null }
         };
 
+        // ===== Audio =====
         function initAudio() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
@@ -2605,6 +3023,499 @@
             setTimeout(() => playTone(150, 0.1, 'square'), 50);
         }
 
+        // ===== Error Toast =====
+        function showError(msg) {
+            const toast = document.getElementById('errorToast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        function showInfo(msg) {
+            const toast = document.getElementById('errorToast');
+            toast.textContent = msg;
+            toast.style.background = 'rgba(59, 130, 246, 0.9)';
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.style.background = '';
+            }, 3000);
+        }
+
+        // ===== WebSocket with Auto-Reconnect =====
+        function connectWebSocket(isReconnect = false) {
+            return new Promise((resolve, reject) => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    resolve();
+                    return;
+                }
+
+                // Clear existing connection
+                if (ws) {
+                    ws.onclose = null;
+                    ws.onerror = null;
+                    ws.close();
+                }
+
+                updateConnectionStatus(isReconnect ? 'reconnecting' : 'connecting');
+                
+                try {
+                    ws = new WebSocket(WS_URL);
+                } catch (e) {
+                    console.error('Failed to create WebSocket:', e);
+                    updateConnectionStatus('error');
+                    reject(e);
+                    return;
+                }
+
+                const connectionTimeout = setTimeout(() => {
+                    if (ws && ws.readyState !== WebSocket.OPEN) {
+                        ws.close();
+                        reject(new Error('Connection timeout'));
+                    }
+                }, 10000);
+
+                ws.onopen = () => {
+                    clearTimeout(connectionTimeout);
+                    console.log('[WS] Connected');
+                    updateConnectionStatus('connected');
+                    reconnectAttempts = 0;
+                    startHeartbeat();
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        handleServerMessage(msg);
+                        if (msg.type === 'connected') {
+                            // Try to reconnect to room if we have a token
+                            if (isReconnect && reconnectToken) {
+                                sendMessage({ type: 'reconnect', reconnectToken });
+                            }
+                            resolve();
+                        }
+                    } catch (e) {
+                        console.error('[WS] Failed to parse message:', e);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    clearTimeout(connectionTimeout);
+                    console.error('[WS] Error:', error);
+                    updateConnectionStatus('error');
+                };
+
+                ws.onclose = (event) => {
+                    clearTimeout(connectionTimeout);
+                    console.log('[WS] Closed:', event.code, event.reason);
+                    stopHeartbeat();
+                    updateConnectionStatus('disconnected');
+                    ws = null;
+                    
+                    // Auto-reconnect if we were in a game or room
+                    if ((roomCode || gameRunning) && !isReconnecting) {
+                        attemptReconnect();
+                    }
+                    
+                    if (!isReconnect) {
+                        reject(new Error('Connection closed'));
+                    }
+                };
+            });
+        }
+
+        function attemptReconnect() {
+            if (isReconnecting || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                    showError('接続が切れました。再接続に失敗しました。');
+                    handleDisconnectDuringGame();
+                }
+                return;
+            }
+
+            isReconnecting = true;
+            reconnectAttempts++;
+            
+            const delay = RECONNECT_DELAY_BASE * Math.pow(2, reconnectAttempts - 1);
+            console.log(\`[WS] Reconnecting in \${delay}ms (attempt \${reconnectAttempts}/\${MAX_RECONNECT_ATTEMPTS})\`);
+            showInfo(\`再接続中... (\${reconnectAttempts}/\${MAX_RECONNECT_ATTEMPTS})\`);
+
+            reconnectTimer = setTimeout(async () => {
+                try {
+                    await connectWebSocket(true);
+                    isReconnecting = false;
+                    showInfo('再接続しました');
+                    flushMessageQueue();
+                } catch (e) {
+                    isReconnecting = false;
+                    attemptReconnect();
+                }
+            }, delay);
+        }
+
+        function handleDisconnectDuringGame() {
+            if (gameRunning && isOnline) {
+                // End game due to connection loss
+                gameRunning = false;
+                clearInterval(players.p1?.dropTimer);
+                clearInterval(players.p2?.dropTimer);
+                showError('接続が切れました');
+            }
+        }
+
+        function startHeartbeat() {
+            stopHeartbeat();
+            heartbeatTimer = setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    // Respond to server pings with pong
+                    // The server sends ping, we respond with pong
+                }
+            }, HEARTBEAT_INTERVAL);
+        }
+
+        function stopHeartbeat() {
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+            }
+        }
+
+        function sendMessage(msg) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                try {
+                    ws.send(JSON.stringify(msg));
+                    return true;
+                } catch (e) {
+                    console.error('[WS] Send failed:', e);
+                    queueMessage(msg);
+                    return false;
+                }
+            } else {
+                queueMessage(msg);
+                return false;
+            }
+        }
+
+        function queueMessage(msg) {
+            // Only queue important messages
+            if (msg.type === 'relay' || msg.type === 'set_ready') {
+                messageQueue.push({ msg, timestamp: Date.now() });
+                // Limit queue size
+                if (messageQueue.length > 50) {
+                    messageQueue.shift();
+                }
+            }
+        }
+
+        function flushMessageQueue() {
+            const now = Date.now();
+            // Only send messages from last 10 seconds
+            const validMessages = messageQueue.filter(m => now - m.timestamp < 10000);
+            messageQueue = [];
+            
+            validMessages.forEach(m => {
+                sendMessage(m.msg);
+            });
+        }
+
+        function handleServerMessage(msg) {
+            switch (msg.type) {
+                case 'ping':
+                    // Respond to server heartbeat
+                    sendMessage({ type: 'pong' });
+                    break;
+
+                case 'connected':
+                    myPlayerId = msg.playerId;
+                    if (msg.serverTime) {
+                        lastServerTime = msg.serverTime;
+                    }
+                    console.log('[WS] My player ID:', myPlayerId);
+                    break;
+
+                case 'room_created':
+                    roomCode = msg.roomCode;
+                    isHost = true;
+                    if (msg.reconnectToken) {
+                        reconnectToken = msg.reconnectToken;
+                    }
+                    showWaitingRoom();
+                    break;
+
+                case 'joined_room':
+                    roomCode = msg.roomCode;
+                    isHost = false;
+                    if (msg.reconnectToken) {
+                        reconnectToken = msg.reconnectToken;
+                    }
+                    showWaitingRoom();
+                    break;
+
+                case 'reconnected':
+                    roomCode = msg.roomCode;
+                    if (msg.reconnectToken) {
+                        reconnectToken = msg.reconnectToken;
+                    }
+                    if (msg.roomState) {
+                        updateRoomState(msg.roomState);
+                    }
+                    showInfo('ルームに再接続しました');
+                    break;
+
+                case 'room_state':
+                    updateRoomState(msg.roomState);
+                    break;
+
+                case 'player_joined':
+                    playTone(880, 0.1, 'triangle');
+                    break;
+
+                case 'player_left':
+                    playTone(220, 0.2, 'sawtooth');
+                    if (gameRunning && isOnline) {
+                        // Opponent left during game - you win!
+                        showInfo('相手が切断しました');
+                        setTimeout(() => endBattle(myPlayerSlot), 1000);
+                    }
+                    break;
+
+                case 'player_ready':
+                    updatePlayerReady(msg.playerId, msg.ready);
+                    break;
+
+                case 'game_started':
+                    startOnlineBattle(msg.gameSeed);
+                    break;
+
+                case 'relayed':
+                    handleRelayedMessage(msg.fromPlayerId, msg.payload);
+                    break;
+
+                case 'sync_request':
+                    // Other player is requesting state sync
+                    if (gameRunning && isOnline && myPlayerSlot) {
+                        sendBoardUpdate(myPlayerSlot);
+                        sendNextUpdate(myPlayerSlot);
+                    }
+                    break;
+
+                case 'server_shutdown':
+                    showError('サーバーが再起動中です。しばらくお待ちください。');
+                    break;
+
+                case 'error':
+                    showError(msg.message);
+                    break;
+            }
+        }
+
+        function handleRelayedMessage(fromPlayerId, payload) {
+            if (!isOnline || !gameRunning) return;
+
+            const opponentSlot = myPlayerSlot === 'p1' ? 'p2' : 'p1';
+
+            switch (payload.type) {
+                case 'board_update':
+                    players[opponentSlot].board = payload.board;
+                    players[opponentSlot].piece = payload.piece;
+                    players[opponentSlot].piecePos = payload.piecePos;
+                    players[opponentSlot].score = payload.score;
+                    drawBoard(opponentSlot, opponentSlot + 'Board');
+                    updateScores();
+                    break;
+
+                case 'next_update':
+                    players[opponentSlot].nextPiece = payload.nextPiece;
+                    drawNext(opponentSlot, opponentSlot + 'Next');
+                    break;
+
+                case 'garbage_sent':
+                    players[myPlayerSlot].garbage += payload.lines;
+                    document.getElementById(myPlayerSlot + 'Garbage').style.height = 
+                        Math.min(players[myPlayerSlot].garbage * 5, 100) + '%';
+                    showAttack(myPlayerSlot, payload.lines);
+                    playAttackSound();
+                    document.getElementById(opponentSlot + 'BoardWrap').classList.add('attack');
+                    setTimeout(() => document.getElementById(opponentSlot + 'BoardWrap').classList.remove('attack'), 300);
+                    break;
+
+                case 'game_over':
+                    endBattle(myPlayerSlot);
+                    break;
+            }
+        }
+
+        function updateConnectionStatus(status) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (!dot || !text) return;
+            
+            dot.className = 'status-dot';
+            
+            switch (status) {
+                case 'connected':
+                    dot.classList.add('connected');
+                    text.textContent = '接続済み';
+                    break;
+                case 'connecting':
+                    dot.classList.add('connecting');
+                    text.textContent = '接続中...';
+                    break;
+                case 'reconnecting':
+                    dot.classList.add('connecting');
+                    text.textContent = '再接続中...';
+                    break;
+                case 'error':
+                case 'disconnected':
+                    dot.classList.add('error');
+                    text.textContent = '未接続';
+                    break;
+            }
+        }
+
+        // ===== Online Lobby =====
+        async function showOnlineLobby() {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('onlineLobby').classList.add('active');
+            
+            // Reset state
+            reconnectAttempts = 0;
+            isReconnecting = false;
+            
+            try {
+                await connectWebSocket();
+            } catch (e) {
+                showError('サーバーに接続できません。URLを確認してください。');
+            }
+        }
+
+        function backToMainLobby() {
+            // Clean up
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+            stopHeartbeat();
+            isReconnecting = false;
+            reconnectAttempts = 0;
+            reconnectToken = null;
+            roomCode = null;
+            
+            document.getElementById('onlineLobby').classList.remove('active');
+            document.getElementById('waitingRoom').classList.remove('active');
+            document.getElementById('lobby').style.display = 'flex';
+            
+            if (ws) {
+                ws.close();
+            }
+        }
+
+        async function createRoom() {
+            const name = document.getElementById('playerNameInput').value.trim() || 'Player';
+            
+            try {
+                await connectWebSocket();
+                sendMessage({ type: 'create_room', playerName: name });
+            } catch (e) {
+                showError('接続エラー');
+            }
+        }
+
+        async function joinRoom() {
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            const name = document.getElementById('playerNameInput').value.trim() || 'Player';
+            
+            if (code.length !== 4) {
+                showError('ルームコードを入力してください');
+                return;
+            }
+
+            try {
+                await connectWebSocket();
+                sendMessage({ type: 'join_room', roomCode: code, playerName: name });
+            } catch (e) {
+                showError('接続エラー');
+            }
+        }
+
+        function showWaitingRoom() {
+            document.getElementById('onlineLobby').classList.remove('active');
+            document.getElementById('waitingRoom').classList.add('active');
+            document.getElementById('displayRoomCode').textContent = roomCode;
+            
+            isReady = false;
+            updateReadyButton();
+        }
+
+        function updateRoomState(state) {
+            roomPlayers = state.players || [];
+            
+            // Update player slots
+            const slot1 = document.getElementById('slot1');
+            const slot2 = document.getElementById('slot2');
+            
+            roomPlayers.forEach((player, index) => {
+                const slot = index === 0 ? slot1 : slot2;
+                const slotName = slot.querySelector('.player-slot-name');
+                const slotStatus = slot.querySelector('.player-slot-status');
+                
+                slotName.textContent = player.name;
+                slotStatus.textContent = player.ready ? '準備完了' : '待機中';
+                slot.classList.toggle('ready', player.ready);
+
+                if (player.id === myPlayerId) {
+                    myPlayerSlot = index === 0 ? 'p1' : 'p2';
+                }
+            });
+
+            // Reset empty slots
+            if (roomPlayers.length < 2) {
+                const emptySlot = roomPlayers.length === 0 ? slot1 : slot2;
+                emptySlot.querySelector('.player-slot-name').textContent = '待機中...';
+                emptySlot.querySelector('.player-slot-status').textContent = '---';
+                emptySlot.classList.remove('ready');
+            }
+
+            // Update start button
+            const canStart = isHost && roomPlayers.length === 2 && roomPlayers.every(p => p.ready);
+            document.getElementById('startGameBtn').disabled = !canStart;
+        }
+
+        function updatePlayerReady(playerId, ready) {
+            const player = roomPlayers.find(p => p.id === playerId);
+            if (player) {
+                player.ready = ready;
+            }
+        }
+
+        function toggleReady() {
+            isReady = !isReady;
+            sendMessage({ type: 'set_ready', ready: isReady });
+            updateReadyButton();
+        }
+
+        function updateReadyButton() {
+            const btn = document.getElementById('readyBtn');
+            btn.className = 'ready-btn ' + (isReady ? 'is-ready' : 'not-ready');
+            btn.textContent = isReady ? '✗ キャンセル' : '✓ 準備完了';
+        }
+
+        function leaveRoom() {
+            sendMessage({ type: 'leave_room' });
+            roomCode = null;
+            isHost = false;
+            isReady = false;
+            document.getElementById('waitingRoom').classList.remove('active');
+            document.getElementById('onlineLobby').classList.add('active');
+        }
+
+        function startOnlineGame() {
+            if (!isHost) return;
+            sendMessage({ type: 'start_game' });
+        }
+
+        // ===== Game Logic =====
         function randomPiece() {
             const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
             const color = COLORS[Math.floor(Math.random() * COLORS.length)];
@@ -2624,6 +3535,8 @@
 
         function drawBoard(player, boardId) {
             const p = players[player];
+            if (!p.board) return;
+            
             const cells = document.getElementById(boardId).children;
             const display = p.board.map(r => [...r]);
 
@@ -2706,9 +3619,57 @@
             };
         }
 
+        function sendBoardUpdate(player) {
+            if (!isOnline) return;
+            const p = players[player];
+            sendMessage({
+                type: 'relay',
+                payload: {
+                    type: 'board_update',
+                    board: p.board,
+                    piece: p.piece,
+                    piecePos: p.piecePos,
+                    score: p.score
+                }
+            });
+        }
+
+        function sendNextUpdate(player) {
+            if (!isOnline) return;
+            const p = players[player];
+            sendMessage({
+                type: 'relay',
+                payload: {
+                    type: 'next_update',
+                    nextPiece: p.nextPiece
+                }
+            });
+        }
+
+        function sendGarbage(lines) {
+            if (!isOnline) return;
+            sendMessage({
+                type: 'relay',
+                payload: {
+                    type: 'garbage_sent',
+                    lines: lines
+                }
+            });
+        }
+
+        function sendGameOver() {
+            if (!isOnline) return;
+            sendMessage({
+                type: 'relay',
+                payload: { type: 'game_over' }
+            });
+        }
+
         function lock(player, boardId, opponent) {
             const p = players[player];
             const opp = players[opponent];
+            
+            if (!p.piece) return;
 
             p.piece.shape.forEach((row, py) => {
                 row.forEach((val, px) => {
@@ -2753,17 +3714,24 @@
                     // Send garbage to opponent
                     if (cleared >= 2) {
                         const garbageLines = cleared - 1;
-                        opp.garbage += garbageLines;
-                        document.getElementById(opponent + 'Garbage').style.height = Math.min(opp.garbage * 5, 100) + '%';
                         
-                        showAttack(opponent, garbageLines);
+                        if (isOnline && player === myPlayerSlot) {
+                            sendGarbage(garbageLines);
+                        } else if (!isOnline) {
+                            opp.garbage += garbageLines;
+                            document.getElementById(opponent + 'Garbage').style.height = Math.min(opp.garbage * 5, 100) + '%';
+                            showAttack(opponent, garbageLines);
+                        }
+                        
                         playAttackSound();
-                        
                         document.getElementById(player + 'BoardWrap').classList.add('attack');
                         setTimeout(() => document.getElementById(player + 'BoardWrap').classList.remove('attack'), 300);
                     }
 
                     drawBoard(player, boardId);
+                    if (isOnline && player === myPlayerSlot) {
+                        sendBoardUpdate(player);
+                    }
                 }, 300);
             }
 
@@ -2778,7 +3746,15 @@
             drawNext(player, player + 'Next');
             drawBoard(player, boardId);
 
+            if (isOnline && player === myPlayerSlot) {
+                sendNextUpdate(player);
+                sendBoardUpdate(player);
+            }
+
             if (collision(p, p.piece, p.piecePos.x, p.piecePos.y)) {
+                if (isOnline && player === myPlayerSlot) {
+                    sendGameOver();
+                }
                 endBattle(opponent);
             }
         }
@@ -2790,10 +3766,8 @@
             
             document.getElementById(player + 'Garbage').style.height = Math.min(p.garbage * 5, 100) + '%';
             
-            // Remove top rows
             p.board.splice(0, linesToAdd);
             
-            // Add garbage rows at bottom
             const gapX = Math.floor(Math.random() * W);
             for (let i = 0; i < linesToAdd; i++) {
                 const row = Array(W).fill(null).map((_, x) => x === gapX ? null : { color: '#666', garbage: true });
@@ -2823,6 +3797,9 @@
                 p.piecePos.y += dy;
                 if (dx !== 0) playTone(392, 0.03, 'square');
                 drawBoard(player, boardId);
+                if (isOnline && player === myPlayerSlot) {
+                    sendBoardUpdate(player);
+                }
             } else if (dy > 0) {
                 lock(player, boardId, opponent);
             }
@@ -2838,6 +3815,9 @@
                 p.piece = rotated;
                 playTone(523, 0.05);
                 drawBoard(player, boardId);
+                if (isOnline && player === myPlayerSlot) {
+                    sendBoardUpdate(player);
+                }
             }
         }
 
@@ -2874,14 +3854,17 @@
         function startBattle(mode) {
             lastMode = mode;
             isAI = mode === 'ai';
+            isOnline = false;
             
             initAudio();
             
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('battleContainer').classList.add('active');
             document.getElementById('resultOverlay').classList.remove('show');
+            document.getElementById('controlsHint').style.display = 'flex';
             
-            document.getElementById('p2Name').textContent = isAI ? 'CPU' : 'PLAYER 2';
+            document.getElementById('p1NameDisplay').textContent = 'PLAYER 1';
+            document.getElementById('p2NameDisplay').textContent = isAI ? 'CPU' : 'PLAYER 2';
             
             initPlayer('p1');
             initPlayer('p2');
@@ -2898,7 +3881,81 @@
             document.getElementById('p1Garbage').style.height = '0%';
             document.getElementById('p2Garbage').style.height = '0%';
             
-            // Countdown
+            runCountdown(() => {
+                gameRunning = true;
+                startDropTimers();
+                if (isAI) startAI();
+            });
+        }
+
+        function startOnlineBattle(gameSeed) {
+            isOnline = true;
+            isAI = false;
+            lastMode = 'online';
+            
+            initAudio();
+            
+            // Use game seed for deterministic piece generation if provided
+            if (gameSeed) {
+                console.log('[GAME] Starting with seed:', gameSeed);
+            }
+            
+            document.getElementById('waitingRoom').classList.remove('active');
+            document.getElementById('battleContainer').classList.add('active');
+            document.getElementById('resultOverlay').classList.remove('show');
+            
+            // Hide P2 controls hint in online mode
+            document.getElementById('controlsHint').innerHTML = \`
+                <div class="control-group">
+                    <span>Controls</span>
+                    <div class="key-hint">
+                        <span class="key">A/←</span>
+                        <span class="key">S/↓</span>
+                        <span class="key">D/→</span>
+                        <span class="key">W/↑</span>
+                        <span class="key">Space</span>
+                    </div>
+                </div>
+            \`;
+
+            // Set player names
+            const p1Player = roomPlayers[0];
+            const p2Player = roomPlayers[1];
+            document.getElementById('p1NameDisplay').textContent = p1Player?.name || 'PLAYER 1';
+            document.getElementById('p2NameDisplay').textContent = p2Player?.name || 'PLAYER 2';
+            
+            initPlayer('p1');
+            initPlayer('p2');
+            
+            createBoard('p1Board');
+            createBoard('p2Board');
+            
+            drawBoard('p1', 'p1Board');
+            drawBoard('p2', 'p2Board');
+            drawNext('p1', 'p1Next');
+            drawNext('p2', 'p2Next');
+            updateScores();
+            
+            document.getElementById('p1Garbage').style.height = '0%';
+            document.getElementById('p2Garbage').style.height = '0%';
+            
+            // Send initial state
+            sendBoardUpdate(myPlayerSlot);
+            sendNextUpdate(myPlayerSlot);
+            
+            runCountdown(() => {
+                gameRunning = true;
+                // Only run drop timer for my player in online mode
+                const opponent = myPlayerSlot === 'p1' ? 'p2' : 'p1';
+                players[myPlayerSlot].dropTimer = setInterval(() => {
+                    if (gameRunning && !isReconnecting) {
+                        move(myPlayerSlot, myPlayerSlot + 'Board', opponent, 0, 1);
+                    }
+                }, 500);
+            });
+        }
+
+        function runCountdown(callback) {
             const countdown = document.getElementById('countdown');
             let count = 3;
             countdown.textContent = count;
@@ -2915,9 +3972,7 @@
                 } else {
                     clearInterval(countInterval);
                     countdown.style.display = 'none';
-                    gameRunning = true;
-                    startDropTimers();
-                    if (isAI) startAI();
+                    callback();
                 }
             }, 1000);
         }
@@ -2957,8 +4012,16 @@
             clearInterval(players.p2.dropTimer);
             if (aiTimer) clearInterval(aiTimer);
             
+            let winnerName;
+            if (isOnline) {
+                const winnerPlayer = winner === 'p1' ? roomPlayers[0] : roomPlayers[1];
+                winnerName = winnerPlayer?.name || (winner === 'p1' ? 'PLAYER 1' : 'PLAYER 2');
+            } else {
+                winnerName = winner === 'p1' ? 'PLAYER 1' : (isAI ? 'CPU' : 'PLAYER 2');
+            }
+            
             const winnerText = document.getElementById('winnerText');
-            winnerText.textContent = (winner === 'p1' ? 'PLAYER 1' : (isAI ? 'CPU' : 'PLAYER 2')) + ' WINS!';
+            winnerText.textContent = winnerName + ' WINS!';
             winnerText.className = 'winner-display ' + winner;
             
             document.getElementById('finalP1').textContent = players.p1.score;
@@ -2969,7 +4032,6 @@
                 spawnFireworks();
             }, 500);
             
-            // Victory sound
             [523, 659, 784, 1047].forEach((f, i) => {
                 setTimeout(() => playTone(f, 0.2, 'triangle'), i * 100);
             });
@@ -2996,30 +4058,72 @@
             }
         }
 
+        function handleRematch() {
+            if (isOnline) {
+                // For online, go back to waiting room
+                document.getElementById('battleContainer').classList.remove('active');
+                document.getElementById('resultOverlay').classList.remove('show');
+                isReady = false;
+                updateReadyButton();
+                showWaitingRoom();
+            } else {
+                startBattle(lastMode);
+            }
+        }
+
         function backToLobby() {
             document.getElementById('battleContainer').classList.remove('active');
             document.getElementById('resultOverlay').classList.remove('show');
-            document.getElementById('lobby').style.display = 'flex';
+            
+            if (isOnline) {
+                sendMessage({ type: 'leave_room' });
+                roomCode = null;
+                isHost = false;
+                isReady = false;
+                backToMainLobby();
+            } else {
+                document.getElementById('lobby').style.display = 'flex';
+            }
         }
 
         // Keyboard controls
         document.addEventListener('keydown', e => {
             if (!gameRunning) return;
             
-            // P1: WASD + Space
-            if (e.key === 'a' || e.key === 'A') move('p1', 'p1Board', 'p2', -1, 0);
-            else if (e.key === 'd' || e.key === 'D') move('p1', 'p1Board', 'p2', 1, 0);
-            else if (e.key === 's' || e.key === 'S') move('p1', 'p1Board', 'p2', 0, 1);
-            else if (e.key === 'w' || e.key === 'W') rotatePiece('p1', 'p1Board');
-            else if (e.key === ' ') { e.preventDefault(); hardDrop('p1', 'p1Board', 'p2'); }
-            
-            // P2: Arrows + Enter (only if not AI)
-            if (!isAI) {
-                if (e.key === 'ArrowLeft') move('p2', 'p2Board', 'p1', -1, 0);
-                else if (e.key === 'ArrowRight') move('p2', 'p2Board', 'p1', 1, 0);
-                else if (e.key === 'ArrowDown') move('p2', 'p2Board', 'p1', 0, 1);
-                else if (e.key === 'ArrowUp') rotatePiece('p2', 'p2Board');
-                else if (e.key === 'Enter') { e.preventDefault(); hardDrop('p2', 'p2Board', 'p1'); }
+            if (isOnline) {
+                // Online mode - control only my player
+                const opponent = myPlayerSlot === 'p1' ? 'p2' : 'p1';
+                const boardId = myPlayerSlot + 'Board';
+                
+                if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') {
+                    move(myPlayerSlot, boardId, opponent, -1, 0);
+                } else if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') {
+                    move(myPlayerSlot, boardId, opponent, 1, 0);
+                } else if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') {
+                    move(myPlayerSlot, boardId, opponent, 0, 1);
+                } else if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
+                    rotatePiece(myPlayerSlot, boardId);
+                } else if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    hardDrop(myPlayerSlot, boardId, opponent);
+                }
+            } else {
+                // Local mode
+                // P1: WASD + Space
+                if (e.key === 'a' || e.key === 'A') move('p1', 'p1Board', 'p2', -1, 0);
+                else if (e.key === 'd' || e.key === 'D') move('p1', 'p1Board', 'p2', 1, 0);
+                else if (e.key === 's' || e.key === 'S') move('p1', 'p1Board', 'p2', 0, 1);
+                else if (e.key === 'w' || e.key === 'W') rotatePiece('p1', 'p1Board');
+                else if (e.key === ' ') { e.preventDefault(); hardDrop('p1', 'p1Board', 'p2'); }
+                
+                // P2: Arrows + Enter (only if not AI)
+                if (!isAI) {
+                    if (e.key === 'ArrowLeft') move('p2', 'p2Board', 'p1', -1, 0);
+                    else if (e.key === 'ArrowRight') move('p2', 'p2Board', 'p1', 1, 0);
+                    else if (e.key === 'ArrowDown') move('p2', 'p2Board', 'p1', 0, 1);
+                    else if (e.key === 'ArrowUp') rotatePiece('p2', 'p2Board');
+                    else if (e.key === 'Enter') { e.preventDefault(); hardDrop('p2', 'p2Board', 'p1'); }
+                }
             }
         });
 
