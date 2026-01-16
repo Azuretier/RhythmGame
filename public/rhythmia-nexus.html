@@ -1716,7 +1716,10 @@
                         showJudgment(cleared > 0 ? 'T-SPIN ' + tSpinNames[cleared] + '!' : 'T-SPIN!', '#FF00FF');
                         playTone(880, 0.15, 'triangle');
                     } else if (tSpinType === 'mini') {
-                        const miniPts = [100, 200][Math.min(cleared, 1)] * (level + 1);
+                        // Mini T-Spins only distinguish between 0-line and 1+-line clears;
+                        // any Mini T-Spin that clears 2 or more lines uses the 1-line bonus.
+                        const miniClearIndex = cleared <= 0 ? 0 : 1;
+                        const miniPts = [100, 200][miniClearIndex] * (level + 1);
                         pts += miniPts;
                         showJudgment('MINI T-SPIN!', '#FF88FF');
                     }
