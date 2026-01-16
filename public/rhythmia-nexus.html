@@ -1290,7 +1290,7 @@
             [[0,0,1],[1,1,1]]
         ];
 
-        let board, piece, piecePos, nextPiece, score, combo, level, lines;
+        let board, piece, piecePos, nextPieces = [], score, combo, level, lines;
         let worldIdx, enemyHP, gameOver, paused;
         let beatPhase, lastBeat, audioCtx;
         let dropTimer, beatTimer;
@@ -1298,6 +1298,7 @@
         let lockTimeoutId = null;
         let cellSize = 20;
         let gapSize = 1;
+        let nextPiecesCount = 1; // Start with 1 next piece, max 5
 
         const $ = id => document.getElementById(id);
         const boardEl = $('board');
@@ -1486,21 +1487,41 @@
         }
 
         function drawNext() {
-            if (!nextPiece) return;
-            const shape = nextPiece.shape;
             nextEl.innerHTML = '';
-            nextEl.style.gridTemplateColumns = \`repeat(\${shape[0].length}, 1fr)\`;
-            shape.forEach(row => {
-                row.forEach(val => {
-                    const cell = document.createElement('div');
-                    cell.className = 'next-cell';
-                    if (val) {
-                        cell.style.backgroundColor = nextPiece.color;
-                        cell.style.boxShadow = \`0 0 8px \${nextPiece.color}\`;
-                    }
-                    nextEl.appendChild(cell);
+            const limit = Math.min(nextPiecesCount, nextPieces.length);
+            
+            for (let i = 0; i < limit; i++) {
+                const p = nextPieces[i];
+                const container = document.createElement('div');
+                container.style.marginBottom = '8px';
+                
+                const label = document.createElement('div');
+                label.style.fontSize = '10px';
+                label.style.marginBottom = '2px';
+                label.style.color = '#999';
+                label.textContent = i === 0 ? 'NEXT' : \`+\${i}\`;
+                container.appendChild(label);
+                
+                const grid = document.createElement('div');
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = \`repeat(\${p.shape[0].length}, 12px)\`;
+                grid.style.gap = '1px';
+                
+                p.shape.forEach(row => {
+                    row.forEach(val => {
+                        const cell = document.createElement('div');
+                        if (val) {
+                            cell.style.width = '12px';
+                            cell.style.height = '12px';
+                            cell.style.backgroundColor = p.color;
+                            cell.style.boxShadow = \`0 0 4px \${p.color}\`;
+                        }
+                        grid.appendChild(cell);
+                    });
                 });
-            });
+                container.appendChild(grid);
+                nextEl.appendChild(container);
+            }
         }
 
         function collision(p, x, y) {
@@ -1521,14 +1542,26 @@
         }
 
         function spawnNextPiece() {
-            piece = nextPiece;
-            nextPiece = randomPiece();
+            piece = nextPieces.shift();
+            while (nextPieces.length < nextPiecesCount) {
+                nextPieces.push(randomPiece());
+            }
             piecePos = { x: Math.floor(W/2) - 1, y: 0 };
             rebuildActivePiece();
             drawNext();
             drawBoard();
             if (collision(piece, piecePos.x, piecePos.y)) {
                 endGame();
+            }
+        }
+
+        function expandNextDisplay() {
+            if (nextPiecesCount < 5) {
+                nextPiecesCount++;
+                while (nextPieces.length < nextPiecesCount) {
+                    nextPieces.push(randomPiece());
+                }
+                drawNext();
             }
         }
 
@@ -1752,9 +1785,14 @@
             enemyHP = 100;
             gameOver = false;
             paused = false;
+            nextPiecesCount = 1; // Reset to 1 next piece at start
+            nextPieces = []; // Clear queue
             
             piece = randomPiece();
-            nextPiece = randomPiece();
+            // Initialize next pieces queue
+            while (nextPieces.length < nextPiecesCount) {
+                nextPieces.push(randomPiece());
+            }
             piecePos = { x: Math.floor(W/2) - 1, y: 0 };
             
             createBoard();
@@ -3452,8 +3490,8 @@
         const HEARTBEAT_INTERVAL = 25000;
 
         const players = {
-            p1: { board: null, piece: null, piecePos: null, nextPiece: null, score: 0, garbage: 0, dropTimer: null },
-            p2: { board: null, piece: null, piecePos: null, nextPiece: null, score: 0, garbage: 0, dropTimer: null }
+            p1: { board: null, piece: null, piecePos: null, nextPieces: [], score: 0, garbage: 0, dropTimer: null, nextPiecesCount: 1 },
+            p2: { board: null, piece: null, piecePos: null, nextPieces: [], score: 0, garbage: 0, dropTimer: null, nextPiecesCount: 1 }
         };
 
         // ===== Audio =====
@@ -3788,7 +3826,7 @@
                     break;
 
                 case 'next_update':
-                    players[opponentSlot].nextPiece = payload.nextPiece;
+                    players[opponentSlot].nextPieces = payload.nextPieces;
                     drawNext(opponentSlot, opponentSlot + 'Next');
                     break;
 
@@ -4321,8 +4359,10 @@
                 addGarbage(player, boardId);
             }
 
-            p.piece = p.nextPiece;
-            p.nextPiece = randomPiece();
+            p.piece = p.nextPieces.shift();
+            while (p.nextPieces.length < p.nextPiecesCount) {
+                p.nextPieces.push(randomPiece());
+            }
             p.piecePos = { x: Math.floor(W/2) - 1, y: 0 };
             drawNext(player, player + 'Next');
             drawBoard(player, boardId);
