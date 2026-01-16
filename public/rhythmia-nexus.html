@@ -1298,6 +1298,35 @@
         let lockTimeoutId = null;
         let cellSize = 20;
         let gapSize = 1;
+        let lastRotationWasKick = false;
+        let lastMoveWasRotation = false;
+
+        // Piece type identifiers (I, O, T, S, Z, J, L)
+        const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
+        // SRS Wall Kick Data for JLSTZ pieces
+        const WALL_KICKS = {
+            '0>1': [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
+            '1>0': [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
+            '1>2': [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
+            '2>1': [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
+            '2>3': [[0,0], [1,0], [1,-1], [0,2], [1,2]],
+            '3>2': [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
+            '3>0': [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
+            '0>3': [[0,0], [1,0], [1,-1], [0,2], [1,2]]
+        };
+
+        // SRS Wall Kick Data for I piece (different offsets)
+        const I_WALL_KICKS = {
+            '0>1': [[0,0], [-2,0], [1,0], [-2,1], [1,-2]],
+            '1>0': [[0,0], [2,0], [-1,0], [2,-1], [-1,2]],
+            '1>2': [[0,0], [-1,0], [2,0], [-1,-2], [2,1]],
+            '2>1': [[0,0], [1,0], [-2,0], [1,2], [-2,-1]],
+            '2>3': [[0,0], [2,0], [-1,0], [2,-1], [-1,2]],
+            '3>2': [[0,0], [-2,0], [1,0], [-2,1], [1,-2]],
+            '3>0': [[0,0], [1,0], [-2,0], [1,2], [-2,-1]],
+            '0>3': [[0,0], [-1,0], [2,0], [-1,-2], [2,1]]
+        };
 
         const $ = id => document.getElementById(id);
         const boardEl = $('board');
@@ -1393,9 +1422,11 @@
 
         function randomPiece() {
             const world = WORLDS[worldIdx];
-            const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+            const shapeIdx = Math.floor(Math.random() * SHAPES.length);
+            const shape = SHAPES[shapeIdx].map(row => [...row]); // Deep copy
             const color = world.colors[Math.floor(Math.random() * world.colors.length)];
-            return { shape, color };
+            const type = PIECE_TYPES[shapeIdx];
+            return { shape, color, type, rotation: 0 };
         }
 
         function drawBoard() {
@@ -1513,11 +1544,86 @@
             );
         }
 
-        function rotate(p) {
+        // Rotate shape clockwise (right)
+        function rotateShapeCW(shape) {
+            return shape[0].map((_, i) => shape.map(row => row[i]).reverse());
+        }
+
+        // Rotate shape counter-clockwise (left)
+        function rotateShapeCCW(shape) {
+            return shape[0].map((_, i) => shape.map(row => row[row.length - 1 - i]));
+        }
+
+        function rotate(p, direction = 1) {
+            const newRotation = (p.rotation + direction + 4) % 4;
             return {
                 ...p,
-                shape: p.shape[0].map((_, i) => p.shape.map(row => row[i]).reverse())
+                shape: direction === 1 ? rotateShapeCW(p.shape) : rotateShapeCCW(p.shape),
+                rotation: newRotation
             };
+        }
+
+        // Get wall kick data for a piece and rotation
+        function getWallKicks(pieceType, fromRot, toRot) {
+            const key = fromRot + '>' + toRot;
+            if (pieceType === 'I') return I_WALL_KICKS[key] || [[0,0]];
+            if (pieceType === 'O') return [[0,0]]; // O piece doesn't need kicks
+            return WALL_KICKS[key] || [[0,0]];
+        }
+
+        // Try to rotate with wall kicks
+        function tryRotate(direction) {
+            if (!piece) return false;
+            
+            const fromRot = piece.rotation;
+            const rotated = rotate(piece, direction);
+            const toRot = rotated.rotation;
+            const kicks = getWallKicks(piece.type, fromRot, toRot);
+            
+            for (let i = 0; i < kicks.length; i++) {
+                const [dx, dy] = kicks[i];
+                if (!collision(rotated, piecePos.x + dx, piecePos.y - dy)) {
+                    piece = rotated;
+                    piecePos.x += dx;
+                    piecePos.y -= dy;
+                    lastRotationWasKick = (i > 0);
+                    lastMoveWasRotation = true;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // T-Spin detection
+        function checkTSpin() {
+            if (!piece || piece.type !== 'T' || !lastMoveWasRotation) return 'none';
+            
+            // Check 4 corners of T piece center
+            const cx = piecePos.x + 1;
+            const cy = piecePos.y + 1;
+            const corners = [
+                [cx - 1, cy - 1], [cx + 1, cy - 1],
+                [cx - 1, cy + 1], [cx + 1, cy + 1]
+            ];
+            
+            let filledCorners = 0;
+            let frontCorners = 0;
+            
+            corners.forEach(([x, y], i) => {
+                const blocked = x < 0 || x >= W || y >= H || (y >= 0 && board[y] && board[y][x]);
+                if (blocked) {
+                    filledCorners++;
+                    // Front corners based on rotation
+                    const frontIdx = [[0,1], [1,3], [2,3], [0,2]][piece.rotation];
+                    if (frontIdx.includes(i)) frontCorners++;
+                }
+            });
+            
+            if (filledCorners >= 3) {
+                if (frontCorners >= 2 || lastRotationWasKick) return 'tspin';
+                return 'mini';
+            }
+            return 'none';
         }
 
         function spawnNextPiece() {
@@ -1537,6 +1643,9 @@
             
             const onBeat = beatPhase > 0.75 || beatPhase < 0.15;
             let mult = 1;
+            
+            // Check T-Spin before clearing piece
+            const tSpinType = checkTSpin();
             
             if (onBeat) {
                 mult = 2;
@@ -1558,6 +1667,7 @@
             // Clear piece immediately to prevent race conditions with dropTimer
             piece = null;
             activePieceEl.innerHTML = '';
+            lastMoveWasRotation = false;
             
             lockedPiece.shape.forEach((row, py) => {
                 row.forEach((val, px) => {
@@ -1595,11 +1705,39 @@
                     while (newBoard.length < H) newBoard.unshift(Array(W).fill(null));
                     board = newBoard;
                     
-                    const pts = [0, 100, 300, 500, 800][cleared] * (level + 1) * mult * Math.max(1, combo);
+                    // Base line clear points
+                    let pts = [0, 100, 300, 500, 800][cleared] * (level + 1) * mult * Math.max(1, combo);
+                    
+                    // T-Spin bonuses
+                    if (tSpinType === 'tspin') {
+                        const tSpinClearedIndex = Math.min(cleared, 3);
+                        const tSpinPts = [400, 800, 1200, 1600][tSpinClearedIndex] * (level + 1);
+                        pts += tSpinPts;
+                        const tSpinNames = ['', 'SINGLE', 'DOUBLE', 'TRIPLE'];
+                        showJudgment(cleared > 0 ? 'T-SPIN ' + tSpinNames[tSpinClearedIndex] + '!' : 'T-SPIN!', '#FF00FF');
+                        playTone(880, 0.15, 'triangle');
+                    } else if (tSpinType === 'mini') {
+                        // Mini T-Spins only distinguish between 0-line and 1+-line clears;
+                        // any Mini T-Spin that clears 2 or more lines uses the 1-line bonus.
+                        const miniClearIndex = cleared <= 0 ? 0 : 1;
+                        const miniPts = [100, 200][miniClearIndex] * (level + 1);
+                        pts += miniPts;
+                        showJudgment('MINI T-SPIN!', '#FF88FF');
+                    }
+                    
                     score += pts;
                     lines += cleared;
                     
-                    enemyHP = Math.max(0, enemyHP - cleared * 8 * mult);
+                    let tSpinDamageMult;
+                    if (tSpinType === 'tspin') {
+                        tSpinDamageMult = 1.5;
+                    } else if (tSpinType === 'mini') {
+                        // Mini T-Spins intentionally do not get extra damage (1x)
+                        tSpinDamageMult = 1;
+                    } else {
+                        tSpinDamageMult = 1;
+                    }
+                    enemyHP = Math.max(0, enemyHP - cleared * 8 * mult * tSpinDamageMult);
                     enemyFill.style.width = enemyHP + '%';
                     
                     if (enemyHP <= 0) {
@@ -1618,6 +1756,18 @@
                 return;
             }
             
+            // T-Spin with no lines still gives points
+            if (tSpinType === 'tspin') {
+                score += 400 * (level + 1);
+                showJudgment('T-SPIN!', '#FF00FF');
+                playTone(880, 0.15, 'triangle');
+                updateScore();
+            } else if (tSpinType === 'mini') {
+                score += 100 * (level + 1);
+                showJudgment('MINI T-SPIN!', '#FF88FF');
+                updateScore();
+            }
+            
             spawnNextPiece();
         }
 
@@ -1634,15 +1784,21 @@
             }
         }
 
-        function rotatePiece() {
+        function rotatePiece(direction = 1) {
             if (gameOver || paused || !piece) return;
-            const rotated = rotate(piece);
-            if (!collision(rotated, piecePos.x, piecePos.y)) {
-                piece = rotated;
-                playTone(523, 0.08);
+            if (tryRotate(direction)) {
+                playTone(direction === 1 ? 523 : 440, 0.08);
                 rebuildActivePiece();
                 drawBoard();
             }
+        }
+
+        function rotatePieceLeft() {
+            rotatePiece(-1);
+        }
+
+        function rotatePieceRight() {
+            rotatePiece(1);
         }
 
         function hardDrop() {
@@ -1855,14 +2011,16 @@
             right: 'ArrowRight',
             down: 'ArrowDown',
             rotate: 'ArrowUp',
+            rotateLeft: 'z',
+            rotateRight: 'x',
             drop: ' '
         };
         
         const PRESETS = {
-            arrows: { left: 'ArrowLeft', right: 'ArrowRight', down: 'ArrowDown', rotate: 'ArrowUp', drop: ' ' },
-            wasd: { left: 'a', right: 'd', down: 's', rotate: 'w', drop: ' ' },
-            vim: { left: 'h', right: 'l', down: 'j', rotate: 'k', drop: ' ' },
-            gamer: { left: 's', right: 'f', down: 'd', rotate: 'e', drop: ' ' }
+            arrows: { left: 'ArrowLeft', right: 'ArrowRight', down: 'ArrowDown', rotate: 'ArrowUp', rotateLeft: 'z', rotateRight: 'x', drop: ' ' },
+            wasd: { left: 'a', right: 'd', down: 's', rotate: 'w', rotateLeft: 'q', rotateRight: 'e', drop: ' ' },
+            vim: { left: 'h', right: 'l', down: 'j', rotate: 'k', rotateLeft: 'u', rotateRight: 'i', drop: ' ' },
+            gamer: { left: 's', right: 'f', down: 'd', rotate: 'e', rotateLeft: 'q', rotateRight: 'r', drop: ' ' }
         };
         
         let keybinds = { ...DEFAULT_KEYBINDS };
@@ -1972,11 +2130,13 @@
             
             if (keybindModal.classList.contains('show')) return;
             
-            if (e.key === keybinds.left) move(-1, 0);
-            else if (e.key === keybinds.right) move(1, 0);
-            else if (e.key === keybinds.down) move(0, 1);
-            else if (e.key === keybinds.rotate) rotatePiece();
-            else if (e.key === keybinds.drop) { e.preventDefault(); hardDrop(); }
+            if (e.key === keybinds.left) { move(-1, 0); lastMoveWasRotation = false; }
+            else if (e.key === keybinds.right) { move(1, 0); lastMoveWasRotation = false; }
+            else if (e.key === keybinds.down) { move(0, 1); lastMoveWasRotation = false; }
+            else if (e.key === keybinds.rotate) rotatePieceRight();
+            else if (e.key === keybinds.rotateLeft || e.key === keybinds.rotateLeft.toUpperCase()) rotatePieceLeft();
+            else if (e.key === keybinds.rotateRight || e.key === keybinds.rotateRight.toUpperCase()) rotatePieceRight();
+            else if (e.key === keybinds.drop) { e.preventDefault(); hardDrop(); lastMoveWasRotation = false; }
         });
 
         beatPhase = 0;
@@ -3397,6 +3557,109 @@
 
     <div class="error-toast" id="errorToast"></div>
 
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, query, where, getDocs, onSnapshot, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration - use environment variables in production
+        const firebaseConfig = {
+            apiKey: "AIzaSyBo-Rv5pYYLCKHZH_aZH_n6rYJbHzvDxfA",
+            authDomain: "azuret-me.firebaseapp.com",
+            projectId: "azuret-me",
+            storageBucket: "azuret-me.firebasestorage.app",
+            messagingSenderId: "1058234893661",
+            appId: "1:1058234893661:web:77e7ecc3d0cac1b8d7e7b7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Make auth and db available globally
+        window.firebaseAuth = auth;
+        window.firestoreDB = db;
+        window.firebaseInitialized = false;
+
+        // Anonymous authentication on load
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('[FIREBASE] Authenticated as:', user.uid);
+                window.firebaseUser = user;
+                window.firebaseInitialized = true;
+                
+                // Trigger connection if needed
+                if (typeof window.onFirebaseReady === 'function') {
+                    window.onFirebaseReady();
+                }
+            } else {
+                console.log('[FIREBASE] Signing in anonymously...');
+                signInAnonymously(auth).catch((error) => {
+                    console.error('[FIREBASE] Auth error:', error);
+                });
+            }
+        });
+
+        // Expose Firestore functions globally
+        window.getFirestoreRooms = async function() {
+            try {
+                const roomsRef = collection(db, 'rhythmia_rooms');
+                const q = query(
+                    roomsRef,
+                    where('status', '==', 'open'),
+                    orderBy('createdAt', 'desc'),
+                    limit(50)
+                );
+                const snapshot = await getDocs(q);
+                const rooms = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    rooms.push({
+                        code: data.code,
+                        name: data.name,
+                        hostName: data.players.find(p => p.isHost)?.name || 'Unknown',
+                        playerCount: data.players.length
+                    });
+                });
+                return rooms;
+            } catch (error) {
+                console.error('[FIRESTORE] Error getting rooms:', error);
+                return [];
+            }
+        };
+
+        // Subscribe to Firestore room updates
+        window.subscribeToRooms = function(callback) {
+            const roomsRef = collection(db, 'rhythmia_rooms');
+            const q = query(
+                roomsRef,
+                where('status', '==', 'open'),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            );
+            
+            return onSnapshot(q, (snapshot) => {
+                const rooms = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    rooms.push({
+                        code: data.code,
+                        name: data.name,
+                        hostName: data.players.find(p => p.isHost)?.name || 'Unknown',
+                        playerCount: data.players.length
+                    });
+                });
+                callback(rooms);
+            }, (error) => {
+                console.error('[FIRESTORE] Subscription error:', error);
+            });
+        };
+
+        console.log('[FIREBASE] Initialization complete');
+    </script>
+
     <script>
         const W = 10, H = 20;
         const COLORS = ['#FF6B9D','#4ECDC4','#FFE66D','#A29BFE','#FF6B6B','#6C5CE7','#00D9FF'];
@@ -3855,8 +4118,23 @@
             const savedName = localStorage.getItem('rhythmia_player_name') || '';
             document.getElementById('playerNameInput').value = savedName;
             
+            // Wait for Firebase to initialize if needed
+            if (!window.firebaseInitialized) {
+                console.log('[FIREBASE] Waiting for initialization...');
+                showInfo('認証中...');
+                await new Promise((resolve) => {
+                    window.onFirebaseReady = () => {
+                        console.log('[FIREBASE] Ready!');
+                        resolve();
+                    };
+                    // Timeout after 5 seconds
+                    setTimeout(resolve, 5000);
+                });
+            }
+            
             try {
                 await connectWebSocket();
+                console.log('[INIT] Firebase and WebSocket connected');
             } catch (e) {
                 showError('サーバーに接続できません。URLを確認してください。');
             }
@@ -3913,12 +4191,25 @@
             document.getElementById('publicToggle').classList.toggle('active', isPublicRoom);
         }
 
-        function refreshRoomList() {
+        async function refreshRoomList() {
             const listEl = document.getElementById('roomList');
             listEl.innerHTML = '<div class="room-list-empty">ルームを検索中...</div>';
             
-            // Request room list from server
-            sendMessage({ type: 'get_rooms' });
+            // Try to get rooms from Firestore first, fallback to WebSocket
+            try {
+                if (window.firebaseInitialized && window.getFirestoreRooms) {
+                    const rooms = await window.getFirestoreRooms();
+                    renderRoomList(rooms);
+                    console.log('[FIRESTORE] Loaded', rooms.length, 'rooms');
+                } else {
+                    // Fallback to WebSocket
+                    sendMessage({ type: 'get_rooms' });
+                }
+            } catch (error) {
+                console.error('[ROOM LIST] Error:', error);
+                // Fallback to WebSocket
+                sendMessage({ type: 'get_rooms' });
+            }
         }
 
         function renderRoomList(rooms) {
@@ -4096,11 +4387,16 @@
             sendMessage({ type: 'start_game' });
         }
 
+        // Piece type identifiers for multiplayer
+        const PIECE_TYPES_MP = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
         // ===== Game Logic =====
         function randomPiece() {
-            const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+            const shapeIdx = Math.floor(Math.random() * SHAPES.length);
+            const shape = SHAPES[shapeIdx].map(row => [...row]); // Deep copy
             const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-            return { shape, color };
+            const type = PIECE_TYPES_MP[shapeIdx];
+            return { shape, color, type, rotation: 0 };
         }
 
         function createBoard(id) {
@@ -4193,10 +4489,14 @@
             );
         }
 
-        function rotate(piece) {
+        function rotate(piece, direction = 1) {
+            const rotateShapeCW = (shape) => shape[0].map((_, i) => shape.map(row => row[i]).reverse());
+            const rotateShapeCCW = (shape) => shape[0].map((_, i) => shape.map(row => row[row.length - 1 - i]));
+            const newRotation = (piece.rotation + direction + 4) % 4;
             return {
                 ...piece,
-                shape: piece.shape[0].map((_, i) => piece.shape.map(row => row[i]).reverse())
+                shape: direction === 1 ? rotateShapeCW(piece.shape) : rotateShapeCCW(piece.shape),
+                rotation: newRotation
             };
         }
 
