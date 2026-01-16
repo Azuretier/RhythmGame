@@ -319,27 +319,18 @@ export default function VanillaGame() {
           </button>
         </div>
       ) : (
-        <div className={styles.gameCard}>
-          <div className={styles.gameHeader}>
-            <div className={styles.worldDisplay}>{WORLDS[worldIdx].name}</div>
-            <button className={styles.settingsBtn} onClick={() => setShowKeybindModal(true)}>
-              ⚙
-            </button>
-          </div>
-          
+        <>
+          <div className={styles.worldDisplay}>{WORLDS[worldIdx].name}</div>
           <div className={styles.scoreDisplay}>{score.toLocaleString()}</div>
-          
           {combo >= 2 && (
             <div className={`${styles.combo} ${combo >= 5 ? styles.comboBig : ''}`}>
               {combo} COMBO!
             </div>
           )}
           
-          <div className={styles.enemySection}>
-            <div className={styles.enemyLabel}>👻 ノイズリング</div>
-            <div className={styles.enemyBar}>
-              <div className={styles.enemyFill} style={{ width: `${enemyHP}%` }} />
-            </div>
+          <div className={styles.enemyLabel}>👻 ノイズリング</div>
+          <div className={styles.enemyBar}>
+            <div className={styles.enemyFill} style={{ width: `${enemyHP}%` }} />
           </div>
           
           <div className={styles.gameArea}>
@@ -365,7 +356,11 @@ export default function VanillaGame() {
             <button className={styles.ctrlBtn}>→</button>
             <button className={styles.ctrlBtn}>⬇</button>
           </div>
-        </div>
+          
+          <button className={styles.settingsBtn} onClick={() => setShowKeybindModal(true)}>
+            ⚙
+          </button>
+        </>
       )}
       
       {judgment.show && (
