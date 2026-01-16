@@ -3,12 +3,19 @@ import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_APP_ID,
+  //apiKey: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_API_KEY,
+  //authDomain: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_AUTH_DOMAIN,
+  //projectId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_PROJECT_ID,
+  //storageBucket: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_STORAGE_BUCKET,
+  //messagingSenderId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_MESSAGING_SENDER_ID,
+  //appId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_APP_ID,
+  apiKey: "AIzaSyBPzQ0xqJYktU6GMp2tzM1nvZJZDz5PWUk",
+  authDomain: "azuret-website.firebaseapp.com",
+  projectId: "azuret-website",
+  storageBucket: "azuret-website.firebasestorage.app",
+  messagingSenderId: "527106975022",
+  appId: "1:527106975022:web:9f8c4c70329c1fd11246bf",
+  measurementId: "G-DLN7R9QKK9"
 };
 
 // Check if all required config values are present
