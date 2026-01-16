@@ -14,7 +14,8 @@ import {
   getDocs,
   Timestamp
 } from 'firebase/firestore';
-import { db } from '@/lib/rhythmia/firebase';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '@/lib/rhythmia/firebase';
 import styles from './MultiplayerGame.module.css';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -55,16 +56,37 @@ export default function MultiplayerGame() {
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const playerIdRef = useRef<string>('');
   const roomIdRef = useRef<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Authenticate with Firebase anonymously
+  useEffect(() => {
+    if (!auth) return;
+    
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        playerIdRef.current = user.uid;
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, []);
   
   // Connect to Firebase
   const connectToFirebase = useCallback(async () => {
     try {
-      if (!db) {
+      if (!db || !auth) {
         console.error('Firebase not configured');
         setConnectionStatus('error');
         return;
       }
       setConnectionStatus('connecting');
+      
+      // Sign in anonymously first
+      await signInAnonymously(auth);
+      
       // Test Firebase connection with a simple query
       const testQuery = query(collection(db, 'rhythmia_rooms'));
       await getDocs(testQuery);
@@ -101,9 +123,13 @@ export default function MultiplayerGame() {
   
   const handleNameSubmit = useCallback(() => {
     if (playerName.trim().length < 2) return;
-    playerIdRef.current = `player_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+    if (!isAuthenticated) {
+      setError('認証中です。しばらくお待ちください。');
+      return;
+    }
+    // playerIdRef.current is already set by onAuthStateChanged
     setMode('room-browser');
-  }, [playerName]);
+  }, [playerName, isAuthenticated]);
   
   const createRoom = useCallback(async () => {
     if (newRoomName.trim().length < 3) {
