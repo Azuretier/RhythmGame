@@ -265,16 +265,26 @@ export const Rhythmia: React.FC = () => {
 
     // Lock piece to board
     const newBoard = currentBoard.map(r => [...r]);
+    let pieceExtendsAboveBoard = false;
     currentPiece.shape.forEach((row, py) => {
       row.forEach((val, px) => {
         if (val) {
           const by = currentPos.y + py, bx = currentPos.x + px;
-          if (by >= 0 && by < H) {
+          if (by < 0) {
+            // Piece extends above the visible board - game over condition
+            pieceExtendsAboveBoard = true;
+          } else if (by < H) {
             newBoard[by][bx] = { color: currentPiece.color };
           }
         }
       });
     });
+
+    // Check if piece extends above board (game over)
+    if (pieceExtendsAboveBoard) {
+      endGame();
+      return;
+    }
 
     // Line clear
     let cleared = 0;
