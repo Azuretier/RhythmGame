@@ -4,7 +4,7 @@ const nextConfig = {
       return [
         {
           // Specific rule for rhythmia-nexus.html to prevent caching
-          source: '/rhythmia-nexus.html',
+          source: '/(.*)',
           headers: [
             {
               key: 'Cache-Control',
@@ -19,16 +19,7 @@ const nextConfig = {
               value: '0',
             },
           ],
-        },
-        {
-          source: '/(.*)', // 画像のパス
-          headers: [
-            {
-              key: 'Cache-Control',
-              value: 'public, max-age=31536000, immutable', // 1年間キャッシュ
-            },
-          ],
-        },
+        }
       ];
     },
     webpack(config, { isServer }) {
