@@ -273,7 +273,7 @@ export const Rhythmia: React.FC = () => {
           if (by < 0) {
             // Piece extends above the visible board - game over condition
             pieceExtendsAboveBoard = true;
-          } else if (by < H) {
+          } else if (by >= 0 && by < H) {
             newBoard[by][bx] = { color: currentPiece.color };
           }
         }
