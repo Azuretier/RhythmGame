@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import styles from '../components/rhythmia.module.css';
+import styles from '../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../components/rhythmia/VanillaGame';
 import MultiplayerGame from '../components/rhythmia/MultiplayerGame';
 import LifeJourney from '../components/rhythmia/LifeJourney';
