@@ -17,6 +17,7 @@ import {
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from '@/lib/rhythmia/firebase';
 import styles from './MultiplayerGame.module.css';
+import MultiplayerBattle from './MultiplayerBattle';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'playing';
@@ -264,6 +265,25 @@ export default function MultiplayerGame() {
       console.error('Error starting game:', error);
     }
   }, [currentRoom]);
+
+  const handleGameEnd = useCallback(async (winnerId: string) => {
+    console.log('Game ended, winner:', winnerId);
+    // Game ended, could update room status here if needed
+  }, []);
+
+  const handleBackToLobby = useCallback(async () => {
+    if (roomIdRef.current && db) {
+      try {
+        const roomRef = doc(db, 'rhythmia_rooms', roomIdRef.current);
+        await updateDoc(roomRef, {
+          status: 'waiting'
+        });
+      } catch (error) {
+        console.error('Error resetting room:', error);
+      }
+    }
+    setMode('waiting-room');
+  }, []);
   
   // Listen to current room updates
   useEffect(() => {
@@ -481,14 +501,16 @@ export default function MultiplayerGame() {
         </div>
       )}
       
-      {mode === 'playing' && (
-        <div className={styles.gameView}>
-          <div className={styles.gamePlaceholder}>
-            <h2>ゲーム画面</h2>
-            <p>ここにバトルゲームのUIが表示されます</p>
-            <p className={styles.note}>※ 完全な実装には追加の開発が必要です</p>
-          </div>
-        </div>
+      {mode === 'playing' && currentRoom && (
+        <MultiplayerBattle
+          roomCode={roomIdRef.current}
+          playerId={playerIdRef.current}
+          playerName={playerName}
+          opponentId={players.find(p => p.id !== playerIdRef.current)?.id}
+          opponentName={players.find(p => p.id !== playerIdRef.current)?.name}
+          onGameEnd={handleGameEnd}
+          onBackToLobby={handleBackToLobby}
+        />
       )}
     </div>
   );
