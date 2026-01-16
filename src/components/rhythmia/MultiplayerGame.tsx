@@ -501,7 +501,7 @@ export default function MultiplayerGame() {
         </div>
       )}
       
-      {mode === 'playing' && currentRoom && (
+      {mode === 'playing' && currentRoom && roomIdRef.current && (
         <MultiplayerBattle
           roomCode={roomIdRef.current}
           playerId={playerIdRef.current}

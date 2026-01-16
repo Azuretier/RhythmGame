@@ -40,6 +40,7 @@ const H = 18;
 const BPM = 120;
 
 const COLORS = ['#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A29BFE', '#FF8FAB', '#3DA69B'];
+const GARBAGE_COLOR = '#666666';
 
 const SHAPES = [
   [[1, 1, 1, 1]],
@@ -293,7 +294,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     // Add garbage rows at bottom
     for (let i = 0; i < count; i++) {
-      const garbageRow: (PieceCell | null)[] = Array(W).fill(null).map(() => ({ color: '#666666' } as PieceCell));
+      const garbageRow: (PieceCell | null)[] = Array(W).fill(null).map(() => ({ color: GARBAGE_COLOR } as PieceCell));
       const gapIndex = Math.floor(Math.random() * W);
       garbageRow[gapIndex] = null;
       newBoard.push(garbageRow);
@@ -431,7 +432,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, cleared > 0 ? boardStateRef.current : finalBoard)) {
       sendGameOver();
-      handleGameEnd(opponentId || '');
+      // Player lost - opponent wins (or unknown if opponent not connected)
+      const winner = opponentId || 'opponent';
+      handleGameEnd(winner);
     }
   }, [nextPiece, showJudgment, playTone, randomPiece, collision, playLineClear, sendGameState, sendGarbage, sendGameOver, handleGameEnd, opponentId, addGarbageLines]);
 
