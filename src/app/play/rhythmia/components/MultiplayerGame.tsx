@@ -47,6 +47,7 @@ export default function MultiplayerGame() {
   const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
   const [newRoomName, setNewRoomName] = useState('');
   const [isPrivateRoom, setIsPrivateRoom] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const playerIdRef = useRef<string>('');
@@ -56,8 +57,10 @@ export default function MultiplayerGame() {
   const connectToFirebase = useCallback(async () => {
     try {
       setConnectionStatus('connecting');
-      // Test Firebase connection
-      await collection(db, 'rooms');
+      // Test Firebase connection with a simple query
+      const { getDocs } = await import('firebase/firestore');
+      const testQuery = query(collection(db, 'rhythmia_rooms'));
+      await getDocs(testQuery);
       setConnectionStatus('connected');
     } catch (error) {
       console.error('Firebase connection error:', error);
@@ -91,17 +94,18 @@ export default function MultiplayerGame() {
   
   const handleNameSubmit = useCallback(() => {
     if (playerName.trim().length < 2) return;
-    playerIdRef.current = `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    playerIdRef.current = `player_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     setMode('room-browser');
   }, [playerName]);
   
   const createRoom = useCallback(async () => {
     if (newRoomName.trim().length < 3) {
-      alert('部屋名は3文字以上で入力してください');
+      setError('部屋名は3文字以上で入力してください');
       return;
     }
     
     try {
+      setError(null);
       const roomData = {
         name: newRoomName,
         host: playerIdRef.current,
@@ -127,17 +131,18 @@ export default function MultiplayerGame() {
       setMode('waiting-room');
     } catch (error) {
       console.error('Error creating room:', error);
-      alert('部屋の作成に失敗しました');
+      setError('部屋の作成に失敗しました');
     }
   }, [newRoomName, isPrivateRoom, playerName]);
   
   const joinRoom = useCallback(async (room: Room) => {
     if (room.players >= room.maxPlayers) {
-      alert('この部屋は満員です');
+      setError('この部屋は満員です');
       return;
     }
     
     try {
+      setError(null);
       const roomRef = doc(db, 'rhythmia_rooms', room.id);
       const newPlayer = {
         id: playerIdRef.current,
@@ -156,7 +161,7 @@ export default function MultiplayerGame() {
       setMode('waiting-room');
     } catch (error) {
       console.error('Error joining room:', error);
-      alert('部屋への参加に失敗しました');
+      setError('部屋への参加に失敗しました');
     }
   }, [playerName]);
   
@@ -208,7 +213,7 @@ export default function MultiplayerGame() {
     const unsubscribe = onSnapshot(roomRef, (snapshot) => {
       if (!snapshot.exists()) {
         // Room was deleted
-        alert('部屋が削除されました');
+        setError('部屋が削除されました');
         setMode('room-browser');
         return;
       }
@@ -280,6 +285,12 @@ export default function MultiplayerGame() {
       {mode === 'room-browser' && (
         <div className={styles.roomBrowser}>
           <div className={styles.onlineTitle}>オンラインロビー</div>
+          
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
           
           <div className={styles.playerBadge}>
             <span>👤</span>

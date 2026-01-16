@@ -195,9 +195,58 @@ export default function VanillaGame() {
     setTimeout(() => setJudgment(prev => ({ ...prev, show: false })), 500);
   }, []);
   
-  // Main game logic functions would continue here...
-  // Due to space constraints, I'm showing the structure. The full implementation
-  // would include: tryRotate, checkTSpin, lock, move, hardDrop, startGame, etc.
+  /**
+   * TODO: Complete game implementation
+   * 
+   * The following functions need to be implemented to complete the game:
+   * 
+   * 1. tryRotate(direction: number): boolean
+   *    - Attempts piece rotation with SRS wall kicks
+   *    - Returns true if rotation successful
+   * 
+   * 2. checkTSpin(): 'none' | 'mini' | 'tspin'
+   *    - Detects T-spin moves based on last rotation
+   *    - Checks corner fill pattern
+   * 
+   * 3. lock(): void
+   *    - Locks current piece to board
+   *    - Checks for line clears
+   *    - Updates score with combo bonuses
+   *    - Spawns next piece
+   * 
+   * 4. move(dx: number, dy: number): void
+   *    - Moves piece in given direction
+   *    - Calls lock() if piece hits bottom
+   * 
+   * 5. hardDrop(): void
+   *    - Instantly drops piece to bottom
+   *    - Calls lock() after brief delay
+   * 
+   * 6. spawnNextPiece(): void
+   *    - Makes nextPiece the current piece
+   *    - Generates new nextPiece
+   *    - Checks for game over
+   * 
+   * 7. drawBoard(): void
+   *    - Renders board cells with current state
+   *    - Shows ghost piece preview
+   * 
+   * 8. drawActivePiece(instant?: boolean): void
+   *    - Renders the falling piece
+   *    - Animates piece position
+   * 
+   * 9. createBoard(): void
+   *    - Initializes board DOM elements
+   *    - Sets up cell grid
+   * 
+   * 10. Game loop with requestAnimationFrame
+   *     - Updates beat phase
+   *     - Handles automatic piece dropping
+   *     - Updates animations
+   * 
+   * See the original implementation in /public/rhythmia-nexus.html (lines 1400-2000)
+   * for reference implementation of these functions.
+   */
   
   const startGame = useCallback(() => {
     initAudio();
