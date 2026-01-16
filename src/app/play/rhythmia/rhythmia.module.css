@@ -1,13 +1,3 @@
-:root {
-  --neon-pink: #FF6B9D;
-  --neon-cyan: #4ECDC4;
-  --neon-purple: #A29BFE;
-  --neon-gold: #FFD700;
-  --neon-orange: #FF6B35;
-  --dark-bg: #0a0a12;
-  --darker-bg: #050508;
-}
-
 .page {
   font-family: 'Zen Kaku Gothic New', sans-serif;
   background: var(--dark-bg);

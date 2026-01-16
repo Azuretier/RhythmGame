@@ -7,15 +7,6 @@
   flex-direction: column;
 }
 
-:root {
-  --p1-color: #4ECDC4;
-  --p1-glow: rgba(78, 205, 196, 0.5);
-  --p2-color: #FF6B9D;
-  --p2-glow: rgba(255, 107, 157, 0.5);
-  --gold: #FFD700;
-  --danger: #FF4444;
-}
-
 .statusBar {
   padding: 15px 20px;
   display: flex;

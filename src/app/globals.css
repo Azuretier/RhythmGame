@@ -5,6 +5,27 @@
 /* Import the Game Font (VT323) and Inter */
 @import url('https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;700&family=Russo+One&display=swap');
 
+/* Rhythmia CSS Variables */
+:root {
+  /* Rhythmia Neon Colors */
+  --neon-pink: #FF6B9D;
+  --neon-cyan: #4ECDC4;
+  --neon-purple: #A29BFE;
+  --neon-gold: #FFD700;
+  --neon-orange: #FF6B35;
+  --dark-bg: #0a0a12;
+  --darker-bg: #050508;
+  
+  /* Rhythmia Multiplayer Colors */
+  --p1-color: #4ECDC4;
+  --p1-glow: rgba(78, 205, 196, 0.5);
+  --p2-color: #FF6B9D;
+  --p2-glow: rgba(255, 107, 157, 0.5);
+  --gold: #FFD700;
+  --danger: #FF4444;
+}
+
+
 /* 1. THE MOVING GRADIENT BACKGROUND */
 @keyframes gradient-flow {
   0% {

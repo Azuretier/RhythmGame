@@ -58,6 +58,11 @@ export default function MultiplayerGame() {
   // Connect to Firebase
   const connectToFirebase = useCallback(async () => {
     try {
+      if (!db) {
+        console.error('Firebase not configured');
+        setConnectionStatus('error');
+        return;
+      }
       setConnectionStatus('connecting');
       // Test Firebase connection with a simple query
       const { getDocs } = await import('firebase/firestore');
@@ -76,7 +81,7 @@ export default function MultiplayerGame() {
   
   // Listen to rooms list
   useEffect(() => {
-    if (mode !== 'room-browser') return;
+    if (mode !== 'room-browser' || !db) return;
     
     const roomsQuery = query(
       collection(db, 'rhythmia_rooms'),
@@ -103,6 +108,11 @@ export default function MultiplayerGame() {
   const createRoom = useCallback(async () => {
     if (newRoomName.trim().length < 3) {
       setError('部屋名は3文字以上で入力してください');
+      return;
+    }
+    
+    if (!db) {
+      setError('Firebaseが設定されていません');
       return;
     }
     
@@ -155,6 +165,11 @@ export default function MultiplayerGame() {
       return;
     }
     
+    if (!db) {
+      setError('Firebaseが設定されていません');
+      return;
+    }
+    
     try {
       setError(null);
       const roomRef = doc(db, 'rhythmia_rooms', room.id);
@@ -180,7 +195,7 @@ export default function MultiplayerGame() {
   }, [playerName]);
   
   const leaveRoom = useCallback(async () => {
-    if (!roomIdRef.current) return;
+    if (!roomIdRef.current || !db) return;
     
     try {
       const roomRef = doc(db, 'rhythmia_rooms', roomIdRef.current);
@@ -206,7 +221,7 @@ export default function MultiplayerGame() {
   }, [currentRoom, players]);
   
   const startGame = useCallback(async () => {
-    if (!roomIdRef.current || currentRoom?.host !== playerIdRef.current) return;
+    if (!roomIdRef.current || currentRoom?.host !== playerIdRef.current || !db) return;
     
     try {
       const roomRef = doc(db, 'rhythmia_rooms', roomIdRef.current);
@@ -221,7 +236,7 @@ export default function MultiplayerGame() {
   
   // Listen to current room updates
   useEffect(() => {
-    if (mode !== 'waiting-room' || !roomIdRef.current) return;
+    if (mode !== 'waiting-room' || !roomIdRef.current || !db) return;
     
     const roomRef = doc(db, 'rhythmia_rooms', roomIdRef.current);
     const unsubscribe = onSnapshot(roomRef, (snapshot) => {
