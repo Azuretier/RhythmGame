@@ -278,7 +278,8 @@ export default function VanillaGame() {
         setKeybinds({ ...DEFAULT_KEYBINDS, ...JSON.parse(saved) });
       }
     } catch (e) {
-      console.log('Failed to load keybinds');
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+      console.error('Failed to load keybinds from localStorage:', errorMessage);
     }
   }, []);
   

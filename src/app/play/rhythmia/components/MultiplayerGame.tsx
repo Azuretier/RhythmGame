@@ -23,11 +23,13 @@ interface Room {
   id: string;
   name: string;
   host: string;
+  hostName?: string;
   players: number;
   maxPlayers: number;
   isPrivate: boolean;
   createdAt: Timestamp;
   status: 'waiting' | 'playing' | 'finished';
+  playerList?: Player[];
 }
 
 interface Player {
@@ -127,7 +129,19 @@ export default function MultiplayerGame() {
       
       const docRef = await addDoc(collection(db, 'rhythmia_rooms'), roomData);
       roomIdRef.current = docRef.id;
-      setCurrentRoom({ id: docRef.id, ...roomData } as any);
+      const newRoom: Room = {
+        id: docRef.id,
+        name: roomData.name,
+        host: roomData.host,
+        hostName: roomData.hostName,
+        players: roomData.players,
+        maxPlayers: roomData.maxPlayers,
+        isPrivate: roomData.isPrivate,
+        status: roomData.status as 'waiting' | 'playing' | 'finished',
+        createdAt: Timestamp.now(),
+        playerList: roomData.playerList
+      };
+      setCurrentRoom(newRoom);
       setMode('waiting-room');
     } catch (error) {
       console.error('Error creating room:', error);
@@ -153,7 +167,7 @@ export default function MultiplayerGame() {
       
       await updateDoc(roomRef, {
         players: room.players + 1,
-        playerList: [...(room as any).playerList || [], newPlayer]
+        playerList: [...(room.playerList || []), newPlayer]
       });
       
       roomIdRef.current = room.id;
@@ -218,7 +232,19 @@ export default function MultiplayerGame() {
         return;
       }
       
-      const roomData = { id: snapshot.id, ...snapshot.data() } as any;
+      const data = snapshot.data();
+      const roomData: Room = {
+        id: snapshot.id,
+        name: data.name,
+        host: data.host,
+        hostName: data.hostName,
+        players: data.players,
+        maxPlayers: data.maxPlayers,
+        isPrivate: data.isPrivate,
+        createdAt: data.createdAt,
+        status: data.status,
+        playerList: data.playerList
+      };
       setCurrentRoom(roomData);
       setPlayers(roomData.playerList || []);
       
@@ -354,7 +380,7 @@ export default function MultiplayerGame() {
                       <div key={room.id} className={styles.roomItem} onClick={() => joinRoom(room)}>
                         <div className={styles.roomInfo}>
                           <div className={styles.roomName}>{room.name}</div>
-                          <div className={styles.roomHost}>Host: {(room as any).hostName || 'Unknown'}</div>
+                          <div className={styles.roomHost}>Host: {room.hostName || 'Unknown'}</div>
                         </div>
                         <div className={styles.roomPlayers}>
                           {room.players}/{room.maxPlayers}
