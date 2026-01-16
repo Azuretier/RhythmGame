@@ -72,6 +72,13 @@ export default function MultiplayerGame() {
       }
     });
     
+    // Sign in anonymously after setting up the listener
+    signInAnonymously(auth).catch((error) => {
+      console.error('Authentication error:', error);
+      setConnectionStatus('error');
+      setError('認証に失敗しました。ページを再読み込みしてください。');
+    });
+    
     return () => unsubscribe();
   }, []);
   
@@ -84,9 +91,6 @@ export default function MultiplayerGame() {
         return;
       }
       setConnectionStatus('connecting');
-      
-      // Sign in anonymously first
-      await signInAnonymously(auth);
       
       // Test Firebase connection with a simple query
       const testQuery = query(collection(db, 'rhythmia_rooms'));
