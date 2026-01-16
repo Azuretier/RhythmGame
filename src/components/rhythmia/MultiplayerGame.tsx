@@ -62,11 +62,6 @@ export default function MultiplayerGame() {
   useEffect(() => {
     if (!auth) return;
     
-    // Sign in anonymously first
-    signInAnonymously(auth).catch((error) => {
-      console.error('Authentication error:', error);
-    });
-    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         playerIdRef.current = user.uid;
@@ -75,6 +70,13 @@ export default function MultiplayerGame() {
         playerIdRef.current = '';
         setIsAuthenticated(false);
       }
+    });
+    
+    // Sign in anonymously after setting up the listener
+    signInAnonymously(auth).catch((error) => {
+      console.error('Authentication error:', error);
+      setConnectionStatus('error');
+      setError('認証に失敗しました。ページを再読み込みしてください。');
     });
     
     return () => unsubscribe();
