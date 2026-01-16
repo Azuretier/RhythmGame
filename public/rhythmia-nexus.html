@@ -3,7 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RHYTHMIA NEXUS</title>
+    <title>RHYTHMIA NEXUS - DEPRECATED</title>
+    <style>
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #0a0a12;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+        .notice {
+            max-width: 600px;
+        }
+        h1 {
+            color: #FF6B9D;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        a {
+            color: #4ECDC4;
+            text-decoration: none;
+            font-size: 1.2rem;
+            border: 2px solid #4ECDC4;
+            padding: 10px 20px;
+            display: inline-block;
+            margin-top: 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        a:hover {
+            background: #4ECDC4;
+            color: #0a0a12;
+        }
+    </style>
+</head>
+<body>
+    <div class="notice">
+        <h1>⚠️ DEPRECATED</h1>
+        <p>This HTML version has been deprecated and replaced with a modern React/TypeScript implementation.</p>
+        <p>Please access Rhythmia through the main application route:</p>
+        <a href="/play/rhythmia">Go to Rhythmia TSX Version</a>
+        <p style="margin-top: 30px; font-size: 0.8rem; opacity: 0.6;">
+            Note: This file is kept for reference only. It should not be used in production.
+        </p>
+    </div>
+</body>
+</html>
+<!-- 
+DEPRECATION NOTICE: 
+This file has been replaced by /src/app/play/rhythmia/page.tsx and related components.
+The new implementation fixes the "INITIALIZING..." hang issue by using proper React state management
+instead of embedding large HTML strings in JavaScript template literals.
+
+For more information, see /src/app/play/rhythmia/README.md
+-->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         * {

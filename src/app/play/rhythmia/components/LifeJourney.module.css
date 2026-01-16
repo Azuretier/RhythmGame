@@ -1,0 +1,184 @@
+.container {
+  min-height: 100vh;
+  font-family: 'Noto Serif JP', Georgia, serif;
+  transition: background 0.8s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.container[data-dark="true"] {
+  color: #fff;
+}
+
+.container[data-dark="false"] {
+  color: #333;
+}
+
+.tabHeader {
+  display: flex;
+  gap: 8px;
+  padding: 30px 20px 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tabButton {
+  position: relative;
+  padding: 12px 8px;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 70px;
+  font-family: inherit;
+  color: inherit;
+  opacity: 0.5;
+}
+
+.tabButton:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-4px);
+}
+
+.tabButton.active {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: currentColor;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.tabEmoji {
+  font-size: 24px;
+}
+
+.tabTitle {
+  font-size: 12px;
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  letter-spacing: 0.1em;
+}
+
+.contentArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  transition: opacity 0.3s ease;
+}
+
+.floatingEmoji {
+  position: absolute;
+  font-size: 3rem;
+  opacity: 0.15;
+  pointer-events: none;
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+.mainContent {
+  text-align: center;
+  max-width: 600px;
+  animation: slideUp 0.8s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chapterEmoji {
+  font-size: 5rem;
+  margin-bottom: 20px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.chapterTitle {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: 0.1em;
+}
+
+.chapterSubtitle {
+  font-size: 1.2rem;
+  font-weight: 300;
+  opacity: 0.8;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.chapterPoem {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 30px 0;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+.chapterDescription {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  opacity: 0.85;
+  font-weight: 300;
+}
+
+.progressBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px currentColor;
+}
+
+@media (max-width: 768px) {
+  .chapterTitle {
+    font-size: 2rem;
+  }
+
+  .chapterEmoji {
+    font-size: 3rem;
+  }
+
+  .chapterPoem {
+    font-size: 1.2rem;
+  }
+
+  .chapterDescription {
+    font-size: 1rem;
+  }
+
+  .tabButton {
+    min-width: 60px;
+    padding: 10px 6px;
+  }
+
+  .tabEmoji {
+    font-size: 20px;
+  }
+
+  .tabTitle {
+    font-size: 10px;
+  }
+}

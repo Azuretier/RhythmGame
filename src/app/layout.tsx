@@ -35,6 +35,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       <head>
         <meta name="theme-color" content="#ffbd43" />
         <link rel="icon" href="/favicon.ico" />
+        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <VersionProvider>
