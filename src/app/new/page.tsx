@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import styles from './VanillaGame.module.css';
+import styles from '../../components/rhythmia/VanillaGame.module.css';
 
 // ===== Types =====
 interface PieceCell {
