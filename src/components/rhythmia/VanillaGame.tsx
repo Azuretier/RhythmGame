@@ -637,46 +637,42 @@ export const Rhythmia: React.FC = () => {
 
   // Beat timer
   useEffect(() => {
-    if (!gameStarted || gameOver) return;
-
-    const world = WORLDS[worldIdx];
-    const interval = 60000 / world.bpm;
-
-    // Initialize lastBeatRef to now so the phase calculation starts correctly
-    lastBeatRef.current = Date.now();
-
-    beatTimerRef.current = window.setInterval(() => {
+      if (!gameStarted) return;
+  
+      const world = WORLDS[worldIdx];
+      const interval = 60000 / world.bpm;
+  
       lastBeatRef.current = Date.now();
-      setBoardBeat(true);
-      playDrum();
-      setTimeout(() => setBoardBeat(false), 100);
-    }, interval);
-
-    return () => {
-      if (beatTimerRef.current) clearInterval(beatTimerRef.current);
-    };
-  }, [gameStarted, gameOver, worldIdx, playDrum]);
-
-  // Beat phase animation
-  useEffect(() => {
-    if (!gameStarted || gameOver) return;
-
-    let animFrame: number;
-    const updateBeat = () => {
-      if (!gameOverRef.current) {
-        const world = WORLDS[worldIdxRef.current];
+  
+      beatTimerRef.current = window.setInterval(() => {
+        lastBeatRef.current = Date.now();
+        setBoardBeat(true);
+        playDrum();
+        setTimeout(() => setBoardBeat(false), 100);
+      }, interval);
+  
+      return () => {
+        if (beatTimerRef.current) clearInterval(beatTimerRef.current);
+      };
+    }, [gameStarted, worldIdx, playDrum]);
+  
+    // Beat phase animation (shared between players)
+    useEffect(() => {
+      if (!gameStarted) return;
+  
+      let animFrame: number;
+      const updateBeat = () => {
+        const world = WORLDS[worldIdx];
         const interval = 60000 / world.bpm;
         const elapsed = Date.now() - lastBeatRef.current;
         const phase = (elapsed % interval) / interval;
         setBeatPhase(phase);
-        beatPhaseRef.current = phase;
         animFrame = requestAnimationFrame(updateBeat);
-      }
-    };
-    animFrame = requestAnimationFrame(updateBeat);
-
-    return () => cancelAnimationFrame(animFrame);
-  }, [gameStarted, worldIdx, gameOver]);
+      };
+      animFrame = requestAnimationFrame(updateBeat);
+  
+      return () => cancelAnimationFrame(animFrame);
+    }, [gameStarted, worldIdx]);
 
   // Keyboard controls
   useEffect(() => {
