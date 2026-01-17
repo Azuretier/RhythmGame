@@ -60,6 +60,7 @@ export default function WebGPUStage() {
         const shaderCode = `
           struct Uniforms {
             time: f32,
+            _padding: f32,
             resolution: vec2<f32>,
           }
           @binding(0) @group(0) var<uniform> uniforms: Uniforms;
@@ -137,14 +138,15 @@ export default function WebGPUStage() {
             gridLines *= gridFade;
             
             // Glow orbs (like the CSS background glows)
+            // Use uv (not aspect-corrected coord) for correct positioning
             let glow1Pos = vec2<f32>(0.2, 0.2) + vec2<f32>(sin(time * 0.5), cos(time * 0.3)) * 0.1;
-            let glow1 = exp(-length(coord - glow1Pos) * 3.0) * strongPulse;
+            let glow1 = exp(-length(uv - glow1Pos) * 3.0) * strongPulse;
             
             let glow2Pos = vec2<f32>(0.8, 0.8) + vec2<f32>(cos(time * 0.4), sin(time * 0.6)) * 0.1;
-            let glow2 = exp(-length(coord - glow2Pos) * 3.0) * strongPulse;
+            let glow2 = exp(-length(uv - glow2Pos) * 3.0) * strongPulse;
             
             let glow3Pos = vec2<f32>(0.5, 0.5) + vec2<f32>(sin(time * 0.3), cos(time * 0.5)) * 0.15;
-            let glow3 = exp(-length(coord - glow3Pos) * 2.5) * pulse * 0.5;
+            let glow3 = exp(-length(uv - glow3Pos) * 2.5) * pulse * 0.5;
             
             // Noise layer
             let noiseVal = noise(coord * 5.0 + time * 0.5) * 0.05;
@@ -176,7 +178,7 @@ export default function WebGPUStage() {
 
         // Create uniform buffer
         const uniformBuffer = device.createBuffer({
-          size: 16, // time (4 bytes) + resolution (8 bytes) + padding (4 bytes)
+          size: 16, // time (4 bytes) + padding (4 bytes) + resolution (8 bytes)
           usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
         uniformBufferRef.current = uniformBuffer;
