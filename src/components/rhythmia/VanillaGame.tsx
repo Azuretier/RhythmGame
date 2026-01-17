@@ -539,12 +539,31 @@ export const Rhythmia: React.FC = () => {
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
 
+    // 1. Get the target shape
     const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
-    if (!collision(rotated, currentPos.x, currentPos.y, currentBoard)) {
-      setPiece(rotated);
-      pieceRef.current = rotated;
-      playTone(direction === 1 ? 523 : 440, 0.08);
+    
+    // 2. Define Kick Tests (Simplified example or reference your SRS table)
+    // This allows the piece to "jump" 1 space left/right/up to find a fit
+    const kickTests = [[0, 0], [-1, 0], [1, 0], [0, -1]]; 
+
+    for (const [offsetX, offsetY] of kickTests) {
+      if (!collision(rotated, currentPos.x + offsetX, currentPos.y + offsetY, currentBoard)) {
+        // Success! Update position and piece
+        const newPos = { x: currentPos.x + offsetX, y: currentPos.y + offsetY };
+        
+        setPiece(rotated);
+        pieceRef.current = rotated;
+        setPiecePos(newPos);
+        piecePosRef.current = newPos;
+        
+        playTone(direction === 1 ? 523 : 440, 0.08);
+        lastRotationRef.current = true; // For T-Spin detection
+        return; 
+      }
     }
+    
+    // If we reach here, no kicks worked
+    lastRotationRef.current = false;
   }, [rotate, rotateCCW, collision, playTone]);
 
   const hardDrop = useCallback(() => {
