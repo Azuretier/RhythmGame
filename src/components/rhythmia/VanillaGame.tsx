@@ -287,17 +287,34 @@ export const Rhythmia: React.FC = () => {
       return null;
     }
 
-    // Find the center of the T piece (the cell with value 1 in the middle row)
-    // T piece in rotation 0: [[0,1,0], [1,1,1]]
-    // Center is at local position (1, 0) relative to piece origin
+    // Find the center of the T piece by looking for the cell that has 3 neighbors
+    // In a T piece, the center is the only cell with 3 filled neighbors
+    let centerX = -1;
+    let centerY = -1;
     
-    // For T piece, the center position depends on rotation
-    // We'll check the 4 corners around where the T's center would be
-    // Corners are at offsets relative to the piece's center cell
+    for (let py = 0; py < piece.shape.length; py++) {
+      for (let px = 0; px < piece.shape[py].length; px++) {
+        if (piece.shape[py][px]) {
+          // Count neighbors
+          let neighbors = 0;
+          // Check up, down, left, right
+          if (py > 0 && piece.shape[py - 1][px]) neighbors++;
+          if (py < piece.shape.length - 1 && piece.shape[py + 1][px]) neighbors++;
+          if (px > 0 && piece.shape[py][px - 1]) neighbors++;
+          if (px < piece.shape[py].length - 1 && piece.shape[py][px + 1]) neighbors++;
+          
+          // The center of T has exactly 3 neighbors
+          if (neighbors === 3) {
+            centerX = pos.x + px;
+            centerY = pos.y + py;
+            break;
+          }
+        }
+      }
+      if (centerX !== -1) break;
+    }
     
-    // Get the actual center position on the board
-    const centerX = pos.x + 1; // T piece center is typically at x+1
-    const centerY = pos.y; // and y+0 for rotation 0
+    if (centerX === -1) return null; // Couldn't find center
     
     // Check the 4 corners (diagonals from center)
     const corners = [
@@ -318,6 +335,7 @@ export const Rhythmia: React.FC = () => {
     // T-Spin requires at least 3 corners filled
     if (filledCorners >= 3) {
       // Check front corners vs back corners to determine mini vs full
+      // Front corners are determined by rotation direction
       // For simplicity, we'll just return 'full' for any 3+ corner T-Spin
       // A proper implementation would check if the two front corners are filled
       return 'full';
