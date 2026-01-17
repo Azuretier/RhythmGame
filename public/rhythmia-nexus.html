@@ -1214,7 +1214,8 @@
         </div>
         
         <div id="controls">
-            <button class="ctrl-btn" data-action="rotate">↻</button>
+            <button class="ctrl-btn" data-action="rotateLeft">↶</button>
+            <button class="ctrl-btn" data-action="rotateRight">↻</button>
             <button class="ctrl-btn" data-action="left">←</button>
             <button class="ctrl-btn" data-action="down">↓</button>
             <button class="ctrl-btn" data-action="right">→</button>
@@ -1243,8 +1244,16 @@
                 <button class="keybind-key" data-action="down">↓</button>
             </div>
             <div class="keybind-row">
-                <span class="keybind-label">🔄 回転</span>
+                <span class="keybind-label">🔄 回転（右）</span>
                 <button class="keybind-key" data-action="rotate">↑</button>
+            </div>
+            <div class="keybind-row">
+                <span class="keybind-label">↶ 回転（左）</span>
+                <button class="keybind-key" data-action="rotateLeft">Z</button>
+            </div>
+            <div class="keybind-row">
+                <span class="keybind-label">↻ 回転（右）</span>
+                <button class="keybind-key" data-action="rotateRight">X</button>
             </div>
             <div class="keybind-row">
                 <span class="keybind-label">⬇ ハードドロップ</span>
@@ -1994,7 +2003,9 @@
                     case 'left': move(-1, 0); break;
                     case 'right': move(1, 0); break;
                     case 'down': move(0, 1); break;
-                    case 'rotate': rotatePiece(); break;
+                    case 'rotate': rotatePieceRight(); break;
+                    case 'rotateLeft': rotatePieceLeft(); break;
+                    case 'rotateRight': rotatePieceRight(); break;
                     case 'drop': hardDrop(); break;
                 }
             };
@@ -3612,8 +3623,8 @@
         const HEARTBEAT_INTERVAL = 25000;
 
         const players = {
-            p1: { board: null, piece: null, piecePos: null, nextPiece: null, score: 0, garbage: 0, dropTimer: null },
-            p2: { board: null, piece: null, piecePos: null, nextPiece: null, score: 0, garbage: 0, dropTimer: null }
+            p1: { board: null, piece: null, piecePos: null, nextPiece: null, score: 0, garbage: 0, dropTimer: null, lastRotationWasKick: false, lastMoveWasRotation: false },
+            p2: { board: null, piece: null, piecePos: null, nextPiece: null, score: 0, garbage: 0, dropTimer: null, lastRotationWasKick: false, lastMoveWasRotation: false }
         };
 
         // ===== Audio =====
@@ -4259,6 +4270,30 @@
         // Piece type identifiers for multiplayer
         const PIECE_TYPES_MP = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
 
+        // SRS Wall Kick Data for JLSTZ pieces (multiplayer)
+        const WALL_KICKS_MP = {
+            '0>1': [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
+            '1>0': [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
+            '1>2': [[0,0], [1,0], [1,1], [0,-2], [1,-2]],
+            '2>1': [[0,0], [-1,0], [-1,-1], [0,2], [-1,2]],
+            '2>3': [[0,0], [1,0], [1,-1], [0,2], [1,2]],
+            '3>2': [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
+            '3>0': [[0,0], [-1,0], [-1,1], [0,-2], [-1,-2]],
+            '0>3': [[0,0], [1,0], [1,-1], [0,2], [1,2]]
+        };
+
+        // SRS Wall Kick Data for I piece (multiplayer)
+        const I_WALL_KICKS_MP = {
+            '0>1': [[0,0], [-2,0], [1,0], [-2,1], [1,-2]],
+            '1>0': [[0,0], [2,0], [-1,0], [2,-1], [-1,2]],
+            '1>2': [[0,0], [-1,0], [2,0], [-1,-2], [2,1]],
+            '2>1': [[0,0], [1,0], [-2,0], [1,2], [-2,-1]],
+            '2>3': [[0,0], [2,0], [-1,0], [2,-1], [-1,2]],
+            '3>2': [[0,0], [-2,0], [1,0], [-2,1], [1,-2]],
+            '3>0': [[0,0], [1,0], [-2,0], [1,2], [-2,-1]],
+            '0>3': [[0,0], [-1,0], [2,0], [-1,-2], [2,1]]
+        };
+
         // ===== Game Logic =====
         function randomPiece() {
             const shapeIdx = Math.floor(Math.random() * SHAPES.length);
@@ -4369,6 +4404,47 @@
             };
         }
 
+        // Get wall kick data for multiplayer
+        function getWallKicksMP(pieceType, fromRot, toRot) {
+            const key = fromRot + '>' + toRot;
+            if (pieceType === 'I') return I_WALL_KICKS_MP[key] || [[0,0]];
+            if (pieceType === 'O') return [[0,0]]; // O piece doesn't need kicks
+            return WALL_KICKS_MP[key] || [[0,0]];
+        }
+
+        // T-Spin detection for multiplayer
+        function checkTSpinMP(player) {
+            const p = players[player];
+            if (!p.piece || p.piece.type !== 'T' || !p.lastMoveWasRotation) return 'none';
+            
+            // Check 4 corners of T piece center
+            const cx = p.piecePos.x + 1;
+            const cy = p.piecePos.y + 1;
+            const corners = [
+                [cx - 1, cy - 1], [cx + 1, cy - 1],
+                [cx - 1, cy + 1], [cx + 1, cy + 1]
+            ];
+            
+            let filledCorners = 0;
+            let frontCorners = 0;
+            
+            corners.forEach(([x, y], i) => {
+                const blocked = x < 0 || x >= W || y >= H || (y >= 0 && p.board[y] && p.board[y][x]);
+                if (blocked) {
+                    filledCorners++;
+                    // Front corners based on rotation
+                    const frontIdx = [[0,1], [1,3], [2,3], [0,2]][p.piece.rotation];
+                    if (frontIdx.includes(i)) frontCorners++;
+                }
+            });
+            
+            if (filledCorners >= 3) {
+                if (frontCorners >= 2 || p.lastRotationWasKick) return 'tspin';
+                return 'mini';
+            }
+            return 'none';
+        }
+
         function sendBoardUpdate(player) {
             if (!isOnline) return;
             const p = players[player];
@@ -4421,6 +4497,9 @@
             
             if (!p.piece) return;
 
+            // Check T-Spin before locking piece
+            const tSpinType = checkTSpinMP(player);
+
             p.piece.shape.forEach((row, py) => {
                 row.forEach((val, px) => {
                     if (val) {
@@ -4457,13 +4536,36 @@
                     while (newBoard.length < H) newBoard.unshift(Array(W).fill(null));
                     p.board = newBoard;
 
-                    const pts = [0, 100, 300, 500, 800][cleared];
+                    let pts = [0, 100, 300, 500, 800][cleared];
+                    
+                    // T-Spin bonuses
+                    if (tSpinType === 'tspin') {
+                        const tSpinClearedIndex = Math.min(cleared, 3);
+                        const tSpinPts = [400, 800, 1200, 1600][tSpinClearedIndex];
+                        pts += tSpinPts;
+                    } else if (tSpinType === 'mini') {
+                        const miniClearIndex = cleared <= 0 ? 0 : 1;
+                        const miniPts = [100, 200][miniClearIndex];
+                        pts += miniPts;
+                    }
+                    
                     p.score += pts;
                     updateScores();
 
                     // Send garbage to opponent
+                    let garbageLines = 0;
                     if (cleared >= 2) {
-                        const garbageLines = cleared - 1;
+                        garbageLines = cleared - 1;
+                    }
+                    
+                    // T-Spin damage multiplier
+                    let tSpinDamageMult = 1;
+                    if (tSpinType === 'tspin') {
+                        tSpinDamageMult = 1.5;
+                    }
+                    
+                    if (garbageLines > 0) {
+                        garbageLines = Math.floor(garbageLines * tSpinDamageMult);
                         
                         if (isOnline && player === myPlayerSlot) {
                             sendGarbage(garbageLines);
@@ -4483,7 +4585,20 @@
                         sendBoardUpdate(player);
                     }
                 }, 300);
+            } else if (tSpinType !== 'none') {
+                // T-Spin with no lines still gives points
+                let pts = 0;
+                if (tSpinType === 'tspin') {
+                    pts = 400;
+                } else if (tSpinType === 'mini') {
+                    pts = 100;
+                }
+                p.score += pts;
+                updateScores();
             }
+
+            // Reset rotation tracking
+            p.lastMoveWasRotation = false;
 
             // Add garbage if pending
             if (p.garbage > 0) {
@@ -4545,6 +4660,7 @@
             if (!collision(p, p.piece, p.piecePos.x + dx, p.piecePos.y + dy)) {
                 p.piecePos.x += dx;
                 p.piecePos.y += dy;
+                p.lastMoveWasRotation = false;
                 if (dx !== 0) playTone(392, 0.03, 'square');
                 drawBoard(player, boardId);
                 if (isOnline && player === myPlayerSlot) {
@@ -4555,20 +4671,40 @@
             }
         }
 
-        function rotatePiece(player, boardId) {
+        function rotatePiece(player, boardId, direction = 1) {
             if (!gameRunning) return;
             const p = players[player];
             if (!p.piece) return;
 
-            const rotated = rotate(p.piece);
-            if (!collision(p, rotated, p.piecePos.x, p.piecePos.y)) {
-                p.piece = rotated;
-                playTone(523, 0.05);
-                drawBoard(player, boardId);
-                if (isOnline && player === myPlayerSlot) {
-                    sendBoardUpdate(player);
+            const fromRot = p.piece.rotation;
+            const rotated = rotate(p.piece, direction);
+            const toRot = rotated.rotation;
+            const kicks = getWallKicksMP(p.piece.type, fromRot, toRot);
+            
+            for (let i = 0; i < kicks.length; i++) {
+                const [dx, dy] = kicks[i];
+                if (!collision(p, rotated, p.piecePos.x + dx, p.piecePos.y - dy)) {
+                    p.piece = rotated;
+                    p.piecePos.x += dx;
+                    p.piecePos.y -= dy;
+                    p.lastRotationWasKick = (i > 0);
+                    p.lastMoveWasRotation = true;
+                    playTone(523, 0.05);
+                    drawBoard(player, boardId);
+                    if (isOnline && player === myPlayerSlot) {
+                        sendBoardUpdate(player);
+                    }
+                    return;
                 }
             }
+        }
+
+        function rotatePieceLeft(player, boardId) {
+            rotatePiece(player, boardId, -1);
+        }
+
+        function rotatePieceRight(player, boardId) {
+            rotatePiece(player, boardId, 1);
         }
 
         function hardDrop(player, boardId, opponent) {
@@ -4579,6 +4715,7 @@
             while (!collision(p, p.piece, p.piecePos.x, p.piecePos.y + 1)) {
                 p.piecePos.y++;
             }
+            p.lastMoveWasRotation = false;
             playTone(196, 0.08, 'sawtooth');
             drawBoard(player, boardId);
             lock(player, boardId, opponent);
@@ -4597,7 +4734,9 @@
                 nextPiece: randomPiece(),
                 score: 0,
                 garbage: 0,
-                dropTimer: null
+                dropTimer: null,
+                lastRotationWasKick: false,
+                lastMoveWasRotation: false
             };
         }
 
@@ -4747,7 +4886,7 @@
                 } else if (action < 0.6) {
                     move('p2', 'p2Board', 'p1', 1, 0);
                 } else if (action < 0.8) {
-                    rotatePiece('p2', 'p2Board');
+                    rotatePieceRight('p2', 'p2Board');
                 } else if (action < 0.95) {
                     move('p2', 'p2Board', 'p1', 0, 1);
                 } else {
@@ -4852,26 +4991,34 @@
                 } else if (e.key === 's' || e.key === 'S' || e.key === 'ArrowDown') {
                     move(myPlayerSlot, boardId, opponent, 0, 1);
                 } else if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') {
-                    rotatePiece(myPlayerSlot, boardId);
+                    rotatePieceRight(myPlayerSlot, boardId);
+                } else if (e.key === 'q' || e.key === 'Q' || e.key === 'z' || e.key === 'Z') {
+                    rotatePieceLeft(myPlayerSlot, boardId);
+                } else if (e.key === 'e' || e.key === 'E' || e.key === 'x' || e.key === 'X') {
+                    rotatePieceRight(myPlayerSlot, boardId);
                 } else if (e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
                     hardDrop(myPlayerSlot, boardId, opponent);
                 }
             } else {
                 // Local mode
-                // P1: WASD + Space
+                // P1: WASD + QE + Space
                 if (e.key === 'a' || e.key === 'A') move('p1', 'p1Board', 'p2', -1, 0);
                 else if (e.key === 'd' || e.key === 'D') move('p1', 'p1Board', 'p2', 1, 0);
                 else if (e.key === 's' || e.key === 'S') move('p1', 'p1Board', 'p2', 0, 1);
-                else if (e.key === 'w' || e.key === 'W') rotatePiece('p1', 'p1Board');
+                else if (e.key === 'w' || e.key === 'W') rotatePieceRight('p1', 'p1Board');
+                else if (e.key === 'q' || e.key === 'Q') rotatePieceLeft('p1', 'p1Board');
+                else if (e.key === 'e' || e.key === 'E') rotatePieceRight('p1', 'p1Board');
                 else if (e.key === ' ') { e.preventDefault(); hardDrop('p1', 'p1Board', 'p2'); }
                 
-                // P2: Arrows + Enter (only if not AI)
+                // P2: Arrows + ZX + Enter (only if not AI)
                 if (!isAI) {
                     if (e.key === 'ArrowLeft') move('p2', 'p2Board', 'p1', -1, 0);
                     else if (e.key === 'ArrowRight') move('p2', 'p2Board', 'p1', 1, 0);
                     else if (e.key === 'ArrowDown') move('p2', 'p2Board', 'p1', 0, 1);
-                    else if (e.key === 'ArrowUp') rotatePiece('p2', 'p2Board');
+                    else if (e.key === 'ArrowUp') rotatePieceRight('p2', 'p2Board');
+                    else if (e.key === 'z') rotatePieceLeft('p2', 'p2Board');
+                    else if (e.key === 'x') rotatePieceRight('p2', 'p2Board');
                     else if (e.key === 'Enter') { e.preventDefault(); hardDrop('p2', 'p2Board', 'p1'); }
                 }
             }
