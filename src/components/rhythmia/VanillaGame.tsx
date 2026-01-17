@@ -227,6 +227,14 @@ export const Rhythmia: React.FC = () => {
     playTone(131, 0.5, 'sawtooth');
   }, [playTone]);
 
+  const completeBoard = useCallback((partialBoard: (PieceCell | null)[][]) => {
+    const completed = [...partialBoard];
+    while (completed.length < H) {
+      completed.unshift(Array(W).fill(null));
+    }
+    return completed;
+  }, []);
+
   const lock = useCallback(() => {
     const currentPiece = pieceRef.current;
     const currentPos = piecePosRef.current;
@@ -257,16 +265,26 @@ export const Rhythmia: React.FC = () => {
 
     // Lock piece to board
     const newBoard = currentBoard.map(r => [...r]);
+    let pieceExtendsAboveBoard = false;
     currentPiece.shape.forEach((row, py) => {
       row.forEach((val, px) => {
         if (val) {
           const by = currentPos.y + py, bx = currentPos.x + px;
-          if (by >= 0 && by < H) {
+          if (by < 0) {
+            // Piece extends above the visible board - game over condition
+            pieceExtendsAboveBoard = true;
+          } else if (by >= 0 && by < H) {
             newBoard[by][bx] = { color: currentPiece.color };
           }
         }
       });
     });
+
+    // Check if piece extends above board (game over)
+    if (pieceExtendsAboveBoard) {
+      endGame();
+      return;
+    }
 
     // Line clear
     let cleared = 0;
@@ -282,13 +300,19 @@ export const Rhythmia: React.FC = () => {
       }
     });
 
+    // Prepare the board state for collision check
+    let boardForCollisionCheck = newBoard;
     if (cleared > 0) {
+      // Complete the remaining board by adding empty rows at the top
+      boardForCollisionCheck = completeBoard(remainingBoard);
+      
+      // Update the board state ref immediately to prevent using stale state in subsequent lock() calls
+      boardStateRef.current = boardForCollisionCheck;
+
       setClearingRows(rowsToClear);
       setBoard(newBoard);
 
       setTimeout(() => {
-        while (remainingBoard.length < H) remainingBoard.unshift(Array(W).fill(null));
-
         const currentCombo = comboRef.current;
         const currentLevel = levelRef.current;
         const pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
@@ -318,8 +342,9 @@ export const Rhythmia: React.FC = () => {
         setTimeout(() => setBoardShake(false), 200);
 
         setClearingRows([]);
-        setBoard(remainingBoard);
-        boardStateRef.current = remainingBoard;
+        const completedBoard = completeBoard(remainingBoard);
+        setBoard(completedBoard);
+        boardStateRef.current = completedBoard;
       }, 300);
     } else {
       setBoard(newBoard);
@@ -337,10 +362,10 @@ export const Rhythmia: React.FC = () => {
     setPiecePos(newPos);
     piecePosRef.current = newPos;
 
-    if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, cleared > 0 ? boardStateRef.current : newBoard)) {
+    if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, boardForCollisionCheck)) {
       endGame();
     }
-  }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame]);
+  }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame, completeBoard]);
 
   const move = useCallback((dx: number, dy: number) => {
     if (gameOverRef.current || !pieceRef.current) return;
@@ -388,7 +413,7 @@ export const Rhythmia: React.FC = () => {
     setPiecePos(currentPos);
     piecePosRef.current = currentPos;
     playTone(196, 0.1, 'sawtooth');
-    setTimeout(lock, 30);
+    lock();
   }, [collision, playTone, lock]);
 
   // ===== Start Game =====
