@@ -231,6 +231,79 @@ If you encounter issues:
 3. Test locally first to isolate issues
 4. Check browser console for client-side errors
 
+## Tick-Based Input Protocol
+
+The multiplayer system now uses a server-authoritative, tick-based input protocol for gameplay synchronization.
+
+### Architecture Overview
+
+- **Server**: Runs a fixed tick loop (100ms per tick = 10 ticks/second)
+- **Clients**: Send input actions (move, rotate, drop) with tick numbers
+- **Server**: Collects inputs from all players and broadcasts authoritative `tick_inputs` messages
+- **Clients**: Apply inputs locally immediately for responsiveness, receive server broadcasts for opponent state
+
+### Message Flow
+
+1. **Game Start**: Host starts game → Server creates `GameSessionManager` → Tick loop begins
+2. **Player Input**: Client action (e.g., move left) → Client sends `input` message with current tick
+3. **Server Processing**: Server collects inputs for current tick → Broadcasts `tick_inputs` with all player inputs
+4. **Client Update**: Client receives `tick_inputs` → Updates opponent visualization
+
+### Input Validation
+
+The server validates inputs to prevent cheating:
+- **Past Tick Rejection**: Inputs for already-processed ticks are ignored
+- **Future Tick Limit**: Inputs more than 5 ticks ahead are rejected
+- **Action Limit**: Maximum 10 actions per player per tick
+- **Player Validation**: Only valid room members can submit inputs
+
+### Reconnection & Resync
+
+On reconnect:
+1. Client sends `game_resync_request`
+2. Server responds with `game_resync` containing:
+   - Current tick number
+   - Recent tick history (last 100 ticks)
+3. Client updates local tick counter
+
+### Backward Compatibility
+
+The system maintains backward compatibility:
+- Old `relay` messages still work for state sync fallback
+- Clients can use mixed protocol during transition
+- Server supports both input-based and relay-based gameplay
+
+### Configuration
+
+Tick system settings in `multiplayer-server.ts`:
+```typescript
+const TICK_RATE = 100; // ms per tick
+const MAX_TICK_HISTORY = 100; // Ticks kept for resync
+const MAX_FUTURE_TICKS = 5; // Max ticks ahead for input
+const MAX_ACTIONS_PER_TICK = 10; // Action limit per player
+```
+
+### Input Actions
+
+Supported action types:
+- `{ type: 'move', direction: 'left' | 'right' | 'down' }`
+- `{ type: 'rotate' }`
+- `{ type: 'hard_drop' }`
+
+### Future Improvements
+
+The current implementation provides:
+- ✅ Server-authoritative tick management
+- ✅ Input validation and rate limiting
+- ✅ Reconnect support with history replay
+- ✅ Simultaneous player input handling
+
+Future enhancements:
+- 🔄 Full deterministic simulation (requires game logic refactor)
+- 🔄 Client-side prediction with rollback
+- 🔄 Input buffering for network jitter
+- 🔄 Replay system using tick history
+
 ## Next Steps
 
 After successful deployment:
