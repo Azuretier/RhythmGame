@@ -189,6 +189,13 @@ export const Rhythmia: React.FC = () => {
     };
   }, []);
 
+  const rotateCCW = useCallback((p: Piece): Piece => {
+    return {
+      ...p,
+      shape: p.shape[0].map((_, i) => p.shape.map(row => row[row.length - 1 - i])),
+    };
+  }, []);
+
   const showJudgment = useCallback((text: string, color: string) => {
     setJudgmentText(text);
     setJudgmentColor(color);
@@ -384,20 +391,20 @@ export const Rhythmia: React.FC = () => {
     }
   }, [collision, playTone, lock]);
 
-  const rotatePiece = useCallback(() => {
+  const rotatePiece = useCallback((direction: 1 | -1 = 1) => {
     if (gameOverRef.current || !pieceRef.current) return;
 
     const currentPiece = pieceRef.current;
-    const currentPos = piecePosRef. current;
+    const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
 
-    const rotated = rotate(currentPiece);
-    if (! collision(rotated, currentPos. x, currentPos.y, currentBoard)) {
+    const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
+    if (!collision(rotated, currentPos.x, currentPos.y, currentBoard)) {
       setPiece(rotated);
       pieceRef.current = rotated;
-      playTone(523, 0.08);
+      playTone(direction === 1 ? 523 : 440, 0.08);
     }
-  }, [rotate, collision, playTone]);
+  }, [rotate, rotateCCW, collision, playTone]);
 
   const hardDrop = useCallback(() => {
     if (gameOverRef. current || !pieceRef.current) return;
@@ -515,10 +522,12 @@ export const Rhythmia: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'ArrowLeft':  move(-1, 0); break;
+        case 'ArrowLeft': move(-1, 0); break;
         case 'ArrowRight': move(1, 0); break;
         case 'ArrowDown': move(0, 1); break;
-        case 'ArrowUp': rotatePiece(); break;
+        case 'ArrowUp': rotatePiece(1); break;
+        case 'z':
+        case 'Z': rotatePiece(-1); break;
         case ' ': e.preventDefault(); hardDrop(); break;
       }
     };
@@ -572,7 +581,8 @@ export const Rhythmia: React.FC = () => {
       case 'left': move(-1, 0); break;
       case 'right': move(1, 0); break;
       case 'down': move(0, 1); break;
-      case 'rotate': rotatePiece(); break;
+      case 'rotate': rotatePiece(1); break;
+      case 'rotateLeft': rotatePiece(-1); break;
       case 'drop': hardDrop(); break;
     }
   }, [move, rotatePiece, hardDrop]);
@@ -681,15 +691,19 @@ export const Rhythmia: React.FC = () => {
             <div className={styles. beatFill} style={{ width: `${beatPhase * 100}%` }} />
           </div>
 
-          <div className={styles. controls}>
-            {['rotate', 'left', 'down', 'right', 'drop'].map((action) => (
+          <div className={styles.controls}>
+            {['rotateLeft', 'left', 'down', 'right', 'rotate', 'drop'].map((action) => (
               <button
                 key={action}
                 className={styles.ctrlBtn}
                 onTouchEnd={(e) => { e.preventDefault(); handleControlClick(action); }}
                 onClick={() => handleControlClick(action)}
               >
-                {action === 'rotate' ?  '↻' : action === 'left' ? '←' : action === 'down' ?  '↓' : action === 'right' ? '→' :  '⬇'}
+                {action === 'rotate' ? '↻' : 
+                 action === 'rotateLeft' ? '↺' : 
+                 action === 'left' ? '←' : 
+                 action === 'down' ? '↓' : 
+                 action === 'right' ? '→' : '⬇'}
               </button>
             ))}
           </div>
