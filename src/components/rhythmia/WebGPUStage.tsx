@@ -89,7 +89,6 @@ export default function WebGPUStage() {
             return output;
           }
 
-          // Noise function for visual variation
           fn hash(p: vec2<f32>) -> f32 {
             let p3 = fract(vec3<f32>(p.xyx) * 0.13);
             let p3_shifted = p3 + dot(p3, vec3<f32>(p3.yzx) + 3.333);
@@ -120,30 +119,30 @@ export default function WebGPUStage() {
             coord.x *= resolution.x / resolution.y;
             let aspectRatio = resolution.x / resolution.y;
             
-            // Heartbeat/rhythm pulse (60-120 BPM range)
+            // Heartbeat pulse
             let bpm = 90.0;
-            let beatsPerSecond = 1.5; // 90 / 60
+            let beatsPerSecond = 1.5; 
             let beatTime = time * beatsPerSecond;
             let pulse = sin(beatTime * 6.28318) * 0.5 + 0.5;
             let strongPulse = pow(pulse, 3.0);
             
-            // Animated grid with perspective
+            // Animated grid - CHANGED TO VAR
             let gridScale = 20.0;
             var gridCoord = coord * gridScale;
-            gridCoord.y += time * 2.0; // Move grid
+            gridCoord.y += time * 2.0; 
             
             let grid = fract(gridCoord);
-            let gridLines = smoothstep(0.02, 0.0, min(grid.x, grid.y)) +
-                           smoothstep(0.02, 0.0, min(1.0 - grid.x, 1.0 - grid.y));
+            // gridLines MUST BE VAR to use *= later
+            var gridLines = smoothstep(0.02, 0.0, min(grid.x, grid.y)) +
+                          smoothstep(0.02, 0.0, min(1.0 - grid.x, 1.0 - grid.y));
             
-            // Fade grid with distance (perspective effect)
             let centerCoord = vec2<f32>(0.5 * aspectRatio, 0.5);
             let centerDist = length(coord - centerCoord);
             let gridFade = smoothstep(1.5, 0.3, centerDist);
+            
+            // This was causing your error
             gridLines *= gridFade;
             
-            // Glow orbs (like the CSS background glows)
-            // Use uv (not aspect-corrected coord) for correct positioning
             let glow1Pos = vec2<f32>(0.2, 0.2) + vec2<f32>(sin(time * 0.5), cos(time * 0.3)) * 0.1;
             let glow1 = exp(-length(uv - glow1Pos) * 3.0) * strongPulse;
             
@@ -153,13 +152,11 @@ export default function WebGPUStage() {
             let glow3Pos = vec2<f32>(0.5, 0.5) + vec2<f32>(sin(time * 0.3), cos(time * 0.5)) * 0.15;
             let glow3 = exp(-length(uv - glow3Pos) * 2.5) * pulse * 0.5;
             
-            // Noise layer
             let noiseVal = noise(coord * 5.0 + time * 0.5) * 0.05;
             
-            // Combine effects with neon colors
-            let neonPink = vec3<f32>(1.0, 0.42, 0.62);   // #FF6B9D
-            let neonCyan = vec3<f32>(0.31, 0.8, 0.77);   // #4ECDC4
-            let neonPurple = vec3<f32>(0.64, 0.61, 1.0); // #A29BFE
+            let neonPink = vec3<f32>(1.0, 0.42, 0.62);   
+            let neonCyan = vec3<f32>(0.31, 0.8, 0.77);   
+            let neonPurple = vec3<f32>(0.64, 0.61, 1.0); 
             
             var color = vec3<f32>(0.0);
             color += gridLines * neonCyan * 0.3;
@@ -168,7 +165,6 @@ export default function WebGPUStage() {
             color += glow3 * neonPurple * 0.3;
             color += noiseVal;
             
-            // Overall intensity (keep it subtle for background)
             let intensity = 0.6;
             color *= intensity;
             
