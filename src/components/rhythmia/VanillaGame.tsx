@@ -305,47 +305,40 @@ export const Rhythmia: React.FC = () => {
     if (cleared > 0) {
       // Complete the remaining board by adding empty rows at the top
       boardForCollisionCheck = completeBoard(remainingBoard);
-      
-      // Update the board state ref immediately to prevent using stale state in subsequent lock() calls
+
+      const currentCombo = comboRef.current;
+      const currentLevel = levelRef.current;
+      const pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
+      const newScore = scoreRef.current + pts;
+      const newLines = linesRef.current + cleared;
+
+      updateScore(newScore);
+      scoreRef.current = newScore;
+      setLines(newLines);
+      linesRef.current = newLines;
+
+      // Enemy damage
+      const newEnemyHP = Math.max(0, enemyHPRef.current - cleared * 8 * mult);
+      setEnemyHP(newEnemyHP);
+      enemyHPRef.current = newEnemyHP;
+
+      if (newEnemyHP <= 0) {
+        nextWorld();
+      }
+
+      const newLevel = Math.floor(newLines / 10);
+      setLevel(newLevel);
+      levelRef.current = newLevel;
+
+      playLineClear(cleared);
+      setBoardShake(true);
+      setTimeout(() => setBoardShake(false), 200);
+
+      setClearingRows([]);
+      setBoard(boardForCollisionCheck);
       boardStateRef.current = boardForCollisionCheck;
-
-      setClearingRows(rowsToClear);
-      setBoard(newBoard);
-
-      setTimeout(() => {
-        const currentCombo = comboRef.current;
-        const currentLevel = levelRef.current;
-        const pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
-        const newScore = scoreRef.current + pts;
-        const newLines = linesRef.current + cleared;
-
-        updateScore(newScore);
-        scoreRef.current = newScore;
-        setLines(newLines);
-        linesRef.current = newLines;
-
-        // Enemy damage
-        const newEnemyHP = Math. max(0, enemyHPRef.current - cleared * 8 * mult);
-        setEnemyHP(newEnemyHP);
-        enemyHPRef.current = newEnemyHP;
-
-        if (newEnemyHP <= 0) {
-          nextWorld();
-        }
-
-        const newLevel = Math.floor(newLines / 10);
-        setLevel(newLevel);
-        levelRef.current = newLevel;
-
-        playLineClear(cleared);
-        setBoardShake(true);
-        setTimeout(() => setBoardShake(false), 200);
-
-        setClearingRows([]);
-        setBoard(remainingBoard);
-        boardStateRef.current = remainingBoard;
-      });
     } else {
+      setClearingRows([]);
       setBoard(newBoard);
       boardStateRef.current = newBoard;
     }
@@ -621,7 +614,7 @@ export const Rhythmia: React.FC = () => {
                   return (
                     <div
                       key={i}
-                      className={`${styles.cell} ${cell ? styles.filled : ''} ${cell?. ghost ? styles.ghost : ''} ${isClearing ? styles.clearing : ''}`}
+                      className={`${styles.cell} ${cell ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''} ${isClearing ? styles.clearing : ''}`}
                       style={cell ? { backgroundColor: cell.color, color: cell.color } : {}}
                     />
                   );
