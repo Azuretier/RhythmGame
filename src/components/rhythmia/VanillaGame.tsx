@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VanillaGame.module.css';
-import { tryRotate, type Piece as RotationPiece, type Position } from '@/lib/rotationSystem';
+import { tryRotate, type Piece as RotationPiece, type Position, type Rotation } from '@/lib/rotationSystem';
 
 // ===== Types =====
 interface PieceCell {
@@ -14,7 +14,7 @@ interface Piece {
   shape: number[][];
   color: string;
   type: PieceType;
-  rotation: 0 | 1 | 2 | 3;
+  rotation: Rotation;
 }
 
 interface World {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MultiplayerBattle.module.css';
-import { tryRotate, type PieceType } from '@/lib/rotationSystem';
+import { tryRotate, type PieceType, type Rotation } from '@/lib/rotationSystem';
 
 // ===== Types =====
 interface PieceCell {
@@ -14,7 +14,7 @@ interface Piece {
   shape: number[][];
   color: string;
   type: PieceType;
-  rotation: 0 | 1 | 2 | 3;
+  rotation: Rotation;
 }
 
 interface GameState {

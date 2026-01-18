@@ -19,7 +19,11 @@
 
 export type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 export type Rotation = 0 | 1 | 2 | 3;
-export type RotationDirection = 1 | -1; // 1 = clockwise, -1 = counter-clockwise
+
+// Rotation direction constants for better readability
+export const CLOCKWISE = 1 as const;
+export const COUNTER_CLOCKWISE = -1 as const;
+export type RotationDirection = typeof CLOCKWISE | typeof COUNTER_CLOCKWISE; // 1 = CW, -1 = CCW
 
 export interface Piece {
   shape: number[][];

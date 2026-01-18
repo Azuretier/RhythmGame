@@ -9,6 +9,7 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts",
     "bot:dev": "cd apps/discord-bot && npm run dev",
     "bot:build": "cd apps/discord-bot && npm run build",
