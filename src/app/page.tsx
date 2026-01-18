@@ -5,7 +5,6 @@ import styles from '../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../components/rhythmia/VanillaGame';
 import MultiplayerGame from '../components/rhythmia/MultiplayerGame';
 import LifeJourney from '../components/rhythmia/LifeJourney';
-import WebGPUStage from '../components/rhythmia/WebGPUStage';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer' | 'modded';
 
@@ -86,10 +85,7 @@ export default function RhythmiaPage() {
 
   return (
     <div className={styles.page}>
-      {/* WebGPU Stage Background */}
-      <WebGPUStage />
-      
-      {/* CSS Fallback Background effects (for browsers without WebGPU) */}
+      {/* Background effects */}
       <div className={styles.bgGrid}></div>
       <div className={`${styles.bgGlow} ${styles.glow1}`}></div>
       <div className={`${styles.bgGlow} ${styles.glow2}`}></div>
