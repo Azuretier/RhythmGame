@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import styles from './VanillaGame.module.css';
 
 // Tetromino definitions with all 4 rotation states (0, R, 2, L)
 // Using SRS (Super Rotation System) - the standard Tetris rotation system
@@ -82,6 +83,21 @@ const COLORS: Record<string, string> = {
   L: '#f0a000',
 };
 
+// ===== Rhythm Game Worlds =====
+interface World {
+  name: string;
+  bpm: number;
+  colors: string[];
+}
+
+const WORLDS: World[] = [
+  { name: '🎀 メロディア', bpm: 100, colors: ['#FF6B9D', '#FF8FAB', '#FFB6C1', '#C44569', '#E8668B', '#D4587D', '#B84A6F'] },
+  { name: '🌊 ハーモニア', bpm: 110, colors: ['#4ECDC4', '#45B7AA', '#3DA69B', '#35958C', '#2D847D', '#26736E', '#1A535C'] },
+  { name: '☀️ クレシェンダ', bpm: 120, colors: ['#FFE66D', '#FFD93D', '#F7B731', '#ECA700', '#D19600', '#B68600', '#9B7600'] },
+  { name: '🔥 フォルティッシモ', bpm: 140, colors: ['#FF6B6B', '#FF5252', '#FF3838', '#FF1F1F', '#E61717', '#CC0F0F', '#B30707'] },
+  { name: '✨ 静寂の間', bpm: 160, colors: ['#A29BFE', '#9B8EFD', '#9381FC', '#8B74FB', '#8367FA', '#7B5AF9', '#6C5CE7'] },
+];
+
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
 const CELL_SIZE = 28;
@@ -103,17 +119,137 @@ const getRandomPiece = (): string => {
   return pieces[Math.floor(Math.random() * pieces.length)];
 };
 
-export default function Tetris() {
+export default function Rhythmia() {
   const [board, setBoard] = useState<(string | null)[][]>(createEmptyBoard());
   const [currentPiece, setCurrentPiece] = useState<Piece | null>(null);
   const [nextPiece, setNextPiece] = useState<string>(getRandomPiece());
   const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
   const [lines, setLines] = useState(0);
   const [level, setLevel] = useState(1);
   const [gameOver, setGameOver] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Rhythm game state
+  const [worldIdx, setWorldIdx] = useState(0);
+  const [enemyHP, setEnemyHP] = useState(100);
+  const [beatPhase, setBeatPhase] = useState(0);
+  const [judgmentText, setJudgmentText] = useState('');
+  const [judgmentColor, setJudgmentColor] = useState('');
+  const [showJudgmentAnim, setShowJudgmentAnim] = useState(false);
+  const [boardBeat, setBoardBeat] = useState(false);
+  const [boardShake, setBoardShake] = useState(false);
+  const [scorePop, setScorePop] = useState(false);
+  const [lastRotationWasSuccessful, setLastRotationWasSuccessful] = useState(false);
+  
+  // Refs for accessing current values in callbacks (avoids stale closures)
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
+  const beatTimerRef = useRef<number | null>(null);
+  const lastBeatRef = useRef(Date.now());
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const boardRef = useRef(board);
+  const currentPieceRef = useRef(currentPiece);
+  const nextPieceRef = useRef(nextPiece);
+  const scoreRef = useRef(score);
+  const comboRef = useRef(combo);
+  const linesRef = useRef(lines);
+  const levelRef = useRef(level);
+  const gameOverRef = useRef(gameOver);
+  const isPausedRef = useRef(isPaused);
+  const worldIdxRef = useRef(worldIdx);
+  const enemyHPRef = useRef(enemyHP);
+  const beatPhaseRef = useRef(beatPhase);
+  const lastRotationRef = useRef(lastRotationWasSuccessful);
+
+  // Keep refs in sync with state
+  useEffect(() => { boardRef.current = board; }, [board]);
+  useEffect(() => { currentPieceRef.current = currentPiece; }, [currentPiece]);
+  useEffect(() => { nextPieceRef.current = nextPiece; }, [nextPiece]);
+  useEffect(() => { scoreRef.current = score; }, [score]);
+  useEffect(() => { comboRef.current = combo; }, [combo]);
+  useEffect(() => { linesRef.current = lines; }, [lines]);
+  useEffect(() => { levelRef.current = level; }, [level]);
+  useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
+  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
+  useEffect(() => { worldIdxRef.current = worldIdx; }, [worldIdx]);
+  useEffect(() => { enemyHPRef.current = enemyHP; }, [enemyHP]);
+  useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
+  useEffect(() => { lastRotationRef.current = lastRotationWasSuccessful; }, [lastRotationWasSuccessful]);
+
+  // ===== Audio System =====
+  const initAudio = useCallback(() => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+  }, []);
+
+  const playTone = useCallback((freq: number, dur = 0.1, type: OscillatorType = 'sine') => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + dur);
+  }, []);
+
+  const playDrum = useCallback(() => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.1);
+  }, []);
+
+  const playLineClear = useCallback((count: number) => {
+    const freqs = [523, 659, 784, 1047];
+    freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
+  }, [playTone]);
+
+  // ===== Judgment & Effects =====
+  const showJudgment = useCallback((text: string, color: string) => {
+    setJudgmentText(text);
+    setJudgmentColor(color);
+    setShowJudgmentAnim(false);
+    requestAnimationFrame(() => {
+      setShowJudgmentAnim(true);
+    });
+  }, []);
+
+  const updateScore = useCallback((newScore: number) => {
+    setScore(newScore);
+    setScorePop(true);
+    setTimeout(() => setScorePop(false), 100);
+  }, []);
+
+  const nextWorld = useCallback(() => {
+    const newWorldIdx = worldIdxRef.current + 1;
+    if (newWorldIdx >= WORLDS.length) {
+      showJudgment('🎉 CLEAR!', '#FFD700');
+      setTimeout(() => {
+        setWorldIdx(0);
+        setEnemyHP(100);
+      }, 2000);
+    } else {
+      showJudgment('WORLD CLEAR!', '#00FF00');
+      setWorldIdx(newWorldIdx);
+      setEnemyHP(100);
+    }
+  }, [showJudgment]);
 
   const getShape = useCallback((type: string, rotation: number) => {
     return TETROMINOES[type][rotation];
@@ -257,20 +393,57 @@ export default function Tetris() {
       dropDistance++;
     }
     
+    // Beat judgment
+    const currentBeatPhase = beatPhaseRef.current;
+    const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
+    let mult = 1;
+    
+    if (onBeat) {
+      mult = 2;
+      const newCombo = comboRef.current + 1;
+      setCombo(newCombo);
+      showJudgment('PERFECT!', '#FFD700');
+      playTone(1047, 0.2, 'triangle');
+    } else {
+      setCombo(0);
+    }
+    
     const newBoard = lockPiece(newPiece, board);
     const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
     
     setBoard(clearedBoard);
-    setScore(prev => prev + dropDistance * 2 + clearedLines * 100 * level);
+    
+    // Calculate score with rhythm multiplier
+    const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * (level);
+    const finalScore = baseScore * mult * Math.max(1, comboRef.current);
+    updateScore(scoreRef.current + finalScore);
+    
+    // Enemy damage
+    if (clearedLines > 0) {
+      const damage = clearedLines * 8 * mult;
+      const newEnemyHP = Math.max(0, enemyHPRef.current - damage);
+      setEnemyHP(newEnemyHP);
+      
+      if (newEnemyHP <= 0) {
+        nextWorld();
+      }
+      
+      playLineClear(clearedLines);
+      setBoardShake(true);
+      setTimeout(() => setBoardShake(false), 200);
+    }
+    
     setLines(prev => {
       const newLines = prev + clearedLines;
       setLevel(Math.floor(newLines / 10) + 1);
       return newLines;
     });
     
+    playTone(196, 0.1, 'sawtooth');
     const spawned = spawnPiece();
     setCurrentPiece(spawned);
-  }, [currentPiece, board, isValidPosition, lockPiece, clearLines, spawnPiece, level, gameOver, isPaused]);
+    setLastRotationWasSuccessful(false);
+  }, [currentPiece, board, isValidPosition, lockPiece, clearLines, spawnPiece, level, gameOver, isPaused, showJudgment, playTone, playLineClear, updateScore, nextWorld]);
 
   const tick = useCallback(() => {
     if (!currentPiece || gameOver || isPaused) return;
@@ -283,12 +456,49 @@ export default function Tetris() {
     if (isValidPosition(newPiece, board)) {
       setCurrentPiece(newPiece);
     } else {
+      // Beat judgment on lock
+      const currentBeatPhase = beatPhaseRef.current;
+      const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
+      let mult = 1;
+      
+      if (onBeat) {
+        mult = 2;
+        const newCombo = comboRef.current + 1;
+        setCombo(newCombo);
+        showJudgment('PERFECT!', '#FFD700');
+        playTone(1047, 0.2, 'triangle');
+      } else {
+        setCombo(0);
+      }
+      
       // Lock the piece
       const newBoard = lockPiece(currentPiece, board);
       const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
       
       setBoard(clearedBoard);
-      setScore(prev => prev + clearedLines * 100 * level);
+      
+      // Calculate score with rhythm multiplier
+      const baseScore = [0, 100, 300, 500, 800][clearedLines] * (level);
+      const finalScore = baseScore * mult * Math.max(1, comboRef.current);
+      if (finalScore > 0) {
+        updateScore(scoreRef.current + finalScore);
+      }
+      
+      // Enemy damage
+      if (clearedLines > 0) {
+        const damage = clearedLines * 8 * mult;
+        const newEnemyHP = Math.max(0, enemyHPRef.current - damage);
+        setEnemyHP(newEnemyHP);
+        
+        if (newEnemyHP <= 0) {
+          nextWorld();
+        }
+        
+        playLineClear(clearedLines);
+        setBoardShake(true);
+        setTimeout(() => setBoardShake(false), 200);
+      }
+      
       setLines(prev => {
         const newLines = prev + clearedLines;
         setLevel(Math.floor(newLines / 10) + 1);
@@ -297,17 +507,24 @@ export default function Tetris() {
       
       const spawned = spawnPiece();
       setCurrentPiece(spawned);
+      setLastRotationWasSuccessful(false);
     }
-  }, [currentPiece, board, isValidPosition, lockPiece, clearLines, spawnPiece, level, gameOver, isPaused]);
+  }, [currentPiece, board, isValidPosition, lockPiece, clearLines, spawnPiece, level, gameOver, isPaused, showJudgment, playTone, playLineClear, updateScore, nextWorld]);
 
   const startGame = useCallback(() => {
+    initAudio();
+    
     setBoard(createEmptyBoard());
     setScore(0);
+    setCombo(0);
     setLines(0);
     setLevel(1);
+    setWorldIdx(0);
+    setEnemyHP(100);
     setGameOver(false);
     setIsPaused(false);
     setIsPlaying(true);
+    setLastRotationWasSuccessful(false);
     setNextPiece(getRandomPiece());
     
     const type = getRandomPiece();
@@ -318,8 +535,9 @@ export default function Tetris() {
       x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
       y: type === 'I' ? -1 : 0,
     });
-  }, [getShape]);
+  }, [getShape, initAudio]);
 
+  // Drop timer
   useEffect(() => {
     if (isPlaying && !gameOver && !isPaused) {
       const speed = Math.max(100, 1000 - (level - 1) * 100);
@@ -329,6 +547,47 @@ export default function Tetris() {
       };
     }
   }, [isPlaying, gameOver, isPaused, level, tick]);
+
+  // Beat timer for rhythm game
+  useEffect(() => {
+    if (!isPlaying || gameOver) return;
+
+    const world = WORLDS[worldIdx];
+    const interval = 60000 / world.bpm;
+
+    lastBeatRef.current = Date.now();
+
+    beatTimerRef.current = window.setInterval(() => {
+      lastBeatRef.current = Date.now();
+      setBoardBeat(true);
+      playDrum();
+      setTimeout(() => setBoardBeat(false), 100);
+    }, interval);
+
+    return () => {
+      if (beatTimerRef.current) clearInterval(beatTimerRef.current);
+    };
+  }, [isPlaying, gameOver, worldIdx, playDrum]);
+
+  // Beat phase animation
+  useEffect(() => {
+    if (!isPlaying || gameOver) return;
+
+    let animFrame: number;
+    const updateBeat = () => {
+      if (!gameOverRef.current) {
+        const world = WORLDS[worldIdxRef.current];
+        const interval = 60000 / world.bpm;
+        const elapsed = Date.now() - lastBeatRef.current;
+        const phase = (elapsed % interval) / interval;
+        setBeatPhase(phase);
+        animFrame = requestAnimationFrame(updateBeat);
+      }
+    };
+    animFrame = requestAnimationFrame(updateBeat);
+
+    return () => cancelAnimationFrame(animFrame);
+  }, [isPlaying, gameOver]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -420,149 +679,149 @@ export default function Tetris() {
 
   const renderNextPiece = () => {
     const shape = getShape(nextPiece, 0);
-    const size = nextPiece === 'I' ? 4 : nextPiece === 'O' ? 2 : 3;
     
     return (
-      <div className="flex flex-col items-center">
-        {shape.slice(0, size === 4 ? 4 : 2).map((row, y) => (
-          <div key={y} className="flex">
-            {row.slice(0, size).map((cell, x) => (
-              <div
-                key={x}
-                className="border border-gray-700"
-                style={{
-                  width: 20,
-                  height: 20,
-                  backgroundColor: cell ? COLORS[nextPiece] : '#1a1a2e',
-                  boxShadow: cell ? 'inset 2px 2px 4px rgba(255,255,255,0.3), inset -2px -2px 4px rgba(0,0,0,0.3)' : 'none',
-                }}
-              />
-            ))}
-          </div>
+      <div 
+        className={styles.next}
+        style={{ gridTemplateColumns: `repeat(${shape[0].length}, 1fr)` }}
+      >
+        {shape.flat().map((val, i) => (
+          <div
+            key={i}
+            className={styles.nextCell}
+            style={val ? { 
+              backgroundColor: COLORS[nextPiece], 
+              boxShadow: `0 0 8px ${COLORS[nextPiece]}` 
+            } : {}}
+          />
         ))}
       </div>
     );
   };
 
   const displayBoard = renderBoard();
+  const world = WORLDS[worldIdx];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center p-4">
-      <div className="flex gap-6">
-        {/* Main Game Board */}
-        <div className="flex flex-col items-center">
-          <h1 className="text-3xl font-bold text-white mb-4 tracking-wider">TETRIS</h1>
-          <div 
-            className="relative border-4 border-purple-500 rounded-lg overflow-hidden"
-            style={{ 
-              backgroundColor: '#0f0f1a',
-              boxShadow: '0 0 20px rgba(139, 92, 246, 0.5), inset 0 0 20px rgba(0,0,0,0.5)'
-            }}
-          >
-            {displayBoard.map((row, y) => (
-              <div key={y} className="flex">
-                {row.map((cell, x) => {
+    <div className={`${styles.body} ${styles[`w${worldIdx}`]}`}>
+      {/* Title Screen */}
+      {!isPlaying && !gameOver && (
+        <div className={styles.titleScreen}>
+          <h1>RHYTHMIA</h1>
+          <p>リズムに乗ってブロックを積め！</p>
+          <button className={styles.startBtn} onClick={startGame}>▶ START</button>
+        </div>
+      )}
+
+      {/* Game */}
+      {(isPlaying || gameOver) && (
+        <div className={styles.game}>
+          <div className={styles.worldDisplay}>{world.name}</div>
+
+          <div className={`${styles.scoreDisplay} ${scorePop ? styles.pop : ''}`}>
+            {score.toLocaleString()}
+          </div>
+
+          <div className={`${styles.combo} ${combo >= 2 ? styles.show : ''} ${combo >= 5 ? styles.big : ''}`}>
+            {combo} COMBO!
+          </div>
+
+          <div className={styles.enemyLabel}>👻 ノイズリング</div>
+          <div className={styles.enemyBar}>
+            <div className={styles.enemyFill} style={{ width: `${enemyHP}%` }} />
+          </div>
+
+          <div className={styles.gameArea}>
+            <div className={`${styles.boardWrap} ${boardBeat ? styles.beat : ''} ${boardShake ? styles.shake : ''}`}>
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}>
+                {displayBoard.flat().map((cell, i) => {
                   const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
                   const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
                   
                   return (
                     <div
-                      key={x}
-                      className="border border-gray-800"
-                      style={{
-                        width: CELL_SIZE,
-                        height: CELL_SIZE,
-                        backgroundColor: cell 
-                          ? isGhost 
-                            ? 'transparent'
-                            : COLORS[pieceType as string]
-                          : 'transparent',
-                        border: isGhost 
-                          ? `2px dashed ${COLORS[pieceType as string]}40`
-                          : '1px solid #2d2d4a',
-                        boxShadow: cell && !isGhost
-                          ? 'inset 3px 3px 6px rgba(255,255,255,0.3), inset -3px -3px 6px rgba(0,0,0,0.4)'
-                          : 'none',
-                        opacity: isGhost ? 0.4 : 1,
-                      }}
+                      key={i}
+                      className={`${styles.cell} ${cell && !isGhost ? styles.filled : ''} ${isGhost ? styles.ghost : ''}`}
+                      style={cell && !isGhost ? { 
+                        backgroundColor: COLORS[pieceType as string], 
+                        boxShadow: `0 0 8px ${COLORS[pieceType as string]}` 
+                      } : isGhost ? {
+                        borderColor: `${COLORS[pieceType as string]}60`
+                      } : {}}
                     />
                   );
                 })}
               </div>
-            ))}
-            
-            {/* Overlay for Game Over / Paused */}
-            {(gameOver || isPaused) && (
-              <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-white mb-4">
-                    {gameOver ? 'GAME OVER' : 'PAUSED'}
-                  </p>
-                  {gameOver && (
-                    <button
-                      onClick={startGame}
-                      className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors"
-                    >
-                      Play Again
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Side Panel */}
-        <div className="flex flex-col gap-4 text-white">
-          {/* Next Piece */}
-          <div className="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-purple-500">
-            <h3 className="text-sm font-semibold mb-2 text-purple-300">NEXT</h3>
-            <div className="flex justify-center items-center h-20">
+              {/* Overlay for Game Over / Paused */}
+              {(gameOver || isPaused) && (
+                <div className={styles.gameover} style={{ display: 'flex' }}>
+                  <h2>{gameOver ? 'GAME OVER' : 'PAUSED'}</h2>
+                  <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
+                  <button className={styles.restartBtn} onClick={startGame}>
+                    {gameOver ? 'もう一度' : 'Resume'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className={styles.nextWrap}>
+              <div className={styles.nextLabel}>NEXT</div>
               {renderNextPiece()}
             </div>
           </div>
 
-          {/* Score */}
-          <div className="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-purple-500">
-            <h3 className="text-sm font-semibold text-purple-300">SCORE</h3>
-            <p className="text-2xl font-bold">{score.toLocaleString()}</p>
+          <div className={styles.beatBar}>
+            <div className={styles.beatTarget} />
+            <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
           </div>
 
-          {/* Lines */}
-          <div className="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-purple-500">
-            <h3 className="text-sm font-semibold text-purple-300">LINES</h3>
-            <p className="text-2xl font-bold">{lines}</p>
+          <div className={styles.controls}>
+            {['rotateLeft', 'left', 'down', 'right', 'rotate', 'drop'].map((action) => (
+              <button
+                key={action}
+                className={styles.ctrlBtn}
+                onTouchEnd={(e) => { 
+                  e.preventDefault(); 
+                  if (action === 'left') movePiece(-1, 0);
+                  else if (action === 'right') movePiece(1, 0);
+                  else if (action === 'down') movePiece(0, 1);
+                  else if (action === 'rotate') rotatePiece(1);
+                  else if (action === 'rotateLeft') rotatePiece(-1);
+                  else if (action === 'drop') hardDrop();
+                }}
+                onClick={() => {
+                  if (action === 'left') movePiece(-1, 0);
+                  else if (action === 'right') movePiece(1, 0);
+                  else if (action === 'down') movePiece(0, 1);
+                  else if (action === 'rotate') rotatePiece(1);
+                  else if (action === 'rotateLeft') rotatePiece(-1);
+                  else if (action === 'drop') hardDrop();
+                }}
+              >
+                {action === 'rotate' ? '↻' : 
+                 action === 'rotateLeft' ? '↺' : 
+                 action === 'left' ? '←' : 
+                 action === 'down' ? '↓' : 
+                 action === 'right' ? '→' : '⬇'}
+              </button>
+            ))}
           </div>
 
-          {/* Level */}
-          <div className="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-purple-500">
-            <h3 className="text-sm font-semibold text-purple-300">LEVEL</h3>
-            <p className="text-2xl font-bold">{level}</p>
+          {/* Stats Panel */}
+          <div className={styles.statsPanel || 'flex gap-4 mt-4 text-white text-sm'}>
+            <div>LINES: {lines}</div>
+            <div>LEVEL: {level}</div>
           </div>
-
-          {/* Controls */}
-          <div className="bg-gray-800 bg-opacity-50 rounded-lg p-4 border border-purple-500">
-            <h3 className="text-sm font-semibold mb-2 text-purple-300">CONTROLS</h3>
-            <div className="text-xs space-y-1 text-gray-300">
-              <p>← → Move</p>
-              <p>↓ Soft Drop</p>
-              <p>↑/X Rotate CW</p>
-              <p>Z/Ctrl Rotate CCW</p>
-              <p>Space Hard Drop</p>
-              <p>P/Esc Pause</p>
-            </div>
-          </div>
-
-          {/* Start Button */}
-          {!isPlaying && !gameOver && (
-            <button
-              onClick={startGame}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold text-lg transition-colors shadow-lg"
-            >
-              START GAME
-            </button>
-          )}
         </div>
+      )}
+
+      {/* Judgment */}
+      <div
+        className={`${styles.judgment} ${showJudgmentAnim ? styles.show : ''}`}
+        style={{ color: judgmentColor, textShadow: `0 0 30px ${judgmentColor}` }}
+      >
+        {judgmentText}
       </div>
     </div>
   );
