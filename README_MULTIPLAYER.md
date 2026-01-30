@@ -3,7 +3,7 @@
 ## Quick Start Instructions 🚀
 To start the multiplayer server, run:
 ```bash
-npm run multiplayer-server
+npm run multiplayer
 ```
 
 The server will start on port 3001 by default (configurable via `PORT` environment variable).
