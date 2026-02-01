@@ -94,6 +94,9 @@ export default function RhythmiaPage() {
       <div className={`${styles.bgGlow} ${styles.glow1}`}></div>
       <div className={`${styles.bgGlow} ${styles.glow2}`}></div>
       <div className={`${styles.bgGlow} ${styles.glow3}`}></div>
+      <div className={styles.lunarHalo}></div>
+      <div className={styles.lunarRim}></div>
+      <div className={styles.lunarWall}></div>
 
       {/* Loading overlay */}
       <div className={`${styles.loadingOverlay} ${!isLoading ? styles.hidden : ''}`}>  
