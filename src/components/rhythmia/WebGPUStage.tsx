@@ -154,15 +154,16 @@ export default function WebGPUStage() {
             
             let noiseVal = noise(coord * 5.0 + time * 0.5) * 0.05;
             
-            let neonPink = vec3<f32>(1.0, 0.42, 0.62);   
-            let neonCyan = vec3<f32>(0.31, 0.8, 0.77);   
-            let neonPurple = vec3<f32>(0.64, 0.61, 1.0); 
+            // Honkai Star Rail colors - warm golds, cosmic purples, deep blues
+            let hsrGold = vec3<f32>(0.96, 0.77, 0.19);     // #f4c430
+            let hsrPurple = vec3<f32>(0.58, 0.44, 0.86);   // #9370db
+            let hsrBlue = vec3<f32>(0.25, 0.41, 0.88);     // #4169e1
             
             var color = vec3<f32>(0.0);
-            color += gridLines * neonCyan * 0.3;
-            color += glow1 * neonPink * 0.4;
-            color += glow2 * neonCyan * 0.4;
-            color += glow3 * neonPurple * 0.3;
+            color += gridLines * hsrPurple * 0.3;
+            color += glow1 * hsrGold * 0.4;
+            color += glow2 * hsrBlue * 0.4;
+            color += glow3 * hsrPurple * 0.3;
             color += noiseVal;
             
             let intensity = 0.6;
