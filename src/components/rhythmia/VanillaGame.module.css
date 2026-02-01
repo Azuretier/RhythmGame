@@ -373,3 +373,131 @@
   border-radius: 50%;
   z-index: 150;
 }
+
+/* Language Selection */
+.languageSelector {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.langBtn {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.langBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.langBtn.active {
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  border-color: var(--c1);
+  box-shadow: 0 0 20px var(--c1);
+}
+
+.langLabel {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* Settings Button (in-game) */
+.settingsBtn {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 10px 15px;
+  font-size: 1.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settingsBtn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: var(--c1);
+  box-shadow: 0 0 15px var(--c1);
+  transform: rotate(90deg);
+}
+
+/* Settings Modal */
+.settingsModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 300;
+  gap: 20px;
+  padding: 20px;
+}
+
+.settingsModal.show {
+  display: flex;
+}
+
+.settingsContent {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid var(--c1);
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 0 40px var(--c1);
+}
+
+.settingsTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 0 0 20px var(--c1);
+}
+
+.closeSettingsBtn {
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  border: none;
+  border-radius: 25px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 20px;
+}
+
+.closeSettingsBtn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px var(--c1);
+}

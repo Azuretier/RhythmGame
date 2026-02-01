@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VanillaGame.module.css';
+import { GAME_TRANSLATIONS, Language, getStoredLanguage, storeLanguage } from './translations';
 
 // ===== Types =====
 interface PieceCell {
@@ -99,6 +100,8 @@ export const Rhythmia: React.FC = () => {
   const [scorePop, setScorePop] = useState(false);
   const [clearingRows, setClearingRows] = useState<number[]>([]);
   const [lastRotationWasSuccessful, setLastRotationWasSuccessful] = useState(false);
+  const [language, setLanguage] = useState<Language>('en');
+  const [showSettings, setShowSettings] = useState(false);
 
   // Refs
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -137,6 +140,20 @@ export const Rhythmia: React.FC = () => {
   useEffect(() => { worldIdxRef.current = worldIdx; }, [worldIdx]);
   useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
   useEffect(() => { lastRotationRef.current = lastRotationWasSuccessful; }, [lastRotationWasSuccessful]);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    setLanguage(getStoredLanguage());
+  }, []);
+
+  // Handle language change
+  const changeLanguage = useCallback((lang: Language) => {
+    setLanguage(lang);
+    storeLanguage(lang);
+  }, []);
+
+  // Get current translations
+  const t = GAME_TRANSLATIONS[language];
 
   // ===== Audio =====
   const initAudio = useCallback(() => {
@@ -809,6 +826,12 @@ export const Rhythmia: React.FC = () => {
     }
   }, [move, rotatePiece, hardDrop]);
 
+  // Get translated world name
+  const getWorldName = useCallback((idx: number) => {
+    const worldKeys = ['melodia', 'harmonia', 'crescenda', 'fortissimo', 'silence'];
+    return t.worlds[worldKeys[idx] as keyof typeof t.worlds] || WORLDS[idx].name;
+  }, [t]);
+
   const world = WORLDS[worldIdx];
   const displayBoard = getDisplayBoard();
   const unit = cellSizeRef.current + 1;
@@ -818,26 +841,63 @@ export const Rhythmia: React.FC = () => {
       {/* Title Screen */}
       {! gameStarted && (
         <div className={styles.titleScreen}>
-          <h1>RHYTHMIA</h1>
-          <p>リズムに乗ってブロックを積め！</p>
-          <button className={styles.startBtn} onClick={startGame}>▶ START</button>
+          <h1>{t.title}</h1>
+          <p>{t.subtitle}</p>
+          
+          {/* Language Selection */}
+          <div style={{ marginTop: '20px' }}>
+            <div className={styles.langLabel}>{t.selectLanguage}</div>
+            <div className={styles.languageSelector}>
+              <button
+                className={`${styles.langBtn} ${language === 'en' ? styles.active : ''}`}
+                onClick={() => changeLanguage('en')}
+              >
+                🇺🇸 EN
+              </button>
+              <button
+                className={`${styles.langBtn} ${language === 'ja' ? styles.active : ''}`}
+                onClick={() => changeLanguage('ja')}
+              >
+                🇯🇵 JP
+              </button>
+              <button
+                className={`${styles.langBtn} ${language === 'es' ? styles.active : ''}`}
+                onClick={() => changeLanguage('es')}
+              >
+                🇪🇸 ES
+              </button>
+              <button
+                className={`${styles.langBtn} ${language === 'fr' ? styles.active : ''}`}
+                onClick={() => changeLanguage('fr')}
+              >
+                🇫🇷 FR
+              </button>
+            </div>
+          </div>
+
+          <button className={styles.startBtn} onClick={startGame}>▶ {t.start}</button>
         </div>
       )}
 
       {/* Game */}
       {gameStarted && (
         <div className={styles. game}>
-          <div className={styles.worldDisplay}>{world.name}</div>
+          {/* Settings Button */}
+          <button className={styles.settingsBtn} onClick={() => setShowSettings(true)}>
+            {t.settings}
+          </button>
+
+          <div className={styles.worldDisplay}>{getWorldName(worldIdx)}</div>
 
           <div className={`${styles.scoreDisplay} ${scorePop ? styles.pop : ''}`}>
             {score. toLocaleString()}
           </div>
 
           <div className={`${styles.combo} ${combo >= 2 ? styles.show : ''} ${combo >= 5 ? styles.big : ''}`}>
-            {combo} COMBO! 
+            {combo} {t.combo}! 
           </div>
 
-          <div className={styles.enemyLabel}>👻 ノイズリング</div>
+          <div className={styles.enemyLabel}>👻 {t.enemy}</div>
           <div className={styles.enemyBar}>
             <div className={styles.enemyFill} style={{ width: `${enemyHP}%` }} />
           </div>
@@ -943,9 +1003,47 @@ export const Rhythmia: React.FC = () => {
       {/* Game Over */}
       {showGameOver && (
         <div className={`${styles.gameover} ${styles.show}`}>
-          <h2>GAME OVER</h2>
+          <h2>{t.gameOver}</h2>
           <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
-          <button className={styles.restartBtn} onClick={startGame}>もう一度</button>
+          <button className={styles.restartBtn} onClick={startGame}>{t.playAgain}</button>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className={`${styles.settingsModal} ${styles.show}`}>
+          <div className={styles.settingsContent}>
+            <h2 className={styles.settingsTitle}>{t.selectLanguage}</h2>
+            <div className={styles.languageSelector}>
+              <button
+                className={`${styles.langBtn} ${language === 'en' ? styles.active : ''}`}
+                onClick={() => changeLanguage('en')}
+              >
+                🇺🇸 EN
+              </button>
+              <button
+                className={`${styles.langBtn} ${language === 'ja' ? styles.active : ''}`}
+                onClick={() => changeLanguage('ja')}
+              >
+                🇯🇵 JP
+              </button>
+              <button
+                className={`${styles.langBtn} ${language === 'es' ? styles.active : ''}`}
+                onClick={() => changeLanguage('es')}
+              >
+                🇪🇸 ES
+              </button>
+              <button
+                className={`${styles.langBtn} ${language === 'fr' ? styles.active : ''}`}
+                onClick={() => changeLanguage('fr')}
+              >
+                🇫🇷 FR
+              </button>
+            </div>
+            <button className={styles.closeSettingsBtn} onClick={() => setShowSettings(false)}>
+              Close
+            </button>
+          </div>
         </div>
       )}
     </div>
