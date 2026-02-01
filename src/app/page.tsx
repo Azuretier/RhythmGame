@@ -9,11 +9,13 @@ import WebGPUStage from '../components/rhythmia/WebGPUStage';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer' | 'modded';
 
+const DEFAULT_THIRD_WIDGET_TITLE = 'SNS links widgets';
+
 export default function RhythmiaPage() {
   const [gameMode, setGameMode] = useState<GameMode>('lobby');
   const [isLoading, setIsLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(127);
-  const thirdWidgetTitle = process.env.NEXT_PUBLIC_THIRD_WIDGET_TITLE || 'SNS links widgets';
+  const thirdWidgetTitle = process.env.NEXT_PUBLIC_THIRD_WIDGET_TITLE || DEFAULT_THIRD_WIDGET_TITLE;
 
   useEffect(() => {
     // Simulate initialization time

@@ -7,6 +7,9 @@
   --hsr-cosmic-blue: #4169e1;
   --hsr-dark-purple: #2d1b4e;
   
+  /* Desktop tab styling colors */
+  --tab-close-hover: #ff3232;
+  
   /* Legacy variable names for compatibility */
   --dark-bg: #0d0620;
   --darker-bg: #070313;
@@ -600,8 +603,8 @@
 }
 
 .tabButton:last-child:hover {
-  background: rgba(255, 50, 50, 0.3);
-  border-color: rgba(255, 50, 50, 0.6);
+  background: var(--tab-close-hover);
+  border-color: var(--tab-close-hover);
 }
 
 .desktopTab .cardIcon {
