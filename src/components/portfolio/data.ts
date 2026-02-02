@@ -578,9 +578,41 @@ export const TERMINAL_COMMANDS: Record<string, {
     }
   },
   date: {
-    description: "Current date/time",
+    description: "Current date/time (options: -u UTC, -i ISO, -l locale)",
     action: (args, addLine) => {
-      addLine(new Date().toString(), "output");
+      const now = new Date();
+      
+      if (args.includes("-u") || args.includes("--utc")) {
+        // UTC format
+        addLine(now.toUTCString(), "output");
+      } else if (args.includes("-i") || args.includes("--iso")) {
+        // ISO 8601 format
+        addLine(now.toISOString(), "output");
+      } else if (args.includes("-l") || args.includes("--locale")) {
+        // Locale format
+        addLine(now.toLocaleString(), "output");
+      } else if (args.includes("-t") || args.includes("--time")) {
+        // Time only
+        addLine(now.toLocaleTimeString(), "output");
+      } else if (args.includes("-d") || args.includes("--date-only")) {
+        // Date only
+        addLine(now.toLocaleDateString(), "output");
+      } else if (args.includes("--help") || args.includes("-h")) {
+        // Help message
+        addLine("Usage: date [OPTION]", "output");
+        addLine("Display current date and time in various formats", "output");
+        addLine("", "output");
+        addLine("Options:", "output");
+        addLine("  -u, --utc        Display in UTC format", "output");
+        addLine("  -i, --iso        Display in ISO 8601 format", "output");
+        addLine("  -l, --locale     Display in locale format", "output");
+        addLine("  -t, --time       Display time only", "output");
+        addLine("  -d, --date-only  Display date only", "output");
+        addLine("  -h, --help       Display this help message", "output");
+      } else {
+        // Default format
+        addLine(now.toString(), "output");
+      }
     }
   },
   uname: {
