@@ -9,10 +9,13 @@ import ParticleSystem from '../components/rhythmia/ParticleSystem';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer' | 'modded';
 
+const DEFAULT_THIRD_WIDGET_TITLE = 'SNS links widgets';
+
 export default function RhythmiaPage() {
   const [gameMode, setGameMode] = useState<GameMode>('lobby');
   const [isLoading, setIsLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(127);
+  const thirdWidgetTitle = process.env.NEXT_PUBLIC_THIRD_WIDGET_TITLE || DEFAULT_THIRD_WIDGET_TITLE;
 
   useEffect(() => {
     // Simulate initialization time
@@ -74,7 +77,7 @@ export default function RhythmiaPage() {
     return (
       <div className={styles.gameContainer + ' ' + styles.active}>
         <div className={styles.gameHeader}>
-          <span className={styles.gameTitle}>✨ SNS links widgets — MOD SERVER</span>
+          <span className={styles.gameTitle}>✨ {thirdWidgetTitle} — MOD SERVER</span>
           <button className={styles.backButton} onClick={closeGame}>
             ← ロビーに戻る
           </button>
@@ -197,12 +200,23 @@ export default function RhythmiaPage() {
 
             {/* Modded Server */}  
             <div   
-              className={`${styles.serverCard} ${styles.modded}`}
+              className={`${styles.serverCard} ${styles.modded} ${styles.desktopTab}`}
               onClick={() => launchGame('modded')}
             >
+              <div className={styles.tabTitleBar}>
+                <div className={styles.tabTitle}>
+                  <span className={styles.tabIcon}>✨</span>
+                  <span>{thirdWidgetTitle}</span>
+                </div>
+                <div className={styles.tabControls}>
+                  <span className={styles.tabButton}>_</span>
+                  <span className={styles.tabButton}>□</span>
+                  <span className={styles.tabButton}>×</span>
+                </div>
+              </div>
               <span className={styles.cardBadge}>MODDED</span>
               <span className={styles.cardIcon}>✨</span>
-              <h2 className={styles.cardTitle}>SNS links widgets</h2>
+              <h2 className={styles.cardTitle}>{thirdWidgetTitle}</h2>
               <p className={styles.cardSubtitle}>Social Connection</p>
               <p className={styles.cardDescription}>
                 ソーシャルメディアへのリンクを集約したウィジェット。GitHub、YouTube、Instagram、Discordなど、すべての連絡先を一箇所で確認できます。
