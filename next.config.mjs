@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Empty turbopack config to silence build warnings about webpack config
+    turbopack: {},
     async headers() {
       return [
         {
