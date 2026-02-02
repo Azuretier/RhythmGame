@@ -12,6 +12,7 @@ const WebGLBackground = memo(({ onLoaded }: WebGLBackgroundProps) => {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
+  const resizeHandlerRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (isInitializedRef.current || !containerRef.current) return;
@@ -42,7 +43,7 @@ const WebGLBackground = memo(({ onLoaded }: WebGLBackgroundProps) => {
     // Load shader
     async function loadShader() {
       try {
-        const fragShader = await fetch("/shaders/atmosphere.frag").then(
+        const fragShader = await fetch("/shaders/light-scattering.frag").then(
           (res) => {
             if (!res.ok) throw new Error("Shader not found");
             return res.text();
@@ -87,6 +88,20 @@ const WebGLBackground = memo(({ onLoaded }: WebGLBackgroundProps) => {
 
         animate();
         onLoaded?.();
+
+        // Handle resize - update resolution uniform
+        const handleResize = () => {
+          if (!rendererRef.current) return;
+
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+
+          rendererRef.current.setSize(width, height);
+          uniforms.u_resolution.value.set(width, height);
+        };
+
+        resizeHandlerRef.current = handleResize;
+        window.addEventListener("resize", handleResize);
       } catch (error) {
         console.warn("Failed to load WebGL shader:", error);
         onLoaded?.();
@@ -95,21 +110,12 @@ const WebGLBackground = memo(({ onLoaded }: WebGLBackgroundProps) => {
 
     loadShader();
 
-    // Handle resize
-    const handleResize = () => {
-      if (!rendererRef.current) return;
-
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-
-      rendererRef.current.setSize(width, height);
-    };
-
-    window.addEventListener("resize", handleResize);
-
     // Cleanup
     return () => {
-      window.removeEventListener("resize", handleResize);
+      if (resizeHandlerRef.current) {
+        window.removeEventListener("resize", resizeHandlerRef.current);
+        resizeHandlerRef.current = null;
+      }
 
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);

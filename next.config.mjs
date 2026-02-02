@@ -22,6 +22,7 @@ const nextConfig = {
         }
       ];
     },
+    turbopack: {},
     webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.(glsl|vs|fs|vert|frag)$/,
@@ -39,9 +40,6 @@ const nextConfig = {
     }
     
     return config;
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   };
 
