@@ -38,40 +38,41 @@ const SHAPES = [
   [[1, 1, 1, 1]],        // I
   [[1, 1], [1, 1]],      // O
   [[0, 1, 0], [1, 1, 1]], // T
-  [[0, 1, 1], [1, 1, 0]], // S
-  [[1, 1, 0], [0, 1, 1]], // Z
+  [[0, 1, 1], [1, 1, 0], [0, 0, 0]], // S - 3x3 for proper center rotation
+  [[1, 1, 0], [0, 1, 1], [0, 0, 0]], // Z - 3x3 for proper center rotation
   [[1, 0, 0], [1, 1, 1]], // L
   [[0, 0, 1], [1, 1, 1]], // J
 ];
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
-// SRS Wall Kick Data
-// Offset tests for JLSTZ pieces (relative to rotation center)
-// Format: 5 offset tests [test 1, test 2, test 3, test 4, test 5]
-// Each test is [x, y] where positive x is right, positive y is UP (SRS convention)
-// Our coordinate system has positive y as DOWN, so y values are negated from SRS spec
+// SRS Wall Kick Data - Using rotation state names ('0', 'R', '2', 'L')
+// Format: [dx, dy] offsets to try when rotation fails
+// Tests are tried in order until one succeeds
+// Note: SRS uses inverted Y for kicks (positive Y = up), so we negate dy when applying
+const ROTATION_NAMES = ['0', 'R', '2', 'L'] as const;
+
 const WALL_KICK_JLSTZ: Record<string, [number, number][]> = {
-  '0->1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
-  '1->0': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
-  '1->2': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
-  '2->1': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
-  '2->3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
-  '3->2': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
-  '3->0': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
-  '0->3': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '0->R': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  'R->2': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '2->L': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+  'L->0': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  'R->0': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '2->R': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  'L->2': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  '0->L': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
 };
 
 // Offset tests for I piece (different from JLSTZ)
 const WALL_KICK_I: Record<string, [number, number][]> = {
-  '0->1': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
-  '1->0': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
-  '1->2': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
-  '2->1': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
-  '2->3': [[0, 0], [2, 0], [-1, 0], [2, -1], [-1, 2]],
-  '3->2': [[0, 0], [-2, 0], [1, 0], [-2, 1], [1, -2]],
-  '3->0': [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
-  '0->3': [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]],
+  '0->R': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  'R->2': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+  '2->L': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  'L->0': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  'R->0': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  '2->R': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  'L->2': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  '0->L': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
 };
 
 // ===== Component =====
@@ -118,6 +119,10 @@ export const Rhythmia: React.FC = () => {
   const enemyHPRef = useRef(enemyHP);
   const worldIdxRef = useRef(worldIdx);
   const beatPhaseRef = useRef(beatPhase);
+  const keysPressed = useRef<Set<string>>(new Set());
+  const softDropInterval = useRef<number | null>(null);
+  const moveRepeatTimeout = useRef<number | null>(null);
+  const moveRepeatInterval = useRef<number | null>(null);
   const lastRotationRef = useRef(lastRotationWasSuccessful);
 
   // Keep refs in sync
@@ -231,9 +236,11 @@ export const Rhythmia: React.FC = () => {
   }, []);
 
   const rotateCCW = useCallback((p: Piece): Piece => {
+    const newRotation = ((p.rotation - 1 + 4) % 4) as 0 | 1 | 2 | 3;
     return {
       ...p,
       shape: p.shape[0].map((_, i) => p.shape.map(row => row[row.length - 1 - i])),
+      rotation: newRotation,
     };
   }, []);
 
@@ -287,20 +294,29 @@ export const Rhythmia: React.FC = () => {
   // A T-Spin is detected when:
   // 1. The piece is a T piece
   // 2. The last action was a successful rotation
-  // 3. At least 3 of the 4 corner cells around the T's center are filled or out of bounds
+  // 3. At least 3 of the 4 corner cells around the T's bottom center are filled or out of bounds
   const checkTSpin = useCallback((piece: Piece, pos: { x: number; y: number }, board: (PieceCell | null)[][]): 'full' | 'mini' | null => {
     if (piece.type !== 'T' || !lastRotationRef.current) {
       return null;
     }
 
-    // Find the center of the T piece by looking for the cell that has 3 neighbors
-    // In a T piece, the center is the only cell with 3 filled neighbors
+    // Find the bottom center of the T piece for T-spin detection
+    // The T piece rotates around its bottom axis
+    // We find the center cell (the one with 3 neighbors) and use its position
+    // but for T-spin corner checks, we use the bottom row's center as the axis
     let centerX = -1;
     let centerY = -1;
+    let bottomY = -1;
     
+    // First, find the geometric center (cell with 3 neighbors)
     for (let py = 0; py < piece.shape.length; py++) {
       for (let px = 0; px < piece.shape[py].length; px++) {
         if (piece.shape[py][px]) {
+          // Track the bottommost row with filled cells
+          if (pos.y + py > bottomY) {
+            bottomY = pos.y + py;
+          }
+          
           // Count neighbors
           let neighbors = 0;
           // Check up, down, left, right
@@ -313,11 +329,14 @@ export const Rhythmia: React.FC = () => {
           if (neighbors === 3) {
             centerX = pos.x + px;
             centerY = pos.y + py;
-            break;
           }
         }
       }
-      if (centerX !== -1) break;
+    }
+    
+    // Use the center X but bottom Y for T-spin axis
+    if (centerX !== -1 && bottomY !== -1) {
+      centerY = bottomY;
     }
     
     if (centerX === -1) return null; // Couldn't find center
@@ -532,6 +551,21 @@ export const Rhythmia: React.FC = () => {
     }
   }, [collision, playTone, lock]);
 
+  // Get wall kicks for a specific rotation transition
+  const getWallKicks = useCallback((type: PieceType, fromRotation: number, toRotation: number): [number, number][] => {
+    const from = ROTATION_NAMES[fromRotation];
+    const to = ROTATION_NAMES[toRotation];
+    const key = `${from}->${to}`;
+    
+    if (type === 'I') {
+      return WALL_KICK_I[key] || [[0, 0]];
+    } else if (type === 'O') {
+      return [[0, 0]]; // O piece doesn't need wall kicks
+    } else {
+      return WALL_KICK_JLSTZ[key] || [[0, 0]];
+    }
+  }, []);
+
   const rotatePiece = useCallback((direction: 1 | -1 = 1) => {
     if (gameOverRef.current || !pieceRef.current) return;
 
@@ -539,17 +573,25 @@ export const Rhythmia: React.FC = () => {
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
 
-    // 1. Get the target shape
+    // Get the rotated piece
     const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
     
-    // 2. Define Kick Tests (Simplified example or reference your SRS table)
-    // This allows the piece to "jump" 1 space left/right/up to find a fit
-    const kickTests = [[0, 0], [-1, 0], [1, 0], [0, -1]]; 
+    // Calculate rotation indices
+    const fromRotation = currentPiece.rotation;
+    const toRotation = rotated.rotation;
+    
+    // Get SRS wall kick tests for this rotation
+    const kicks = getWallKicks(currentPiece.type, fromRotation, toRotation);
 
-    for (const [offsetX, offsetY] of kickTests) {
-      if (!collision(rotated, currentPos.x + offsetX, currentPos.y + offsetY, currentBoard)) {
+    // Try each kick offset until one succeeds
+    for (const [dx, dy] of kicks) {
+      // SRS uses inverted Y for kicks, so we negate dy
+      const testX = currentPos.x + dx;
+      const testY = currentPos.y - dy;
+      
+      if (!collision(rotated, testX, testY, currentBoard)) {
         // Success! Update position and piece
-        const newPos = { x: currentPos.x + offsetX, y: currentPos.y + offsetY };
+        const newPos = { x: testX, y: testY };
         
         setPiece(rotated);
         pieceRef.current = rotated;
@@ -557,14 +599,16 @@ export const Rhythmia: React.FC = () => {
         piecePosRef.current = newPos;
         
         playTone(direction === 1 ? 523 : 440, 0.08);
+        setLastRotationWasSuccessful(true);
         lastRotationRef.current = true; // For T-Spin detection
         return; 
       }
     }
     
     // If we reach here, no kicks worked
+    setLastRotationWasSuccessful(false);
     lastRotationRef.current = false;
-  }, [rotate, rotateCCW, collision, playTone]);
+  }, [rotate, rotateCCW, collision, playTone, getWallKicks]);
 
   const hardDrop = useCallback(() => {
     if (gameOverRef.current || !pieceRef.current) return;
@@ -681,19 +725,77 @@ export const Rhythmia: React.FC = () => {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent key repeat events
+      if (keysPressed.current.has(e.key)) return;
+      keysPressed.current.add(e.key);
+
       switch (e.key) {
-        case 'ArrowLeft': move(-1, 0); break;
-        case 'ArrowRight': move(1, 0); break;
-        case 'ArrowDown': move(0, 1); break;
-        case 'ArrowUp': rotatePiece(1); break;
+        case 'ArrowLeft':
+          move(-1, 0);
+          // Start repeat interval after 150ms delay
+          moveRepeatTimeout.current = window.setTimeout(() => {
+            moveRepeatInterval.current = window.setInterval(() => move(-1, 0), 50);
+          }, 150);
+          break;
+        case 'ArrowRight':
+          move(1, 0);
+          // Start repeat interval after 150ms delay
+          moveRepeatTimeout.current = window.setTimeout(() => {
+            moveRepeatInterval.current = window.setInterval(() => move(1, 0), 50);
+          }, 150);
+          break;
+        case 'ArrowDown':
+          // Start continuous soft drop without immediate move to prevent instant lock
+          softDropInterval.current = window.setInterval(() => move(0, 1), 50);
+          break;
+        case 'ArrowUp':
+          rotatePiece(1);
+          break;
         case 'z':
-        case 'Z': rotatePiece(-1); break;
-        case ' ': e.preventDefault(); hardDrop(); break;
+        case 'Z':
+          rotatePiece(-1);
+          break;
+        case ' ':
+          e.preventDefault();
+          hardDrop();
+          break;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.key);
+
+      switch (e.key) {
+        case 'ArrowLeft':
+        case 'ArrowRight':
+          if (moveRepeatTimeout.current) {
+            clearTimeout(moveRepeatTimeout.current);
+            moveRepeatTimeout.current = null;
+          }
+          if (moveRepeatInterval.current) {
+            clearInterval(moveRepeatInterval.current);
+            moveRepeatInterval.current = null;
+          }
+          break;
+        case 'ArrowDown':
+          if (softDropInterval.current) {
+            clearInterval(softDropInterval.current);
+            softDropInterval.current = null;
+          }
+          break;
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      if (softDropInterval.current) clearInterval(softDropInterval.current);
+      if (moveRepeatTimeout.current) clearTimeout(moveRepeatTimeout.current);
+      if (moveRepeatInterval.current) clearInterval(moveRepeatInterval.current);
+    };
   }, [move, rotatePiece, hardDrop]);
 
   // Update cell size on resize

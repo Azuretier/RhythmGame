@@ -110,6 +110,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const linesRef = useRef(lines);
   const beatPhaseRef = useRef(beatPhase);
   const pendingGarbageRef = useRef(pendingGarbage);
+  const keysPressed = useRef<Set<string>>(new Set());
+  const softDropInterval = useRef<number | null>(null);
+  const moveRepeatTimeout = useRef<number | null>(null);
+  const moveRepeatInterval = useRef<number | null>(null);
 
   // Keep refs in sync
   useEffect(() => { pieceRef.current = piece; }, [piece]);
@@ -166,6 +170,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
     freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
   }, [playTone]);
 
+  const showJudgment = useCallback((text: string) => {
+    setJudgmentText(text);
+    setShowJudgmentAnim(false);
+    requestAnimationFrame(() => {
+      setShowJudgmentAnim(true);
+    });
+  }, []);
+
   // ===== WebSocket =====
   const connectWebSocket = useCallback(() => {
     const wsUrl = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
@@ -174,6 +186,16 @@ export const MultiplayerBattle: React.FC<Props> = ({
     ws.onopen = () => {
       console.log('[WS] Connected');
       setWsConnected(true);
+      
+      // Join the room after connection
+      ws.send(JSON.stringify({
+        type: 'relay',
+        payload: {
+          type: 'join_room',
+          roomCode: roomCode,
+          playerId: playerId,
+        }
+      }));
     };
 
     ws.onmessage = (event) => {
@@ -206,6 +228,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
             // Opponent lost - we win! (fallback)
             handleGameEnd(playerId);
           }
+        } else if (message.type === 'ping') {
+          // Respond to ping to keep connection alive
+          ws.send(JSON.stringify({ type: 'pong' }));
         }
       } catch (error) {
         console.error('[WS] Error parsing message:', error);
@@ -224,9 +249,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
     wsRef.current = ws;
 
     return () => {
-      ws.close();
+      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+        ws.close();
+      }
     };
-  }, [playerId]);
+  }, [playerId, roomCode, showJudgment, playTone, onGameEnd]);
 
   // Send input to server for current tick
   const sendInput = useCallback((actions: GameAction[]) => {
@@ -331,12 +358,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
   }, []);
 
-  const showJudgment = useCallback((text: string) => {
-    setJudgmentText(text);
-    setShowJudgmentAnim(false);
-    requestAnimationFrame(() => {
-      setShowJudgmentAnim(true);
-    });
+  const completeBoard = useCallback((partialBoard: (PieceCell | null)[][]) => {
+    const completed = [...partialBoard];
+    while (completed.length < H) {
+      completed.unshift(Array(W).fill(null));
+    }
+    return completed;
   }, []);
 
   const addGarbageLines = useCallback((count: number) => {
@@ -403,16 +430,30 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     // Lock piece to board
     const newBoard = currentBoard.map(r => [...r]);
+    let pieceExtendsAboveBoard = false;
     currentPiece.shape.forEach((row, py) => {
       row.forEach((val, px) => {
         if (val) {
           const by = currentPos.y + py, bx = currentPos.x + px;
-          if (by >= 0 && by < H) {
+          if (by < 0) {
+            // Piece extends above the visible board - game over condition
+            pieceExtendsAboveBoard = true;
+          } else if (by >= 0 && by < H) {
             newBoard[by][bx] = { color: currentPiece.color };
           }
         }
       });
     });
+
+    // Check if piece extends above board (game over)
+    if (pieceExtendsAboveBoard) {
+      sendGameOver();
+      // Player lost - opponent wins
+      // Use opponentId if available, otherwise this player loses to unknown opponent
+      const winner = opponentId || playerId; // If no opponent, declare self as loser
+      handleGameEnd(winner);
+      return;
+    }
 
     // Apply pending garbage
     const currentGarbage = pendingGarbageRef.current;
@@ -437,13 +478,19 @@ export const MultiplayerBattle: React.FC<Props> = ({
       }
     });
 
+    // Prepare the board state for collision check
+    let boardForCollisionCheck = finalBoard;
     if (cleared > 0) {
+      // Complete the remaining board by adding empty rows at the top
+      boardForCollisionCheck = completeBoard(remainingBoard);
+      
+      // Update the board state ref immediately to prevent using stale state in subsequent lock() calls
+      boardStateRef.current = boardForCollisionCheck;
+
       setClearingRows(rowsToClear);
       setBoard(finalBoard);
 
       setTimeout(() => {
-        while (remainingBoard.length < H) remainingBoard.unshift(Array(W).fill(null));
-
         const currentCombo = comboRef.current;
         const pts = [0, 100, 300, 500, 800][cleared] * mult * Math.max(1, currentCombo);
         const newScore = scoreRef.current + pts;
@@ -462,11 +509,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
         playLineClear(cleared);
         setClearingRows([]);
-        setBoard(remainingBoard);
-        boardStateRef.current = remainingBoard;
+        const completedBoard = completeBoard(remainingBoard);
+        setBoard(completedBoard);
+        boardStateRef.current = completedBoard;
 
         // Send updated state
-        sendGameState({ board: remainingBoard, score: newScore, lines: newLines });
+        sendGameState({ board: completedBoard, score: newScore, lines: newLines });
       }, 300);
     } else {
       setBoard(finalBoard);
@@ -487,13 +535,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
     setPiecePos(newPos);
     piecePosRef.current = newPos;
 
-    if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, cleared > 0 ? boardStateRef.current : finalBoard)) {
+    if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, boardForCollisionCheck)) {
       sendGameOver();
-      // Player lost - opponent wins (or unknown if opponent not connected)
-      const winner = opponentId || 'opponent';
+      // Player lost - opponent wins
+      // Use opponentId if available, otherwise this player loses to unknown opponent
+      const winner = opponentId || playerId; // If no opponent, declare self as loser
       handleGameEnd(winner);
     }
-  }, [nextPiece, showJudgment, playTone, randomPiece, collision, playLineClear, sendGameState, sendGarbage, sendGameOver, handleGameEnd, opponentId, addGarbageLines]);
+  }, [nextPiece, showJudgment, playTone, randomPiece, collision, playLineClear, sendGameState, sendGarbage, sendGameOver, handleGameEnd, opponentId, addGarbageLines, completeBoard]);
 
   const move = useCallback((dx: number, dy: number) => {
     if (gameOverRef.current || !pieceRef.current) return;
@@ -614,6 +663,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
     initGame();
   }, [initGame]);
 
+  // Periodic game state sync to opponent
+  useEffect(() => {
+    if (gameOver || !wsConnected) return;
+
+    const syncInterval = setInterval(() => {
+      sendGameState({ board: boardStateRef.current, score: scoreRef.current, lines: linesRef.current });
+    }, 1000); // Sync every second
+
+    return () => clearInterval(syncInterval);
+  }, [gameOver, wsConnected, sendGameState]);
+
   // Drop timer
   useEffect(() => {
     if (gameOver) return;
@@ -668,17 +728,73 @@ export const MultiplayerBattle: React.FC<Props> = ({
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent key repeat events
+      if (keysPressed.current.has(e.key)) return;
+      keysPressed.current.add(e.key);
+
       switch (e.key) {
-        case 'ArrowLeft': move(-1, 0); break;
-        case 'ArrowRight': move(1, 0); break;
-        case 'ArrowDown': move(0, 1); break;
-        case 'ArrowUp': rotatePiece(); break;
-        case ' ': e.preventDefault(); hardDrop(); break;
+        case 'ArrowLeft':
+          move(-1, 0);
+          // Start repeat interval after 150ms delay
+          moveRepeatTimeout.current = window.setTimeout(() => {
+            moveRepeatInterval.current = window.setInterval(() => move(-1, 0), 50);
+          }, 150);
+          break;
+        case 'ArrowRight':
+          move(1, 0);
+          // Start repeat interval after 150ms delay
+          moveRepeatTimeout.current = window.setTimeout(() => {
+            moveRepeatInterval.current = window.setInterval(() => move(1, 0), 50);
+          }, 150);
+          break;
+        case 'ArrowDown':
+          // Start continuous soft drop without immediate move to prevent instant lock
+          softDropInterval.current = window.setInterval(() => move(0, 1), 50);
+          break;
+        case 'ArrowUp':
+          rotatePiece();
+          break;
+        case ' ':
+          e.preventDefault();
+          hardDrop();
+          break;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.key);
+
+      switch (e.key) {
+        case 'ArrowLeft':
+        case 'ArrowRight':
+          if (moveRepeatTimeout.current) {
+            clearTimeout(moveRepeatTimeout.current);
+            moveRepeatTimeout.current = null;
+          }
+          if (moveRepeatInterval.current) {
+            clearInterval(moveRepeatInterval.current);
+            moveRepeatInterval.current = null;
+          }
+          break;
+        case 'ArrowDown':
+          if (softDropInterval.current) {
+            clearInterval(softDropInterval.current);
+            softDropInterval.current = null;
+          }
+          break;
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
+      if (softDropInterval.current) clearInterval(softDropInterval.current);
+      if (moveRepeatTimeout.current) clearTimeout(moveRepeatTimeout.current);
+      if (moveRepeatInterval.current) clearInterval(moveRepeatInterval.current);
+    };
   }, [move, rotatePiece, hardDrop]);
 
   // Update cell size on resize
@@ -699,7 +815,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
   // ===== Render Helpers =====
   const getDisplayBoard = useCallback((currentBoard: (PieceCell | null)[][], showPiece = true) => {
-    const display = currentBoard.map(r => r.map(c => c ? { ...c } : null));
+    // Ensure board has correct dimensions
+    if (!currentBoard || currentBoard.length !== H) {
+      return Array(H).fill(null).map(() => Array(W).fill(null));
+    }
+    
+    const display = currentBoard.map(r => {
+      if (!r || r.length !== W) {
+        return Array(W).fill(null);
+      }
+      return r.map(c => c ? { ...c } : null);
+    });
 
     // Ghost position for player board only
     if (showPiece && piece) {
