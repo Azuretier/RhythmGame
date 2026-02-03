@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './VanillaGame.module.css';
 
+type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
+
 // Tetromino definitions with all 4 rotation states (0, R, 2, L)
 // Using SRS (Super Rotation System) - the standard Tetris rotation system
 const TETROMINOES: Record<string, number[][][]> = {
