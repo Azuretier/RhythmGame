@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Empty turbopack config to silence build warnings about webpack config
+    turbopack: {},
     async headers() {
       return [
         {
@@ -22,6 +24,7 @@ const nextConfig = {
         }
       ];
     },
+    turbopack: {},
     webpack(config, { isServer }) {
     config.module.rules.push({
       test: /\.(glsl|vs|fs|vert|frag)$/,
@@ -39,9 +42,6 @@ const nextConfig = {
     }
     
     return config;
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   };
 

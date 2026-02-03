@@ -2,16 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import styles from '../components/rhythmia/rhythmia.module.css';
-import VanillaGame from '../components/rhythmia/VanillaGame';
+import VanillaGame from '../components/rhythmia/tetris';
 import MultiplayerGame from '../components/rhythmia/MultiplayerGame';
 import LifeJourney from '../components/rhythmia/LifeJourney';
+import ParticleSystem from '../components/rhythmia/ParticleSystem';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer' | 'modded';
+
+const DEFAULT_THIRD_WIDGET_TITLE = 'SNS links widgets';
 
 export default function RhythmiaPage() {
   const [gameMode, setGameMode] = useState<GameMode>('lobby');
   const [isLoading, setIsLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(127);
+  const thirdWidgetTitle = process.env.NEXT_PUBLIC_THIRD_WIDGET_TITLE || DEFAULT_THIRD_WIDGET_TITLE;
 
   useEffect(() => {
     // Simulate initialization time
@@ -73,7 +77,7 @@ export default function RhythmiaPage() {
     return (
       <div className={styles.gameContainer + ' ' + styles.active}>
         <div className={styles.gameHeader}>
-          <span className={styles.gameTitle}>✨ LIFE JOURNEY — MOD SERVER</span>
+          <span className={styles.gameTitle}>✨ {thirdWidgetTitle} — MOD SERVER</span>
           <button className={styles.backButton} onClick={closeGame}>
             ← ロビーに戻る
           </button>
@@ -85,41 +89,47 @@ export default function RhythmiaPage() {
 
   return (
     <div className={styles.page}>
-      {/* Background effects */}
+      {/* Particle System Background */}
+      <ParticleSystem />
+      
+      {/* CSS Fallback Background effects */}
       <div className={styles.bgGrid}></div>
       <div className={`${styles.bgGlow} ${styles.glow1}`}></div>
       <div className={`${styles.bgGlow} ${styles.glow2}`}></div>
       <div className={`${styles.bgGlow} ${styles.glow3}`}></div>
+      <div className={styles.lunarHalo}></div>
+      <div className={styles.lunarRim}></div>
+      <div className={styles.lunarWall}></div>
 
       {/* Loading overlay */}
-      <div className={`${styles.loadingOverlay} ${!isLoading ? styles.hidden : ''}`}>
+      <div className={`${styles.loadingOverlay} ${!isLoading ? styles.hidden : ''}`}>  
         <div className={styles.loader}></div>
         <div className={styles.loadingText}>INITIALIZING...</div>
       </div>
 
-      <div className={styles.container}>
-        <header className={styles.header}>
-          <div className={styles.logo}>RHYTHMIA</div>
-          <div className={styles.statusBar}>
-            <div className={styles.statusItem}>
-              <span className={styles.statusDot}></span>
-              <span>サーバー接続中</span>
-            </div>
-            <div className={styles.statusItem}>
-              <span>v2.5.0</span>
-            </div>
-          </div>
-        </header>
+      <div className={styles.container}>  
+        <header className={styles.header}>  
+          <div className={styles.logo}>RHYTHMIA</div>  
+          <div className={styles.statusBar}>  
+            <div className={styles.statusItem}>  
+              <span className={styles.statusDot}></span>  
+              <span>サーバー接続中</span>  
+            </div>  
+            <div className={styles.statusItem}>  
+              <span>v2.5.0</span>  
+            </div>  
+          </div>  
+        </header>  
 
-        <main className={styles.main}>
-          <div className={styles.heroText}>
-            <h1>SELECT SERVER</h1>
-            <p>サーバーを選択してプレイ開始</p>
-          </div>
+        <main className={styles.main}>  
+          <div className={styles.heroText}>  
+            <h1>SELECT SERVER</h1>  
+            <p>サーバーを選択してプレイ開始</p>  
+          </div>  
 
-          <div className={styles.serverGrid}>
-            {/* Vanilla Server */}
-            <div 
+          <div className={styles.serverGrid}>  
+            {/* Vanilla Server */}  
+            <div   
               className={`${styles.serverCard} ${styles.vanilla}`}
               onClick={() => launchGame('vanilla')}
             >
@@ -152,8 +162,8 @@ export default function RhythmiaPage() {
               <button className={styles.playButton}>▶ PLAY NOW</button>
             </div>
 
-            {/* Multiplayer Server */}
-            <div 
+            {/* Multiplayer Server */}  
+            <div   
               className={`${styles.serverCard} ${styles.multiplayer}`}
               onClick={() => launchGame('multiplayer')}
             >
@@ -191,43 +201,54 @@ export default function RhythmiaPage() {
               <button className={styles.playButton}>⚔️ BATTLE NOW</button>
             </div>
 
-            {/* Modded Server */}
-            <div 
-              className={`${styles.serverCard} ${styles.modded}`}
+            {/* Modded Server */}  
+            <div   
+              className={`${styles.serverCard} ${styles.modded} ${styles.desktopTab}`}
               onClick={() => launchGame('modded')}
             >
+              <div className={styles.tabTitleBar}>
+                <div className={styles.tabTitle}>
+                  <span className={styles.tabIcon}>✨</span>
+                  <span>{thirdWidgetTitle}</span>
+                </div>
+                <div className={styles.tabControls}>
+                  <span className={styles.tabButton}>_</span>
+                  <span className={styles.tabButton}>□</span>
+                  <span className={styles.tabButton}>×</span>
+                </div>
+              </div>
               <span className={styles.cardBadge}>MODDED</span>
               <span className={styles.cardIcon}>✨</span>
-              <h2 className={styles.cardTitle}>LIFE JOURNEY</h2>
-              <p className={styles.cardSubtitle}>Zen Experience</p>
+              <h2 className={styles.cardTitle}>{thirdWidgetTitle}</h2>
+              <p className={styles.cardSubtitle}>Social Connection</p>
               <p className={styles.cardDescription}>
-                人生の旅を体験するインタラクティブアート。誕生から継承まで、7つの章を通じて人生の意味を探求します。
+                ソーシャルメディアへのリンクを集約したウィジェット。GitHub、YouTube、Instagram、Discordなど、すべての連絡先を一箇所で確認できます。
               </p>
               <div className={styles.cardFeatures}>
-                <span className={styles.featureTag}>🌅 7チャプター</span>
-                <span className={styles.featureTag}>🎨 ビジュアルアート</span>
-                <span className={styles.featureTag}>📖 ストーリー</span>
+                <span className={styles.featureTag}>🔗 SNSリンク</span>
+                <span className={styles.featureTag}>📱 モバイル対応</span>
+                <span className={styles.featureTag}>🎨 カスタム</span>
               </div>
               <div className={styles.cardStats}>
                 <div className={styles.stat}>
-                  <div className={styles.statValue}>7</div>
-                  <div className={styles.statLabel}>Chapters</div>
+                  <div className={styles.statValue}>4</div>
+                  <div className={styles.statLabel}>Platforms</div>
                 </div>
                 <div className={styles.stat}>
-                  <div className={styles.statValue}>∞</div>
-                  <div className={styles.statLabel}>リプレイ</div>
+                  <div className={styles.statValue}>LIVE</div>
+                  <div className={styles.statLabel}>Status</div>
                 </div>
                 <div className={styles.stat}>
-                  <div className={styles.statValue}>ZEN</div>
-                  <div className={styles.statLabel}>Mode</div>
+                  <div className={styles.statValue}>⚡</div>
+                  <div className={styles.statLabel}>Fast</div>
                 </div>
               </div>
-              <button className={styles.playButton}>▶ EXPERIENCE</button>
+              <button className={styles.playButton}>▶ CONNECT</button>
             </div>
           </div>
         </main>
 
-        <footer className={styles.footer}>
+        <footer className={styles.footer}>  
           RHYTHMIA NEXUS © 2025 — PLAY YOUR RHYTHM
         </footer>
       </div>
