@@ -98,6 +98,45 @@ const WORLDS: World[] = [
   { name: '✨ 静寂の間', bpm: 160, colors: ['#A29BFE', '#9B8EFD', '#9381FC', '#8B74FB', '#8367FA', '#7B5AF9', '#6C5CE7'] },
 ];
 
+const BOARD_WIDTH = 10;
+const BOARD_HEIGHT = 20;
+
+// DAS/ARR Settings (in milliseconds)
+const DEFAULT_DAS = 167;
+const DEFAULT_ARR = 33;
+const DEFAULT_SDF = 50;
+
+type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
+
+// Board cell stores piece type or null.
+type PieceCell = PieceType | null;
+
+type Piece = {
+  type: PieceType;
+  rotation: number;
+  x: number;
+  y: number;
+  shape: number[][];
+  color?: string;
+};
+
+type KeyState = {
+  pressed: boolean;
+  dasCharged: boolean;
+  lastMoveTime: number;
+  pressTime: number;
+};
+
+const rotationNames = ['0', 'R', '2', 'L'];
+
+const createEmptyBoard = (): PieceCell[][] =>
+  Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
+
+const getRandomPiece = (): PieceType => {
+  const pieces: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
+  return pieces[Math.floor(Math.random() * pieces.length)];
+};
+
 const SHAPES = [
   [[1, 1, 1, 1]],        // I
   [[1, 1], [1, 1]],      // O
@@ -306,7 +345,7 @@ export default function Rhythmia() {
       row.some((val, px) => {
         if (!val) return false;
         const nx = x + px, ny = y + py;
-        return nx < 0 || nx >= W || ny >= H || (ny >= 0 && boardState[ny] && boardState[ny][nx]);
+        return nx < 0 || nx >= BOARD_WIDTH || ny >= BOARD_HEIGHT || (ny >= 0 && boardState[ny] && boardState[ny][nx]);
       })
     );
   }, []);
