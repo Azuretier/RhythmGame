@@ -18,11 +18,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'azuret.me',
-  description: "A website created by Azuret.",
+  title: 'Azuretia - Play Azuretia from azuretier.net',
+  description: "A website created by Azuretier.",
   openGraph: {
-    title: "azuret.me",
-    description: "A website created by Azuret.",
+    title: "Azuretia - Play Azuretia from azuretier.net",
+    description: "Play Azuretia from azuretier.net",
     locale: 'ja-JP',
     type: 'website',
   },
