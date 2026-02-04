@@ -25,9 +25,11 @@
   font-family: 'Zen Kaku Gothic New', sans-serif;
   background: var(--dark-bg);
   min-height: 100vh;
+  max-width: 100%;
   overflow-x: hidden;
   color: #fff;
   position: relative;
+  box-sizing: border-box;
 }
 
 /* WebGPU Stage Canvas */
