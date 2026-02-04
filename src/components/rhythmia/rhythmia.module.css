@@ -26,7 +26,7 @@
   background: var(--dark-bg);
   min-height: 100vh;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
   color: #fff;
   position: relative;
   box-sizing: border-box;
