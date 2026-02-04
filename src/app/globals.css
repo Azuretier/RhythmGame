@@ -1,3 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@400;700&family=Inter:wght@400;700&family=Russo+One&display=swap');
 
+/* Global reset for overflow prevention */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 /* Existing CSS content below */
