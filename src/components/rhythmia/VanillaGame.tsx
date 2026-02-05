@@ -47,6 +47,31 @@ const SHAPES = [
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
+// ===== Color Themes =====
+type ColorTheme = 'standard' | 'stage' | 'monochrome';
+
+// Standard Tetris colors for each piece type
+const STANDARD_COLORS: Record<PieceType, string> = {
+  I: '#00F0F0', // Cyan
+  O: '#F0F000', // Yellow
+  T: '#A000F0', // Purple
+  S: '#00F000', // Green
+  Z: '#F00000', // Red
+  L: '#F0A000', // Orange
+  J: '#0000F0', // Blue
+};
+
+// Monochrome colors (shades of white/gray)
+const MONOCHROME_COLORS: Record<PieceType, string> = {
+  I: '#FFFFFF',
+  O: '#E0E0E0',
+  T: '#C0C0C0',
+  S: '#D0D0D0',
+  Z: '#B0B0B0',
+  L: '#F0F0F0',
+  J: '#A0A0A0',
+};
+
 // SRS Wall Kick Data - Using rotation state names ('0', 'R', '2', 'L')
 // Format: [dx, dy] offsets to try when rotation fails
 // Tests are tried in order until one succeeds
@@ -104,6 +129,7 @@ export const Rhythmia: React.FC = () => {
   const [scorePop, setScorePop] = useState(false);
   const [clearingRows, setClearingRows] = useState<number[]>([]);
   const [lastRotationWasSuccessful, setLastRotationWasSuccessful] = useState(false);
+  const [colorTheme, setColorTheme] = useState<ColorTheme>('stage');
 
   // Refs
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -216,9 +242,21 @@ export const Rhythmia: React.FC = () => {
     const shapeIdx = Math.floor(Math.random() * SHAPES.length);
     const shape = SHAPES[shapeIdx];
     const type = PIECE_TYPES[shapeIdx];
-    const color = world.colors[Math.floor(Math.random() * world.colors.length)];
+
+    // Select color based on theme
+    let color: string;
+    if (colorTheme === 'standard') {
+      color = STANDARD_COLORS[type];
+    } else if (colorTheme === 'monochrome') {
+      color = MONOCHROME_COLORS[type];
+    } else {
+      // Stage-dependent colors
+      color = world.colors[Math.floor(Math.random() * world.colors.length)];
+    }
+
     return { shape, color, type, rotation: 0 };
-  }, []);
+  }, [colorTheme]);
+
 
   const collision = useCallback((p: Piece, x: number, y: number, boardState: (PieceCell | null)[][]): boolean => {
     return p.shape.some((row, py) =>
@@ -872,6 +910,30 @@ export const Rhythmia: React.FC = () => {
       {gameStarted && (
         <div className={styles.game}>
           <div className={styles.worldDisplay}>{world.name}</div>
+
+          {/* Theme Navbar */}
+          <div className={styles.themeNav}>
+            <span className={styles.themeLabel}>🎨 Theme:</span>
+            <button
+              className={`${styles.themeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
+              onClick={() => setColorTheme('standard')}
+            >
+              Standard
+            </button>
+            <button
+              className={`${styles.themeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
+              onClick={() => setColorTheme('stage')}
+            >
+              Stage
+            </button>
+            <button
+              className={`${styles.themeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
+              onClick={() => setColorTheme('monochrome')}
+            >
+              Mono
+            </button>
+          </div>
+
 
           <div className={`${styles.scoreDisplay} ${scorePop ? styles.pop : ''}`}>
             {score.toLocaleString()}
