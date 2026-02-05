@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VanillaGame.module.css';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // ===== Types =====
 interface PieceCell {
   color: string;
-  ghost?:  boolean;
+  ghost?: boolean;
 }
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -29,7 +30,7 @@ const H = 18;
 const WORLDS: World[] = [
   { name: '🎀 メロディア', bpm: 100, colors: ['#FF6B9D', '#FF8FAB', '#FFB6C1', '#C44569', '#E8668B', '#D4587D', '#B84A6F'] },
   { name: '🌊 ハーモニア', bpm: 110, colors: ['#4ECDC4', '#45B7AA', '#3DA69B', '#35958C', '#2D847D', '#26736E', '#1A535C'] },
-  { name:  '☀️ クレシェンダ', bpm: 120, colors: ['#FFE66D', '#FFD93D', '#F7B731', '#ECA700', '#D19600', '#B68600', '#9B7600'] },
+  { name: '☀️ クレシェンダ', bpm: 120, colors: ['#FFE66D', '#FFD93D', '#F7B731', '#ECA700', '#D19600', '#B68600', '#9B7600'] },
   { name: '🔥 フォルティッシモ', bpm: 140, colors: ['#FF6B6B', '#FF5252', '#FF3838', '#FF1F1F', '#E61717', '#CC0F0F', '#B30707'] },
   { name: '✨ 静寂の間', bpm: 160, colors: ['#A29BFE', '#9B8EFD', '#9381FC', '#8B74FB', '#8367FA', '#7B5AF9', '#6C5CE7'] },
 ];
@@ -77,6 +78,9 @@ const WALL_KICK_I: Record<string, [number, number][]> = {
 
 // ===== Component =====
 export const Rhythmia: React.FC = () => {
+  // Hook to detect mobile devices
+  const isMobile = useIsMobile();
+
   // Game state
   const [board, setBoard] = useState<(PieceCell | null)[][]>([]);
   const [piece, setPiece] = useState<Piece | null>(null);
@@ -128,7 +132,7 @@ export const Rhythmia: React.FC = () => {
   // Keep refs in sync
   useEffect(() => { pieceRef.current = piece; }, [piece]);
   useEffect(() => { piecePosRef.current = piecePos; }, [piecePos]);
-  useEffect(() => { boardStateRef. current = board; }, [board]);
+  useEffect(() => { boardStateRef.current = board; }, [board]);
   useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
   useEffect(() => { comboRef.current = combo; }, [combo]);
   useEffect(() => { scoreRef.current = score; }, [score]);
@@ -146,13 +150,13 @@ export const Rhythmia: React.FC = () => {
     }
   }, []);
 
-  const playTone = useCallback((freq:  number, dur = 0.1, type: OscillatorType = 'sine') => {
+  const playTone = useCallback((freq: number, dur = 0.1, type: OscillatorType = 'sine') => {
     const ctx = audioCtxRef.current;
     if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = type;
-    osc. frequency.value = freq;
+    osc.frequency.value = freq;
     gain.gain.setValueAtTime(0.3, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
     osc.connect(gain);
@@ -307,7 +311,7 @@ export const Rhythmia: React.FC = () => {
     let centerX = -1;
     let centerY = -1;
     let bottomY = -1;
-    
+
     // First, find the geometric center (cell with 3 neighbors)
     for (let py = 0; py < piece.shape.length; py++) {
       for (let px = 0; px < piece.shape[py].length; px++) {
@@ -316,7 +320,7 @@ export const Rhythmia: React.FC = () => {
           if (pos.y + py > bottomY) {
             bottomY = pos.y + py;
           }
-          
+
           // Count neighbors
           let neighbors = 0;
           // Check up, down, left, right
@@ -324,7 +328,7 @@ export const Rhythmia: React.FC = () => {
           if (py < piece.shape.length - 1 && piece.shape[py + 1][px]) neighbors++;
           if (px > 0 && piece.shape[py][px - 1]) neighbors++;
           if (px < piece.shape[py].length - 1 && piece.shape[py][px + 1]) neighbors++;
-          
+
           // The center of T has exactly 3 neighbors
           if (neighbors === 3) {
             centerX = pos.x + px;
@@ -333,14 +337,14 @@ export const Rhythmia: React.FC = () => {
         }
       }
     }
-    
+
     // Use the center X but bottom Y for T-spin axis
     if (centerX !== -1 && bottomY !== -1) {
       centerY = bottomY;
     }
-    
+
     if (centerX === -1) return null; // Couldn't find center
-    
+
     // Check the 4 corners (diagonals from center)
     const corners = [
       [centerX - 1, centerY - 1], // top-left
@@ -348,7 +352,7 @@ export const Rhythmia: React.FC = () => {
       [centerX - 1, centerY + 1], // bottom-left
       [centerX + 1, centerY + 1], // bottom-right
     ];
-    
+
     let filledCorners = 0;
     for (const [cx, cy] of corners) {
       // Corner is considered filled if out of bounds or occupied
@@ -356,7 +360,7 @@ export const Rhythmia: React.FC = () => {
         filledCorners++;
       }
     }
-    
+
     // T-Spin requires at least 3 corners filled
     if (filledCorners >= 3) {
       // Check front corners vs back corners to determine mini vs full
@@ -365,7 +369,7 @@ export const Rhythmia: React.FC = () => {
       // A proper implementation would check if the two front corners are filled
       return 'full';
     }
-    
+
     return null;
   }, []);
 
@@ -373,9 +377,9 @@ export const Rhythmia: React.FC = () => {
     const currentPiece = pieceRef.current;
     const currentPos = piecePosRef.current;
     const currentBoard = boardStateRef.current;
-    const currentBeatPhase = beatPhaseRef. current;
+    const currentBeatPhase = beatPhaseRef.current;
 
-    if (! currentPiece) return;
+    if (!currentPiece) return;
 
     // Beat judgment
     const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
@@ -425,7 +429,7 @@ export const Rhythmia: React.FC = () => {
 
     // Line clear
     let cleared = 0;
-    const remainingBoard:  (PieceCell | null)[][] = [];
+    const remainingBoard: (PieceCell | null)[][] = [];
     const rowsToClear: number[] = [];
 
     newBoard.forEach((row, y) => {
@@ -442,7 +446,7 @@ export const Rhythmia: React.FC = () => {
     if (cleared > 0) {
       // Complete the remaining board by adding empty rows at the top
       boardForCollisionCheck = completeBoard(remainingBoard);
-      
+
       // Update the board state ref immediately to prevent using stale state in subsequent lock() calls
       boardStateRef.current = boardForCollisionCheck;
 
@@ -452,16 +456,16 @@ export const Rhythmia: React.FC = () => {
       setTimeout(() => {
         const currentCombo = comboRef.current;
         const currentLevel = levelRef.current;
-        
+
         // Base scoring
         let pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
-        
+
         // T-Spin bonus scoring
         if (tSpinType) {
           const tSpinBonus = tSpinType === 'full' ? 400 : 100;
           const tSpinLineBonus = cleared * 400; // Additional bonus per line cleared with T-Spin
           pts += (tSpinBonus + tSpinLineBonus) * (currentLevel + 1);
-          
+
           // Show T-Spin judgment
           if (cleared === 0) {
             showJudgment('T-SPIN!', '#FF00FF');
@@ -472,7 +476,7 @@ export const Rhythmia: React.FC = () => {
           }
           playTone(880, 0.3, 'square');
         }
-        
+
         const newScore = scoreRef.current + pts;
         const newLines = linesRef.current + cleared;
 
@@ -482,7 +486,7 @@ export const Rhythmia: React.FC = () => {
         linesRef.current = newLines;
 
         // Enemy damage
-        const newEnemyHP = Math. max(0, enemyHPRef.current - cleared * 8 * mult);
+        const newEnemyHP = Math.max(0, enemyHPRef.current - cleared * 8 * mult);
         setEnemyHP(newEnemyHP);
         enemyHPRef.current = newEnemyHP;
 
@@ -556,7 +560,7 @@ export const Rhythmia: React.FC = () => {
     const from = ROTATION_NAMES[fromRotation];
     const to = ROTATION_NAMES[toRotation];
     const key = `${from}->${to}`;
-    
+
     if (type === 'I') {
       return WALL_KICK_I[key] || [[0, 0]];
     } else if (type === 'O') {
@@ -575,11 +579,11 @@ export const Rhythmia: React.FC = () => {
 
     // Get the rotated piece
     const rotated = direction === 1 ? rotate(currentPiece) : rotateCCW(currentPiece);
-    
+
     // Calculate rotation indices
     const fromRotation = currentPiece.rotation;
     const toRotation = rotated.rotation;
-    
+
     // Get SRS wall kick tests for this rotation
     const kicks = getWallKicks(currentPiece.type, fromRotation, toRotation);
 
@@ -588,23 +592,23 @@ export const Rhythmia: React.FC = () => {
       // SRS uses inverted Y for kicks, so we negate dy
       const testX = currentPos.x + dx;
       const testY = currentPos.y - dy;
-      
+
       if (!collision(rotated, testX, testY, currentBoard)) {
         // Success! Update position and piece
         const newPos = { x: testX, y: testY };
-        
+
         setPiece(rotated);
         pieceRef.current = rotated;
         setPiecePos(newPos);
         piecePosRef.current = newPos;
-        
+
         playTone(direction === 1 ? 523 : 440, 0.08);
         setLastRotationWasSuccessful(true);
         lastRotationRef.current = true; // For T-Spin detection
-        return; 
+        return;
       }
     }
-    
+
     // If we reach here, no kicks worked
     setLastRotationWasSuccessful(false);
     lastRotationRef.current = false;
@@ -614,7 +618,7 @@ export const Rhythmia: React.FC = () => {
     if (gameOverRef.current || !pieceRef.current) return;
 
     const currentPiece = pieceRef.current;
-    let currentPos = {...piecePosRef.current};
+    let currentPos = { ...piecePosRef.current };
     const currentBoard = boardStateRef.current;
 
     while (!collision(currentPiece, currentPos.x, currentPos.y + 1, currentBoard)) {
@@ -666,16 +670,16 @@ export const Rhythmia: React.FC = () => {
 
   // Drop timer
   useEffect(() => {
-    if (! gameStarted || gameOver) return;
+    if (!gameStarted || gameOver) return;
 
     dropTimerRef.current = window.setInterval(() => {
-      if (! gameOverRef.current) {
+      if (!gameOverRef.current) {
         move(0, 1);
       }
     }, 500);
 
     return () => {
-      if (dropTimerRef.current) clearInterval(dropTimerRef. current);
+      if (dropTimerRef.current) clearInterval(dropTimerRef.current);
     };
   }, [gameStarted, gameOver, move]);
 
@@ -788,7 +792,7 @@ export const Rhythmia: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
-    
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
@@ -816,18 +820,18 @@ export const Rhythmia: React.FC = () => {
 
   // ===== Render Helpers =====
   const getDisplayBoard = useCallback(() => {
-    const display = board.map(r => r.map(c => c ? { ... c } : null));
+    const display = board.map(r => r.map(c => c ? { ...c } : null));
 
     // Ghost position
     if (piece) {
       let gy = piecePos.y;
-      while (! collision(piece, piecePos.x, gy + 1, board)) gy++;
+      while (!collision(piece, piecePos.x, gy + 1, board)) gy++;
 
       piece.shape.forEach((row, py) => {
         row.forEach((val, px) => {
           if (val) {
             const by = gy + py, bx = piecePos.x + px;
-            if (by >= 0 && by < H && bx >= 0 && bx < W && ! display[by][bx]) {
+            if (by >= 0 && by < H && bx >= 0 && bx < W && !display[by][bx]) {
               display[by][bx] = { color: piece.color, ghost: true };
             }
           }
@@ -856,7 +860,7 @@ export const Rhythmia: React.FC = () => {
   return (
     <div className={`${styles.body} ${styles[`w${worldIdx}`]}`}>
       {/* Title Screen */}
-      {! gameStarted && (
+      {!gameStarted && (
         <div className={styles.titleScreen}>
           <h1>RHYTHMIA</h1>
           <p>リズムに乗ってブロックを積め！</p>
@@ -866,15 +870,15 @@ export const Rhythmia: React.FC = () => {
 
       {/* Game */}
       {gameStarted && (
-        <div className={styles. game}>
+        <div className={styles.game}>
           <div className={styles.worldDisplay}>{world.name}</div>
 
           <div className={`${styles.scoreDisplay} ${scorePop ? styles.pop : ''}`}>
-            {score. toLocaleString()}
+            {score.toLocaleString()}
           </div>
 
           <div className={`${styles.combo} ${combo >= 2 ? styles.show : ''} ${combo >= 5 ? styles.big : ''}`}>
-            {combo} COMBO! 
+            {combo} COMBO!
           </div>
 
           <div className={styles.enemyLabel}>👻 ノイズリング</div>
@@ -894,7 +898,7 @@ export const Rhythmia: React.FC = () => {
                   return (
                     <div
                       key={i}
-                      className={`${styles.cell} ${cell ? styles.filled : ''} ${cell?. ghost ? styles.ghost : ''} ${isClearing ? styles.clearing : ''}`}
+                      className={`${styles.cell} ${cell ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''} ${isClearing ? styles.clearing : ''}`}
                       style={cell ? { backgroundColor: cell.color, color: cell.color } : {}}
                     />
                   );
@@ -934,7 +938,7 @@ export const Rhythmia: React.FC = () => {
               {nextPiece && (
                 <div
                   className={styles.next}
-                  style={{ gridTemplateColumns: `repeat(${nextPiece.shape[0]. length}, 1fr)` }}
+                  style={{ gridTemplateColumns: `repeat(${nextPiece.shape[0].length}, 1fr)` }}
                 >
                   {nextPiece.shape.flat().map((val, i) => (
                     <div
@@ -950,10 +954,10 @@ export const Rhythmia: React.FC = () => {
 
           <div className={styles.beatBar}>
             <div className={styles.beatTarget} />
-            <div className={styles. beatFill} style={{ width: `${beatPhase * 100}%` }} />
+            <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
           </div>
 
-          <div className={styles.controls}>
+          {isMobile && (<div className={styles.controls}>
             {['rotateLeft', 'left', 'down', 'right', 'rotate', 'drop'].map((action) => (
               <button
                 key={action}
@@ -961,14 +965,14 @@ export const Rhythmia: React.FC = () => {
                 onTouchEnd={(e) => { e.preventDefault(); handleControlClick(action); }}
                 onClick={() => handleControlClick(action)}
               >
-                {action === 'rotate' ? '↻' : 
-                 action === 'rotateLeft' ? '↺' : 
-                 action === 'left' ? '←' : 
-                 action === 'down' ? '↓' : 
-                 action === 'right' ? '→' : '⬇'}
+                {action === 'rotate' ? '↻' :
+                  action === 'rotateLeft' ? '↺' :
+                    action === 'left' ? '←' :
+                      action === 'down' ? '↓' :
+                        action === 'right' ? '→' : '⬇'}
               </button>
             ))}
-          </div>
+          </div>)}
         </div>
       )}
 
