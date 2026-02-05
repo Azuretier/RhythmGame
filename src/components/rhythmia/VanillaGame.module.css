@@ -281,20 +281,18 @@
   }
 }
 
-/* Controls */
+/* Mobile Touch Controls */
 .controls {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  width: 45px;
-  height: 45px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  /* Modern frosted glass look */
-  clip-path: polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%);
-  /* Sharp angled edges */
-  transition: all 0.2s ease;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 10px;
+  width: min(280px, 85vw);
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  margin-top: 15px;
 }
 
 

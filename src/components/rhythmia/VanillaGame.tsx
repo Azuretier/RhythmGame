@@ -957,22 +957,52 @@ export const Rhythmia: React.FC = () => {
             <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
           </div>
 
-          {isMobile && (<div className={styles.controls}>
-            {['rotateLeft', 'left', 'down', 'right', 'rotate', 'drop'].map((action) => (
+          {isMobile && (
+            <div className={styles.controls}>
               <button
-                key={action}
                 className={styles.ctrlBtn}
-                onTouchEnd={(e) => { e.preventDefault(); handleControlClick(action); }}
-                onClick={() => handleControlClick(action)}
+                onTouchStart={(e) => { e.preventDefault(); handleControlClick('rotateLeft'); }}
+                onClick={() => handleControlClick('rotateLeft')}
               >
-                {action === 'rotate' ? '↻' :
-                  action === 'rotateLeft' ? '↺' :
-                    action === 'left' ? '←' :
-                      action === 'down' ? '↓' :
-                        action === 'right' ? '→' : '⬇'}
+                ↺
               </button>
-            ))}
-          </div>)}
+              <button
+                className={styles.ctrlBtn}
+                onTouchStart={(e) => { e.preventDefault(); handleControlClick('drop'); }}
+                onClick={() => handleControlClick('drop')}
+              >
+                ⬇
+              </button>
+              <button
+                className={styles.ctrlBtn}
+                onTouchStart={(e) => { e.preventDefault(); handleControlClick('rotate'); }}
+                onClick={() => handleControlClick('rotate')}
+              >
+                ↻
+              </button>
+              <button
+                className={styles.ctrlBtn}
+                onTouchStart={(e) => { e.preventDefault(); handleControlClick('left'); }}
+                onClick={() => handleControlClick('left')}
+              >
+                ←
+              </button>
+              <button
+                className={styles.ctrlBtn}
+                onTouchStart={(e) => { e.preventDefault(); handleControlClick('down'); }}
+                onClick={() => handleControlClick('down')}
+              >
+                ↓
+              </button>
+              <button
+                className={styles.ctrlBtn}
+                onTouchStart={(e) => { e.preventDefault(); handleControlClick('right'); }}
+                onClick={() => handleControlClick('right')}
+              >
+                →
+              </button>
+            </div>
+          )}
         </div>
       )}
 
