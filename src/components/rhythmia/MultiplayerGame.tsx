@@ -32,6 +32,10 @@ export default function MultiplayerGame() {
   const [newRoomName, setNewRoomName] = useState('');
   const [joinCode, setJoinCode] = useState('');
 
+  // Action state
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const createRoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Game state
   const [gameSeed, setGameSeed] = useState<number>(0);
   const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
@@ -92,6 +96,11 @@ export default function MultiplayerGame() {
         reconnectTokenRef.current = msg.reconnectToken;
         setRoomState(msg.roomState);
         setMode('waiting-room');
+        setIsCreatingRoom(false);
+        if (createRoomTimeoutRef.current) {
+          clearTimeout(createRoomTimeoutRef.current);
+          createRoomTimeoutRef.current = null;
+        }
         setError(null);
         break;
 
@@ -195,6 +204,9 @@ export default function MultiplayerGame() {
         wsRef.current.close();
         wsRef.current = null;
       }
+      if (createRoomTimeoutRef.current) {
+        clearTimeout(createRoomTimeoutRef.current);
+      }
     };
   }, [connectWebSocket]);
 
@@ -214,12 +226,27 @@ export default function MultiplayerGame() {
   }, [playerName]);
 
   const createRoom = useCallback(() => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) {
+      setError('Not connected to server. Please wait or go back and retry.');
+      return;
+    }
+
+    setIsCreatingRoom(true);
+    setError(null);
+
     send({
       type: 'create_room',
       playerName: playerName.trim(),
       roomName: newRoomName.trim() || undefined,
       isPublic: true,
     });
+
+    // Timeout if server never responds
+    if (createRoomTimeoutRef.current) clearTimeout(createRoomTimeoutRef.current);
+    createRoomTimeoutRef.current = setTimeout(() => {
+      setIsCreatingRoom(false);
+      setError('Room creation timed out. Please try again.');
+    }, 8000);
   }, [send, playerName, newRoomName]);
 
   const joinRoomByCode = useCallback(() => {
@@ -399,8 +426,12 @@ export default function MultiplayerGame() {
                       maxLength={20}
                     />
                   </div>
-                  <button className={styles.createBtn} onClick={createRoom}>
-                    Create Room
+                  <button
+                    className={styles.createBtn}
+                    onClick={createRoom}
+                    disabled={isCreatingRoom || connectionStatus !== 'connected'}
+                  >
+                    {isCreatingRoom ? 'Creating...' : 'Create Room'}
                   </button>
                 </div>
               )}
