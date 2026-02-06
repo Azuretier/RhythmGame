@@ -1,4 +1,5 @@
-// Player types
+// ===== Player & Room Types =====
+
 export interface Player {
   id: string;
   name: string;
@@ -6,13 +7,14 @@ export interface Player {
   connected: boolean;
 }
 
-// Room types
 export interface RoomState {
   code: string;
   name: string;
   hostId: string;
   players: Player[];
-  status: 'waiting' | 'playing' | 'finished';
+  status: 'waiting' | 'countdown' | 'playing' | 'finished';
+  maxPlayers: number;
+  isPublic: boolean;
 }
 
 export interface PublicRoomInfo {
@@ -20,9 +22,19 @@ export interface PublicRoomInfo {
   name: string;
   hostName: string;
   playerCount: number;
+  maxPlayers: number;
 }
 
-// Client -> Server messages
+// ===== Game Actions =====
+
+export type GameAction =
+  | { type: 'move'; direction: 'left' | 'right' | 'down' }
+  | { type: 'rotate'; direction: 'cw' | 'ccw' }
+  | { type: 'hard_drop' }
+  | { type: 'hold' };
+
+// ===== Client -> Server Messages =====
+
 export interface CreateRoomMessage {
   type: 'create_room';
   playerName: string;
@@ -55,7 +67,7 @@ export interface GetRoomsMessage {
 
 export interface RelayMessage {
   type: 'relay';
-  payload: any;
+  payload: RelayPayload;
 }
 
 export interface PongMessage {
@@ -64,31 +76,11 @@ export interface PongMessage {
 
 export interface ReconnectMessage {
   type: 'reconnect';
-  roomCode: string;
   reconnectToken: string;
 }
 
-export interface SyncRequestMessage {
-  type: 'sync_request';
-  lastReceivedTimestamp: number;
-}
-
-// Game input actions
-export type GameAction = 
-  | { type: 'move'; direction: 'left' | 'right' | 'down' }
-  | { type: 'rotate' }
-  | { type: 'hard_drop' };
-
-// Client -> Server: Input for a specific tick
-export interface InputMessage {
-  type: 'input';
-  tick: number;
-  actions: GameAction[];
-}
-
-// Client -> Server: Request resync with current tick + history
-export interface GameResyncRequestMessage {
-  type: 'game_resync_request';
+export interface RematchMessage {
+  type: 'rematch';
 }
 
 export type ClientMessage =
@@ -101,22 +93,21 @@ export type ClientMessage =
   | RelayMessage
   | PongMessage
   | ReconnectMessage
-  | SyncRequestMessage
-  | InputMessage
-  | GameResyncRequestMessage;
+  | RematchMessage;
 
-// Server -> Client messages
+// ===== Server -> Client Messages =====
+
 export interface ConnectedMessage {
   type: 'connected';
   playerId: string;
-  serverTime?: number;
+  serverTime: number;
 }
 
 export interface RoomCreatedMessage {
   type: 'room_created';
   roomCode: string;
   playerId: string;
-  reconnectToken?: string;
+  reconnectToken: string;
 }
 
 export interface JoinedRoomMessage {
@@ -124,7 +115,7 @@ export interface JoinedRoomMessage {
   roomCode: string;
   playerId: string;
   roomState: RoomState;
-  reconnectToken?: string;
+  reconnectToken: string;
 }
 
 export interface RoomStateMessage {
@@ -145,7 +136,7 @@ export interface PlayerJoinedMessage {
 export interface PlayerLeftMessage {
   type: 'player_left';
   playerId: string;
-  reason?: string;
+  reason: 'left' | 'disconnected' | 'timeout';
 }
 
 export interface PlayerReadyMessage {
@@ -154,17 +145,22 @@ export interface PlayerReadyMessage {
   ready: boolean;
 }
 
+export interface CountdownMessage {
+  type: 'countdown';
+  count: number;
+}
+
 export interface GameStartedMessage {
   type: 'game_started';
-  gameSeed?: number;
-  timestamp?: number;
+  gameSeed: number;
+  players: string[];
+  timestamp: number;
 }
 
 export interface RelayedMessage {
   type: 'relayed';
   fromPlayerId: string;
-  payload: any;
-  timestamp?: number;
+  payload: RelayPayload;
 }
 
 export interface PingMessage {
@@ -178,25 +174,21 @@ export interface ErrorMessage {
   code?: string;
 }
 
-// Server -> Client: Authoritative tick inputs from all players
-export interface TickInputsMessage {
-  type: 'tick_inputs';
-  tick: number;
-  inputs: {
-    [playerId: string]: GameAction[];
-  };
+export interface ReconnectedMessage {
+  type: 'reconnected';
+  roomCode: string;
+  playerId: string;
+  roomState: RoomState;
+  reconnectToken: string;
 }
 
-// Server -> Client: Resync response with current tick and recent history
-export interface GameResyncMessage {
-  type: 'game_resync';
-  currentTick: number;
-  tickHistory: Array<{
-    tick: number;
-    inputs: {
-      [playerId: string]: GameAction[];
-    };
-  }>;
+export interface RematchStartedMessage {
+  type: 'rematch_started';
+}
+
+export interface ServerShutdownMessage {
+  type: 'server_shutdown';
+  message: string;
 }
 
 export type ServerMessage =
@@ -208,9 +200,51 @@ export type ServerMessage =
   | PlayerJoinedMessage
   | PlayerLeftMessage
   | PlayerReadyMessage
+  | CountdownMessage
   | GameStartedMessage
   | RelayedMessage
   | PingMessage
   | ErrorMessage
-  | TickInputsMessage
-  | GameResyncMessage;
+  | ReconnectedMessage
+  | RematchStartedMessage
+  | ServerShutdownMessage;
+
+// ===== Relay Payload Types =====
+// These are game-specific messages relayed between players
+
+export interface BoardUpdatePayload {
+  event: 'board_update';
+  board: (BoardCell | null)[][];
+  score: number;
+  lines: number;
+  combo: number;
+  piece?: string;
+  hold?: string | null;
+}
+
+export interface GarbagePayload {
+  event: 'garbage';
+  lines: number;
+}
+
+export interface GameOverPayload {
+  event: 'game_over';
+}
+
+export interface KOPayload {
+  event: 'ko';
+  winnerId: string;
+  loserId: string;
+}
+
+export type RelayPayload =
+  | BoardUpdatePayload
+  | GarbagePayload
+  | GameOverPayload
+  | KOPayload;
+
+// ===== Shared Game Types =====
+
+export interface BoardCell {
+  color: string;
+}
