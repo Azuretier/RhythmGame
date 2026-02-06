@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback } from 'react';
-import styles from '../VanillaGame.module.css';
+import styles from './VanillaGame.module.css';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Constants and Types
