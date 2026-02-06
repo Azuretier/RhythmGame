@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from '../components/rhythmia/rhythmia.module.css';
-import VanillaGame from '../components/rhythmia/VanillaGame';
+import VanillaGame from '../components/rhythmia/tetris';
 import MultiplayerGame from '../components/rhythmia/MultiplayerGame';
 import LifeJourney from '../components/rhythmia/LifeJourney';
 import ForestCampfireScene from '../components/rhythmia/ForestCampfireScene';
