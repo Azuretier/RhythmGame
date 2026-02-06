@@ -1,15 +1,14 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import styles from './VanillaGame.module.css';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 // Constants and Types
 import { WORLDS, BOARD_WIDTH } from './constants';
 import type { Piece } from './types';
 
 // Hooks
-import { useAudio, useGameState } from './hooks';
+import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars } from './hooks';
 
 // Utilities
 import {
@@ -43,8 +42,34 @@ import {
  * Split into modular components for better maintainability
  */
 export default function Rhythmia() {
-  // Mobile detection
-  const isMobile = useIsMobile();
+  // Device type detection for responsive layouts
+  const deviceInfo = useDeviceType();
+  const { type: deviceType, isLandscape } = deviceInfo;
+
+  // Compute responsive CSS class names
+  const responsiveClassName = useMemo(() => {
+    const classes = [styles.body];
+
+    if (deviceType === 'mobile') {
+      classes.push(styles.deviceMobile);
+    } else if (deviceType === 'tablet') {
+      classes.push(styles.deviceTablet);
+    } else {
+      classes.push(styles.deviceDesktop);
+      if (deviceInfo.viewportWidth >= 1800) {
+        classes.push(styles.deviceDesktopLarge);
+      }
+    }
+
+    if (isLandscape && deviceType !== 'desktop') {
+      classes.push(styles.landscape);
+    }
+
+    return classes.filter(Boolean).join(' ');
+  }, [deviceType, isLandscape, deviceInfo.viewportWidth]);
+
+  // Get CSS custom properties for responsive sizing
+  const responsiveCSSVars = useMemo(() => getResponsiveCSSVars(deviceInfo), [deviceInfo]);
 
   // Game state and refs
   const gameState = useGameState();
@@ -538,7 +563,10 @@ export default function Rhythmia() {
   const world = WORLDS[worldIdx];
 
   return (
-    <div className={`${styles.body} ${styles[`w${worldIdx}`]}`}>
+    <div
+      className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
+      style={responsiveCSSVars}
+    >
       {/* Title Screen */}
       {!isPlaying && !gameOver && (
         <TitleScreen onStart={startGame} />
@@ -591,7 +619,7 @@ export default function Rhythmia() {
             onRotateCCW={() => rotatePiece(-1)}
             onHardDrop={hardDrop}
             onHold={holdCurrentPiece}
-            isMobile={isMobile}
+            isMobile={deviceType !== 'desktop'}
           />
 
           <StatsPanel lines={lines} level={level} />

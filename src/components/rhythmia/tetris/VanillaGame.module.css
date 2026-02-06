@@ -1,3 +1,13 @@
+/* ===== CSS Custom Properties for Responsive Design ===== */
+:root {
+  --cell-size: 28px;
+  --preview-cell-size: 20px;
+  --gap-size: 1px;
+  --board-padding: 8px;
+  --controls-size: 0px;
+  --board-scale: 1;
+}
+
 .body {
   min-height: 100vh;
   overflow: hidden;
@@ -477,4 +487,335 @@
   pointer-events: none;
   border-radius: 50%;
   z-index: 150;
+}
+
+/* ===== Responsive Layout Classes ===== */
+.responsiveWrapper {
+  --cell-size: 28px;
+  --preview-cell-size: 20px;
+}
+
+/* Device-specific wrapper classes */
+.deviceMobile {
+  --cell-size: 14px;
+  --preview-cell-size: 10px;
+}
+
+.deviceMobile.landscape {
+  --cell-size: 12px;
+  --preview-cell-size: 9px;
+}
+
+.deviceTablet {
+  --cell-size: 22px;
+  --preview-cell-size: 16px;
+}
+
+.deviceTablet.landscape {
+  --cell-size: 20px;
+  --preview-cell-size: 14px;
+}
+
+.deviceDesktop {
+  --cell-size: 28px;
+  --preview-cell-size: 20px;
+}
+
+.deviceDesktopLarge {
+  --cell-size: 32px;
+  --preview-cell-size: 24px;
+}
+
+/* ===== Media Query Breakpoints ===== */
+
+/* Mobile Portrait (up to 480px) */
+@media screen and (max-width: 480px) {
+  .game {
+    padding: 5px;
+    gap: 6px;
+  }
+
+  .gameArea {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cell {
+    width: var(--cell-size, 14px);
+    height: var(--cell-size, 14px);
+  }
+
+  .nextCell {
+    width: var(--preview-cell-size, 10px);
+    height: var(--preview-cell-size, 10px);
+  }
+
+  .nextWrap {
+    flex-direction: row;
+    padding: 6px 12px;
+  }
+
+  .boardWrap {
+    border-width: 2px;
+  }
+
+  .scoreDisplay {
+    font-size: 1.8rem;
+  }
+
+  .combo {
+    font-size: 1.2rem;
+  }
+
+  .themeNav {
+    padding: 4px 8px;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .themeBtn {
+    padding: 4px 10px;
+    font-size: 0.7rem;
+  }
+
+  .themeLabel {
+    font-size: 0.75rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .controls {
+    width: min(320px, 95vw);
+    padding: 10px;
+    gap: 6px;
+  }
+
+  .ctrlBtn {
+    font-size: 1.1rem;
+  }
+
+  .beatBar {
+    width: min(250px, 90vw);
+    height: 16px;
+  }
+
+  .enemyBar {
+    width: min(200px, 80vw);
+    height: 10px;
+  }
+
+  .worldDisplay {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mobile Landscape (up to 480px height, width > 480px) */
+@media screen and (max-height: 480px) and (min-width: 481px) {
+  .game {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 5px;
+    gap: 5px;
+  }
+
+  .gameArea {
+    flex-direction: row;
+  }
+
+  .cell {
+    width: var(--cell-size, 12px);
+    height: var(--cell-size, 12px);
+  }
+
+  .nextCell {
+    width: var(--preview-cell-size, 9px);
+    height: var(--preview-cell-size, 9px);
+  }
+
+  .nextWrap {
+    padding: 4px;
+  }
+
+  .scoreDisplay {
+    font-size: 1.5rem;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 5px;
+    right: 5px;
+    width: 140px;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 6px;
+    gap: 4px;
+  }
+
+  .ctrlBtn {
+    font-size: 0.9rem;
+  }
+
+  .beatBar {
+    width: 180px;
+    height: 12px;
+  }
+
+  .themeNav {
+    position: fixed;
+    top: 5px;
+    right: 5px;
+    padding: 4px 8px;
+  }
+}
+
+/* Tablet (481px - 1024px) */
+@media screen and (min-width: 481px) and (max-width: 1024px) {
+  .cell {
+    width: var(--cell-size, 22px);
+    height: var(--cell-size, 22px);
+  }
+
+  .nextCell {
+    width: var(--preview-cell-size, 16px);
+    height: var(--preview-cell-size, 16px);
+  }
+
+  .game {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .scoreDisplay {
+    font-size: 2.5rem;
+  }
+
+  .controls {
+    width: min(300px, 90vw);
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .ctrlBtn {
+    font-size: 1.3rem;
+  }
+}
+
+/* Tablet Landscape */
+@media screen and (min-width: 481px) and (max-width: 1024px) and (orientation: landscape) {
+  .game {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .controls {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 180px;
+  }
+
+  .cell {
+    width: var(--cell-size, 20px);
+    height: var(--cell-size, 20px);
+  }
+}
+
+/* Desktop (1025px+) */
+@media screen and (min-width: 1025px) {
+  .cell {
+    width: var(--cell-size, 28px);
+    height: var(--cell-size, 28px);
+  }
+
+  .nextCell {
+    width: var(--preview-cell-size, 20px);
+    height: var(--preview-cell-size, 20px);
+  }
+
+  .game {
+    padding: 15px;
+    gap: 12px;
+  }
+
+  .controls {
+    display: none;
+    /* Hide touch controls on desktop */
+  }
+}
+
+/* Large Desktop (1400px+) */
+@media screen and (min-width: 1400px) {
+  .cell {
+    width: var(--cell-size, 30px);
+    height: var(--cell-size, 30px);
+  }
+
+  .nextCell {
+    width: var(--preview-cell-size, 22px);
+    height: var(--preview-cell-size, 22px);
+  }
+
+  .scoreDisplay {
+    font-size: 4rem;
+  }
+}
+
+/* Extra Large Desktop (1800px+) */
+@media screen and (min-width: 1800px) {
+  .cell {
+    width: var(--cell-size, 32px);
+    height: var(--cell-size, 32px);
+  }
+
+  .nextCell {
+    width: var(--preview-cell-size, 24px);
+    height: var(--preview-cell-size, 24px);
+  }
+}
+
+/* ===== Touch Device Optimizations ===== */
+@media (pointer: coarse) {
+  .ctrlBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .startBtn {
+    padding: 24px 64px;
+    font-size: 1.6rem;
+  }
+
+  .restartBtn {
+    padding: 18px 48px;
+    font-size: 1.3rem;
+  }
+
+  .themeBtn {
+    padding: 8px 16px;
+    min-height: 44px;
+  }
+}
+
+/* ===== Accessibility: Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+
+  .boardWrap,
+  .cell,
+  .scoreDisplay,
+  .combo,
+  .judgment {
+    transition: none;
+    animation: none;
+  }
+
+  .boardWrap.beat {
+    transform: none;
+  }
+
+  .boardWrap.shake {
+    animation: none;
+  }
 }
