@@ -1,3 +1,4 @@
+import type { Firestore } from 'firebase-admin/firestore';
 import type { Player, RoomState, PublicRoomInfo } from '@/types/multiplayer';
 
 export interface Room {
@@ -14,15 +15,124 @@ export interface Room {
   gameSeed?: number;
 }
 
+// Firestore document schema for a room
+interface RoomDocument {
+  code: string;
+  name: string;
+  hostId: string;
+  hostName: string;
+  players: Player[];
+  status: string;
+  isPublic: boolean;
+  maxPlayers: number;
+  createdAt: number;
+  gameStartedAt?: number;
+  gameSeed?: number;
+}
+
+const ROOMS_COLLECTION = 'multiplayer_rooms';
+
 export class MultiplayerRoomManager {
   private rooms = new Map<string, Room>();
   private playerToRoom = new Map<string, string>();
   private readonly ROOM_TIMEOUT = 5 * 60 * 1000;
   private cleanupInterval: NodeJS.Timeout;
+  private db: Firestore | null = null;
 
-  constructor() {
+  constructor(firestore?: Firestore) {
+    this.db = firestore ?? null;
     this.cleanupInterval = setInterval(() => this.cleanupStaleRooms(), 60000);
   }
+
+  /**
+   * Load existing rooms from Firestore on startup.
+   * Restores in-memory state so the server can recover after restarts.
+   */
+  async loadFromFirestore(): Promise<void> {
+    if (!this.db) return;
+
+    try {
+      const snapshot = await this.db
+        .collection(ROOMS_COLLECTION)
+        .where('status', 'in', ['waiting', 'playing', 'countdown'])
+        .get();
+
+      let loaded = 0;
+      for (const doc of snapshot.docs) {
+        const data = doc.data() as RoomDocument;
+
+        // Skip rooms older than timeout with no connected players
+        const age = Date.now() - data.createdAt;
+        if (age > this.ROOM_TIMEOUT) continue;
+
+        const room: Room = {
+          code: data.code,
+          name: data.name,
+          hostId: data.hostId,
+          hostName: data.hostName,
+          players: data.players.map(p => ({
+            ...p,
+            // Mark all players as disconnected on restore; they must reconnect
+            connected: false,
+          })),
+          status: data.status as Room['status'],
+          isPublic: data.isPublic,
+          maxPlayers: data.maxPlayers,
+          createdAt: data.createdAt,
+          gameStartedAt: data.gameStartedAt,
+          gameSeed: data.gameSeed,
+        };
+
+        this.rooms.set(room.code, room);
+        for (const player of room.players) {
+          this.playerToRoom.set(player.id, room.code);
+        }
+        loaded++;
+      }
+
+      console.log(`[FIRESTORE] Loaded ${loaded} rooms from Firestore`);
+    } catch (error) {
+      console.error('[FIRESTORE] Failed to load rooms:', error);
+    }
+  }
+
+  // ===== Firestore Write-Through =====
+
+  private persistRoom(room: Room): void {
+    if (!this.db) return;
+
+    const doc: RoomDocument = {
+      code: room.code,
+      name: room.name,
+      hostId: room.hostId,
+      hostName: room.hostName,
+      players: room.players,
+      status: room.status,
+      isPublic: room.isPublic,
+      maxPlayers: room.maxPlayers,
+      createdAt: room.createdAt,
+      gameStartedAt: room.gameStartedAt,
+      gameSeed: room.gameSeed,
+    };
+
+    this.db
+      .collection(ROOMS_COLLECTION)
+      .doc(room.code)
+      .set(doc)
+      .catch(err => console.error(`[FIRESTORE] Failed to persist room ${room.code}:`, err));
+  }
+
+  private deleteRoomFromFirestore(roomCode: string): void {
+    if (!this.db) return;
+
+    this.db
+      .collection(ROOMS_COLLECTION)
+      .doc(roomCode)
+      .delete()
+      .catch(err => console.error(`[FIRESTORE] Failed to delete room ${roomCode}:`, err));
+  }
+
+  // ===== Cleanup =====
 
   private cleanupStaleRooms(): void {
     const now = Date.now();
@@ -44,9 +154,12 @@ export class MultiplayerRoomManager {
         room.players.forEach(p => this.playerToRoom.delete(p.id));
       }
       this.rooms.delete(code);
+      this.deleteRoomFromFirestore(code);
       console.log(`[CLEANUP] Removed stale room ${code}`);
     });
   }
+
+  // ===== Room Code Generation =====
 
   private generateRoomCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -62,6 +175,8 @@ export class MultiplayerRoomManager {
     } while (this.rooms.has(code));
     return code;
   }
+
+  // ===== Public API =====
 
   getRoomCount(): number {
     return this.rooms.size;
@@ -121,6 +236,7 @@ export class MultiplayerRoomManager {
 
     this.rooms.set(roomCode, room);
     this.playerToRoom.set(playerId, roomCode);
+    this.persistRoom(room);
 
     return { roomCode, player };
   }
@@ -149,6 +265,7 @@ export class MultiplayerRoomManager {
     const existing = room.players.find(p => p.id === playerId);
     if (existing) {
       existing.connected = true;
+      this.persistRoom(room);
       return { success: true, player: existing };
     }
 
@@ -161,6 +278,7 @@ export class MultiplayerRoomManager {
 
     room.players.push(player);
     this.playerToRoom.set(playerId, normalizedCode);
+    this.persistRoom(room);
 
     return { success: true, player };
   }
@@ -184,6 +302,7 @@ export class MultiplayerRoomManager {
 
     this.playerToRoom.delete(oldPlayerId);
     this.playerToRoom.set(newPlayerId, roomCode);
+    this.persistRoom(room);
 
     return true;
   }
@@ -202,6 +321,8 @@ export class MultiplayerRoomManager {
     this.playerToRoom.delete(playerId);
 
     if (room.players.length === 0) {
+      this.rooms.delete(roomCode);
+      this.deleteRoomFromFirestore(roomCode);
       return { roomCode };
     }
 
@@ -216,6 +337,8 @@ export class MultiplayerRoomManager {
     if (room.status === 'playing' && room.players.filter(p => p.connected).length < 2) {
       room.status = 'finished';
     }
+
+    this.persistRoom(room);
 
     return { roomCode, room };
   }
@@ -250,6 +373,8 @@ export class MultiplayerRoomManager {
     if (!player) return { success: false, error: 'Player not found' };
 
     player.ready = ready;
+    this.persistRoom(room);
+
     return { success: true };
   }
 
@@ -277,6 +402,7 @@ export class MultiplayerRoomManager {
     room.status = 'countdown';
     room.gameStartedAt = Date.now();
     room.gameSeed = gameSeed;
+    this.persistRoom(room);
 
     return { success: true, gameSeed };
   }
@@ -285,6 +411,7 @@ export class MultiplayerRoomManager {
     const room = this.rooms.get(roomCode);
     if (room && room.status === 'countdown') {
       room.status = 'playing';
+      this.persistRoom(room);
     }
   }
 
@@ -292,6 +419,7 @@ export class MultiplayerRoomManager {
     const room = this.rooms.get(roomCode);
     if (room) {
       room.status = 'finished';
+      this.persistRoom(room);
     }
   }
 
@@ -305,6 +433,7 @@ export class MultiplayerRoomManager {
     room.players.forEach(p => {
       p.ready = false;
     });
+    this.persistRoom(room);
 
     return true;
   }

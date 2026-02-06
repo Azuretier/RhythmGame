@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import type { IncomingMessage } from 'http';
+import type { Firestore } from 'firebase-admin/firestore';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import type {
   ClientMessage,
@@ -22,8 +23,21 @@ const CLIENT_TIMEOUT = 45000;
 const RECONNECT_GRACE_PERIOD = 60000;
 const COUNTDOWN_SECONDS = 3;
 
-// Initialize room manager
-const roomManager = new MultiplayerRoomManager();
+// Initialize Firestore for room persistence
+let firestoreDb: Firestore | undefined;
+try {
+  const { getMultiplayerDb } = require('./src/lib/multiplayer/firebase-admin');
+  firestoreDb = getMultiplayerDb();
+  console.log('[FIRESTORE] Initialized successfully');
+} catch (error) {
+  console.warn(
+    '[FIRESTORE] Not available — rooms will only persist in memory.',
+    error instanceof Error ? error.message : ''
+  );
+}
+
+// Initialize room manager with optional Firestore backing
+const roomManager = new MultiplayerRoomManager(firestoreDb);
 
 // Player connection tracking
 interface PlayerConnection {
@@ -414,12 +428,14 @@ const server = createServer((req, res) => {
       timestamp: Date.now(),
       connections: playerConnections.size,
       rooms: roomManager.getRoomCount(),
+      firestore: firestoreDb ? 'enabled' : 'disabled',
     }));
   } else if (req.url === '/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       connections: playerConnections.size,
       rooms: roomManager.getRoomCount(),
+      firestore: firestoreDb ? 'enabled' : 'disabled',
       uptime: process.uptime(),
       memory: process.memoryUsage(),
     }));
@@ -522,18 +538,29 @@ wss.on('error', (error) => {
 
 // ===== Start Server =====
 
-server.listen(PORT, HOST, () => {
-  console.log(`
+async function startServer() {
+  // Restore rooms from Firestore before accepting connections
+  await roomManager.loadFromFirestore();
+
+  server.listen(PORT, HOST, () => {
+    console.log(`
   RHYTHMIA Multiplayer Server
   ============================
-  WebSocket: ws://${HOST}:${PORT}
-  Health:    http://${HOST}:${PORT}/health
-  Stats:     http://${HOST}:${PORT}/stats
-  Heartbeat: ${HEARTBEAT_INTERVAL / 1000}s
-  Timeout:   ${CLIENT_TIMEOUT / 1000}s
-  Reconnect: ${RECONNECT_GRACE_PERIOD / 1000}s grace
+  WebSocket:  ws://${HOST}:${PORT}
+  Health:     http://${HOST}:${PORT}/health
+  Stats:      http://${HOST}:${PORT}/stats
+  Firestore:  ${firestoreDb ? 'enabled' : 'disabled (in-memory only)'}
+  Heartbeat:  ${HEARTBEAT_INTERVAL / 1000}s
+  Timeout:    ${CLIENT_TIMEOUT / 1000}s
+  Reconnect:  ${RECONNECT_GRACE_PERIOD / 1000}s grace
   ============================
-  `);
+    `);
+  });
+}
+
+startServer().catch(error => {
+  console.error('[FATAL] Failed to start server:', error);
+  process.exit(1);
 });
 
 // ===== Graceful Shutdown =====
