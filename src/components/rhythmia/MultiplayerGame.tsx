@@ -1,363 +1,338 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  onSnapshot, 
-  updateDoc,
-  doc,
-  deleteDoc,
-  serverTimestamp,
-  getDocs,
-  Timestamp
-} from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { db, auth } from '@/lib/rhythmia/firebase';
 import styles from './MultiplayerGame.module.css';
 import MultiplayerBattle from './MultiplayerBattle';
+import type {
+  ServerMessage,
+  RoomState,
+  Player,
+  PublicRoomInfo,
+} from '@/types/multiplayer';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
-type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'playing';
-
-interface Room {
-  id: string;
-  name: string;
-  host: string;
-  hostName?: string;
-  players: number;
-  maxPlayers: number;
-  isPrivate: boolean;
-  createdAt: Timestamp;
-  status: 'waiting' | 'playing' | 'finished';
-  playerList?: Player[];
-}
-
-interface Player {
-  id: string;
-  name: string;
-  score: number;
-  isReady: boolean;
-}
+type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished';
 
 export default function MultiplayerGame() {
-  const [mode, setMode] = useState<GameMode>('lobby');
+  // Connection
+  const wsRef = useRef<WebSocket | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
-  const [playerName, setPlayerName] = useState('');
-  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [activeTab, setActiveTab] = useState<'create' | 'join'>('create');
-  const [newRoomName, setNewRoomName] = useState('');
-  const [isPrivateRoom, setIsPrivateRoom] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  const unsubscribeRef = useRef<(() => void) | null>(null);
   const playerIdRef = useRef<string>('');
-  const roomIdRef = useRef<string>('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  // Authenticate with Firebase anonymously
-  useEffect(() => {
-    if (!auth) return;
-    
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        playerIdRef.current = user.uid;
-        setIsAuthenticated(true);
-      } else {
-        playerIdRef.current = '';
-        setIsAuthenticated(false);
-      }
-    });
-    
-    // Sign in anonymously after setting up the listener
-    signInAnonymously(auth).catch((error) => {
-      console.error('Authentication error:', error);
-      setConnectionStatus('error');
-      setError('認証に失敗しました。ページを再読み込みしてください。');
-    });
-    
-    return () => unsubscribe();
-  }, []);
-  
-  // Connect to Firebase
-  const connectToFirebase = useCallback(async () => {
-    try {
-      if (!db || !auth) {
-        console.error('Firebase not configured');
-        setConnectionStatus('error');
-        return;
-      }
-      setConnectionStatus('connecting');
-      
-      // Test Firebase connection with a simple query
-      const testQuery = query(collection(db, 'rhythmia_rooms'));
-      await getDocs(testQuery);
+  const reconnectTokenRef = useRef<string>('');
+
+  // UI state
+  const [mode, setMode] = useState<GameMode>('lobby');
+  const [playerName, setPlayerName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  // Room state
+  const [roomState, setRoomState] = useState<RoomState | null>(null);
+  const [rooms, setRooms] = useState<PublicRoomInfo[]>([]);
+  const [activeTab, setActiveTab] = useState<'create' | 'join' | 'code'>('create');
+  const [newRoomName, setNewRoomName] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+
+  // Game state
+  const [gameSeed, setGameSeed] = useState<number>(0);
+  const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
+  const [gameResult, setGameResult] = useState<{ winnerId: string } | null>(null);
+
+  // ===== WebSocket Connection =====
+  const connectWebSocket = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    setConnectionStatus('connecting');
+    const wsUrl = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('[WS] Connected');
       setConnectionStatus('connected');
-    } catch (error) {
-      console.error('Firebase connection error:', error);
+      setError(null);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message: ServerMessage = JSON.parse(event.data);
+        handleServerMessage(message);
+      } catch (err) {
+        console.error('[WS] Parse error:', err);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('[WS] Disconnected');
+      setConnectionStatus('disconnected');
+      wsRef.current = null;
+    };
+
+    ws.onerror = () => {
       setConnectionStatus('error');
+      setError('Connection failed. Check your internet connection.');
+    };
+
+    wsRef.current = ws;
+  }, []);
+
+  const send = useCallback((data: object) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(data));
     }
   }, []);
-  
+
+  // ===== Server Message Handler =====
+  const handleServerMessage = useCallback((msg: ServerMessage) => {
+    switch (msg.type) {
+      case 'connected':
+        playerIdRef.current = msg.playerId;
+        break;
+
+      case 'room_created':
+        playerIdRef.current = msg.playerId;
+        reconnectTokenRef.current = msg.reconnectToken;
+        break;
+
+      case 'joined_room':
+        playerIdRef.current = msg.playerId;
+        reconnectTokenRef.current = msg.reconnectToken;
+        setRoomState(msg.roomState);
+        setMode('waiting-room');
+        setError(null);
+        break;
+
+      case 'room_state':
+        setRoomState(msg.roomState);
+        break;
+
+      case 'room_list':
+        setRooms(msg.rooms);
+        break;
+
+      case 'player_joined':
+        setRoomState(prev => {
+          if (!prev) return prev;
+          const exists = prev.players.some(p => p.id === msg.player.id);
+          return {
+            ...prev,
+            players: exists ? prev.players : [...prev.players, msg.player],
+          };
+        });
+        break;
+
+      case 'player_left':
+        setRoomState(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            players: prev.players.filter(p => p.id !== msg.playerId),
+          };
+        });
+        break;
+
+      case 'player_ready':
+        setRoomState(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            players: prev.players.map(p =>
+              p.id === msg.playerId ? { ...p, ready: msg.ready } : p
+            ),
+          };
+        });
+        break;
+
+      case 'countdown':
+        setCountdownNumber(msg.count);
+        setMode('countdown');
+        break;
+
+      case 'game_started':
+        setGameSeed(msg.gameSeed);
+        setCountdownNumber(null);
+        setGameResult(null);
+        setMode('playing');
+        break;
+
+      case 'reconnected':
+        playerIdRef.current = msg.playerId;
+        reconnectTokenRef.current = msg.reconnectToken;
+        setRoomState(msg.roomState);
+        if (msg.roomState.status === 'playing') {
+          setMode('playing');
+        } else {
+          setMode('waiting-room');
+        }
+        break;
+
+      case 'rematch_started':
+        setMode('waiting-room');
+        setGameResult(null);
+        break;
+
+      case 'error':
+        setError(msg.message);
+        break;
+
+      case 'ping':
+        send({ type: 'pong' });
+        break;
+
+      case 'server_shutdown':
+        setError('Server is restarting. Please reconnect.');
+        setConnectionStatus('disconnected');
+        break;
+    }
+  }, [send]);
+
+  // Connect on mount
   useEffect(() => {
-    connectToFirebase();
-  }, [connectToFirebase]);
-  
-  // Listen to rooms list
+    connectWebSocket();
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    };
+  }, [connectWebSocket]);
+
+  // Refresh room list when browsing
   useEffect(() => {
-    if (mode !== 'room-browser' || !db) return;
-    
-    const roomsQuery = query(
-      collection(db, 'rhythmia_rooms'),
-      where('status', '==', 'waiting')
-    );
-    
-    const unsubscribe = onSnapshot(roomsQuery, (snapshot) => {
-      const roomsList: Room[] = [];
-      snapshot.forEach((doc) => {
-        roomsList.push({ id: doc.id, ...doc.data() } as Room);
-      });
-      setRooms(roomsList.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds));
-    });
-    
-    return () => unsubscribe();
-  }, [mode]);
-  
+    if (mode !== 'room-browser') return;
+    send({ type: 'get_rooms' });
+    const interval = setInterval(() => send({ type: 'get_rooms' }), 5000);
+    return () => clearInterval(interval);
+  }, [mode, send]);
+
+  // ===== Actions =====
   const handleNameSubmit = useCallback(() => {
     if (playerName.trim().length < 2) return;
-    if (!isAuthenticated) {
-      setError('認証が完了していません。もう一度お試しください。');
-      return;
-    }
-    // playerIdRef.current is already set by onAuthStateChanged
     setMode('room-browser');
-  }, [playerName, isAuthenticated]);
-  
-  const createRoom = useCallback(async () => {
-    if (newRoomName.trim().length < 3) {
-      setError('部屋名は3文字以上で入力してください');
-      return;
-    }
-    
-    if (!db) {
-      setError('Firebaseが設定されていません');
-      return;
-    }
-    
-    try {
-      setError(null);
-      const roomData = {
-        name: newRoomName,
-        host: playerIdRef.current,
-        hostName: playerName,
-        players: 1,
-        maxPlayers: 2,
-        isPrivate: isPrivateRoom,
-        status: 'waiting',
-        createdAt: serverTimestamp(),
-        playerList: [
-          {
-            id: playerIdRef.current,
-            name: playerName,
-            score: 0,
-            isReady: false
-          }
-        ]
-      };
-      
-      const docRef = await addDoc(collection(db, 'rhythmia_rooms'), roomData);
-      roomIdRef.current = docRef.id;
-      const newRoom: Room = {
-        id: docRef.id,
-        name: roomData.name,
-        host: roomData.host,
-        hostName: roomData.hostName,
-        players: roomData.players,
-        maxPlayers: roomData.maxPlayers,
-        isPrivate: roomData.isPrivate,
-        status: roomData.status as 'waiting' | 'playing' | 'finished',
-        createdAt: Timestamp.now(),
-        playerList: roomData.playerList
-      };
-      setCurrentRoom(newRoom);
-      setMode('waiting-room');
-    } catch (error) {
-      console.error('Error creating room:', error);
-      setError('部屋の作成に失敗しました');
-    }
-  }, [newRoomName, isPrivateRoom, playerName]);
-  
-  const joinRoom = useCallback(async (room: Room) => {
-    if (room.players >= room.maxPlayers) {
-      setError('この部屋は満員です');
-      return;
-    }
-    
-    if (!db) {
-      setError('Firebaseが設定されていません');
-      return;
-    }
-    
-    try {
-      setError(null);
-      const roomRef = doc(db, 'rhythmia_rooms', room.id);
-      const newPlayer = {
-        id: playerIdRef.current,
-        name: playerName,
-        score: 0,
-        isReady: false
-      };
-      
-      await updateDoc(roomRef, {
-        players: room.players + 1,
-        playerList: [...(room.playerList || []), newPlayer]
-      });
-      
-      roomIdRef.current = room.id;
-      setCurrentRoom(room);
-      setMode('waiting-room');
-    } catch (error) {
-      console.error('Error joining room:', error);
-      setError('部屋への参加に失敗しました');
-    }
+    setError(null);
   }, [playerName]);
-  
-  const leaveRoom = useCallback(async () => {
-    if (!roomIdRef.current || !db) return;
-    
-    try {
-      const roomRef = doc(db, 'rhythmia_rooms', roomIdRef.current);
-      
-      if (currentRoom?.host === playerIdRef.current) {
-        // Host leaving - delete room
-        await deleteDoc(roomRef);
-      } else {
-        // Player leaving - update player list
-        const updatedPlayers = players.filter(p => p.id !== playerIdRef.current);
-        await updateDoc(roomRef, {
-          players: updatedPlayers.length,
-          playerList: updatedPlayers
-        });
-      }
-      
-      setCurrentRoom(null);
-      roomIdRef.current = '';
-      setMode('room-browser');
-    } catch (error) {
-      console.error('Error leaving room:', error);
-    }
-  }, [currentRoom, players]);
-  
-  const startGame = useCallback(async () => {
-    if (!roomIdRef.current || currentRoom?.host !== playerIdRef.current || !db) return;
-    
-    try {
-      const roomRef = doc(db, 'rhythmia_rooms', roomIdRef.current);
-      await updateDoc(roomRef, {
-        status: 'playing'
-      });
-      setMode('playing');
-    } catch (error) {
-      console.error('Error starting game:', error);
-    }
-  }, [currentRoom]);
 
-  const handleGameEnd = useCallback(async (winnerId: string) => {
-    console.log('Game ended, winner:', winnerId);
-    // Game ended, could update room status here if needed
-  }, []);
-
-  const handleBackToLobby = useCallback(async () => {
-    if (roomIdRef.current && db) {
-      try {
-        const roomRef = doc(db, 'rhythmia_rooms', roomIdRef.current);
-        await updateDoc(roomRef, {
-          status: 'waiting'
-        });
-      } catch (error) {
-        console.error('Error resetting room:', error);
-      }
-    }
-    setMode('waiting-room');
-  }, []);
-  
-  // Listen to current room updates
-  useEffect(() => {
-    if (mode !== 'waiting-room' || !roomIdRef.current || !db) return;
-    
-    const roomRef = doc(db, 'rhythmia_rooms', roomIdRef.current);
-    const unsubscribe = onSnapshot(roomRef, (snapshot) => {
-      if (!snapshot.exists()) {
-        // Room was deleted
-        setError('部屋が削除されました');
-        setMode('room-browser');
-        return;
-      }
-      
-      const data = snapshot.data();
-      const roomData: Room = {
-        id: snapshot.id,
-        name: data.name,
-        host: data.host,
-        hostName: data.hostName,
-        players: data.players,
-        maxPlayers: data.maxPlayers,
-        isPrivate: data.isPrivate,
-        createdAt: data.createdAt,
-        status: data.status,
-        playerList: data.playerList
-      };
-      setCurrentRoom(roomData);
-      setPlayers(roomData.playerList || []);
-      
-      if (roomData.status === 'playing') {
-        setMode('playing');
-      }
+  const createRoom = useCallback(() => {
+    send({
+      type: 'create_room',
+      playerName: playerName.trim(),
+      roomName: newRoomName.trim() || undefined,
+      isPublic: true,
     });
-    
-    return () => unsubscribe();
-  }, [mode]);
-  
+    setMode('waiting-room');
+  }, [send, playerName, newRoomName]);
+
+  const joinRoomByCode = useCallback(() => {
+    const code = joinCode.trim().toUpperCase();
+    if (code.length < 4) {
+      setError('Enter a valid room code');
+      return;
+    }
+    send({
+      type: 'join_room',
+      roomCode: code,
+      playerName: playerName.trim(),
+    });
+  }, [send, joinCode, playerName]);
+
+  const joinRoom = useCallback((room: PublicRoomInfo) => {
+    send({
+      type: 'join_room',
+      roomCode: room.code,
+      playerName: playerName.trim(),
+    });
+  }, [send, playerName]);
+
+  const toggleReady = useCallback(() => {
+    const me = roomState?.players.find(p => p.id === playerIdRef.current);
+    if (me) {
+      send({ type: 'set_ready', ready: !me.ready });
+    }
+  }, [send, roomState]);
+
+  const startGame = useCallback(() => {
+    send({ type: 'start_game' });
+  }, [send]);
+
+  const leaveRoom = useCallback(() => {
+    send({ type: 'leave_room' });
+    setRoomState(null);
+    setMode('room-browser');
+    setError(null);
+  }, [send]);
+
+  const requestRematch = useCallback(() => {
+    send({ type: 'rematch' });
+  }, [send]);
+
+  const handleGameEnd = useCallback((winnerId: string) => {
+    setGameResult({ winnerId });
+    setMode('finished');
+  }, []);
+
+  const handleBackToLobby = useCallback(() => {
+    leaveRoom();
+  }, [leaveRoom]);
+
+  // ===== Derived State =====
+  const isHost = roomState?.hostId === playerIdRef.current;
+  const myPlayer = roomState?.players.find(p => p.id === playerIdRef.current);
+  const opponents = roomState?.players.filter(p => p.id !== playerIdRef.current) || [];
+  const allReady = roomState?.players.every(p => p.ready || p.id === roomState.hostId) && (roomState?.players.length ?? 0) >= 2;
+
   return (
     <div className={styles.container}>
+      {/* Status Bar */}
       <div className={styles.statusBar}>
         <div className={styles.connectionStatus}>
           <div className={`${styles.statusDot} ${styles[connectionStatus]}`} />
           <span>
-            {connectionStatus === 'connected' && '接続中'}
-            {connectionStatus === 'connecting' && '接続中...'}
-            {connectionStatus === 'error' && '接続エラー'}
-            {connectionStatus === 'disconnected' && '未接続'}
+            {connectionStatus === 'connected' && 'Online'}
+            {connectionStatus === 'connecting' && 'Connecting...'}
+            {connectionStatus === 'error' && 'Connection Error'}
+            {connectionStatus === 'disconnected' && 'Offline'}
           </span>
         </div>
       </div>
-      
+
+      {/* Error Banner */}
+      {error && (
+        <div className={styles.errorBanner}>
+          {error}
+          <button className={styles.errorClose} onClick={() => setError(null)}>x</button>
+        </div>
+      )}
+
+      {/* Lobby */}
       {mode === 'lobby' && (
         <div className={styles.lobby}>
           <h1 className={styles.title}>BATTLE ARENA</h1>
-          <p className={styles.subtitle}>オンライン対戦モード</p>
-          
+          <p className={styles.subtitle}>MULTIPLAYER TETRIS BATTLE</p>
+
           <div className={styles.modeGrid}>
-            <div className={`${styles.modeCard} ${styles.online}`} onClick={() => setMode('name-entry')}>
-              <div className={styles.modeIcon}>🌐</div>
-              <div className={styles.modeTitle}>オンライン対戦</div>
-              <p className={styles.modeDesc}>他のプレイヤーとリアルタイムバトル</p>
+            <div
+              className={`${styles.modeCard} ${styles.online}`}
+              onClick={() => {
+                if (connectionStatus !== 'connected') {
+                  connectWebSocket();
+                }
+                setMode('name-entry');
+              }}
+            >
+              <div className={styles.modeIcon}>VS</div>
+              <div className={styles.modeTitle}>Online Battle</div>
+              <p className={styles.modeDesc}>Real-time battle against other players</p>
             </div>
           </div>
         </div>
       )}
-      
+
+      {/* Name Entry */}
       {mode === 'name-entry' && (
         <div className={styles.nameEntryScreen}>
-          <div className={styles.onlineTitle}>名前を入力</div>
+          <div className={styles.onlineTitle}>Enter Your Name</div>
           <input
             type="text"
             className={styles.nameInput}
-            placeholder="プレイヤー名"
+            placeholder="Player Name"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
@@ -369,87 +344,105 @@ export default function MultiplayerGame() {
             onClick={handleNameSubmit}
             disabled={playerName.trim().length < 2}
           >
-            次へ
+            Next
+          </button>
+          <button className={styles.backBtn} onClick={() => setMode('lobby')}>
+            Back
           </button>
         </div>
       )}
-      
+
+      {/* Room Browser */}
       {mode === 'room-browser' && (
         <div className={styles.roomBrowser}>
-          <div className={styles.onlineTitle}>オンラインロビー</div>
-          
-          {error && (
-            <div className={styles.errorMessage}>
-              {error}
-            </div>
-          )}
-          
+          <div className={styles.onlineTitle}>Online Lobby</div>
+
           <div className={styles.playerBadge}>
-            <span>👤</span>
             <span>{playerName}</span>
           </div>
-          
+
           <div className={styles.tabWidget}>
             <div className={styles.tabHeader}>
               <button
                 className={`${styles.tabBtn} ${activeTab === 'create' ? styles.active : ''}`}
                 onClick={() => setActiveTab('create')}
               >
-                部屋を作る
+                Create Room
+              </button>
+              <button
+                className={`${styles.tabBtn} ${activeTab === 'code' ? styles.active : ''}`}
+                onClick={() => setActiveTab('code')}
+              >
+                Enter Code
               </button>
               <button
                 className={`${styles.tabBtn} ${activeTab === 'join' ? styles.active : ''}`}
                 onClick={() => setActiveTab('join')}
               >
-                部屋に参加
+                Browse
               </button>
             </div>
-            
+
             <div className={styles.tabContent}>
               {activeTab === 'create' && (
                 <div className={styles.createForm}>
                   <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>部屋名</label>
+                    <label className={styles.formLabel}>Room Name (optional)</label>
                     <input
                       type="text"
                       className={styles.formInput}
-                      placeholder="例: 初心者歓迎"
+                      placeholder="e.g. Friendly Match"
                       value={newRoomName}
                       onChange={(e) => setNewRoomName(e.target.value)}
                       maxLength={20}
                     />
                   </div>
-                  
-                  <div className={styles.toggleGroup}>
-                    <span className={styles.toggleLabel}>プライベート部屋</span>
-                    <div
-                      className={`${styles.toggleSwitch} ${isPrivateRoom ? styles.active : ''}`}
-                      onClick={() => setIsPrivateRoom(!isPrivateRoom)}
-                    />
-                  </div>
-                  
                   <button className={styles.createBtn} onClick={createRoom}>
-                    部屋を作成
+                    Create Room
                   </button>
                 </div>
               )}
-              
+
+              {activeTab === 'code' && (
+                <div className={styles.createForm}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Room Code</label>
+                    <input
+                      type="text"
+                      className={`${styles.formInput} ${styles.codeInput}`}
+                      placeholder="ABCD"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                      maxLength={5}
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    className={styles.createBtn}
+                    onClick={joinRoomByCode}
+                    disabled={joinCode.trim().length < 4}
+                  >
+                    Join Room
+                  </button>
+                </div>
+              )}
+
               {activeTab === 'join' && (
                 <div className={styles.roomList}>
                   {rooms.length === 0 ? (
                     <div className={styles.emptyState}>
-                      <p>参加可能な部屋がありません</p>
-                      <p>新しい部屋を作成してください</p>
+                      <p>No rooms available</p>
+                      <p>Create a new room or enter a code</p>
                     </div>
                   ) : (
                     rooms.map((room) => (
-                      <div key={room.id} className={styles.roomItem} onClick={() => joinRoom(room)}>
+                      <div key={room.code} className={styles.roomItem} onClick={() => joinRoom(room)}>
                         <div className={styles.roomInfo}>
                           <div className={styles.roomName}>{room.name}</div>
-                          <div className={styles.roomHost}>Host: {room.hostName || 'Unknown'}</div>
+                          <div className={styles.roomHost}>Host: {room.hostName}</div>
                         </div>
                         <div className={styles.roomPlayers}>
-                          {room.players}/{room.maxPlayers}
+                          {room.playerCount}/{room.maxPlayers}
                         </div>
                       </div>
                     ))
@@ -458,59 +451,121 @@ export default function MultiplayerGame() {
               )}
             </div>
           </div>
-          
-          <button className={styles.backBtn} onClick={() => setMode('lobby')}>
-            ← 戻る
+
+          <button className={styles.backBtn} onClick={() => setMode('name-entry')}>
+            Back
           </button>
         </div>
       )}
-      
-      {mode === 'waiting-room' && currentRoom && (
+
+      {/* Waiting Room */}
+      {mode === 'waiting-room' && roomState && (
         <div className={styles.waitingRoom}>
-          <div className={styles.onlineTitle}>{currentRoom.name}</div>
-          
+          <div className={styles.onlineTitle}>{roomState.name}</div>
+
+          <div className={styles.roomCode}>
+            <span className={styles.roomCodeLabel}>Room Code</span>
+            <span className={styles.roomCodeValue}>{roomState.code}</span>
+            <button
+              className={styles.copyBtn}
+              onClick={() => {
+                navigator.clipboard.writeText(roomState.code);
+              }}
+            >
+              Copy
+            </button>
+          </div>
+
           <div className={styles.playersGrid}>
-            {players.map((player) => (
-              <div key={player.id} className={styles.playerCard}>
-                <div className={styles.playerName}>{player.name}</div>
+            {roomState.players.map((player) => (
+              <div
+                key={player.id}
+                className={`${styles.playerCard} ${player.ready ? styles.ready : ''} ${player.id === roomState.hostId ? styles.host : ''}`}
+              >
+                <div className={styles.playerCardName}>
+                  {player.name}
+                  {player.id === roomState.hostId && <span className={styles.hostBadge}>HOST</span>}
+                </div>
                 <div className={styles.playerStatus}>
-                  {player.isReady ? '✓ 準備完了' : '待機中...'}
+                  {player.ready ? 'READY' : 'Not Ready'}
                 </div>
               </div>
             ))}
-            {players.length < (currentRoom.maxPlayers || 2) && (
+            {roomState.players.length < roomState.maxPlayers && (
               <div className={`${styles.playerCard} ${styles.empty}`}>
-                <div className={styles.playerName}>待機中...</div>
+                <div className={styles.playerCardName}>Waiting...</div>
               </div>
             )}
           </div>
-          
-          {currentRoom.host === playerIdRef.current && (
-            <button
-              className={styles.startBtn}
-              onClick={startGame}
-              disabled={players.length < 2}
-            >
-              ゲーム開始
+
+          <div className={styles.waitingActions}>
+            {!isHost && (
+              <button
+                className={`${styles.readyBtn} ${myPlayer?.ready ? styles.readyActive : ''}`}
+                onClick={toggleReady}
+              >
+                {myPlayer?.ready ? 'Cancel Ready' : 'Ready!'}
+              </button>
+            )}
+
+            {isHost && (
+              <button
+                className={styles.startBtn}
+                onClick={startGame}
+                disabled={!allReady}
+              >
+                {allReady ? 'Start Game' : 'Waiting for players...'}
+              </button>
+            )}
+
+            <button className={styles.leaveBtn} onClick={leaveRoom}>
+              Leave Room
             </button>
-          )}
-          
-          <button className={styles.leaveBtn} onClick={leaveRoom}>
-            部屋を出る
-          </button>
+          </div>
         </div>
       )}
-      
-      {mode === 'playing' && currentRoom && roomIdRef.current && (
+
+      {/* Countdown */}
+      {mode === 'countdown' && (
+        <div className={styles.countdownScreen}>
+          <div className={styles.countdownNumber}>
+            {countdownNumber}
+          </div>
+        </div>
+      )}
+
+      {/* Playing */}
+      {mode === 'playing' && roomState && wsRef.current && (
         <MultiplayerBattle
-          roomCode={roomIdRef.current}
+          ws={wsRef.current}
+          roomCode={roomState.code}
           playerId={playerIdRef.current}
           playerName={playerName}
-          opponentId={players.find(p => p.id !== playerIdRef.current)?.id}
-          opponentName={players.find(p => p.id !== playerIdRef.current)?.name}
+          opponents={opponents}
+          gameSeed={gameSeed}
           onGameEnd={handleGameEnd}
           onBackToLobby={handleBackToLobby}
         />
+      )}
+
+      {/* Finished */}
+      {mode === 'finished' && gameResult && (
+        <div className={styles.resultScreen}>
+          <h2 className={styles.resultTitle}>
+            {gameResult.winnerId === playerIdRef.current ? 'VICTORY!' : 'DEFEAT'}
+          </h2>
+
+          <div className={styles.resultActions}>
+            {isHost && (
+              <button className={styles.rematchBtn} onClick={requestRematch}>
+                Rematch
+              </button>
+            )}
+            <button className={styles.leaveBtn} onClick={handleBackToLobby}>
+              Leave
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

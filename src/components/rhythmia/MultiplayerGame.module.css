@@ -1,3 +1,9 @@
+:root {
+  --gold: #FFD700;
+  --p1-color: #4ECDC4;
+  --p1-glow: rgba(78, 205, 196, 0.4);
+}
+
 .container {
   min-height: 100vh;
   font-family: 'Orbitron', system-ui, sans-serif;
@@ -7,8 +13,9 @@
   flex-direction: column;
 }
 
+/* Status Bar */
 .statusBar {
-  padding: 15px 20px;
+  padding: 12px 20px;
   display: flex;
   justify-content: flex-end;
 }
@@ -16,30 +23,31 @@
 .connectionStatus {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.7);
+  gap: 8px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .statusDot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #666;
   transition: background 0.3s;
 }
 
-.statusDot.connected {
+.connected {
   background: #4ade80;
-  box-shadow: 0 0 10px #4ade80;
+  box-shadow: 0 0 8px #4ade80;
 }
 
-.statusDot.connecting {
+.connecting {
   background: #fbbf24;
   animation: blink 1s infinite;
 }
 
-.statusDot.error {
+.error,
+.disconnected {
   background: #ef4444;
 }
 
@@ -48,6 +56,36 @@
   50% { opacity: 0.3; }
 }
 
+/* Error Banner */
+.errorBanner {
+  margin: 0 20px;
+  padding: 10px 16px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.errorClose {
+  background: none;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 1rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Lobby */
 .lobby {
   height: calc(100vh - 60px);
   display: flex;
@@ -61,7 +99,7 @@
 .title {
   font-size: clamp(2rem, 8vw, 4rem);
   font-weight: 900;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   background: linear-gradient(135deg, var(--gold), #FF6B35);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -75,33 +113,34 @@
 }
 
 .subtitle {
-  color: rgba(255,255,255,0.6);
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
   letter-spacing: 0.3em;
 }
 
+/* Mode Grid */
 .modeGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   width: 100%;
-  max-width: 700px;
+  max-width: 500px;
 }
 
 .modeCard {
-  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  border: 2px solid rgba(255,255,255,0.1);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  padding: 30px 20px;
+  padding: 35px 24px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .modeCard:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-6px) scale(1.02);
   border-color: var(--gold);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(255,215,0,0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.15);
 }
 
 .modeCard.online {
@@ -110,39 +149,30 @@
 
 .modeCard.online:hover {
   border-color: var(--p1-color);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px var(--p1-glow);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px var(--p1-glow);
 }
 
 .modeIcon {
-  font-size: 3rem;
-  margin-bottom: 15px;
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 12px;
+  color: var(--p1-color);
 }
 
 .modeTitle {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--gold);
-  margin-bottom: 8px;
-}
-
-.modeCard.online .modeTitle {
   color: var(--p1-color);
+  margin-bottom: 8px;
 }
 
 .modeDesc {
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.45);
   font-family: sans-serif;
 }
 
-.onlineTitle {
-  font-size: 2rem;
-  font-weight: 900;
-  color: var(--p1-color);
-  text-shadow: 0 0 30px var(--p1-glow);
-  margin-bottom: 20px;
-}
-
+/* Name Entry */
 .nameEntryScreen {
   height: calc(100vh - 60px);
   display: flex;
@@ -152,32 +182,41 @@
   gap: 20px;
 }
 
+.onlineTitle {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--p1-color);
+  text-shadow: 0 0 25px var(--p1-glow);
+  margin-bottom: 10px;
+}
+
 .nameInput {
-  padding: 15px 30px;
+  padding: 14px 28px;
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   text-align: center;
-  background: rgba(0,0,0,0.5);
-  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.25);
   border-radius: 12px;
   color: white;
-  width: 280px;
+  width: 260px;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
 .nameInput:focus {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 20px rgba(255,215,0,0.3);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
 }
 
 .nameBtn {
-  padding: 15px 50px;
+  padding: 14px 50px;
   font-family: 'Orbitron', sans-serif;
   font-size: 1rem;
   font-weight: 700;
   background: linear-gradient(135deg, var(--gold), #FF6B35);
   border: none;
-  border-radius: 30px;
+  border-radius: 25px;
   color: #000;
   cursor: pointer;
   transition: all 0.3s;
@@ -185,91 +224,74 @@
 
 .nameBtn:hover:not(:disabled) {
   transform: scale(1.05);
-  box-shadow: 0 0 30px var(--gold);
+  box-shadow: 0 0 25px var(--gold);
 }
 
 .nameBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
+/* Room Browser */
 .roomBrowser {
   height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 25px;
+  gap: 20px;
   padding: 20px;
 }
 
 .playerBadge {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 20px;
-  background: rgba(255,255,255,0.1);
+  gap: 8px;
+  padding: 6px 18px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  font-size: 0.9rem;
-}
-
-.errorMessage {
-  padding: 12px 20px;
-  background: rgba(239, 68, 68, 0.2);
-  border: 2px solid #ef4444;
-  border-radius: 8px;
-  color: #fca5a5;
-  font-size: 0.9rem;
-  text-align: center;
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.playerBadge span:last-child {
+  font-size: 0.85rem;
   color: var(--gold);
-  font-weight: 700;
+  font-weight: 600;
 }
 
+/* Tab Widget */
 .tabWidget {
   width: 100%;
-  max-width: 500px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 16px;
+  max-width: 440px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tabHeader {
   display: flex;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .tabBtn {
   flex: 1;
-  padding: 15px 20px;
+  padding: 13px 12px;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 700;
   background: transparent;
   border: none;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.4);
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
 }
 
 .tabBtn:hover {
-  color: rgba(255,255,255,0.8);
-  background: rgba(255,255,255,0.05);
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .tabBtn.active {
   color: var(--p1-color);
-  background: rgba(78,205,196,0.1);
+  background: rgba(78, 205, 196, 0.08);
 }
 
 .tabBtn.active::after {
@@ -278,7 +300,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 2px;
   background: var(--p1-color);
 }
 
@@ -286,32 +308,34 @@
   padding: 20px;
 }
 
+/* Create Form */
 .createForm {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .formLabel {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
   font-family: sans-serif;
 }
 
 .formInput {
-  padding: 12px 16px;
+  padding: 11px 14px;
   font-family: sans-serif;
-  font-size: 1rem;
-  background: rgba(0,0,0,0.5);
-  border: 2px solid rgba(255,255,255,0.2);
+  font-size: 0.95rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   color: white;
+  transition: border-color 0.3s;
 }
 
 .formInput:focus {
@@ -319,55 +343,18 @@
   border-color: var(--p1-color);
 }
 
-.toggleGroup {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 8px;
-}
-
-.toggleLabel {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.8);
-  font-family: sans-serif;
-}
-
-.toggleSwitch {
-  position: relative;
-  width: 50px;
-  height: 26px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 13px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.toggleSwitch.active {
-  background: var(--p1-color);
-}
-
-.toggleSwitch::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s;
-}
-
-.toggleSwitch.active::after {
-  transform: translateX(24px);
+.codeInput {
+  text-align: center;
+  font-size: 1.5rem;
+  font-family: 'Orbitron', monospace;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
 }
 
 .createBtn {
-  padding: 15px;
+  padding: 14px;
   font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   background: linear-gradient(135deg, var(--p1-color), #2dd4bf);
   border: none;
@@ -377,26 +364,32 @@
   transition: all 0.3s;
 }
 
-.createBtn:hover {
+.createBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px var(--p1-glow);
+  box-shadow: 0 10px 25px var(--p1-glow);
 }
 
+.createBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Room List */
 .roomList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   max-height: 250px;
   overflow-y: auto;
-  padding-right: 5px;
+  padding-right: 4px;
 }
 
 .roomList::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .roomList::-webkit-scrollbar-track {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 3px;
 }
 
@@ -409,63 +402,232 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .roomItem:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-color: var(--p1-color);
 }
 
 .roomInfo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .roomName {
   font-weight: 700;
   color: white;
+  font-size: 0.9rem;
 }
 
 .roomHost {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
   font-family: sans-serif;
 }
 
 .roomPlayers {
-  padding: 4px 12px;
-  background: rgba(78,205,196,0.2);
-  border: 1px solid var(--p1-color);
-  border-radius: 12px;
-  font-size: 0.85rem;
+  padding: 3px 10px;
+  background: rgba(78, 205, 196, 0.15);
+  border: 1px solid rgba(78, 205, 196, 0.4);
+  border-radius: 10px;
+  font-size: 0.8rem;
   color: var(--p1-color);
 }
 
 .emptyState {
   text-align: center;
-  color: rgba(255,255,255,0.5);
-  padding: 40px 20px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 35px 20px;
+  font-family: sans-serif;
+  font-size: 0.9rem;
 }
 
 .emptyState p {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+/* Waiting Room */
+.waitingRoom {
+  height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  padding: 20px;
+}
+
+/* Room Code */
+.roomCode {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+.roomCodeLabel {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.1em;
+}
+
+.roomCodeValue {
+  font-family: 'Orbitron', monospace;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.copyBtn {
+  padding: 6px 14px;
+  font-family: sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Players Grid */
+.playersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.playerCard {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.playerCard.ready {
+  border-color: #4ade80;
+  box-shadow: 0 0 15px rgba(74, 222, 128, 0.15);
+}
+
+.playerCard.host {
+  border-color: var(--gold);
+}
+
+.playerCard.empty {
+  border-style: dashed;
+  opacity: 0.4;
+}
+
+.playerCardName {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--p1-color);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hostBadge {
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  background: var(--gold);
+  color: #000;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.playerStatus {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: sans-serif;
+}
+
+/* Waiting Actions */
+.waitingActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.readyBtn {
+  padding: 14px 40px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4ade80, #16a34a);
+  border: none;
+  border-radius: 25px;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.readyBtn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px rgba(74, 222, 128, 0.4);
+}
+
+.readyBtn.readyActive {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.startBtn {
+  padding: 14px 50px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), #FF6B35);
+  border: none;
+  border-radius: 25px;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.startBtn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px var(--gold);
+}
+
+.startBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .backBtn,
 .leaveBtn {
-  padding: 12px 30px;
+  padding: 12px 28px;
   font-family: 'Orbitron', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  background: rgba(255,255,255,0.1);
-  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   color: white;
   cursor: pointer;
@@ -474,106 +636,95 @@
 
 .backBtn:hover,
 .leaveBtn:hover {
-  background: rgba(255,255,255,0.2);
-  border-color: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
-.waitingRoom {
+/* Countdown */
+.countdownScreen {
+  height: calc(100vh - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdownNumber {
+  font-size: clamp(6rem, 25vw, 12rem);
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 60px var(--gold);
+  animation: countdownPop 0.5s ease-out;
+}
+
+@keyframes countdownPop {
+  from { transform: scale(2); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Result Screen */
+.resultScreen {
   height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 30px;
-  padding: 20px;
 }
 
-.playersGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  width: 100%;
-  max-width: 600px;
+.resultTitle {
+  font-size: clamp(3rem, 12vw, 6rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), #FF6B35);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: titlePulse 2s ease-in-out infinite;
 }
 
-.playerCard {
-  background: rgba(255,255,255,0.08);
-  border: 2px solid rgba(255,255,255,0.2);
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
+.resultActions {
+  display: flex;
+  gap: 15px;
 }
 
-.playerCard.empty {
-  border-style: dashed;
-  opacity: 0.5;
-}
-
-.playerName {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--p1-color);
-  margin-bottom: 10px;
-}
-
-.playerStatus {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.6);
-  font-family: sans-serif;
-}
-
-.startBtn {
-  padding: 15px 50px;
+.rematchBtn {
+  padding: 14px 50px;
   font-family: 'Orbitron', sans-serif;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   background: linear-gradient(135deg, var(--gold), #FF6B35);
   border: none;
-  border-radius: 30px;
+  border-radius: 25px;
   color: #000;
   cursor: pointer;
   transition: all 0.3s;
 }
 
-.startBtn:hover:not(:disabled) {
+.rematchBtn:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 30px var(--gold);
+  box-shadow: 0 0 25px var(--gold);
 }
 
-.startBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+/* Responsive */
+@media (max-width: 480px) {
+  .lobby {
+    gap: 20px;
+  }
 
-.gameView {
-  height: calc(100vh - 60px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
+  .title {
+    font-size: 2rem;
+  }
 
-.gamePlaceholder {
-  text-align: center;
-  padding: 40px;
-  background: rgba(0,0,0,0.3);
-  border: 2px solid rgba(255,255,255,0.2);
-  border-radius: 16px;
-}
+  .roomCodeValue {
+    font-size: 1.5rem;
+  }
 
-.gamePlaceholder h2 {
-  font-size: 2rem;
-  margin-bottom: 20px;
-  color: var(--p1-color);
-}
+  .tabBtn {
+    font-size: 0.65rem;
+    padding: 10px 8px;
+  }
 
-.gamePlaceholder p {
-  color: rgba(255,255,255,0.7);
-  margin-bottom: 10px;
-}
-
-.note {
-  font-size: 0.85rem;
-  color: rgba(255,255,255,0.5);
-  font-style: italic;
+  .nameInput {
+    width: 220px;
+    font-size: 0.95rem;
+  }
 }
