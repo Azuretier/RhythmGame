@@ -137,14 +137,18 @@
   display: grid;
   gap: 1px;
   position: relative;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .cell {
   width: clamp(16px, 4vw, 28px);
   height: clamp(16px, 4vw, 28px);
   background: rgba(255, 255, 255, 0.02);
-  border-radius: 1px;
+  border-radius: 0;
   transition: all 0.1s;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .cell.filled {
@@ -181,8 +185,10 @@
 
 .pieceCell {
   position: absolute;
-  border-radius: 1px;
+  border-radius: 0;
   box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.2);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* NEXT / HOLD */
