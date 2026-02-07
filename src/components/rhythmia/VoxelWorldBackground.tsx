@@ -56,6 +56,172 @@ function blockColor(y: number, maxY: number): THREE.Color {
   return new THREE.Color(0.3, 0.3, 0.35);
 }
 
+// Procedural detail texture — grayscale surface that multiplies with instance colors
+function createBlockDetailTexture(): THREE.CanvasTexture {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const imgData = ctx.createImageData(size, size);
+  const rng = seededRandom(54321);
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+
+      // Multi-octave noise for surface grain
+      let val = 0.78;
+      val += (smoothNoise(x * 0.06, y * 0.06, 7000) - 0.5) * 0.18;
+      val += (smoothNoise(x * 0.14, y * 0.14, 7100) - 0.5) * 0.10;
+      val += (smoothNoise(x * 0.3, y * 0.3, 7200) - 0.5) * 0.06;
+      // Fine grain
+      val += (rng() - 0.5) * 0.08;
+
+      // Edge darkening (ambient occlusion bevel)
+      const edgeDist = Math.min(x, y, size - 1 - x, size - 1 - y);
+      const edgeWidth = 5;
+      if (edgeDist < edgeWidth) {
+        const t = edgeDist / edgeWidth;
+        val *= 0.45 + 0.55 * (t * t); // quadratic falloff for softer AO
+      }
+
+      // Top-edge highlight (bevel shine)
+      if (y < 3) {
+        val += 0.12 * (1 - y / 3);
+      }
+      // Left-edge subtle highlight
+      if (x < 2) {
+        val += 0.06 * (1 - x / 2);
+      }
+
+      // Bottom-edge and right-edge extra shadow
+      if (y > size - 3) {
+        val -= 0.08 * (1 - (size - 1 - y) / 2);
+      }
+      if (x > size - 3) {
+        val -= 0.05 * (1 - (size - 1 - x) / 2);
+      }
+
+      val = Math.max(0, Math.min(1, val));
+      const byte = Math.round(val * 255);
+      imgData.data[idx] = byte;
+      imgData.data[idx + 1] = byte;
+      imgData.data[idx + 2] = byte;
+      imgData.data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Subtle crack/vein lines for weathered stone look
+  ctx.globalCompositeOperation = 'multiply';
+  const cRng = seededRandom(99999);
+  for (let i = 0; i < 5; i++) {
+    ctx.strokeStyle = `rgba(${160 + Math.floor(cRng() * 40)}, ${160 + Math.floor(cRng() * 40)}, ${160 + Math.floor(cRng() * 40)}, 1)`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    let cx = cRng() * size;
+    let cy = cRng() * size;
+    ctx.moveTo(cx, cy);
+    const segments = 2 + Math.floor(cRng() * 3);
+    for (let j = 0; j < segments; j++) {
+      cx += (cRng() - 0.5) * 28;
+      cy += (cRng() - 0.5) * 28;
+      ctx.lineTo(cx, cy);
+    }
+    ctx.stroke();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// Procedural bump map for surface relief
+function createBlockBumpMap(): THREE.CanvasTexture {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const imgData = ctx.createImageData(size, size);
+  const rng = seededRandom(11111);
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+
+      // Multi-scale height noise
+      let h = 0.5;
+      h += (smoothNoise(x * 0.08, y * 0.08, 8000) - 0.5) * 0.3;
+      h += (smoothNoise(x * 0.2, y * 0.2, 8100) - 0.5) * 0.18;
+      h += (smoothNoise(x * 0.5, y * 0.5, 8200) - 0.5) * 0.08;
+      h += (rng() - 0.5) * 0.06;
+
+      // Depress edges for inset block look
+      const edgeDist = Math.min(x, y, size - 1 - x, size - 1 - y);
+      if (edgeDist < 4) {
+        h *= edgeDist / 4;
+      }
+
+      h = Math.max(0, Math.min(1, h));
+      const byte = Math.round(h * 255);
+      imgData.data[idx] = byte;
+      imgData.data[idx + 1] = byte;
+      imgData.data[idx + 2] = byte;
+      imgData.data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  return texture;
+}
+
+// Procedural roughness map — edges rougher, surface varies
+function createBlockRoughnessMap(): THREE.CanvasTexture {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const imgData = ctx.createImageData(size, size);
+  const rng = seededRandom(22222);
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      let r = 0.7;
+      r += (smoothNoise(x * 0.1, y * 0.1, 9000) - 0.5) * 0.2;
+      r += (rng() - 0.5) * 0.1;
+
+      // Edges slightly smoother (worn)
+      const edgeDist = Math.min(x, y, size - 1 - x, size - 1 - y);
+      if (edgeDist < 3) {
+        r -= 0.15 * (1 - edgeDist / 3);
+      }
+
+      r = Math.max(0, Math.min(1, r));
+      const byte = Math.round(r * 255);
+      imgData.data[idx] = byte;
+      imgData.data[idx + 1] = byte;
+      imgData.data[idx + 2] = byte;
+      imgData.data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  return texture;
+}
+
 interface VoxelData {
   positions: Float32Array;
   colors: Float32Array;
@@ -206,19 +372,36 @@ export default function VoxelWorldBackground({
     camera.position.set(35, 25, 35);
     camera.lookAt(0, 0, 0);
 
-    // Lights
-    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+    // Lights — tuned for realistic PBR block rendering
+    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
     dirLight.position.set(20, 30, 10);
     scene.add(dirLight);
+    // Fill light from opposite side for softer shadows
+    const fillLight = new THREE.DirectionalLight(0x8899bb, 0.3);
+    fillLight.position.set(-15, 10, -10);
+    scene.add(fillLight);
     const pointLight = new THREE.PointLight(0xffffff, 0.3);
     pointLight.position.set(0, 15, 0);
     scene.add(pointLight);
 
+    // Procedural textures for realistic block appearance
+    const detailMap = createBlockDetailTexture();
+    const bumpMap = createBlockBumpMap();
+    const roughnessMap = createBlockRoughnessMap();
+
     // Shared geometry/material for instanced meshes
     const boxGeo = new THREE.BoxGeometry(0.95, 0.95, 0.95);
-    const boxMat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0, flatShading: true });
+    const boxMat = new THREE.MeshStandardMaterial({
+      roughness: 0.75,
+      metalness: 0.02,
+      flatShading: false,
+      map: detailMap,
+      bumpMap: bumpMap,
+      bumpScale: 0.15,
+      roughnessMap: roughnessMap,
+    });
 
     // Grid lines
     const gridLines = createGridLines();
@@ -266,6 +449,9 @@ export default function VoxelWorldBackground({
       window.removeEventListener('resize', updateSize);
       renderer.dispose();
       boxGeo.dispose();
+      detailMap.dispose();
+      bumpMap.dispose();
+      roughnessMap.dispose();
       boxMat.dispose();
       if (sceneStateRef.current?.instancedMesh) {
         sceneStateRef.current.instancedMesh.dispose();
