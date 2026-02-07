@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { db } from '@/lib/MNSW/firebase';
 import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
-import { createTextureAtlas, BLOCK_IDS, TOTAL_BLOCKS } from './TextureUtils';
+import { createTextureAtlas, BLOCK_FACE_TEXTURES, TOTAL_TEXTURES } from './TextureUtils';
 
 // Post Processing
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
@@ -100,10 +100,11 @@ export class VoxelEngine {
     private perlin: Perlin;
     private worldType: 'default' | 'superflat';
     private matAtlas: THREE.MeshStandardMaterial;
+    private texturesReady = false;
 
     constructor(
-        container: HTMLElement, 
-        worldPath: string, 
+        container: HTMLElement,
+        worldPath: string,
         updateHUD: (x:number, y:number, z:number) => void,
         settings: { seed: number, type: 'default' | 'superflat' } = { seed: 12345, type: 'default' }
     ) {
@@ -130,34 +131,46 @@ export class VoxelEngine {
         this.composer = new EffectComposer(this.renderer);
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
-        
+
         const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.3, 0.4, 0.85);
         this.composer.addPass(bloomPass);
-        
+
         const outputPass = new OutputPass();
         this.composer.addPass(outputPass);
 
-        // --- NEW MATERIAL: Texture Atlas ---
-        const texture = createTextureAtlas();
-        this.matAtlas = new THREE.MeshStandardMaterial({ 
-            map: texture,
-            roughness: 0.9, 
+        // Placeholder material until textures load
+        this.matAtlas = new THREE.MeshStandardMaterial({
+            color: 0x888888,
+            roughness: 0.9,
             metalness: 0.1,
-            vertexColors: false // Disable vertex colors, use texture map
+            vertexColors: false
+        });
+
+        // Load texture atlas from image files asynchronously
+        createTextureAtlas().then((texture) => {
+            this.matAtlas.map = texture;
+            this.matAtlas.color.set(0xffffff);
+            this.matAtlas.needsUpdate = true;
+            this.texturesReady = true;
+            // Rebuild all chunks with the loaded textures
+            for (const chunk of this.chunks.values()) {
+                chunk.isDirty = true;
+            }
+            this.updateChunks(true);
         });
 
         this.setupLights();
         this.setupReferenceObject();
         this.raycaster = new THREE.Raycaster();
-        
-        this.updateChunks(true); 
+
+        this.updateChunks(true);
 
         window.addEventListener('resize', this.onResize);
         document.addEventListener('keydown', this.onKeyDown);
         document.addEventListener('keyup', this.onKeyUp);
         document.body.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mousedown', this.onMouseDown);
-        
+
         this.connectToFirebase();
         this.animate();
     }
@@ -258,70 +271,74 @@ export class VoxelEngine {
     private buildChunkMesh(chunk: Chunk) {
         if (chunk.mesh) { this.scene.remove(chunk.mesh); chunk.mesh.geometry.dispose(); chunk.mesh = null; }
         const vertices: number[] = [];
-        const uvs: number[] = []; // NEW: UV Coordinates
+        const uvs: number[] = [];
         const normals: number[] = [];
         const indices: number[] = [];
         let vertCount = 0;
-        
+
         const isSolid = (x: number, y: number, z: number) => {
             const b = chunk.getBlock(x, y, z);
             return b !== undefined && b !== 'water' && b !== 'leaves';
         };
+
+        const defaultFace = { top: 2, bottom: 2, side: 2 }; // fallback to dirt
 
         chunk.data.forEach((type, key) => {
             const [x, y, z] = key.split(',').map(Number);
             const wx = x * BLOCK_SIZE + chunk.cx * CHUNK_SIZE * BLOCK_SIZE;
             const wy = y * BLOCK_SIZE;
             const wz = z * BLOCK_SIZE + chunk.cz * CHUNK_SIZE * BLOCK_SIZE;
-            
-            // --- UV MAPPING LOGIC ---
-            const textureIndex = BLOCK_IDS[type] || BLOCK_IDS['dirt'];
-            const uStart = textureIndex / TOTAL_BLOCKS;
-            const uEnd = (textureIndex + 1) / TOTAL_BLOCKS;
-            
+
+            const faceTextures = BLOCK_FACE_TEXTURES[type] || defaultFace;
+
             const s = HALF_BLOCK;
-            const faces = [
-                { dir: [1, 0, 0], pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ], check: [x+1, y, z] },
-                { dir: [-1, 0, 0], pos: [ [-s, -s, -s], [-s, -s, s], [-s, s, s], [-s, s, -s] ], check: [x-1, y, z] },
-                { dir: [0, 1, 0], pos: [ [-s, s, s], [s, s, s], [s, s, -s], [-s, s, -s] ], check: [x, y+1, z] },
-                { dir: [0, -1, 0], pos: [ [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s] ], check: [x, y-1, z] },
-                { dir: [0, 0, 1], pos: [ [-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s] ], check: [x, y, z+1] },
-                { dir: [0, 0, -1], pos: [ [s, -s, -s], [-s, -s, -s], [-s, s, -s], [s, s, -s] ], check: [x, y, z-1] }
+            // Each face tagged with which texture slot to use: 'top', 'bottom', or 'side'
+            const faces: { dir: number[]; pos: number[][]; check: number[]; face: 'top' | 'bottom' | 'side' }[] = [
+                { dir: [1, 0, 0],  pos: [ [s, -s, s], [s, -s, -s], [s, s, -s], [s, s, s] ],       check: [x+1, y, z], face: 'side' },
+                { dir: [-1, 0, 0], pos: [ [-s, -s, -s], [-s, -s, s], [-s, s, s], [-s, s, -s] ],    check: [x-1, y, z], face: 'side' },
+                { dir: [0, 1, 0],  pos: [ [-s, s, s], [s, s, s], [s, s, -s], [-s, s, -s] ],        check: [x, y+1, z], face: 'top' },
+                { dir: [0, -1, 0], pos: [ [-s, -s, -s], [s, -s, -s], [s, -s, s], [-s, -s, s] ],    check: [x, y-1, z], face: 'bottom' },
+                { dir: [0, 0, 1],  pos: [ [-s, -s, s], [s, -s, s], [s, s, s], [-s, s, s] ],        check: [x, y, z+1], face: 'side' },
+                { dir: [0, 0, -1], pos: [ [s, -s, -s], [-s, -s, -s], [-s, s, -s], [s, s, -s] ],    check: [x, y, z-1], face: 'side' }
             ];
 
             for (const face of faces) {
                 if (isSolid(face.check[0], face.check[1], face.check[2])) continue;
+
+                // Pick the correct texture atlas index for this face direction
+                const texIdx = faceTextures[face.face];
+                const uStart = texIdx / TOTAL_TEXTURES;
+                const uEnd = (texIdx + 1) / TOTAL_TEXTURES;
+
                 for (const v of face.pos) {
                     vertices.push(wx + v[0] + HALF_BLOCK, wy + v[1] + HALF_BLOCK, wz + v[2] + HALF_BLOCK);
                     normals.push(face.dir[0], face.dir[1], face.dir[2]);
                 }
-                
-                // UVs for this face (Standard 0-1 square, mapped to Atlas slice)
-                // Order: Bottom Left, Bottom Right, Top Right, Top Left
-                uvs.push(uStart, 0); // 0,0
-                uvs.push(uEnd, 0);   // 1,0
-                uvs.push(uEnd, 1);   // 1,1
-                uvs.push(uStart, 1); // 0,1
+
+                // UVs mapped to the correct atlas slice
+                uvs.push(uStart, 0);
+                uvs.push(uEnd, 0);
+                uvs.push(uEnd, 1);
+                uvs.push(uStart, 1);
 
                 const a = vertCount, b = vertCount + 1, c = vertCount + 2, d = vertCount + 3;
                 indices.push(a, b, c, a, c, d);
                 vertCount += 4;
             }
         });
-        
+
         if (vertices.length === 0) return;
-        
+
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); // Use UVs
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
         geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
         geometry.setIndex(indices);
-        
-        // Use the Texture Atlas Material
+
         chunk.mesh = new THREE.Mesh(geometry, this.matAtlas);
         chunk.mesh.castShadow = true;
         chunk.mesh.receiveShadow = true;
-        
+
         this.scene.add(chunk.mesh);
         chunk.isDirty = false;
     }
