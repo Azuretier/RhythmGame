@@ -91,6 +91,11 @@ export default function Rhythmia() {
   const gameState = useGameState();
   const audio = useAudio();
   const vfx = useRhythmVFX();
+  // Stable ref for vfx — useRhythmVFX() returns a new object every render,
+  // so using vfx directly as an effect dependency would restart those effects
+  // on every render. The ref always holds the latest value without triggering re-runs.
+  const vfxRef = useRef(vfx);
+  vfxRef.current = vfx;
   const boardElRef = useRef<HTMLDivElement>(null);
   const beatBarRef = useRef<HTMLDivElement>(null);
 
@@ -228,7 +233,7 @@ export default function Rhythmia() {
     const rotatedPiece = tryRotation(piece, direction, boardRef.current);
     if (rotatedPiece) {
       // Emit rotation trail VFX before updating piece
-      vfx.emit({
+      vfxRef.current.emit({
         type: 'rotation',
         pieceType: piece.type,
         boardX: piece.x,
@@ -241,7 +246,7 @@ export default function Rhythmia() {
       currentPieceRef.current = rotatedPiece;
       playRotateSound();
     }
-  }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef, gameOverRef, isPausedRef, playRotateSound, vfx]);
+  }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef, gameOverRef, isPausedRef, playRotateSound]);
 
   // Process horizontal DAS/ARR
   const processHorizontalDasArr = useCallback((direction: 'left' | 'right', currentTime: number) => {
@@ -312,19 +317,19 @@ export default function Rhythmia() {
       playTone(1047, 0.2, 'triangle');
 
       // VFX: combo change event
-      vfx.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
+      vfxRef.current.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
 
       // VFX: fever mode trigger at combo 10+
       if (newCombo >= 10 && comboRef.current < 10) {
-        vfx.emit({ type: 'feverStart', combo: newCombo });
+        vfxRef.current.emit({ type: 'feverStart', combo: newCombo });
       }
     } else {
       // VFX: combo broken — end fever if active
       if (comboRef.current >= 10) {
-        vfx.emit({ type: 'feverEnd' });
+        vfxRef.current.emit({ type: 'feverEnd' });
       }
       setCombo(0);
-      vfx.emit({ type: 'comboChange', combo: 0, onBeat: false });
+      vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
     }
 
     const newBoard = lockPiece(piece, boardRef.current);
@@ -354,7 +359,7 @@ export default function Rhythmia() {
       const remaining = destroyTerrain(damage);
 
       // VFX: line clear equalizer bars + glitch particles
-      vfx.emit({
+      vfxRef.current.emit({
         type: 'lineClear',
         rows: rowsToClear,
         count: clearedLines,
@@ -417,7 +422,7 @@ export default function Rhythmia() {
     terrainDestroyedCountRef, terrainTotalRef, damageMultiplierRef,
     setCombo, setBoard, setWorldIdx, setLines, setLevel, setCurrentPiece, setGamePhase,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
-    currentPieceRef, destroyTerrain, startNewStage, vfx,
+    currentPieceRef, destroyTerrain, startNewStage,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops,
     triggerCollapse, triggerTransition, triggerWorldCreation,
   ]);
@@ -438,7 +443,7 @@ export default function Rhythmia() {
 
     // VFX: hard drop impact particles
     if (dropDistance > 0) {
-      vfx.emit({
+      vfxRef.current.emit({
         type: 'hardDrop',
         pieceType: newPiece.type,
         boardX: newPiece.x,
@@ -449,7 +454,7 @@ export default function Rhythmia() {
 
     playHardDropSound();
     handlePieceLock(newPiece, dropDistance);
-  }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, handlePieceLock, playHardDropSound, vfx]);
+  }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, handlePieceLock, playHardDropSound]);
 
   // Hold current piece
   const holdCurrentPiece = useCallback(() => {
@@ -526,7 +531,7 @@ export default function Rhythmia() {
 
       // VFX: beat pulse ring — intensity scales with BPM
       const intensity = Math.min(1, (world.bpm - 80) / 100);
-      vfx.emit({ type: 'beat', bpm: world.bpm, intensity });
+      vfxRef.current.emit({ type: 'beat', bpm: world.bpm, intensity });
 
       setTimeout(() => setBoardBeat(false), 100);
     }, interval);
@@ -534,7 +539,7 @@ export default function Rhythmia() {
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
-  }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat, vfx]);
+  }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
 
   // Beat phase animation — drives cursor via direct DOM manipulation (CSS var + data attr)
   // to avoid React re-render batching issues that cause inconsistent/missing animation on
