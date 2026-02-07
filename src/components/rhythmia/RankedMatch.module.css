@@ -1,0 +1,545 @@
+.container {
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  background: #000000;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Status Bar */
+.statusBar {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.connectionStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: background 0.3s;
+}
+
+.connected {
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+
+.connecting {
+  background: rgba(255, 255, 255, 0.5);
+  animation: blink 1s infinite;
+}
+
+.error,
+.disconnected {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===== Rank Screen (Idle) ===== */
+.rankScreen {
+  height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 20px;
+}
+
+.rankHeader {
+  font-size: clamp(1.5rem, 6vw, 2.5rem);
+  font-weight: 200;
+  letter-spacing: 0.35em;
+  color: #ffffff;
+}
+
+/* Rank Card */
+.rankCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 32px 28px;
+  text-align: center;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.tierIcon {
+  font-size: 2.5rem;
+  font-weight: 200;
+  letter-spacing: 0.1em;
+}
+
+.tierName {
+  font-size: 1.3rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+
+.tierNameJa {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+}
+
+.pointsDisplay {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.pointsValue {
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.pointsLabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+
+/* Progress Bar */
+.progressContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressLabel {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: right;
+  letter-spacing: 0.05em;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statItem .statValue {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.statItem .statLabel {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+.busFare {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.busFare span {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Search Button */
+.searchBtn {
+  padding: 14px 60px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #ffffff;
+  border: none;
+  border-radius: 8px;
+  color: #000000;
+  cursor: pointer;
+  letter-spacing: 0.25em;
+  transition: all 0.25s;
+}
+
+.searchBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
+}
+
+.searchBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.backBtn {
+  padding: 10px 24px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.08em;
+}
+
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ===== Search Screen ===== */
+.searchScreen {
+  height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 20px;
+}
+
+.searchTitle {
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.searchAnim {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchPulse {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.searchPulse::before {
+  content: '';
+  position: absolute;
+  inset: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite 0.5s;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.searchTimer {
+  font-size: 1.8rem;
+  font-weight: 200;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  z-index: 1;
+}
+
+.searchInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.searchRank {
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+
+.searchPoints {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.1em;
+}
+
+.searchHint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.05em;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cancelBtn {
+  padding: 10px 36px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.1em;
+}
+
+.cancelBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+/* ===== Countdown Screen ===== */
+.countdownScreen {
+  height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+.matchupDisplay {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.matchupPlayer {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.matchupName {
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: #ffffff;
+  letter-spacing: 0.1em;
+}
+
+.matchupRank {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+
+.matchupVs {
+  font-size: 1.5rem;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+}
+
+.aiBadge {
+  font-size: 0.6rem;
+  padding: 2px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+
+.countdownNumber {
+  font-size: clamp(6rem, 25vw, 12rem);
+  font-weight: 200;
+  color: #ffffff;
+  animation: countdownPop 0.5s ease-out;
+  letter-spacing: 0.1em;
+}
+
+@keyframes countdownPop {
+  from { transform: scale(2); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ===== Result Screen ===== */
+.resultScreen {
+  height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 20px;
+}
+
+.resultTitle {
+  font-size: clamp(2.5rem, 10vw, 4rem);
+  font-weight: 200;
+  letter-spacing: 0.3em;
+}
+
+.resultWin {
+  color: #ffffff;
+}
+
+.resultLoss {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Rank Change Card */
+.rankChangeCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 28px 32px;
+  text-align: center;
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.rankChangeTier {
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+
+.rankChangePoints {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rankChangeOld {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.3);
+  text-decoration: line-through;
+}
+
+.rankChangeArrow {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.rankChangeNew {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #ffffff;
+}
+
+.promotionBanner {
+  padding: 6px 20px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 8px;
+  color: #FFD700;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  animation: glow 1.5s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.1); }
+  50% { box-shadow: 0 0 16px rgba(255, 215, 0, 0.2); }
+}
+
+.demotionBanner {
+  padding: 6px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+}
+
+.resultActions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .rankCard {
+    padding: 24px 20px;
+  }
+
+  .pointsValue {
+    font-size: 2rem;
+  }
+
+  .statsGrid {
+    gap: 10px;
+  }
+
+  .matchupDisplay {
+    gap: 20px;
+  }
+
+  .matchupName {
+    font-size: 1rem;
+  }
+}
