@@ -13,12 +13,20 @@ import type {
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished';
 
+const MAX_RECONNECT_ATTEMPTS = 5;
+const PING_TIMEOUT = 60000; // Consider connection dead if no ping from server in 60s
+
 export default function MultiplayerGame() {
   // Connection
   const wsRef = useRef<WebSocket | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const playerIdRef = useRef<string>('');
   const reconnectTokenRef = useRef<string>('');
+  const reconnectAttemptsRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPingRef = useRef<number>(Date.now());
+  const pingCheckTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const roomCodeRef = useRef<string>('');
 
   // UI state
   const [mode, setMode] = useState<GameMode>('lobby');
@@ -38,8 +46,29 @@ export default function MultiplayerGame() {
   const [gameResult, setGameResult] = useState<{ winnerId: string } | null>(null);
 
   // ===== WebSocket Connection =====
+  const connectWebSocketRef = useRef<() => void>(() => {});
+
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectTimerRef.current) return;
+    if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+      setError('Connection lost. Please rejoin manually.');
+      return;
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 15000);
+    reconnectAttemptsRef.current++;
+    console.log(`[WS] Scheduling reconnect attempt ${reconnectAttemptsRef.current} in ${delay}ms`);
+    setConnectionStatus('connecting');
+
+    reconnectTimerRef.current = setTimeout(() => {
+      reconnectTimerRef.current = null;
+      connectWebSocketRef.current();
+    }, delay);
+  }, []);
+
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
+    if (wsRef.current?.readyState === WebSocket.CONNECTING) return;
 
     setConnectionStatus('connecting');
     const wsUrl = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
@@ -49,6 +78,14 @@ export default function MultiplayerGame() {
       console.log('[WS] Connected');
       setConnectionStatus('connected');
       setError(null);
+      reconnectAttemptsRef.current = 0;
+      lastPingRef.current = Date.now();
+
+      // If we have a reconnect token, attempt to rejoin
+      const token = reconnectTokenRef.current || sessionStorage.getItem('mp_reconnectToken');
+      if (token) {
+        ws.send(JSON.stringify({ type: 'reconnect', reconnectToken: token }));
+      }
     };
 
     ws.onmessage = (event) => {
@@ -64,15 +101,21 @@ export default function MultiplayerGame() {
       console.log('[WS] Disconnected');
       setConnectionStatus('disconnected');
       wsRef.current = null;
+
+      // Auto-reconnect if we were in a room
+      if (reconnectTokenRef.current) {
+        scheduleReconnect();
+      }
     };
 
     ws.onerror = () => {
       setConnectionStatus('error');
-      setError('Connection failed. Check your internet connection.');
     };
 
     wsRef.current = ws;
-  }, []);
+  }, [scheduleReconnect]);
+
+  connectWebSocketRef.current = connectWebSocket;
 
   const send = useCallback((data: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -90,11 +133,15 @@ export default function MultiplayerGame() {
       case 'room_created':
         playerIdRef.current = msg.playerId;
         reconnectTokenRef.current = msg.reconnectToken;
+        roomCodeRef.current = msg.roomCode;
+        sessionStorage.setItem('mp_reconnectToken', msg.reconnectToken);
         break;
 
       case 'joined_room':
         playerIdRef.current = msg.playerId;
         reconnectTokenRef.current = msg.reconnectToken;
+        roomCodeRef.current = msg.roomCode;
+        sessionStorage.setItem('mp_reconnectToken', msg.reconnectToken);
         setRoomState(msg.roomState);
         setMode('waiting-room');
         setError(null);
@@ -122,6 +169,7 @@ export default function MultiplayerGame() {
       case 'player_left':
         setRoomState(prev => {
           if (!prev) return prev;
+          // Only remove player on explicit leave or grace timeout
           return {
             ...prev,
             players: prev.players.filter(p => p.id !== msg.playerId),
@@ -156,6 +204,8 @@ export default function MultiplayerGame() {
       case 'reconnected':
         playerIdRef.current = msg.playerId;
         reconnectTokenRef.current = msg.reconnectToken;
+        roomCodeRef.current = msg.roomCode;
+        sessionStorage.setItem('mp_reconnectToken', msg.reconnectToken);
         setRoomState(msg.roomState);
         if (msg.roomState.status === 'playing') {
           setMode('playing');
@@ -174,20 +224,41 @@ export default function MultiplayerGame() {
         break;
 
       case 'ping':
+        lastPingRef.current = Date.now();
         send({ type: 'pong' });
         break;
 
       case 'server_shutdown':
-        setError('Server is restarting. Please reconnect.');
+        setError('Server is restarting. Reconnecting...');
         setConnectionStatus('disconnected');
         break;
     }
   }, [send]);
 
-  // Connect on mount
+  // Connect on mount + client-side ping timeout detection
   useEffect(() => {
     connectWebSocket();
+
+    // Periodically check if we're still receiving pings from server
+    pingCheckTimerRef.current = setInterval(() => {
+      if (
+        wsRef.current?.readyState === WebSocket.OPEN &&
+        Date.now() - lastPingRef.current > PING_TIMEOUT
+      ) {
+        console.log('[WS] Ping timeout — server may be unreachable');
+        wsRef.current.close();
+      }
+    }, 10000);
+
     return () => {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
+      if (pingCheckTimerRef.current) {
+        clearInterval(pingCheckTimerRef.current);
+        pingCheckTimerRef.current = null;
+      }
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
@@ -254,6 +325,9 @@ export default function MultiplayerGame() {
 
   const leaveRoom = useCallback(() => {
     send({ type: 'leave_room' });
+    reconnectTokenRef.current = '';
+    roomCodeRef.current = '';
+    sessionStorage.removeItem('mp_reconnectToken');
     setRoomState(null);
     setMode('room-browser');
     setError(null);
@@ -481,13 +555,14 @@ export default function MultiplayerGame() {
               <div
                 key={player.id}
                 className={`${styles.playerCard} ${player.ready ? styles.ready : ''} ${player.id === roomState.hostId ? styles.host : ''}`}
+                style={!player.connected ? { opacity: 0.5 } : {}}
               >
                 <div className={styles.playerCardName}>
                   {player.name}
                   {player.id === roomState.hostId && <span className={styles.hostBadge}>HOST</span>}
                 </div>
                 <div className={styles.playerStatus}>
-                  {player.ready ? 'READY' : 'Not Ready'}
+                  {!player.connected ? 'Reconnecting...' : player.ready ? 'READY' : 'Not Ready'}
                 </div>
               </div>
             ))}

@@ -17,7 +17,7 @@ const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   : ['http://localhost:3000', 'http://localhost:3001', 'null', 'file://'];
 
 // Timing constants
-const HEARTBEAT_INTERVAL = 30000;
+const HEARTBEAT_INTERVAL = 15000;
 const CLIENT_TIMEOUT = 45000;
 const RECONNECT_GRACE_PERIOD = 60000;
 const COUNTDOWN_SECONDS = 3;
@@ -29,12 +29,13 @@ const roomManager = new MultiplayerRoomManager();
 interface PlayerConnection {
   ws: WebSocket;
   isAlive: boolean;
-  lastPing: number;
+  lastActivity: number;
   reconnectToken?: string;
 }
 
 const playerConnections = new Map<string, PlayerConnection>();
 const reconnectTokens = new Map<string, { playerId: string; expires: number }>();
+const disconnectTimers = new Map<string, NodeJS.Timeout>();
 
 // ===== Utility Functions =====
 
@@ -54,6 +55,8 @@ function sendToPlayer(playerId: string, message: ServerMessage): boolean {
       return true;
     } catch (error) {
       console.error(`[SEND] Failed for ${playerId}:`, error);
+      conn.ws.terminate();
+      handleDisconnect(playerId, 'send_failed');
       return false;
     }
   }
@@ -150,7 +153,7 @@ function handleMessage(playerId: string, raw: string): void {
   // Update activity
   const conn = playerConnections.get(playerId);
   if (conn) {
-    conn.lastPing = Date.now();
+    conn.lastActivity = Date.now();
   }
 
   switch (message.type) {
@@ -235,6 +238,14 @@ function handleMessage(playerId: string, raw: string): void {
       }
 
       const oldPlayerId = tokenData.playerId;
+
+      // Cancel the grace period removal timer
+      const graceTimer = disconnectTimers.get(oldPlayerId);
+      if (graceTimer) {
+        clearTimeout(graceTimer);
+        disconnectTimers.delete(oldPlayerId);
+      }
+
       const room = roomManager.getRoomByPlayerId(oldPlayerId);
       if (!room) {
         sendError(playerId, 'Room no longer exists', 'ROOM_GONE');
@@ -243,6 +254,7 @@ function handleMessage(playerId: string, raw: string): void {
       }
 
       roomManager.transferPlayer(oldPlayerId, playerId);
+      roomManager.reconnectPlayer(playerId);
       reconnectTokens.delete(message.reconnectToken);
 
       const newToken = issueReconnectToken(playerId);
@@ -256,11 +268,21 @@ function handleMessage(playerId: string, raw: string): void {
         reconnectToken: newToken,
       });
 
+      // Notify other players of reconnection
+      sendRoomState(room.code);
+
       console.log(`[RECONNECT] Player reconnected to room ${room.code}`);
       break;
     }
 
     case 'leave_room': {
+      // Cancel any pending grace timer
+      const graceTimer = disconnectTimers.get(playerId);
+      if (graceTimer) {
+        clearTimeout(graceTimer);
+        disconnectTimers.delete(playerId);
+      }
+
       const result = roomManager.removePlayerFromRoom(playerId);
 
       // Clear reconnect token
@@ -360,22 +382,40 @@ function handleMessage(playerId: string, raw: string): void {
 // ===== Disconnect Handler =====
 
 function handleDisconnect(playerId: string, reason: string): void {
+  // Prevent double-handling
+  if (disconnectTimers.has(playerId)) return;
+
   const result = roomManager.markPlayerDisconnected(playerId);
+  playerConnections.delete(playerId);
 
   if (result.roomCode) {
-    broadcastToRoom(result.roomCode, {
-      type: 'player_left',
-      playerId,
-      reason: 'disconnected',
-    });
+    // Broadcast updated room state showing the player as disconnected
+    sendRoomState(result.roomCode);
 
-    if (result.room) {
-      sendRoomState(result.roomCode);
-    }
+    // Start grace period timer — actually remove player after timeout
+    const timer = setTimeout(() => {
+      disconnectTimers.delete(playerId);
+
+      const removeResult = roomManager.removePlayerFromRoom(playerId);
+      if (removeResult.roomCode) {
+        broadcastToRoom(removeResult.roomCode, {
+          type: 'player_left',
+          playerId,
+          reason: 'timeout',
+        });
+
+        if (removeResult.room) {
+          sendRoomState(removeResult.roomCode);
+        }
+      }
+
+      console.log(`[GRACE_EXPIRED] Player ${playerId} removed from room`);
+    }, RECONNECT_GRACE_PERIOD);
+
+    disconnectTimers.set(playerId, timer);
   }
 
-  playerConnections.delete(playerId);
-  console.log(`[DISCONNECT] Player ${playerId} (${reason})`);
+  console.log(`[DISCONNECT] Player ${playerId} (${reason}) — grace period started`);
 }
 
 // ===== Origin Validation =====
@@ -439,19 +479,19 @@ const wss = new WebSocketServer({
   },
 });
 
-// Heartbeat check
+// Heartbeat check — uses timestamp-based timeout to avoid false disconnects
 const heartbeatInterval = setInterval(() => {
+  const now = Date.now();
   playerConnections.forEach((conn, playerId) => {
-    if (!conn.isAlive) {
-      console.log(`[TIMEOUT] Player ${playerId}`);
+    if (now - conn.lastActivity > CLIENT_TIMEOUT) {
+      console.log(`[TIMEOUT] Player ${playerId} (no activity for ${Math.round((now - conn.lastActivity) / 1000)}s)`);
       conn.ws.terminate();
       handleDisconnect(playerId, 'timeout');
       return;
     }
 
-    conn.isAlive = false;
     try {
-      sendToPlayer(playerId, { type: 'ping', timestamp: Date.now() });
+      sendToPlayer(playerId, { type: 'ping', timestamp: now });
     } catch {
       conn.ws.terminate();
       handleDisconnect(playerId, 'ping_failed');
@@ -477,7 +517,7 @@ wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
   const conn: PlayerConnection = {
     ws,
     isAlive: true,
-    lastPing: Date.now(),
+    lastActivity: Date.now(),
   };
   playerConnections.set(playerId, conn);
 
@@ -540,6 +580,10 @@ function shutdown(signal: string) {
 
   clearInterval(heartbeatInterval);
   clearInterval(tokenCleanupInterval);
+
+  // Clear all grace period timers
+  disconnectTimers.forEach((timer) => clearTimeout(timer));
+  disconnectTimers.clear();
 
   playerConnections.forEach((conn) => {
     try {

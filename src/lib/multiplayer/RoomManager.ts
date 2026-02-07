@@ -232,7 +232,27 @@ export class MultiplayerRoomManager {
       player.connected = false;
     }
 
-    return this.removePlayerFromRoom(playerId);
+    // End game if not enough connected players during gameplay
+    if (room.status === 'playing' && room.players.filter(p => p.connected).length < 2) {
+      room.status = 'finished';
+    }
+
+    return { roomCode, room };
+  }
+
+  reconnectPlayer(playerId: string): { roomCode?: string; room?: Room } {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return {};
+
+    const room = this.rooms.get(roomCode);
+    if (!room) return {};
+
+    const player = room.players.find(p => p.id === playerId);
+    if (player) {
+      player.connected = true;
+    }
+
+    return { roomCode, room };
   }
 
   setPlayerReady(playerId: string, ready: boolean): { success: boolean; error?: string } {
