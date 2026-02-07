@@ -10,6 +10,10 @@ export function useAudio() {
         if (!audioCtxRef.current) {
             audioCtxRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         }
+        // Resume suspended AudioContext (required by browsers after user gesture)
+        if (audioCtxRef.current.state === 'suspended') {
+            audioCtxRef.current.resume();
+        }
     }, []);
 
     const playTone = useCallback((freq: number, dur = 0.1, type: OscillatorType = 'sine') => {
@@ -30,6 +34,7 @@ export function useAudio() {
     const playDrum = useCallback(() => {
         const ctx = audioCtxRef.current;
         if (!ctx) return;
+        if (ctx.state === 'suspended') ctx.resume();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'square';

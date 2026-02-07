@@ -70,15 +70,17 @@ interface TerrainProgressProps {
 }
 
 /**
- * Terrain destruction progress bar
+ * Tower defense enemy progress display
  */
 export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber }: TerrainProgressProps) {
-    const percent = terrainTotal > 0 ? (terrainRemaining / terrainTotal) * 100 : 0;
     return (
         <>
-            <div className={styles.terrainLabel}>STAGE {stageNumber} — 地形破壊</div>
+            <div className={styles.terrainLabel}>STAGE {stageNumber} — TOWER DEFENSE</div>
             <div className={styles.terrainBar}>
-                <div className={styles.terrainFill} style={{ width: `${percent}%` }} />
+                <div className={styles.terrainFill} style={{ width: `${terrainTotal > 0 ? Math.min(100, (terrainRemaining / 20) * 100) : 0}%`, background: terrainRemaining > 10 ? '#ff4444' : terrainRemaining > 5 ? '#ffaa00' : '#44ff44' }} />
+            </div>
+            <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
+                ENEMIES: {terrainRemaining}
             </div>
         </>
     );

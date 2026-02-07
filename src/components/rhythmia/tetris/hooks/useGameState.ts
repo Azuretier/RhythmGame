@@ -1,15 +1,18 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, InventoryItem, FloatingItem, CraftedCard, TerrainParticle } from '../types';
+import type { Piece, Board, KeyState, GamePhase, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy } from '../types';
 import {
     BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
+    ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
+    ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
 let nextFloatingId = 0;
 let nextParticleId = 0;
+let nextEnemyId = 0;
 
 /**
  * Roll a random item based on drop weights
@@ -76,6 +79,10 @@ export function useGameState() {
     const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
     const [showCraftUI, setShowCraftUI] = useState(false);
 
+    // ===== Tower Defense =====
+    const [enemies, setEnemies] = useState<Enemy[]>([]);
+    const [hasHadCombo, setHasHadCombo] = useState(false);
+
     // Computed: total damage multiplier from all crafted cards
     const damageMultiplier = craftedCards.reduce((mult, card) => {
         const def = WEAPON_CARD_MAP[card.cardId];
@@ -110,6 +117,8 @@ export function useGameState() {
     const terrainTotalRef = useRef(terrainTotal);
     const beatPhaseRef = useRef(beatPhase);
     const damageMultiplierRef = useRef(damageMultiplier);
+    const enemiesRef = useRef<Enemy[]>(enemies);
+    const hasHadComboRef = useRef(hasHadCombo);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -140,6 +149,8 @@ export function useGameState() {
     useEffect(() => { terrainTotalRef.current = terrainTotal; }, [terrainTotal]);
     useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
     useEffect(() => { damageMultiplierRef.current = damageMultiplier; }, [damageMultiplier]);
+    useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
+    useEffect(() => { hasHadComboRef.current = hasHadCombo; }, [hasHadCombo]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -315,6 +326,78 @@ export function useGameState() {
         }, TERRAIN_PARTICLE_LIFETIME + 100);
     }, []);
 
+    // ===== Tower Defense Enemy Actions =====
+
+    // Spawn enemies at the terrain edge
+    const spawnEnemies = useCallback((count: number) => {
+        const newEnemies: Enemy[] = [];
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const spawnDist = ENEMY_SPAWN_DISTANCE + Math.random() * 3;
+            newEnemies.push({
+                id: nextEnemyId++,
+                x: Math.cos(angle) * spawnDist,
+                y: 5 + Math.random() * 3,
+                z: Math.sin(angle) * spawnDist,
+                speed: ENEMY_BASE_SPEED + Math.random() * 0.02,
+                health: 1,
+                alive: true,
+                spawnTime: Date.now(),
+            });
+        }
+        setEnemies(prev => [...prev, ...newEnemies]);
+    }, []);
+
+    // Move enemies toward center (tower), returns number that reached the tower
+    const updateEnemies = useCallback((): number => {
+        let reached = 0;
+        setEnemies(prev => {
+            const updated = prev.map(e => {
+                if (!e.alive) return e;
+                const dx = -e.x;
+                const dz = -e.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < ENEMY_TOWER_RADIUS) {
+                    reached++;
+                    return { ...e, alive: false };
+                }
+
+                const nx = dx / dist;
+                const nz = dz / dist;
+                return {
+                    ...e,
+                    x: e.x + nx * e.speed,
+                    z: e.z + nz * e.speed,
+                };
+            });
+            // Clean up dead enemies that have been dead for a while
+            return updated.filter(e => e.alive || Date.now() - e.spawnTime < 10000);
+        });
+        return reached;
+    }, []);
+
+    // Kill closest enemies (when lines are cleared)
+    const killEnemies = useCallback((count: number) => {
+        setEnemies(prev => {
+            // Sort alive enemies by distance to center (closest first)
+            const alive = prev.filter(e => e.alive);
+            const dead = prev.filter(e => !e.alive);
+            alive.sort((a, b) => {
+                const distA = Math.sqrt(a.x * a.x + a.z * a.z);
+                const distB = Math.sqrt(b.x * b.x + b.z * b.z);
+                return distA - distB;
+            });
+
+            // Kill the closest ones
+            const toKill = Math.min(count, alive.length);
+            for (let i = 0; i < toKill; i++) {
+                alive[i] = { ...alive[i], alive: false };
+            }
+            return [...alive, ...dead];
+        });
+    }, []);
+
     // Craft a weapon card
     const craftCard = useCallback((cardId: string): boolean => {
         const card = WEAPON_CARD_MAP[cardId];
@@ -409,6 +492,13 @@ export function useGameState() {
         setTerrainParticles([]);
         setShowCraftUI(false);
 
+        // Reset tower defense state
+        setEnemies([]);
+        enemiesRef.current = [];
+        setHasHadCombo(false);
+        hasHadComboRef.current = false;
+        nextEnemyId = 0;
+
         setHoldPiece(null);
         setCanHold(true);
 
@@ -480,6 +570,9 @@ export function useGameState() {
         craftedCards,
         showCraftUI,
         damageMultiplier,
+        // Tower defense
+        enemies,
+        hasHadCombo,
 
         // Setters
         setBoard,
@@ -526,6 +619,8 @@ export function useGameState() {
         terrainTotalRef,
         beatPhaseRef,
         damageMultiplierRef,
+        enemiesRef,
+        hasHadComboRef,
         keyStatesRef,
         gameLoopRef,
         beatTimerRef,
@@ -552,5 +647,11 @@ export function useGameState() {
         triggerCollapse,
         triggerTransition,
         triggerWorldCreation,
+        // Tower defense actions
+        spawnEnemies,
+        updateEnemies,
+        killEnemies,
+        setHasHadCombo,
+        setEnemies,
     };
 }

@@ -120,6 +120,18 @@ export type CraftedCard = {
     craftedAt: number;
 };
 
+// ===== Tower Defense =====
+export type Enemy = {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    speed: number;
+    health: number;
+    alive: boolean;
+    spawnTime: number;
+};
+
 // ===== Terrain Particle =====
 export type TerrainParticle = {
     id: number;

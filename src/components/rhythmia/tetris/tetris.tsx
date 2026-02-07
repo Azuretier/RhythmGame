@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE } from './constants';
 import type { Piece } from './types';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
@@ -109,8 +109,6 @@ export default function Rhythmia() {
     worldIdx,
     stageNumber,
     terrainSeed,
-    terrainDestroyedCount,
-    terrainTotal,
     beatPhase,
     judgmentText,
     judgmentColor,
@@ -127,6 +125,9 @@ export default function Rhythmia() {
     craftedCards,
     showCraftUI,
     damageMultiplier,
+    // Tower defense
+    enemies,
+    hasHadCombo,
     // Refs
     boardRef,
     currentPieceRef,
@@ -142,10 +143,10 @@ export default function Rhythmia() {
     isPausedRef,
     worldIdxRef,
     stageNumberRef,
-    terrainDestroyedCountRef,
-    terrainTotalRef,
     beatPhaseRef,
     damageMultiplierRef,
+    enemiesRef,
+    hasHadComboRef,
     keyStatesRef,
     gameLoopRef,
     beatTimerRef,
@@ -172,17 +173,18 @@ export default function Rhythmia() {
     triggerBoardShake,
     initGame,
     handleTerrainReady,
-    destroyTerrain,
-    startNewStage,
     // Game loop actions
     spawnItemDrops,
     spawnTerrainParticles,
     craftCard,
     canCraftCard,
     toggleCraftUI,
-    triggerCollapse,
-    triggerTransition,
-    triggerWorldCreation,
+    // Tower defense actions
+    spawnEnemies,
+    updateEnemies,
+    killEnemies,
+    setHasHadCombo,
+    setGameOver,
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound } = audio;
@@ -296,7 +298,7 @@ export default function Rhythmia() {
     }
   }, [movePiece, setScore, keyStatesRef, isPausedRef, gameOverRef, sdfRef]);
 
-  // Handle piece locking and game advancement — integrates the full game loop
+  // Handle piece locking and game advancement — tower defense game loop
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
     // Beat judgment
     const currentBeatPhase = beatPhaseRef.current;
@@ -309,6 +311,11 @@ export default function Rhythmia() {
       setCombo(newCombo);
       showJudgment('PERFECT!', '#FFD700');
       playTone(1047, 0.2, 'triangle');
+
+      // Track that combo has been achieved at least once
+      if (!hasHadComboRef.current) {
+        setHasHadCombo(true);
+      }
 
       // VFX: combo change event
       vfx.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
@@ -324,6 +331,13 @@ export default function Rhythmia() {
       }
       setCombo(0);
       vfx.emit({ type: 'comboChange', combo: 0, onBeat: false });
+
+      // Tower Defense: Game over when combo drops to 0 (but not at game start)
+      if (hasHadComboRef.current) {
+        showJudgment('TOWER FALLEN!', '#FF0000');
+        setGameOver(true);
+        return;
+      }
     }
 
     const newBoard = lockPiece(piece, boardRef.current);
@@ -346,11 +360,11 @@ export default function Rhythmia() {
     const finalScore = baseScore * mult * Math.max(1, comboRef.current);
     updateScore(scoreRef.current + finalScore);
 
-    // === DIG PHASE: Terrain destruction with damage multiplier from weapon cards ===
+    // === TOWER DEFENSE: Kill enemies when lines are cleared ===
     if (clearedLines > 0) {
       const weaponMult = damageMultiplierRef.current;
-      const damage = clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult;
-      const remaining = destroyTerrain(damage);
+      const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+      killEnemies(killCount);
 
       // VFX: line clear equalizer bars + glitch particles
       vfx.emit({
@@ -360,43 +374,13 @@ export default function Rhythmia() {
         onBeat,
         combo: comboRef.current,
       });
-      // === PARTICLE EFFECTS: Terrain emits particles when destroyed ===
+
+      // Particle effects
       const center = getBoardCenter();
       spawnTerrainParticles(center.x, center.y, clearedLines * TERRAIN_PARTICLES_PER_LINE);
 
-      // === ITEM DROP: Terrain drops items that float to inventory ===
-      spawnItemDrops(damage, center.x, center.y);
-
-      if (remaining <= 0) {
-        // === COLLAPSE PHASE: Terrain fully destroyed ===
-        triggerCollapse();
-
-        const newStageNumber = stageNumberRef.current + 1;
-        // Cycle worlds every 5 stages
-        const newWorldIdx = Math.floor((newStageNumber - 1) / 5) % WORLDS.length;
-        const currentWorldIdx = worldIdxRef.current;
-
-        if (newWorldIdx !== currentWorldIdx) {
-          showJudgment('WORLD CLEAR!', '#00FF00');
-          setWorldIdx(newWorldIdx);
-        } else {
-          showJudgment(`STAGE ${newStageNumber}!`, '#FFD700');
-        }
-
-        // Collapse → Transition → World Creation → Playing
-        setTimeout(() => {
-          triggerTransition();
-        }, 1200);
-
-        setTimeout(() => {
-          triggerWorldCreation();
-          startNewStage(newStageNumber);
-        }, 2400);
-
-        setTimeout(() => {
-          setGamePhase('PLAYING');
-        }, 3800);
-      }
+      // Item drops
+      spawnItemDrops(killCount, center.x, center.y);
 
       playLineClear(clearedLines);
       triggerBoardShake();
@@ -412,13 +396,11 @@ export default function Rhythmia() {
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
   }, [
-    beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, worldIdxRef, stageNumberRef,
-    terrainDestroyedCountRef, terrainTotalRef, damageMultiplierRef,
-    setCombo, setBoard, setWorldIdx, setLines, setLevel, setCurrentPiece, setGamePhase,
+    beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, hasHadComboRef,
+    setCombo, setBoard, setLines, setLevel, setCurrentPiece,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
-    currentPieceRef, destroyTerrain, startNewStage, vfx,
+    currentPieceRef, vfx, killEnemies, setHasHadCombo, setGameOver,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops,
-    triggerCollapse, triggerTransition, triggerWorldCreation,
   ]);
 
   // Hard drop
@@ -509,7 +491,7 @@ export default function Rhythmia() {
     initGame();
   }, [initAudio, initGame]);
 
-  // Beat timer for rhythm game
+  // Beat timer for rhythm game + enemy spawning
   useEffect(() => {
     if (!isPlaying || gameOver) return;
 
@@ -523,6 +505,12 @@ export default function Rhythmia() {
       setBoardBeat(true);
       playDrum();
 
+      // Tower Defense: spawn enemies on each beat
+      spawnEnemies(ENEMIES_PER_BEAT);
+
+      // Move enemies toward tower
+      updateEnemies();
+
       // VFX: beat pulse ring — intensity scales with BPM
       const intensity = Math.min(1, (world.bpm - 80) / 100);
       vfx.emit({ type: 'beat', bpm: world.bpm, intensity });
@@ -533,7 +521,7 @@ export default function Rhythmia() {
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
-  }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat, vfx]);
+  }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat, vfx, spawnEnemies, updateEnemies]);
 
   // Beat phase animation
   useEffect(() => {
@@ -722,10 +710,10 @@ export default function Rhythmia() {
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
       style={{ ...responsiveCSSVars, position: 'relative' }}
     >
-      {/* Voxel World Background — destructible terrain */}
+      {/* Voxel World Background — Tower Defense */}
       <VoxelWorldBackground
         seed={terrainSeed}
-        destroyedCount={terrainDestroyedCount}
+        enemies={enemies}
         onTerrainReady={handleTerrainReady}
       />
 
@@ -762,7 +750,7 @@ export default function Rhythmia() {
 
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
-          <TerrainProgress terrainRemaining={terrainTotal - terrainDestroyedCount} terrainTotal={terrainTotal} stageNumber={stageNumber} />
+          <TerrainProgress terrainRemaining={enemies.filter(e => e.alive).length} terrainTotal={enemies.length} stageNumber={stageNumber} />
 
           <div className={styles.gameArea} ref={gameAreaRef}>
             {/* Left side: Hold + Item Slots */}
