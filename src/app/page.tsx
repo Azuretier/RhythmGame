@@ -1,39 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import styles from '../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../components/rhythmia/tetris';
 import MultiplayerGame from '../components/rhythmia/MultiplayerGame';
-import LifeJourney from '../components/rhythmia/LifeJourney';
-import ForestCampfireScene from '../components/rhythmia/ForestCampfireScene';
 
-type GameMode = 'lobby' | 'vanilla' | 'multiplayer' | 'modded';
-
-const DEFAULT_THIRD_WIDGET_TITLE = 'SNS links widgets';
+type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
 export default function RhythmiaPage() {
   const [gameMode, setGameMode] = useState<GameMode>('lobby');
   const [isLoading, setIsLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(127);
-  const thirdWidgetTitle = process.env.NEXT_PUBLIC_THIRD_WIDGET_TITLE || DEFAULT_THIRD_WIDGET_TITLE;
 
   useEffect(() => {
-    // Simulate initialization time
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1500);
-
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    // Simulate online player count updates
     const interval = setInterval(() => {
       const base = 120;
       const variance = Math.floor(Math.random() * 30) - 15;
       setOnlineCount(base + variance);
     }, 5000);
-
     return () => clearInterval(interval);
   }, []);
 
@@ -47,94 +39,111 @@ export default function RhythmiaPage() {
 
   if (gameMode === 'vanilla') {
     return (
-      <div className={styles.gameContainer + ' ' + styles.active}>
+      <motion.div
+        className={styles.gameContainer + ' ' + styles.active}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className={styles.gameHeader}>
-          <span className={styles.gameTitle}>🎮 RHYTHMIA — VANILLA SERVER</span>
+          <span className={styles.gameTitle}>RHYTHMIA — VANILLA</span>
           <button className={styles.backButton} onClick={closeGame}>
-            ← ロビーに戻る
+            ← Back
           </button>
         </div>
         <VanillaGame />
-      </div>
+      </motion.div>
     );
   }
 
   if (gameMode === 'multiplayer') {
     return (
-      <div className={styles.gameContainer + ' ' + styles.active}>
+      <motion.div
+        className={styles.gameContainer + ' ' + styles.active}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className={styles.gameHeader}>
-          <span className={styles.gameTitle}>⚔️ BATTLE ARENA — MULTIPLAYER</span>
+          <span className={styles.gameTitle}>BATTLE ARENA — 1v1</span>
           <button className={styles.backButton} onClick={closeGame}>
-            ← ロビーに戻る
+            ← Back
           </button>
         </div>
         <MultiplayerGame />
-      </div>
-    );
-  }
-
-  if (gameMode === 'modded') {
-    return (
-      <div className={styles.gameContainer + ' ' + styles.active}>
-        <div className={styles.gameHeader}>
-          <span className={styles.gameTitle}>✨ {thirdWidgetTitle} — MOD SERVER</span>
-          <button className={styles.backButton} onClick={closeGame}>
-            ← ロビーに戻る
-          </button>
-        </div>
-        <LifeJourney />
-      </div>
+      </motion.div>
     );
   }
 
   return (
     <div className={styles.page}>
-      {/* WebGPU Forest Campfire Background */}
-      <ForestCampfireScene />
-
       {/* Loading overlay */}
-      <div className={`${styles.loadingOverlay} ${!isLoading ? styles.hidden : ''}`}>
-        <div className={styles.loader}></div>
-        <div className={styles.loadingText}>INITIALIZING...</div>
-      </div>
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            className={styles.loadingOverlay}
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className={styles.loader}></div>
+            <div className={styles.loadingText}>LOADING</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className={styles.container}>
-        <header className={styles.header}>
+        <motion.header
+          className={styles.header}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? -20 : 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
           <div className={styles.logo}>RHYTHMIA</div>
           <div className={styles.statusBar}>
             <div className={styles.statusItem}>
               <span className={styles.statusDot}></span>
-              <span>サーバー接続中</span>
+              <span>Online</span>
             </div>
             <div className={styles.statusItem}>
               <span>v2.5.0</span>
             </div>
           </div>
-        </header>
+        </motion.header>
 
         <main className={styles.main}>
-          <div className={styles.heroText}>
+          <motion.div
+            className={styles.heroText}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+          >
             <h1>SELECT SERVER</h1>
-            <p>サーバーを選択してプレイ開始</p>
-          </div>
+            <p>Choose your mode</p>
+          </motion.div>
 
           <div className={styles.serverGrid}>
             {/* Vanilla Server */}
-            <div
+            <motion.div
               className={`${styles.serverCard} ${styles.vanilla}`}
               onClick={() => launchGame('vanilla')}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              whileHover={{ y: -8, transition: { duration: 0.25 } }}
             >
               <span className={styles.cardBadge}>OFFICIAL</span>
-              <span className={styles.cardIcon}>🎮</span>
               <h2 className={styles.cardTitle}>VANILLA</h2>
               <p className={styles.cardSubtitle}>Original Experience</p>
               <p className={styles.cardDescription}>
-                オリジナルのRHYTHMIA体験。リズムに乗ってブロックを積み、ワールドを攻略しよう。純粋なゲームプレイを楽しめます。
+                Classic RHYTHMIA gameplay. Stack blocks to the rhythm and conquer worlds.
               </p>
               <div className={styles.cardFeatures}>
-                <span className={styles.featureTag}>🎵 5ワールド</span>
-                <span className={styles.featureTag}>⚡ リズムシステム</span>
-                <span className={styles.featureTag}>🎨 オリジナル</span>
+                <span className={styles.featureTag}>5 Worlds</span>
+                <span className={styles.featureTag}>Rhythm</span>
+                <span className={styles.featureTag}>Solo</span>
               </div>
               <div className={styles.cardStats}>
                 <div className={styles.stat}>
@@ -147,29 +156,31 @@ export default function RhythmiaPage() {
                 </div>
                 <div className={styles.stat}>
                   <div className={styles.statValue}>∞</div>
-                  <div className={styles.statLabel}>レベル</div>
+                  <div className={styles.statLabel}>Levels</div>
                 </div>
               </div>
-              <button className={styles.playButton}>▶ PLAY NOW</button>
-            </div>
+              <button className={styles.playButton}>PLAY</button>
+            </motion.div>
 
             {/* Multiplayer Server */}
-            <div
+            <motion.div
               className={`${styles.serverCard} ${styles.multiplayer}`}
               onClick={() => launchGame('multiplayer')}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
+              transition={{ duration: 0.6, delay: 0.45 }}
+              whileHover={{ y: -8, transition: { duration: 0.25 } }}
             >
-              <span className={`${styles.cardBadge} ${styles.new}`}>🔥 NEW</span>
-              <span className={styles.cardIcon}>⚔️</span>
+              <span className={`${styles.cardBadge} ${styles.new}`}>1v1</span>
               <h2 className={styles.cardTitle}>BATTLE ARENA</h2>
-              <p className={styles.cardSubtitle}>Multiplayer Mode</p>
+              <p className={styles.cardSubtitle}>Multiplayer 1v1</p>
               <p className={styles.cardDescription}>
-                リアルタイム対戦モード！ライン消去で相手にガベージを送り込め。最後まで生き残った者が勝者だ。
+                Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.
               </p>
               <div className={styles.cardFeatures}>
-                <span className={styles.featureTag}>👥 2P対戦</span>
-                <span className={styles.featureTag}>🤖 AI対戦</span>
-                <span className={styles.featureTag}>💥 ガベージ</span>
-                <span className={styles.featureTag}>🏆 ランキング</span>
+                <span className={styles.featureTag}>1v1</span>
+                <span className={styles.featureTag}>WebSocket</span>
+                <span className={styles.featureTag}>Ranked</span>
               </div>
               <div className={styles.cardStats}>
                 <div className={styles.stat}>
@@ -187,61 +198,21 @@ export default function RhythmiaPage() {
               </div>
               <div className={styles.onlineCount}>
                 <span className={styles.onlineDot}></span>
-                <span>{onlineCount} players online</span>
+                <span>{onlineCount} online</span>
               </div>
-              <button className={styles.playButton}>⚔️ BATTLE NOW</button>
-            </div>
-
-            {/* Modded Server */}
-            <div
-              className={`${styles.serverCard} ${styles.modded} ${styles.desktopTab}`}
-              onClick={() => launchGame('modded')}
-            >
-              <div className={styles.tabTitleBar}>
-                <div className={styles.tabTitle}>
-                  <span className={styles.tabIcon}>✨</span>
-                  <span>{thirdWidgetTitle}</span>
-                </div>
-                <div className={styles.tabControls}>
-                  <span className={styles.tabButton}>_</span>
-                  <span className={styles.tabButton}>□</span>
-                  <span className={styles.tabButton}>×</span>
-                </div>
-              </div>
-              <span className={styles.cardBadge}>MODDED</span>
-              <span className={styles.cardIcon}>✨</span>
-              <h2 className={styles.cardTitle}>{thirdWidgetTitle}</h2>
-              <p className={styles.cardSubtitle}>Social Connection</p>
-              <p className={styles.cardDescription}>
-                ソーシャルメディアへのリンクを集約したウィジェット。GitHub、YouTube、Instagram、Discordなど、すべての連絡先を一箇所で確認できます。
-              </p>
-              <div className={styles.cardFeatures}>
-                <span className={styles.featureTag}>🔗 SNSリンク</span>
-                <span className={styles.featureTag}>📱 モバイル対応</span>
-                <span className={styles.featureTag}>🎨 カスタム</span>
-              </div>
-              <div className={styles.cardStats}>
-                <div className={styles.stat}>
-                  <div className={styles.statValue}>4</div>
-                  <div className={styles.statLabel}>Platforms</div>
-                </div>
-                <div className={styles.stat}>
-                  <div className={styles.statValue}>LIVE</div>
-                  <div className={styles.statLabel}>Status</div>
-                </div>
-                <div className={styles.stat}>
-                  <div className={styles.statValue}>⚡</div>
-                  <div className={styles.statLabel}>Fast</div>
-                </div>
-              </div>
-              <button className={styles.playButton}>▶ CONNECT</button>
-            </div>
+              <button className={styles.playButton}>BATTLE</button>
+            </motion.div>
           </div>
         </main>
 
-        <footer className={styles.footer}>
-          RHYTHMIA NEXUS © 2025 — PLAY YOUR RHYTHM
-        </footer>
+        <motion.footer
+          className={styles.footer}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isLoading ? 0 : 0.4 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+        >
+          RHYTHMIA &copy; 2025
+        </motion.footer>
       </div>
     </div>
   );

@@ -1,208 +1,13 @@
-/* Honkai Star Rail Theme */
+/* Minimal Black & White Theme */
 .page {
-  /* HSR Color variables */
-  --hsr-gold: #f4c430;
-  --hsr-amber: #ffb347;
-  --hsr-purple: #9370db;
-  --hsr-cosmic-blue: #4169e1;
-  --hsr-dark-purple: #2d1b4e;
-
-  /* Desktop tab styling colors */
-  --tab-close-hover: #ff3232;
-
-  /* Legacy variable names for compatibility */
-  --dark-bg: #0d0620;
-  --darker-bg: #070313;
-  --neon-pink: #f4c430;
-  /* Maps to HSR gold */
-  --neon-cyan: #4169e1;
-  /* Maps to HSR cosmic blue */
-  --neon-purple: #9370db;
-  /* Maps to HSR purple */
-  --neon-gold: #f4c430;
-  /* Maps to HSR gold */
-
-  font-family: 'Zen Kaku Gothic New', sans-serif;
-  background: var(--dark-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  background: #000000;
   min-height: 100vh;
   max-width: 100%;
   overflow: hidden;
-  color: #fff;
+  color: #ffffff;
   position: relative;
   box-sizing: border-box;
-}
-
-/* WebGPU Stage Canvas */
-.webgpuStage {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Animated background - Star field pattern */
-.bgGrid {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image:
-    radial-gradient(2px 2px at 20% 30%, rgba(244, 196, 48, 0.8), transparent),
-    radial-gradient(2px 2px at 60% 70%, rgba(255, 179, 71, 0.6), transparent),
-    radial-gradient(1px 1px at 50% 50%, rgba(147, 112, 219, 0.5), transparent),
-    radial-gradient(2px 2px at 80% 10%, rgba(65, 105, 225, 0.7), transparent),
-    radial-gradient(1px 1px at 90% 60%, rgba(244, 196, 48, 0.6), transparent),
-    radial-gradient(2px 2px at 15% 80%, rgba(147, 112, 219, 0.5), transparent),
-    linear-gradient(rgba(147, 112, 219, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(65, 105, 225, 0.02) 1px, transparent 1px);
-  background-size: 200px 200px, 300px 300px, 250px 250px, 350px 350px, 150px 150px, 280px 280px, 60px 60px, 60px 60px;
-  background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, 200px 50px, 300px 200px, 0 0, 0 0;
-  animation: starfieldMove 60s linear infinite, starTwinkle 3s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@keyframes starfieldMove {
-  0% {
-    transform: translateY(0) scale(1);
-  }
-
-  100% {
-    transform: translateY(50px) scale(1.02);
-  }
-}
-
-@keyframes starTwinkle {
-
-  0%,
-  100% {
-    opacity: 0.8;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}
-
-.bgGlow {
-  position: fixed;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  filter: blur(150px);
-  opacity: 0.3;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.glow1 {
-  top: -200px;
-  left: -200px;
-  background: var(--hsr-gold);
-  animation: glowPulse 8s ease-in-out infinite;
-}
-
-.glow2 {
-  bottom: -200px;
-  right: -200px;
-  background: var(--hsr-cosmic-blue);
-  animation: glowPulse 8s ease-in-out infinite 4s;
-}
-
-.glow3 {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--hsr-purple);
-  animation: glowPulse 8s ease-in-out infinite 2s;
-  opacity: 0.15;
-}
-
-@keyframes glowPulse {
-
-  0%,
-  100% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.4;
-    transform: scale(1.2);
-  }
-}
-
-/* Lunar halo + perimeter wall */
-.lunarHalo {
-  position: fixed;
-  top: -140px;
-  right: -120px;
-  width: 520px;
-  height: 520px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 45%, rgba(255, 255, 255, 0.18), rgba(244, 196, 48, 0.04) 45%, transparent 60%),
-    radial-gradient(circle at 60% 55%, rgba(65, 105, 225, 0.25), transparent 55%),
-    radial-gradient(circle at 50% 50%, rgba(147, 112, 219, 0.12), transparent 70%);
-  box-shadow:
-    0 0 120px rgba(244, 196, 48, 0.3),
-    0 0 220px rgba(65, 105, 225, 0.2);
-  filter: blur(1px);
-  opacity: 0.55;
-  mix-blend-mode: screen;
-  pointer-events: none;
-  z-index: 0;
-  animation: haloDrift 18s ease-in-out infinite;
-}
-
-.lunarRim {
-  position: fixed;
-  inset: 24px;
-  border-radius: 28px;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(244, 196, 48, 0.08), transparent 30%),
-    radial-gradient(circle at 80% 75%, rgba(65, 105, 225, 0.08), transparent 35%),
-    conic-gradient(from 120deg at 50% 50%, rgba(255, 255, 255, 0.05), rgba(244, 196, 48, 0.1), rgba(147, 112, 219, 0.08), rgba(255, 255, 255, 0.05));
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    inset 0 0 60px rgba(0, 0, 0, 0.4),
-    0 0 40px rgba(244, 196, 48, 0.08);
-  mask-image: radial-gradient(circle at 50% 50%, transparent 45%, black 60%);
-}
-
-.lunarWall {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    linear-gradient(rgba(7, 3, 19, 0.92), rgba(7, 3, 19, 0.75)) padding-box,
-    repeating-linear-gradient(90deg,
-      rgba(255, 255, 255, 0.08) 0,
-      rgba(255, 255, 255, 0.08) 2px,
-      transparent 2px,
-      transparent 14px);
-  background-size: cover, 120px 100%;
-  mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.65) 25%, rgba(0, 0, 0, 0.9) 50%, rgba(0, 0, 0, 0.65) 75%, transparent 100%);
-  opacity: 0.25;
-  mix-blend-mode: lighten;
-}
-
-@keyframes haloDrift {
-
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  50% {
-    transform: translate(-12px, 10px) scale(1.05);
-  }
 }
 
 /* Loading overlay */
@@ -212,28 +17,21 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--darker-bg);
+  background: #000000;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 200;
-  opacity: 1;
-  transition: opacity 0.5s;
-}
-
-.loadingOverlay.hidden {
-  opacity: 0;
-  pointer-events: none;
 }
 
 .loader {
-  width: 60px;
-  height: 60px;
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top-color: var(--hsr-gold);
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #ffffff;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -243,22 +41,20 @@
 }
 
 .loadingText {
-  margin-top: 20px;
-  font-family: 'Orbitron', monospace;
-  font-size: 0.9rem;
-  letter-spacing: 0.3em;
-  opacity: 0.7;
+  margin-top: 16px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.4em;
+  opacity: 0.4;
 }
 
 /* Main container */
 .container {
   position: relative;
   z-index: 1;
-  min-height: 100%;
+  min-height: 100vh;
   overflow: hidden;
-  /* Standard */
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
   display: flex;
   flex-direction: column;
@@ -266,34 +62,29 @@
 
 .container::-webkit-scrollbar {
   display: none;
-  /* Chrome, Safari and Opera */
 }
 
 /* Header */
 .header {
-  padding: 30px 40px;
+  padding: 32px 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .logo {
-  font-family: 'Orbitron', monospace;
-  font-size: 1.8rem;
-  font-weight: 900;
-  letter-spacing: 0.3em;
-  background: linear-gradient(135deg, var(--hsr-gold), var(--hsr-amber));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: 0 0 30px rgba(244, 196, 48, 0.5);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  color: #ffffff;
+  opacity: 0.9;
 }
 
 .statusBar {
   display: flex;
   gap: 20px;
-  font-size: 0.85rem;
-  opacity: 0.7;
+  font-size: 0.75rem;
+  opacity: 0.35;
 }
 
 .statusItem {
@@ -303,28 +94,26 @@
 }
 
 .statusDot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #4ade80;
-  animation: statusPulse 2s ease-in-out infinite;
+  background: #ffffff;
+  opacity: 0.6;
+  animation: statusPulse 2.5s ease-in-out infinite;
 }
 
 @keyframes statusPulse {
-
   0%,
   100% {
-    opacity: 1;
+    opacity: 0.6;
   }
-
   50% {
-    opacity: 0.5;
+    opacity: 0.2;
   }
 }
 
 /* Main content */
 .main {
-  perspective: 1200px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -335,81 +124,47 @@
 
 .heroText {
   text-align: center;
-  margin-bottom: 60px;
+  margin-bottom: 64px;
 }
 
 .heroText h1 {
-  font-family: 'Orbitron', monospace;
-  font-size: clamp(2rem, 8vw, 5rem);
-  font-weight: 900;
-  letter-spacing: 0.2em;
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: titleGlow 3s ease-in-out infinite;
-}
-
-@keyframes titleGlow {
-
-  0%,
-  100% {
-    filter: drop-shadow(0 0 20px rgba(244, 196, 48, 0.5));
-  }
-
-  50% {
-    filter: drop-shadow(0 0 40px rgba(147, 112, 219, 0.8));
-  }
+  font-size: clamp(1.8rem, 6vw, 3.5rem);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  margin-bottom: 12px;
+  color: #ffffff;
 }
 
 .heroText p {
-  font-size: 1.1rem;
-  opacity: 0.6;
-  letter-spacing: 0.3em;
+  font-size: 0.8rem;
+  opacity: 0.3;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
+  font-weight: 400;
 }
 
-/* Server selection */
+/* Server selection grid */
 .serverGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(2, minmax(280px, 420px));
+  gap: 24px;
   width: 100%;
-  max-width: 1200px;
-  transform-style: preserve-3d;
+  max-width: 900px;
+  justify-content: center;
 }
 
-/* Gradient Card with Glassmorphism */
+/* Server card - minimal glassmorphism */
 .serverCard {
   position: relative;
-  background: linear-gradient(135deg,
-      rgba(20, 15, 10, 0.85) 0%,
-      rgba(40, 25, 15, 0.75) 50%,
-      rgba(25, 18, 12, 0.85) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 180, 100, 0.15);
-  border-radius: 16px;
-  padding: 35px 25px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 36px 28px;
   cursor: pointer;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  will-change: transform, box-shadow;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.6),
-    0 0 0 1px rgba(255, 150, 80, 0.08),
-    0 12px 35px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 200, 150, 0.1);
 }
 
-/* Gradient border effect */
 .serverCard::before {
   content: '';
   position: absolute;
@@ -417,158 +172,102 @@
   left: 0;
   right: 0;
   bottom: 0;
-  border-radius: 16px;
-  padding: 1px;
-  background: linear-gradient(135deg,
-      rgba(255, 180, 100, 0.3) 0%,
-      transparent 30%,
-      transparent 70%,
-      rgba(var(--card-rgb), 0.3) 100%);
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.6;
-  transition: opacity 0.4s;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.35s;
   pointer-events: none;
 }
 
-/* Inner glow effect */
-.serverCard::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  background:
-    radial-gradient(ellipse at 30% 0%, rgba(255, 180, 100, 0.12), transparent 50%),
-    radial-gradient(ellipse at 70% 100%, rgba(var(--card-rgb), 0.1), transparent 50%);
-  opacity: 0;
-  transition: opacity 0.4s;
-  pointer-events: none;
+.serverCard:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .serverCard:hover::before {
   opacity: 1;
 }
 
-.serverCard:hover::after {
-  opacity: 1;
-}
-
-.serverCard:hover {
-  transform: translateY(-12px) translateZ(0);
-  border-color: rgba(255, 180, 100, 0.3);
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.7),
-    0 0 60px rgba(var(--card-rgb), 0.25),
-    0 0 30px rgba(255, 150, 80, 0.15),
-    inset 0 1px 0 rgba(255, 200, 150, 0.2);
-}
-
-/* Warm campfire color variations */
+/* Card color accents (subtle) */
 .serverCard.vanilla {
-  --card-color: #4a9eff;
-  --card-color-dim: rgba(74, 158, 255, 0.3);
-  --card-rgb: 74, 158, 255;
-}
-
-.serverCard.modded {
-  --card-color: #b88aff;
-  --card-color-dim: rgba(184, 138, 255, 0.3);
-  --card-rgb: 184, 138, 255;
+  --card-accent: rgba(255, 255, 255, 0.7);
 }
 
 .serverCard.multiplayer {
-  --card-color: #ffb347;
-  --card-color-dim: rgba(255, 179, 71, 0.3);
-  --card-rgb: 255, 179, 71;
-}
-
-.cardIcon {
-  font-size: 3.5rem;
-  margin-bottom: 15px;
-  display: block;
+  --card-accent: rgba(255, 255, 255, 0.7);
 }
 
 .cardBadge {
   position: absolute;
   top: 20px;
   right: 20px;
-  padding: 6px 14px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  border-radius: 0;
-  background: var(--card-color);
-  color: var(--darker-bg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
 }
 
 .cardBadge.new {
-  background: linear-gradient(135deg, #FF6B35, #FFD700);
-  animation: badgePulse 2s ease-in-out infinite;
-}
-
-@keyframes badgePulse {
-
-  0%,
-  100% {
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
-  }
-
-  50% {
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.8);
-  }
+  border-color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .cardTitle {
-  font-family: 'Orbitron', monospace;
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: var(--card-color);
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  margin-bottom: 6px;
+  color: #ffffff;
 }
 
 .cardSubtitle {
-  font-size: 0.85rem;
-  opacity: 0.5;
-  margin-bottom: 15px;
+  font-size: 0.7rem;
+  opacity: 0.3;
+  margin-bottom: 16px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+  font-weight: 400;
 }
 
 .cardDescription {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   line-height: 1.7;
-  opacity: 0.7;
+  opacity: 0.45;
   margin-bottom: 20px;
+  font-weight: 300;
 }
 
 .cardFeatures {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 20px;
 }
 
 .featureTag {
-  padding: 5px 10px;
-  font-size: 0.7rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0;
-  opacity: 0.8;
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  opacity: 0.5;
+  letter-spacing: 0.05em;
 }
 
 .cardStats {
   display: flex;
-  gap: 20px;
-  padding-top: 15px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .stat {
@@ -576,75 +275,60 @@
 }
 
 .statValue {
-  font-family: 'Orbitron', monospace;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--card-color);
+  font-size: 1rem;
+  font-weight: 500;
+  color: #ffffff;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
-  font-size: 0.65rem;
-  opacity: 0.5;
+  font-size: 0.6rem;
+  opacity: 0.3;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  margin-top: 2px;
 }
 
 .playButton {
-  position: relative;
   width: 100%;
-  padding: 14px;
-  margin-top: 15px;
-  font-family: 'Orbitron', monospace;
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
+  padding: 12px;
+  margin-top: 16px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: var(--darker-bg);
-  background: linear-gradient(135deg, var(--card-color), var(--card-color));
+  color: #000000;
+  background: #ffffff;
   border: none;
-  border-radius: 0;
+  border-radius: 6px;
   cursor: pointer;
-  overflow: hidden;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .playButton:hover {
-  transform: scale(1.02);
-  box-shadow: 0 10px 30px var(--card-color-dim);
-}
-
-.playButton::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
-}
-
-.playButton:hover::after {
-  left: 100%;
+  background: rgba(255, 255, 255, 0.85);
+  transform: none;
 }
 
 /* Footer */
 .footer {
-  padding: 30px 40px;
+  padding: 24px 40px;
   text-align: center;
-  font-size: 0.8rem;
-  opacity: 0.4;
-  letter-spacing: 0.2em;
+  font-size: 0.7rem;
+  opacity: 0.2;
+  letter-spacing: 0.15em;
+  font-weight: 300;
 }
 
-/* Game iframe container */
+/* Game container */
 .gameContainer {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--darker-bg);
+  background: #000000;
   z-index: 100;
   display: none;
   flex-direction: column;
@@ -658,42 +342,37 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 25px;
-  background: rgba(0, 0, 0, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 24px;
+  background: rgba(0, 0, 0, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .gameTitle {
-  font-family: 'Orbitron', monospace;
-  font-size: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
   letter-spacing: 0.2em;
+  opacity: 0.7;
 }
 
 .backButton {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 20px;
-  font-family: 'Orbitron', monospace;
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s;
 }
 
 .backButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: var(--hsr-gold);
-}
-
-.gameFrame {
-  flex: 1;
-  border: none;
-  width: 100%;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* Online indicator */
@@ -701,116 +380,28 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
-  color: var(--neon-gold);
-  margin-top: 8px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 10px;
 }
 
 .onlineDot {
-  width: 6px;
-  height: 6px;
-  background: var(--neon-gold);
+  width: 5px;
+  height: 5px;
+  background: #ffffff;
   border-radius: 50%;
-  animation: onlinePulse 1.5s ease-in-out infinite;
+  opacity: 0.5;
+  animation: onlinePulse 2s ease-in-out infinite;
 }
 
 @keyframes onlinePulse {
-
   0%,
   100% {
-    opacity: 1;
-    box-shadow: 0 0 5px var(--neon-gold);
-  }
-
-  50% {
     opacity: 0.5;
-    box-shadow: 0 0 15px var(--neon-gold);
   }
-}
-
-/* Desktop Application Tab Styling */
-.desktopTab {
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.desktopTab:hover {
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    0 0 40px var(--card-color-dim),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.tabTitleBar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 32px;
-  background: linear-gradient(180deg, rgba(147, 112, 219, 0.3) 0%, rgba(147, 112, 219, 0.15) 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 10px;
-  z-index: 10;
-}
-
-.tabTitle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0.05em;
-}
-
-.tabIcon {
-  font-size: 0.9rem;
-}
-
-.tabControls {
-  display: flex;
-  gap: 8px;
-}
-
-.tabButton {
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  cursor: pointer;
-  transition: all 0.2s;
-  line-height: 1;
-}
-
-.tabButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 1);
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.tabButton:last-child:hover {
-  background: var(--tab-close-hover);
-  border-color: var(--tab-close-hover);
-}
-
-.desktopTab .cardIcon {
-  margin-top: 20px;
-}
-
-.desktopTab .cardBadge {
-  top: 40px;
+  50% {
+    opacity: 0.2;
+  }
 }
 
 /* Responsive */
@@ -818,15 +409,19 @@
   .header {
     padding: 20px;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
   }
 
   .serverGrid {
     grid-template-columns: 1fr;
-    padding: 0 10px;
+    padding: 0 16px;
   }
 
   .heroText h1 {
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
+  }
+
+  .heroText {
+    margin-bottom: 40px;
   }
 }

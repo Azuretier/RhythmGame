@@ -1,11 +1,17 @@
 'use client';
 
 import React, { useEffect, useCallback, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
 import { WORLDS, BOARD_WIDTH } from './constants';
 import type { Piece } from './types';
+
+// Dynamically import VoxelWorldBackground (Three.js requires client-side only)
+const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
+  ssr: false,
+});
 
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars } from './hooks';
@@ -567,6 +573,9 @@ export default function Rhythmia() {
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
       style={responsiveCSSVars}
     >
+      {/* Voxel World Background */}
+      <VoxelWorldBackground />
+
       {/* Title Screen */}
       {!isPlaying && !gameOver && (
         <TitleScreen onStart={startGame} />
