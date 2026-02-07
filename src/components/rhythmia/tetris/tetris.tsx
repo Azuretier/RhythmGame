@@ -274,9 +274,9 @@ export default function Rhythmia() {
     const finalScore = baseScore * mult * Math.max(1, comboRef.current);
     updateScore(scoreRef.current + finalScore);
 
-    // Terrain destruction
+    // Terrain destruction (combo multiplier mirrors score calculation)
     if (clearedLines > 0) {
-      const damage = clearedLines * TERRAIN_DAMAGE_PER_LINE * mult;
+      const damage = clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current);
       const remaining = destroyTerrain(damage);
 
       if (remaining <= 0) {
