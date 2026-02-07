@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import type { FloatingItem } from '../types';
 import { ITEM_MAP } from '../constants';
+import { ItemIcon } from './ItemIcon';
 import styles from '../VanillaGame.module.css';
 
 interface FloatingItemsProps {
@@ -68,7 +69,7 @@ function FloatingItemEl({ item }: { item: FloatingItem }) {
                 background: `radial-gradient(circle at 30% 30%, ${itemDef.glowColor}40, ${itemDef.color}20)`,
             }}
         >
-            <span className={styles.floatingItemIcon}>{itemDef.icon}</span>
+            <ItemIcon itemId={item.itemId} size={16} />
         </div>
     );
 }
