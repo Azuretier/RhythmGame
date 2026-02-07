@@ -1,13 +1,12 @@
 :root {
-  --gold: #FFD700;
-  --p1-color: #4ECDC4;
-  --p1-glow: rgba(78, 205, 196, 0.4);
+  --mp-accent: rgba(255, 255, 255, 0.8);
+  --mp-accent-dim: rgba(255, 255, 255, 0.15);
 }
 
 .container {
   min-height: 100vh;
-  font-family: 'Orbitron', system-ui, sans-serif;
-  background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  background: #000000;
   color: white;
   display: flex;
   flex-direction: column;
@@ -24,31 +23,32 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
 }
 
 .statusDot {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #666;
+  background: rgba(255, 255, 255, 0.3);
   transition: background 0.3s;
 }
 
 .connected {
-  background: #4ade80;
-  box-shadow: 0 0 8px #4ade80;
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
 }
 
 .connecting {
-  background: #fbbf24;
+  background: rgba(255, 255, 255, 0.5);
   animation: blink 1s infinite;
 }
 
 .error,
 .disconnected {
-  background: #ef4444;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 @keyframes blink {
@@ -60,11 +60,11 @@
 .errorBanner {
   margin: 0 20px;
   padding: 10px 16px;
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
-  color: #fca5a5;
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -74,7 +74,7 @@
 .errorClose {
   background: none;
   border: none;
-  color: #fca5a5;
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   padding: 4px 8px;
   font-size: 1rem;
@@ -97,25 +97,17 @@
 }
 
 .title {
-  font-size: clamp(2rem, 8vw, 4rem);
-  font-weight: 900;
-  letter-spacing: 0.15em;
-  background: linear-gradient(135deg, var(--gold), #FF6B35);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: titlePulse 3s ease-in-out infinite;
-}
-
-@keyframes titlePulse {
-  0%, 100% { filter: drop-shadow(0 0 20px var(--gold)); }
-  50% { filter: drop-shadow(0 0 40px #FF6B35); }
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 200;
+  letter-spacing: 0.3em;
+  color: #ffffff;
 }
 
 .subtitle {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.9rem;
-  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.8rem;
+  letter-spacing: 0.25em;
+  font-weight: 400;
 }
 
 /* Mode Grid */
@@ -128,48 +120,48 @@
 }
 
 .modeCard {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 35px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 32px 24px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .modeCard:hover {
-  transform: translateY(-6px) scale(1.02);
-  border-color: var(--gold);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(255, 215, 0, 0.15);
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .modeCard.online {
-  border-color: var(--p1-color);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .modeCard.online:hover {
-  border-color: var(--p1-color);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px var(--p1-glow);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .modeIcon {
-  font-size: 2.5rem;
-  font-weight: 900;
+  font-size: 2rem;
+  font-weight: 300;
   margin-bottom: 12px;
-  color: var(--p1-color);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .modeTitle {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--p1-color);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #ffffff;
   margin-bottom: 8px;
+  letter-spacing: 0.1em;
 }
 
 .modeDesc {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.45);
-  font-family: sans-serif;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 300;
 }
 
 /* Name Entry */
@@ -183,52 +175,53 @@
 }
 
 .onlineTitle {
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: var(--p1-color);
-  text-shadow: 0 0 25px var(--p1-glow);
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #ffffff;
+  letter-spacing: 0.2em;
   margin-bottom: 10px;
 }
 
 .nameInput {
-  padding: 14px 28px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1.1rem;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 1rem;
   text-align: center;
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
   color: white;
   width: 260px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: border-color 0.3s;
+  letter-spacing: 0.05em;
 }
 
 .nameInput:focus {
   outline: none;
-  border-color: var(--gold);
-  box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .nameBtn {
-  padding: 14px 50px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--gold), #FF6B35);
+  padding: 12px 40px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #ffffff;
   border: none;
-  border-radius: 25px;
-  color: #000;
+  border-radius: 8px;
+  color: #000000;
   cursor: pointer;
-  transition: all 0.3s;
+  letter-spacing: 0.2em;
+  transition: all 0.25s;
 }
 
 .nameBtn:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 0 25px var(--gold);
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
 }
 
 .nameBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
@@ -247,51 +240,54 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 18px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  font-size: 0.85rem;
-  color: var(--gold);
-  font-weight: 600;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  letter-spacing: 0.05em;
 }
 
 /* Tab Widget */
 .tabWidget {
   width: 100%;
   max-width: 440px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .tabHeader {
   display: flex;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .tabBtn {
   flex: 1;
-  padding: 13px 12px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 500;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.3);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s;
   position: relative;
+  letter-spacing: 0.1em;
 }
 
 .tabBtn:hover {
-  color: rgba(255, 255, 255, 0.7);
-  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .tabBtn.active {
-  color: var(--p1-color);
-  background: rgba(78, 205, 196, 0.08);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .tabBtn.active::after {
@@ -300,8 +296,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 2px;
-  background: var(--p1-color);
+  height: 1px;
+  background: #ffffff;
 }
 
 .tabContent {
@@ -312,7 +308,7 @@
 .createForm {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .formGroup {
@@ -322,55 +318,56 @@
 }
 
 .formLabel {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.1em;
 }
 
 .formInput {
-  padding: 11px 14px;
-  font-family: sans-serif;
-  font-size: 0.95rem;
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
   color: white;
-  transition: border-color 0.3s;
+  transition: border-color 0.25s;
 }
 
 .formInput:focus {
   outline: none;
-  border-color: var(--p1-color);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .codeInput {
   text-align: center;
-  font-size: 1.5rem;
-  font-family: 'Orbitron', monospace;
+  font-size: 1.3rem;
   letter-spacing: 0.3em;
   text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 .createBtn {
-  padding: 14px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.95rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--p1-color), #2dd4bf);
+  padding: 12px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #ffffff;
   border: none;
-  border-radius: 12px;
-  color: #000;
+  border-radius: 8px;
+  color: #000000;
   cursor: pointer;
-  transition: all 0.3s;
+  letter-spacing: 0.15em;
+  transition: all 0.25s;
 }
 
 .createBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.85);
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px var(--p1-glow);
 }
 
 .createBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
@@ -385,17 +382,17 @@
 }
 
 .roomList::-webkit-scrollbar {
-  width: 5px;
+  width: 3px;
 }
 
 .roomList::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 2px;
 }
 
 .roomList::-webkit-scrollbar-thumb {
-  background: var(--p1-color);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
 }
 
 .roomItem {
@@ -403,51 +400,50 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s;
 }
 
 .roomItem:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--p1-color);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .roomInfo {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .roomName {
-  font-weight: 700;
+  font-weight: 500;
   color: white;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .roomHost {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
-  font-family: sans-serif;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .roomPlayers {
   padding: 3px 10px;
-  background: rgba(78, 205, 196, 0.15);
-  border: 1px solid rgba(78, 205, 196, 0.4);
-  border-radius: 10px;
-  font-size: 0.8rem;
-  color: var(--p1-color);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .emptyState {
   text-align: center;
-  color: rgba(255, 255, 255, 0.4);
-  padding: 35px 20px;
-  font-family: sans-serif;
-  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 32px 20px;
+  font-size: 0.85rem;
+  font-weight: 300;
 }
 
 .emptyState p {
@@ -461,7 +457,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 25px;
+  gap: 24px;
   padding: 20px;
 }
 
@@ -471,41 +467,41 @@
   align-items: center;
   gap: 12px;
   padding: 12px 20px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
 }
 
 .roomCodeLabel {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.1em;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
 }
 
 .roomCodeValue {
-  font-family: 'Orbitron', monospace;
-  font-size: 2rem;
-  font-weight: 900;
-  letter-spacing: 0.2em;
-  color: var(--gold);
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
 }
 
 .copyBtn {
-  padding: 6px 14px;
-  font-family: sans-serif;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  color: white;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.2s;
+  letter-spacing: 0.05em;
 }
 
 .copyBtn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 /* Players Grid */
@@ -518,32 +514,31 @@
 }
 
 .playerCard {
-  background: rgba(255, 255, 255, 0.06);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   padding: 18px;
   text-align: center;
   transition: all 0.3s;
 }
 
 .playerCard.ready {
-  border-color: #4ade80;
-  box-shadow: 0 0 15px rgba(74, 222, 128, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .playerCard.host {
-  border-color: var(--gold);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .playerCard.empty {
   border-style: dashed;
-  opacity: 0.4;
+  opacity: 0.3;
 }
 
 .playerCardName {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--p1-color);
+  font-size: 1rem;
+  font-weight: 500;
+  color: #ffffff;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -552,18 +547,19 @@
 }
 
 .hostBadge {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   padding: 2px 8px;
-  background: var(--gold);
-  color: #000;
-  border-radius: 8px;
-  font-weight: 800;
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
 }
 
 .playerStatus {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: sans-serif;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 300;
 }
 
 /* Waiting Actions */
@@ -575,69 +571,74 @@
 }
 
 .readyBtn {
-  padding: 14px 40px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #4ade80, #16a34a);
+  padding: 12px 36px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #ffffff;
   border: none;
-  border-radius: 25px;
-  color: #000;
+  border-radius: 8px;
+  color: #000000;
   cursor: pointer;
-  transition: all 0.3s;
+  letter-spacing: 0.15em;
+  transition: all 0.25s;
 }
 
 .readyBtn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 25px rgba(74, 222, 128, 0.4);
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
 }
 
 .readyBtn.readyActive {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .startBtn {
-  padding: 14px 50px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--gold), #FF6B35);
+  padding: 12px 44px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #ffffff;
   border: none;
-  border-radius: 25px;
-  color: #000;
+  border-radius: 8px;
+  color: #000000;
   cursor: pointer;
-  transition: all 0.3s;
+  letter-spacing: 0.2em;
+  transition: all 0.25s;
 }
 
 .startBtn:hover:not(:disabled) {
-  transform: scale(1.05);
-  box-shadow: 0 0 25px var(--gold);
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
 }
 
 .startBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
 .backBtn,
 .leaveBtn {
-  padding: 12px 28px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  color: white;
+  padding: 10px 24px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.25s;
+  letter-spacing: 0.08em;
 }
 
 .backBtn:hover,
 .leaveBtn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 /* Countdown */
@@ -650,10 +651,10 @@
 
 .countdownNumber {
   font-size: clamp(6rem, 25vw, 12rem);
-  font-weight: 900;
-  color: var(--gold);
-  text-shadow: 0 0 60px var(--gold);
+  font-weight: 200;
+  color: #ffffff;
   animation: countdownPop 0.5s ease-out;
+  letter-spacing: 0.1em;
 }
 
 @keyframes countdownPop {
@@ -672,13 +673,10 @@
 }
 
 .resultTitle {
-  font-size: clamp(3rem, 12vw, 6rem);
-  font-weight: 900;
-  background: linear-gradient(135deg, var(--gold), #FF6B35);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: titlePulse 2s ease-in-out infinite;
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  font-weight: 200;
+  color: #ffffff;
+  letter-spacing: 0.2em;
 }
 
 .resultActions {
@@ -687,21 +685,22 @@
 }
 
 .rematchBtn {
-  padding: 14px 50px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--gold), #FF6B35);
+  padding: 12px 44px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #ffffff;
   border: none;
-  border-radius: 25px;
-  color: #000;
+  border-radius: 8px;
+  color: #000000;
   cursor: pointer;
-  transition: all 0.3s;
+  letter-spacing: 0.2em;
+  transition: all 0.25s;
 }
 
 .rematchBtn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 25px var(--gold);
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
 }
 
 /* Responsive */
@@ -715,16 +714,16 @@
   }
 
   .roomCodeValue {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
   }
 
   .tabBtn {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     padding: 10px 8px;
   }
 
   .nameInput {
     width: 220px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 }

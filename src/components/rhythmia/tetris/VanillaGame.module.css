@@ -12,40 +12,41 @@
   min-height: 100vh;
   overflow: hidden;
   touch-action: manipulation;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: #0a0a12;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  background: #000000;
+  position: relative;
   transition: background 0.5s;
 }
 
-/* World themes */
+/* World themes - minimal monochrome */
 .w0 {
-  --c1: #FF6B9D;
-  --c2: #C44569;
-  --bg: #1a1025;
+  --c1: rgba(255, 255, 255, 0.9);
+  --c2: rgba(255, 255, 255, 0.5);
+  --bg: #000000;
 }
 
 .w1 {
-  --c1: #4ECDC4;
-  --c2: #1A535C;
-  --bg: #051620;
+  --c1: rgba(255, 255, 255, 0.9);
+  --c2: rgba(255, 255, 255, 0.5);
+  --bg: #000000;
 }
 
 .w2 {
-  --c1: #FFE66D;
-  --c2: #F7B731;
-  --bg: #1a1505;
+  --c1: rgba(255, 255, 255, 0.9);
+  --c2: rgba(255, 255, 255, 0.5);
+  --bg: #000000;
 }
 
 .w3 {
-  --c1: #FF6B6B;
-  --c2: #C0392B;
-  --bg: #1a0a0a;
+  --c1: rgba(255, 255, 255, 0.9);
+  --c2: rgba(255, 255, 255, 0.5);
+  --bg: #000000;
 }
 
 .w4 {
-  --c1: #A29BFE;
-  --c2: #6C5CE7;
-  --bg: #0a0a1a;
+  --c1: rgba(255, 255, 255, 0.9);
+  --c2: rgba(255, 255, 255, 0.5);
+  --bg: #000000;
 }
 
 .body {
@@ -61,29 +62,32 @@
   justify-content: center;
   padding: 10px;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Score display */
 .scoreDisplay {
   font-size: clamp(2rem, 8vw, 4rem);
-  font-weight: 900;
+  font-weight: 300;
   color: white;
-  text-shadow: 0 0 30px var(--c1);
+  letter-spacing: 0.05em;
   transition: transform 0.1s;
 }
 
 .scoreDisplay.pop {
-  transform: scale(1.2);
+  transform: scale(1.1);
 }
 
 /* Combo */
 .combo {
-  font-size: clamp(1.5rem, 5vw, 2.5rem);
-  font-weight: 700;
-  color: var(--c1);
+  font-size: clamp(1.2rem, 4vw, 2rem);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
   opacity: 0;
   transform: scale(0);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 0.1em;
 }
 
 .combo.show {
@@ -92,32 +96,31 @@
 }
 
 .combo.big {
-  transform: scale(1.5);
-  color: #FFD700;
+  transform: scale(1.3);
+  color: #ffffff;
 }
 
 /* Game area */
 .gameArea {
   position: relative;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: flex-start;
 }
 
 /* Board */
 .boardWrap {
   position: relative;
-  border: 3px solid var(--c1);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  box-shadow: 0 0 30px var(--c1), inset 0 0 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.7);
   transition: box-shadow 0.1s, transform 0.1s;
   overflow: hidden;
 }
 
 .boardWrap.beat {
-  box-shadow: 0 0 50px var(--c1), 0 0 80px var(--c1), inset 0 0 30px rgba(0, 0, 0, 0.5);
-  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  transform: scale(1.01);
 }
 
 .boardWrap.shake {
@@ -125,19 +128,9 @@
 }
 
 @keyframes shake {
-
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  25% {
-    transform: translateX(-5px);
-  }
-
-  75% {
-    transform: translateX(5px);
-  }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
 }
 
 .board {
@@ -149,17 +142,17 @@
 .cell {
   width: clamp(16px, 4vw, 28px);
   height: clamp(16px, 4vw, 28px);
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 1px;
   transition: all 0.1s;
 }
 
 .cell.filled {
-  box-shadow: 0 0 10px currentColor, inset 0 0 8px rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
 .cell.ghost {
-  opacity: 0.3;
+  opacity: 0.2;
 }
 
 .cell.clearing {
@@ -167,19 +160,9 @@
 }
 
 @keyframes clear {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.3);
-    background: white;
-  }
-
-  100% {
-    transform: scale(0);
-    opacity: 0;
-  }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); background: white; }
+  100% { transform: scale(0); opacity: 0; }
 }
 
 /* Active piece (smooth movement) */
@@ -198,23 +181,25 @@
 
 .pieceCell {
   position: absolute;
-  border-radius: 2px;
-  box-shadow: 0 0 10px currentColor, inset 0 0 8px rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
-/* NEXT */
+/* NEXT / HOLD */
 .nextWrap {
-  background: rgba(0, 0, 0, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
   padding: 10px;
 }
 
 .nextLabel {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.65rem;
   text-align: center;
   margin-bottom: 5px;
+  letter-spacing: 0.15em;
+  font-weight: 500;
 }
 
 .next {
@@ -225,25 +210,25 @@
 .nextCell {
   width: clamp(12px, 3vw, 20px);
   height: clamp(12px, 3vw, 20px);
-  border-radius: 2px;
+  border-radius: 1px;
 }
 
 /* Beat indicator */
 .beatBar {
   width: min(300px, 80vw);
-  height: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
   overflow: hidden;
   position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .beatFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--c2), var(--c1));
-  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.7));
+  border-radius: 8px;
   transition: width 0.05s linear;
-  box-shadow: 0 0 20px var(--c1);
 }
 
 .beatTarget {
@@ -252,9 +237,9 @@
   top: 0;
   bottom: 0;
   width: 15%;
-  background: rgba(255, 215, 0, 0.3);
-  border: 2px solid #FFD700;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
 }
 
 /* Judgment display */
@@ -264,10 +249,11 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: clamp(2rem, 10vw, 5rem);
-  font-weight: 900;
+  font-weight: 300;
   pointer-events: none;
   opacity: 0;
   z-index: 100;
+  letter-spacing: 0.1em;
 }
 
 .judgment.show {
@@ -275,20 +261,9 @@
 }
 
 @keyframes judgePop {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-  }
-
-  30% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.3);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -60%) scale(1);
-  }
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
 }
 
 /* Mobile Touch Controls */
@@ -296,33 +271,31 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: 10px;
+  gap: 8px;
   width: min(280px, 85vw);
-  padding: 15px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 16px;
-  backdrop-filter: blur(10px);
-  margin-top: 15px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  margin-top: 12px;
 }
-
 
 .ctrlBtn {
   aspect-ratio: 1;
-  background: linear-gradient(135deg, var(--c1), var(--c2));
-  border: none;
-  border-radius: 12px;
-  color: white;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
   font-size: clamp(1.2rem, 4vw, 2rem);
-  font-weight: bold;
+  font-weight: 300;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: all 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 
 .ctrlBtn:active {
-  transform: scale(0.9);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(0.95);
 }
 
 /* Title screen */
@@ -333,49 +306,52 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: rgba(0, 0, 0, 0.85);
   z-index: 200;
-  gap: 30px;
+  gap: 24px;
 }
 
 .titleScreen h1 {
   font-size: clamp(3rem, 12vw, 6rem);
-  font-weight: 900;
+  font-weight: 200;
   color: white;
-  text-shadow: 0 0 30px var(--c1), 0 0 60px var(--c1);
+  letter-spacing: 0.3em;
 }
 
 .titleScreen p {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
 }
 
 .startBtn {
-  padding: 20px 60px;
-  font-size: 1.5rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, var(--c1), var(--c2));
+  padding: 16px 48px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: #ffffff;
   border: none;
-  border-radius: 50px;
-  color: white;
+  border-radius: 8px;
+  color: #000000;
   cursor: pointer;
-  box-shadow: 0 0 30px var(--c1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.2em;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .startBtn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 50px var(--c1);
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
 }
 
 /* World display */
 .worldDisplay {
   position: fixed;
-  top: 10px;
-  left: 10px;
-  color: white;
-  font-size: 0.9rem;
-  opacity: 0.7;
+  top: 12px;
+  left: 16px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
 }
 
 /* Theme Navbar */
@@ -383,64 +359,64 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.4);
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.5);
   border-radius: 50px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 8px;
 }
 
 .themeLabel {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.85rem;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
 }
 
 .themeBtn {
-  padding: 6px 14px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  color: rgba(255, 255, 255, 0.8);
+  padding: 5px 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   transition: all 0.2s ease;
+  letter-spacing: 0.05em;
 }
 
 .themeBtn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .themeBtn.active {
-  background: linear-gradient(135deg, var(--c1), var(--c2));
-  border-color: var(--c1);
-  color: white;
-  box-shadow: 0 0 15px var(--c1);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: #000000;
 }
 
 /* Enemy HP */
 .enemyBar {
   width: min(250px, 70vw);
-  height: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .enemyFill {
   height: 100%;
-  background: linear-gradient(90deg, #FF4444, #FF8888);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.7));
   transition: width 0.3s;
-  box-shadow: 0 0 10px #FF4444;
 }
 
 .enemyLabel {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.7rem;
   text-align: center;
+  letter-spacing: 0.1em;
 }
 
 /* Game over */
@@ -451,7 +427,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.92);
   z-index: 200;
   gap: 20px;
 }
@@ -461,24 +437,33 @@
 }
 
 .gameover h2 {
-  font-size: 3rem;
-  color: var(--c1);
-  text-shadow: 0 0 30px var(--c1);
+  font-size: 2.5rem;
+  font-weight: 200;
+  color: white;
+  letter-spacing: 0.3em;
 }
 
 .finalScore {
-  font-size: 2rem;
-  color: white;
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .restartBtn {
-  padding: 15px 40px;
-  font-size: 1.2rem;
-  background: linear-gradient(135deg, var(--c1), var(--c2));
+  padding: 14px 40px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #ffffff;
   border: none;
-  border-radius: 30px;
-  color: white;
+  border-radius: 8px;
+  color: #000000;
   cursor: pointer;
+  letter-spacing: 0.2em;
+  transition: all 0.25s;
+}
+
+.restartBtn:hover {
+  background: rgba(255, 255, 255, 0.85);
 }
 
 /* Particles */
@@ -557,7 +542,7 @@
   }
 
   .boardWrap {
-    border-width: 2px;
+    border-width: 1px;
   }
 
   .scoreDisplay {
@@ -598,20 +583,20 @@
 
   .beatBar {
     width: min(250px, 90vw);
-    height: 16px;
+    height: 14px;
   }
 
   .enemyBar {
     width: min(200px, 80vw);
-    height: 10px;
+    height: 6px;
   }
 
   .worldDisplay {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 }
 
-/* Mobile Landscape (up to 480px height, width > 480px) */
+/* Mobile Landscape */
 @media screen and (max-height: 480px) and (min-width: 481px) {
   .game {
     flex-direction: row;
@@ -658,7 +643,7 @@
 
   .beatBar {
     width: 180px;
-    height: 12px;
+    height: 10px;
   }
 
   .themeNav {
@@ -669,7 +654,7 @@
   }
 }
 
-/* Tablet (481px - 1024px) */
+/* Tablet */
 @media screen and (min-width: 481px) and (max-width: 1024px) {
   .cell {
     width: var(--cell-size, 22px);
@@ -723,7 +708,7 @@
   }
 }
 
-/* Desktop (1025px+) */
+/* Desktop */
 @media screen and (min-width: 1025px) {
   .cell {
     width: var(--cell-size, 28px);
@@ -742,11 +727,10 @@
 
   .controls {
     display: none;
-    /* Hide touch controls on desktop */
   }
 }
 
-/* Large Desktop (1400px+) */
+/* Large Desktop */
 @media screen and (min-width: 1400px) {
   .cell {
     width: var(--cell-size, 30px);
@@ -763,7 +747,7 @@
   }
 }
 
-/* Extra Large Desktop (1800px+) */
+/* Extra Large Desktop */
 @media screen and (min-width: 1800px) {
   .cell {
     width: var(--cell-size, 32px);
@@ -776,7 +760,7 @@
   }
 }
 
-/* ===== Touch Device Optimizations ===== */
+/* Touch Device Optimizations */
 @media (pointer: coarse) {
   .ctrlBtn {
     min-width: 44px;
@@ -784,13 +768,13 @@
   }
 
   .startBtn {
-    padding: 24px 64px;
-    font-size: 1.6rem;
+    padding: 20px 56px;
+    font-size: 0.9rem;
   }
 
   .restartBtn {
-    padding: 18px 48px;
-    font-size: 1.3rem;
+    padding: 16px 44px;
+    font-size: 0.85rem;
   }
 
   .themeBtn {
@@ -799,9 +783,8 @@
   }
 }
 
-/* ===== Accessibility: Reduced Motion ===== */
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-
   .boardWrap,
   .cell,
   .scoreDisplay,

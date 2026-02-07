@@ -58,6 +58,9 @@ export interface ServerToClientEvents {
   // Connection events
   'connect': () => void;
   'disconnect': () => void;
+
+  // Online count
+  'online:count': (count: number) => void;
 }
 
 export interface ClientToServerEvents {
