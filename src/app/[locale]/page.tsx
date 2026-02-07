@@ -147,7 +147,7 @@ export default function RhythmiaPage() {
                     <div className={styles.statusBar}>
                         <div className={styles.statusItem}>
                             <span className={styles.statusDot}></span>
-                            <span>{t('lobby.online')}</span>
+                            <span>{t('lobby.onlineCount', { count: onlineCount })}</span>
                         </div>
                         <div className={styles.statusItem}>
                             <span>v{rhythmiaConfig.version}</span>
@@ -238,10 +238,6 @@ export default function RhythmiaPage() {
                                     <div className={styles.statValue}>LIVE</div>
                                     <div className={styles.statLabel}>{t('multiplayer.stats.status')}</div>
                                 </div>
-                            </div>
-                            <div className={styles.onlineCount}>
-                                <span className={styles.onlineDot}></span>
-                                <span>{t('lobby.onlineCount', { count: onlineCount })}</span>
                             </div>
                             <button className={styles.playButton}>{t('lobby.battle')}</button>
                         </motion.div>
