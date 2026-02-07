@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 
 // Simple seeded random for deterministic terrain
@@ -50,11 +49,11 @@ function terrainHeight(x: number, z: number, seed: number): number {
 // Block color based on height
 function blockColor(y: number, maxY: number): THREE.Color {
   const ratio = y / Math.max(maxY, 1);
-  if (ratio > 0.8) return new THREE.Color(0.95, 0.95, 0.95); // Snow white
-  if (ratio > 0.6) return new THREE.Color(0.45, 0.45, 0.45); // Stone gray
-  if (ratio > 0.3) return new THREE.Color(0.25, 0.55, 0.2);  // Grass green
-  if (ratio > 0.1) return new THREE.Color(0.4, 0.28, 0.15);  // Dirt brown
-  return new THREE.Color(0.3, 0.3, 0.35);                     // Deep stone
+  if (ratio > 0.8) return new THREE.Color(0.95, 0.95, 0.95);
+  if (ratio > 0.6) return new THREE.Color(0.45, 0.45, 0.45);
+  if (ratio > 0.3) return new THREE.Color(0.25, 0.55, 0.2);
+  if (ratio > 0.1) return new THREE.Color(0.4, 0.28, 0.15);
+  return new THREE.Color(0.3, 0.3, 0.35);
 }
 
 interface VoxelData {
@@ -67,7 +66,6 @@ function generateVoxelWorld(seed: number, size: number): VoxelData {
   const blocks: { x: number; y: number; z: number; color: THREE.Color }[] = [];
   let maxY = 0;
 
-  // First pass: determine heights
   const heights: number[][] = [];
   for (let x = -size; x <= size; x++) {
     heights[x + size] = [];
@@ -78,11 +76,9 @@ function generateVoxelWorld(seed: number, size: number): VoxelData {
     }
   }
 
-  // Second pass: create blocks (only surface visible)
   for (let x = -size; x <= size; x++) {
     for (let z = -size; z <= size; z++) {
       const h = heights[x + size][z + size];
-      // Only render top layer and exposed sides
       for (let y = Math.max(0, h - 2); y <= h; y++) {
         const color = blockColor(y, maxY);
         blocks.push({ x, y, z, color });
@@ -106,18 +102,59 @@ function generateVoxelWorld(seed: number, size: number): VoxelData {
   return { positions, colors, count };
 }
 
-// Instanced voxel mesh component
-function VoxelTerrain({ seed = 42, size = 24 }: { seed?: number; size?: number }) {
-  const meshRef = useRef<THREE.InstancedMesh>(null);
+function createGridLines(): THREE.LineSegments {
+  const geo = new THREE.BufferGeometry();
+  const positions: number[] = [];
+  const gridSize = 30;
+  for (let i = -gridSize; i <= gridSize; i += 2) {
+    positions.push(-gridSize, -2, i, gridSize, -2, i);
+    positions.push(i, -2, -gridSize, i, -2, gridSize);
+  }
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  const mat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.04, transparent: true });
+  return new THREE.LineSegments(geo, mat);
+}
 
-  const voxelData = useMemo(() => generateVoxelWorld(seed, size), [seed, size]);
+export default function VoxelWorldBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
-  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-  useMemo(() => {
-    if (!meshRef.current) return;
-    const mesh = meshRef.current;
+    // Scene setup
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setClearColor(0x000000, 0);
 
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x000000, 30, 80);
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+    camera.position.set(35, 25, 35);
+    camera.lookAt(0, 0, 0);
+
+    // Lights
+    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambient);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(20, 30, 10);
+    scene.add(dirLight);
+
+    const pointLight = new THREE.PointLight(0xffffff, 0.3);
+    pointLight.position.set(0, 15, 0);
+    scene.add(pointLight);
+
+    // Voxel terrain
+    const voxelData = generateVoxelWorld(42, 20);
+    const boxGeo = new THREE.BoxGeometry(0.95, 0.95, 0.95);
+    const boxMat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0, flatShading: true });
+    const instancedMesh = new THREE.InstancedMesh(boxGeo, boxMat, voxelData.count);
+
+    const dummy = new THREE.Object3D();
+    const color = new THREE.Color();
     for (let i = 0; i < voxelData.count; i++) {
       dummy.position.set(
         voxelData.positions[i * 3],
@@ -125,76 +162,69 @@ function VoxelTerrain({ seed = 42, size = 24 }: { seed?: number; size?: number }
         voxelData.positions[i * 3 + 2]
       );
       dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-      mesh.setColorAt(
-        i,
-        new THREE.Color(
-          voxelData.colors[i * 3],
-          voxelData.colors[i * 3 + 1],
-          voxelData.colors[i * 3 + 2]
-        )
+      instancedMesh.setMatrixAt(i, dummy.matrix);
+      color.setRGB(
+        voxelData.colors[i * 3],
+        voxelData.colors[i * 3 + 1],
+        voxelData.colors[i * 3 + 2]
       );
+      instancedMesh.setColorAt(i, color);
     }
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  }, [voxelData, dummy]);
+    instancedMesh.instanceMatrix.needsUpdate = true;
+    if (instancedMesh.instanceColor) instancedMesh.instanceColor.needsUpdate = true;
+    scene.add(instancedMesh);
 
-  // Slow rotation
-  useFrame((_, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.03;
-    }
-  });
+    // Grid lines
+    const gridLines = createGridLines();
+    scene.add(gridLines);
 
-  return (
-    <instancedMesh
-      ref={meshRef}
-      args={[undefined, undefined, voxelData.count]}
-      castShadow={false}
-      receiveShadow={false}
-    >
-      <boxGeometry args={[0.95, 0.95, 0.95]} />
-      <meshStandardMaterial
-        roughness={0.9}
-        metalness={0.0}
-        flatShading
-      />
-    </instancedMesh>
-  );
-}
+    // Handle resize
+    const updateSize = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const w = parent.clientWidth;
+      const h = parent.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
 
-// Floating grid lines
-function GridLines() {
-  const gridRef = useRef<THREE.LineSegments>(null);
+    // Animation loop
+    let animId: number;
+    let lastTime = 0;
+    const animate = (time: number) => {
+      animId = requestAnimationFrame(animate);
+      const delta = (time - lastTime) / 1000;
+      lastTime = time;
 
-  useFrame((_, delta) => {
-    if (gridRef.current) {
-      gridRef.current.rotation.y += delta * 0.02;
-    }
-  });
+      if (delta < 0.1) {
+        instancedMesh.rotation.y += delta * 0.03;
+        gridLines.rotation.y += delta * 0.02;
+      }
 
-  const geometry = useMemo(() => {
-    const geo = new THREE.BufferGeometry();
-    const positions: number[] = [];
-    const size = 30;
-    for (let i = -size; i <= size; i += 2) {
-      // X lines
-      positions.push(-size, -2, i, size, -2, i);
-      // Z lines
-      positions.push(i, -2, -size, i, -2, size);
-    }
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    return geo;
+      renderer.render(scene, camera);
+    };
+    animId = requestAnimationFrame(animate);
+
+    // Cleanup
+    cleanupRef.current = () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', updateSize);
+      renderer.dispose();
+      boxGeo.dispose();
+      boxMat.dispose();
+      instancedMesh.dispose();
+      gridLines.geometry.dispose();
+      (gridLines.material as THREE.Material).dispose();
+    };
+
+    return () => {
+      cleanupRef.current?.();
+    };
   }, []);
 
-  return (
-    <lineSegments ref={gridRef} geometry={geometry}>
-      <lineBasicMaterial color="#ffffff" opacity={0.04} transparent />
-    </lineSegments>
-  );
-}
-
-export default function VoxelWorldBackground() {
   return (
     <div
       style={{
@@ -208,28 +238,10 @@ export default function VoxelWorldBackground() {
         opacity: 0.35,
       }}
     >
-      <Canvas
-        camera={{
-          position: [35, 25, 35],
-          fov: 45,
-          near: 0.1,
-          far: 200,
-        }}
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true }}
-        style={{ background: 'transparent' }}
-      >
-        <ambientLight intensity={0.4} />
-        <directionalLight
-          position={[20, 30, 10]}
-          intensity={0.8}
-          color="#ffffff"
-        />
-        <pointLight position={[0, 15, 0]} intensity={0.3} color="#ffffff" />
-        <VoxelTerrain seed={42} size={20} />
-        <GridLines />
-        <fog attach="fog" args={['#000000', 30, 80]} />
-      </Canvas>
+      <canvas
+        ref={canvasRef}
+        style={{ width: '100%', height: '100%', display: 'block' }}
+      />
     </div>
   );
 }
