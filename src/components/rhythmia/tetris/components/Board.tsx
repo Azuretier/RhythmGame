@@ -15,10 +15,14 @@ interface BoardProps {
     onRestart: () => void;
     colorTheme?: ColorTheme;
     worldIdx?: number;
+    combo?: number;
+    beatPhase?: number;
+    boardElRef?: React.Ref<HTMLDivElement>;
 }
 
 /**
- * Renders the game board with pieces, ghost piece, and overlays
+ * Renders the game board with pieces, ghost piece, and overlays.
+ * Enhanced with rhythm-reactive VFX: beat ghost glow, fever chroma shift.
  */
 export function Board({
     board,
@@ -31,9 +35,23 @@ export function Board({
     onRestart,
     colorTheme = 'stage',
     worldIdx = 0,
+    combo = 0,
+    beatPhase = 0,
+    boardElRef,
 }: BoardProps) {
-    // Helper to get color for a piece type
-    const getColor = (pieceType: string) => getThemedColor(pieceType, colorTheme, worldIdx);
+    const isFever = combo >= 10;
+
+    // Helper to get color for a piece type, with fever chroma shift
+    const getColor = (pieceType: string) => {
+        if (isFever) {
+            // Rainbow cycle: shift hue based on time (use beatPhase as proxy)
+            const baseHue = beatPhase * 360;
+            const offset = 'IOTSzjl'.indexOf(pieceType.toUpperCase()) * 51;
+            return `hsl(${(baseHue + offset) % 360}, 90%, 60%)`;
+        }
+        return getThemedColor(pieceType, colorTheme, worldIdx);
+    };
+
     // Create display board with current piece and ghost
     const displayBoard = React.useMemo(() => {
         const display = board.map(row => [...row]);
@@ -76,23 +94,46 @@ export function Board({
         return display;
     }, [board, currentPiece]);
 
+    // Board wrapper classes: beat pulse, shake, fever state
+    const boardWrapClasses = [
+        styles.boardWrap,
+        boardBeat ? styles.beat : '',
+        boardShake ? styles.shake : '',
+        isFever ? styles.fever : '',
+    ].filter(Boolean).join(' ');
+
     return (
-        <div className={`${styles.boardWrap} ${boardBeat ? styles.beat : ''} ${boardShake ? styles.shake : ''}`}>
-            <div className={styles.board} style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}>
+        <div className={boardWrapClasses}>
+            <div
+                ref={boardElRef}
+                className={styles.board}
+                style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}
+            >
                 {displayBoard.flat().map((cell, i) => {
                     const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
                     const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
+                    const color = pieceType ? getColor(pieceType as string) : '';
+
+                    // Ghost piece: enhanced glow on beat
+                    const ghostStyle = isGhost ? {
+                        borderColor: boardBeat ? `${color}CC` : `${color}60`,
+                        boxShadow: boardBeat ? `0 0 12px ${color}80, inset 0 0 6px ${color}40` : 'none',
+                        transition: 'border-color 0.1s, box-shadow 0.1s',
+                    } : {};
+
+                    // Filled piece style
+                    const filledStyle = cell && !isGhost ? {
+                        backgroundColor: color,
+                        boxShadow: isFever
+                            ? `0 0 12px ${color}, 0 0 4px ${color}`
+                            : `0 0 8px ${color}`,
+                    } : {};
 
                     return (
                         <div
                             key={i}
-                            className={`${styles.cell} ${cell && !isGhost ? styles.filled : ''} ${isGhost ? styles.ghost : ''}`}
-                            style={cell && !isGhost ? {
-                                backgroundColor: getColor(pieceType as string),
-                                boxShadow: `0 0 8px ${getColor(pieceType as string)}`
-                            } : isGhost ? {
-                                borderColor: `${getColor(pieceType as string)}60`
-                            } : {}}
+                            className={`${styles.cell} ${cell && !isGhost ? styles.filled : ''} ${isGhost ? styles.ghost : ''} ${isGhost && boardBeat ? styles.ghostBeat : ''}`}
+                            style={{ ...filledStyle, ...ghostStyle }}
                         />
                     );
                 })}

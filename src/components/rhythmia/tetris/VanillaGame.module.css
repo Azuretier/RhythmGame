@@ -114,17 +114,34 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.7);
-  transition: box-shadow 0.1s, transform 0.1s;
-  overflow: hidden;
+  transition: box-shadow 0.1s, transform 0.1s, border-color 0.1s;
+  overflow: visible;
 }
 
 .boardWrap.beat {
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-  transform: scale(1.01);
+  box-shadow: 0 0 20px rgba(0, 220, 255, 0.2), 0 0 40px rgba(0, 220, 255, 0.08);
+  border-color: rgba(0, 220, 255, 0.35);
+  transform: scale(1.012);
 }
 
 .boardWrap.shake {
   animation: shake 0.2s;
+}
+
+.boardWrap.fever {
+  border-color: rgba(255, 100, 255, 0.4);
+  animation: feverBorder 0.5s ease-in-out infinite alternate;
+}
+
+.boardWrap.beat.fever {
+  box-shadow: 0 0 30px rgba(255, 100, 255, 0.3), 0 0 60px rgba(255, 50, 200, 0.15);
+}
+
+@keyframes feverBorder {
+  0% { border-color: rgba(255, 100, 100, 0.4); }
+  33% { border-color: rgba(100, 255, 100, 0.4); }
+  66% { border-color: rgba(100, 100, 255, 0.4); }
+  100% { border-color: rgba(255, 100, 255, 0.4); }
 }
 
 @keyframes shake {
@@ -156,7 +173,20 @@
 }
 
 .cell.ghost {
-  opacity: 0.2;
+  opacity: 0.25;
+  border: 1px solid transparent;
+  transition: opacity 0.1s, border-color 0.1s, box-shadow 0.1s;
+}
+
+.cell.ghostBeat {
+  opacity: 0.55;
+  animation: ghostPulse 0.15s ease-out;
+}
+
+@keyframes ghostPulse {
+  0% { opacity: 0.25; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.08); }
+  100% { opacity: 0.55; transform: scale(1); }
 }
 
 .cell.clearing {

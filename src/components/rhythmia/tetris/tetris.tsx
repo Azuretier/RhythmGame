@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE } from './constants';
 import type { Piece } from './types';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
@@ -14,7 +14,7 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 });
 
 // Hooks
-import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars } from './hooks';
+import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 
 // Utilities
 import {
@@ -41,6 +41,7 @@ import {
   ThemeNav,
   JudgmentDisplay,
   TouchControls,
+  RhythmVFX,
   FloatingItems,
   ItemSlots,
   CraftingUI,
@@ -89,6 +90,8 @@ export default function Rhythmia() {
   // Game state and refs
   const gameState = useGameState();
   const audio = useAudio();
+  const vfx = useRhythmVFX();
+  const boardElRef = useRef<HTMLDivElement>(null);
 
   const {
     board,
@@ -223,11 +226,21 @@ export default function Rhythmia() {
 
     const rotatedPiece = tryRotation(piece, direction, boardRef.current);
     if (rotatedPiece) {
+      // Emit rotation trail VFX before updating piece
+      vfx.emit({
+        type: 'rotation',
+        pieceType: piece.type,
+        boardX: piece.x,
+        boardY: piece.y,
+        fromRotation: piece.rotation,
+        toRotation: rotatedPiece.rotation,
+      });
+
       setCurrentPiece(rotatedPiece);
       currentPieceRef.current = rotatedPiece;
       playRotateSound();
     }
-  }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef, gameOverRef, isPausedRef, playRotateSound]);
+  }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef, gameOverRef, isPausedRef, playRotateSound, vfx]);
 
   // Process horizontal DAS/ARR
   const processHorizontalDasArr = useCallback((direction: 'left' | 'right', currentTime: number) => {
@@ -296,11 +309,33 @@ export default function Rhythmia() {
       setCombo(newCombo);
       showJudgment('PERFECT!', '#FFD700');
       playTone(1047, 0.2, 'triangle');
+
+      // VFX: combo change event
+      vfx.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
+
+      // VFX: fever mode trigger at combo 10+
+      if (newCombo >= 10 && comboRef.current < 10) {
+        vfx.emit({ type: 'feverStart', combo: newCombo });
+      }
     } else {
+      // VFX: combo broken — end fever if active
+      if (comboRef.current >= 10) {
+        vfx.emit({ type: 'feverEnd' });
+      }
       setCombo(0);
+      vfx.emit({ type: 'comboChange', combo: 0, onBeat: false });
     }
 
     const newBoard = lockPiece(piece, boardRef.current);
+
+    // Detect which rows will be cleared (before clearing) for VFX positioning
+    const rowsToClear: number[] = [];
+    for (let y = 0; y < BOARD_HEIGHT; y++) {
+      if (newBoard[y].every(cell => cell !== null)) {
+        rowsToClear.push(y);
+      }
+    }
+
     const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
 
     setBoard(clearedBoard);
@@ -317,6 +352,14 @@ export default function Rhythmia() {
       const damage = clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult;
       const remaining = destroyTerrain(damage);
 
+      // VFX: line clear equalizer bars + glitch particles
+      vfx.emit({
+        type: 'lineClear',
+        rows: rowsToClear,
+        count: clearedLines,
+        onBeat,
+        combo: comboRef.current,
+      });
       // === PARTICLE EFFECTS: Terrain emits particles when destroyed ===
       const center = getBoardCenter();
       spawnTerrainParticles(center.x, center.y, clearedLines * TERRAIN_PARTICLES_PER_LINE);
@@ -373,7 +416,7 @@ export default function Rhythmia() {
     terrainDestroyedCountRef, terrainTotalRef, damageMultiplierRef,
     setCombo, setBoard, setWorldIdx, setLines, setLevel, setCurrentPiece, setGamePhase,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
-    currentPieceRef, destroyTerrain, startNewStage,
+    currentPieceRef, destroyTerrain, startNewStage, vfx,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops,
     triggerCollapse, triggerTransition, triggerWorldCreation,
   ]);
@@ -392,9 +435,20 @@ export default function Rhythmia() {
       dropDistance++;
     }
 
+    // VFX: hard drop impact particles
+    if (dropDistance > 0) {
+      vfx.emit({
+        type: 'hardDrop',
+        pieceType: newPiece.type,
+        boardX: newPiece.x,
+        boardY: newPiece.y,
+        dropDistance,
+      });
+    }
+
     playHardDropSound();
     handlePieceLock(newPiece, dropDistance);
-  }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, handlePieceLock, playHardDropSound]);
+  }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, handlePieceLock, playHardDropSound, vfx]);
 
   // Hold current piece
   const holdCurrentPiece = useCallback(() => {
@@ -468,13 +522,18 @@ export default function Rhythmia() {
       lastBeatRef.current = Date.now();
       setBoardBeat(true);
       playDrum();
+
+      // VFX: beat pulse ring — intensity scales with BPM
+      const intensity = Math.min(1, (world.bpm - 80) / 100);
+      vfx.emit({ type: 'beat', bpm: world.bpm, intensity });
+
       setTimeout(() => setBoardBeat(false), 100);
     }, interval);
 
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
-  }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
+  }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat, vfx]);
 
   // Beat phase animation
   useEffect(() => {
@@ -661,7 +720,7 @@ export default function Rhythmia() {
   return (
     <div
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
-      style={responsiveCSSVars}
+      style={{ ...responsiveCSSVars, position: 'relative' }}
     >
       {/* Voxel World Background — destructible terrain */}
       <VoxelWorldBackground
@@ -729,6 +788,9 @@ export default function Rhythmia() {
               onRestart={startGame}
               colorTheme={colorTheme}
               worldIdx={worldIdx}
+              combo={combo}
+              beatPhase={beatPhase}
+              boardElRef={boardElRef}
             />
 
             <div className={styles.nextWrap}>
@@ -754,6 +816,15 @@ export default function Rhythmia() {
         </div>
       )}
 
+      {/* Rhythm VFX Canvas Overlay */}
+      <RhythmVFX
+        canvasRef={vfx.canvasRef}
+        boardRef={boardElRef}
+        onBoardGeometry={vfx.updateBoardGeometry}
+        isPlaying={isPlaying && !gameOver}
+        onStart={vfx.start}
+        onStop={vfx.stop}
+      />
       {/* Crafting UI overlay */}
       {showCraftUI && (
         <CraftingUI

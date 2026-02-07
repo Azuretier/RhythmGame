@@ -13,6 +13,7 @@ export {
     JudgmentDisplay,
     TouchControls,
 } from './GameUI';
+export { RhythmVFX } from './RhythmVFX';
 export { FloatingItems } from './FloatingItems';
 export { ItemSlots } from './ItemSlots';
 export { CraftingUI } from './CraftingUI';
