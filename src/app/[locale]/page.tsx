@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { io } from 'socket.io-client';
 import { useTranslations } from 'next-intl';
-import type { ServerToClientEvents, ClientToServerEvents } from '@/types/game';
+import type { ServerMessage } from '@/types/multiplayer';
+import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
@@ -16,6 +16,7 @@ export default function RhythmiaPage() {
     const [gameMode, setGameMode] = useState<GameMode>('lobby');
     const [isLoading, setIsLoading] = useState(true);
     const [onlineCount, setOnlineCount] = useState(0);
+    const wsRef = useRef<WebSocket | null>(null);
 
     const t = useTranslations();
 
@@ -26,24 +27,56 @@ export default function RhythmiaPage() {
         return () => clearTimeout(timer);
     }, []);
 
-    useEffect(() => {
-        const socket = io({ path: '/socket.io' }) as import('socket.io-client').Socket<ServerToClientEvents, ClientToServerEvents>;
+    // Connect to multiplayer WebSocket at page load for accurate online count
+    const connectMultiplayerWs = useCallback(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) return;
+        if (wsRef.current?.readyState === WebSocket.CONNECTING) return;
 
-        socket.on('online:count', (count) => {
-            setOnlineCount(count);
-        });
+        const wsUrl = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
+        const ws = new WebSocket(wsUrl);
 
-        return () => {
-            socket.disconnect();
+        ws.onmessage = (event) => {
+            try {
+                const message: ServerMessage = JSON.parse(event.data);
+                if (message.type === 'online_count') {
+                    setOnlineCount(message.count);
+                } else if (message.type === 'ping') {
+                    ws.send(JSON.stringify({ type: 'pong' }));
+                }
+            } catch {}
         };
+
+        ws.onclose = () => {
+            wsRef.current = null;
+        };
+
+        wsRef.current = ws;
     }, []);
 
+    useEffect(() => {
+        connectMultiplayerWs();
+
+        return () => {
+            if (wsRef.current) {
+                wsRef.current.close();
+                wsRef.current = null;
+            }
+        };
+    }, [connectMultiplayerWs]);
+
     const launchGame = (mode: GameMode) => {
+        // Close lobby WebSocket when entering multiplayer to avoid double-counting
+        if (mode === 'multiplayer' && wsRef.current) {
+            wsRef.current.close();
+            wsRef.current = null;
+        }
         setGameMode(mode);
     };
 
     const closeGame = () => {
         setGameMode('lobby');
+        // Re-establish lobby WebSocket for online count when returning from multiplayer
+        connectMultiplayerWs();
     };
 
     if (gameMode === 'vanilla') {
@@ -117,7 +150,7 @@ export default function RhythmiaPage() {
                             <span>{t('lobby.online')}</span>
                         </div>
                         <div className={styles.statusItem}>
-                            <span>v2.5.0</span>
+                            <span>v{rhythmiaConfig.version}</span>
                         </div>
                         <LocaleSwitcher />
                     </div>

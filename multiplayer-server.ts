@@ -72,6 +72,18 @@ function broadcastToRoom(roomCode: string, message: ServerMessage, excludePlayer
   }
 }
 
+function broadcastOnlineCount(): void {
+  const count = playerConnections.size;
+  const message: ServerMessage = { type: 'online_count', count };
+  playerConnections.forEach((conn) => {
+    if (conn.ws.readyState === WebSocket.OPEN) {
+      try {
+        conn.ws.send(JSON.stringify(message));
+      } catch {}
+    }
+  });
+}
+
 function sendError(playerId: string, message: string, code?: string): void {
   const msg: ErrorMessage = { type: 'error', message, code };
   sendToPlayer(playerId, msg);
@@ -388,6 +400,9 @@ function handleDisconnect(playerId: string, reason: string): void {
   const result = roomManager.markPlayerDisconnected(playerId);
   playerConnections.delete(playerId);
 
+  // Broadcast updated online count to all clients
+  broadcastOnlineCount();
+
   if (result.roomCode) {
     // Broadcast updated room state showing the player as disconnected
     sendRoomState(result.roomCode);
@@ -528,6 +543,9 @@ wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
     playerId,
     serverTime: Date.now(),
   });
+
+  // Broadcast updated online count to all clients
+  broadcastOnlineCount();
 
   ws.on('message', (data: Buffer) => {
     try {

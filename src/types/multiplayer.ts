@@ -186,6 +186,11 @@ export interface RematchStartedMessage {
   type: 'rematch_started';
 }
 
+export interface OnlineCountMessage {
+  type: 'online_count';
+  count: number;
+}
+
 export interface ServerShutdownMessage {
   type: 'server_shutdown';
   message: string;
@@ -207,6 +212,7 @@ export type ServerMessage =
   | ErrorMessage
   | ReconnectedMessage
   | RematchStartedMessage
+  | OnlineCountMessage
   | ServerShutdownMessage;
 
 // ===== Relay Payload Types =====

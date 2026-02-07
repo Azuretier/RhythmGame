@@ -228,6 +228,10 @@ export default function MultiplayerGame() {
         send({ type: 'pong' });
         break;
 
+      case 'online_count':
+        // Handled at page level for lobby display; ignore here
+        break;
+
       case 'server_shutdown':
         setError('Server is restarting. Reconnecting...');
         setConnectionStatus('disconnected');
