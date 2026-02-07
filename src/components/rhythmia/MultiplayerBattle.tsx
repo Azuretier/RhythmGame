@@ -985,7 +985,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 <div className={styles.garbageMeter}>
                   <div
                     className={styles.garbageFill}
-                    style={{ height: `${Math.min(100, (pendingGarbage / H) * 100)}%` }}
+                    style={{ height: `${Math.round(Math.min(100, (pendingGarbage / H) * 100))}%` }}
                   />
                 </div>
               )}
