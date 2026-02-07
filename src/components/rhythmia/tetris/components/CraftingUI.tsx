@@ -1,6 +1,7 @@
 import React from 'react';
 import type { InventoryItem, CraftedCard } from '../types';
 import { WEAPON_CARDS, ITEM_MAP, WEAPON_CARD_MAP } from '../constants';
+import { ItemIcon, WeaponIcon } from './ItemIcon';
 import styles from '../VanillaGame.module.css';
 
 interface CraftingUIProps {
@@ -12,7 +13,7 @@ interface CraftingUIProps {
 }
 
 /**
- * Full-screen crafting overlay for creating weapon cards
+ * Full-screen crafting overlay with modern card-style weapon recipes
  */
 export function CraftingUI({ inventory, craftedCards, onCraft, canCraft, onClose }: CraftingUIProps) {
     return (
@@ -33,7 +34,9 @@ export function CraftingUI({ inventory, craftedCards, onCraft, canCraft, onClose
                             if (!item) return null;
                             return (
                                 <div key={inv.itemId} className={styles.craftingMaterial}>
-                                    <span className={styles.craftingMaterialIcon}>{item.icon}</span>
+                                    <div className={styles.craftingMaterialIconWrap}>
+                                        <ItemIcon itemId={inv.itemId} size={16} />
+                                    </div>
                                     <span className={styles.craftingMaterialName}>{item.nameJa}</span>
                                     <span className={styles.craftingMaterialCount}>x{inv.count}</span>
                                 </div>
@@ -45,7 +48,7 @@ export function CraftingUI({ inventory, craftedCards, onCraft, canCraft, onClose
                     </div>
                 </div>
 
-                {/* Recipe list */}
+                {/* Recipe list — modern card layout */}
                 <div className={styles.craftingRecipes}>
                     <div className={styles.craftingRecipesTitle}>RECIPES</div>
                     <div className={styles.craftingRecipeList}>
@@ -58,12 +61,12 @@ export function CraftingUI({ inventory, craftedCards, onCraft, canCraft, onClose
                                     className={`${styles.craftingRecipe} ${craftable ? styles.craftable : ''} ${alreadyCrafted ? styles.crafted : ''}`}
                                 >
                                     <div className={styles.recipeLeft}>
-                                        <span
+                                        <div
                                             className={styles.recipeIcon}
-                                            style={{ background: `radial-gradient(circle, ${card.glowColor}40, ${card.color}20)` }}
+                                            style={{ background: `radial-gradient(circle, ${card.glowColor}30, ${card.color}10)` }}
                                         >
-                                            {card.icon}
-                                        </span>
+                                            <ItemIcon itemId={card.id} size={24} />
+                                        </div>
                                         <div className={styles.recipeInfo}>
                                             <div className={styles.recipeName}>{card.name}</div>
                                             <div className={styles.recipeNameJa}>{card.nameJa}</div>
@@ -82,7 +85,8 @@ export function CraftingUI({ inventory, craftedCards, onCraft, canCraft, onClose
                                                         key={i}
                                                         className={`${styles.recipeCostItem} ${enough ? styles.recipeCostEnough : ''}`}
                                                     >
-                                                        {item.icon} {owned}/{req.count}
+                                                        <ItemIcon itemId={req.itemId} size={12} />
+                                                        <span>{owned}/{req.count}</span>
                                                     </span>
                                                 );
                                             })}

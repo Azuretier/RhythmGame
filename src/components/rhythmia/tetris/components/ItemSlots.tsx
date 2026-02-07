@@ -1,6 +1,7 @@
 import React from 'react';
 import type { InventoryItem, CraftedCard } from '../types';
 import { ITEM_MAP, WEAPON_CARD_MAP } from '../constants';
+import { ItemIcon, WeaponIcon } from './ItemIcon';
 import styles from '../VanillaGame.module.css';
 
 interface ItemSlotsProps {
@@ -10,16 +11,24 @@ interface ItemSlotsProps {
     onCraftOpen: () => void;
 }
 
+const RARITY_LABEL: Record<string, string> = {
+    common: 'COMMON',
+    uncommon: 'UNCOMMON',
+    rare: 'RARE',
+    epic: 'EPIC',
+    legendary: 'LEGENDARY',
+};
+
 /**
- * Modern item slot inventory display
- * Shows collected items and crafted weapon cards in a compact, stylish layout
+ * Modern card-style inventory display
+ * Glass-morphism cards with SVG icons, large count typography, and rarity accents
  */
 export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOpen }: ItemSlotsProps) {
     return (
         <div className={styles.itemSlotsPanel}>
-            {/* Inventory header */}
+            {/* Panel header */}
             <div className={styles.itemSlotsHeader}>
-                <span className={styles.itemSlotsTitle}>ITEMS</span>
+                <span className={styles.itemSlotsTitle}>INVENTORY</span>
                 {damageMultiplier > 1 && (
                     <span className={styles.damageMultBadge}>
                         x{damageMultiplier.toFixed(1)}
@@ -27,7 +36,7 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
                 )}
             </div>
 
-            {/* Item grid */}
+            {/* Item cards grid */}
             <div className={styles.itemSlotsGrid}>
                 {inventory.length === 0 && (
                     <div className={styles.itemSlotEmpty}>
@@ -40,19 +49,33 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
                     return (
                         <div
                             key={inv.itemId}
-                            className={`${styles.itemSlot} ${styles[`rarity_${item.rarity}`]}`}
+                            className={`${styles.itemCard} ${styles[`rarity_${item.rarity}`]}`}
                             title={`${item.name} (${item.nameJa})`}
                         >
+                            {/* Accent line at top */}
                             <div
-                                className={styles.itemSlotInner}
+                                className={styles.itemCardAccent}
+                                style={{ background: item.color }}
+                            />
+                            {/* Icon area */}
+                            <div
+                                className={styles.itemCardIconWrap}
                                 style={{
-                                    borderColor: `${item.color}60`,
-                                    background: `radial-gradient(circle at 30% 30%, ${item.glowColor}15, transparent)`,
+                                    background: `radial-gradient(circle at 50% 50%, ${item.glowColor}18, transparent)`,
                                 }}
                             >
-                                <span className={styles.itemSlotIcon}>{item.icon}</span>
-                                <span className={styles.itemSlotCount}>{inv.count}</span>
+                                <ItemIcon itemId={inv.itemId} size={22} />
                             </div>
+                            {/* Count — large number typography */}
+                            <span className={styles.itemCardCount}>{inv.count}</span>
+                            {/* Name + rarity */}
+                            <span className={styles.itemCardName}>{item.nameJa}</span>
+                            <span
+                                className={styles.itemCardRarity}
+                                style={{ color: item.color }}
+                            >
+                                {RARITY_LABEL[item.rarity] || item.rarity}
+                            </span>
                         </div>
                     );
                 })}
@@ -68,13 +91,13 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
                             <div
                                 key={idx}
                                 className={styles.weaponCardSlot}
-                                title={`${card.name} - ${card.description}`}
+                                title={`${card.name} — ${card.description}`}
                                 style={{
-                                    borderColor: `${card.color}80`,
-                                    background: `linear-gradient(135deg, ${card.color}20, transparent)`,
+                                    borderColor: `${card.color}50`,
+                                    background: `linear-gradient(135deg, ${card.color}12, transparent)`,
                                 }}
                             >
-                                <span className={styles.weaponCardIcon}>{card.icon}</span>
+                                <WeaponIcon cardId={cc.cardId} size={16} glowColor={card.glowColor} />
                             </div>
                         );
                     })}
@@ -83,7 +106,7 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
 
             {/* Craft button */}
             <button className={styles.craftButton} onClick={onCraftOpen}>
-                CRAFT
+                FORGE
             </button>
         </div>
     );
