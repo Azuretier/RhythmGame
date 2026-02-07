@@ -48,7 +48,9 @@ import {
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
+  AnimeCompanion,
 } from './components';
+import type { CompanionMood } from './components';
 
 /**
  * Rhythmia - A rhythm-based Tetris game with full game loop:
@@ -717,6 +719,16 @@ export default function Rhythmia() {
 
   const world = WORLDS[worldIdx];
 
+  // Compute the companion's mood from game state
+  const companionMood: CompanionMood = useMemo(() => {
+    if (gameOver) return 'sad';
+    if (showJudgmentAnim && judgmentText === 'PERFECT!') return 'perfect';
+    if (combo >= 8) return 'excited';
+    if (combo >= 3) return 'happy';
+    if (isPlaying && !isPaused) return 'dancing';
+    return 'idle';
+  }, [gameOver, showJudgmentAnim, judgmentText, combo, isPlaying, isPaused]);
+
   return (
     <div
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
@@ -796,6 +808,13 @@ export default function Rhythmia() {
             <div className={styles.nextWrap}>
               <div className={styles.nextLabel}>NEXT</div>
               {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
+              <AnimeCompanion
+                mood={companionMood}
+                beatPhase={beatPhase}
+                boardBeat={boardBeat}
+                combo={combo}
+                worldIdx={worldIdx}
+              />
             </div>
           </div>
 
