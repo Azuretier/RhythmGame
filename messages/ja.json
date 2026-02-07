@@ -1,9 +1,11 @@
 {
     "meta": {
-        "title": "Azuretia - azuretier.netでAzuretiaをプレイ",
-        "description": "Azuretierが作成したウェブサイト。RHYTHMIAやその他のリズムゲームをプレイしよう。",
-        "ogTitle": "Azuretia - azuretier.netでAzuretiaをプレイ",
-        "ogDescription": "azuretier.netでRHYTHMIAやその他のリズムゲームをプレイ"
+        "title": "RHYTHMIA | リズム×テトリスの新感覚パズルゲーム - Azuretier",
+        "description": "音楽とパズルが完全融合！RHYTHMIA（リズミア）は、リズムに合わせてブロックを消す新感覚の無料ブラウザゲームです。テトリスの戦略性と音ゲーの爽快感を今すぐ体験しよう。",
+        "ogTitle": "RHYTHMIA - 究極のリズムパズル体験をブラウザで",
+        "ogDescription": "【音ゲー×テトリス】音楽の鼓動でブロックを操れ。Azuretierが贈る全く新しい落ち物パズルゲーム、RHYTHMIAをプレイ。",
+        "ogType": "website",
+        "keywords": "RHYTHMIA,リズミア,テトリス,音ゲー,リズムゲーム,落ち物パズル,無料ゲーム,ブラウザゲーム,Azuretier"
     },
     "lobby": {
         "loading": "読み込み中",
