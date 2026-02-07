@@ -154,7 +154,6 @@
   display: grid;
   gap: 1px;
   position: relative;
-  padding: 2px;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }

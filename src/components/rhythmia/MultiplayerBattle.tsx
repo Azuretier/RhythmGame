@@ -926,7 +926,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const renderPreview = (type: PieceType) => {
     const shape = getShape(type, 0);
     return (
-      <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, 1fr)` }}>
+      <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, auto)` }}>
         {shape.flat().map((val, i) => (
           <div
             key={i}
@@ -990,7 +990,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 </div>
               )}
 
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
                 {displayBoard.flat().map((cell, i) => (
                   <div
                     key={i}
@@ -1020,7 +1020,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             </div>
 
             <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
                 {opponentDisplay.flat().map((cell, i) => (
                   <div
                     key={i}

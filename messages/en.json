@@ -1,9 +1,11 @@
 {
     "meta": {
-        "title": "Azuretia - Play Azuretia from azuretier.net",
-        "description": "A website created by Azuretier. Play RHYTHMIA and other rhythm games.",
-        "ogTitle": "Azuretia - Play Azuretia from azuretier.net",
-        "ogDescription": "Play RHYTHMIA and other rhythm games from azuretier.net"
+        "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
+        "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
+        "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
+        "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+        "ogType": "website",
+        "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
     },
     "lobby": {
         "loading": "LOADING",
