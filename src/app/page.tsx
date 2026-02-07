@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { io } from 'socket.io-client';
+import type { ServerToClientEvents, ClientToServerEvents } from '@/types/game';
 import styles from '../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../components/rhythmia/tetris';
 import MultiplayerGame from '../components/rhythmia/MultiplayerGame';
@@ -11,7 +13,7 @@ type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 export default function RhythmiaPage() {
   const [gameMode, setGameMode] = useState<GameMode>('lobby');
   const [isLoading, setIsLoading] = useState(true);
-  const [onlineCount, setOnlineCount] = useState(127);
+  const [onlineCount, setOnlineCount] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -21,12 +23,15 @@ export default function RhythmiaPage() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const base = 120;
-      const variance = Math.floor(Math.random() * 30) - 15;
-      setOnlineCount(base + variance);
-    }, 5000);
-    return () => clearInterval(interval);
+    const socket = io({ path: '/socket.io' }) as import('socket.io-client').Socket<ServerToClientEvents, ClientToServerEvents>;
+
+    socket.on('online:count', (count) => {
+      setOnlineCount(count);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const launchGame = (mode: GameMode) => {

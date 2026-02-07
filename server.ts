@@ -37,9 +37,18 @@ app.prepare().then(() => {
     },
   });
 
+  // Broadcast current online count to all clients
+  function broadcastOnlineCount() {
+    const count = io.engine.clientsCount;
+    io.emit('online:count', count);
+  }
+
   // Socket.IO event handlers
   io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
     console.log('Client connected:', socket.id);
+
+    // Send current online count to all clients
+    broadcastOnlineCount();
 
     // Create room
     socket.on('room:create', (playerName: string, callback) => {
@@ -189,13 +198,16 @@ app.prepare().then(() => {
     // Disconnect
     socket.on('disconnect', () => {
       const result = gameManager.handleDisconnect(socket.id);
-      
+
       if (result.roomId) {
         socket.to(result.roomId).emit('room:player-disconnected', socket.id);
         console.log(`Player ${socket.id} disconnected from room ${result.roomId}`);
       }
-      
+
       console.log('Client disconnected:', socket.id);
+
+      // Update online count for remaining clients
+      broadcastOnlineCount();
     });
   });
 
