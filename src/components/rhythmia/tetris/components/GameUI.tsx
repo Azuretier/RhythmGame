@@ -1,20 +1,32 @@
 import React from 'react';
 import { WORLDS, ColorTheme } from '../constants';
+import type { GameMode } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface TitleScreenProps {
-    onStart: () => void;
+    onStart: (mode: GameMode) => void;
 }
 
 /**
- * Title screen component
+ * Title screen component with game mode selection
  */
 export function TitleScreen({ onStart }: TitleScreenProps) {
     return (
         <div className={styles.titleScreen}>
             <h1>RHYTHMIA</h1>
             <p>リズムに乗ってブロックを積め！</p>
-            <button className={styles.startBtn} onClick={onStart}>▶ START</button>
+            <div className={styles.modeSelect}>
+                <button className={styles.modeBtn} onClick={() => onStart('vanilla')}>
+                    <span className={styles.modeBtnIcon}>🎵</span>
+                    <span className={styles.modeBtnTitle}>VANILLA</span>
+                    <span className={styles.modeBtnDesc}>地形破壊リズムゲーム</span>
+                </button>
+                <button className={`${styles.modeBtn} ${styles.modeBtnTd}`} onClick={() => onStart('td')}>
+                    <span className={styles.modeBtnIcon}>🏰</span>
+                    <span className={styles.modeBtnTitle}>TOWER DEFENSE</span>
+                    <span className={styles.modeBtnDesc}>タワーを守れ！</span>
+                </button>
+            </div>
         </div>
     );
 }
@@ -67,35 +79,63 @@ interface TerrainProgressProps {
     terrainRemaining: number;
     terrainTotal: number;
     stageNumber: number;
+    gameMode: GameMode;
 }
 
 /**
- * Terrain destruction progress bar
+ * Progress display — mode-aware
+ * Vanilla: terrain destruction progress
+ * TD: enemy count indicator
  */
-export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber }: TerrainProgressProps) {
-    const percent = terrainTotal > 0 ? (terrainRemaining / terrainTotal) * 100 : 0;
+export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, gameMode }: TerrainProgressProps) {
+    if (gameMode === 'td') {
+        return (
+            <>
+                <div className={styles.terrainLabel}>STAGE {stageNumber} — TOWER DEFENSE</div>
+                <div className={styles.terrainBar}>
+                    <div className={styles.terrainFill} style={{ width: `${terrainTotal > 0 ? Math.min(100, (terrainRemaining / 20) * 100) : 0}%`, background: terrainRemaining > 10 ? '#ff4444' : terrainRemaining > 5 ? '#ffaa00' : '#44ff44' }} />
+                </div>
+                <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
+                    ENEMIES: {terrainRemaining}
+                </div>
+            </>
+        );
+    }
+
+    // Vanilla mode: terrain destruction progress
+    const pct = terrainTotal > 0 ? Math.min(100, ((terrainTotal - terrainRemaining) / terrainTotal) * 100) : 0;
     return (
         <>
-            <div className={styles.terrainLabel}>STAGE {stageNumber} — 地形破壊</div>
+            <div className={styles.terrainLabel}>STAGE {stageNumber} — DIG</div>
             <div className={styles.terrainBar}>
-                <div className={styles.terrainFill} style={{ width: `${percent}%` }} />
+                <div className={styles.terrainFill} style={{ width: `${pct}%` }} />
+            </div>
+            <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
+                {terrainRemaining} / {terrainTotal} blocks
             </div>
         </>
     );
 }
 
 interface BeatBarProps {
-    beatPhase: number;
+    /** Ref attached to the container div — parent's rAF loop sets
+     *  --beat-phase CSS var and data-onbeat attribute directly on this element
+     *  to bypass React re-render batching for smooth cross-browser animation. */
+    containerRef?: React.Ref<HTMLDivElement>;
 }
 
 /**
- * Beat timing indicator bar
+ * Beat timing indicator bar — cursor sweeps left→right each beat interval.
+ * Cursor position is driven by a CSS custom property (--beat-phase) and
+ * the on-beat glow by a data-onbeat attribute, both set from the parent's
+ * requestAnimationFrame loop for frame-precise, re-render-free animation.
  */
-export function BeatBar({ beatPhase }: BeatBarProps) {
+export function BeatBar({ containerRef }: BeatBarProps) {
     return (
-        <div className={styles.beatBar}>
-            <div className={styles.beatTarget} />
-            <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
+        <div ref={containerRef} className={styles.beatBar}>
+            <div className={styles.beatTargetLeft} />
+            <div className={styles.beatTargetRight} />
+            <div className={styles.beatCursor} />
         </div>
     );
 }
@@ -110,7 +150,7 @@ interface StatsProps {
  */
 export function StatsPanel({ lines, level }: StatsProps) {
     return (
-        <div className={styles.statsPanel || 'flex gap-4 mt-4 text-white text-sm'}>
+        <div className={styles.statsPanel}>
             <div>LINES: {lines}</div>
             <div>LEVEL: {level}</div>
         </div>

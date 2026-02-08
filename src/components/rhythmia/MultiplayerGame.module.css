@@ -143,6 +143,23 @@
   border-color: rgba(255, 255, 255, 0.25);
 }
 
+.modeCard.ranked {
+  border-color: rgba(255, 215, 0, 0.12);
+}
+
+.modeCard.ranked:hover {
+  border-color: rgba(255, 215, 0, 0.3);
+  background: rgba(255, 215, 0, 0.03);
+}
+
+.modeCard.ranked .modeIcon {
+  color: rgba(255, 215, 0, 0.7);
+}
+
+.modeCard.ranked .modeTitle {
+  color: rgba(255, 215, 0, 0.9);
+}
+
 .modeIcon {
   font-size: 2rem;
   font-weight: 300;

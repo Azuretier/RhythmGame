@@ -1,15 +1,21 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, InventoryItem, FloatingItem, CraftedCard, TerrainParticle } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
+    ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
+    ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
+    MAX_HEALTH, MAX_MANA, ENEMY_REACH_DAMAGE,
+    BULLET_MANA_COST, BULLET_SPEED, BULLET_KILL_RADIUS,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
 let nextFloatingId = 0;
 let nextParticleId = 0;
+let nextEnemyId = 0;
+let nextBulletId = 0;
 
 /**
  * Roll a random item based on drop weights
@@ -41,6 +47,9 @@ export function useGameState() {
     const [gameOver, setGameOver] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+
+    // Game mode
+    const [gameMode, setGameMode] = useState<GameMode>('vanilla');
 
     // Rhythm game state
     const [worldIdx, setWorldIdx] = useState(0);
@@ -76,6 +85,12 @@ export function useGameState() {
     const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
     const [showCraftUI, setShowCraftUI] = useState(false);
 
+    // ===== Tower Defense =====
+    const [enemies, setEnemies] = useState<Enemy[]>([]);
+    const [bullets, setBullets] = useState<Bullet[]>([]);
+    const [towerHealth, setTowerHealth] = useState(MAX_HEALTH);
+    const [mana, setMana] = useState(0);
+
     // Computed: total damage multiplier from all crafted cards
     const damageMultiplier = craftedCards.reduce((mult, card) => {
         const def = WEAPON_CARD_MAP[card.cardId];
@@ -110,6 +125,11 @@ export function useGameState() {
     const terrainTotalRef = useRef(terrainTotal);
     const beatPhaseRef = useRef(beatPhase);
     const damageMultiplierRef = useRef(damageMultiplier);
+    const enemiesRef = useRef<Enemy[]>(enemies);
+    const bulletsRef = useRef<Bullet[]>(bullets);
+    const towerHealthRef = useRef(towerHealth);
+    const manaRef = useRef(mana);
+    const gameModeRef = useRef<GameMode>(gameMode);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -140,6 +160,11 @@ export function useGameState() {
     useEffect(() => { terrainTotalRef.current = terrainTotal; }, [terrainTotal]);
     useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
     useEffect(() => { damageMultiplierRef.current = damageMultiplier; }, [damageMultiplier]);
+    useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
+    useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
+    useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
+    useEffect(() => { manaRef.current = mana; }, [mana]);
+    useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -315,6 +340,185 @@ export function useGameState() {
         }, TERRAIN_PARTICLE_LIFETIME + 100);
     }, []);
 
+    // ===== Tower Defense Enemy Actions =====
+
+    // Spawn enemies at the terrain edge
+    const spawnEnemies = useCallback((count: number) => {
+        const newEnemies: Enemy[] = [];
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const spawnDist = ENEMY_SPAWN_DISTANCE + Math.random() * 3;
+            newEnemies.push({
+                id: nextEnemyId++,
+                x: Math.cos(angle) * spawnDist,
+                y: 0.5,
+                z: Math.sin(angle) * spawnDist,
+                speed: ENEMY_BASE_SPEED + Math.random() * 0.03,
+                health: 1,
+                alive: true,
+                spawnTime: Date.now(),
+            });
+        }
+        setEnemies(prev => [...prev, ...newEnemies]);
+    }, []);
+
+    // Move enemies toward center (tower), returns number that reached the tower
+    // Enemies that reach the tower are removed immediately (disappear).
+    // Must compute reached OUTSIDE the state setter — React 18 batching
+    // defers the updater callback, so a `reached` counter inside it would
+    // still be 0 when this function returns.
+    const updateEnemies = useCallback((): number => {
+        const current = enemiesRef.current;
+        let reached = 0;
+        const updated: Enemy[] = [];
+
+        for (const e of current) {
+            if (!e.alive) continue;
+
+            const dx = -e.x;
+            const dz = -e.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+
+            if (dist < ENEMY_TOWER_RADIUS) {
+                reached++;
+                // Enemy disappears — not added to updated array
+                continue;
+            }
+
+            const nx = dx / dist;
+            const nz = dz / dist;
+            updated.push({
+                ...e,
+                x: e.x + nx * e.speed,
+                z: e.z + nz * e.speed,
+            });
+        }
+
+        setEnemies(updated);
+        enemiesRef.current = updated;
+        return reached;
+    }, []);
+
+    // Kill closest enemies (when lines are cleared) — removed instantly
+    const killEnemies = useCallback((count: number) => {
+        setEnemies(prev => {
+            const alive = prev.filter(e => e.alive);
+            alive.sort((a, b) => {
+                const distA = Math.sqrt(a.x * a.x + a.z * a.z);
+                const distB = Math.sqrt(b.x * b.x + b.z * b.z);
+                return distA - distB;
+            });
+
+            // Remove the closest ones entirely
+            const toKill = Math.min(count, alive.length);
+            const survivors = alive.slice(toKill);
+            return survivors;
+        });
+    }, []);
+
+    // Fire a bullet from tower at the closest enemy (costs mana)
+    const fireBullet = useCallback((): boolean => {
+        if (manaRef.current < BULLET_MANA_COST) return false;
+
+        const alive = enemiesRef.current.filter(e => e.alive);
+        if (alive.length === 0) return false;
+
+        // Find closest enemy
+        let closest = alive[0];
+        let closestDist = Math.sqrt(closest.x * closest.x + closest.z * closest.z);
+        for (let i = 1; i < alive.length; i++) {
+            const d = Math.sqrt(alive[i].x * alive[i].x + alive[i].z * alive[i].z);
+            if (d < closestDist) {
+                closest = alive[i];
+                closestDist = d;
+            }
+        }
+
+        // Deduct mana
+        setMana(prev => Math.max(0, prev - BULLET_MANA_COST));
+        manaRef.current = Math.max(0, manaRef.current - BULLET_MANA_COST);
+
+        // Create bullet from tower top toward enemy
+        const bullet: Bullet = {
+            id: nextBulletId++,
+            x: 0,
+            y: 12,
+            z: 0,
+            targetX: closest.x,
+            targetY: 1.5,
+            targetZ: closest.z,
+            speed: BULLET_SPEED,
+            alive: true,
+        };
+        setBullets(prev => [...prev, bullet]);
+
+        return true;
+    }, []);
+
+    // Move bullets toward targets and check collision with enemies
+    const updateBullets = useCallback(() => {
+        const currentBullets = bulletsRef.current;
+        if (currentBullets.length === 0) return;
+
+        const updatedBullets: Bullet[] = [];
+        const killedEnemyIds: Set<number> = new Set();
+
+        for (const b of currentBullets) {
+            if (!b.alive) continue;
+
+            const dx = b.targetX - b.x;
+            const dy = b.targetY - b.y;
+            const dz = b.targetZ - b.z;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (dist < BULLET_KILL_RADIUS) {
+                // Bullet arrived — find and kill closest enemy at target
+                const alive = enemiesRef.current.filter(
+                    e => e.alive && !killedEnemyIds.has(e.id)
+                );
+                let closest: Enemy | null = null;
+                let bestDist = Infinity;
+                for (const e of alive) {
+                    const ed = Math.sqrt(
+                        (e.x - b.targetX) ** 2 + (e.z - b.targetZ) ** 2
+                    );
+                    if (ed < bestDist) {
+                        bestDist = ed;
+                        closest = e;
+                    }
+                }
+                if (closest && bestDist < BULLET_KILL_RADIUS * 3) {
+                    killedEnemyIds.add(closest.id);
+                }
+                // Bullet consumed — don't add to updated
+                continue;
+            }
+
+            // Move bullet toward target
+            const nx = dx / dist;
+            const ny = dy / dist;
+            const nz = dz / dist;
+            updatedBullets.push({
+                ...b,
+                x: b.x + nx * b.speed,
+                y: b.y + ny * b.speed,
+                z: b.z + nz * b.speed,
+            });
+        }
+
+        setBullets(updatedBullets);
+        bulletsRef.current = updatedBullets;
+
+        // Remove killed enemies
+        if (killedEnemyIds.size > 0) {
+            const newEnemies = enemiesRef.current.filter(
+                e => !killedEnemyIds.has(e.id)
+            );
+            setEnemies(newEnemies);
+            enemiesRef.current = newEnemies;
+        }
+    }, []);
+
     // Craft a weapon card
     const craftCard = useCallback((cardId: string): boolean => {
         const card = WEAPON_CARD_MAP[cardId];
@@ -381,7 +585,10 @@ export function useGameState() {
     }, []);
 
     // Initialize/reset game
-    const initGame = useCallback(() => {
+    const initGame = useCallback((mode: GameMode = 'vanilla') => {
+        setGameMode(mode);
+        gameModeRef.current = mode;
+
         setBoard(createEmptyBoard());
         boardRef.current = createEmptyBoard();
         setScore(0);
@@ -408,6 +615,18 @@ export function useGameState() {
         setFloatingItems([]);
         setTerrainParticles([]);
         setShowCraftUI(false);
+
+        // Reset tower defense state (always reset, only used in TD mode)
+        setEnemies([]);
+        enemiesRef.current = [];
+        setBullets([]);
+        bulletsRef.current = [];
+        setTowerHealth(MAX_HEALTH);
+        towerHealthRef.current = MAX_HEALTH;
+        setMana(0);
+        manaRef.current = 0;
+        nextEnemyId = 0;
+        nextBulletId = 0;
 
         setHoldPiece(null);
         setCanHold(true);
@@ -480,6 +699,14 @@ export function useGameState() {
         craftedCards,
         showCraftUI,
         damageMultiplier,
+        // Game mode
+        gameMode,
+
+        // Tower defense
+        enemies,
+        bullets,
+        towerHealth,
+        mana,
 
         // Setters
         setBoard,
@@ -526,6 +753,9 @@ export function useGameState() {
         terrainTotalRef,
         beatPhaseRef,
         damageMultiplierRef,
+        enemiesRef,
+        bulletsRef,
+        gameModeRef,
         keyStatesRef,
         gameLoopRef,
         beatTimerRef,
@@ -552,5 +782,16 @@ export function useGameState() {
         triggerCollapse,
         triggerTransition,
         triggerWorldCreation,
+        // Tower defense actions
+        spawnEnemies,
+        updateEnemies,
+        killEnemies,
+        fireBullet,
+        updateBullets,
+        setEnemies,
+        setTowerHealth,
+        setMana,
+        towerHealthRef,
+        manaRef,
     };
 }

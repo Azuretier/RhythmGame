@@ -772,8 +772,12 @@ export default function Rhythmia() {
           </div>
 
           <div className={styles.beatBar}>
-            <div className={styles.beatTarget} />
-            <div className={styles.beatFill} style={{ width: `${beatPhase * 100}%` }} />
+            <div className={styles.beatTargetLeft} />
+            <div className={styles.beatTargetRight} />
+            <div
+              className={`${styles.beatCursor} ${(beatPhase > 0.75 || beatPhase < 0.15) ? styles.onBeat : ''}`}
+              style={{ left: `${beatPhase * 100}%` }}
+            />
           </div>
 
           <div className={styles.controls}>

@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useMemo } from 'react';
 import type { VFXEvent } from '../types';
 import { BOARD_WIDTH, BOARD_HEIGHT, WORLDS } from '../constants';
 
@@ -694,12 +694,12 @@ export function useRhythmVFX() {
         };
     }, []);
 
-    return {
+    return useMemo(() => ({
         canvasRef,
         emit,
         updateBoardGeometry,
         start,
         stop,
         stateRef,
-    };
+    }), [canvasRef, emit, updateBoardGeometry, start, stop, stateRef]);
 }

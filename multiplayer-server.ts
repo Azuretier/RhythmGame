@@ -25,6 +25,10 @@ const COUNTDOWN_SECONDS = 3;
 // Initialize room manager
 const roomManager = new MultiplayerRoomManager();
 
+// Ranked matchmaking constants
+const RANKED_MATCH_TIMEOUT = 8000; // 8 seconds before AI fallback
+const RANKED_POINT_RANGE = 500;    // Match within this point range
+
 // Player connection tracking
 interface PlayerConnection {
   ws: WebSocket;
@@ -32,6 +36,17 @@ interface PlayerConnection {
   lastActivity: number;
   reconnectToken?: string;
 }
+
+// Ranked matchmaking queue
+interface QueuedPlayer {
+  playerId: string;
+  playerName: string;
+  rankPoints: number;
+  queuedAt: number;
+}
+
+const rankedQueue: Map<string, QueuedPlayer> = new Map();
+const rankedTimers: Map<string, NodeJS.Timeout> = new Map();
 
 const playerConnections = new Map<string, PlayerConnection>();
 const reconnectTokens = new Map<string, { playerId: string; expires: number }>();
@@ -143,6 +158,128 @@ function startCountdown(roomCode: string, gameSeed: number): void {
   };
 
   tick();
+}
+
+// ===== Ranked Matchmaking =====
+
+function tryRankedMatch(playerId: string): boolean {
+  const queued = rankedQueue.get(playerId);
+  if (!queued) return false;
+
+  // Find a suitable opponent in the queue
+  for (const [otherId, other] of rankedQueue) {
+    if (otherId === playerId) continue;
+    const pointDiff = Math.abs(queued.rankPoints - other.rankPoints);
+    // Expand range over time: after 4s, accept wider range
+    const elapsed = Date.now() - queued.queuedAt;
+    const expandedRange = RANKED_POINT_RANGE + Math.floor(elapsed / 1000) * 200;
+    if (pointDiff <= expandedRange) {
+      // Match found! Create a room for them
+      createRankedRoom(playerId, queued, otherId, other);
+      return true;
+    }
+  }
+  return false;
+}
+
+function createRankedRoom(
+  player1Id: string, player1: QueuedPlayer,
+  player2Id: string, player2: QueuedPlayer,
+): void {
+  // Remove both from queue
+  rankedQueue.delete(player1Id);
+  rankedQueue.delete(player2Id);
+  clearRankedTimer(player1Id);
+  clearRankedTimer(player2Id);
+
+  // Leave any existing rooms
+  const existing1 = roomManager.getRoomByPlayerId(player1Id);
+  if (existing1) roomManager.removePlayerFromRoom(player1Id);
+  const existing2 = roomManager.getRoomByPlayerId(player2Id);
+  if (existing2) roomManager.removePlayerFromRoom(player2Id);
+
+  // Create room with player1 as host
+  const { roomCode } = roomManager.createRoom(player1Id, player1.playerName, 'Ranked Match', false, 2);
+  const joinResult = roomManager.joinRoom(roomCode, player2Id, player2.playerName);
+
+  const gameSeed = Math.floor(Math.random() * 2147483647);
+  const token1 = issueReconnectToken(player1Id);
+  const token2 = issueReconnectToken(player2Id);
+
+  // Notify both players
+  sendToPlayer(player1Id, {
+    type: 'ranked_match_found',
+    roomCode,
+    opponentName: player2.playerName,
+    opponentId: player2Id,
+    isAI: false,
+    gameSeed,
+    reconnectToken: token1,
+  });
+
+  sendToPlayer(player2Id, {
+    type: 'ranked_match_found',
+    roomCode,
+    opponentName: player1.playerName,
+    opponentId: player1Id,
+    isAI: false,
+    gameSeed,
+    reconnectToken: token2,
+  });
+
+  // Auto-start countdown after a brief delay
+  setTimeout(() => {
+    // Set both players ready and start
+    roomManager.setPlayerReady(player1Id, true);
+    roomManager.setPlayerReady(player2Id, true);
+    const startResult = roomManager.startGame(player1Id);
+    if (startResult.success && startResult.gameSeed) {
+      sendRoomState(roomCode);
+      startCountdown(roomCode, gameSeed);
+    }
+  }, 1500);
+
+  console.log(`[RANKED] Match created: ${player1.playerName} vs ${player2.playerName} (Room: ${roomCode})`);
+}
+
+function spawnAIMatch(playerId: string): void {
+  const queued = rankedQueue.get(playerId);
+  if (!queued) return;
+
+  // Remove from queue
+  rankedQueue.delete(playerId);
+  clearRankedTimer(playerId);
+
+  // Leave any existing room
+  const existing = roomManager.getRoomByPlayerId(playerId);
+  if (existing) roomManager.removePlayerFromRoom(playerId);
+
+  // Create room with player as host
+  const { roomCode } = roomManager.createRoom(playerId, queued.playerName, 'Ranked Match', false, 2);
+
+  const gameSeed = Math.floor(Math.random() * 2147483647);
+  const token = issueReconnectToken(playerId);
+
+  // Notify player — AI match
+  sendToPlayer(playerId, {
+    type: 'ranked_match_found',
+    roomCode,
+    opponentName: 'AI Rival',
+    opponentId: `ai_${Date.now()}`,
+    isAI: true,
+    gameSeed,
+    reconnectToken: token,
+  });
+
+  console.log(`[RANKED] AI match spawned for ${queued.playerName} (Room: ${roomCode})`);
+}
+
+function clearRankedTimer(playerId: string): void {
+  const timer = rankedTimers.get(playerId);
+  if (timer) {
+    clearTimeout(timer);
+    rankedTimers.delete(playerId);
+  }
 }
 
 // ===== Message Handler =====
@@ -386,6 +523,70 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
+    case 'queue_ranked': {
+      // Remove from any existing room
+      const existing = roomManager.getRoomByPlayerId(playerId);
+      if (existing) {
+        roomManager.removePlayerFromRoom(playerId);
+      }
+
+      // Remove from queue if already in it
+      rankedQueue.delete(playerId);
+      clearRankedTimer(playerId);
+
+      // Add to queue
+      const queueEntry: QueuedPlayer = {
+        playerId,
+        playerName: (message.playerName || 'Player').slice(0, 20),
+        rankPoints: typeof message.rankPoints === 'number' ? message.rankPoints : 0,
+        queuedAt: Date.now(),
+      };
+      rankedQueue.set(playerId, queueEntry);
+
+      // Notify player they're queued
+      sendToPlayer(playerId, {
+        type: 'ranked_queued',
+        position: rankedQueue.size,
+      });
+
+      console.log(`[RANKED] ${queueEntry.playerName} queued (${queueEntry.rankPoints} pts, ${rankedQueue.size} in queue)`);
+
+      // Try to find a match immediately
+      if (!tryRankedMatch(playerId)) {
+        // Set timeout for AI fallback
+        const timer = setTimeout(() => {
+          rankedTimers.delete(playerId);
+          // Try one more time to find a human match
+          if (rankedQueue.has(playerId) && !tryRankedMatch(playerId)) {
+            spawnAIMatch(playerId);
+          }
+        }, RANKED_MATCH_TIMEOUT);
+        rankedTimers.set(playerId, timer);
+
+        // Also periodically retry matching during the wait
+        const retryInterval = setInterval(() => {
+          if (!rankedQueue.has(playerId)) {
+            clearInterval(retryInterval);
+            return;
+          }
+          if (tryRankedMatch(playerId)) {
+            clearInterval(retryInterval);
+          }
+        }, 1000);
+
+        // Clean up retry interval after timeout
+        setTimeout(() => clearInterval(retryInterval), RANKED_MATCH_TIMEOUT + 500);
+      }
+      break;
+    }
+
+    case 'cancel_ranked': {
+      rankedQueue.delete(playerId);
+      clearRankedTimer(playerId);
+      console.log(`[RANKED] ${playerId} cancelled queue`);
+      break;
+    }
+
     default:
       sendError(playerId, `Unknown message type`, 'UNKNOWN_TYPE');
   }
@@ -396,6 +597,10 @@ function handleMessage(playerId: string, raw: string): void {
 function handleDisconnect(playerId: string, reason: string): void {
   // Prevent double-handling
   if (disconnectTimers.has(playerId)) return;
+
+  // Clean up ranked queue
+  rankedQueue.delete(playerId);
+  clearRankedTimer(playerId);
 
   const result = roomManager.markPlayerDisconnected(playerId);
   playerConnections.delete(playerId);

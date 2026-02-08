@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MultiplayerBattle.module.css';
 import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/multiplayer';
+import { recordMultiplayerGameEnd } from '@/lib/advancements/storage';
+import AdvancementToast from './AdvancementToast';
 
 // ===== Types =====
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -261,6 +263,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const isOnGroundRef = useRef(false);
   const pendingGarbageRef = useRef(0);
 
+  // Per-game stat tracking for advancements
+  const gameHardDropsRef = useRef(0);
+  const gamePiecesPlacedRef = useRef(0);
+  const advRecordedRef = useRef(false);
+  const [toastIds, setToastIds] = useState<string[]>([]);
+
   // Opponent state
   const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
   const opponentScoreRef = useRef(0);
@@ -392,9 +400,20 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
 
     if (!isValid(piece, boardRef.current)) {
-      // Game over - can't spawn
+      // Game over - can't spawn (we lost)
       gameOverRef.current = true;
       sendGameOver();
+      if (!advRecordedRef.current) {
+        advRecordedRef.current = true;
+        const result = recordMultiplayerGameEnd({
+          score: scoreRef.current,
+          lines: linesRef.current,
+          won: false,
+          hardDrops: gameHardDropsRef.current,
+          piecesPlaced: gamePiecesPlacedRef.current,
+        });
+        if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
+      }
       onGameEnd(opponent?.id || '');
       render();
       return false;
@@ -458,6 +477,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (aboveBoard) {
       gameOverRef.current = true;
       sendGameOver();
+      if (!advRecordedRef.current) {
+        advRecordedRef.current = true;
+        const result = recordMultiplayerGameEnd({
+          score: scoreRef.current,
+          lines: linesRef.current,
+          won: false,
+          hardDrops: gameHardDropsRef.current,
+          piecesPlaced: gamePiecesPlacedRef.current,
+        });
+        if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
+      }
       onGameEnd(opponent?.id || '');
       render();
       return;
@@ -475,6 +505,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
     } else {
       comboRef.current = 0;
     }
+
+    // Track pieces placed
+    gamePiecesPlacedRef.current++;
 
     // Lock to board
     let newBoard = lockPiece(piece, boardRef.current);
@@ -599,6 +632,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const piece = pieceRef.current;
     if (!piece || gameOverRef.current) return;
 
+    gameHardDropsRef.current++;
     const gy = getGhostY(piece, boardRef.current);
     const dropDist = gy - piece.y;
     pieceRef.current = { ...piece, y: gy };
@@ -656,6 +690,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
           } else if (payload.event === 'game_over') {
             if (!gameOverRef.current) {
               gameOverRef.current = true;
+              if (!advRecordedRef.current) {
+                advRecordedRef.current = true;
+                const result = recordMultiplayerGameEnd({
+                  score: scoreRef.current,
+                  lines: linesRef.current,
+                  won: true,
+                  hardDrops: gameHardDropsRef.current,
+                  piecesPlaced: gamePiecesPlacedRef.current,
+                });
+                if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
+              }
               onGameEnd(playerId);
               render();
             }
@@ -685,6 +730,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
     linesRef.current = 0;
     gameOverRef.current = false;
     pendingGarbageRef.current = 0;
+    gameHardDropsRef.current = 0;
+    gamePiecesPlacedRef.current = 0;
+    advRecordedRef.current = false;
+    setToastIds([]);
     opponentBoardRef.current = createEmptyBoard();
     opponentScoreRef.current = 0;
     opponentLinesRef.current = 0;
@@ -1057,7 +1106,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
       {gameOver && (
         <div className={styles.gameOverOverlay}>
           <h2 className={styles.gameOverTitle}>
-            {/* If opponent sent game_over, we won. If we sent game_over, we lost. */}
             GAME OVER
           </h2>
           <div className={styles.finalScores}>
@@ -1068,6 +1116,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
             Back to Lobby
           </button>
         </div>
+      )}
+
+      {/* Advancement Toast */}
+      {toastIds.length > 0 && (
+        <AdvancementToast
+          unlockedIds={toastIds}
+          onDismiss={() => setToastIds([])}
+        />
       )}
     </div>
   );

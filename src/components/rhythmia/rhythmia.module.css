@@ -404,6 +404,75 @@
   }
 }
 
+/* Advancement button */
+.advButton {
+  padding: 4px 12px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.advButton:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Locked card */
+.lockedCard {
+  cursor: not-allowed;
+  position: relative;
+}
+
+.lockedCard > *:not(.lockOverlay) {
+  filter: blur(2px);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.lockOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: 12px;
+}
+
+.lockIcon {
+  width: 36px;
+  height: 36px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.lockText {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.08em;
+  text-align: center;
+  max-width: 200px;
+  line-height: 1.5;
+}
+
+.lockedButton {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .header {

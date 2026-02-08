@@ -1,0 +1,270 @@
+/* Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Panel */
+.panel {
+  width: 100%;
+  max-width: 700px;
+  max-height: 85vh;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 12px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  color: #ffffff;
+}
+
+.progressLabel {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.05em;
+}
+
+.closeBtn {
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.6);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.closeBtn:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Progress bar (top) */
+.progressBar {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 0 24px 12px;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 1px;
+  transition: width 0.5s ease;
+}
+
+/* Category tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 14px;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.activeTab {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tabLabel {
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.tabCount {
+  font-size: 0.55rem;
+  opacity: 0.5;
+}
+
+/* Advancement list */
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+/* Advancement item */
+.advItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: all 0.2s;
+}
+
+.advItem.unlocked {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.advItem.locked {
+  opacity: 0.5;
+}
+
+.advIcon {
+  font-size: 1.4rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.advInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.advName {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 2px;
+  letter-spacing: 0.03em;
+}
+
+.advDesc {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+
+.advProgressBar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 1.5px;
+  overflow: hidden;
+  margin-bottom: 3px;
+}
+
+.advProgressFill {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 1.5px;
+  transition: width 0.4s ease;
+}
+
+.locked .advProgressFill {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.advProgressText {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-variant-numeric: tabular-nums;
+}
+
+.advCheck {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .panel {
+    max-height: 90vh;
+  }
+
+  .header {
+    padding: 16px 16px 10px;
+  }
+
+  .tabs {
+    padding: 0 16px;
+  }
+
+  .list {
+    padding: 0 16px 16px;
+  }
+
+  .tab {
+    padding: 6px 10px;
+  }
+}

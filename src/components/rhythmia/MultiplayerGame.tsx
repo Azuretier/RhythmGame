@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import styles from './MultiplayerGame.module.css';
 import MultiplayerBattle from './MultiplayerBattle';
+import RankedMatch from './RankedMatch';
 import type {
   ServerMessage,
   RoomState,
@@ -11,7 +12,7 @@ import type {
 } from '@/types/multiplayer';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
-type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished';
+type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished' | 'ranked';
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const PING_TIMEOUT = 60000; // Consider connection dead if no ping from server in 60s
@@ -281,7 +282,13 @@ export default function MultiplayerGame() {
   // ===== Actions =====
   const handleNameSubmit = useCallback(() => {
     if (playerName.trim().length < 2) return;
-    setMode('room-browser');
+    const nextMode = sessionStorage.getItem('mp_nextMode');
+    sessionStorage.removeItem('mp_nextMode');
+    if (nextMode === 'ranked') {
+      setMode('ranked');
+    } else {
+      setMode('room-browser');
+    }
     setError(null);
   }, [playerName]);
 
@@ -398,6 +405,24 @@ export default function MultiplayerGame() {
               <div className={styles.modeIcon}>VS</div>
               <div className={styles.modeTitle}>Online Battle</div>
               <p className={styles.modeDesc}>Real-time battle against other players</p>
+            </div>
+            <div
+              className={`${styles.modeCard} ${styles.ranked}`}
+              onClick={() => {
+                if (connectionStatus !== 'connected') {
+                  connectWebSocket();
+                }
+                if (playerName.trim().length >= 2) {
+                  setMode('ranked');
+                } else {
+                  setMode('name-entry');
+                  sessionStorage.setItem('mp_nextMode', 'ranked');
+                }
+              }}
+            >
+              <div className={styles.modeIcon}>RANK</div>
+              <div className={styles.modeTitle}>Ranked Match</div>
+              <p className={styles.modeDesc}>Climb the ranks with AI fallback matchmaking</p>
             </div>
           </div>
         </div>
@@ -645,6 +670,17 @@ export default function MultiplayerGame() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Ranked */}
+      {mode === 'ranked' && (
+        <RankedMatch
+          playerName={playerName || 'Player'}
+          onBack={() => setMode('lobby')}
+          ws={wsRef.current}
+          connectionStatus={connectionStatus}
+          playerId={playerIdRef.current}
+        />
       )}
     </div>
   );

@@ -1,3 +1,6 @@
+// ===== Game Mode =====
+export type GameMode = 'vanilla' | 'td';
+
 // ===== Game Types =====
 
 export type Piece = {
@@ -118,6 +121,30 @@ export type WeaponCard = {
 export type CraftedCard = {
     cardId: string;
     craftedAt: number;
+};
+
+// ===== Tower Defense =====
+export type Enemy = {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    speed: number;
+    health: number;
+    alive: boolean;
+    spawnTime: number;
+};
+
+export type Bullet = {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    targetX: number;
+    targetY: number;
+    targetZ: number;
+    speed: number;
+    alive: boolean;
 };
 
 // ===== Terrain Particle =====

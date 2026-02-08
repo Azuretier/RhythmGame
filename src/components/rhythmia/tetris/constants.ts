@@ -251,6 +251,25 @@ export const FLOAT_DURATION = 800;
 export const TERRAIN_PARTICLES_PER_LINE = 15;
 export const TERRAIN_PARTICLE_LIFETIME = 600;
 
+// ===== Tower Defense Settings =====
+export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn
+export const ENEMY_BASE_SPEED = 0.5;     // Base movement speed toward tower per tick
+export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower
+export const ENEMIES_PER_BEAT = 1;       // Enemies spawned per beat
+export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
+
+// ===== Tower Defense HUD =====
+export const MAX_HEALTH = 100;
+export const MAX_MANA = 100;
+export const ENEMY_REACH_DAMAGE = 15;    // Damage when an enemy reaches the tower
+export const MANA_PER_LINE = 12;         // Mana gained per line clear
+export const MANA_PER_COMBO = 3;         // Mana gained per combo increment
+export const MANA_COST_FEVER = 2;        // Mana drained per beat during fever
+export const HEALTH_REGEN_FEVER = 1;     // Health regen per beat during fever
+export const BULLET_MANA_COST = 10;     // Mana cost per tower bullet
+export const BULLET_SPEED = 2.0;        // Bullet travel speed per frame
+export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet kills enemy
+
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
 

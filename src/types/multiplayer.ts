@@ -83,6 +83,16 @@ export interface RematchMessage {
   type: 'rematch';
 }
 
+export interface QueueRankedMessage {
+  type: 'queue_ranked';
+  playerName: string;
+  rankPoints: number;
+}
+
+export interface CancelRankedMessage {
+  type: 'cancel_ranked';
+}
+
 export type ClientMessage =
   | CreateRoomMessage
   | JoinRoomMessage
@@ -93,7 +103,9 @@ export type ClientMessage =
   | RelayMessage
   | PongMessage
   | ReconnectMessage
-  | RematchMessage;
+  | RematchMessage
+  | QueueRankedMessage
+  | CancelRankedMessage;
 
 // ===== Server -> Client Messages =====
 
@@ -196,6 +208,21 @@ export interface ServerShutdownMessage {
   message: string;
 }
 
+export interface RankedMatchFoundMessage {
+  type: 'ranked_match_found';
+  roomCode: string;
+  opponentName: string;
+  opponentId: string;
+  isAI: boolean;
+  gameSeed: number;
+  reconnectToken: string;
+}
+
+export interface RankedQueuedMessage {
+  type: 'ranked_queued';
+  position: number;
+}
+
 export type ServerMessage =
   | ConnectedMessage
   | RoomCreatedMessage
@@ -213,7 +240,9 @@ export type ServerMessage =
   | ReconnectedMessage
   | RematchStartedMessage
   | OnlineCountMessage
-  | ServerShutdownMessage;
+  | ServerShutdownMessage
+  | RankedMatchFoundMessage
+  | RankedQueuedMessage;
 
 // ===== Relay Payload Types =====
 // These are game-specific messages relayed between players

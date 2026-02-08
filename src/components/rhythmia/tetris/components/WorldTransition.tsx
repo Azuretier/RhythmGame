@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { GamePhase } from '../types';
+import type { GamePhase, GameMode } from '../types';
 import { WORLDS } from '../constants';
 import styles from '../VanillaGame.module.css';
 
@@ -7,6 +7,7 @@ interface WorldTransitionProps {
     phase: GamePhase;
     worldIdx: number;
     stageNumber: number;
+    gameMode?: GameMode;
 }
 
 /**
@@ -15,7 +16,7 @@ interface WorldTransitionProps {
  * - COLLAPSE: Shake + flash when terrain is fully destroyed
  * - TRANSITION: Reload/rebuild visual between worlds
  */
-export function WorldTransition({ phase, worldIdx, stageNumber }: WorldTransitionProps) {
+export function WorldTransition({ phase, worldIdx, stageNumber, gameMode = 'vanilla' }: WorldTransitionProps) {
     const [visible, setVisible] = useState(false);
     const [text, setText] = useState('');
     const [subText, setSubText] = useState('');
@@ -24,25 +25,26 @@ export function WorldTransition({ phase, worldIdx, stageNumber }: WorldTransitio
         if (phase === 'WORLD_CREATION') {
             setVisible(true);
             setText(`STAGE ${stageNumber}`);
-            setSubText(WORLDS[worldIdx]?.name || '');
+            const modeSuffix = gameMode === 'td' ? ' — TOWER DEFENSE' : '';
+            setSubText((WORLDS[worldIdx]?.name || '') + modeSuffix);
             const timer = setTimeout(() => setVisible(false), 1400);
             return () => clearTimeout(timer);
         } else if (phase === 'COLLAPSE') {
             setVisible(true);
-            setText('TERRAIN CLEARED!');
-            setSubText('地形破壊完了');
+            setText(gameMode === 'td' ? 'WAVE COMPLETE!' : 'TERRAIN CLEARED!');
+            setSubText(gameMode === 'td' ? 'ウェーブクリア！' : '地形破壊完了');
             const timer = setTimeout(() => setVisible(false), 1200);
             return () => clearTimeout(timer);
         } else if (phase === 'TRANSITION') {
             setVisible(true);
-            setText('NEXT WORLD');
-            setSubText('新世界構築中...');
+            setText(gameMode === 'td' ? 'NEXT WAVE' : 'NEXT WORLD');
+            setSubText(gameMode === 'td' ? '次のウェーブ準備中...' : '新世界構築中...');
             const timer = setTimeout(() => setVisible(false), 1200);
             return () => clearTimeout(timer);
         } else {
             setVisible(false);
         }
-    }, [phase, worldIdx, stageNumber]);
+    }, [phase, worldIdx, stageNumber, gameMode]);
 
     if (!visible) return null;
 
