@@ -19,3 +19,5 @@ export { ItemSlots } from './ItemSlots';
 export { CraftingUI } from './CraftingUI';
 export { TerrainParticles } from './TerrainParticles';
 export { WorldTransition, GamePhaseIndicator } from './WorldTransition';
+export { AnimeCompanion } from './AnimeCompanion';
+export type { CompanionMood } from './AnimeCompanion';

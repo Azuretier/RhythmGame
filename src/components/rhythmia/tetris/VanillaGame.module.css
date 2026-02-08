@@ -1681,3 +1681,362 @@
     height: 36px;
   }
 }
+
+/* ===== Anime Companion ===== */
+.companion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+  min-height: 120px;
+  margin-top: 12px;
+  user-select: none;
+  pointer-events: none;
+}
+
+.companionBody {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.08s ease-out;
+}
+
+/* Beat bounce */
+.companionBeat .companionBody {
+  animation: companionBounce 0.15s ease-out;
+}
+
+@keyframes companionBounce {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-8px) scale(1.04); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Dancing sway */
+.companionDancing .companionBody {
+  animation: companionSway 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes companionSway {
+  0% { transform: rotate(-4deg) translateX(-2px); }
+  100% { transform: rotate(4deg) translateX(2px); }
+}
+
+/* Excited jitter */
+.companionExcited .companionBody {
+  animation: companionJitter 0.2s ease-in-out infinite;
+}
+
+@keyframes companionJitter {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-2px) rotate(-2deg); }
+  75% { transform: translateX(2px) rotate(2deg); }
+}
+
+/* Perfect sparkle */
+.companionPerfect {
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+}
+
+/* Sad droop */
+.companionSad .companionBody {
+  transform: translateY(4px);
+  opacity: 0.8;
+}
+
+/* ===== Hair ===== */
+.companionHair {
+  position: relative;
+  width: 50px;
+  height: 28px;
+  z-index: 2;
+}
+
+.companionHairTop {
+  position: absolute;
+  top: 0;
+  left: 3px;
+  width: 44px;
+  height: 26px;
+  background: linear-gradient(180deg, #4a3a2a 0%, #3a2a1a 100%);
+  border-radius: 22px 22px 4px 4px;
+  z-index: 2;
+}
+
+.companionTail {
+  position: absolute;
+  bottom: -18px;
+  width: 10px;
+  height: 28px;
+  border-radius: 0 0 5px 5px;
+  z-index: 1;
+  transition: transform 0.1s ease-out;
+}
+
+.companionTailLeft {
+  left: -2px;
+  transform-origin: top center;
+}
+
+.companionTailRight {
+  right: -2px;
+  transform-origin: top center;
+}
+
+.companionRibbon {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 6px;
+  border-radius: 3px;
+  z-index: 3;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+/* ===== Face ===== */
+.companionFace {
+  position: relative;
+  width: 42px;
+  height: 38px;
+  background: #fde8d0;
+  border-radius: 50% 50% 45% 45%;
+  margin-top: -6px;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.companionBlush {
+  position: absolute;
+  width: 10px;
+  height: 6px;
+  background: rgba(255, 140, 140, 0.35);
+  border-radius: 50%;
+  top: 22px;
+}
+
+.companionBlushLeft {
+  left: 3px;
+}
+
+.companionBlushRight {
+  right: 3px;
+}
+
+.companionEyes {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.companionEye {
+  font-size: 9px;
+  line-height: 1;
+  color: #2a1a0a;
+  transition: all 0.15s ease;
+}
+
+.companionEyeStar {
+  color: #FFD700;
+  font-size: 10px;
+  animation: companionStarSpin 0.6s ease-in-out;
+}
+
+@keyframes companionStarSpin {
+  0% { transform: scale(0.5) rotate(-30deg); }
+  50% { transform: scale(1.3) rotate(15deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.companionEyeExcited {
+  font-size: 11px;
+  color: #1a0a00;
+}
+
+.companionEyeHappy {
+  font-size: 10px;
+  color: #2a1a0a;
+}
+
+.companionEyeSad {
+  font-size: 9px;
+  color: #5a4a3a;
+}
+
+.companionEyeDancing {
+  animation: companionEyeBlink 2s ease-in-out infinite;
+}
+
+@keyframes companionEyeBlink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+.companionMouth {
+  text-align: center;
+  font-size: 8px;
+  margin-top: 2px;
+  color: #b05a4a;
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+/* ===== Dress ===== */
+.companionDress {
+  width: 36px;
+  height: 30px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px 4px 14px 14px;
+  margin-top: -2px;
+  position: relative;
+  z-index: 1;
+  transition: border-color 0.3s;
+}
+
+/* ===== Arms ===== */
+.companionArm {
+  position: absolute;
+  width: 4px;
+  height: 18px;
+  background: #fde8d0;
+  border-radius: 2px;
+  top: 52px;
+  z-index: 0;
+  transition: transform 0.12s ease-out;
+  transform-origin: top center;
+}
+
+.companionArmLeft {
+  left: 12px;
+}
+
+.companionArmRight {
+  right: 12px;
+}
+
+/* ===== Musical Notes ===== */
+.companionNotes {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 40px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.companionNote {
+  position: absolute;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  animation: companionNoteFloat 1.6s ease-out infinite;
+  opacity: 0;
+}
+
+.companionNote:nth-child(1) {
+  left: 10px;
+}
+
+.companionNote:nth-child(2) {
+  left: 30px;
+}
+
+.companionNote:nth-child(3) {
+  left: 50px;
+}
+
+@keyframes companionNoteFloat {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  20% { opacity: 0.7; }
+  100% { opacity: 0; transform: translateY(-30px) scale(1) rotate(15deg); }
+}
+
+/* ===== Speech Bubble ===== */
+.companionBubble {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 3px 7px;
+  white-space: nowrap;
+  animation: companionBubbleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 20;
+}
+
+.companionBubble span {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+@keyframes companionBubbleIn {
+  0% { opacity: 0; transform: scale(0.5) translateY(4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ===== Aura (high combo) ===== */
+.companionAura {
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  animation: companionAuraPulse 0.8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes companionAuraPulse {
+  0% { transform: scale(0.95); opacity: 0.3; }
+  100% { transform: scale(1.1); opacity: 0.7; }
+}
+
+/* ===== Companion Responsive ===== */
+@media screen and (max-width: 480px) {
+  .companion {
+    width: 60px;
+    min-height: 90px;
+    margin-top: 8px;
+    transform: scale(0.8);
+    transform-origin: top center;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .companionBubble {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  .companion {
+    width: 90px;
+    min-height: 130px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .companionBeat .companionBody,
+  .companionDancing .companionBody,
+  .companionExcited .companionBody,
+  .companionNote,
+  .companionAura,
+  .companionEyeStar,
+  .companionEyeDancing {
+    animation: none;
+  }
+
+  .companionBody,
+  .companionArm,
+  .companionTail {
+    transition: none;
+  }
+}
