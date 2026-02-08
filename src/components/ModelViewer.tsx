@@ -1,67 +1,86 @@
 'use client';
 
-import { Suspense, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, Center } from '@react-three/drei';
-import * as THREE from 'three';
+import * as THREE from 'three'
+import { useEffect, useRef, useState, ReactNode } from 'react'
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
+import { useCursor, MeshPortalMaterial, CameraControls, Gltf, Text, Preload } from '@react-three/drei'
+import { useRoute, useLocation } from 'wouter'
+import { easing, geometry } from 'maath'
+import { suspend } from 'suspend-react'
 
-interface ModelProps {
-    url: string;
-    scale?: number;
-    rotation?: [number, number, number];
+extend(geometry)
+const regular = import('@pmndrs/assets/fonts/inter_regular.woff')
+const medium = import('@pmndrs/assets/fonts/inter_medium.woff')
+
+interface FrameProps {
+    id: string
+    name: string
+    author: string
+    bg?: string
+    width?: number
+    height?: number
+    children?: ReactNode
+    position?: [number, number, number]
+    rotation?: [number, number, number]
 }
 
-function Model({ url, scale = 1, rotation = [0, 0, 0] }: ModelProps) {
-    const { scene } = useGLTF(url);
-    const groupRef = useRef<THREE.Group>(null);
-
-    useFrame((state) => {
-        if (groupRef.current) {
-            groupRef.current.rotation.y = state.clock.getElapsedTime() * 0.3;
-        }
-    });
-
+function Frame({ id, name, author, bg, width = 1, height = 1.61803398875, children, ...props }: FrameProps) {
+    const portal = useRef<any>(null)
+    const [, setLocation] = useLocation()
+    const [, params] = useRoute('/item/:id')
+    const [hovered, hover] = useState<boolean>(false)
+    useCursor(hovered)
+    useFrame((_state, dt) => easing.damp(portal.current, 'blend', params?.id === id ? 1 : 0, 0.2, dt))
     return (
-        <group ref={groupRef} rotation={rotation}>
-            <Center>
-                <primitive object={scene} scale={scale} />
-            </Center>
+        <group {...props}>
+            <Text font={suspend(medium).default} fontSize={0.3} anchorY="top" anchorX="left" lineHeight={0.8} position={[-0.375, 0.715, 0.01]} material-toneMapped={false}>
+                {name}
+            </Text>
+            <Text font={suspend(regular).default} fontSize={0.1} anchorX="right" position={[0.4, -0.659, 0.01]} material-toneMapped={false}>
+                /{id}
+            </Text>
+            <Text font={suspend(regular).default} fontSize={0.04} anchorX="right" position={[0.0, -0.677, 0.01]} material-toneMapped={false}>
+                {author}
+            </Text>
+            <mesh name={id} onDoubleClick={(e) => (e.stopPropagation(), setLocation('/item/' + e.object.name))} onPointerOver={() => hover(true)} onPointerOut={() => hover(false)}>
+                <roundedPlaneGeometry args={[width, height, 0.1]} />
+                <MeshPortalMaterial ref={portal} events={params?.id === id} side={THREE.DoubleSide}>
+                    <color attach="background" args={[bg]} />
+                    {children}
+                </MeshPortalMaterial>
+            </mesh>
         </group>
-    );
+    )
 }
 
-function LoadingFallback() {
-    return (
-        <mesh>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color="#888" wireframe />
-        </mesh>
-    );
+interface RigProps {
+    position?: THREE.Vector3
+    focus?: THREE.Vector3
+}
+
+function Rig({ position = new THREE.Vector3(0, 0, 2), focus = new THREE.Vector3(0, 0, 0) }: RigProps) {
+    const { controls, scene } = useThree()
+    const [, params] = useRoute('/item/:id')
+    useEffect(() => {
+        const active = scene.getObjectByName(params?.id ?? '')
+        if (active) {
+            active.parent!.localToWorld(position.set(0, 0.5, 0.25))
+            active.parent!.localToWorld(focus.set(0, 0, -2))
+        }
+        ; (controls as any)?.setLookAt(...position.toArray(), ...focus.toArray(), true)
+    })
+    return <CameraControls makeDefault minPolarAngle={0} maxPolarAngle={Math.PI / 2} />
 }
 
 interface ModelViewerProps {
-    models?: {
-        url: string;
-        scale?: number;
-        rotation?: [number, number, number];
-    }[];
-    height?: string;
-    className?: string;
+    height?: string
+    className?: string
 }
 
 export default function ModelViewer({
-    models = [
-        { url: '/models/fiesta_tea-transformed.glb', scale: 2 },
-        { url: '/models/pickles_3d_version_of_hyuna_lees_illustration-transformed.glb', scale: 2 },
-        { url: '/models/still_life_based_on_heathers_artwork-transformed.glb', scale: 2 },
-    ],
     height = '400px',
     className = ''
 }: ModelViewerProps) {
-    // Calculate positions for models in a row
-    const spacing = 4;
-    const startX = -((models.length - 1) * spacing) / 2;
-
     return (
         <div
             className={className}
@@ -70,47 +89,22 @@ export default function ModelViewer({
                 height,
                 borderRadius: '16px',
                 overflow: 'hidden',
-                background: 'linear-gradient(135deg, rgba(30, 30, 50, 0.8) 0%, rgba(20, 20, 35, 0.9) 100%)',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
             }}
         >
-            <Canvas
-                camera={{ position: [0, 2, 10], fov: 45 }}
-                gl={{ antialias: true, alpha: true }}
-            >
-                <ambientLight intensity={0.5} />
-                <directionalLight position={[10, 10, 5]} intensity={1} />
-                <spotLight position={[-10, 10, -5]} intensity={0.5} angle={0.3} />
-
-                <Suspense fallback={<LoadingFallback />}>
-                    {models.map((model, index) => (
-                        <group key={model.url} position={[startX + index * spacing, 0, 0]}>
-                            <Model
-                                url={model.url}
-                                scale={model.scale}
-                                rotation={model.rotation}
-                            />
-                        </group>
-                    ))}
-                    <Environment preset="city" />
-                </Suspense>
-
-                <OrbitControls
-                    enableZoom={true}
-                    enablePan={false}
-                    minDistance={5}
-                    maxDistance={20}
-                    autoRotate={false}
-                />
+            <Canvas flat camera={{ fov: 75, position: [0, 0, 20] }}>
+                <color attach="background" args={['#f0f0f0']} />
+                <Frame id="01" name={`pick\nles`} author="Omar Faruq Tawsif" bg="#e4cdac" position={[-1.15, 0, 0]} rotation={[0, 0.5, 0]}>
+                    <Gltf src="/models/pickles_3d_version_of_hyuna_lees_illustration-transformed.glb" scale={8} position={[0, -0.7, -2]} />
+                </Frame>
+                <Frame id="02" name="tea" author="Omar Faruq Tawsif">
+                    <Gltf src="/models/fiesta_tea-transformed.glb" position={[0, -2, -3]} />
+                </Frame>
+                <Frame id="03" name="still" author="Omar Faruq Tawsif" bg="#d1d1ca" position={[1.15, 0, 0]} rotation={[0, -0.5, 0]}>
+                    <Gltf src="/models/still_life_based_on_heathers_artwork-transformed.glb" scale={2} position={[0, -0.8, -4]} />
+                </Frame>
+                <Rig />
+                <Preload all />
             </Canvas>
         </div>
-    );
+    )
 }
-
-// Preload all models
-[
-    '/models/fiesta_tea-transformed.glb',
-    '/models/pickles_3d_version_of_hyuna_lees_illustration-transformed.glb',
-    '/models/still_life_based_on_heathers_artwork-transformed.glb',
-].forEach((url) => useGLTF.preload(url));
