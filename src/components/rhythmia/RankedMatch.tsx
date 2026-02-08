@@ -12,13 +12,14 @@ import {
   calculateRankChange,
   tierProgress,
   pointsToNextTier,
+  MATCHMAKING_TIMEOUT_MS,
 } from '@/lib/ranked/constants';
 import type { RankedState, RankChange } from '@/lib/ranked/types';
 import { TetrisAIGame, getDifficultyForRank } from '@/lib/ranked/TetrisAI';
 import type { BoardCell } from '@/types/multiplayer';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
-type MatchPhase = 'idle' | 'found' | 'countdown' | 'playing' | 'result';
+type MatchPhase = 'idle' | 'searching' | 'found' | 'countdown' | 'playing' | 'result';
 
 const RANKED_STORAGE_KEY = 'rhythmia_ranked_state';
 
@@ -69,8 +70,13 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
 
   // Match state
   const [phase, setPhase] = useState<MatchPhase>('idle');
+  const phaseRef = useRef<MatchPhase>('idle');
+  phaseRef.current = phase;
+  const [searchTimer, setSearchTimer] = useState(0);
+  const searchIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [opponentName, setOpponentName] = useState('');
   const [opponentId, setOpponentId] = useState('');
+  const [isAIMatch, setIsAIMatch] = useState(false);
   const [gameSeed, setGameSeed] = useState(0);
   const [roomCode, setRoomCode] = useState('');
   const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
@@ -79,24 +85,143 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
   // AI game
   const aiGameRef = useRef<TetrisAIGame | null>(null);
 
-  // ===== Start AI Match Directly =====
+  // ===== Send helper =====
+  const send = useCallback((data: object) => {
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(data));
+    }
+  }, [ws]);
+
+  // ===== Listen for ranked server messages on parent ws =====
+  useEffect(() => {
+    if (!ws) return;
+
+    const handler = (event: MessageEvent) => {
+      try {
+        const msg: ServerMessage = JSON.parse(event.data);
+        switch (msg.type) {
+          case 'ranked_queued':
+            // Confirmed in queue
+            break;
+
+          case 'ranked_match_found':
+            setRoomCode(msg.roomCode);
+            setOpponentName(msg.opponentName);
+            setOpponentId(msg.opponentId);
+            setIsAIMatch(msg.isAI);
+            setGameSeed(msg.gameSeed);
+            setPhase('found');
+            // Stop search timer
+            if (searchIntervalRef.current) {
+              clearInterval(searchIntervalRef.current);
+              searchIntervalRef.current = null;
+            }
+            break;
+
+          case 'countdown':
+            // Server-driven countdown (human matches)
+            setCountdownNumber(msg.count);
+            if (phaseRef.current !== 'countdown') {
+              setPhase('countdown');
+            }
+            break;
+
+          case 'game_started':
+            setGameSeed(msg.gameSeed);
+            setCountdownNumber(null);
+            setPhase('playing');
+            break;
+
+          case 'error':
+            if (phaseRef.current === 'searching') {
+              setPhase('idle');
+              if (searchIntervalRef.current) {
+                clearInterval(searchIntervalRef.current);
+                searchIntervalRef.current = null;
+              }
+            }
+            break;
+
+          case 'ping':
+            // Already handled by parent
+            break;
+        }
+      } catch {}
+    };
+
+    ws.addEventListener('message', handler);
+    return () => ws.removeEventListener('message', handler);
+  }, [ws]);
+
+  // ===== Matchmaking =====
   const startSearch = useCallback(() => {
+    if (connectionStatus !== 'connected') return;
+
+    setPhase('searching');
+    setSearchTimer(0);
     setGameResult(null);
     setRankChange(null);
 
-    // Start AI match immediately (client-side, no server queue)
-    const seed = Math.floor(Math.random() * 2147483647);
-    setGameSeed(seed);
-    setOpponentName('AI Rival');
-    setOpponentId(`ai_${Date.now()}`);
-    setRoomCode(`ai_${Date.now()}`);
-    setPhase('found');
-  }, []);
+    send({
+      type: 'queue_ranked',
+      playerName: playerName.trim(),
+      rankPoints: rankedState.points,
+    });
+
+    // Start search timer display
+    const start = Date.now();
+    searchIntervalRef.current = setInterval(() => {
+      setSearchTimer(Math.floor((Date.now() - start) / 1000));
+    }, 100);
+  }, [connectionStatus, send, playerName, rankedState.points]);
+
+  const cancelSearch = useCallback(() => {
+    send({ type: 'cancel_ranked' });
+    setPhase('idle');
+    setSearchTimer(0);
+    if (searchIntervalRef.current) {
+      clearInterval(searchIntervalRef.current);
+      searchIntervalRef.current = null;
+    }
+  }, [send]);
+
+  // ===== AI Match: transition from 'found' to 'countdown' =====
+  // Separate effect so setPhase('countdown') doesn't kill the countdown interval
+  useEffect(() => {
+    if (phase !== 'found' || !isAIMatch) return;
+
+    const timer = setTimeout(() => {
+      setPhase('countdown');
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [phase, isAIMatch]);
+
+  // ===== AI Match: client-side countdown =====
+  useEffect(() => {
+    if (phase !== 'countdown' || !isAIMatch) return;
+
+    let count = 3;
+    setCountdownNumber(count);
+
+    const interval = setInterval(() => {
+      count--;
+      if (count > 0) {
+        setCountdownNumber(count);
+      } else {
+        clearInterval(interval);
+        setCountdownNumber(null);
+        setPhase('playing');
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [phase, isAIMatch]);
 
   // ===== AI Match Setup =====
   // The AI runs client-side, relaying board updates through fake WebSocket messages
   useEffect(() => {
-    if (phase !== 'playing') return;
+    if (phase !== 'playing' || !isAIMatch) return;
 
     const currentWs = wsRef.current;
     if (!currentWs) return;
@@ -120,10 +245,9 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
               hold,
             },
           };
-          const event = new MessageEvent('message', {
+          currentWs.dispatchEvent(new MessageEvent('message', {
             data: JSON.stringify(fakeMessage),
-          });
-          currentWs.dispatchEvent(event);
+          }));
         }
       },
       onGarbage: (lines) => {
@@ -133,10 +257,9 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
             fromPlayerId: currentOpponentId,
             payload: { event: 'garbage', lines },
           };
-          const event = new MessageEvent('message', {
+          currentWs.dispatchEvent(new MessageEvent('message', {
             data: JSON.stringify(fakeMessage),
-          });
-          currentWs.dispatchEvent(event);
+          }));
         }
       },
       onGameOver: () => {
@@ -146,10 +269,9 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
             fromPlayerId: currentOpponentId,
             payload: { event: 'game_over' },
           };
-          const event = new MessageEvent('message', {
+          currentWs.dispatchEvent(new MessageEvent('message', {
             data: JSON.stringify(fakeMessage),
-          });
-          currentWs.dispatchEvent(event);
+          }));
         }
       },
     });
@@ -186,7 +308,7 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
         currentWs.send = originalSend;
       }
     };
-  }, [phase, gameSeed, opponentId, rankedState.points]);
+  }, [phase, isAIMatch, gameSeed, opponentId, rankedState.points]);
 
   // ===== Game End =====
   const handleGameEnd = useCallback((winnerId: string) => {
@@ -217,44 +339,26 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
   }, [rankedState, playerId]);
 
   const handleBackToLobby = useCallback(() => {
+    send({ type: 'leave_room' });
     setPhase('idle');
     setGameResult(null);
     if (aiGameRef.current) {
       aiGameRef.current.stop();
       aiGameRef.current = null;
     }
-  }, []);
+  }, [send]);
 
   // ===== Derived State =====
   const tier = getTierByPoints(rankedState.points);
   const progress = tierProgress(rankedState.points);
   const toNext = pointsToNextTier(rankedState.points);
 
-  // For AI matches, auto-start countdown after "found" phase
-  useEffect(() => {
-    if (phase !== 'found') return;
-
-    let count = 3;
-    setCountdownNumber(count);
-    setPhase('countdown');
-
-    const interval = setInterval(() => {
-      count--;
-      if (count > 0) {
-        setCountdownNumber(count);
-      } else {
-        clearInterval(interval);
-        setCountdownNumber(null);
-        setPhase('playing');
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [phase]);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (searchIntervalRef.current) {
+        clearInterval(searchIntervalRef.current);
+      }
       if (aiGameRef.current) {
         aiGameRef.current.stop();
       }
@@ -332,12 +436,40 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
           <button
             className={styles.searchBtn}
             onClick={startSearch}
+            disabled={connectionStatus !== 'connected'}
           >
             FIND MATCH
           </button>
 
           <button className={styles.backBtn} onClick={onBack}>
             Back
+          </button>
+        </div>
+      )}
+
+      {/* Searching */}
+      {phase === 'searching' && (
+        <div className={styles.searchScreen}>
+          <div className={styles.searchTitle}>SEARCHING FOR OPPONENT</div>
+
+          <div className={styles.searchAnim}>
+            <div className={styles.searchPulse} />
+            <div className={styles.searchTimer}>{searchTimer}s</div>
+          </div>
+
+          <div className={styles.searchInfo}>
+            <div className={styles.searchRank} style={{ color: tier.color }}>{tier.name}</div>
+            <div className={styles.searchPoints}>{rankedState.points} RP</div>
+          </div>
+
+          {searchTimer >= 5 && (
+            <div className={styles.searchHint}>
+              AI opponent joining soon...
+            </div>
+          )}
+
+          <button className={styles.cancelBtn} onClick={cancelSearch}>
+            Cancel
           </button>
         </div>
       )}
@@ -353,7 +485,7 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
             <div className={styles.matchupVs}>VS</div>
             <div className={styles.matchupPlayer}>
               <div className={styles.matchupName}>{opponentName}</div>
-              <div className={styles.aiBadge}>AI</div>
+              {isAIMatch && <div className={styles.aiBadge}>AI</div>}
             </div>
           </div>
           <div className={styles.countdownNumber}>{countdownNumber}</div>
