@@ -1,12 +1,16 @@
 'use client';
 
-import React, { useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
 import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL } from './constants';
 import type { Piece, GameMode } from './types';
+
+// Advancements
+import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
+import AdvancementToast from '../AdvancementToast';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
 const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
@@ -99,6 +103,17 @@ export default function Rhythmia() {
   vfxRef.current = vfx;
   const boardElRef = useRef<HTMLDivElement>(null);
   const beatBarRef = useRef<HTMLDivElement>(null);
+
+  // Per-game stat tracking for advancements
+  const gamePerfectBeatsRef = useRef(0);
+  const gameBestComboRef = useRef(0);
+  const gameTetrisClearsRef = useRef(0);
+  const gameHardDropsRef = useRef(0);
+  const gamePiecesPlacedRef = useRef(0);
+  const gameWorldsClearedRef = useRef(0);
+  const advRecordedRef = useRef(false);
+  const liveNotifiedRef = useRef<Set<string>>(new Set());
+  const [toastIds, setToastIds] = useState<string[]>([]);
 
   // Stable refs for callbacks used inside setInterval (avoids stale closures + dep churn)
   const vfxEmitRef = useRef(vfx.emit);
@@ -344,6 +359,26 @@ export default function Rhythmia() {
     }
   }, [movePiece, setScore, keyStatesRef, isPausedRef, gameOverRef, sdfRef]);
 
+  // Push-based live advancement check — runs every handlePieceLock(), instant toast on threshold
+  const pushLiveAdvancementCheck = useCallback(() => {
+    const qualifying = checkLiveGameAdvancements({
+      score: scoreRef.current,
+      lines: linesRef.current,
+      tSpins: 0, // T-spin detection not implemented in this game mode
+      bestCombo: gameBestComboRef.current,
+      perfectBeats: gamePerfectBeatsRef.current,
+      worldsCleared: gameWorldsClearedRef.current,
+      tetrisClears: gameTetrisClearsRef.current,
+      hardDrops: gameHardDropsRef.current,
+      piecesPlaced: gamePiecesPlacedRef.current,
+    });
+    const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
+    if (fresh.length > 0) {
+      fresh.forEach(id => liveNotifiedRef.current.add(id));
+      setToastIds(prev => [...prev, ...fresh]);
+    }
+  }, []);
+
   // Handle piece locking and game advancement — branches by game mode
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
     const mode = gameModeRef.current;
@@ -353,12 +388,21 @@ export default function Rhythmia() {
     const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
     let mult = 1;
 
+    // Track pieces placed for advancements
+    gamePiecesPlacedRef.current++;
+
     if (onBeat) {
       mult = 2;
       const newCombo = comboRef.current + 1;
       setCombo(newCombo);
       showJudgment('PERFECT!', '#FFD700');
       playTone(1047, 0.2, 'triangle');
+
+      // Track advancement stats
+      gamePerfectBeatsRef.current++;
+      if (newCombo > gameBestComboRef.current) {
+        gameBestComboRef.current = newCombo;
+      }
 
       // VFX: combo change event
       vfxRef.current.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
@@ -400,6 +444,11 @@ export default function Rhythmia() {
     updateScore(scoreRef.current + finalScore);
 
     if (clearedLines > 0) {
+      // Track tetris clears (4 lines at once) for advancements
+      if (clearedLines === 4) {
+        gameTetrisClearsRef.current++;
+      }
+
       const weaponMult = damageMultiplierRef.current;
       const center = getBoardCenter();
 
@@ -420,6 +469,7 @@ export default function Rhythmia() {
 
         // Check if terrain is fully destroyed → next stage
         if (remaining <= 0) {
+          gameWorldsClearedRef.current++;
           const nextStage = stageNumberRef.current + 1;
           startNewStage(nextStage);
         }
@@ -447,6 +497,9 @@ export default function Rhythmia() {
       return newLines;
     });
 
+    // Live advancement check after stats update
+    pushLiveAdvancementCheck();
+
     const spawned = spawnPiece();
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
@@ -455,7 +508,7 @@ export default function Rhythmia() {
     setCombo, setBoard, setLines, setLevel, setCurrentPiece,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
-    getBoardCenter, spawnTerrainParticles, spawnItemDrops,
+    getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
   ]);
 
   // Hard drop
@@ -471,6 +524,9 @@ export default function Rhythmia() {
       newPiece.y++;
       dropDistance++;
     }
+
+    // Track hard drops for advancements
+    gameHardDropsRef.current++;
 
     // VFX: hard drop impact particles
     if (dropDistance > 0) {
@@ -544,7 +600,39 @@ export default function Rhythmia() {
   const startGame = useCallback((mode: GameMode) => {
     initAudio();
     initGame(mode);
+
+    // Reset per-game advancement tracking
+    gamePerfectBeatsRef.current = 0;
+    gameBestComboRef.current = 0;
+    gameTetrisClearsRef.current = 0;
+    gameHardDropsRef.current = 0;
+    gamePiecesPlacedRef.current = 0;
+    gameWorldsClearedRef.current = 0;
+    advRecordedRef.current = false;
+    liveNotifiedRef.current = new Set();
+    setToastIds([]);
   }, [initAudio, initGame]);
+
+  // Record advancement stats when game ends
+  useEffect(() => {
+    if (gameOver && !advRecordedRef.current) {
+      advRecordedRef.current = true;
+      const result = recordGameEnd({
+        score: scoreRef.current,
+        lines: linesRef.current,
+        tSpins: 0,
+        bestCombo: gameBestComboRef.current,
+        perfectBeats: gamePerfectBeatsRef.current,
+        worldsCleared: gameWorldsClearedRef.current,
+        tetrisClears: gameTetrisClearsRef.current,
+        hardDrops: gameHardDropsRef.current,
+        piecesPlaced: gamePiecesPlacedRef.current,
+      });
+      if (result.newlyUnlockedIds.length > 0) {
+        setToastIds(prev => [...prev, ...result.newlyUnlockedIds]);
+      }
+    }
+  }, [gameOver]);
 
   // Beat timer for rhythm game — branches by game mode via gameModeRef
   // Uses refs for vfx.emit/spawnEnemies/updateEnemies to keep deps stable
@@ -965,6 +1053,14 @@ export default function Rhythmia() {
         color={judgmentColor}
         show={showJudgmentAnim}
       />
+
+      {/* Advancement Toast */}
+      {toastIds.length > 0 && (
+        <AdvancementToast
+          unlockedIds={toastIds}
+          onDismiss={() => setToastIds([])}
+        />
+      )}
     </div>
   );
 }

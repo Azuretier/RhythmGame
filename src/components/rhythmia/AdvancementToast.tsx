@@ -24,7 +24,7 @@ export const AdvancementToast: React.FC<Props> = ({ unlockedIds, onDismiss }) =>
       } else {
         onDismiss();
       }
-    }, 3000);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, [currentIndex, unlockedIds.length, onDismiss]);
@@ -36,21 +36,30 @@ export const AdvancementToast: React.FC<Props> = ({ unlockedIds, onDismiss }) =>
   if (!adv) return null;
 
   const name = t(`advancements.${adv.id}.name`);
+  const desc = t(`advancements.${adv.id}.desc`);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
         key={id}
         className={styles.toast}
-        initial={{ opacity: 0, y: -40, scale: 0.95 }}
+        initial={{ opacity: 0, y: -60, scale: 0.8 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -20, scale: 0.95 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
+        exit={{ opacity: 0, y: -30, scale: 0.9 }}
+        transition={{
+          type: 'spring',
+          stiffness: 300,
+          damping: 20,
+          mass: 0.8,
+        }}
       >
-        <div className={styles.toastIcon}>{adv.icon}</div>
+        <div className={styles.toastIconFrame}>
+          <div className={styles.toastIcon}>{adv.icon}</div>
+        </div>
         <div className={styles.toastContent}>
           <div className={styles.toastLabel}>{t('advancements.unlocked')}</div>
           <div className={styles.toastName}>{name}</div>
+          <div className={styles.toastDesc}>{desc}</div>
         </div>
       </motion.div>
     </AnimatePresence>
