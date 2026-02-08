@@ -5,10 +5,11 @@ import { useEffect, useRef, useState, ReactNode } from 'react'
 import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
 import { useCursor, MeshPortalMaterial, CameraControls, Gltf, Text, Preload } from '@react-three/drei'
 import { useRoute, useLocation } from 'wouter'
-import { easing, geometry } from 'maath'
+import { easing } from 'maath'
+import { RoundedPlaneGeometry } from 'maath/geometry'
 import { suspend } from 'suspend-react'
 
-extend(geometry)
+extend({ RoundedPlaneGeometry })
 const regular = import('@pmndrs/assets/fonts/inter_regular.woff')
 const medium = import('@pmndrs/assets/fonts/inter_medium.woff')
 
