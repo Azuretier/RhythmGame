@@ -9,6 +9,25 @@ import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
+import dynamic from 'next/dynamic';
+
+const ModelViewer = dynamic(() => import('../../components/ModelViewer'), {
+    ssr: false,
+    loading: () => (
+        <div style={{
+            width: '100%',
+            height: '350px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, rgba(30, 30, 50, 0.8) 0%, rgba(20, 20, 35, 0.9) 100%)',
+            borderRadius: '16px',
+            color: 'rgba(255,255,255,0.5)',
+        }}>
+            Loading 3D models...
+        </div>
+    ),
+});
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -43,7 +62,7 @@ export default function RhythmiaPage() {
                 } else if (message.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong' }));
                 }
-            } catch {}
+            } catch { }
         };
 
         ws.onclose = () => {
@@ -165,6 +184,16 @@ export default function RhythmiaPage() {
                     >
                         <h1>{t('lobby.selectServer')}</h1>
                         <p>{t('lobby.chooseMode')}</p>
+                    </motion.div>
+
+                    {/* 3D Model Showcase */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: isLoading ? 0 : 1, scale: isLoading ? 0.95 : 1 }}
+                        transition={{ duration: 0.7, delay: 0.25 }}
+                        style={{ width: '100%', maxWidth: '900px', margin: '0 auto 2rem' }}
+                    >
+                        <ModelViewer height="350px" />
                     </motion.div>
 
                     <div className={styles.serverGrid}>
