@@ -545,6 +545,7 @@ export default function VoxelWorldBackground({
   worldIdx = 0,
 }: VoxelWorldBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const hpOverlayRef = useRef<HTMLCanvasElement>(null);
   const sceneStateRef = useRef<SceneState | null>(null);
   const animIdRef = useRef<number>(0);
   const onTerrainReadyRef = useRef(onTerrainReady);
@@ -752,6 +753,11 @@ export default function VoxelWorldBackground({
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      // Sync HP overlay canvas size
+      if (hpOverlayRef.current) {
+        hpOverlayRef.current.width = w;
+        hpOverlayRef.current.height = h;
+      }
     };
     updateSize();
     window.addEventListener('resize', updateSize);
@@ -760,6 +766,7 @@ export default function VoxelWorldBackground({
     let lastTime = 0;
     const dummy = new THREE.Object3D();
     const enemyColor = new THREE.Color();
+    const projVec = new THREE.Vector3();
 
     // Bullet tracking for muzzle flash and impact detection
     const prevBulletIds = new Set<number>();
@@ -905,8 +912,8 @@ export default function VoxelWorldBackground({
           }
 
           // Interpolate bullet positions every frame for smooth 60fps movement
-          // Each frame, move the interpolated position toward the target at BULLET_SPEED
-          const frameSpeed = BULLET_SPEED * delta * 60; // normalize to ~60fps baseline
+          // Slightly slower than game-logic speed for a trailing visual effect
+          const frameSpeed = BULLET_SPEED * 0.7 * delta * 60; // 70% of logic speed for smoother trail
           for (const b of currentBullets) {
             let pos = interpBulletPos.get(b.id);
             if (!pos) {
@@ -988,6 +995,55 @@ export default function VoxelWorldBackground({
       }
 
       renderer.render(scene, camera);
+
+      // === Draw enemy HP bars on 2D overlay canvas ===
+      const hpCanvas = hpOverlayRef.current;
+      const hpCtx = hpCanvas?.getContext('2d');
+      if (hpCtx && hpCanvas) {
+        hpCtx.clearRect(0, 0, hpCanvas.width, hpCanvas.height);
+        const currentEnemies = enemiesRef.current.filter(e => e.alive);
+        const terrainRotY = sceneStateRef.current?.instancedMesh?.rotation.y ?? 0;
+        const cosR = Math.cos(terrainRotY);
+        const sinR = Math.sin(terrainRotY);
+
+        for (const e of currentEnemies) {
+          // Only show HP bar if enemy has taken damage
+          if (e.health >= e.maxHealth) continue;
+
+          // Project enemy position to screen (with terrain rotation)
+          const rx = e.x * cosR - e.z * sinR;
+          const rz = e.x * sinR + e.z * cosR;
+          const bobY = 1.5 + Math.sin(time * 0.005 + e.id) * 0.3;
+          projVec.set(rx, bobY + 2.0, rz);
+          projVec.project(camera);
+
+          // Convert NDC to canvas pixels
+          const sx = (projVec.x * 0.5 + 0.5) * hpCanvas.width;
+          const sy = (-projVec.y * 0.5 + 0.5) * hpCanvas.height;
+
+          // Skip if behind camera
+          if (projVec.z > 1) continue;
+
+          const barW = 28;
+          const barH = 4;
+          const hpPct = Math.max(0, e.health / e.maxHealth);
+
+          // Background (dark)
+          hpCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+          hpCtx.fillRect(sx - barW / 2, sy - barH / 2, barW, barH);
+
+          // HP fill (green → yellow → red based on %)
+          const r = hpPct < 0.5 ? 255 : Math.round(255 * (1 - hpPct) * 2);
+          const g = hpPct > 0.5 ? 255 : Math.round(255 * hpPct * 2);
+          hpCtx.fillStyle = `rgb(${r}, ${g}, 40)`;
+          hpCtx.fillRect(sx - barW / 2, sy - barH / 2, barW * hpPct, barH);
+
+          // Border
+          hpCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+          hpCtx.lineWidth = 0.5;
+          hpCtx.strokeRect(sx - barW / 2, sy - barH / 2, barW, barH);
+        }
+      }
     };
     animIdRef.current = requestAnimationFrame(animate);
 
@@ -1091,6 +1147,17 @@ export default function VoxelWorldBackground({
       <canvas
         ref={canvasRef}
         style={{ width: '100%', height: '100%', display: 'block' }}
+      />
+      <canvas
+        ref={hpOverlayRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
       />
     </div>
   );

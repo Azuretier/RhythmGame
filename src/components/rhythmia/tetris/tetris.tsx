@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MANA_PER_LINE, MANA_PER_COMBO, MANA_COST_FEVER, HEALTH_REGEN_FEVER, MAX_MANA, MAX_HEALTH, BULLET_MANA_COST } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL } from './constants';
 import type { Piece, GameMode } from './types';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
@@ -142,7 +142,6 @@ export default function Rhythmia() {
     enemies,
     bullets,
     towerHealth,
-    mana,
     // Terrain (vanilla)
     terrainDestroyedCount,
     terrainTotal,
@@ -209,9 +208,7 @@ export default function Rhythmia() {
     updateBullets,
     setGameOver,
     setTowerHealth,
-    setMana,
     towerHealthRef,
-    manaRef,
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
@@ -223,8 +220,6 @@ export default function Rhythmia() {
   updateEnemiesRef.current = updateEnemies;
   const setTowerHealthRef = useRef(setTowerHealth);
   setTowerHealthRef.current = setTowerHealth;
-  const setManaRef = useRef(setMana);
-  setManaRef.current = setMana;
   const setGameOverRef = useRef(setGameOver);
   setGameOverRef.current = setGameOver;
   const fireBulletRef = useRef(fireBullet);
@@ -365,11 +360,6 @@ export default function Rhythmia() {
       showJudgment('PERFECT!', '#FFD700');
       playTone(1047, 0.2, 'triangle');
 
-      // Mana gain from combo (TD only)
-      if (mode === 'td') {
-        setMana(prev => Math.min(MAX_MANA, prev + MANA_PER_COMBO));
-      }
-
       // VFX: combo change event
       vfxRef.current.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
 
@@ -418,9 +408,6 @@ export default function Rhythmia() {
         const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
         killEnemies(killCount);
 
-        // Mana gain from line clears
-        setMana(prev => Math.min(MAX_MANA, prev + clearedLines * MANA_PER_LINE));
-
         // Item drops
         spawnItemDrops(killCount, center.x, center.y);
       } else {
@@ -465,7 +452,7 @@ export default function Rhythmia() {
     currentPieceRef.current = spawned;
   }, [
     gameModeRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
-    setCombo, setBoard, setLines, setLevel, setCurrentPiece, setMana,
+    setCombo, setBoard, setLines, setLevel, setCurrentPiece,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops,
@@ -602,18 +589,6 @@ export default function Rhythmia() {
             return newHealth;
           });
         }
-
-        // Tower auto-fires bullet if enough mana
-        const fired = fireBulletRef.current();
-        if (fired) {
-          playShootSoundRef.current();
-        }
-
-        // Fever mode: drain mana, regen health
-        if (comboRef.current >= 10) {
-          setManaRef.current(prev => Math.max(0, prev - MANA_COST_FEVER));
-          setTowerHealthRef.current(prev => Math.min(MAX_HEALTH, prev + HEALTH_REGEN_FEVER));
-        }
       }
       // Vanilla mode: no enemy/bullet/tower logic — just rhythm VFX below
 
@@ -628,6 +603,22 @@ export default function Rhythmia() {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
   }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
+
+  // Auto-fire bullet every 1 second (independent of beat timer)
+  useEffect(() => {
+    if (!isPlaying || gameOver) return;
+    if (gameModeRef.current !== 'td') return;
+
+    const bulletTimer = window.setInterval(() => {
+      if (gameOverRef.current) return;
+      const fired = fireBulletRef.current();
+      if (fired) {
+        playShootSoundRef.current();
+      }
+    }, BULLET_FIRE_INTERVAL);
+
+    return () => clearInterval(bulletTimer);
+  }, [isPlaying, gameOver]);
 
   // Beat phase animation — drives cursor via direct DOM manipulation (CSS var + data attr)
   // to avoid React re-render batching issues that cause inconsistent/missing animation on
@@ -923,15 +914,15 @@ export default function Rhythmia() {
               />
               <BeatBar containerRef={beatBarRef} />
               <StatsPanel lines={lines} level={level} />
-              {gameMode === 'td' && <HealthManaHUD health={towerHealth} mana={mana} combo={combo} />}
             </div>
 
-            {/* Right sidebar: Next */}
+            {/* Right sidebar: Next + HP bar */}
             <div className={styles.sidePanelRight}>
               <div className={styles.nextWrap}>
                 <div className={styles.nextLabel}>NEXT</div>
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
               </div>
+              {gameMode === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
           </div>
 
