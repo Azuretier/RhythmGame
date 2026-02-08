@@ -9,7 +9,11 @@ import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
-import AnimeCharacter from '../../components/character/AnimeCharacter';
+import dynamic from 'next/dynamic';
+
+const AnimeCharacter3D = dynamic(() => import('../../components/character/AnimeCharacter3D'), {
+    ssr: false,
+});
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -175,7 +179,7 @@ export default function RhythmiaPage() {
                         transition={{ duration: 0.8, delay: 0.25 }}
                         style={{ marginBottom: '24px' }}
                     >
-                        <AnimeCharacter size={260} />
+                        <AnimeCharacter3D size={280} />
                     </motion.div>
 
                     <div className={styles.serverGrid}>
