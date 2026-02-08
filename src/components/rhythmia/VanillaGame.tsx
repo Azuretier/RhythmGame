@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VanillaGame.module.css';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { recordGameEnd } from '@/lib/advancements/storage';
+import AdvancementToast from './AdvancementToast';
 
 // ===== Types =====
 interface PieceCell {
@@ -155,6 +157,16 @@ export const Rhythmia: React.FC = () => {
   const moveRepeatInterval = useRef<number | null>(null);
   const lastRotationRef = useRef(lastRotationWasSuccessful);
 
+  // Per-game stat tracking for advancements
+  const gameTSpinsRef = useRef(0);
+  const gamePerfectBeatsRef = useRef(0);
+  const gameTetrisClearsRef = useRef(0);
+  const gameHardDropsRef = useRef(0);
+  const gamePiecesPlacedRef = useRef(0);
+  const gameWorldsClearedRef = useRef(0);
+  const gameBestComboRef = useRef(0);
+  const [toastIds, setToastIds] = useState<string[]>([]);
+
   // Keep refs in sync
   useEffect(() => { pieceRef.current = piece; }, [piece]);
   useEffect(() => { piecePosRef.current = piecePos; }, [piecePos]);
@@ -302,6 +314,7 @@ export const Rhythmia: React.FC = () => {
   }, []);
 
   const nextWorld = useCallback(() => {
+    gameWorldsClearedRef.current++;
     const newWorldIdx = worldIdxRef.current + 1;
     if (newWorldIdx >= WORLDS.length) {
       showJudgment('🎉 CLEAR!', '#FFD700');
@@ -322,6 +335,22 @@ export const Rhythmia: React.FC = () => {
     if (dropTimerRef.current) clearInterval(dropTimerRef.current);
     if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     playTone(131, 0.5, 'sawtooth');
+
+    // Record game stats for advancements
+    const result = recordGameEnd({
+      score: scoreRef.current,
+      lines: linesRef.current,
+      tSpins: gameTSpinsRef.current,
+      bestCombo: gameBestComboRef.current,
+      perfectBeats: gamePerfectBeatsRef.current,
+      worldsCleared: gameWorldsClearedRef.current,
+      tetrisClears: gameTetrisClearsRef.current,
+      hardDrops: gameHardDropsRef.current,
+      piecesPlaced: gamePiecesPlacedRef.current,
+    });
+    if (result.newlyUnlockedIds.length > 0) {
+      setToastIds(result.newlyUnlockedIds);
+    }
   }, [playTone]);
 
   const completeBoard = useCallback((partialBoard: (PieceCell | null)[][]) => {
@@ -428,6 +457,10 @@ export const Rhythmia: React.FC = () => {
       const newCombo = comboRef.current + 1;
       setCombo(newCombo);
       comboRef.current = newCombo;
+      gamePerfectBeatsRef.current++;
+      if (newCombo > gameBestComboRef.current) {
+        gameBestComboRef.current = newCombo;
+      }
       showJudgment('PERFECT! ', '#FFD700');
       playTone(1047, 0.2, 'triangle');
       if (boardRef.current) {
@@ -461,6 +494,9 @@ export const Rhythmia: React.FC = () => {
       endGame();
       return;
     }
+
+    // Track pieces placed for advancements
+    gamePiecesPlacedRef.current++;
 
     // Check for T-Spin before locking
     const tSpinType = checkTSpin(currentPiece, currentPos, currentBoard);
@@ -498,8 +534,14 @@ export const Rhythmia: React.FC = () => {
         // Base scoring
         let pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
 
+        // Track tetris clears (4 lines at once)
+        if (cleared === 4) {
+          gameTetrisClearsRef.current++;
+        }
+
         // T-Spin bonus scoring
         if (tSpinType) {
+          gameTSpinsRef.current++;
           const tSpinBonus = tSpinType === 'full' ? 400 : 100;
           const tSpinLineBonus = cleared * 400; // Additional bonus per line cleared with T-Spin
           pts += (tSpinBonus + tSpinLineBonus) * (currentLevel + 1);
@@ -663,6 +705,7 @@ export const Rhythmia: React.FC = () => {
       currentPos.y++;
     }
 
+    gameHardDropsRef.current++;
     setPiecePos(currentPos);
     piecePosRef.current = currentPos;
     playTone(196, 0.1, 'sawtooth');
@@ -702,6 +745,16 @@ export const Rhythmia: React.FC = () => {
     setShowGameOver(false);
     setGameStarted(true);
     setClearingRows([]);
+
+    // Reset per-game advancement tracking
+    gameTSpinsRef.current = 0;
+    gamePerfectBeatsRef.current = 0;
+    gameTetrisClearsRef.current = 0;
+    gameHardDropsRef.current = 0;
+    gamePiecesPlacedRef.current = 0;
+    gameWorldsClearedRef.current = 0;
+    gameBestComboRef.current = 0;
+    setToastIds([]);
   }, [initAudio, randomPiece]);
 
   // ===== Effects =====
@@ -1087,6 +1140,14 @@ export const Rhythmia: React.FC = () => {
           <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
           <button className={styles.restartBtn} onClick={startGame}>もう一度</button>
         </div>
+      )}
+
+      {/* Advancement Toast */}
+      {toastIds.length > 0 && (
+        <AdvancementToast
+          unlockedIds={toastIds}
+          onDismiss={() => setToastIds([])}
+        />
       )}
     </div>
   );
