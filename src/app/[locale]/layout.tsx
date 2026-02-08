@@ -10,6 +10,8 @@ import Provider from '../provider';
 import { VersionProvider } from '@/lib/version/context';
 import NotificationCenter from '@/components/main/NotificationCenter';
 
+import { GoogleAnalytics } from "@next/third-parties/google";
+
 const geistSans = localFont({
     src: "../fonts/GeistVF.woff",
     variable: "--font-geist-sans",
@@ -82,6 +84,8 @@ export default async function LocaleLayout({ children, params }: Props) {
     // Provide all messages to the client side
     const messages = await getMessages();
 
+    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
@@ -118,6 +122,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                         </Provider>
                     </VersionProvider>
                 </NextIntlClientProvider>
+                {gaId && <GoogleAnalytics gaId={gaId} />}
             </body>
         </html>
     );
