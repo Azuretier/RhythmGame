@@ -596,6 +596,9 @@ export default function Rhythmia() {
     }
   }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, setCurrentPiece, handlePieceLock]);
 
+  // Stable callback for toast dismiss — avoids resetting the toast timer on every render
+  const dismissToast = useCallback(() => setToastIds([]), []);
+
   // Start game with selected mode
   const startGame = useCallback((mode: GameMode) => {
     initAudio();
@@ -1058,7 +1061,7 @@ export default function Rhythmia() {
       {toastIds.length > 0 && (
         <AdvancementToast
           unlockedIds={toastIds}
-          onDismiss={() => setToastIds([])}
+          onDismiss={dismissToast}
         />
       )}
     </div>

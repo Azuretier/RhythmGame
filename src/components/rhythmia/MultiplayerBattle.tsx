@@ -454,6 +454,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
     }
   }, [startLockTimer]);
 
+  // Stable callback for toast dismiss — avoids resetting the toast timer on every render
+  const dismissToast = useCallback(() => setToastIds([]), []);
+
   // Push-based live advancement check — runs every performLock(), instant toast
   const pushLiveAdvancementCheck = useCallback(() => {
     const qualifying = checkLiveMultiplayerAdvancements({
@@ -1143,7 +1146,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
       {toastIds.length > 0 && (
         <AdvancementToast
           unlockedIds={toastIds}
-          onDismiss={() => setToastIds([])}
+          onDismiss={dismissToast}
         />
       )}
     </div>

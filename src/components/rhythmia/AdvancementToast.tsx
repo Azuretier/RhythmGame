@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
@@ -15,6 +15,10 @@ export const AdvancementToast: React.FC<Props> = ({ unlockedIds, onDismiss }) =>
   const [currentIndex, setCurrentIndex] = useState(0);
   const t = useTranslations();
 
+  // Stable ref so the timer never resets due to parent re-renders
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   useEffect(() => {
     if (unlockedIds.length === 0) return;
 
@@ -22,12 +26,12 @@ export const AdvancementToast: React.FC<Props> = ({ unlockedIds, onDismiss }) =>
       if (currentIndex < unlockedIds.length - 1) {
         setCurrentIndex(prev => prev + 1);
       } else {
-        onDismiss();
+        onDismissRef.current();
       }
     }, 4000);
 
     return () => clearTimeout(timer);
-  }, [currentIndex, unlockedIds.length, onDismiss]);
+  }, [currentIndex, unlockedIds.length]);
 
   if (unlockedIds.length === 0) return null;
 
