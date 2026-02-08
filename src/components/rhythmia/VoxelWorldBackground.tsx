@@ -706,13 +706,6 @@ export default function VoxelWorldBackground({
         const ss = sceneStateRef.current;
         if (ss?.instancedMesh) {
           ss.instancedMesh.rotation.y += delta * 0.03;
-
-          // Vanilla mode: reduce visible block count based on destroyed count
-          if (gameModeRef.current === 'vanilla') {
-            const destroyed = terrainDestroyedCountRef.current;
-            const visible = Math.max(0, totalBlockCountRef.current - destroyed);
-            ss.instancedMesh.count = visible;
-          }
         }
         gridLines.rotation.y += delta * 0.02;
 
