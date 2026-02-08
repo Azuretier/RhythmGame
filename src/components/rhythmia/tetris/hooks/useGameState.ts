@@ -7,8 +7,8 @@ import {
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
-    MAX_HEALTH, MAX_MANA, ENEMY_REACH_DAMAGE,
-    BULLET_MANA_COST, BULLET_SPEED, BULLET_KILL_RADIUS,
+    MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
+    BULLET_SPEED, BULLET_KILL_RADIUS, BULLET_DAMAGE,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -89,7 +89,6 @@ export function useGameState() {
     const [enemies, setEnemies] = useState<Enemy[]>([]);
     const [bullets, setBullets] = useState<Bullet[]>([]);
     const [towerHealth, setTowerHealth] = useState(MAX_HEALTH);
-    const [mana, setMana] = useState(0);
 
     // Computed: total damage multiplier from all crafted cards
     const damageMultiplier = craftedCards.reduce((mult, card) => {
@@ -128,7 +127,6 @@ export function useGameState() {
     const enemiesRef = useRef<Enemy[]>(enemies);
     const bulletsRef = useRef<Bullet[]>(bullets);
     const towerHealthRef = useRef(towerHealth);
-    const manaRef = useRef(mana);
     const gameModeRef = useRef<GameMode>(gameMode);
 
     // Key states for DAS/ARR
@@ -163,7 +161,6 @@ export function useGameState() {
     useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
     useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
-    useEffect(() => { manaRef.current = mana; }, [mana]);
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
 
     // Get next piece from seven-bag system
@@ -354,7 +351,8 @@ export function useGameState() {
                 y: 0.5,
                 z: Math.sin(angle) * spawnDist,
                 speed: ENEMY_BASE_SPEED + Math.random() * 0.03,
-                health: 1,
+                health: ENEMY_HP,
+                maxHealth: ENEMY_HP,
                 alive: true,
                 spawnTime: Date.now(),
             });
@@ -416,10 +414,8 @@ export function useGameState() {
         });
     }, []);
 
-    // Fire a bullet from tower at the closest enemy (costs mana)
+    // Fire a bullet from tower at the closest enemy (no mana cost)
     const fireBullet = useCallback((): boolean => {
-        if (manaRef.current < BULLET_MANA_COST) return false;
-
         const alive = enemiesRef.current.filter(e => e.alive);
         if (alive.length === 0) return false;
 
@@ -433,10 +429,6 @@ export function useGameState() {
                 closestDist = d;
             }
         }
-
-        // Deduct mana
-        setMana(prev => Math.max(0, prev - BULLET_MANA_COST));
-        manaRef.current = Math.max(0, manaRef.current - BULLET_MANA_COST);
 
         // Create bullet from tower top toward enemy
         const bullet: Bullet = {
@@ -462,7 +454,8 @@ export function useGameState() {
         if (currentBullets.length === 0) return 0;
 
         const updatedBullets: Bullet[] = [];
-        const killedEnemyIds: Set<number> = new Set();
+        const damagedEnemyIds: Set<number> = new Set();
+        let totalKills = 0;
 
         for (const b of currentBullets) {
             if (!b.alive) continue;
@@ -473,9 +466,9 @@ export function useGameState() {
             const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
             if (dist < BULLET_KILL_RADIUS) {
-                // Bullet arrived — find and kill closest enemy at target
+                // Bullet arrived — find and damage closest enemy at target
                 const alive = enemiesRef.current.filter(
-                    e => e.alive && !killedEnemyIds.has(e.id)
+                    e => e.alive && !damagedEnemyIds.has(e.id)
                 );
                 let closest: Enemy | null = null;
                 let bestDist = Infinity;
@@ -489,7 +482,12 @@ export function useGameState() {
                     }
                 }
                 if (closest && bestDist < BULLET_KILL_RADIUS * 3) {
-                    killedEnemyIds.add(closest.id);
+                    closest.health -= BULLET_DAMAGE;
+                    damagedEnemyIds.add(closest.id);
+                    if (closest.health <= 0) {
+                        closest.alive = false;
+                        totalKills++;
+                    }
                 }
                 // Bullet consumed — don't add to updated
                 continue;
@@ -510,16 +508,15 @@ export function useGameState() {
         setBullets(updatedBullets);
         bulletsRef.current = updatedBullets;
 
-        // Remove killed enemies
-        if (killedEnemyIds.size > 0) {
-            const newEnemies = enemiesRef.current.filter(
-                e => !killedEnemyIds.has(e.id)
-            );
+        // Remove dead enemies
+        const deadEnemies = enemiesRef.current.filter(e => !e.alive);
+        if (deadEnemies.length > 0) {
+            const newEnemies = enemiesRef.current.filter(e => e.alive);
             setEnemies(newEnemies);
             enemiesRef.current = newEnemies;
         }
 
-        return killedEnemyIds.size;
+        return totalKills;
     }, []);
 
     // Craft a weapon card
@@ -626,8 +623,6 @@ export function useGameState() {
         bulletsRef.current = [];
         setTowerHealth(MAX_HEALTH);
         towerHealthRef.current = MAX_HEALTH;
-        setMana(0);
-        manaRef.current = 0;
         nextEnemyId = 0;
         nextBulletId = 0;
 
@@ -709,7 +704,6 @@ export function useGameState() {
         enemies,
         bullets,
         towerHealth,
-        mana,
 
         // Setters
         setBoard,
@@ -793,8 +787,6 @@ export function useGameState() {
         updateBullets,
         setEnemies,
         setTowerHealth,
-        setMana,
         towerHealthRef,
-        manaRef,
     };
 }

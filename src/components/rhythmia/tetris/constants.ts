@@ -260,15 +260,12 @@ export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
 
 // ===== Tower Defense HUD =====
 export const MAX_HEALTH = 100;
-export const MAX_MANA = 100;
 export const ENEMY_REACH_DAMAGE = 15;    // Damage when an enemy reaches the tower
-export const MANA_PER_LINE = 12;         // Mana gained per line clear
-export const MANA_PER_COMBO = 3;         // Mana gained per combo increment
-export const MANA_COST_FEVER = 2;        // Mana drained per beat during fever
-export const HEALTH_REGEN_FEVER = 1;     // Health regen per beat during fever
-export const BULLET_MANA_COST = 10;     // Mana cost per tower bullet
-export const BULLET_SPEED = 2.0;        // Bullet travel speed per frame
-export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet kills enemy
+export const ENEMY_HP = 3;              // Default HP for each enemy
+export const BULLET_SPEED = 4.5;        // Bullet travel speed per frame
+export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
+export const BULLET_DAMAGE = 1;         // Damage per bullet hit
+export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
 
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];

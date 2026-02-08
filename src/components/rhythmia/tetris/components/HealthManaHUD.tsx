@@ -2,23 +2,19 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import styles from '../VanillaGame.module.css';
-import { MAX_HEALTH, MAX_MANA } from '../constants';
+import { MAX_HEALTH } from '../constants';
 
-interface HealthManaHUDProps {
+interface HealthHUDProps {
   health: number;
-  mana: number;
-  combo: number;
 }
 
 /**
- * Vertical HP and MP bars placed to the right of the game board.
+ * Vertical HP bar placed to the right of the game board.
  * Red vignette flashes when the tower takes damage.
  */
-export function HealthManaHUD({ health, mana, combo }: HealthManaHUDProps) {
+export function HealthManaHUD({ health }: HealthHUDProps) {
   const healthPct = Math.max(0, Math.min(100, (health / MAX_HEALTH) * 100));
-  const manaPct = Math.max(0, Math.min(100, (mana / MAX_MANA) * 100));
 
-  const isFever = combo >= 10;
   const isLow = healthPct < 30;
 
   // Damage vignette: flash when health decreases
@@ -58,23 +54,6 @@ export function HealthManaHUD({ health, mana, combo }: HealthManaHUDProps) {
             </div>
           </div>
           <div className={styles.vBarValue}>{Math.ceil(health)}</div>
-        </div>
-
-        {/* MP Bar */}
-        <div className={styles.vBar}>
-          <div className={styles.vBarLabel}>MP</div>
-          <div className={`${styles.vBarTrack} ${styles.vBarMpTrack}`}>
-            <div
-              className={`${styles.vBarFill} ${styles.vBarMpFill} ${isFever ? styles.vBarMpFever : ''}`}
-              style={{ height: `${manaPct}%` }}
-            />
-            <div className={styles.vBarTicks}>
-              <div className={styles.vBarTick} style={{ bottom: '25%' }} />
-              <div className={styles.vBarTick} style={{ bottom: '50%' }} />
-              <div className={styles.vBarTick} style={{ bottom: '75%' }} />
-            </div>
-          </div>
-          <div className={styles.vBarValue}>{Math.ceil(mana)}</div>
         </div>
       </div>
     </>

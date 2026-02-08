@@ -131,6 +131,7 @@ export type Enemy = {
     z: number;
     speed: number;
     health: number;
+    maxHealth: number;
     alive: boolean;
     spawnTime: number;
 };
