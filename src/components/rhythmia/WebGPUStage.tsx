@@ -5,7 +5,7 @@ import styles from './rhythmia.module.css';
 
 export default function WebGPUStage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | undefined>(undefined);
   const deviceRef = useRef<GPUDevice | null>(null);
   const contextRef = useRef<GPUCanvasContext | null>(null);
   const pipelineRef = useRef<GPURenderPipeline | null>(null);

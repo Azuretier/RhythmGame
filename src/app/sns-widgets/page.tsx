@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ReactElement } from 'react';
 import { FaTwitter, FaDiscord, FaYoutube, FaInstagram, FaGithub } from 'react-icons/fa';
 import TwitterWidget from '@/components/sns-widgets/TwitterWidget';
 import DiscordWidget from '@/components/sns-widgets/DiscordWidget';
@@ -13,7 +13,7 @@ type WidgetType = 'twitter' | 'discord' | 'youtube' | 'instagram' | 'github';
 interface WidgetConfig {
   id: WidgetType;
   name: string;
-  icon: JSX.Element;
+  icon: ReactElement;
   enabled: boolean;
   config: {
     username?: string;
