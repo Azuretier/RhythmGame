@@ -1,0 +1,13 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /images/
+Disallow: /net*
+
+# Host
+Host: https://azuretier.net
+
+# Sitemaps
+Sitemap: https://azuretier.net/sitemap.xml

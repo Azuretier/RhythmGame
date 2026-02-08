@@ -21,7 +21,7 @@ export function useKV<T>(key: string, initialValue: T): [T, (value: T | ((prev: 
   })
 
   // Use ref to track last serialized value to avoid redundant localStorage reads
-  const lastSerializedRef = useRef<string>()
+  const lastSerializedRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
     try {
