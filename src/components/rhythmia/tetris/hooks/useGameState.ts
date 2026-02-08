@@ -356,52 +356,56 @@ export function useGameState() {
     }, []);
 
     // Move enemies toward center (tower), returns number that reached the tower
+    // Enemies that reach the tower are removed immediately (disappear).
+    // Must compute reached OUTSIDE the state setter — React 18 batching
+    // defers the updater callback, so a `reached` counter inside it would
+    // still be 0 when this function returns.
     const updateEnemies = useCallback((): number => {
+        const current = enemiesRef.current;
         let reached = 0;
-        setEnemies(prev => {
-            const updated = prev.map(e => {
-                if (!e.alive) return e;
-                const dx = -e.x;
-                const dz = -e.z;
-                const dist = Math.sqrt(dx * dx + dz * dz);
+        const updated: Enemy[] = [];
 
-                if (dist < ENEMY_TOWER_RADIUS) {
-                    reached++;
-                    return { ...e, alive: false };
-                }
+        for (const e of current) {
+            if (!e.alive) continue;
 
-                const nx = dx / dist;
-                const nz = dz / dist;
-                return {
-                    ...e,
-                    x: e.x + nx * e.speed,
-                    z: e.z + nz * e.speed,
-                };
+            const dx = -e.x;
+            const dz = -e.z;
+            const dist = Math.sqrt(dx * dx + dz * dz);
+
+            if (dist < ENEMY_TOWER_RADIUS) {
+                reached++;
+                // Enemy disappears — not added to updated array
+                continue;
+            }
+
+            const nx = dx / dist;
+            const nz = dz / dist;
+            updated.push({
+                ...e,
+                x: e.x + nx * e.speed,
+                z: e.z + nz * e.speed,
             });
-            // Clean up dead enemies that have been dead for a while
-            return updated.filter(e => e.alive || Date.now() - e.spawnTime < 10000);
-        });
+        }
+
+        setEnemies(updated);
+        enemiesRef.current = updated;
         return reached;
     }, []);
 
-    // Kill closest enemies (when lines are cleared)
+    // Kill closest enemies (when lines are cleared) — removed instantly
     const killEnemies = useCallback((count: number) => {
         setEnemies(prev => {
-            // Sort alive enemies by distance to center (closest first)
             const alive = prev.filter(e => e.alive);
-            const dead = prev.filter(e => !e.alive);
             alive.sort((a, b) => {
                 const distA = Math.sqrt(a.x * a.x + a.z * a.z);
                 const distB = Math.sqrt(b.x * b.x + b.z * b.z);
                 return distA - distB;
             });
 
-            // Kill the closest ones
+            // Remove the closest ones entirely
             const toKill = Math.min(count, alive.length);
-            for (let i = 0; i < toKill; i++) {
-                alive[i] = { ...alive[i], alive: false };
-            }
-            return [...alive, ...dead];
+            const survivors = alive.slice(toKill);
+            return survivors;
         });
     }, []);
 
