@@ -677,6 +677,9 @@ export default function MultiplayerGame() {
         <RankedMatch
           playerName={playerName || 'Player'}
           onBack={() => setMode('lobby')}
+          ws={wsRef.current}
+          connectionStatus={connectionStatus}
+          playerId={playerIdRef.current}
         />
       )}
     </div>
