@@ -102,13 +102,13 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, g
         );
     }
 
-    // Vanilla mode: terrain destruction progress
-    const pct = terrainTotal > 0 ? Math.min(100, ((terrainTotal - terrainRemaining) / terrainTotal) * 100) : 0;
+    // Vanilla mode: terrain gauge starts full and decreases as blocks are destroyed
+    const remainingPct = terrainTotal > 0 ? Math.max(0, (terrainRemaining / terrainTotal) * 100) : 100;
     return (
         <>
             <div className={styles.terrainLabel}>STAGE {stageNumber} — DIG</div>
             <div className={styles.terrainBar}>
-                <div className={styles.terrainFill} style={{ width: `${pct}%` }} />
+                <div className={styles.terrainFill} style={{ width: `${remainingPct}%` }} />
             </div>
             <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
                 {terrainRemaining} / {terrainTotal} blocks

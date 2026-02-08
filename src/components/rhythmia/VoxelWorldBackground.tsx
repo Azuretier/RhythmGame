@@ -39,13 +39,13 @@ function smoothNoise(x: number, z: number, seed: number): number {
   return nx0 + sz * (nx1 - nx0);
 }
 
-// Hilly terrain for vanilla mode
+// Hilly terrain for vanilla mode — generates height up to 20 blocks for 16x20x16 terrain
 function terrainHeightVanilla(x: number, z: number, seed: number): number {
   const s1 = smoothNoise(x * 0.08, z * 0.08, seed);
   const s2 = smoothNoise(x * 0.15, z * 0.15, seed + 100);
   const s3 = smoothNoise(x * 0.3, z * 0.3, seed + 200);
-  const h = s1 * 4 + s2 * 2 + s3 * 1;
-  return Math.max(1, Math.floor(h + 1));
+  const h = s1 * 12 + s2 * 5 + s3 * 2;
+  return Math.max(1, Math.min(20, Math.floor(h + 2)));
 }
 
 // Flat terrain for TD mode
@@ -53,12 +53,74 @@ function terrainHeightTD(_x: number, _z: number, _seed: number): number {
   return 1;
 }
 
-// Block color for vanilla mode — earth tones by height
-function blockColorVanilla(y: number, maxY: number): THREE.Color {
+// World-specific block color palettes for vanilla mode
+// Each world has layers: top (surface), mid (subsurface), deep (bedrock)
+// Colors are derived from the world theme colors in WORLDS constant
+type WorldBlockPalette = {
+  top: THREE.Color;
+  mid: THREE.Color;
+  deep: THREE.Color;
+  accent: THREE.Color;
+};
+
+function getWorldPalette(worldIdx: number): WorldBlockPalette {
+  switch (worldIdx) {
+    case 0: // Melodia (pink/rose)
+      return {
+        top: new THREE.Color(0.85, 0.42, 0.55),    // rose surface
+        mid: new THREE.Color(0.65, 0.30, 0.42),     // dark rose
+        deep: new THREE.Color(0.45, 0.22, 0.32),    // deep mauve
+        accent: new THREE.Color(1.0, 0.71, 0.76),   // light pink
+      };
+    case 1: // Harmonia (teal/ocean)
+      return {
+        top: new THREE.Color(0.20, 0.65, 0.55),     // sea green
+        mid: new THREE.Color(0.15, 0.50, 0.48),     // deep teal
+        deep: new THREE.Color(0.10, 0.33, 0.36),    // ocean floor
+        accent: new THREE.Color(0.30, 0.80, 0.77),  // aqua
+      };
+    case 2: // Crescenda (gold/sun)
+      return {
+        top: new THREE.Color(0.85, 0.75, 0.28),     // golden surface
+        mid: new THREE.Color(0.70, 0.58, 0.18),     // amber
+        deep: new THREE.Color(0.50, 0.40, 0.12),    // dark gold
+        accent: new THREE.Color(1.0, 0.90, 0.43),   // bright gold
+      };
+    case 3: // Fortissimo (red/fire)
+      return {
+        top: new THREE.Color(0.80, 0.30, 0.25),     // lava surface
+        mid: new THREE.Color(0.60, 0.18, 0.15),     // deep red
+        deep: new THREE.Color(0.35, 0.10, 0.08),    // obsidian
+        accent: new THREE.Color(1.0, 0.50, 0.30),   // fire orange
+      };
+    case 4: // Seijaku (purple/ethereal)
+      return {
+        top: new THREE.Color(0.55, 0.50, 0.85),     // amethyst surface
+        mid: new THREE.Color(0.40, 0.35, 0.70),     // deep purple
+        deep: new THREE.Color(0.25, 0.20, 0.50),    // dark violet
+        accent: new THREE.Color(0.75, 0.70, 0.95),  // light lavender
+      };
+    default: // Fallback earth tones
+      return {
+        top: new THREE.Color(0.35, 0.55, 0.25),
+        mid: new THREE.Color(0.45, 0.35, 0.25),
+        deep: new THREE.Color(0.4, 0.4, 0.4),
+        accent: new THREE.Color(0.50, 0.65, 0.35),
+      };
+  }
+}
+
+// Block color for vanilla mode — world-themed layers by height
+function blockColorVanilla(y: number, maxY: number, worldIdx: number = 0): THREE.Color {
+  const palette = getWorldPalette(worldIdx);
   const t = maxY > 1 ? y / maxY : 0.5;
-  if (t > 0.7) return new THREE.Color(0.35, 0.55, 0.25);  // grass
-  if (t > 0.3) return new THREE.Color(0.45, 0.35, 0.25);  // dirt
-  return new THREE.Color(0.4, 0.4, 0.4);                    // stone
+  if (y === maxY - 1) {
+    // Topmost block gets accent highlight
+    return palette.accent.clone().lerp(palette.top, 0.4);
+  }
+  if (t > 0.6) return palette.top;
+  if (t > 0.25) return palette.mid;
+  return palette.deep;
 }
 
 // Block color for TD mode — checkerboard board-game pattern
@@ -214,31 +276,46 @@ interface VoxelData {
   count: number;
 }
 
-function generateVoxelWorld(seed: number, size: number, mode: GameMode = 'td'): VoxelData {
+// Vanilla terrain dimensions
+const VANILLA_SIZE_X = 16;
+const VANILLA_SIZE_Y = 20; // max height (noise-driven)
+const VANILLA_SIZE_Z = 16;
+
+function generateVoxelWorld(seed: number, size: number, mode: GameMode = 'td', worldIdx: number = 0): VoxelData {
   const blocks: { x: number; y: number; z: number; color: THREE.Color }[] = [];
 
   const heightFn = mode === 'vanilla' ? terrainHeightVanilla : terrainHeightTD;
-  const colorFn = mode === 'vanilla' ? blockColorVanilla : blockColorTD;
 
-  for (let x = -size; x <= size; x++) {
-    for (let z = -size; z <= size; z++) {
-      const dist = Math.sqrt(x * x + z * z);
-      if (dist > size + 0.5) continue;
-
-      const maxY = heightFn(x, z, seed);
-      for (let y = 0; y < maxY; y++) {
-        const color = mode === 'vanilla'
-          ? colorFn(y, maxY)
-          : colorFn(y, maxY, x, z);
-        blocks.push({ x, y, z, color });
+  if (mode === 'vanilla') {
+    // Rectangular 16x20x16 terrain
+    const halfX = Math.floor(VANILLA_SIZE_X / 2);
+    const halfZ = Math.floor(VANILLA_SIZE_Z / 2);
+    for (let x = -halfX; x < halfX; x++) {
+      for (let z = -halfZ; z < halfZ; z++) {
+        const maxY = heightFn(x, z, seed);
+        for (let y = 0; y < maxY; y++) {
+          const color = blockColorVanilla(y, maxY, worldIdx);
+          blocks.push({ x, y, z, color });
+        }
       }
     }
-  }
-
-  // For vanilla mode, sort blocks by height descending so that
-  // reducing instancedMesh.count removes the top blocks first
-  if (mode === 'vanilla') {
+    // Sort blocks by height descending so reducing instancedMesh.count
+    // removes the top blocks first
     blocks.sort((a, b) => b.y - a.y);
+  } else {
+    // TD mode: circular terrain
+    for (let x = -size; x <= size; x++) {
+      for (let z = -size; z <= size; z++) {
+        const dist = Math.sqrt(x * x + z * z);
+        if (dist > size + 0.5) continue;
+
+        const maxY = heightFn(x, z, seed);
+        for (let y = 0; y < maxY; y++) {
+          const color = blockColorTD(y, maxY, x, z);
+          blocks.push({ x, y, z, color });
+        }
+      }
+    }
   }
 
   const count = blocks.length;
@@ -409,6 +486,7 @@ interface VoxelWorldBackgroundProps {
   enemies?: Enemy[];
   bullets?: Bullet[];
   onTerrainReady?: (totalBlocks: number) => void;
+  worldIdx?: number;
 }
 
 export default function VoxelWorldBackground({
@@ -418,6 +496,7 @@ export default function VoxelWorldBackground({
   enemies = [],
   bullets = [],
   onTerrainReady,
+  worldIdx = 0,
 }: VoxelWorldBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneStateRef = useRef<SceneState | null>(null);
@@ -432,12 +511,14 @@ export default function VoxelWorldBackground({
   gameModeRef.current = gameMode;
   const terrainDestroyedCountRef = useRef(terrainDestroyedCount);
   terrainDestroyedCountRef.current = terrainDestroyedCount;
+  const worldIdxRef = useRef(worldIdx);
+  worldIdxRef.current = worldIdx;
   const totalBlockCountRef = useRef(0);
   const aliveIndicesRef = useRef<number[]>([]);
   const lastDestroyedCountRef = useRef(0);
 
   // Build terrain mesh into the scene (called once)
-  const buildTerrain = useCallback((terrainSeed: number, mode: GameMode) => {
+  const buildTerrain = useCallback((terrainSeed: number, mode: GameMode, wIdx: number = 0) => {
     const ss = sceneStateRef.current;
     if (!ss) return;
 
@@ -464,7 +545,7 @@ export default function VoxelWorldBackground({
     }
 
     // Generate terrain based on mode
-    const voxelData = generateVoxelWorld(terrainSeed, 20, mode);
+    const voxelData = generateVoxelWorld(terrainSeed, 20, mode, wIdx);
     const mesh = new THREE.InstancedMesh(ss.boxGeo, ss.boxMat, voxelData.count);
 
     const dummy = new THREE.Object3D();
@@ -712,7 +793,7 @@ export default function VoxelWorldBackground({
     animIdRef.current = requestAnimationFrame(animate);
 
     // Build initial terrain
-    buildTerrain(seed, gameModeRef.current);
+    buildTerrain(seed, gameModeRef.current, worldIdxRef.current);
 
     return () => {
       cancelAnimationFrame(animIdRef.current);
@@ -755,10 +836,10 @@ export default function VoxelWorldBackground({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Regenerate terrain when seed changes
+  // Regenerate terrain when seed or worldIdx changes
   useEffect(() => {
-    buildTerrain(seed, gameMode);
-  }, [seed, gameMode, buildTerrain]);
+    buildTerrain(seed, gameMode, worldIdx);
+  }, [seed, gameMode, worldIdx, buildTerrain]);
 
   // Destroy blocks when destroyedCount increases — top-to-bottom order
   // Blocks are sorted Y-descending in generateVoxelWorld, so destroying

@@ -835,6 +835,7 @@ export default function Rhythmia() {
         enemies={gameMode === 'td' ? enemies : []}
         bullets={gameMode === 'td' ? bullets : []}
         onTerrainReady={handleTerrainReady}
+        worldIdx={worldIdx}
       />
 
       {/* Terrain destruction particle effects */}
