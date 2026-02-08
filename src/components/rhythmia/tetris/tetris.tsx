@@ -903,7 +903,7 @@ export default function Rhythmia() {
                 gameOver={gameOver}
                 isPaused={isPaused}
                 score={score}
-                onRestart={startGame}
+                onRestart={() => startGame(gameMode)}
                 colorTheme={colorTheme}
                 worldIdx={worldIdx}
                 combo={combo}
