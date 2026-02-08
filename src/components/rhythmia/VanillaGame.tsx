@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VanillaGame.module.css';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { recordGameEnd } from '@/lib/advancements/storage';
+import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
 
 // ===== Types =====
@@ -165,6 +165,7 @@ export const Rhythmia: React.FC = () => {
   const gamePiecesPlacedRef = useRef(0);
   const gameWorldsClearedRef = useRef(0);
   const gameBestComboRef = useRef(0);
+  const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
 
   // Keep refs in sync
@@ -311,6 +312,26 @@ export const Rhythmia: React.FC = () => {
     setScore(newScore);
     setScorePop(true);
     setTimeout(() => setScorePop(false), 100);
+  }, []);
+
+  // Push-based live advancement check — runs every lock(), instant toast on threshold
+  const pushLiveAdvancementCheck = useCallback(() => {
+    const qualifying = checkLiveGameAdvancements({
+      score: scoreRef.current,
+      lines: linesRef.current,
+      tSpins: gameTSpinsRef.current,
+      bestCombo: gameBestComboRef.current,
+      perfectBeats: gamePerfectBeatsRef.current,
+      worldsCleared: gameWorldsClearedRef.current,
+      tetrisClears: gameTetrisClearsRef.current,
+      hardDrops: gameHardDropsRef.current,
+      piecesPlaced: gamePiecesPlacedRef.current,
+    });
+    const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
+    if (fresh.length > 0) {
+      fresh.forEach(id => liveNotifiedRef.current.add(id));
+      setToastIds(prev => [...prev, ...fresh]);
+    }
   }, []);
 
   const nextWorld = useCallback(() => {
@@ -586,10 +607,16 @@ export const Rhythmia: React.FC = () => {
         const completedBoard = completeBoard(remainingBoard);
         setBoard(completedBoard);
         boardStateRef.current = completedBoard;
+
+        // Live advancement check after score/lines update
+        pushLiveAdvancementCheck();
       }, 300);
     } else {
       setBoard(newBoard);
       boardStateRef.current = newBoard;
+
+      // Live advancement check for piece-placement-only actions
+      pushLiveAdvancementCheck();
     }
 
     // Next piece
@@ -610,7 +637,7 @@ export const Rhythmia: React.FC = () => {
     if (currentNextPiece && collision(currentNextPiece, newPos.x, newPos.y, boardForCollisionCheck)) {
       endGame();
     }
-  }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame, completeBoard, checkTSpin]);
+  }, [nextPiece, showJudgment, playTone, spawnParticles, randomPiece, collision, updateScore, nextWorld, playLineClear, endGame, completeBoard, checkTSpin, pushLiveAdvancementCheck]);
 
   const move = useCallback((dx: number, dy: number) => {
     if (gameOverRef.current || !pieceRef.current) return;
@@ -754,6 +781,7 @@ export const Rhythmia: React.FC = () => {
     gamePiecesPlacedRef.current = 0;
     gameWorldsClearedRef.current = 0;
     gameBestComboRef.current = 0;
+    liveNotifiedRef.current = new Set();
     setToastIds([]);
   }, [initAudio, randomPiece]);
 

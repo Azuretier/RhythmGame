@@ -8,6 +8,7 @@ import { routing } from '@/i18n/routing';
 
 import Provider from '../provider';
 import { VersionProvider } from '@/lib/version/context';
+import NotificationCenter from '@/components/main/NotificationCenter';
 
 const geistSans = localFont({
     src: "../fonts/GeistVF.woff",
@@ -112,6 +113,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <NextIntlClientProvider messages={messages}>
                     <VersionProvider>
                         <Provider>
+                            <NotificationCenter />
                             {children}
                         </Provider>
                     </VersionProvider>

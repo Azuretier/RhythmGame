@@ -1,5 +1,6 @@
 import type { PlayerStats, AdvancementState } from './types';
 import { ADVANCEMENTS } from './definitions';
+import { syncToFirestore, writeNotification } from './firestore';
 
 const STORAGE_KEY = 'rhythmia_advancements';
 
@@ -118,6 +119,13 @@ export function recordGameEnd(stats: GameEndStats): AdvancementState {
 
   const updated = checkNewAdvancements(state);
   saveAdvancementState(updated);
+
+  // Sync to Firestore and write notifications for newly unlocked
+  syncToFirestore(updated);
+  for (const advId of updated.newlyUnlockedIds) {
+    writeNotification(advId);
+  }
+
   return updated;
 }
 
@@ -158,7 +166,89 @@ export function recordMultiplayerGameEnd(stats: MultiplayerGameEndStats): Advanc
 
   const updated = checkNewAdvancements(state);
   saveAdvancementState(updated);
+
+  // Sync to Firestore and write notifications for newly unlocked
+  syncToFirestore(updated);
+  for (const advId of updated.newlyUnlockedIds) {
+    writeNotification(advId);
+  }
+
   return updated;
+}
+
+/**
+ * Project what advancements would unlock given current in-game session stats,
+ * WITHOUT saving anything. Pure, synchronous, cheap — safe to call every lock().
+ * Returns advancement IDs that newly qualify (not yet in saved unlockedIds).
+ */
+export function checkLiveGameAdvancements(sessionStats: GameEndStats): string[] {
+  const state = loadAdvancementState();
+  const projected = { ...state.stats };
+
+  // Cumulative fields: add session on top of saved
+  projected.totalScore += sessionStats.score;
+  projected.totalLines += sessionStats.lines;
+  projected.totalTSpins += sessionStats.tSpins;
+  projected.totalPerfectBeats += sessionStats.perfectBeats;
+  projected.totalTetrisClears += sessionStats.tetrisClears;
+  projected.totalHardDrops += sessionStats.hardDrops;
+  projected.totalPiecesPlaced += sessionStats.piecesPlaced;
+  projected.totalGamesPlayed += 1;
+  projected.worldsCleared += sessionStats.worldsCleared;
+
+  // Best-of fields: max of saved and session
+  if (sessionStats.score > projected.bestScorePerGame) {
+    projected.bestScorePerGame = sessionStats.score;
+  }
+  if (sessionStats.lines > projected.bestLinesPerGame) {
+    projected.bestLinesPerGame = sessionStats.lines;
+  }
+  if (sessionStats.bestCombo > projected.bestCombo) {
+    projected.bestCombo = sessionStats.bestCombo;
+  }
+  if (sessionStats.perfectBeats > projected.bestPerfectBeatsPerGame) {
+    projected.bestPerfectBeatsPerGame = sessionStats.perfectBeats;
+  }
+
+  const qualifying: string[] = [];
+  for (const adv of ADVANCEMENTS) {
+    if (state.unlockedIds.includes(adv.id)) continue;
+    if (projected[adv.statKey] >= adv.threshold) {
+      qualifying.push(adv.id);
+    }
+  }
+  return qualifying;
+}
+
+/**
+ * Same as checkLiveGameAdvancements but for multiplayer session stats.
+ */
+export function checkLiveMultiplayerAdvancements(sessionStats: MultiplayerGameEndStats): string[] {
+  const state = loadAdvancementState();
+  const projected = { ...state.stats };
+
+  projected.totalScore += sessionStats.score;
+  projected.totalLines += sessionStats.lines;
+  projected.totalHardDrops += sessionStats.hardDrops;
+  projected.totalPiecesPlaced += sessionStats.piecesPlaced;
+  projected.totalMultiplayerGames += 1;
+  projected.totalGamesPlayed += 1;
+
+  if (sessionStats.score > projected.bestScorePerGame) {
+    projected.bestScorePerGame = sessionStats.score;
+  }
+  if (sessionStats.lines > projected.bestLinesPerGame) {
+    projected.bestLinesPerGame = sessionStats.lines;
+  }
+
+  const qualifying: string[] = [];
+  for (const adv of ADVANCEMENTS) {
+    if (state.unlockedIds.includes(adv.id)) continue;
+    if (projected[adv.statKey] >= adv.threshold) {
+      qualifying.push(adv.id);
+    }
+  }
+  return qualifying;
 }
 
 export function getUnlockedCount(): number {

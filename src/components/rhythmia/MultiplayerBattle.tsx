@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MultiplayerBattle.module.css';
 import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/multiplayer';
-import { recordMultiplayerGameEnd } from '@/lib/advancements/storage';
+import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
 
 // ===== Types =====
@@ -267,6 +267,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const gameHardDropsRef = useRef(0);
   const gamePiecesPlacedRef = useRef(0);
   const advRecordedRef = useRef(false);
+  const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
 
   // Opponent state
@@ -453,6 +454,22 @@ export const MultiplayerBattle: React.FC<Props> = ({
     }
   }, [startLockTimer]);
 
+  // Push-based live advancement check — runs every performLock(), instant toast
+  const pushLiveAdvancementCheck = useCallback(() => {
+    const qualifying = checkLiveMultiplayerAdvancements({
+      score: scoreRef.current,
+      lines: linesRef.current,
+      won: false,
+      hardDrops: gameHardDropsRef.current,
+      piecesPlaced: gamePiecesPlacedRef.current,
+    });
+    const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
+    if (fresh.length > 0) {
+      fresh.forEach(id => liveNotifiedRef.current.add(id));
+      setToastIds(prev => [...prev, ...fresh]);
+    }
+  }, []);
+
   // ===== Core Game Logic =====
   const performLock = useCallback(() => {
     const piece = pieceRef.current;
@@ -537,12 +554,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     pieceRef.current = null;
 
+    // Live advancement check after stats update
+    pushLiveAdvancementCheck();
+
     // Send state update
     sendBoardUpdate();
 
     // Spawn next piece
     spawnPiece();
-  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playTone, spawnPiece, render]);
+  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playTone, spawnPiece, render, pushLiveAdvancementCheck]);
 
   // Wire up startLockTimer -> performLock circular dependency
   // performLock is already defined, we just need to ensure startLockTimer calls it
@@ -733,6 +753,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     gameHardDropsRef.current = 0;
     gamePiecesPlacedRef.current = 0;
     advRecordedRef.current = false;
+    liveNotifiedRef.current = new Set();
     setToastIds([]);
     opponentBoardRef.current = createEmptyBoard();
     opponentScoreRef.current = 0;
