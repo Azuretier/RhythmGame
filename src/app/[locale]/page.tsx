@@ -10,7 +10,7 @@ import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
-import { AdvancementsMenu } from '../../components/rhythmia/AdvancementsMenu';
+import Advancements from '../../components/rhythmia/Advancements';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
@@ -155,25 +155,7 @@ export default function RhythmiaPage() {
             {/* Advancements panel */}
             <AnimatePresence>
                 {showAdvancements && (
-                    <motion.div
-                        style={{
-                            position: 'fixed',
-                            inset: 0,
-                            background: 'rgba(0, 0, 0, 0.85)',
-                            backdropFilter: 'blur(8px)',
-                            zIndex: 300,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '20px',
-                        }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                    >
-                        <AdvancementsMenu onClose={() => setShowAdvancements(false)} />
-                    </motion.div>
+                    <Advancements onClose={() => setShowAdvancements(false)} />
                 )}
             </AnimatePresence>
 
