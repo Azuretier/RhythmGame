@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BOARD_WIDTH, BOARD_HEIGHT, COLORS, ColorTheme, getThemedColor } from '../constants';
 import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
+import { ADVANCEMENTS } from '@/lib/advancements/definitions';
+import { loadAdvancementState } from '@/lib/advancements/storage';
+import { AdvancementsMenu } from '@/components/rhythmia/AdvancementsMenu';
 import type { Piece, Board as BoardType } from '../types';
 import styles from '../VanillaGame.module.css';
 
@@ -13,7 +16,9 @@ interface BoardProps {
     isPaused: boolean;
     score: number;
     onRestart: () => void;
+    onResume?: () => void;
     colorTheme?: ColorTheme;
+    onThemeChange?: (theme: ColorTheme) => void;
     worldIdx?: number;
     combo?: number;
     beatPhase?: number;
@@ -33,18 +38,31 @@ export function Board({
     isPaused,
     score,
     onRestart,
+    onResume,
     colorTheme = 'stage',
+    onThemeChange,
     worldIdx = 0,
     combo = 0,
     beatPhase = 0,
     boardElRef,
 }: BoardProps) {
     const isFever = combo >= 10;
+    const [showAdvancements, setShowAdvancements] = useState(false);
+    const [unlockedCount, setUnlockedCount] = useState(0);
+
+    // Load advancement count when pause menu opens
+    useEffect(() => {
+        if (isPaused && !gameOver) {
+            const state = loadAdvancementState();
+            setUnlockedCount(state.unlockedIds.length);
+        } else {
+            setShowAdvancements(false);
+        }
+    }, [isPaused, gameOver]);
 
     // Helper to get color for a piece type, with fever chroma shift
     const getColor = (pieceType: string) => {
         if (isFever) {
-            // Rainbow cycle: shift hue based on time (use beatPhase as proxy)
             const baseHue = beatPhase * 360;
             const offset = 'IOTSzjl'.indexOf(pieceType.toUpperCase()) * 51;
             return `hsl(${(baseHue + offset) % 360}, 90%, 60%)`;
@@ -59,7 +77,6 @@ export function Board({
         if (currentPiece) {
             const shape = getShape(currentPiece.type, currentPiece.rotation);
 
-            // Add ghost piece first
             const ghostY = getGhostY(currentPiece, board);
             if (ghostY !== currentPiece.y) {
                 for (let y = 0; y < shape.length; y++) {
@@ -77,7 +94,6 @@ export function Board({
                 }
             }
 
-            // Add current piece on top
             for (let y = 0; y < shape.length; y++) {
                 for (let x = 0; x < shape[y].length; x++) {
                     if (shape[y][x]) {
@@ -94,13 +110,14 @@ export function Board({
         return display;
     }, [board, currentPiece]);
 
-    // Board wrapper classes: beat pulse, shake, fever state
     const boardWrapClasses = [
         styles.boardWrap,
         boardBeat ? styles.beat : '',
         boardShake ? styles.shake : '',
         isFever ? styles.fever : '',
     ].filter(Boolean).join(' ');
+
+    const totalCount = ADVANCEMENTS.length;
 
     return (
         <div className={boardWrapClasses}>
@@ -114,14 +131,12 @@ export function Board({
                     const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
                     const color = pieceType ? getColor(pieceType as string) : '';
 
-                    // Ghost piece: enhanced glow on beat
                     const ghostStyle = isGhost ? {
                         borderColor: boardBeat ? `${color}CC` : `${color}60`,
                         boxShadow: boardBeat ? `0 0 12px ${color}80, inset 0 0 6px ${color}40` : 'none',
                         transition: 'border-color 0.1s, box-shadow 0.1s',
                     } : {};
 
-                    // Filled piece style
                     const filledStyle = cell && !isGhost ? {
                         backgroundColor: color,
                         boxShadow: isFever
@@ -139,14 +154,72 @@ export function Board({
                 })}
             </div>
 
-            {/* Overlay for Game Over / Paused */}
-            {(gameOver || isPaused) && (
+            {/* Overlay for Game Over */}
+            {gameOver && (
                 <div className={styles.gameover} style={{ display: 'flex' }}>
-                    <h2>{gameOver ? 'GAME OVER' : 'PAUSED'}</h2>
+                    <h2>GAME OVER</h2>
                     <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
                     <button className={styles.restartBtn} onClick={onRestart}>
-                        {gameOver ? 'もう一度' : 'Resume'}
+                        もう一度
                     </button>
+                </div>
+            )}
+
+            {/* Overlay for Paused — main menu or advancements sub-panel */}
+            {isPaused && !gameOver && (
+                <div className={styles.gameover} style={{ display: 'flex' }}>
+                    {!showAdvancements ? (
+                        <>
+                            <h2>PAUSED</h2>
+                            <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
+
+                            {/* Pause menu buttons */}
+                            <div className={styles.pauseMenuButtons}>
+                                <button className={styles.pauseMenuBtn} onClick={onResume || onRestart}>
+                                    Resume
+                                </button>
+                                <button
+                                    className={styles.pauseMenuBtn}
+                                    onClick={() => setShowAdvancements(true)}
+                                >
+                                    <span className={styles.pauseMenuBtnIcon}>🏆</span>
+                                    Advancements
+                                    <span className={styles.pauseMenuBtnBadge}>
+                                        {unlockedCount}/{totalCount}
+                                    </span>
+                                </button>
+                            </div>
+
+                            {/* Theme selector */}
+                            {onThemeChange && (
+                                <div className={styles.pauseThemeNav}>
+                                    <span className={styles.pauseThemeLabel}>Theme</span>
+                                    <div className={styles.pauseThemeButtons}>
+                                        <button
+                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
+                                            onClick={() => onThemeChange('standard')}
+                                        >
+                                            Standard
+                                        </button>
+                                        <button
+                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
+                                            onClick={() => onThemeChange('stage')}
+                                        >
+                                            Stage
+                                        </button>
+                                        <button
+                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
+                                            onClick={() => onThemeChange('monochrome')}
+                                        >
+                                            Mono
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <AdvancementsMenu onClose={() => setShowAdvancements(false)} />
+                    )}
                 </div>
             )}
         </div>

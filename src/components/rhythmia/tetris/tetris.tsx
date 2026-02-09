@@ -36,13 +36,11 @@ import {
   NextPiece,
   HoldPiece,
   TitleScreen,
-  WorldDisplay,
   ScoreDisplay,
   ComboDisplay,
   TerrainProgress,
   BeatBar,
   StatsPanel,
-  ThemeNav,
   JudgmentDisplay,
   TouchControls,
   RhythmVFX,
@@ -637,6 +635,13 @@ export default function Rhythmia() {
     }
   }, [gameOver]);
 
+  // Reset beat timing when unpausing to avoid desync
+  useEffect(() => {
+    if (!isPaused && isPlaying && !gameOver) {
+      lastBeatRef.current = Date.now();
+    }
+  }, [isPaused, isPlaying, gameOver, lastBeatRef]);
+
   // Beat timer for rhythm game — branches by game mode via gameModeRef
   // Uses refs for vfx.emit/spawnEnemies/updateEnemies to keep deps stable
   // (vfx object recreates every render, which would reset the interval)
@@ -649,6 +654,9 @@ export default function Rhythmia() {
     lastBeatRef.current = Date.now();
 
     beatTimerRef.current = window.setInterval(() => {
+      // Skip beat processing while paused
+      if (isPausedRef.current) return;
+
       lastBeatRef.current = Date.now();
       setBoardBeat(true);
       playDrum();
@@ -701,7 +709,7 @@ export default function Rhythmia() {
     if (gameModeRef.current !== 'td') return;
 
     const bulletTimer = window.setInterval(() => {
-      if (gameOverRef.current) return;
+      if (gameOverRef.current || isPausedRef.current) return;
       const fired = fireBulletRef.current();
       if (fired) {
         playShootSoundRef.current();
@@ -721,6 +729,12 @@ export default function Rhythmia() {
     let lastStateUpdate = 0;
     const updateBeat = () => {
       if (!gameOverRef.current) {
+        // Skip phase updates while paused (freeze the beat cursor)
+        if (isPausedRef.current) {
+          animFrame = requestAnimationFrame(updateBeat);
+          return;
+        }
+
         const world = WORLDS[worldIdxRef.current];
         const interval = 60000 / world.bpm;
         const now = Date.now();
@@ -952,15 +966,12 @@ export default function Rhythmia() {
       {/* Game */}
       {(isPlaying || gameOver) && (
         <div className={styles.game}>
-          <WorldDisplay worldIdx={worldIdx} />
-
-          {/* Game phase indicator + Theme Navbar */}
+          {/* Game phase indicator */}
           <GamePhaseIndicator
             phase={gamePhase}
             stageNumber={stageNumber}
             damageMultiplier={damageMultiplier}
           />
-          <ThemeNav colorTheme={colorTheme} onThemeChange={setColorTheme} />
 
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
@@ -997,7 +1008,9 @@ export default function Rhythmia() {
                 isPaused={isPaused}
                 score={score}
                 onRestart={() => startGame(gameMode)}
+                onResume={() => setIsPaused(false)}
                 colorTheme={colorTheme}
+                onThemeChange={setColorTheme}
                 worldIdx={worldIdx}
                 combo={combo}
                 beatPhase={beatPhase}

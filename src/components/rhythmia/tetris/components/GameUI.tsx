@@ -13,7 +13,6 @@ interface TitleScreenProps {
 export function TitleScreen({ onStart }: TitleScreenProps) {
     return (
         <div className={styles.titleScreen}>
-            <h1>RHYTHMIA</h1>
             <p>リズムに乗ってブロックを積め！</p>
             <div className={styles.modeSelect}>
                 <button className={styles.modeBtn} onClick={() => onStart('vanilla')}>

@@ -619,6 +619,115 @@
   background: rgba(255, 255, 255, 0.85);
 }
 
+/* Pause menu: theme selector */
+.pauseThemeNav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.pauseThemeLabel {
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.pauseThemeButtons {
+  display: flex;
+  gap: 6px;
+}
+
+.pauseThemeBtn {
+  padding: 6px 14px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.05em;
+}
+
+.pauseThemeBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.pauseThemeBtn.active {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: #000000;
+}
+
+/* Pause menu: button list */
+.pauseMenuButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 260px;
+}
+
+.pauseMenuBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pauseMenuBtn:first-child {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #000000;
+}
+
+.pauseMenuBtn:first-child:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.pauseMenuBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.pauseMenuBtnIcon {
+  font-size: 1rem;
+}
+
+.pauseMenuBtnBadge {
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.05em;
+}
+
+.pauseMenuBtn:first-child .pauseMenuBtnBadge {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* Responsive: pause menu on smaller screens */
+@media (max-width: 480px) {
+  .pauseMenuButtons {
+    width: 220px;
+  }
+}
+
 /* Stats panel */
 .statsPanel {
   display: flex;
