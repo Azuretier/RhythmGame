@@ -2,7 +2,7 @@
 .page {
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: #000000;
-  min-height: 100vh;
+  height: 100vh;
   max-width: 100%;
   overflow: hidden;
   color: #ffffff;
@@ -48,16 +48,83 @@
   opacity: 0.4;
 }
 
+/* Slide system */
+.slideContainer {
+  transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+  will-change: transform;
+}
+
+.slideSection {
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.slideSectionLanding {
+  display: flex;
+  flex-direction: column;
+}
+
+.slideSectionPlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px;
+}
+
+.slideNav {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+}
+
+.slideDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slideDotActive {
+  height: 20px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.scrollHint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.3);
+  z-index: 10;
+  animation: scrollBounce 2s ease-in-out infinite;
+}
+
+@keyframes scrollBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(6px); }
+}
+
 /* Main container */
 .container {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
   overflow: hidden;
   -ms-overflow-style: none;
   scrollbar-width: none;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .container::-webkit-scrollbar {
@@ -492,5 +559,19 @@
 
   .heroText {
     margin-bottom: 24px;
+  }
+
+  .slideSectionPlay {
+    padding: 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .slideNav {
+    right: 12px;
+  }
+
+  .scrollHint {
+    bottom: 20px;
   }
 }
