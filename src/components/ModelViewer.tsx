@@ -33,7 +33,7 @@ interface FrameProps {
     onSelect: (id: string) => void
 }
 
-function Frame({ id, name, author, bg = '#f0f0f0', width = 1, height = 1.61803398875, children, activeId, onSelect, ...props }: FrameProps) {
+function Frame({ id, name, author, bg = '#111118', width = 1, height = 1.61803398875, children, activeId, onSelect, ...props }: FrameProps) {
     const portal = useRef<any>(null)
     const [hovered, hover] = useState<boolean>(false)
     useCursor(hovered)
@@ -51,7 +51,7 @@ function Frame({ id, name, author, bg = '#f0f0f0', width = 1, height = 1.6180339
                 lineHeight={0.8}
                 position={[-0.375, 0.715, 0.01]}
                 material-toneMapped={false}
-                color="#000"
+                color="rgba(255,255,255,0.85)"
             >
                 {name}
             </Text>
@@ -60,7 +60,7 @@ function Frame({ id, name, author, bg = '#f0f0f0', width = 1, height = 1.6180339
                 anchorX="right"
                 position={[0.4, -0.659, 0.01]}
                 material-toneMapped={false}
-                color="#666"
+                color="rgba(255,255,255,0.3)"
             >
                 /{id}
             </Text>
@@ -69,7 +69,7 @@ function Frame({ id, name, author, bg = '#f0f0f0', width = 1, height = 1.6180339
                 anchorX="right"
                 position={[0.0, -0.677, 0.01]}
                 material-toneMapped={false}
-                color="#888"
+                color="rgba(255,255,255,0.2)"
             >
                 {author}
             </Text>
@@ -85,8 +85,8 @@ function Frame({ id, name, author, bg = '#f0f0f0', width = 1, height = 1.6180339
                 <roundedPlaneGeometry args={[width, height, 0.1]} />
                 <MeshPortalMaterial ref={portal} events={activeId === id} side={THREE.DoubleSide} resolution={512} blur={0.5}>
                     <color attach="background" args={[bg]} />
-                    <ambientLight intensity={0.5} />
-                    <directionalLight position={[5, 5, 5]} intensity={1} />
+                    <ambientLight intensity={0.6} />
+                    <directionalLight position={[5, 5, 5]} intensity={0.8} />
                     {children}
                 </MeshPortalMaterial>
             </mesh>
@@ -125,12 +125,12 @@ function Rig({ activeId }: RigProps) {
 function Scene({ activeId, onSelect }: { activeId: string | null, onSelect: (id: string) => void }) {
     return (
         <>
-            <color attach="background" args={['#f0f0f0']} />
+            <color attach="background" args={['#080808']} />
             <Frame
                 id="01"
                 name={`pick\nles`}
                 author="Omar Faruq Tawsif"
-                bg="#e4cdac"
+                bg="#1a1510"
                 position={[-1.15, 0, 0]}
                 rotation={[0, 0.5, 0]}
                 activeId={activeId}
@@ -142,6 +142,7 @@ function Scene({ activeId, onSelect }: { activeId: string | null, onSelect: (id:
                 id="02"
                 name="tea"
                 author="Omar Faruq Tawsif"
+                bg="#0d1117"
                 activeId={activeId}
                 onSelect={onSelect}
             >
@@ -151,7 +152,7 @@ function Scene({ activeId, onSelect }: { activeId: string | null, onSelect: (id:
                 id="03"
                 name="still"
                 author="Omar Faruq Tawsif"
-                bg="#d1d1ca"
+                bg="#12150f"
                 position={[1.15, 0, 0]}
                 rotation={[0, -0.5, 0]}
                 activeId={activeId}
@@ -182,8 +183,10 @@ export default function ModelViewer({
             style={{
                 width: '100%',
                 height,
-                borderRadius: '16px',
+                borderRadius: '12px',
                 overflow: 'hidden',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: '#080808',
             }}
         >
             <Canvas flat camera={{ fov: 75, position: [0, 0, 5] }}>

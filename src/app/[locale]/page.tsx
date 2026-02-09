@@ -201,9 +201,9 @@ export default function RhythmiaPage() {
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
                         transition={{ duration: 0.6, delay: 0.25 }}
-                        style={{ marginBottom: '2rem' }}
+                        style={{ width: '100%', maxWidth: '900px', marginBottom: '32px' }}
                     >
-                        <ModelViewer height="400px" />
+                        <ModelViewer height="380px" />
                     </motion.div>
 
                     <div className={styles.serverGrid}>

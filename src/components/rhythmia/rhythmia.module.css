@@ -124,7 +124,7 @@
 
 .heroText {
   text-align: center;
-  margin-bottom: 64px;
+  margin-bottom: 32px;
 }
 
 .heroText h1 {
@@ -491,6 +491,6 @@
   }
 
   .heroText {
-    margin-bottom: 40px;
+    margin-bottom: 24px;
   }
 }
