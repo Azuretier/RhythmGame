@@ -12,7 +12,6 @@ import {
   calculateRankChange,
   tierProgress,
   pointsToNextTier,
-  MATCHMAKING_TIMEOUT_MS,
 } from '@/lib/ranked/constants';
 import type { RankedState, RankChange } from '@/lib/ranked/types';
 import { TetrisAIGame, getDifficultyForRank } from '@/lib/ranked/TetrisAI';
@@ -85,6 +84,9 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
   // AI game
   const aiGameRef = useRef<TetrisAIGame | null>(null);
 
+  // Countdown timers (imperative, not driven by useEffect)
+  const countdownTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
   // ===== Send helper =====
   const send = useCallback((data: object) => {
     if (ws?.readyState === WebSocket.OPEN) {
@@ -110,11 +112,28 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
             setOpponentId(msg.opponentId);
             setIsAIMatch(msg.isAI);
             setGameSeed(msg.gameSeed);
-            setPhase('found');
             // Stop search timer
             if (searchIntervalRef.current) {
               clearInterval(searchIntervalRef.current);
               searchIntervalRef.current = null;
+            }
+            if (msg.isAI) {
+              // AI match: start countdown imperatively via setTimeout chain
+              // This avoids React useEffect lifecycle issues that kill intervals
+              setPhase('countdown');
+              setCountdownNumber(3);
+              countdownTimersRef.current.forEach(clearTimeout);
+              countdownTimersRef.current = [
+                setTimeout(() => setCountdownNumber(2), 1000),
+                setTimeout(() => setCountdownNumber(1), 2000),
+                setTimeout(() => {
+                  setCountdownNumber(null);
+                  setPhase('playing');
+                }, 3000),
+              ];
+            } else {
+              // Human match: server will send countdown + game_started messages
+              setPhase('found');
             }
             break;
 
@@ -183,40 +202,9 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
       clearInterval(searchIntervalRef.current);
       searchIntervalRef.current = null;
     }
+    countdownTimersRef.current.forEach(clearTimeout);
+    countdownTimersRef.current = [];
   }, [send]);
-
-  // ===== AI Match: transition from 'found' to 'countdown' =====
-  // Separate effect so setPhase('countdown') doesn't kill the countdown interval
-  useEffect(() => {
-    if (phase !== 'found' || !isAIMatch) return;
-
-    const timer = setTimeout(() => {
-      setPhase('countdown');
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [phase, isAIMatch]);
-
-  // ===== AI Match: client-side countdown =====
-  useEffect(() => {
-    if (phase !== 'countdown' || !isAIMatch) return;
-
-    let count = 3;
-    setCountdownNumber(count);
-
-    const interval = setInterval(() => {
-      count--;
-      if (count > 0) {
-        setCountdownNumber(count);
-      } else {
-        clearInterval(interval);
-        setCountdownNumber(null);
-        setPhase('playing');
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [phase, isAIMatch]);
 
   // ===== AI Match Setup =====
   // The AI runs client-side, relaying board updates through fake WebSocket messages
@@ -342,6 +330,8 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
     send({ type: 'leave_room' });
     setPhase('idle');
     setGameResult(null);
+    countdownTimersRef.current.forEach(clearTimeout);
+    countdownTimersRef.current = [];
     if (aiGameRef.current) {
       aiGameRef.current.stop();
       aiGameRef.current = null;
@@ -356,6 +346,7 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      countdownTimersRef.current.forEach(clearTimeout);
       if (searchIntervalRef.current) {
         clearInterval(searchIntervalRef.current);
       }
