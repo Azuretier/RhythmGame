@@ -59,7 +59,7 @@ export default function RhythmiaPage() {
                 } else if (message.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong' }));
                 }
-            } catch {}
+            } catch { }
         };
 
         ws.onclose = () => {
@@ -184,7 +184,7 @@ export default function RhythmiaPage() {
                         </div>
                         <LocaleSwitcher />
                         <a
-                            href="https://discord.gg/TRFHTWCY4W"
+                            href="https://discord.gg/7mBCasYkJY"
                             target="_blank"
                             rel="noopener noreferrer"
                             className={styles.discordLink}
