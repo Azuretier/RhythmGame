@@ -5,8 +5,15 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL } from './constants';
-import type { Piece, GameMode } from './types';
+import {
+  WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE,
+  ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL,
+  MIX_ENEMIES_PER_BEAT, MIX_ENEMY_SPAWN_INTERVAL, MIX_TERRAIN_DAMAGE_PER_LINE,
+  MIX_ENEMIES_KILLED_PER_LINE, MIX_MANA_REGEN_PER_BEAT, MIX_MANA_PER_LINE_CLEAR,
+  MIX_BULLET_MANA_COST, MIX_PRE_STAGE_HP_BONUS, MIX_PRE_STAGE_MANA_BONUS,
+  MIX_DIFFICULTY_SCALE_PER_CYCLE,
+} from './constants';
+import type { Piece, GameMode, PreStageUpgrade } from './types';
 
 // Advancements
 import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
@@ -51,6 +58,7 @@ import {
   WorldTransition,
   GamePhaseIndicator,
   HealthManaHUD,
+  PreStageScreen,
 } from './components';
 
 /**
@@ -155,7 +163,12 @@ export default function Rhythmia() {
     enemies,
     bullets,
     towerHealth,
-    // Terrain (vanilla)
+    // Mix mode
+    mana,
+    maxMana,
+    maxHealth,
+    cycleCount,
+    // Terrain (vanilla + mix)
     terrainDestroyedCount,
     terrainTotal,
     // Refs
@@ -220,8 +233,19 @@ export default function Rhythmia() {
     fireBullet,
     updateBullets,
     setGameOver,
+    setEnemies,
+    setBullets,
     setTowerHealth,
     towerHealthRef,
+    // Mix mode actions
+    manaRef,
+    maxManaRef,
+    maxHealthRef,
+    cycleCountRef,
+    addMana,
+    spendMana,
+    applyPreStageUpgrade,
+    setMana,
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
@@ -247,6 +271,13 @@ export default function Rhythmia() {
   destroyTerrainRef.current = destroyTerrain;
   const startNewStageRef = useRef(startNewStage);
   startNewStageRef.current = startNewStage;
+  const addManaRef = useRef(addMana);
+  addManaRef.current = addMana;
+  const spendManaRef = useRef(spendMana);
+  spendManaRef.current = spendMana;
+
+  // Mix mode: beat counter for enemy spawn interval
+  const mixBeatCountRef = useRef(0);
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -450,7 +481,44 @@ export default function Rhythmia() {
       const weaponMult = damageMultiplierRef.current;
       const center = getBoardCenter();
 
-      if (mode === 'td') {
+      if (mode === 'mix') {
+        // === MIX MODE: Destroy terrain AND kill enemies ===
+        const terrainDamage = Math.ceil(clearedLines * MIX_TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        const remaining = destroyTerrain(terrainDamage);
+
+        const killCount = Math.ceil(clearedLines * MIX_ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        killEnemies(killCount);
+
+        // Mana gain on line clear
+        addMana(clearedLines * MIX_MANA_PER_LINE_CLEAR);
+
+        // Item drops from terrain
+        spawnItemDrops(terrainDamage, center.x, center.y);
+
+        // Check if terrain is fully destroyed → next world
+        if (remaining <= 0) {
+          gameWorldsClearedRef.current++;
+          const newWorldIdx = worldIdxRef.current + 1;
+
+          // Clear remaining enemies on world clear
+          setEnemies([]);
+          enemiesRef.current = [];
+          setBullets([]);
+
+          if (newWorldIdx >= WORLDS.length) {
+            // All worlds cleared → pre-stage upgrade screen
+            showJudgment('ALL CLEAR!', '#FFD700');
+            setGamePhase('PRE_STAGE');
+            setIsPaused(true);
+          } else {
+            // Advance to next world
+            showJudgment('WORLD CLEAR!', '#00FF00');
+            setWorldIdx(newWorldIdx);
+            worldIdxRef.current = newWorldIdx;
+            startNewStage(newWorldIdx + 1);
+          }
+        }
+      } else if (mode === 'td') {
         // === TOWER DEFENSE: Kill enemies when lines are cleared ===
         const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
         killEnemies(killCount);
@@ -461,7 +529,7 @@ export default function Rhythmia() {
         // === VANILLA: Destroy terrain blocks ===
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
         const remaining = destroyTerrain(damage);
-        
+
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
 
@@ -505,8 +573,9 @@ export default function Rhythmia() {
     gameModeRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
     setCombo, setBoard, setLines, setLevel, setCurrentPiece,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
-    currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
+    currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage, addMana,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
+    setEnemies, enemiesRef, setBullets, setWorldIdx, worldIdxRef, setGamePhase, setIsPaused,
   ]);
 
   // Hard drop
@@ -602,6 +671,9 @@ export default function Rhythmia() {
     initAudio();
     initGame(mode);
 
+    // Reset mix mode beat counter
+    mixBeatCountRef.current = 0;
+
     // Reset per-game advancement tracking
     gamePerfectBeatsRef.current = 0;
     gameBestComboRef.current = 0;
@@ -613,6 +685,12 @@ export default function Rhythmia() {
     liveNotifiedRef.current = new Set();
     setToastIds([]);
   }, [initAudio, initGame]);
+
+  // Handle pre-stage upgrade selection (Mix Mode)
+  const handlePreStageUpgrade = useCallback((choice: PreStageUpgrade) => {
+    mixBeatCountRef.current = 0;
+    applyPreStageUpgrade(choice);
+  }, [applyPreStageUpgrade]);
 
   // Record advancement stats when game ends
   useEffect(() => {
@@ -688,6 +766,38 @@ export default function Rhythmia() {
             return newHealth;
           });
         }
+      } else if (mode === 'mix') {
+        // === Mix Mode beat logic: terrain + TD enemies ===
+        // Update existing enemies
+        const reached = updateEnemiesRef.current();
+
+        // Spawn enemies at reduced rate (every N beats)
+        mixBeatCountRef.current++;
+        if (mixBeatCountRef.current >= MIX_ENEMY_SPAWN_INTERVAL) {
+          mixBeatCountRef.current = 0;
+          spawnEnemiesRef.current(MIX_ENEMIES_PER_BEAT);
+        }
+
+        // Move bullets and check collisions
+        const kills = updateBulletsRef.current();
+        if (kills > 0) {
+          playKillSoundRef.current();
+        }
+
+        // Mana regen per beat
+        addManaRef.current(MIX_MANA_REGEN_PER_BEAT);
+
+        // Apply damage when enemies reach the tower
+        if (reached > 0) {
+          const damage = reached * ENEMY_REACH_DAMAGE;
+          setTowerHealthRef.current(prev => {
+            const newHealth = Math.max(0, prev - damage);
+            if (newHealth <= 0) {
+              setGameOverRef.current(true);
+            }
+            return newHealth;
+          });
+        }
       }
       // Vanilla mode: no enemy/bullet/tower logic — just rhythm VFX below
 
@@ -704,12 +814,20 @@ export default function Rhythmia() {
   }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
 
   // Auto-fire bullet every 1 second (independent of beat timer)
+  // TD: free bullets. Mix: costs mana per bullet.
   useEffect(() => {
     if (!isPlaying || gameOver) return;
-    if (gameModeRef.current !== 'td') return;
+    const mode = gameModeRef.current;
+    if (mode !== 'td' && mode !== 'mix') return;
 
     const bulletTimer = window.setInterval(() => {
       if (gameOverRef.current || isPausedRef.current) return;
+
+      // Mix mode: bullets cost mana
+      if (mode === 'mix') {
+        if (!spendManaRef.current(MIX_BULLET_MANA_COST)) return;
+      }
+
       const fired = fireBulletRef.current();
       if (fired) {
         playShootSoundRef.current();
@@ -936,10 +1054,10 @@ export default function Rhythmia() {
       {/* Voxel World Background — mode-aware */}
       <VoxelWorldBackground
         seed={terrainSeed}
-        gameMode={gameMode}
+        gameMode={gameMode === 'mix' ? 'vanilla' : gameMode}
         terrainDestroyedCount={terrainDestroyedCount}
-        enemies={gameMode === 'td' ? enemies : []}
-        bullets={gameMode === 'td' ? bullets : []}
+        enemies={(gameMode === 'td' || gameMode === 'mix') ? enemies : []}
+        bullets={(gameMode === 'td' || gameMode === 'mix') ? bullets : []}
         onTerrainReady={handleTerrainReady}
         worldIdx={worldIdx}
       />
@@ -981,6 +1099,11 @@ export default function Rhythmia() {
             stageNumber={stageNumber}
             gameMode={gameMode}
           />
+          {gameMode === 'mix' && cycleCount > 0 && (
+            <div style={{ color: 'rgba(160, 80, 255, 0.6)', fontSize: '0.65rem', textAlign: 'center', letterSpacing: '0.1em' }}>
+              CYCLE {cycleCount + 1}
+            </div>
+          )}
 
           <div className={styles.gameArea} ref={gameAreaRef}>
             {/* Left sidebar: Hold + Inventory (separate containers) */}
@@ -1027,6 +1150,15 @@ export default function Rhythmia() {
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
               </div>
               {gameMode === 'td' && <HealthManaHUD health={towerHealth} />}
+              {gameMode === 'mix' && (
+                <HealthManaHUD
+                  health={towerHealth}
+                  maxHealth={maxHealth}
+                  mana={mana}
+                  maxMana={maxMana}
+                  showMana
+                />
+              )}
             </div>
           </div>
 
@@ -1052,6 +1184,18 @@ export default function Rhythmia() {
         onStart={vfx.start}
         onStop={vfx.stop}
       />
+      {/* Pre-stage upgrade screen (Mix Mode) */}
+      {gamePhase === 'PRE_STAGE' && gameMode === 'mix' && (
+        <PreStageScreen
+          cycleCount={cycleCount}
+          currentMaxHP={maxHealth}
+          currentMaxMana={maxMana}
+          hpBonus={MIX_PRE_STAGE_HP_BONUS}
+          manaBonus={MIX_PRE_STAGE_MANA_BONUS}
+          onChoose={handlePreStageUpgrade}
+        />
+      )}
+
       {/* Crafting UI overlay */}
       {showCraftUI && (
         <CraftingUI

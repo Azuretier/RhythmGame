@@ -25,14 +25,14 @@ export function WorldTransition({ phase, worldIdx, stageNumber, gameMode = 'vani
         if (phase === 'WORLD_CREATION') {
             setVisible(true);
             setText(`STAGE ${stageNumber}`);
-            const modeSuffix = gameMode === 'td' ? ' — TOWER DEFENSE' : '';
+            const modeSuffix = gameMode === 'td' ? ' — TOWER DEFENSE' : gameMode === 'mix' ? ' — MIX' : '';
             setSubText((WORLDS[worldIdx]?.name || '') + modeSuffix);
             const timer = setTimeout(() => setVisible(false), 1400);
             return () => clearTimeout(timer);
         } else if (phase === 'COLLAPSE') {
             setVisible(true);
             setText(gameMode === 'td' ? 'WAVE COMPLETE!' : 'TERRAIN CLEARED!');
-            setSubText(gameMode === 'td' ? 'ウェーブクリア！' : '地形破壊完了');
+            setSubText(gameMode === 'td' ? 'ウェーブクリア！' : gameMode === 'mix' ? 'ワールドクリア！' : '地形破壊完了');
             const timer = setTimeout(() => setVisible(false), 1200);
             return () => clearTimeout(timer);
         } else if (phase === 'TRANSITION') {
@@ -96,6 +96,7 @@ export function GamePhaseIndicator({ phase, stageNumber, damageMultiplier }: Gam
         CRAFTING: 'FORGE',
         COLLAPSE: 'COLLAPSE',
         TRANSITION: 'RELOAD',
+        PRE_STAGE: 'UPGRADE',
     };
 
     return (

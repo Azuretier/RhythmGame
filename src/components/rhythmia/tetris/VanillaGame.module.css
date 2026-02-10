@@ -460,6 +460,15 @@
   box-shadow: 0 0 20px rgba(255, 80, 80, 0.15);
 }
 
+.modeBtnMix {
+  border-color: rgba(160, 80, 255, 0.3);
+}
+
+.modeBtnMix:hover {
+  border-color: rgba(160, 80, 255, 0.6);
+  box-shadow: 0 0 20px rgba(160, 80, 255, 0.2);
+}
+
 .modeBtnIcon {
   font-size: 2rem;
 }
@@ -1797,6 +1806,12 @@
   animation: phasePulse 0.8s infinite alternate;
 }
 
+.phaseDot[data-phase="PRE_STAGE"] {
+  background: #FFD700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  animation: phasePulse 0.6s infinite alternate;
+}
+
 @keyframes phasePulse {
   from { opacity: 0.5; }
   to { opacity: 1; }
@@ -2067,5 +2082,159 @@
 
   .vBarLabel {
     font-size: 0.5rem;
+  }
+}
+
+/* ===== Pre-Stage Upgrade Screen (Mix Mode) ===== */
+.preStageOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 350;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: preStageIn 0.5s ease;
+}
+
+@keyframes preStageIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.preStagePanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 520px;
+  width: 90vw;
+}
+
+.preStageClear {
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  font-weight: 200;
+  color: #FFD700;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+  animation: preStageClearPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes preStageClearPulse {
+  0% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+  100% { text-shadow: 0 0 40px rgba(255, 215, 0, 0.5); }
+}
+
+.preStageCycle {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.2em;
+  font-weight: 400;
+}
+
+.preStagePrompt {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.1em;
+  font-weight: 300;
+}
+
+.preStageChoices {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.preStageBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 36px;
+  min-width: 200px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.preStageBtn:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.preStageBtnHp {
+  border-color: rgba(229, 57, 53, 0.3);
+}
+
+.preStageBtnHp:hover {
+  border-color: rgba(229, 57, 53, 0.6);
+  background: rgba(229, 57, 53, 0.08);
+  box-shadow: 0 8px 30px rgba(229, 57, 53, 0.15);
+}
+
+.preStageBtnMana {
+  border-color: rgba(66, 165, 245, 0.3);
+}
+
+.preStageBtnMana:hover {
+  border-color: rgba(66, 165, 245, 0.6);
+  background: rgba(66, 165, 245, 0.08);
+  box-shadow: 0 8px 30px rgba(66, 165, 245, 0.15);
+}
+
+.preStageBtnIcon {
+  font-size: 2.5rem;
+}
+
+.preStageBtnTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 0.15em;
+}
+
+.preStageBtnCurrent {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.08em;
+  font-weight: 400;
+}
+
+.preStageBtnDesc {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+  font-weight: 300;
+}
+
+.preStageWarning {
+  font-size: 0.7rem;
+  color: rgba(255, 100, 100, 0.5);
+  letter-spacing: 0.15em;
+  font-weight: 400;
+  margin-top: 8px;
+}
+
+/* Responsive pre-stage */
+@media screen and (max-width: 480px) {
+  .preStageBtn {
+    padding: 20px 24px;
+    min-width: 160px;
+  }
+
+  .preStageBtnIcon {
+    font-size: 2rem;
+  }
+
+  .preStageBtnTitle {
+    font-size: 0.8rem;
+  }
+
+  .preStageClear {
+    font-size: 1.5rem;
   }
 }

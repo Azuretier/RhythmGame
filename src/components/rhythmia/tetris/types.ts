@@ -1,5 +1,5 @@
 // ===== Game Mode =====
-export type GameMode = 'vanilla' | 'td';
+export type GameMode = 'vanilla' | 'td' | 'mix';
 
 // ===== Game Types =====
 
@@ -69,7 +69,11 @@ export type GamePhase =
     | 'PLAYING'
     | 'CRAFTING'
     | 'COLLAPSE'
-    | 'TRANSITION';
+    | 'TRANSITION'
+    | 'PRE_STAGE';
+
+// ===== Pre-Stage Upgrade (Mix Mode) =====
+export type PreStageUpgrade = 'hp' | 'mana';
 
 // ===== Item System =====
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';

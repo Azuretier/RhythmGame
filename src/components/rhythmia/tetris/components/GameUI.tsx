@@ -25,6 +25,11 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                     <span className={styles.modeBtnTitle}>TOWER DEFENSE</span>
                     <span className={styles.modeBtnDesc}>タワーを守れ！</span>
                 </button>
+                <button className={`${styles.modeBtn} ${styles.modeBtnMix}`} onClick={() => onStart('mix')}>
+                    <span className={styles.modeBtnIcon}>⚔️</span>
+                    <span className={styles.modeBtnTitle}>MIX MODE</span>
+                    <span className={styles.modeBtnDesc}>破壊と防衛の融合</span>
+                </button>
             </div>
         </div>
     );
@@ -87,6 +92,22 @@ interface TerrainProgressProps {
  * TD: enemy count indicator
  */
 export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, gameMode }: TerrainProgressProps) {
+    if (gameMode === 'mix') {
+        // Mix mode: terrain gauge (like vanilla) + enemy count
+        const remainingPct = terrainTotal > 0 ? Math.max(0, (terrainRemaining / terrainTotal) * 100) : 100;
+        return (
+            <>
+                <div className={styles.terrainLabel}>STAGE {stageNumber} — MIX</div>
+                <div className={styles.terrainBar}>
+                    <div className={styles.terrainFill} style={{ width: `${remainingPct}%`, background: 'linear-gradient(90deg, rgba(160, 80, 255, 0.5), rgba(255, 160, 80, 0.7))' }} />
+                </div>
+                <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
+                    {terrainRemaining} / {terrainTotal} blocks
+                </div>
+            </>
+        );
+    }
+
     if (gameMode === 'td') {
         return (
             <>

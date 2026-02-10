@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, PreStageUpgrade, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP,
@@ -10,6 +10,8 @@ import {
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
     BULLET_SPEED, BULLET_KILL_RADIUS, BULLET_DAMAGE,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
+    MIX_INITIAL_MAX_HP, MIX_INITIAL_MAX_MANA,
+    MIX_PRE_STAGE_HP_BONUS, MIX_PRE_STAGE_MANA_BONUS,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -91,6 +93,12 @@ export function useGameState() {
     const [bullets, setBullets] = useState<Bullet[]>([]);
     const [towerHealth, setTowerHealth] = useState(MAX_HEALTH);
 
+    // ===== Mix Mode =====
+    const [mana, setMana] = useState(MIX_INITIAL_MAX_MANA);
+    const [maxMana, setMaxMana] = useState(MIX_INITIAL_MAX_MANA);
+    const [maxHealth, setMaxHealth] = useState(MIX_INITIAL_MAX_HP);
+    const [cycleCount, setCycleCount] = useState(0);  // Times all worlds cleared
+
     // Computed: total damage multiplier from all crafted cards
     const damageMultiplier = craftedCards.reduce((mult, card) => {
         const def = WEAPON_CARD_MAP[card.cardId];
@@ -129,6 +137,10 @@ export function useGameState() {
     const bulletsRef = useRef<Bullet[]>(bullets);
     const towerHealthRef = useRef(towerHealth);
     const gameModeRef = useRef<GameMode>(gameMode);
+    const manaRef = useRef(mana);
+    const maxManaRef = useRef(maxMana);
+    const maxHealthRef = useRef(maxHealth);
+    const cycleCountRef = useRef(cycleCount);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -163,6 +175,10 @@ export function useGameState() {
     useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
+    useEffect(() => { manaRef.current = mana; }, [mana]);
+    useEffect(() => { maxManaRef.current = maxMana; }, [maxMana]);
+    useEffect(() => { maxHealthRef.current = maxHealth; }, [maxHealth]);
+    useEffect(() => { cycleCountRef.current = cycleCount; }, [cycleCount]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -651,6 +667,76 @@ export function useGameState() {
         setGamePhase('WORLD_CREATION');
     }, []);
 
+    // ===== Mix Mode: Mana Management =====
+    const addMana = useCallback((amount: number) => {
+        setMana(prev => {
+            const newMana = Math.min(prev + amount, maxManaRef.current);
+            manaRef.current = newMana;
+            return newMana;
+        });
+    }, []);
+
+    const spendMana = useCallback((cost: number): boolean => {
+        if (manaRef.current < cost) return false;
+        setMana(prev => {
+            const newMana = prev - cost;
+            manaRef.current = newMana;
+            return newMana;
+        });
+        return true;
+    }, []);
+
+    // ===== Mix Mode: Pre-Stage Upgrade =====
+    const applyPreStageUpgrade = useCallback((choice: PreStageUpgrade) => {
+        if (choice === 'hp') {
+            const newMaxHealth = maxHealthRef.current + MIX_PRE_STAGE_HP_BONUS;
+            setMaxHealth(newMaxHealth);
+            maxHealthRef.current = newMaxHealth;
+            setTowerHealth(newMaxHealth);
+            towerHealthRef.current = newMaxHealth;
+        } else {
+            const newMaxMana = maxManaRef.current + MIX_PRE_STAGE_MANA_BONUS;
+            setMaxMana(newMaxMana);
+            maxManaRef.current = newMaxMana;
+            setMana(newMaxMana);
+            manaRef.current = newMaxMana;
+        }
+
+        // Increment cycle
+        const newCycle = cycleCountRef.current + 1;
+        setCycleCount(newCycle);
+        cycleCountRef.current = newCycle;
+
+        // Reset to world 0 for new cycle
+        setWorldIdx(0);
+        worldIdxRef.current = 0;
+        startNewStage(1);
+
+        // Clear enemies/bullets for fresh start
+        setEnemies([]);
+        enemiesRef.current = [];
+        setBullets([]);
+        bulletsRef.current = [];
+
+        // Restore health to full (max may have changed)
+        if (choice !== 'hp') {
+            setTowerHealth(maxHealthRef.current);
+            towerHealthRef.current = maxHealthRef.current;
+        }
+        // Restore mana to full (max may have changed)
+        if (choice !== 'mana') {
+            setMana(maxManaRef.current);
+            manaRef.current = maxManaRef.current;
+        }
+
+        // Transition back to gameplay
+        setGamePhase('WORLD_CREATION');
+        setIsPaused(false);
+        setTimeout(() => {
+            setGamePhase('PLAYING');
+        }, 1500);
+    }, [startNewStage, setWorldIdx, setEnemies, setBullets, setTowerHealth, setGamePhase, setIsPaused]);
+
     // Initialize/reset game
     const initGame = useCallback((mode: GameMode = 'vanilla') => {
         setGameMode(mode);
@@ -683,15 +769,25 @@ export function useGameState() {
         setTerrainParticles([]);
         setShowCraftUI(false);
 
-        // Reset tower defense state (always reset, only used in TD mode)
+        // Reset tower defense state (used in TD and Mix modes)
         setEnemies([]);
         enemiesRef.current = [];
         setBullets([]);
         bulletsRef.current = [];
-        setTowerHealth(MAX_HEALTH);
-        towerHealthRef.current = MAX_HEALTH;
+        setTowerHealth(mode === 'mix' ? MIX_INITIAL_MAX_HP : MAX_HEALTH);
+        towerHealthRef.current = mode === 'mix' ? MIX_INITIAL_MAX_HP : MAX_HEALTH;
         nextEnemyId = 0;
         nextBulletId = 0;
+
+        // Reset Mix Mode state
+        setMana(MIX_INITIAL_MAX_MANA);
+        manaRef.current = MIX_INITIAL_MAX_MANA;
+        setMaxMana(MIX_INITIAL_MAX_MANA);
+        maxManaRef.current = MIX_INITIAL_MAX_MANA;
+        setMaxHealth(mode === 'mix' ? MIX_INITIAL_MAX_HP : MAX_HEALTH);
+        maxHealthRef.current = mode === 'mix' ? MIX_INITIAL_MAX_HP : MAX_HEALTH;
+        setCycleCount(0);
+        cycleCountRef.current = 0;
 
         setHoldPiece(null);
         setCanHold(true);
@@ -771,6 +867,12 @@ export function useGameState() {
         enemies,
         bullets,
         towerHealth,
+
+        // Mix mode
+        mana,
+        maxMana,
+        maxHealth,
+        cycleCount,
 
         // Setters
         setBoard,
@@ -853,7 +955,17 @@ export function useGameState() {
         fireBullet,
         updateBullets,
         setEnemies,
+        setBullets,
         setTowerHealth,
         towerHealthRef,
+        // Mix mode actions
+        manaRef,
+        maxManaRef,
+        maxHealthRef,
+        cycleCountRef,
+        addMana,
+        spendMana,
+        applyPreStageUpgrade,
+        setMana,
     };
 }

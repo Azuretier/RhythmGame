@@ -275,6 +275,21 @@ export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
 export const BULLET_DAMAGE = 1;         // Damage per bullet hit
 export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
 
+// ===== Mix Mode Settings =====
+// Mix Mode spawns enemies at a lower rate and combines terrain destruction + TD
+export const MIX_ENEMIES_PER_BEAT = 1;           // Enemies spawned per beat (same as TD)
+export const MIX_ENEMY_SPAWN_INTERVAL = 2;       // Spawn enemies every N beats (slower than TD)
+export const MIX_TERRAIN_DAMAGE_PER_LINE = 4;    // Same as vanilla terrain damage
+export const MIX_ENEMIES_KILLED_PER_LINE = 1;    // Fewer kills per line than pure TD
+export const MIX_INITIAL_MAX_HP = 100;            // Starting max HP
+export const MIX_INITIAL_MAX_MANA = 100;          // Starting max mana
+export const MIX_MANA_REGEN_PER_BEAT = 3;        // Mana regenerated each beat
+export const MIX_MANA_PER_LINE_CLEAR = 10;       // Mana gained per line clear
+export const MIX_BULLET_MANA_COST = 15;          // Mana cost per bullet fired
+export const MIX_PRE_STAGE_HP_BONUS = 25;        // HP added per pre-stage upgrade
+export const MIX_PRE_STAGE_MANA_BONUS = 25;      // Mana added per pre-stage upgrade
+export const MIX_DIFFICULTY_SCALE_PER_CYCLE = 0.15; // 15% harder per cycle (enemy speed/spawn rate)
+
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
 
