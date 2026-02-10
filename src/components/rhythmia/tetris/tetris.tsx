@@ -8,6 +8,7 @@ import styles from './VanillaGame.module.css';
 import {
   WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE,
   ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL,
+  LOCK_DELAY, MAX_LOCK_MOVES,
   MIX_ENEMIES_PER_BEAT, MIX_ENEMY_SPAWN_INTERVAL, MIX_TERRAIN_DAMAGE_PER_LINE,
   MIX_ENEMIES_KILLED_PER_LINE, MIX_MANA_REGEN_PER_BEAT, MIX_MANA_PER_LINE_CLEAR,
   MIX_BULLET_MANA_COST, MIX_PRE_STAGE_HP_BONUS, MIX_PRE_STAGE_MANA_BONUS,
@@ -279,6 +280,10 @@ export default function Rhythmia() {
   // Mix mode: beat counter for enemy spawn interval
   const mixBeatCountRef = useRef(0);
 
+  // Lock delay — grace period after piece lands before locking
+  const lockStartTimeRef = useRef<number | null>(null);
+  const lockMovesRef = useRef(0);
+
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
     if (gameAreaRef.current) {
@@ -310,6 +315,25 @@ export default function Rhythmia() {
     return false;
   }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef]);
 
+  // Horizontal move with lock delay reset
+  const moveHorizontal = useCallback((dx: number): boolean => {
+    const result = movePiece(dx, 0);
+    if (result && lockStartTimeRef.current !== null) {
+      const piece = currentPieceRef.current;
+      if (piece) {
+        if (isValidPosition({ ...piece, y: piece.y + 1 }, boardRef.current)) {
+          // Moved off ground
+          lockStartTimeRef.current = null;
+        } else if (lockMovesRef.current < MAX_LOCK_MOVES) {
+          // Still on ground — reset lock timer
+          lockMovesRef.current++;
+          lockStartTimeRef.current = performance.now();
+        }
+      }
+    }
+    return result;
+  }, [movePiece, currentPieceRef, boardRef]);
+
   // Rotate piece
   const rotatePiece = useCallback((direction: 1 | -1) => {
     if (!currentPiece || gameOver || isPaused) return;
@@ -331,6 +355,18 @@ export default function Rhythmia() {
       setCurrentPiece(rotatedPiece);
       currentPieceRef.current = rotatedPiece;
       playRotateSound();
+
+      // Reset lock delay if piece is on ground after rotation
+      if (lockStartTimeRef.current !== null) {
+        if (isValidPosition({ ...rotatedPiece, y: rotatedPiece.y + 1 }, boardRef.current)) {
+          // Rotation moved piece off ground (e.g. wall kick)
+          lockStartTimeRef.current = null;
+        } else if (lockMovesRef.current < MAX_LOCK_MOVES) {
+          // Still on ground — reset lock timer
+          lockMovesRef.current++;
+          lockStartTimeRef.current = performance.now();
+        }
+      }
     }
   }, [currentPiece, gameOver, isPaused, setCurrentPiece, currentPieceRef, boardRef, gameOverRef, isPausedRef, playRotateSound]);
 
@@ -350,23 +386,23 @@ export default function Rhythmia() {
         state.lastMoveTime = currentTime;
 
         if (currentArr === 0) {
-          while (movePiece(dx, 0)) { }
+          while (moveHorizontal(dx)) { }
         } else {
-          movePiece(dx, 0);
+          moveHorizontal(dx);
         }
       }
     } else {
       if (currentArr === 0) {
-        while (movePiece(dx, 0)) { }
+        while (moveHorizontal(dx)) { }
       } else {
         const timeSinceLastMove = currentTime - state.lastMoveTime;
         if (timeSinceLastMove >= currentArr) {
-          movePiece(dx, 0);
+          moveHorizontal(dx);
           state.lastMoveTime = currentTime;
         }
       }
     }
-  }, [movePiece, keyStatesRef, isPausedRef, gameOverRef, dasRef, arrRef]);
+  }, [moveHorizontal, keyStatesRef, isPausedRef, gameOverRef, dasRef, arrRef]);
 
   // Process soft drop (SDF)
   const processSoftDrop = useCallback((currentTime: number) => {
@@ -569,6 +605,9 @@ export default function Rhythmia() {
     const spawned = spawnPiece();
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
+    // Reset lock delay for new piece
+    lockStartTimeRef.current = null;
+    lockMovesRef.current = 0;
   }, [
     gameModeRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
     setCombo, setBoard, setLines, setLevel, setCurrentPiece,
@@ -621,6 +660,9 @@ export default function Rhythmia() {
       const spawned = spawnPiece();
       setCurrentPiece(spawned);
       currentPieceRef.current = spawned;
+      // Reset lock delay for new piece
+      lockStartTimeRef.current = null;
+      lockMovesRef.current = 0;
     } else {
       const heldType = holdPiece;
       setHoldPiece(currentType);
@@ -630,6 +672,9 @@ export default function Rhythmia() {
       if (isValidPosition(newPiece, board)) {
         setCurrentPiece(newPiece);
         currentPieceRef.current = newPiece;
+        // Reset lock delay for swapped piece
+        lockStartTimeRef.current = null;
+        lockMovesRef.current = 0;
       } else {
         setHoldPiece(heldType);
         return;
@@ -658,8 +703,25 @@ export default function Rhythmia() {
     if (isValidPosition(newPiece, boardRef.current)) {
       setCurrentPiece(newPiece);
       currentPieceRef.current = newPiece;
+      // Piece moved down successfully — cancel lock delay
+      lockStartTimeRef.current = null;
+      lockMovesRef.current = 0;
     } else {
-      handlePieceLock(piece);
+      // Piece cannot move down — start or check lock delay
+      if (lockStartTimeRef.current === null) {
+        // First time on ground — start lock delay timer
+        lockStartTimeRef.current = performance.now();
+        lockMovesRef.current = 0;
+      } else {
+        // Check if lock delay has expired
+        const elapsed = performance.now() - lockStartTimeRef.current;
+        if (elapsed >= LOCK_DELAY || lockMovesRef.current >= MAX_LOCK_MOVES) {
+          // Lock the piece
+          lockStartTimeRef.current = null;
+          lockMovesRef.current = 0;
+          handlePieceLock(piece);
+        }
+      }
     }
   }, [currentPiece, gameOver, isPaused, currentPieceRef, gameOverRef, isPausedRef, boardRef, setCurrentPiece, handlePieceLock]);
 

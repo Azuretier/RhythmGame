@@ -13,6 +13,7 @@ import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import Advancements from '../../components/rhythmia/Advancements';
 import { FaDiscord } from 'react-icons/fa';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
+import { useRouter } from '@/i18n/navigation';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -25,6 +26,7 @@ export default function RhythmiaPage() {
     const wsRef = useRef<WebSocket | null>(null);
 
     const t = useTranslations();
+    const router = useRouter();
 
     const isArenaLocked = unlockedCount < BATTLE_ARENA_REQUIRED_ADVANCEMENTS;
 
@@ -218,29 +220,6 @@ export default function RhythmiaPage() {
                         >
                             <span className={styles.cardBadge}>{t('vanilla.badge')}</span>
                             <h2 className={styles.cardTitle}>{t('vanilla.title')}</h2>
-                            <p className={styles.cardSubtitle}>{t('vanilla.subtitle')}</p>
-                            <p className={styles.cardDescription}>
-                                {t('vanilla.description')}
-                            </p>
-                            <div className={styles.cardFeatures}>
-                                <span className={styles.featureTag}>{t('vanilla.features.worlds')}</span>
-                                <span className={styles.featureTag}>{t('vanilla.features.rhythm')}</span>
-                                <span className={styles.featureTag}>{t('vanilla.features.solo')}</span>
-                            </div>
-                            <div className={styles.cardStats}>
-                                <div className={styles.stat}>
-                                    <div className={styles.statValue}>100</div>
-                                    <div className={styles.statLabel}>{t('vanilla.stats.bpmStart')}</div>
-                                </div>
-                                <div className={styles.stat}>
-                                    <div className={styles.statValue}>160</div>
-                                    <div className={styles.statLabel}>{t('vanilla.stats.bpmMax')}</div>
-                                </div>
-                                <div className={styles.stat}>
-                                    <div className={styles.statValue}>∞</div>
-                                    <div className={styles.statLabel}>{t('vanilla.stats.levels')}</div>
-                                </div>
-                            </div>
                             <button className={styles.playButton}>{t('lobby.play')}</button>
                         </motion.div>
 
@@ -295,6 +274,43 @@ export default function RhythmiaPage() {
                             <button className={`${styles.playButton} ${isArenaLocked ? styles.lockedButton : ''}`} disabled={isArenaLocked}>
                                 {isArenaLocked ? t('advancements.locked') : t('lobby.battle')}
                             </button>
+                        </motion.div>
+
+                        {/* 9-Player Arena */}
+                        <motion.div
+                            className={`${styles.serverCard} ${styles.multiplayer}`}
+                            onClick={() => router.push('/arena')}
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
+                            transition={{ duration: 0.6, delay: 0.6 }}
+                            whileHover={{ y: -8, transition: { duration: 0.25 } }}
+                        >
+                            <span className={`${styles.cardBadge} ${styles.new}`}>9P</span>
+                            <h2 className={styles.cardTitle}>{t('arena.title')}</h2>
+                            <p className={styles.cardSubtitle}>{t('arena.subtitle')}</p>
+                            <p className={styles.cardDescription}>
+                                9 players, 1 rhythm. Shared chaos, synced tempo, random gimmicks. Stay on beat or the tempo collapses.
+                            </p>
+                            <div className={styles.cardFeatures}>
+                                <span className={styles.featureTag}>9 Players</span>
+                                <span className={styles.featureTag}>Chaos</span>
+                                <span className={styles.featureTag}>Rhythm Sync</span>
+                            </div>
+                            <div className={styles.cardStats}>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>9</div>
+                                    <div className={styles.statLabel}>Players</div>
+                                </div>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>120+</div>
+                                    <div className={styles.statLabel}>BPM</div>
+                                </div>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>LIVE</div>
+                                    <div className={styles.statLabel}>Status</div>
+                                </div>
+                            </div>
+                            <button className={styles.playButton}>{t('arena.quickMatch')}</button>
                         </motion.div>
                     </div>
                 </main>

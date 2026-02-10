@@ -1,5 +1,5 @@
 import React from 'react';
-import { WORLDS, ColorTheme } from '../constants';
+import { WORLDS, TERRAINS_PER_WORLD, ColorTheme } from '../constants';
 import type { GameMode } from '../types';
 import styles from '../VanillaGame.module.css';
 

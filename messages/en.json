@@ -1,116 +1,307 @@
 {
-    "meta": {
-        "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-        "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-        "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-        "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
-        "ogType": "website",
-        "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+  "meta": {
+    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
+    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
+    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
+    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "ogType": "website",
+    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+  },
+  "lobby": {
+    "loading": "LOADING",
+    "selectServer": "SELECT SERVER",
+    "chooseMode": "Choose your mode",
+    "play": "PLAY",
+    "battle": "BATTLE",
+    "back": "← Back",
+    "online": "Online",
+    "onlineCount": "{count} online"
+  },
+  "vanilla": {
+    "badge": "OFFICIAL",
+    "title": "VANILLA",
+    "gameTitle": "RHYTHMIA — VANILLA",
+    "subtitle": "Original Experience",
+    "description": "Classic RHYTHMIA gameplay. Stack blocks to the rhythm and conquer worlds.",
+    "features": {
+      "worlds": "5 Worlds",
+      "rhythm": "Rhythm",
+      "solo": "Solo"
     },
-    "lobby": {
-        "loading": "LOADING",
-        "selectServer": "SELECT SERVER",
-        "chooseMode": "Choose your mode",
-        "play": "PLAY",
-        "battle": "BATTLE",
-        "back": "← Back",
-        "online": "Online",
-        "onlineCount": "{count} online"
-    },
-    "vanilla": {
-        "badge": "OFFICIAL",
-        "title": "VANILLA",
-        "gameTitle": "RHYTHMIA — VANILLA",
-        "subtitle": "Original Experience",
-        "description": "Classic RHYTHMIA gameplay. Stack blocks to the rhythm and conquer worlds.",
-        "features": {
-            "worlds": "5 Worlds",
-            "rhythm": "Rhythm",
-            "solo": "Solo"
-        },
-        "stats": {
-            "bpmStart": "BPM Start",
-            "bpmMax": "BPM Max",
-            "levels": "Levels"
-        }
-    },
-    "multiplayer": {
-        "badge": "1v1",
-        "title": "BATTLE ARENA",
-        "gameTitle": "BATTLE ARENA — 1v1",
-        "subtitle": "Multiplayer 1v1",
-        "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-        "features": {
-            "vs": "1v1",
-            "websocket": "WebSocket",
-            "ranked": "Ranked"
-        },
-        "stats": {
-            "mode": "Mode",
-            "battle": "Battle",
-            "status": "Status"
-        }
-    },
-    "advancements": {
-        "title": "ADVANCEMENTS",
-        "button": "{count}/{total} Advancements",
-        "unlocked": "ADVANCEMENT UNLOCKED",
-        "locked": "LOCKED",
-        "lockMessage": "{current}/{required} advancements to unlock",
-        "lines_10": { "name": "Line Beginner", "desc": "Clear 10 total lines" },
-        "lines_50": { "name": "Line Apprentice", "desc": "Clear 50 total lines" },
-        "lines_200": { "name": "Line Expert", "desc": "Clear 200 total lines" },
-        "lines_500": { "name": "Line Master", "desc": "Clear 500 total lines" },
-        "lines_1000": { "name": "Line Legend", "desc": "Clear 1,000 total lines" },
-        "best_lines_10": { "name": "Warm Up", "desc": "Clear 10 lines in one game" },
-        "best_lines_25": { "name": "Getting Started", "desc": "Clear 25 lines in one game" },
-        "best_lines_50": { "name": "Line Machine", "desc": "Clear 50 lines in one game" },
-        "best_lines_100": { "name": "Unstoppable", "desc": "Clear 100 lines in one game" },
-        "tspin_1": { "name": "First Twist", "desc": "Perform your first T-Spin" },
-        "tspin_10": { "name": "Spin Doctor", "desc": "Perform 10 T-Spins" },
-        "tspin_50": { "name": "T-Spin Expert", "desc": "Perform 50 T-Spins" },
-        "tspin_200": { "name": "T-Spin Legend", "desc": "Perform 200 T-Spins" },
-        "score_10k": { "name": "Score Rookie", "desc": "Accumulate 10,000 total score" },
-        "score_100k": { "name": "Score Hunter", "desc": "Accumulate 100,000 total score" },
-        "score_1m": { "name": "Score Master", "desc": "Accumulate 1,000,000 total score" },
-        "score_10m": { "name": "Score Legend", "desc": "Accumulate 10,000,000 total score" },
-        "best_score_5k": { "name": "Nice Game", "desc": "Score 5,000 in one game" },
-        "best_score_25k": { "name": "Great Game", "desc": "Score 25,000 in one game" },
-        "best_score_100k": { "name": "Amazing Game", "desc": "Score 100,000 in one game" },
-        "best_score_500k": { "name": "Legendary Game", "desc": "Score 500,000 in one game" },
-        "combo_3": { "name": "Combo Starter", "desc": "Reach a 3 combo" },
-        "combo_10": { "name": "Combo King", "desc": "Reach a 10 combo" },
-        "combo_20": { "name": "Combo God", "desc": "Reach a 20 combo" },
-        "games_1": { "name": "First Steps", "desc": "Play your first game" },
-        "games_10": { "name": "Getting Serious", "desc": "Play 10 games" },
-        "games_50": { "name": "Dedicated Player", "desc": "Play 50 games" },
-        "games_100": { "name": "Veteran", "desc": "Play 100 games" },
-        "worlds_5": { "name": "World Traveler", "desc": "Clear 5 worlds" },
-        "tetris_1": { "name": "Tetris!", "desc": "Clear 4 lines at once" },
-        "tetris_10": { "name": "Tetris Addict", "desc": "Clear 4 lines at once 10 times" },
-        "tetris_50": { "name": "Tetris Master", "desc": "Clear 4 lines at once 50 times" },
-        "perfect_beats_10": { "name": "Rhythm Rookie", "desc": "Hit 10 perfect beats in one game" },
-        "perfect_beats_50": { "name": "Rhythm Master", "desc": "Hit 50 perfect beats in one game" },
-        "hard_drops_100": { "name": "Speed Dropper", "desc": "Perform 100 hard drops" },
-        "hard_drops_1000": { "name": "Terminal Velocity", "desc": "Perform 1,000 hard drops" },
-        "pieces_100": { "name": "Block Builder", "desc": "Place 100 pieces" },
-        "pieces_1000": { "name": "Block Architect", "desc": "Place 1,000 pieces" },
-        "pieces_10000": { "name": "Block Legend", "desc": "Place 10,000 pieces" },
-        "mp_win_1": { "name": "First Victory", "desc": "Win your first multiplayer match" },
-        "mp_win_10": { "name": "Arena Fighter", "desc": "Win 10 multiplayer matches" },
-        "mp_win_50": { "name": "Arena Champion", "desc": "Win 50 multiplayer matches" },
-        "mp_streak_3": { "name": "Hot Streak", "desc": "Win 3 matches in a row" },
-        "mp_streak_5": { "name": "Domination", "desc": "Win 5 matches in a row" },
-        "mp_streak_10": { "name": "Unbreakable", "desc": "Win 10 matches in a row" },
-        "mp_games_10": { "name": "Arena Regular", "desc": "Play 10 multiplayer matches" },
-        "mp_games_50": { "name": "Arena Veteran", "desc": "Play 50 multiplayer matches" }
-    },
-    "footer": {
-        "copyright": "RHYTHMIA © 2025"
-    },
-    "localeSwitcher": {
-        "label": "Language",
-        "en": "English",
-        "ja": "日本語"
+    "stats": {
+      "bpmStart": "BPM Start",
+      "bpmMax": "BPM Max",
+      "levels": "Levels"
     }
+  },
+  "multiplayer": {
+    "badge": "1v1",
+    "title": "BATTLE ARENA",
+    "gameTitle": "BATTLE ARENA — 1v1",
+    "subtitle": "Multiplayer 1v1",
+    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Ranked"
+    },
+    "stats": {
+      "mode": "Mode",
+      "battle": "Battle",
+      "status": "Status"
+    }
+  },
+  "advancements": {
+    "title": "ADVANCEMENTS",
+    "button": "{count}/{total} Advancements",
+    "unlocked": "ADVANCEMENT UNLOCKED",
+    "locked": "LOCKED",
+    "lockMessage": "{current}/{required} advancements to unlock",
+    "lines_10": {
+      "name": "Line Beginner",
+      "desc": "Clear 10 total lines"
+    },
+    "lines_50": {
+      "name": "Line Apprentice",
+      "desc": "Clear 50 total lines"
+    },
+    "lines_200": {
+      "name": "Line Expert",
+      "desc": "Clear 200 total lines"
+    },
+    "lines_500": {
+      "name": "Line Master",
+      "desc": "Clear 500 total lines"
+    },
+    "lines_1000": {
+      "name": "Line Legend",
+      "desc": "Clear 1,000 total lines"
+    },
+    "best_lines_10": {
+      "name": "Warm Up",
+      "desc": "Clear 10 lines in one game"
+    },
+    "best_lines_25": {
+      "name": "Getting Started",
+      "desc": "Clear 25 lines in one game"
+    },
+    "best_lines_50": {
+      "name": "Line Machine",
+      "desc": "Clear 50 lines in one game"
+    },
+    "best_lines_100": {
+      "name": "Unstoppable",
+      "desc": "Clear 100 lines in one game"
+    },
+    "tspin_1": {
+      "name": "First Twist",
+      "desc": "Perform your first T-Spin"
+    },
+    "tspin_10": {
+      "name": "Spin Doctor",
+      "desc": "Perform 10 T-Spins"
+    },
+    "tspin_50": {
+      "name": "T-Spin Expert",
+      "desc": "Perform 50 T-Spins"
+    },
+    "tspin_200": {
+      "name": "T-Spin Legend",
+      "desc": "Perform 200 T-Spins"
+    },
+    "score_10k": {
+      "name": "Score Rookie",
+      "desc": "Accumulate 10,000 total score"
+    },
+    "score_100k": {
+      "name": "Score Hunter",
+      "desc": "Accumulate 100,000 total score"
+    },
+    "score_1m": {
+      "name": "Score Master",
+      "desc": "Accumulate 1,000,000 total score"
+    },
+    "score_10m": {
+      "name": "Score Legend",
+      "desc": "Accumulate 10,000,000 total score"
+    },
+    "best_score_5k": {
+      "name": "Nice Game",
+      "desc": "Score 5,000 in one game"
+    },
+    "best_score_25k": {
+      "name": "Great Game",
+      "desc": "Score 25,000 in one game"
+    },
+    "best_score_100k": {
+      "name": "Amazing Game",
+      "desc": "Score 100,000 in one game"
+    },
+    "best_score_500k": {
+      "name": "Legendary Game",
+      "desc": "Score 500,000 in one game"
+    },
+    "combo_3": {
+      "name": "Combo Starter",
+      "desc": "Reach a 3 combo"
+    },
+    "combo_10": {
+      "name": "Combo King",
+      "desc": "Reach a 10 combo"
+    },
+    "combo_20": {
+      "name": "Combo God",
+      "desc": "Reach a 20 combo"
+    },
+    "games_1": {
+      "name": "First Steps",
+      "desc": "Play your first game"
+    },
+    "games_10": {
+      "name": "Getting Serious",
+      "desc": "Play 10 games"
+    },
+    "games_50": {
+      "name": "Dedicated Player",
+      "desc": "Play 50 games"
+    },
+    "games_100": {
+      "name": "Veteran",
+      "desc": "Play 100 games"
+    },
+    "worlds_5": {
+      "name": "World Traveler",
+      "desc": "Clear 5 worlds"
+    },
+    "tetris_1": {
+      "name": "Tetris!",
+      "desc": "Clear 4 lines at once"
+    },
+    "tetris_10": {
+      "name": "Tetris Addict",
+      "desc": "Clear 4 lines at once 10 times"
+    },
+    "tetris_50": {
+      "name": "Tetris Master",
+      "desc": "Clear 4 lines at once 50 times"
+    },
+    "perfect_beats_10": {
+      "name": "Rhythm Rookie",
+      "desc": "Hit 10 perfect beats in one game"
+    },
+    "perfect_beats_50": {
+      "name": "Rhythm Master",
+      "desc": "Hit 50 perfect beats in one game"
+    },
+    "hard_drops_100": {
+      "name": "Speed Dropper",
+      "desc": "Perform 100 hard drops"
+    },
+    "hard_drops_1000": {
+      "name": "Terminal Velocity",
+      "desc": "Perform 1,000 hard drops"
+    },
+    "pieces_100": {
+      "name": "Block Builder",
+      "desc": "Place 100 pieces"
+    },
+    "pieces_1000": {
+      "name": "Block Architect",
+      "desc": "Place 1,000 pieces"
+    },
+    "pieces_10000": {
+      "name": "Block Legend",
+      "desc": "Place 10,000 pieces"
+    },
+    "mp_win_1": {
+      "name": "First Victory",
+      "desc": "Win your first multiplayer match"
+    },
+    "mp_win_10": {
+      "name": "Arena Fighter",
+      "desc": "Win 10 multiplayer matches"
+    },
+    "mp_win_50": {
+      "name": "Arena Champion",
+      "desc": "Win 50 multiplayer matches"
+    },
+    "mp_streak_3": {
+      "name": "Hot Streak",
+      "desc": "Win 3 matches in a row"
+    },
+    "mp_streak_5": {
+      "name": "Domination",
+      "desc": "Win 5 matches in a row"
+    },
+    "mp_streak_10": {
+      "name": "Unbreakable",
+      "desc": "Win 10 matches in a row"
+    },
+    "mp_games_10": {
+      "name": "Arena Regular",
+      "desc": "Play 10 multiplayer matches"
+    },
+    "mp_games_50": {
+      "name": "Arena Veteran",
+      "desc": "Play 50 multiplayer matches"
+    }
+  },
+  "arena": {
+    "title": "ARENA",
+    "subtitle": "9-PLAYER RHYTHM BATTLE",
+    "maxPlayers": "{count} Players Max",
+    "quickMatch": "QUICK MATCH",
+    "createArena": "Create Arena",
+    "joinByCode": "Join by Code",
+    "enterName": "Enter Your Name",
+    "namePlaceholder": "Player Name",
+    "enterCode": "Arena Code",
+    "join": "Join",
+    "next": "Next",
+    "back": "Back",
+    "online": "Online",
+    "connecting": "Connecting...",
+    "connectionError": "Connection Error",
+    "offline": "Offline",
+    "searching": "Searching for Players",
+    "queueInfo": "Waiting for enough players to form an arena...",
+    "playersInQueue": "{count} in queue",
+    "cancel": "Cancel",
+    "arenaCode": "Arena Code",
+    "copy": "Copy",
+    "reconnecting": "Reconnecting...",
+    "ready": "READY",
+    "notReady": "Not Ready",
+    "waiting": "Waiting...",
+    "cancelReady": "Cancel Ready",
+    "readyUp": "Ready!",
+    "startArena": "Start Arena",
+    "waitingForPlayers": "Waiting for players...",
+    "leave": "Leave",
+    "getReady": "GET READY",
+    "chaos": "CHAOS",
+    "sync": "Sync",
+    "eliminated": "eliminated",
+    "resultLastStanding": "LAST ONE STANDING",
+    "resultTempoCollapse": "TEMPO COLLAPSED",
+    "resultChaosOverload": "CHAOS OVERLOAD",
+    "victory": "VICTORY",
+    "wins": "WINS",
+    "noWinner": "NO WINNER",
+    "duration": "DURATION",
+    "peakBpm": "PEAK BPM",
+    "gimmicks": "GIMMICKS",
+    "peakChaos": "PEAK CHAOS",
+    "tempoCollapses": "COLLAPSES",
+    "lowestBpm": "LOW BPM",
+    "backToLobby": "Back to Lobby"
+  },
+  "footer": {
+    "copyright": "RHYTHMIA © 2025"
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ja": "日本語"
+  }
 }

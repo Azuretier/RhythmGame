@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Piece, Board, KeyState, GamePhase, GameMode, PreStageUpgrade, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
-    ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP,
+    ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
+    TERRAINS_PER_WORLD,
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
@@ -258,10 +259,19 @@ export function useGameState() {
         return remaining;
     }, []);
 
-    // Start a new terrain stage
+    // Start a new terrain stage — advances world when enough terrains are cleared
     const startNewStage = useCallback((newStageNumber: number) => {
         setStageNumber(newStageNumber);
         stageNumberRef.current = newStageNumber;
+
+        // Advance world based on completed stages (stage 1 = first terrain of world 0)
+        const newWorldIdx = Math.min(
+            Math.floor((newStageNumber - 1) / TERRAINS_PER_WORLD),
+            WORLDS.length - 1
+        );
+        setWorldIdx(newWorldIdx);
+        worldIdxRef.current = newWorldIdx;
+
         // New seed triggers VoxelWorldBackground regeneration
         setTerrainSeed(newStageNumber * 7919 + 42);
         setTerrainDestroyedCount(0);
@@ -769,7 +779,7 @@ export function useGameState() {
         setTerrainParticles([]);
         setShowCraftUI(false);
 
-        // Reset tower defense state (used in TD and Mix modes)
+        // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
         enemiesRef.current = [];
         setBullets([]);

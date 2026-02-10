@@ -1,0 +1,803 @@
+:root {
+  --arena-accent: #00ffcc;
+  --arena-accent-dim: rgba(0, 255, 204, 0.15);
+  --arena-danger: #ff3366;
+  --arena-warning: #ffaa00;
+}
+
+.container {
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  background: #000000;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Status Bar */
+.statusBar {
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.connectionStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: background 0.3s;
+}
+
+.connected { background: var(--arena-accent); box-shadow: 0 0 6px var(--arena-accent-dim); }
+.connecting { background: var(--arena-warning); animation: blink 1s infinite; }
+.error, .disconnected { background: rgba(255, 255, 255, 0.2); }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.tempoDisplay {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.1em;
+}
+
+.bpmValue {
+  font-size: 1rem;
+  font-weight: 300;
+  color: var(--arena-accent);
+  font-variant-numeric: tabular-nums;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* Error Banner */
+.errorBanner {
+  margin: 0 16px;
+  padding: 8px 14px;
+  background: rgba(255, 51, 102, 0.08);
+  border: 1px solid rgba(255, 51, 102, 0.2);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.errorClose {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Lobby */
+.lobby {
+  height: calc(100vh - 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 20px;
+}
+
+.title {
+  font-size: clamp(1.8rem, 7vw, 3rem);
+  font-weight: 200;
+  letter-spacing: 0.3em;
+  color: var(--arena-accent);
+  text-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.75rem;
+  letter-spacing: 0.25em;
+  font-weight: 400;
+}
+
+.playerCount {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.1em;
+}
+
+.lobbyActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.primaryBtn {
+  padding: 14px 32px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--arena-accent);
+  border: none;
+  border-radius: 8px;
+  color: #000000;
+  cursor: pointer;
+  letter-spacing: 0.2em;
+  transition: all 0.25s;
+  text-align: center;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  background: rgba(0, 255, 204, 0.85);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 255, 204, 0.2);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.secondaryBtn {
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.25s;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+.secondaryBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* Name Entry */
+.nameEntry {
+  height: calc(100vh - 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.sectionTitle {
+  font-size: 1.3rem;
+  font-weight: 300;
+  color: #ffffff;
+  letter-spacing: 0.2em;
+  margin-bottom: 8px;
+}
+
+.nameInput {
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: white;
+  width: 260px;
+  transition: border-color 0.3s;
+  letter-spacing: 0.05em;
+}
+
+.nameInput:focus {
+  outline: none;
+  border-color: var(--arena-accent);
+}
+
+/* Queue Screen */
+.queueScreen {
+  height: calc(100vh - 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.queuePulse {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--arena-accent);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.3; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.queueInfo {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+
+.queueCount {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: var(--arena-accent);
+  margin-top: 8px;
+}
+
+/* Waiting Room */
+.waitingRoom {
+  height: calc(100vh - 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.arenaCode {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  background: rgba(0, 255, 204, 0.03);
+  border: 1px solid rgba(0, 255, 204, 0.12);
+  border-radius: 8px;
+}
+
+.arenaCodeLabel {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+}
+
+.arenaCodeValue {
+  font-size: 1.4rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: var(--arena-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.copyBtn {
+  padding: 5px 10px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* 9-Player Grid */
+.playersGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 460px;
+}
+
+.playerSlot {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px 10px;
+  text-align: center;
+  transition: all 0.3s;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.playerSlot.ready {
+  border-color: var(--arena-accent);
+  background: rgba(0, 255, 204, 0.03);
+}
+
+.playerSlot.host {
+  border-color: rgba(0, 255, 204, 0.4);
+}
+
+.playerSlot.empty {
+  border-style: dashed;
+  opacity: 0.2;
+}
+
+.playerSlot.eliminated {
+  opacity: 0.3;
+  border-color: rgba(255, 51, 102, 0.3);
+}
+
+.playerSlotName {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.hostBadge {
+  font-size: 0.5rem;
+  padding: 1px 5px;
+  background: var(--arena-accent-dim);
+  color: var(--arena-accent);
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.playerSlotStatus {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 3px;
+}
+
+.waitingActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Countdown */
+.countdownScreen {
+  height: calc(100vh - 50px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.countdownNumber {
+  font-size: clamp(6rem, 25vw, 12rem);
+  font-weight: 200;
+  color: var(--arena-accent);
+  animation: countdownPop 0.5s ease-out;
+  text-shadow: 0 0 40px rgba(0, 255, 204, 0.3);
+}
+
+@keyframes countdownPop {
+  from { transform: scale(2); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.countdownLabel {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.3em;
+}
+
+/* ===== Playing Phase ===== */
+.arenaPlayfield {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 50px);
+  overflow: hidden;
+}
+
+/* HUD Bar */
+.hudBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.chaosBar {
+  flex: 1;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chaosLabel {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  display: flex;
+  justify-content: space-between;
+}
+
+.chaosTrack {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.chaosFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s, background 0.3s;
+}
+
+.chaosLow { background: var(--arena-accent); }
+.chaosMedium { background: var(--arena-warning); }
+.chaosHigh { background: var(--arena-danger); }
+
+.gimmickBanner {
+  padding: 4px 12px;
+  background: rgba(255, 170, 0, 0.1);
+  border: 1px solid rgba(255, 170, 0, 0.2);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  color: var(--arena-warning);
+  letter-spacing: 0.1em;
+  animation: gimmickFlash 0.5s ease-out;
+}
+
+@keyframes gimmickFlash {
+  from { opacity: 0; transform: scale(1.1); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.beatIndicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 255, 204, 0.3);
+  transition: all 0.1s;
+}
+
+.beatIndicator.onBeat {
+  background: var(--arena-accent);
+  box-shadow: 0 0 8px var(--arena-accent);
+  transform: scale(1.2);
+}
+
+.syncValue {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Main Arena Content */
+.arenaContent {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Player's own board area */
+.myBoardArea {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  position: relative;
+}
+
+.myBoard {
+  position: relative;
+  border: 1px solid rgba(0, 255, 204, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.boardRow {
+  display: flex;
+}
+
+.boardCell {
+  width: var(--cell-size, 24px);
+  height: var(--cell-size, 24px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-sizing: border-box;
+}
+
+.boardCell.filled {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Opponents sidebar */
+.opponentsSidebar {
+  flex: 3;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 8px;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.opponentMini {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.opponentMini.eliminated {
+  opacity: 0.25;
+  border-color: rgba(255, 51, 102, 0.2);
+}
+
+.opponentName {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.opponentMiniBoard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+}
+
+.miniRow {
+  display: flex;
+}
+
+.miniCell {
+  width: 4px;
+  height: 4px;
+}
+
+.miniCell.filled {
+  opacity: 0.8;
+}
+
+.opponentStats {
+  display: flex;
+  gap: 6px;
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.opponentSync {
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.opponentSyncFill {
+  height: 100%;
+  background: var(--arena-accent);
+  transition: width 0.3s;
+}
+
+/* Tempo Collapse Overlay */
+.tempoCollapseOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 0, 0, 0.05);
+  pointer-events: none;
+  animation: collapseFlash 1s ease-out forwards;
+  z-index: 50;
+}
+
+@keyframes collapseFlash {
+  0% { background: rgba(255, 0, 0, 0.15); }
+  100% { background: transparent; }
+}
+
+/* Elimination Banner */
+.eliminationBanner {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 20px;
+  background: rgba(255, 51, 102, 0.1);
+  border: 1px solid rgba(255, 51, 102, 0.2);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--arena-danger);
+  letter-spacing: 0.1em;
+  animation: fadeIn 0.3s ease-out;
+  z-index: 40;
+}
+
+/* Results Screen */
+.resultsScreen {
+  height: calc(100vh - 50px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 20px;
+}
+
+.resultReason {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.resultTitle {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 200;
+  color: var(--arena-accent);
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 30px rgba(0, 255, 204, 0.2);
+}
+
+.resultTitle.defeat {
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: none;
+}
+
+.rankingsTable {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rankingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.rankingRow.isMe {
+  border-color: var(--arena-accent);
+  background: rgba(0, 255, 204, 0.03);
+}
+
+.rankingRow.first {
+  border-color: rgba(255, 215, 0, 0.3);
+  background: rgba(255, 215, 0, 0.03);
+}
+
+.rankingPlace {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 24px;
+  text-align: center;
+}
+
+.rankingName {
+  flex: 1;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.rankingStat {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.65rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statValue {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: var(--arena-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+}
+
+.resultActions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .opponentsSidebar {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .arenaContent {
+    flex-direction: column;
+  }
+
+  .myBoardArea {
+    flex: 1;
+  }
+
+  .opponentsSidebar {
+    flex: none;
+    max-height: 30vh;
+  }
+
+  .miniCell {
+    width: 3px;
+    height: 3px;
+  }
+
+  .playersGrid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

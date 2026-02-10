@@ -77,6 +77,7 @@ export type PreStageUpgrade = 'hp' | 'mana';
 
 // ===== Item System =====
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
 export type ItemType = {
     id: string;

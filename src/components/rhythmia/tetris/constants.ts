@@ -136,10 +136,40 @@ export const DEFAULT_ARR = 33;   // Auto Repeat Rate - delay between each auto-r
 // Set to 0 for instant movement (common in competitive play)
 export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 
+
+// ===== Lock Delay Settings =====
+export const LOCK_DELAY = 500;     // Grace period (ms) after piece lands before locking
+export const MAX_LOCK_MOVES = 15;  // Max moves/rotations on ground before forced lock
+
 // ===== Terrain Settings =====
+// Number of terrains (stages) to clear before advancing to the next world
+export const TERRAINS_PER_WORLD = 4;
 // Voxel blocks destroyed per cleared line (multiplied by beat multiplier)
 export const TERRAIN_DAMAGE_PER_LINE = 4;
+            if (pieceIndex >= 0 && WORLDS[worldIdx]) {
+                return WORLDS[worldIdx].colors[pieceIndex] || COLORS[pieceType];
+            }
+            return COLORS[pieceType];
+    }
+};
+export const MIX_BULLET_MANA_COST = 15;          // Mana cost per bullet fired
+export const MIX_PRE_STAGE_HP_BONUS = 25;        // HP added per pre-stage upgrade
+export const MIX_PRE_STAGE_MANA_BONUS = 25;      // Mana added per pre-stage upgrade
+export const MIX_DIFFICULTY_SCALE_PER_CYCLE = 0.15; // 15% harder per cycle (enemy speed/spawn rate)
 
+// ===== Helper Constants =====
+export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
+
+// ===== Piece Type Array =====
+export const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
+// ===== Color Theme Helper =====
+// Get color for a piece type based on theme and world
+export const getThemedColor = (
+    pieceType: string,
+    theme: ColorTheme,
+    worldIdx: number
+): string => {
 // ===== Item Definitions =====
 import type { ItemType, WeaponCard } from './types';
 
@@ -285,36 +315,3 @@ export const MIX_INITIAL_MAX_HP = 100;            // Starting max HP
 export const MIX_INITIAL_MAX_MANA = 100;          // Starting max mana
 export const MIX_MANA_REGEN_PER_BEAT = 3;        // Mana regenerated each beat
 export const MIX_MANA_PER_LINE_CLEAR = 10;       // Mana gained per line clear
-export const MIX_BULLET_MANA_COST = 15;          // Mana cost per bullet fired
-export const MIX_PRE_STAGE_HP_BONUS = 25;        // HP added per pre-stage upgrade
-export const MIX_PRE_STAGE_MANA_BONUS = 25;      // Mana added per pre-stage upgrade
-export const MIX_DIFFICULTY_SCALE_PER_CYCLE = 0.15; // 15% harder per cycle (enemy speed/spawn rate)
-
-// ===== Helper Constants =====
-export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
-
-// ===== Piece Type Array =====
-export const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-
-// ===== Color Theme Helper =====
-// Get color for a piece type based on theme and world
-export const getThemedColor = (
-    pieceType: string,
-    theme: ColorTheme,
-    worldIdx: number
-): string => {
-    switch (theme) {
-        case 'standard':
-            return STANDARD_COLORS[pieceType] || COLORS[pieceType];
-        case 'monochrome':
-            return MONOCHROME_COLORS[pieceType] || '#FFFFFF';
-        case 'stage':
-        default:
-            // Use world colors based on piece index
-            const pieceIndex = PIECE_TYPES.indexOf(pieceType);
-            if (pieceIndex >= 0 && WORLDS[worldIdx]) {
-                return WORLDS[worldIdx].colors[pieceIndex] || COLORS[pieceType];
-            }
-            return COLORS[pieceType];
-    }
-};
