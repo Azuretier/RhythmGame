@@ -4,6 +4,7 @@ export { NextPiece, HoldPiece } from './PiecePreview';
 export {
     TitleScreen,
     WorldDisplay,
+    WorldProgressDisplay,
     ScoreDisplay,
     ComboDisplay,
     TerrainProgress,
