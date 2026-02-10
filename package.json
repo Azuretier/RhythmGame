@@ -8,12 +8,7 @@
     "postbuild": "next-sitemap",
     "start": "ts-node --project tsconfig.server.json server.ts",
     "lint": "next lint",
-    "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts",
-    "bot:dev": "cd apps/discord-bot && npm run dev",
-    "bot:build": "cd apps/discord-bot && npm run build",
-    "bot:start": "cd apps/discord-bot && npm run start",
-    "bot:deploy-commands": "cd apps/discord-bot && npm run deploy-commands",
-    "bot:install": "cd apps/discord-bot && npm install"
+    "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts"
   },
   "dependencies": {
     "@next/third-parties": "^16.1.6",
