@@ -4,7 +4,8 @@ import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import Advancements from '@/components/rhythmia/Advancements';
-import type { Piece, Board as BoardType } from '../types';
+import { KeyBindSettings } from './KeyBindSettings';
+import type { Piece, Board as BoardType, KeyBindings } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface BoardProps {
@@ -23,6 +24,8 @@ interface BoardProps {
     combo?: number;
     beatPhase?: number;
     boardElRef?: React.Ref<HTMLDivElement>;
+    keyBindings?: KeyBindings;
+    onKeyBindingsChange?: (bindings: KeyBindings) => void;
 }
 
 /**
@@ -45,9 +48,12 @@ export function Board({
     combo = 0,
     beatPhase = 0,
     boardElRef,
+    keyBindings,
+    onKeyBindingsChange,
 }: BoardProps) {
     const isFever = combo >= 10;
     const [showAdvancements, setShowAdvancements] = useState(false);
+    const [showKeyBinds, setShowKeyBinds] = useState(false);
     const [unlockedCount, setUnlockedCount] = useState(0);
 
     // Load advancement count when pause menu opens
@@ -57,6 +63,7 @@ export function Board({
             setUnlockedCount(state.unlockedIds.length);
         } else {
             setShowAdvancements(false);
+            setShowKeyBinds(false);
         }
     }, [isPaused, gameOver]);
 
@@ -165,10 +172,16 @@ export function Board({
                 </div>
             )}
 
-            {/* Overlay for Paused — main menu or advancements sub-panel */}
+            {/* Overlay for Paused — main menu, advancements, or key bindings sub-panel */}
             {isPaused && !gameOver && (
                 <div className={styles.gameover} style={{ display: 'flex' }}>
-                    {!showAdvancements ? (
+                    {showKeyBinds && keyBindings && onKeyBindingsChange ? (
+                        <KeyBindSettings
+                            bindings={keyBindings}
+                            onUpdate={onKeyBindingsChange}
+                            onBack={() => setShowKeyBinds(false)}
+                        />
+                    ) : !showAdvancements ? (
                         <>
                             <h2>PAUSED</h2>
                             <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
@@ -188,6 +201,15 @@ export function Board({
                                         {unlockedCount}/{totalCount}
                                     </span>
                                 </button>
+                                {keyBindings && onKeyBindingsChange && (
+                                    <button
+                                        className={styles.pauseMenuBtn}
+                                        onClick={() => setShowKeyBinds(true)}
+                                    >
+                                        <span className={styles.pauseMenuBtnIcon}>⌨</span>
+                                        Key Bindings
+                                    </button>
+                                )}
                             </div>
 
                             {/* Theme selector */}

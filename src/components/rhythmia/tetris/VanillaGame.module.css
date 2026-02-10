@@ -2404,3 +2404,1274 @@
     gap: 16px;
   }
 }
+
+/* ===================================================================
+   INVENTORY UI — Minecraft Dungeons Style
+   =================================================================== */
+.inventoryOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(10, 5, 20, 0.92);
+  backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: invFadeIn 0.25s ease;
+}
+
+@keyframes invFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.inventoryPanel {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  gap: 20px;
+  max-width: 960px;
+  width: 95vw;
+  max-height: 80vh;
+  padding: 24px;
+}
+
+/* --- Character Section (Left) --- */
+.invCharacterSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.invLevelBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 16px;
+  background: rgba(120, 60, 200, 0.15);
+  border: 1px solid rgba(120, 60, 200, 0.3);
+  border-radius: 20px;
+}
+
+.invLevelIcon {
+  color: rgba(160, 100, 255, 0.8);
+  font-size: 0.7rem;
+}
+
+.invLevelLabel {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.2em;
+  font-weight: 600;
+}
+
+.invLevelValue {
+  font-size: 1.4rem;
+  font-weight: 200;
+  color: white;
+}
+
+.invCharacterArea {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+}
+
+.invEquipSlots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.invEquipRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.invCharacterIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+}
+
+.invEquipSlot {
+  width: 52px;
+  height: 52px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.invEquipSlot:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.invEquipSmall {
+  width: 44px;
+  height: 44px;
+}
+
+.invEquipFilled {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.invEquipEmpty {
+  color: rgba(255, 255, 255, 0.12);
+  font-size: 1.2rem;
+  font-weight: 200;
+}
+
+.invEquipCount {
+  font-size: 0.45rem;
+  color: rgba(255, 215, 0, 0.7);
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+}
+
+.invPowerDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+.invPowerIcon {
+  color: rgba(200, 200, 200, 0.5);
+  font-size: 0.7rem;
+}
+
+.invPowerLabel {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.2em;
+  font-weight: 600;
+}
+
+.invPowerValue {
+  font-size: 1.1rem;
+  font-weight: 300;
+  color: white;
+}
+
+.invArtifactRow {
+  display: flex;
+  gap: 8px;
+}
+
+/* --- Grid Section (Center) --- */
+.invGridSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invCategoryTabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.invTabLabel {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.1em;
+}
+
+.invTabIcons {
+  display: flex;
+  gap: 4px;
+}
+
+.invTabBtn {
+  width: 32px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invTabBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.invTabActive {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.invGrid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  overflow-y: auto;
+  max-height: 55vh;
+  padding: 4px;
+}
+
+.invGridItem {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  padding: 4px;
+}
+
+.invGridItem:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(1.02);
+}
+
+.invGridItemSelected {
+  background: rgba(100, 200, 255, 0.08);
+  border-color: rgba(100, 200, 255, 0.4);
+}
+
+.invGridItemRarityBar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 3px;
+  height: 14px;
+  border-radius: 0 2px 0 2px;
+  opacity: 0.7;
+}
+
+.invGridItemIcon {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invGridItemCount {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.invGridItemCountIcon {
+  font-size: 0.4rem;
+  color: rgba(255, 215, 0, 0.5);
+}
+
+.invGridItemEmpty {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invGridEmptyX {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.06);
+}
+
+/* --- Detail Section (Right) --- */
+.invDetailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.invDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invDetailLevel {
+  font-size: 1.2rem;
+  font-weight: 200;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.invDetailRarity {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.invDetailName {
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: white;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.invDetailIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+
+.invDetailStats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.invDetailStat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.invDetailStatIcon {
+  color: rgba(100, 200, 100, 0.8);
+  font-size: 0.65rem;
+}
+
+.invDetailDesc {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.invDetailBars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invDetailBarRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invDetailBarLabel {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.1em;
+  width: 50px;
+}
+
+.invDetailBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.invDetailBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.invDetailEnchants {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.invDetailEnchantsTitle {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.15em;
+  margin: 0 0 8px 0;
+}
+
+.invDetailEnchantSlots {
+  display: flex;
+  gap: 10px;
+}
+
+.invDetailEnchantSlot {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(45deg);
+}
+
+.invDetailEnchantIcon {
+  transform: rotate(-45deg);
+  color: #FFD700;
+  font-size: 1rem;
+}
+
+.invDetailEnchantEmpty {
+  transform: rotate(-45deg);
+  color: rgba(255, 255, 255, 0.1);
+  font-size: 1rem;
+}
+
+.invDetailEmpty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.invDetailEmptyText {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.1em;
+}
+
+.invDetailEmptySubtext {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.12);
+}
+
+/* --- Bottom Action Bar --- */
+.invBottomBar {
+  display: flex;
+  gap: 32px;
+  padding: 16px 24px;
+  margin-top: 12px;
+}
+
+.invBottomAction {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.invBottomKey {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 3px 10px;
+  letter-spacing: 0.05em;
+}
+
+.invBottomLabel {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.05em;
+}
+
+/* Inventory responsive */
+@media screen and (max-width: 768px) {
+  .inventoryPanel {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    max-height: 90vh;
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .invCharacterSection {
+    flex-direction: row;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .invGrid {
+    grid-template-columns: repeat(4, 1fr);
+    max-height: 40vh;
+  }
+
+  .invBottomBar {
+    gap: 16px;
+    padding: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* ===================================================================
+   SHOP UI — League of Legends Style
+   =================================================================== */
+.shopOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 8, 16, 0.95);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: shopFadeIn 0.2s ease;
+}
+
+@keyframes shopFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.shopPanel {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 0;
+  max-width: 1000px;
+  width: 95vw;
+  max-height: 85vh;
+  background: rgba(10, 18, 30, 0.95);
+  border: 1px solid rgba(0, 180, 200, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.shopClose {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.shopClose:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* --- Shop Left (Tabs + Items) --- */
+.shopLeft {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(0, 180, 200, 0.1);
+  overflow: hidden;
+}
+
+.shopTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid rgba(0, 180, 200, 0.1);
+}
+
+.shopTab {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.shopTab:hover {
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 180, 200, 0.03);
+}
+
+.shopTabActive {
+  color: #C89B3C;
+  border-bottom-color: #C89B3C;
+}
+
+.shopSearchWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.shopSearchIcon {
+  font-size: 0.75rem;
+  opacity: 0.4;
+}
+
+.shopSearch {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+  outline: none;
+  letter-spacing: 0.05em;
+}
+
+.shopSearch::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.shopSectionTitle {
+  padding: 8px 14px;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.2em;
+}
+
+.shopItemGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 8px 12px;
+  overflow-y: auto;
+  max-height: 40vh;
+}
+
+.shopItemCard {
+  background: rgba(20, 30, 50, 0.7);
+  border: 1px solid rgba(0, 180, 200, 0.1);
+  border-radius: 4px;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.shopItemCard:hover {
+  border-color: rgba(0, 180, 200, 0.4);
+  background: rgba(0, 180, 200, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 180, 200, 0.1);
+}
+
+.shopItemSelected {
+  border-color: rgba(0, 220, 255, 0.6);
+  background: rgba(0, 220, 255, 0.08);
+  box-shadow: 0 0 20px rgba(0, 220, 255, 0.15), inset 0 0 16px rgba(0, 220, 255, 0.05);
+}
+
+.shopItemOwned {
+  opacity: 0.5;
+}
+
+.shopItemName {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.shopItemIconWrap {
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.shopItemPrice {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  color: #C89B3C;
+  font-weight: 500;
+}
+
+.shopGoldIcon {
+  color: #C89B3C;
+  font-size: 0.6rem;
+}
+
+.shopItemTag {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 8px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shopItemInfo {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.shopItemInfoIcon {
+  font-size: 0.65rem;
+  color: rgba(0, 180, 200, 0.4);
+}
+
+.shopItemRating {
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* Commonly Built */
+.shopCommonlyBuilt {
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.shopCommonlyBuiltLabel {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.15em;
+  margin-bottom: 6px;
+}
+
+.shopCommonlyBuiltItems {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.shopCommonItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.shopCommonItem:hover {
+  border-color: rgba(0, 180, 200, 0.3);
+}
+
+.shopCommonItemActive {
+  border-color: rgba(0, 220, 255, 0.5);
+  background: rgba(0, 220, 255, 0.06);
+}
+
+.shopCommonPrice {
+  font-size: 0.5rem;
+  color: #C89B3C;
+  font-weight: 600;
+}
+
+/* Bottom bar */
+.shopBottomBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.shopSellBtn,
+.shopUndoBtn {
+  padding: 6px 16px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.shopSellBtn {
+  background: transparent;
+  border: 1px solid rgba(200, 60, 60, 0.3);
+  color: rgba(200, 60, 60, 0.7);
+}
+
+.shopSellBtn:hover {
+  background: rgba(200, 60, 60, 0.1);
+}
+
+.shopUndoBtn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.shopUndoBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.shopGoldDisplay {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.shopGoldAmount {
+  color: #C89B3C;
+  font-weight: 600;
+}
+
+/* --- Shop Right (Detail Panel) --- */
+.shopRight {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  overflow-y: auto;
+  gap: 10px;
+  background: rgba(0, 10, 20, 0.5);
+}
+
+.shopBuildsIntoLabel {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+}
+
+.shopBuildsIntoGrid {
+  display: flex;
+  gap: 4px;
+}
+
+.shopBuildSlot {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+}
+
+/* Build tree */
+.shopBuildTree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.shopBuildTreeMain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.shopBuildTreeIcon {
+  width: 64px;
+  height: 64px;
+  background: rgba(0, 180, 200, 0.06);
+  border: 2px solid rgba(0, 180, 200, 0.3);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shopBuildTreePrice {
+  font-size: 0.65rem;
+  color: #C89B3C;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.shopBuildTreeLine {
+  width: 2px;
+  height: 20px;
+  background: rgba(0, 180, 200, 0.2);
+}
+
+.shopBuildTreeComponents {
+  display: flex;
+  gap: 12px;
+}
+
+.shopBuildTreeComp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.shopBuildTreeCompIcon {
+  width: 44px;
+  height: 44px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shopBuildTreeCompPrice {
+  font-size: 0.55rem;
+  color: #C89B3C;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Purchase button */
+.shopPurchaseBtn {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  background: rgba(50, 50, 50, 0.6);
+  border: 1px solid rgba(100, 100, 100, 0.3);
+  border-radius: 3px;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: not-allowed;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.shopPurchaseBtnActive {
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(0, 180, 160, 0.4), rgba(0, 120, 100, 0.6));
+  border-color: rgba(0, 200, 180, 0.5);
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 12px rgba(0, 200, 180, 0.15);
+}
+
+.shopPurchaseBtnActive:hover {
+  background: linear-gradient(180deg, rgba(0, 200, 180, 0.5), rgba(0, 140, 120, 0.7));
+  box-shadow: 0 0 20px rgba(0, 200, 180, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Detail panel */
+.shopDetailPanel {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shopDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shopDetailIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.shopDetailInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shopDetailName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 0.05em;
+}
+
+.shopDetailPrice {
+  font-size: 0.7rem;
+  color: #C89B3C;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shopDetailStats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shopDetailStatRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+}
+
+.shopDetailStatIcon {
+  color: rgba(100, 200, 100, 0.7);
+  width: 12px;
+  text-align: center;
+}
+
+.shopDetailStatValue {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.shopDetailStatLabel {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.shopDetailPassive {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.shopDetailPassiveName {
+  font-size: 0.7rem;
+  color: rgba(200, 155, 60, 0.8);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.shopDetailPassiveDesc {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.shopEmptyDetail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 0.8rem;
+}
+
+.shopEmptyDetailSub {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.1);
+}
+
+/* Shop responsive */
+@media screen and (max-width: 768px) {
+  .shopPanel {
+    grid-template-columns: 1fr;
+    max-height: 90vh;
+  }
+
+  .shopRight {
+    border-top: 1px solid rgba(0, 180, 200, 0.1);
+    max-height: 40vh;
+  }
+
+  .shopItemGrid {
+    grid-template-columns: repeat(2, 1fr);
+    max-height: 30vh;
+  }
+}
+
+/* ===================================================================
+   KEY BIND SETTINGS — Pause Menu Panel
+   =================================================================== */
+.keyBindPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 280px;
+}
+
+.keyBindTitle {
+  font-size: 1.4rem;
+  font-weight: 200;
+  color: white;
+  letter-spacing: 0.3em;
+  margin: 0;
+}
+
+.keyBindSubtitle {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+  margin-top: -10px;
+}
+
+.keyBindList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.keyBindRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+}
+
+.keyBindLabelWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.keyBindLabel {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+.keyBindLabelJa {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.keyBindKey {
+  padding: 6px 16px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.1em;
+  min-width: 60px;
+  text-align: center;
+}
+
+.keyBindKey:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.keyBindKeyListening {
+  background: rgba(0, 180, 200, 0.15);
+  border-color: rgba(0, 180, 200, 0.5);
+  color: rgba(0, 220, 255, 0.9);
+  animation: keyBindPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes keyBindPulse {
+  0% { box-shadow: 0 0 0 rgba(0, 180, 200, 0); }
+  100% { box-shadow: 0 0 12px rgba(0, 180, 200, 0.3); }
+}
+
+.keyBindActions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.keyBindResetBtn,
+.keyBindBackBtn {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.keyBindResetBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.keyBindResetBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.keyBindBackBtn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  color: #000;
+}
+
+.keyBindBackBtn:hover {
+  background: rgba(255, 255, 255, 0.75);
+}

@@ -87,6 +87,11 @@ export function useGameState() {
     const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
     const [showCraftUI, setShowCraftUI] = useState(false);
 
+    // ===== Inventory & Shop UI =====
+    const [showInventory, setShowInventory] = useState(false);
+    const [showShop, setShowShop] = useState(false);
+    const [gold, setGold] = useState(0);
+
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
     const [bullets, setBullets] = useState<Bullet[]>([]);
@@ -203,9 +208,11 @@ export function useGameState() {
         });
     }, []);
 
-    // Update score with pop animation
+    // Update score with pop animation — also grants gold
     const updateScore = useCallback((newScore: number) => {
+        const earned = Math.max(0, newScore - scoreRef.current);
         setScore(newScore);
+        setGold(prev => prev + earned);
         setScorePop(true);
         setTimeout(() => setScorePop(false), 100);
     }, []);
@@ -641,6 +648,66 @@ export function useGameState() {
         }
     }, [showCraftUI]);
 
+    // Toggle inventory UI
+    const toggleInventory = useCallback(() => {
+        setShowInventory(prev => {
+            const next = !prev;
+            if (next) {
+                // Close other overlays
+                setShowShop(false);
+                setShowCraftUI(false);
+                setIsPaused(true);
+            } else {
+                setIsPaused(false);
+                setGamePhase('PLAYING');
+            }
+            return next;
+        });
+    }, []);
+
+    // Toggle shop UI
+    const toggleShop = useCallback(() => {
+        setShowShop(prev => {
+            const next = !prev;
+            if (next) {
+                // Close other overlays
+                setShowInventory(false);
+                setShowCraftUI(false);
+                setIsPaused(true);
+            } else {
+                setIsPaused(false);
+                setGamePhase('PLAYING');
+            }
+            return next;
+        });
+    }, []);
+
+    // Purchase item from shop using gold
+    const purchaseItem = useCallback((itemId: string, price: number): boolean => {
+        if (gold < price) return false;
+        setGold(prev => prev - price);
+
+        // Check if it's a weapon card
+        const weaponCard = WEAPON_CARD_MAP[itemId];
+        if (weaponCard) {
+            setCraftedCards(prev => [...prev, { cardId: itemId, craftedAt: Date.now() }]);
+            return true;
+        }
+
+        // It's a material — add to inventory
+        setInventory(prev => {
+            const updated = [...prev];
+            const existing = updated.find(i => i.itemId === itemId);
+            if (existing) {
+                existing.count += 1;
+            } else {
+                updated.push({ itemId, count: 1 });
+            }
+            return updated;
+        });
+        return true;
+    }, [gold, inventory]);
+
     // Set phase to PLAYING (after world creation animation)
     const enterPlayPhase = useCallback(() => {
         setGamePhase('PLAYING');
@@ -692,6 +759,9 @@ export function useGameState() {
         setFloatingItems([]);
         setTerrainParticles([]);
         setShowCraftUI(false);
+        setShowInventory(false);
+        setShowShop(false);
+        setGold(0);
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -774,6 +844,10 @@ export function useGameState() {
         craftedCards,
         showCraftUI,
         damageMultiplier,
+        // Inventory & Shop
+        showInventory,
+        showShop,
+        gold,
         // Game mode
         gameMode,
 
@@ -852,6 +926,9 @@ export function useGameState() {
         craftCard,
         canCraftCard,
         toggleCraftUI,
+        toggleInventory,
+        toggleShop,
+        purchaseItem,
         enterPlayPhase,
         triggerCollapse,
         triggerTransition,

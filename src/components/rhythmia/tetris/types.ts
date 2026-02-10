@@ -156,6 +156,30 @@ export type Bullet = {
     alive: boolean;
 };
 
+// ===== Shop System =====
+export type ShopItem = {
+    id: string;
+    name: string;
+    nameJa: string;
+    category: 'material' | 'weapon';
+    price: number;
+    icon: string;
+    color: string;
+    glowColor: string;
+    rarity: ItemRarity;
+    description: string;
+    descriptionJa: string;
+    stats?: { label: string; value: string }[];
+    buildsFrom?: { itemId: string; price: number }[];
+};
+
+// ===== Key Bindings =====
+export type KeyBindings = {
+    inventory: string;
+    shop: string;
+    forge: string;
+};
+
 // ===== Terrain Particle =====
 export type TerrainParticle = {
     id: number;
