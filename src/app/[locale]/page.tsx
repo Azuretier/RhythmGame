@@ -13,6 +13,11 @@ import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import Advancements from '../../components/rhythmia/Advancements';
 import { FaDiscord } from 'react-icons/fa';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
+import dynamic from 'next/dynamic';
+
+const AnimeCharacter3D = dynamic(() => import('../../components/character/AnimeCharacter3D'), {
+    ssr: false,
+});
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -204,6 +209,16 @@ export default function RhythmiaPage() {
                     >
                         <h1>{t('lobby.selectServer')}</h1>
                         <p>{t('lobby.chooseMode')}</p>
+                    </motion.div>
+
+                    {/* Mascot character */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: isLoading ? 0 : 1 }}
+                        transition={{ duration: 0.8, delay: 0.25 }}
+                        style={{ marginBottom: '24px' }}
+                    >
+                        <AnimeCharacter3D size={280} />
                     </motion.div>
 
                     <div className={styles.serverGrid}>
