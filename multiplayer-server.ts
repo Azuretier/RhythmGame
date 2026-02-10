@@ -2,12 +2,22 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
+import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import type {
   ClientMessage,
   ServerMessage,
   ErrorMessage,
   RelayPayload,
 } from './src/types/multiplayer';
+import type {
+  ArenaClientMessage,
+  ArenaAction,
+  ArenaBoardPayload,
+} from './src/types/arena';
+import {
+  ARENA_MAX_PLAYERS,
+  ARENA_QUEUE_TIMEOUT,
+} from './src/types/arena';
 
 // Environment configuration
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -51,6 +61,30 @@ const rankedTimers: Map<string, NodeJS.Timeout> = new Map();
 const playerConnections = new Map<string, PlayerConnection>();
 const reconnectTokens = new Map<string, { playerId: string; expires: number }>();
 const disconnectTimers = new Map<string, NodeJS.Timeout>();
+
+// ===== Arena System =====
+
+const arenaManager = new ArenaRoomManager({
+  onBroadcast: (roomCode, message, excludePlayerId) => {
+    broadcastToArena(roomCode, message as ServerMessage, excludePlayerId);
+  },
+  onSendToPlayer: (playerId, message) => {
+    sendToPlayer(playerId, message as ServerMessage);
+  },
+  onSessionEnd: (roomCode) => {
+    console.log(`[ARENA] Session ended in room ${roomCode}`);
+  },
+});
+
+// Arena matchmaking queue
+interface ArenaQueuedPlayer {
+  playerId: string;
+  playerName: string;
+  queuedAt: number;
+}
+
+const arenaQueue: Map<string, ArenaQueuedPlayer> = new Map();
+const arenaQueueTimers: Map<string, NodeJS.Timeout> = new Map();
 
 // ===== Utility Functions =====
 
@@ -122,6 +156,128 @@ function issueReconnectToken(playerId: string): string {
     expires: Date.now() + RECONNECT_GRACE_PERIOD,
   });
   return token;
+}
+
+// ===== Arena Helpers =====
+
+function broadcastToArena(roomCode: string, message: ServerMessage, excludePlayerId?: string): void {
+  const playerIds = arenaManager.getPlayerIdsInRoom(roomCode);
+  for (const pid of playerIds) {
+    if (pid !== excludePlayerId) {
+      sendToPlayer(pid, message);
+    }
+  }
+}
+
+function sendArenaState(roomCode: string): void {
+  const arenaState = arenaManager.getRoomState(roomCode);
+  if (arenaState) {
+    broadcastToArena(roomCode, { type: 'arena_state', arenaState } as unknown as ServerMessage);
+  }
+}
+
+function startArenaCountdown(roomCode: string, gameSeed: number): void {
+  const playerIds = arenaManager.getPlayerIdsInRoom(roomCode);
+  let count = COUNTDOWN_SECONDS;
+
+  const tick = () => {
+    if (count > 0) {
+      broadcastToArena(roomCode, { type: 'arena_countdown', count } as unknown as ServerMessage);
+      count--;
+      setTimeout(tick, 1000);
+    } else {
+      arenaManager.beginPlaying(roomCode);
+      const arenaState = arenaManager.getRoomState(roomCode);
+      broadcastToArena(roomCode, {
+        type: 'arena_started',
+        gameSeed,
+        bpm: arenaState?.bpm || 120,
+        serverTime: Date.now(),
+        players: playerIds,
+      } as unknown as ServerMessage);
+      sendArenaState(roomCode);
+      console.log(`[ARENA] Game started in room ${roomCode} with ${playerIds.length} players`);
+    }
+  };
+
+  tick();
+}
+
+function tryFormArenaMatch(): boolean {
+  // Need at least 3 players to form an arena
+  if (arenaQueue.size < 3) return false;
+
+  // Grab up to 9 players from the queue
+  const players: ArenaQueuedPlayer[] = [];
+  for (const [, queued] of arenaQueue) {
+    players.push(queued);
+    if (players.length >= ARENA_MAX_PLAYERS) break;
+  }
+
+  if (players.length < 3) return false;
+
+  // Create the arena room with the first player as host
+  const host = players[0];
+  const { roomCode } = arenaManager.createRoom(host.playerId, host.playerName);
+
+  // Remove host from queue
+  arenaQueue.delete(host.playerId);
+  clearArenaTimer(host.playerId);
+
+  const hostToken = issueReconnectToken(host.playerId);
+  sendToPlayer(host.playerId, {
+    type: 'arena_created',
+    arenaCode: roomCode,
+    playerId: host.playerId,
+    reconnectToken: hostToken,
+  } as unknown as ServerMessage);
+
+  // Join remaining players
+  for (let i = 1; i < players.length; i++) {
+    const p = players[i];
+    arenaQueue.delete(p.playerId);
+    clearArenaTimer(p.playerId);
+
+    const joinResult = arenaManager.joinRoom(roomCode, p.playerId, p.playerName);
+    if (joinResult.success) {
+      const token = issueReconnectToken(p.playerId);
+      const arenaState = arenaManager.getRoomState(roomCode);
+      sendToPlayer(p.playerId, {
+        type: 'arena_joined',
+        arenaCode: roomCode,
+        playerId: p.playerId,
+        arenaState,
+        reconnectToken: token,
+      } as unknown as ServerMessage);
+    }
+  }
+
+  // Auto-ready all and start after brief delay
+  setTimeout(() => {
+    for (const p of players) {
+      arenaManager.setPlayerReady(p.playerId, true);
+    }
+    const startResult = arenaManager.startGame(host.playerId);
+    if (startResult.success && startResult.gameSeed) {
+      sendArenaState(roomCode);
+      startArenaCountdown(roomCode, startResult.gameSeed);
+    }
+  }, 2000);
+
+  console.log(`[ARENA] Match formed with ${players.length} players (Room: ${roomCode})`);
+  return true;
+}
+
+function clearArenaTimer(playerId: string): void {
+  const timer = arenaQueueTimers.get(playerId);
+  if (timer) {
+    clearTimeout(timer);
+    arenaQueueTimers.delete(playerId);
+  }
+}
+
+function isArenaMessage(type: string): boolean {
+  return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue';
 }
 
 // ===== Message Validation =====
@@ -587,6 +743,186 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
+    // ===== Arena Messages =====
+
+    case 'create_arena': {
+      const existing = arenaManager.getRoomByPlayerId(playerId);
+      if (existing) arenaManager.removePlayer(playerId);
+
+      const { roomCode, player } = arenaManager.createRoom(
+        playerId,
+        (message as unknown as { playerName: string }).playerName,
+        (message as unknown as { roomName?: string }).roomName,
+      );
+
+      const reconnectToken = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'arena_created',
+        arenaCode: roomCode,
+        playerId: player.id,
+        reconnectToken,
+      } as unknown as ServerMessage);
+
+      sendArenaState(roomCode);
+      console.log(`[ARENA] ${roomCode} created by ${player.name}`);
+      break;
+    }
+
+    case 'join_arena': {
+      const existing = arenaManager.getRoomByPlayerId(playerId);
+      if (existing) arenaManager.removePlayer(playerId);
+
+      const arenaMsg = message as unknown as { arenaCode: string; playerName: string };
+      const result = arenaManager.joinRoom(arenaMsg.arenaCode, playerId, arenaMsg.playerName);
+      if (!result.success || !result.player) {
+        sendError(playerId, result.error || 'Failed to join arena', 'ARENA_JOIN_FAILED');
+        break;
+      }
+
+      const arenaState = arenaManager.getRoomState(arenaMsg.arenaCode);
+      if (!arenaState) {
+        sendError(playerId, 'Arena not found', 'ARENA_NOT_FOUND');
+        break;
+      }
+
+      const reconnectToken = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'arena_joined',
+        arenaCode: arenaMsg.arenaCode.toUpperCase().trim(),
+        playerId: result.player.id,
+        arenaState,
+        reconnectToken,
+      } as unknown as ServerMessage);
+
+      broadcastToArena(arenaMsg.arenaCode, {
+        type: 'arena_player_joined',
+        player: result.player,
+      } as unknown as ServerMessage, playerId);
+
+      sendArenaState(arenaMsg.arenaCode);
+      console.log(`[ARENA] ${result.player.name} joined arena ${arenaMsg.arenaCode}`);
+      break;
+    }
+
+    case 'queue_arena': {
+      const existing = arenaManager.getRoomByPlayerId(playerId);
+      if (existing) arenaManager.removePlayer(playerId);
+
+      arenaQueue.delete(playerId);
+      clearArenaTimer(playerId);
+
+      const queueMsg = message as unknown as { playerName: string };
+      const entry: ArenaQueuedPlayer = {
+        playerId,
+        playerName: (queueMsg.playerName || 'Player').slice(0, 20),
+        queuedAt: Date.now(),
+      };
+      arenaQueue.set(playerId, entry);
+
+      sendToPlayer(playerId, {
+        type: 'arena_queued',
+        position: arenaQueue.size,
+        queueSize: arenaQueue.size,
+      } as unknown as ServerMessage);
+
+      console.log(`[ARENA] ${entry.playerName} queued (${arenaQueue.size} in queue)`);
+
+      // Try to form a match immediately
+      if (!tryFormArenaMatch()) {
+        // Set timeout for forming with whatever we have (min 3)
+        const timer = setTimeout(() => {
+          arenaQueueTimers.delete(playerId);
+          if (arenaQueue.has(playerId)) {
+            tryFormArenaMatch();
+          }
+        }, ARENA_QUEUE_TIMEOUT);
+        arenaQueueTimers.set(playerId, timer);
+
+        // Retry periodically
+        const retryInterval = setInterval(() => {
+          if (!arenaQueue.has(playerId)) {
+            clearInterval(retryInterval);
+            return;
+          }
+          if (tryFormArenaMatch()) {
+            clearInterval(retryInterval);
+          }
+        }, 3000);
+
+        setTimeout(() => clearInterval(retryInterval), ARENA_QUEUE_TIMEOUT + 1000);
+      }
+      break;
+    }
+
+    case 'cancel_arena_queue': {
+      arenaQueue.delete(playerId);
+      clearArenaTimer(playerId);
+      console.log(`[ARENA] ${playerId} cancelled arena queue`);
+      break;
+    }
+
+    case 'arena_ready': {
+      const readyMsg = message as unknown as { ready: boolean };
+      const result = arenaManager.setPlayerReady(playerId, readyMsg.ready);
+      if (!result.success) {
+        sendError(playerId, result.error || 'Failed to set ready');
+        break;
+      }
+
+      const room = arenaManager.getRoomByPlayerId(playerId);
+      if (room) sendArenaState(room.code);
+      break;
+    }
+
+    case 'arena_start': {
+      const result = arenaManager.startGame(playerId);
+      if (!result.success || !result.gameSeed) {
+        sendError(playerId, result.error || 'Failed to start arena', 'ARENA_START_FAILED');
+        break;
+      }
+
+      const room = arenaManager.getRoomByPlayerId(playerId);
+      if (room) {
+        sendArenaState(room.code);
+        startArenaCountdown(room.code, result.gameSeed);
+      }
+      break;
+    }
+
+    case 'arena_action': {
+      const actionMsg = message as unknown as { action: ArenaAction };
+      arenaManager.handleAction(playerId, actionMsg.action);
+      break;
+    }
+
+    case 'arena_relay': {
+      const relayMsg = message as unknown as { payload: ArenaBoardPayload };
+      arenaManager.handleRelay(playerId, relayMsg.payload);
+      break;
+    }
+
+    case 'arena_leave': {
+      const result = arenaManager.removePlayer(playerId);
+
+      if (conn?.reconnectToken) {
+        reconnectTokens.delete(conn.reconnectToken);
+      }
+
+      if (result.roomCode) {
+        broadcastToArena(result.roomCode, {
+          type: 'arena_player_left',
+          playerId,
+        } as unknown as ServerMessage);
+
+        if (result.room) {
+          sendArenaState(result.roomCode);
+        }
+
+        console.log(`[ARENA] Player ${playerId} left arena ${result.roomCode}`);
+      }
+      break;
+    }
+
     default:
       sendError(playerId, `Unknown message type`, 'UNKNOWN_TYPE');
   }
@@ -601,6 +937,16 @@ function handleDisconnect(playerId: string, reason: string): void {
   // Clean up ranked queue
   rankedQueue.delete(playerId);
   clearRankedTimer(playerId);
+
+  // Clean up arena queue
+  arenaQueue.delete(playerId);
+  clearArenaTimer(playerId);
+
+  // Handle arena disconnect
+  const arenaResult = arenaManager.markDisconnected(playerId);
+  if (arenaResult.roomCode) {
+    sendArenaState(arenaResult.roomCode);
+  }
 
   const result = roomManager.markPlayerDisconnected(playerId);
   playerConnections.delete(playerId);
@@ -671,12 +1017,15 @@ const server = createServer((req, res) => {
       timestamp: Date.now(),
       connections: playerConnections.size,
       rooms: roomManager.getRoomCount(),
+      arenas: arenaManager.getRoomCount(),
     }));
   } else if (req.url === '/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       connections: playerConnections.size,
       rooms: roomManager.getRoomCount(),
+      arenas: arenaManager.getRoomCount(),
+      arenaQueue: arenaQueue.size,
       uptime: process.uptime(),
       memory: process.memoryUsage(),
     }));
@@ -822,6 +1171,7 @@ function shutdown(signal: string) {
   wss.close(() => {
     server.close(() => {
       roomManager.destroy();
+      arenaManager.destroy();
       console.log('[SHUTDOWN] Complete');
       process.exit(0);
     });
