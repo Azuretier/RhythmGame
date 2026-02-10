@@ -218,7 +218,7 @@ export function Board({
                             )}
                         </>
                     ) : (
-                        <Advancements embedded onClose={() => setShowAdvancements(false)} />
+                        <Advancements onClose={() => setShowAdvancements(false)} />
                     )}
                 </div>
             )}
