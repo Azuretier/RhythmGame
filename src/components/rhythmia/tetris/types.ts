@@ -129,6 +129,8 @@ export type Enemy = {
     x: number;
     y: number;
     z: number;
+    gridX: number;
+    gridZ: number;
     speed: number;
     health: number;
     maxHealth: number;
