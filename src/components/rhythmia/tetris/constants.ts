@@ -137,6 +137,8 @@ export const DEFAULT_ARR = 33;   // Auto Repeat Rate - delay between each auto-r
 export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 
 // ===== Terrain Settings =====
+// Number of terrains (stages) to clear before advancing to the next world
+export const TERRAINS_PER_WORLD = 4;
 // Voxel blocks destroyed per cleared line (multiplied by beat multiplier)
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 

@@ -507,6 +507,101 @@
   letter-spacing: 0.1em;
 }
 
+/* Title screen world display */
+.titleWorldDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.titleWorldName {
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.15em;
+}
+
+.titleWorldLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* Title screen world progression */
+.titleWorldProgress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.titleProgressBar {
+  display: flex;
+  gap: 6px;
+}
+
+.titleProgressPip {
+  width: 28px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: background 0.3s, border-color 0.3s;
+}
+
+.titleProgressPipFilled {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.titleProgressText {
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.12em;
+}
+
+/* In-game world progression display */
+.worldProgressDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  justify-content: center;
+}
+
+.worldProgressName {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+}
+
+.worldProgressPips {
+  display: flex;
+  gap: 3px;
+}
+
+.worldProgressPip {
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.3s;
+}
+
+.worldProgressPipFilled {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.worldProgressLabel {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.08em;
+}
+
 /* Theme Navbar */
 .themeNav {
   display: flex;
