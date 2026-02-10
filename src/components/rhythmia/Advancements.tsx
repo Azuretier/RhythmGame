@@ -10,6 +10,8 @@ import styles from './Advancements.module.css';
 
 interface Props {
   onClose: () => void;
+  /** When true, renders just the panel without a fullscreen overlay (for pause menu). */
+  embedded?: boolean;
 }
 
 const CATEGORY_ORDER: AdvancementCategory[] = ['general', 'lines', 'score', 'tspin', 'combo', 'multiplayer'];
@@ -41,7 +43,7 @@ function formatNumber(n: number): string {
   return n.toLocaleString();
 }
 
-export const Advancements: React.FC<Props> = ({ onClose }) => {
+export const Advancements: React.FC<Props> = ({ onClose, embedded = false }) => {
   const [state, setState] = useState<AdvancementState | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<AdvancementCategory>('general');
   const t = useTranslations();
@@ -62,6 +64,96 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
   const locale = t('lobby.play') === 'PLAY' ? 'en' : 'ja';
   const categoryLabels = CATEGORY_LABELS[locale] || CATEGORY_LABELS.en;
 
+  const panelContent = (
+    <>
+      {/* Header */}
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <h2 className={styles.title}>{t('advancements.title')}</h2>
+          <div className={styles.progressLabel}>
+            {unlockedCount} / {totalCount} ({progressPercent}%)
+          </div>
+        </div>
+        <button className={styles.closeBtn} onClick={onClose}>
+          {t('lobby.back')}
+        </button>
+      </div>
+
+      {/* Progress bar */}
+      <div className={styles.progressBar}>
+        <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
+      </div>
+
+      {/* Category tabs */}
+      <div className={styles.tabs}>
+        {CATEGORY_ORDER.map(cat => {
+          const catAdvancements = ADVANCEMENTS.filter(a => a.category === cat);
+          const catUnlocked = catAdvancements.filter(a => state.unlockedIds.includes(a.id)).length;
+          return (
+            <button
+              key={cat}
+              className={`${styles.tab} ${selectedCategory === cat ? styles.activeTab : ''}`}
+              onClick={() => setSelectedCategory(cat)}
+            >
+              <span className={styles.tabLabel}>{categoryLabels[cat]}</span>
+              <span className={styles.tabCount}>{catUnlocked}/{catAdvancements.length}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Advancement list */}
+      <div className={styles.list}>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={selectedCategory}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            {filteredAdvancements.map(adv => {
+              const unlocked = state.unlockedIds.includes(adv.id);
+              const currentValue = state.stats[adv.statKey];
+              const progress = Math.min(1, currentValue / adv.threshold);
+              const displayName = t(`advancements.${adv.id}.name`);
+              const displayDesc = t(`advancements.${adv.id}.desc`);
+
+              return (
+                <div
+                  key={adv.id}
+                  className={`${styles.advItem} ${unlocked ? styles.unlocked : styles.locked}`}
+                >
+                  <div className={styles.advIcon}>
+                    {unlocked ? adv.icon : '🔒'}
+                  </div>
+                  <div className={styles.advInfo}>
+                    <div className={styles.advName}>{displayName}</div>
+                    <div className={styles.advDesc}>{displayDesc}</div>
+                    <div className={styles.advProgressBar}>
+                      <div
+                        className={styles.advProgressFill}
+                        style={{ width: `${progress * 100}%` }}
+                      />
+                    </div>
+                    <div className={styles.advProgressText}>
+                      {formatNumber(currentValue)} / {formatNumber(adv.threshold)}
+                    </div>
+                  </div>
+                  {unlocked && <div className={styles.advCheck}>✓</div>}
+                </div>
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className={styles.panel}>{panelContent}</div>;
+  }
+
   return (
     <motion.div
       className={styles.overlay}
@@ -77,87 +169,7 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
         exit={{ opacity: 0, y: 20, scale: 0.97 }}
         transition={{ duration: 0.3 }}
       >
-        {/* Header */}
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
-            <h2 className={styles.title}>{t('advancements.title')}</h2>
-            <div className={styles.progressLabel}>
-              {unlockedCount} / {totalCount} ({progressPercent}%)
-            </div>
-          </div>
-          <button className={styles.closeBtn} onClick={onClose}>
-            {t('lobby.back')}
-          </button>
-        </div>
-
-        {/* Progress bar */}
-        <div className={styles.progressBar}>
-          <div className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
-        </div>
-
-        {/* Category tabs */}
-        <div className={styles.tabs}>
-          {CATEGORY_ORDER.map(cat => {
-            const catAdvancements = ADVANCEMENTS.filter(a => a.category === cat);
-            const catUnlocked = catAdvancements.filter(a => state.unlockedIds.includes(a.id)).length;
-            return (
-              <button
-                key={cat}
-                className={`${styles.tab} ${selectedCategory === cat ? styles.activeTab : ''}`}
-                onClick={() => setSelectedCategory(cat)}
-              >
-                <span className={styles.tabLabel}>{categoryLabels[cat]}</span>
-                <span className={styles.tabCount}>{catUnlocked}/{catAdvancements.length}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Advancement list */}
-        <div className={styles.list}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={selectedCategory}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {filteredAdvancements.map(adv => {
-                const unlocked = state.unlockedIds.includes(adv.id);
-                const currentValue = state.stats[adv.statKey];
-                const progress = Math.min(1, currentValue / adv.threshold);
-                const displayName = t(`advancements.${adv.id}.name`);
-                const displayDesc = t(`advancements.${adv.id}.desc`);
-
-                return (
-                  <div
-                    key={adv.id}
-                    className={`${styles.advItem} ${unlocked ? styles.unlocked : styles.locked}`}
-                  >
-                    <div className={styles.advIcon}>
-                      {unlocked ? adv.icon : '🔒'}
-                    </div>
-                    <div className={styles.advInfo}>
-                      <div className={styles.advName}>{displayName}</div>
-                      <div className={styles.advDesc}>{displayDesc}</div>
-                      <div className={styles.advProgressBar}>
-                        <div
-                          className={styles.advProgressFill}
-                          style={{ width: `${progress * 100}%` }}
-                        />
-                      </div>
-                      <div className={styles.advProgressText}>
-                        {formatNumber(currentValue)} / {formatNumber(adv.threshold)}
-                      </div>
-                    </div>
-                    {unlocked && <div className={styles.advCheck}>✓</div>}
-                  </div>
-                );
-              })}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+        {panelContent}
       </motion.div>
     </motion.div>
   );
