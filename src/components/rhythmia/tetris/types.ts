@@ -141,10 +141,9 @@ export type Bullet = {
     x: number;
     y: number;
     z: number;
-    targetX: number;
-    targetY: number;
-    targetZ: number;
-    speed: number;
+    vx: number;
+    vy: number;
+    vz: number;
     alive: boolean;
 };
 

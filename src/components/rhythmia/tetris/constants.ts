@@ -262,10 +262,12 @@ export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
 export const MAX_HEALTH = 100;
 export const ENEMY_REACH_DAMAGE = 15;    // Damage when an enemy reaches the tower
 export const ENEMY_HP = 3;              // Default HP for each enemy
-export const BULLET_SPEED = 4.5;        // Bullet travel speed per frame
+export const BULLET_SPEED = 18;         // Horizontal launch speed (units/sec)
+export const BULLET_GRAVITY = 40;       // Gravity acceleration (units/sec²)
 export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
 export const BULLET_DAMAGE = 1;         // Damage per bullet hit
 export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
+export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
 
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];

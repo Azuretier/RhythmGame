@@ -8,7 +8,7 @@ import {
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
-    BULLET_SPEED, BULLET_KILL_RADIUS, BULLET_DAMAGE,
+    BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -430,16 +430,33 @@ export function useGameState() {
             }
         }
 
-        // Create bullet from tower top toward enemy
+        // Calculate parabolic arc velocity from tower top to enemy
+        const startY = 12;
+        const targetY = 1.5;
+        const dx = closest.x;
+        const dz = closest.z;
+        const horizontalDist = Math.sqrt(dx * dx + dz * dz);
+
+        // Flight time based on horizontal speed
+        const T = Math.max(0.3, horizontalDist / BULLET_SPEED);
+
+        // Horizontal velocity components
+        const vx = dx / T;
+        const vz = dz / T;
+
+        // Vertical velocity: solve y = y0 + vy*t - 0.5*g*t² for vy
+        // targetY = startY + vy*T - 0.5*g*T²
+        // vy = (targetY - startY + 0.5*g*T²) / T
+        const vy = (targetY - startY + 0.5 * BULLET_GRAVITY * T * T) / T;
+
         const bullet: Bullet = {
             id: nextBulletId++,
             x: 0,
-            y: 12,
+            y: startY,
             z: 0,
-            targetX: closest.x,
-            targetY: 1.5,
-            targetZ: closest.z,
-            speed: BULLET_SPEED,
+            vx,
+            vy,
+            vz,
             alive: true,
         };
         setBullets(prev => [...prev, bullet]);
@@ -447,11 +464,19 @@ export function useGameState() {
         return true;
     }, []);
 
-    // Move bullets toward targets and check collision with enemies
+    // Move bullets with gravity and check collision with enemies
     // Returns the number of enemies killed this update
+    const lastBulletUpdateRef = useRef(Date.now());
     const updateBullets = useCallback((): number => {
         const currentBullets = bulletsRef.current;
-        if (currentBullets.length === 0) return 0;
+        if (currentBullets.length === 0) {
+            lastBulletUpdateRef.current = Date.now();
+            return 0;
+        }
+
+        const now = Date.now();
+        const dt = Math.min((now - lastBulletUpdateRef.current) / 1000, 0.5); // seconds, capped
+        lastBulletUpdateRef.current = now;
 
         const updatedBullets: Bullet[] = [];
         const damagedEnemyIds: Set<number> = new Set();
@@ -460,48 +485,53 @@ export function useGameState() {
         for (const b of currentBullets) {
             if (!b.alive) continue;
 
-            const dx = b.targetX - b.x;
-            const dy = b.targetY - b.y;
-            const dz = b.targetZ - b.z;
-            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            // Apply gravity to vertical velocity
+            const newVy = b.vy - BULLET_GRAVITY * dt;
 
-            if (dist < BULLET_KILL_RADIUS) {
-                // Bullet arrived — find and damage closest enemy at target
-                const alive = enemiesRef.current.filter(
-                    e => e.alive && !damagedEnemyIds.has(e.id)
+            // Update position
+            const newX = b.x + b.vx * dt;
+            const newY = b.y + b.vy * dt - 0.5 * BULLET_GRAVITY * dt * dt;
+            const newZ = b.z + b.vz * dt;
+
+            // Check if bullet hit the ground — remove it (no persistence)
+            if (newY <= BULLET_GROUND_Y) {
+                continue; // bullet lands and disappears
+            }
+
+            // Check collision with enemies
+            const alive = enemiesRef.current.filter(
+                e => e.alive && !damagedEnemyIds.has(e.id)
+            );
+            let hitEnemy: Enemy | null = null;
+            let bestDist = Infinity;
+            for (const e of alive) {
+                const ed = Math.sqrt(
+                    (e.x - newX) ** 2 + (e.y - newY) ** 2 + (e.z - newZ) ** 2
                 );
-                let closest: Enemy | null = null;
-                let bestDist = Infinity;
-                for (const e of alive) {
-                    const ed = Math.sqrt(
-                        (e.x - b.targetX) ** 2 + (e.z - b.targetZ) ** 2
-                    );
-                    if (ed < bestDist) {
-                        bestDist = ed;
-                        closest = e;
-                    }
+                if (ed < bestDist) {
+                    bestDist = ed;
+                    hitEnemy = e;
                 }
-                if (closest && bestDist < BULLET_KILL_RADIUS * 3) {
-                    closest.health -= BULLET_DAMAGE;
-                    damagedEnemyIds.add(closest.id);
-                    if (closest.health <= 0) {
-                        closest.alive = false;
-                        totalKills++;
-                    }
+            }
+
+            if (hitEnemy && bestDist < BULLET_KILL_RADIUS) {
+                hitEnemy.health -= BULLET_DAMAGE;
+                damagedEnemyIds.add(hitEnemy.id);
+                if (hitEnemy.health <= 0) {
+                    hitEnemy.alive = false;
+                    totalKills++;
                 }
-                // Bullet consumed — don't add to updated
+                // Bullet consumed on hit
                 continue;
             }
 
-            // Move bullet toward target
-            const nx = dx / dist;
-            const ny = dy / dist;
-            const nz = dz / dist;
+            // Bullet still in flight
             updatedBullets.push({
                 ...b,
-                x: b.x + nx * b.speed,
-                y: b.y + ny * b.speed,
-                z: b.z + nz * b.speed,
+                x: newX,
+                y: newY,
+                z: newZ,
+                vy: newVy,
             });
         }
 

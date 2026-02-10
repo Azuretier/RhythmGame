@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import type { Enemy, Bullet, GameMode } from './tetris/types';
-import { BULLET_SPEED } from './tetris/constants';
+import { BULLET_GRAVITY, BULLET_GROUND_Y } from './tetris/constants';
 
 // Simple seeded random for deterministic terrain
 function seededRandom(seed: number) {
@@ -771,8 +771,8 @@ export default function VoxelWorldBackground({
     // Bullet tracking for muzzle flash and impact detection
     const prevBulletIds = new Set<number>();
     const prevBulletPositions = new Map<number, { x: number; y: number; z: number }>();
-    // Interpolated bullet positions — updated every frame for smooth 60fps movement
-    const interpBulletPos = new Map<number, { x: number; y: number; z: number }>();
+    // Interpolated bullet state — updated every frame for smooth 60fps gravity arcs
+    const interpBulletState = new Map<number, { x: number; y: number; z: number; vx: number; vy: number; vz: number }>();
     let muzzleFlashTimer = 0;
     const impactParticles: ImpactParticle[] = [];
 
@@ -883,23 +883,26 @@ export default function VoxelWorldBackground({
           const cosR = Math.cos(terrainRotY);
           const sinR = Math.sin(terrainRotY);
 
-          // Detect new bullets → trigger muzzle flash + init interpolated pos
+          // Detect new bullets → trigger muzzle flash + init interpolated state
           for (const b of currentBullets) {
             if (!prevBulletIds.has(b.id)) {
               muzzleFlashTimer = 80;
-              interpBulletPos.set(b.id, { x: b.x, y: b.y, z: b.z });
+              interpBulletState.set(b.id, { x: b.x, y: b.y, z: b.z, vx: b.vx, vy: b.vy, vz: b.vz });
             }
           }
 
           // Detect removed bullets → spawn impact particles + cleanup
           for (const [id, pos] of prevBulletPositions) {
             if (!currentIds.has(id)) {
-              // Use interpolated position for more accurate impact location
-              const ipos = interpBulletPos.get(id) ?? pos;
-              const ipx = ipos.x * cosR - ipos.z * sinR;
-              const ipz = ipos.x * sinR + ipos.z * cosR;
-              spawnImpactBurst(ipx, ipos.y, ipz, impactParticles, 12);
-              interpBulletPos.delete(id);
+              const istate = interpBulletState.get(id);
+              const ipos = istate ?? pos;
+              // Only spawn impact if bullet hit something (not just fell to ground)
+              if (ipos.y > BULLET_GROUND_Y + 0.5) {
+                const ipx = ipos.x * cosR - ipos.z * sinR;
+                const ipz = ipos.x * sinR + ipos.z * cosR;
+                spawnImpactBurst(ipx, ipos.y, ipz, impactParticles, 12);
+              }
+              interpBulletState.delete(id);
             }
           }
 
@@ -911,54 +914,39 @@ export default function VoxelWorldBackground({
             prevBulletPositions.set(b.id, { x: b.x, y: b.y, z: b.z });
           }
 
-          // Interpolate bullet positions every frame for smooth 60fps movement
-          // Slightly slower than game-logic speed for a trailing visual effect
-          const frameSpeed = BULLET_SPEED * 0.7 * delta * 60; // 70% of logic speed for smoother trail
+          // Simulate gravity-driven arc per frame for smooth 60fps bullet flight
+          let visibleCount = 0;
           for (const b of currentBullets) {
-            let pos = interpBulletPos.get(b.id);
-            if (!pos) {
-              pos = { x: b.x, y: b.y, z: b.z };
-              interpBulletPos.set(b.id, pos);
+            let st = interpBulletState.get(b.id);
+            if (!st) {
+              st = { x: b.x, y: b.y, z: b.z, vx: b.vx, vy: b.vy, vz: b.vz };
+              interpBulletState.set(b.id, st);
             }
 
-            // Move interpolated position toward target
-            const dx = b.targetX - pos.x;
-            const dy = b.targetY - pos.y;
-            const dz = b.targetZ - pos.z;
-            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            // Apply gravity and move
+            st.vy -= BULLET_GRAVITY * delta;
+            st.x += st.vx * delta;
+            st.y += st.vy * delta;
+            st.z += st.vz * delta;
 
-            if (dist > 0.1) {
-              const step = Math.min(frameSpeed, dist);
-              pos.x += (dx / dist) * step;
-              pos.y += (dy / dist) * step;
-              pos.z += (dz / dist) * step;
-            } else {
-              // Snap when very close to target
-              pos.x = b.targetX;
-              pos.y = b.targetY;
-              pos.z = b.targetZ;
-            }
-          }
+            // Don't render if below ground
+            if (st.y <= BULLET_GROUND_Y) continue;
 
-          // Render bullets using interpolated positions
-          ss.bulletMesh.count = currentBullets.length;
-          for (let i = 0; i < currentBullets.length; i++) {
-            const b = currentBullets[i];
-            const pos = interpBulletPos.get(b.id) ?? { x: b.x, y: b.y, z: b.z };
-            const rx = pos.x * cosR - pos.z * sinR;
-            const rz = pos.x * sinR + pos.z * cosR;
+            // Render at interpolated position
+            const rx = st.x * cosR - st.z * sinR;
+            const rz = st.x * sinR + st.z * cosR;
 
-            dummy.position.set(rx, pos.y, rz);
-            // Smoother, subtler pulse for cleaner look at high speed
+            dummy.position.set(rx, st.y, rz);
             const pulse = 0.95 + Math.sin(time * 0.008 + b.id * 1.7) * 0.12;
             dummy.scale.set(pulse, pulse, pulse);
-            // Faster, smoother spin
             dummy.rotation.set(time * 0.012 + b.id, time * 0.015 + b.id * 0.5, 0);
             dummy.updateMatrix();
-            ss.bulletMesh.setMatrixAt(i, dummy.matrix);
+            ss.bulletMesh.setMatrixAt(visibleCount, dummy.matrix);
+            visibleCount++;
           }
 
-          if (currentBullets.length > 0) {
+          ss.bulletMesh.count = visibleCount;
+          if (visibleCount > 0) {
             ss.bulletMesh.instanceMatrix.needsUpdate = true;
           }
         }
