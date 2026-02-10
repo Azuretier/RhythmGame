@@ -2,6 +2,7 @@ import React from 'react';
 import type { InventoryItem, CraftedCard } from '../types';
 import { ITEM_MAP, WEAPON_CARD_MAP } from '../constants';
 import { ItemIcon, WeaponIcon } from './ItemIcon';
+import { ItemTooltipWrapper } from './ItemTooltip';
 import styles from '../VanillaGame.module.css';
 
 interface ItemSlotsProps {
@@ -22,6 +23,7 @@ const RARITY_LABEL: Record<string, string> = {
 /**
  * Modern card-style inventory display
  * Glass-morphism cards with SVG icons, large count typography, and rarity accents
+ * Hybrid tooltips: Java Edition purple container + Dungeons icon/stat content
  */
 export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOpen }: ItemSlotsProps) {
     return (
@@ -47,36 +49,41 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
                     const item = ITEM_MAP[inv.itemId];
                     if (!item) return null;
                     return (
-                        <div
+                        <ItemTooltipWrapper
                             key={inv.itemId}
-                            className={`${styles.itemCard} ${styles[`rarity_${item.rarity}`]}`}
-                            title={`${item.name} (${item.nameJa})`}
+                            item={item}
+                            count={inv.count}
+                            side="right"
                         >
-                            {/* Accent line at top */}
                             <div
-                                className={styles.itemCardAccent}
-                                style={{ background: item.color }}
-                            />
-                            {/* Icon area */}
-                            <div
-                                className={styles.itemCardIconWrap}
-                                style={{
-                                    background: `radial-gradient(circle at 50% 50%, ${item.glowColor}18, transparent)`,
-                                }}
+                                className={`${styles.itemCard} ${styles[`rarity_${item.rarity}`]}`}
                             >
-                                <ItemIcon itemId={inv.itemId} size={22} />
+                                {/* Accent line at top */}
+                                <div
+                                    className={styles.itemCardAccent}
+                                    style={{ background: item.color }}
+                                />
+                                {/* Icon area */}
+                                <div
+                                    className={styles.itemCardIconWrap}
+                                    style={{
+                                        background: `radial-gradient(circle at 50% 50%, ${item.glowColor}18, transparent)`,
+                                    }}
+                                >
+                                    <ItemIcon itemId={inv.itemId} size={22} />
+                                </div>
+                                {/* Count — large number typography */}
+                                <span className={styles.itemCardCount}>{inv.count}</span>
+                                {/* Name + rarity */}
+                                <span className={styles.itemCardName}>{item.nameJa}</span>
+                                <span
+                                    className={styles.itemCardRarity}
+                                    style={{ color: item.color }}
+                                >
+                                    {RARITY_LABEL[item.rarity] || item.rarity}
+                                </span>
                             </div>
-                            {/* Count — large number typography */}
-                            <span className={styles.itemCardCount}>{inv.count}</span>
-                            {/* Name + rarity */}
-                            <span className={styles.itemCardName}>{item.nameJa}</span>
-                            <span
-                                className={styles.itemCardRarity}
-                                style={{ color: item.color }}
-                            >
-                                {RARITY_LABEL[item.rarity] || item.rarity}
-                            </span>
-                        </div>
+                        </ItemTooltipWrapper>
                     );
                 })}
             </div>
@@ -88,17 +95,22 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
                         const card = WEAPON_CARD_MAP[cc.cardId];
                         if (!card) return null;
                         return (
-                            <div
+                            <ItemTooltipWrapper
                                 key={idx}
-                                className={styles.weaponCardSlot}
-                                title={`${card.name} — ${card.description}`}
-                                style={{
-                                    borderColor: `${card.color}50`,
-                                    background: `linear-gradient(135deg, ${card.color}12, transparent)`,
-                                }}
+                                weapon={card}
+                                equipped
+                                side="right"
                             >
-                                <WeaponIcon cardId={cc.cardId} size={16} glowColor={card.glowColor} />
-                            </div>
+                                <div
+                                    className={styles.weaponCardSlot}
+                                    style={{
+                                        borderColor: `${card.color}50`,
+                                        background: `linear-gradient(135deg, ${card.color}12, transparent)`,
+                                    }}
+                                >
+                                    <WeaponIcon cardId={cc.cardId} size={16} glowColor={card.glowColor} />
+                                </div>
+                            </ItemTooltipWrapper>
                         );
                     })}
                 </div>
