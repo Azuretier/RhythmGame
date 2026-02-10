@@ -11,6 +11,7 @@ import styles from '../../components/rhythmia/rhythmia.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import Advancements from '../../components/rhythmia/Advancements';
+import { FaDiscord } from 'react-icons/fa';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
@@ -58,7 +59,7 @@ export default function RhythmiaPage() {
                 } else if (message.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong' }));
                 }
-            } catch {}
+            } catch { }
         };
 
         ws.onclose = () => {
@@ -182,6 +183,15 @@ export default function RhythmiaPage() {
                             <span>v{rhythmiaConfig.version}</span>
                         </div>
                         <LocaleSwitcher />
+                        <a
+                            href="https://discord.gg/7mBCasYkJY"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.discordLink}
+                            aria-label="Discord"
+                        >
+                            <FaDiscord size={16} />
+                        </a>
                     </div>
                 </motion.header>
 

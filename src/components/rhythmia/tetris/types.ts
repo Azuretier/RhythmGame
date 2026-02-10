@@ -124,11 +124,19 @@ export type CraftedCard = {
 };
 
 // ===== Tower Defense =====
+
+// Grid position for block-based movement (orthogonal only, 1 tile per turn)
+export type GridPos = { gx: number; gz: number };
+
 export type Enemy = {
     id: number;
+    // World-space position (derived from grid coords for rendering)
     x: number;
     y: number;
     z: number;
+    // Grid coordinates — enemies move 1 tile per turn, orthogonal only
+    gridX: number;
+    gridZ: number;
     speed: number;
     health: number;
     maxHealth: number;

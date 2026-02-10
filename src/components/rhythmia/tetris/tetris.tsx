@@ -36,6 +36,7 @@ import {
   NextPiece,
   HoldPiece,
   TitleScreen,
+  WorldProgressDisplay,
   ScoreDisplay,
   ComboDisplay,
   TerrainProgress,
@@ -960,7 +961,7 @@ export default function Rhythmia() {
 
       {/* Title Screen */}
       {!isPlaying && !gameOver && (
-        <TitleScreen onStart={startGame} />
+        <TitleScreen onStart={startGame} worldIdx={worldIdx} stageNumber={stageNumber} />
       )}
 
       {/* Game */}
@@ -981,6 +982,9 @@ export default function Rhythmia() {
             stageNumber={stageNumber}
             gameMode={gameMode}
           />
+          {gameMode === 'vanilla' && (
+            <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
+          )}
 
           <div className={styles.gameArea} ref={gameAreaRef}>
             {/* Left sidebar: Hold + Inventory (separate containers) */}

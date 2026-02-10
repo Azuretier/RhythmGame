@@ -112,6 +112,19 @@
   }
 }
 
+/* Discord link */
+.discordLink {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.25s, transform 0.25s;
+}
+
+.discordLink:hover {
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
 /* Main content */
 .main {
   flex: 1;

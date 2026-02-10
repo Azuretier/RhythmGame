@@ -112,5 +112,21 @@
         "label": "Language",
         "en": "English",
         "ja": "日本語"
+    },
+    "updates": {
+        "title": "Recent Updates",
+        "recentUpdates": "Recent updates",
+        "prsMerged": "PRs merged",
+        "all": "All",
+        "viewPR": "View PR",
+        "viewAllPRs": "View all PRs",
+        "categories": {
+            "feature": "Features",
+            "enhancement": "Enhancements",
+            "fix": "Fixes",
+            "refactor": "Refactors",
+            "docs": "Documentation",
+            "i18n": "Internationalization"
+        }
     }
 }

@@ -137,6 +137,8 @@ export const DEFAULT_ARR = 33;   // Auto Repeat Rate - delay between each auto-r
 export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 
 // ===== Terrain Settings =====
+// Number of terrains (stages) to clear before advancing to the next world
+export const TERRAINS_PER_WORLD = 4;
 // Voxel blocks destroyed per cleared line (multiplied by beat multiplier)
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 
@@ -252,11 +254,19 @@ export const TERRAIN_PARTICLES_PER_LINE = 15;
 export const TERRAIN_PARTICLE_LIFETIME = 600;
 
 // ===== Tower Defense Settings =====
-export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn
-export const ENEMY_BASE_SPEED = 0.5;     // Base movement speed toward tower per tick
-export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower
+export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn (world units)
+export const ENEMY_BASE_SPEED = 0.5;     // Legacy — grid system uses 1 tile/turn
+export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower (world units)
 export const ENEMIES_PER_BEAT = 1;       // Enemies spawned per beat
 export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
+
+// ===== Block Grid System =====
+// Enemies move on a discrete grid, 1 tile per turn, orthogonal only (no diagonals).
+// The tower sits at grid origin (0, 0). Grid extends from -GRID_HALF to +GRID_HALF.
+export const GRID_TILE_SIZE = 1;         // World units per grid tile
+export const GRID_HALF = 18;             // Grid extends ±18 tiles from center
+export const GRID_SPAWN_RING = 18;       // Manhattan distance from center for spawn perimeter
+export const GRID_TOWER_RADIUS = 1;      // Grid tiles — enemy reaches tower at Manhattan dist ≤ this
 
 // ===== Tower Defense HUD =====
 export const MAX_HEALTH = 100;

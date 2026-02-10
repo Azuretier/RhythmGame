@@ -2,13 +2,15 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
-    ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP,
+    ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
+    TERRAINS_PER_WORLD,
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
     BULLET_SPEED, BULLET_KILL_RADIUS, BULLET_DAMAGE,
+    GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -241,10 +243,19 @@ export function useGameState() {
         return remaining;
     }, []);
 
-    // Start a new terrain stage
+    // Start a new terrain stage — advances world when enough terrains are cleared
     const startNewStage = useCallback((newStageNumber: number) => {
         setStageNumber(newStageNumber);
         stageNumberRef.current = newStageNumber;
+
+        // Advance world based on completed stages (stage 1 = first terrain of world 0)
+        const newWorldIdx = Math.min(
+            Math.floor((newStageNumber - 1) / TERRAINS_PER_WORLD),
+            WORLDS.length - 1
+        );
+        setWorldIdx(newWorldIdx);
+        worldIdxRef.current = newWorldIdx;
+
         // New seed triggers VoxelWorldBackground regeneration
         setTerrainSeed(newStageNumber * 7919 + 42);
         setTerrainDestroyedCount(0);
@@ -339,18 +350,49 @@ export function useGameState() {
 
     // ===== Tower Defense Enemy Actions =====
 
-    // Spawn enemies at the terrain edge
+    // Collect grid cells occupied by alive enemies (for collision avoidance)
+    const getOccupiedCells = useCallback((): Set<string> => {
+        const set = new Set<string>();
+        for (const e of enemiesRef.current) {
+            if (e.alive) set.add(`${e.gridX},${e.gridZ}`);
+        }
+        return set;
+    }, []);
+
+    // Spawn enemies on the grid perimeter (Manhattan distance = GRID_SPAWN_RING from center)
     const spawnEnemies = useCallback((count: number) => {
+        const occupied = getOccupiedCells();
         const newEnemies: Enemy[] = [];
+
         for (let i = 0; i < count; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const spawnDist = ENEMY_SPAWN_DISTANCE + Math.random() * 3;
+            // Build list of available perimeter cells at Manhattan distance = GRID_SPAWN_RING
+            const candidates: { gx: number; gz: number }[] = [];
+            for (let gx = -GRID_HALF; gx <= GRID_HALF; gx++) {
+                for (let gz = -GRID_HALF; gz <= GRID_HALF; gz++) {
+                    if (Math.abs(gx) + Math.abs(gz) === GRID_SPAWN_RING) {
+                        const key = `${gx},${gz}`;
+                        if (!occupied.has(key)) {
+                            candidates.push({ gx, gz });
+                        }
+                    }
+                }
+            }
+
+            if (candidates.length === 0) break; // No available spawn cells
+
+            const cell = candidates[Math.floor(Math.random() * candidates.length)];
+            const worldX = cell.gx * GRID_TILE_SIZE;
+            const worldZ = cell.gz * GRID_TILE_SIZE;
+            occupied.add(`${cell.gx},${cell.gz}`);
+
             newEnemies.push({
                 id: nextEnemyId++,
-                x: Math.cos(angle) * spawnDist,
+                x: worldX,
                 y: 0.5,
-                z: Math.sin(angle) * spawnDist,
-                speed: ENEMY_BASE_SPEED + Math.random() * 0.03,
+                z: worldZ,
+                gridX: cell.gx,
+                gridZ: cell.gz,
+                speed: 1, // 1 tile per turn (grid system)
                 health: ENEMY_HP,
                 maxHealth: ENEMY_HP,
                 alive: true,
@@ -358,37 +400,70 @@ export function useGameState() {
             });
         }
         setEnemies(prev => [...prev, ...newEnemies]);
-    }, []);
+    }, [getOccupiedCells]);
 
-    // Move enemies toward center (tower), returns number that reached the tower
-    // Enemies that reach the tower are removed immediately (disappear).
-    // Must compute reached OUTSIDE the state setter — React 18 batching
-    // defers the updater callback, so a `reached` counter inside it would
-    // still be 0 when this function returns.
+    // Move enemies 1 tile toward tower using orthogonal-only movement (no diagonals).
+    // Each enemy picks the best cardinal direction (Up/Down/Left/Right) that reduces
+    // Manhattan distance to (0,0), avoiding occupied cells. Returns number that reached tower.
     const updateEnemies = useCallback((): number => {
         const current = enemiesRef.current;
         let reached = 0;
         const updated: Enemy[] = [];
 
-        for (const e of current) {
-            if (!e.alive) continue;
+        // Build set of cells that will be occupied after movement.
+        // Process enemies closest to tower first so they get priority on cell claims.
+        const sorted = current
+            .filter(e => e.alive)
+            .sort((a, b) => (Math.abs(a.gridX) + Math.abs(a.gridZ)) - (Math.abs(b.gridX) + Math.abs(b.gridZ)));
 
-            const dx = -e.x;
-            const dz = -e.z;
-            const dist = Math.sqrt(dx * dx + dz * dz);
+        const claimed = new Set<string>();
 
-            if (dist < ENEMY_TOWER_RADIUS) {
+        // Orthogonal directions: Up, Down, Left, Right
+        const dirs: [number, number][] = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+
+        for (const e of sorted) {
+            const manhattan = Math.abs(e.gridX) + Math.abs(e.gridZ);
+
+            // Check if enemy has reached the tower
+            if (manhattan <= GRID_TOWER_RADIUS) {
                 reached++;
-                // Enemy disappears — not added to updated array
-                continue;
+                continue; // removed from game
             }
 
-            const nx = dx / dist;
-            const nz = dz / dist;
+            // Evaluate orthogonal neighbors — pick the one closest to (0,0)
+            let bestDist = manhattan; // staying still is the fallback
+            let bestGx = e.gridX;
+            let bestGz = e.gridZ;
+
+            // Shuffle directions to break ties randomly
+            const shuffled = [...dirs].sort(() => Math.random() - 0.5);
+
+            for (const [dx, dz] of shuffled) {
+                const nx = e.gridX + dx;
+                const nz = e.gridZ + dz;
+                const nd = Math.abs(nx) + Math.abs(nz);
+
+                // Must reduce distance (move closer to tower)
+                if (nd >= manhattan) continue;
+
+                const key = `${nx},${nz}`;
+                if (claimed.has(key)) continue; // cell taken
+
+                if (nd < bestDist) {
+                    bestDist = nd;
+                    bestGx = nx;
+                    bestGz = nz;
+                }
+            }
+
+            claimed.add(`${bestGx},${bestGz}`);
+
             updated.push({
                 ...e,
-                x: e.x + nx * e.speed,
-                z: e.z + nz * e.speed,
+                gridX: bestGx,
+                gridZ: bestGz,
+                x: bestGx * GRID_TILE_SIZE,
+                z: bestGz * GRID_TILE_SIZE,
             });
         }
 
@@ -398,12 +473,13 @@ export function useGameState() {
     }, []);
 
     // Kill closest enemies (when lines are cleared) — removed instantly
+    // Uses Manhattan distance (tile distance) for sorting
     const killEnemies = useCallback((count: number) => {
         setEnemies(prev => {
             const alive = prev.filter(e => e.alive);
             alive.sort((a, b) => {
-                const distA = Math.sqrt(a.x * a.x + a.z * a.z);
-                const distB = Math.sqrt(b.x * b.x + b.z * b.z);
+                const distA = Math.abs(a.gridX) + Math.abs(a.gridZ);
+                const distB = Math.abs(b.gridX) + Math.abs(b.gridZ);
                 return distA - distB;
             });
 
@@ -415,30 +491,31 @@ export function useGameState() {
     }, []);
 
     // Fire a bullet from tower at the closest enemy (no mana cost)
+    // Uses Manhattan distance (tile distance) for targeting priority
     const fireBullet = useCallback((): boolean => {
         const alive = enemiesRef.current.filter(e => e.alive);
         if (alive.length === 0) return false;
 
-        // Find closest enemy
+        // Find closest enemy by Manhattan distance
         let closest = alive[0];
-        let closestDist = Math.sqrt(closest.x * closest.x + closest.z * closest.z);
+        let closestDist = Math.abs(closest.gridX) + Math.abs(closest.gridZ);
         for (let i = 1; i < alive.length; i++) {
-            const d = Math.sqrt(alive[i].x * alive[i].x + alive[i].z * alive[i].z);
+            const d = Math.abs(alive[i].gridX) + Math.abs(alive[i].gridZ);
             if (d < closestDist) {
                 closest = alive[i];
                 closestDist = d;
             }
         }
 
-        // Create bullet from tower top toward enemy
+        // Create bullet from tower top toward enemy's grid-based world position
         const bullet: Bullet = {
             id: nextBulletId++,
             x: 0,
             y: 12,
             z: 0,
-            targetX: closest.x,
+            targetX: closest.gridX * GRID_TILE_SIZE,
             targetY: 1.5,
-            targetZ: closest.z,
+            targetZ: closest.gridZ * GRID_TILE_SIZE,
             speed: BULLET_SPEED,
             alive: true,
         };

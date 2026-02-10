@@ -1,18 +1,29 @@
 import React from 'react';
-import { WORLDS, ColorTheme } from '../constants';
+import { WORLDS, TERRAINS_PER_WORLD, ColorTheme } from '../constants';
 import type { GameMode } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface TitleScreenProps {
     onStart: (mode: GameMode) => void;
+    worldIdx?: number;
+    stageNumber?: number;
 }
 
 /**
- * Title screen component with game mode selection
+ * Title screen component with game mode selection and world display
  */
-export function TitleScreen({ onStart }: TitleScreenProps) {
+export function TitleScreen({ onStart, worldIdx = 0, stageNumber = 1 }: TitleScreenProps) {
+    const world = WORLDS[worldIdx];
+    const terrainsCleared = (stageNumber - 1) % TERRAINS_PER_WORLD;
+    const isMaxWorld = worldIdx >= WORLDS.length - 1;
+
     return (
         <div className={styles.titleScreen}>
+            {/* World display */}
+            <div className={styles.titleWorldDisplay}>
+                <div className={styles.titleWorldName}>{world.name}</div>
+                <div className={styles.titleWorldLabel}>WORLD {worldIdx + 1}</div>
+            </div>
             <p>リズムに乗ってブロックを積め！</p>
             <div className={styles.modeSelect}>
                 <button className={styles.modeBtn} onClick={() => onStart('vanilla')}>
@@ -26,6 +37,28 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                     <span className={styles.modeBtnDesc}>タワーを守れ！</span>
                 </button>
             </div>
+            {/* World progression info */}
+            {!isMaxWorld ? (
+                <div className={styles.titleWorldProgress}>
+                    <div className={styles.titleProgressBar}>
+                        {Array.from({ length: TERRAINS_PER_WORLD }).map((_, i) => (
+                            <div
+                                key={i}
+                                className={`${styles.titleProgressPip} ${i < terrainsCleared ? styles.titleProgressPipFilled : ''}`}
+                            />
+                        ))}
+                    </div>
+                    <div className={styles.titleProgressText}>
+                        Clear {TERRAINS_PER_WORLD - terrainsCleared} terrain{TERRAINS_PER_WORLD - terrainsCleared !== 1 ? 's' : ''} to Next World
+                    </div>
+                </div>
+            ) : (
+                <div className={styles.titleWorldProgress}>
+                    <div className={styles.titleProgressText}>
+                        FINAL WORLD — {TERRAINS_PER_WORLD - terrainsCleared} terrain{TERRAINS_PER_WORLD - terrainsCleared !== 1 ? 's' : ''} remaining
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -40,6 +73,39 @@ interface WorldDisplayProps {
 export function WorldDisplay({ worldIdx }: WorldDisplayProps) {
     return (
         <div className={styles.worldDisplay}>{WORLDS[worldIdx].name}</div>
+    );
+}
+
+interface WorldProgressDisplayProps {
+    worldIdx: number;
+    stageNumber: number;
+}
+
+/**
+ * In-game world progression indicator showing terrains cleared toward next world
+ */
+export function WorldProgressDisplay({ worldIdx, stageNumber }: WorldProgressDisplayProps) {
+    const world = WORLDS[worldIdx];
+    const terrainsCleared = (stageNumber - 1) % TERRAINS_PER_WORLD;
+    const isMaxWorld = worldIdx >= WORLDS.length - 1;
+
+    return (
+        <div className={styles.worldProgressDisplay}>
+            <span className={styles.worldProgressName}>{world.name}</span>
+            <div className={styles.worldProgressPips}>
+                {Array.from({ length: TERRAINS_PER_WORLD }).map((_, i) => (
+                    <div
+                        key={i}
+                        className={`${styles.worldProgressPip} ${i < terrainsCleared ? styles.worldProgressPipFilled : ''}`}
+                    />
+                ))}
+            </div>
+            <span className={styles.worldProgressLabel}>
+                {isMaxWorld
+                    ? `${terrainsCleared}/${TERRAINS_PER_WORLD}`
+                    : `${terrainsCleared}/${TERRAINS_PER_WORLD} → Next World`}
+            </span>
+        </div>
     );
 }
 

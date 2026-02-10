@@ -112,5 +112,21 @@
         "label": "言語",
         "en": "English",
         "ja": "日本語"
+    },
+    "updates": {
+        "title": "最新アップデート",
+        "recentUpdates": "最近の更新",
+        "prsMerged": "件のPR",
+        "all": "すべて",
+        "viewPR": "PRを見る",
+        "viewAllPRs": "すべてのPRを見る",
+        "categories": {
+            "feature": "新機能",
+            "enhancement": "改善",
+            "fix": "修正",
+            "refactor": "リファクタ",
+            "docs": "ドキュメント",
+            "i18n": "国際化"
+        }
     }
 }
