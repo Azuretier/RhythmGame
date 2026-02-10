@@ -93,6 +93,21 @@ export interface CancelRankedMessage {
   type: 'cancel_ranked';
 }
 
+// Arena client messages (sent on the same WebSocket)
+export interface ArenaGenericMessage {
+  type:
+    | 'create_arena'
+    | 'join_arena'
+    | 'queue_arena'
+    | 'cancel_arena_queue'
+    | 'arena_ready'
+    | 'arena_start'
+    | 'arena_action'
+    | 'arena_relay'
+    | 'arena_leave';
+  [key: string]: unknown;
+}
+
 export type ClientMessage =
   | CreateRoomMessage
   | JoinRoomMessage
@@ -105,7 +120,8 @@ export type ClientMessage =
   | ReconnectMessage
   | RematchMessage
   | QueueRankedMessage
-  | CancelRankedMessage;
+  | CancelRankedMessage
+  | ArenaGenericMessage;
 
 // ===== Server -> Client Messages =====
 
