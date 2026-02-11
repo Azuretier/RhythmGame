@@ -24,6 +24,4 @@ export { TerrainParticles } from './TerrainParticles';
 export { WorldTransition, GamePhaseIndicator } from './WorldTransition';
 export { HealthManaHUD } from './HealthManaHUD';
 export { TutorialGuide, hasTutorialBeenSeen } from './TutorialGuide';
-export { InventoryUI } from './InventoryUI';
-export { ShopUI } from './ShopUI';
 export { KeyBindSettings } from './KeyBindSettings';

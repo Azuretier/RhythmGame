@@ -57,8 +57,6 @@ import {
   HealthManaHUD,
   TutorialGuide,
   hasTutorialBeenSeen,
-  InventoryUI,
-  ShopUI,
   KeyBindSettings,
 } from './components';
 
@@ -122,9 +120,6 @@ export default function Rhythmia() {
     return DEFAULT_KEYBINDINGS;
   });
 
-  // Inventory & Shop overlay state
-  const [showInventory, setShowInventory] = useState(false);
-  const [showShop, setShowShop] = useState(false);
   const [pauseStateBeforeOverlay, setPauseStateBeforeOverlay] = useState(false);
 
   const handleKeybindChange = useCallback((action: KeybindAction, key: string) => {
@@ -133,6 +128,11 @@ export default function Rhythmia() {
       try { localStorage.setItem('rhythmia_keybindings', JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
+  }, []);
+
+  const handleKeybindingsUpdate = useCallback((newBindings: Keybindings) => {
+    setKeybindings(newBindings);
+    try { localStorage.setItem('rhythmia_keybindings', JSON.stringify(newBindings)); } catch { /* ignore */ }
   }, []);
 
   // Per-game stat tracking for advancements
@@ -238,6 +238,8 @@ export default function Rhythmia() {
     setBoardBeat,
     setColorTheme,
     setGamePhase,
+    setShowInventory,
+    setShowShop,
     spawnPiece,
     showJudgment,
     updateScore,
@@ -269,17 +271,6 @@ export default function Rhythmia() {
   } = gameState;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
-
-  // Key bindings state (configurable)
-  const [keyBindings, setKeyBindings] = useState<KeyBindings>(() => loadKeyBindings());
-  const keyBindingsRef = useRef(keyBindings);
-  keyBindingsRef.current = keyBindings;
-
-  const updateKeyBindings = useCallback((newBindings: KeyBindings) => {
-    setKeyBindings(newBindings);
-    keyBindingsRef.current = newBindings;
-    saveKeyBindings(newBindings);
-  }, []);
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -1229,6 +1220,7 @@ export default function Rhythmia() {
                 boardElRef={boardElRef}
                 keybindings={keybindings}
                 onKeybindChange={handleKeybindChange}
+                onKeybindingsUpdate={handleKeybindingsUpdate}
               />
               <BeatBar containerRef={beatBarRef} />
               <StatsPanel lines={lines} level={level} />
