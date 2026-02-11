@@ -111,7 +111,11 @@ export default function RhythmiaPage() {
     const navigateSection = useCallback((direction: 1 | -1) => {
         if (isScrollingRef.current) return;
         const next = currentSectionRef.current + direction;
-        if (next < 0 || next >= SECTION_COUNT) return;
+        if (next < 0 || next >= SECTION_COUNT) {
+            // Reset accumulator even if navigation fails (e.g., at boundary)
+            scrollAccumRef.current = 0;
+            return;
+        }
 
         isScrollingRef.current = true;
         currentSectionRef.current = next;
