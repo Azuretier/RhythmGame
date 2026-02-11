@@ -122,6 +122,7 @@ export default function Rhythmia() {
   // Inventory & Shop overlay state
   const [showInventory, setShowInventory] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [pauseStateBeforeOverlay, setPauseStateBeforeOverlay] = useState(false);
 
   const handleKeybindChange = useCallback((action: KeybindAction, key: string) => {
     setKeybindings(prev => {
@@ -932,10 +933,11 @@ export default function Rhythmia() {
         setShowInventory(prev => {
           const next = !prev;
           if (next) {
+            setPauseStateBeforeOverlay(isPaused);
             setIsPaused(true);
             setShowShop(false);
           } else {
-            setIsPaused(false);
+            setIsPaused(pauseStateBeforeOverlay);
           }
           return next;
         });
@@ -950,10 +952,11 @@ export default function Rhythmia() {
         setShowShop(prev => {
           const next = !prev;
           if (next) {
+            setPauseStateBeforeOverlay(isPaused);
             setIsPaused(true);
             setShowInventory(false);
           } else {
-            setIsPaused(false);
+            setIsPaused(pauseStateBeforeOverlay);
           }
           return next;
         });
@@ -973,13 +976,13 @@ export default function Rhythmia() {
         if (showInventory) {
           e.preventDefault();
           setShowInventory(false);
-          setIsPaused(false);
+          setIsPaused(pauseStateBeforeOverlay);
           return;
         }
         if (showShop) {
           e.preventDefault();
           setShowShop(false);
-          setIsPaused(false);
+          setIsPaused(pauseStateBeforeOverlay);
           return;
         }
         if (showCraftUI) {
@@ -1258,7 +1261,7 @@ export default function Rhythmia() {
           inventory={inventory}
           craftedCards={craftedCards}
           damageMultiplier={damageMultiplier}
-          onClose={() => { setShowInventory(false); setIsPaused(false); }}
+          onClose={() => { setShowInventory(false); setIsPaused(pauseStateBeforeOverlay); }}
           closeKey={keybindings.inventory}
         />
       )}
@@ -1270,7 +1273,7 @@ export default function Rhythmia() {
           craftedCards={craftedCards}
           onPurchase={craftCard}
           canPurchase={canCraftCard}
-          onClose={() => { setShowShop(false); setIsPaused(false); }}
+          onClose={() => { setShowShop(false); setIsPaused(pauseStateBeforeOverlay); }}
           closeKey={keybindings.shop}
         />
       )}
