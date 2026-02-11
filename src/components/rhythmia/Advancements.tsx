@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import type { AdvancementState, AdvancementCategory } from '@/lib/advancements/types';
@@ -60,8 +60,8 @@ export const Advancements: React.FC<Props> = ({ onClose, embedded = false }) => 
 
   const filteredAdvancements = ADVANCEMENTS.filter(a => a.category === selectedCategory);
 
-  // Detect locale from translations
-  const locale = t('lobby.play') === 'PLAY' ? 'en' : 'ja';
+  // Get locale from next-intl
+  const locale = useLocale();
   const categoryLabels = CATEGORY_LABELS[locale] || CATEGORY_LABELS.en;
 
   const panelContent = (

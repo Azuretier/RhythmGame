@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useNotifications } from '@/lib/notifications';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import styles from './NotificationCenter.module.css';
@@ -39,10 +39,8 @@ export default function NotificationCenter() {
     markAllRead,
   } = useNotifications();
   const t = useTranslations();
+  const locale = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Detect locale from translations
-  const locale = t('lobby.play') === 'PLAY' ? 'en' : 'ja';
 
   // Close on escape
   useEffect(() => {

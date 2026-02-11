@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { PR_UPDATES, getRecentUpdates, getUpdatesByCategory, getUpdateStats, type PRUpdate } from '@/lib/updates/changelog';
 import styles from './UpdatesPanel.module.css';
 
@@ -31,11 +31,9 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export default function UpdatesPanel({ maxItems = 10, showCategories = true }: UpdatesPanelProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
-
-  // Detect locale
-  const locale = t('lobby.play') === 'PLAY' ? 'en' : 'ja';
 
   const stats = getUpdateStats();
   const recentUpdates = getRecentUpdates(maxItems);

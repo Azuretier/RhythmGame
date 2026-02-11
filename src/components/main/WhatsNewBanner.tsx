@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { getRecentUpdates } from '@/lib/updates';
 import styles from './WhatsNewBanner.module.css';
 
@@ -18,9 +18,7 @@ export default function WhatsNewBanner({ autoShow = true, dismissible = true }: 
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(true);
   const t = useTranslations();
-  
-  // Detect locale
-  const locale = t('lobby.play') === 'PLAY' ? 'en' : 'ja';
+  const locale = useLocale();
 
   useEffect(() => {
     if (!autoShow) return;
