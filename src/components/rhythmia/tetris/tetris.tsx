@@ -401,6 +401,7 @@ export default function Rhythmia() {
     const currentBeatPhase = beatPhaseRef.current;
     const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
     let mult = 1;
+    let currentCombo = comboRef.current; // Track the combo value to use for calculations
 
     // Track pieces placed for advancements
     gamePiecesPlacedRef.current++;
@@ -408,6 +409,7 @@ export default function Rhythmia() {
     if (onBeat) {
       mult = 2;
       const newCombo = comboRef.current + 1;
+      currentCombo = newCombo; // Use the new combo for calculations
       setCombo(newCombo);
       showJudgment('PERFECT!', '#FFD700');
       playTone(1047, 0.2, 'triangle');
@@ -433,6 +435,7 @@ export default function Rhythmia() {
       if (comboRef.current > 0) {
         showJudgment('MISS', '#FF4444');
       }
+      currentCombo = 0; // Combo is reset to 0
       setCombo(0);
       vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
     }
@@ -454,7 +457,7 @@ export default function Rhythmia() {
 
     // Calculate score with rhythm multiplier
     const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * levelRef.current;
-    const finalScore = baseScore * mult * Math.max(1, comboRef.current);
+    const finalScore = baseScore * mult * Math.max(1, currentCombo);
     updateScore(scoreRef.current + finalScore);
 
     if (clearedLines > 0) {
@@ -476,13 +479,13 @@ export default function Rhythmia() {
 
       // === Gold from line clears ===
       const baseGold = GOLD_PER_LINE[clearedLines] || clearedLines * 100;
-      const comboGold = comboRef.current * GOLD_PER_COMBO;
+      const comboGold = currentCombo * GOLD_PER_COMBO;
       const goldEarned = Math.floor((baseGold + comboGold) * mult);
       addGold(goldEarned);
 
       if (mode === 'td') {
         // === TOWER DEFENSE: Kill enemies when lines are cleared ===
-        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult * critMult);
+        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, currentCombo) * weaponMult * critMult);
         killEnemies(killCount);
 
         // Item drops
@@ -492,7 +495,7 @@ export default function Rhythmia() {
         addGold(killCount * GOLD_PER_TERRAIN_DAMAGE);
       } else {
         // === VANILLA: Destroy terrain blocks ===
-        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult * critMult);
+        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, currentCombo) * weaponMult * critMult);
         const remaining = destroyTerrain(damage);
 
         // Item drops from terrain
@@ -515,7 +518,7 @@ export default function Rhythmia() {
         rows: rowsToClear,
         count: clearedLines,
         onBeat,
-        combo: comboRef.current,
+        combo: currentCombo,
       });
 
       // Particle effects (both modes)
