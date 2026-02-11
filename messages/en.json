@@ -15,7 +15,8 @@
         "battle": "BATTLE",
         "back": "← Back",
         "online": "Online",
-        "onlineCount": "{count} online"
+        "onlineCount": "{count} online",
+        "loyalty": "Loyalty"
     },
     "vanilla": {
         "badge": "OFFICIAL",
@@ -150,6 +151,84 @@
         "label": "Language",
         "en": "English",
         "ja": "日本語"
+    },
+    "loyalty": {
+        "meta": {
+            "title": "Loyalty Program | RHYTHMIA - Azuretier",
+            "description": "Track your loyalty tier, earn badges, maintain streaks, and engage with the RHYTHMIA community."
+        },
+        "backToLobby": "\u2190 Back",
+        "currentTier": "CURRENT LOYALTY TIER",
+        "xpToNext": "{xp} XP to next tier",
+        "maxTier": "MAX TIER REACHED",
+        "streakDays": "DAY STREAK",
+        "tiers": {
+            "new_beat": "New Beat",
+            "syncopated": "Syncopated",
+            "in_rhythm": "In Rhythm",
+            "maestro": "Maestro"
+        },
+        "stats": {
+            "visits": "VISITS",
+            "streak": "STREAK",
+            "games": "GAMES",
+            "badges": "BADGES"
+        },
+        "sections": {
+            "tierRoadmap": "TIER ROADMAP",
+            "streak": "LOGIN STREAK",
+            "badges": "BADGES",
+            "community": "COMMUNITY VOICE",
+            "howItWorks": "HOW IT WORKS"
+        },
+        "badges": {
+            "streak_3": { "icon": "\uD83D\uDD25", "name": "3-Day Streak", "desc": "Visit 3 days in a row" },
+            "streak_7": { "icon": "\uD83D\uDD25", "name": "Weekly Rhythm", "desc": "Visit 7 days in a row" },
+            "streak_14": { "icon": "\uD83D\uDD25", "name": "Fortnight Beat", "desc": "Visit 14 days in a row" },
+            "streak_30": { "icon": "\uD83D\uDD25", "name": "Monthly Pulse", "desc": "Visit 30 days in a row" },
+            "visits_5": { "icon": "\uD83D\uDC63", "name": "Regular", "desc": "Visit 5 times" },
+            "visits_25": { "icon": "\uD83D\uDC63", "name": "Familiar Face", "desc": "Visit 25 times" },
+            "visits_100": { "icon": "\uD83D\uDC63", "name": "Part of the Family", "desc": "Visit 100 times" },
+            "games_10": { "icon": "\uD83C\uDFAE", "name": "Player", "desc": "Play 10 games" },
+            "games_50": { "icon": "\uD83C\uDFAE", "name": "Enthusiast", "desc": "Play 50 games" },
+            "games_200": { "icon": "\uD83C\uDFAE", "name": "Devotee", "desc": "Play 200 games" },
+            "polls_1": { "icon": "\uD83D\uDDF3\uFE0F", "name": "First Vote", "desc": "Vote in your first poll" },
+            "polls_5": { "icon": "\uD83D\uDDF3\uFE0F", "name": "Active Voter", "desc": "Vote in 5 polls" },
+            "polls_10": { "icon": "\uD83D\uDDF3\uFE0F", "name": "Community Voice", "desc": "Vote in 10 polls" }
+        },
+        "poll": {
+            "question": "What should the next RHYTHMIA game mode be?",
+            "options": {
+                "0": "Co-op Mode (2v2 team battles)",
+                "1": "Survival Mode (endless waves)",
+                "2": "Tournament Mode (bracket elimination)",
+                "3": "Zen Mode (relaxed, no pressure)"
+            },
+            "vote": "VOTE",
+            "voted": "Thanks for voting!"
+        },
+        "strategy": {
+            "0": {
+                "step": "STEP 01",
+                "title": "Play & Earn XP",
+                "desc": "Every game you play, every visit you make, and every achievement you unlock earns you XP toward your loyalty tier."
+            },
+            "1": {
+                "step": "STEP 02",
+                "title": "Build Your Streak",
+                "desc": "Visit daily to keep your streak alive. Longer streaks earn bonus XP and unlock exclusive streak badges."
+            },
+            "2": {
+                "step": "STEP 03",
+                "title": "Climb the Tiers",
+                "desc": "Progress from New Beat to Maestro. Each tier brings you closer to the core of the RHYTHMIA community."
+            },
+            "3": {
+                "step": "STEP 04",
+                "title": "Shape the Future",
+                "desc": "Vote in community polls, earn badges, and help decide what comes next for RHYTHMIA."
+            }
+        }
     },
     "updates": {
         "title": "Recent Updates",

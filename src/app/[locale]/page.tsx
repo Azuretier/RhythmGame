@@ -185,6 +185,12 @@ export default function RhythmiaPage() {
                         >
                             {t('advancements.button', { count: unlockedCount, total: ADVANCEMENTS.length })}
                         </button>
+                        <button
+                            className={styles.advButton}
+                            onClick={() => router.push('/loyalty')}
+                        >
+                            {t('lobby.loyalty')}
+                        </button>
                         <div className={styles.statusItem}>
                             <span className={styles.statusDot}></span>
                             <span>{t('lobby.onlineCount', { count: onlineCount })}</span>
