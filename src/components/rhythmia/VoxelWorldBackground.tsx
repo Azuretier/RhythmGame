@@ -860,18 +860,18 @@ export default function VoxelWorldBackground({
           }
         }
 
-        // === Turret aiming ===
+        // === Turret aiming — uses same Manhattan targeting as fireBullet ===
         if (ss?.turret && ss.towerGroup) {
           const aliveEnemies = enemiesRef.current.filter(e => e.alive);
           if (aliveEnemies.length > 0) {
-            // Find closest enemy
+            // Find closest enemy by Manhattan distance (same as fireBullet)
             let closest = aliveEnemies[0];
-            let closestDist = Math.sqrt(closest.x ** 2 + closest.z ** 2);
+            let closestDist = Math.abs(closest.gridX) + Math.abs(closest.gridZ);
             for (let i = 1; i < aliveEnemies.length; i++) {
-              const d = Math.sqrt(aliveEnemies[i].x ** 2 + aliveEnemies[i].z ** 2);
+              const d = Math.abs(aliveEnemies[i].gridX) + Math.abs(aliveEnemies[i].gridZ);
               if (d < closestDist) { closest = aliveEnemies[i]; closestDist = d; }
             }
-            // Smooth turret rotation toward target (in local tower space)
+            // Smooth turret rotation toward target world position
             const targetAngle = Math.atan2(closest.x, closest.z);
             const tRot = ss.turret.rotation.y;
             ss.turret.rotation.y += (targetAngle - tRot) * 0.12;

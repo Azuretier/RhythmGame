@@ -577,33 +577,43 @@ export function useGameState() {
             const newY = b.y + b.vy * dt - 0.5 * BULLET_GRAVITY * dt * dt;
             const newZ = b.z + b.vz * dt;
 
-            // Check if bullet hit the ground — remove it (no persistence)
+            // Check if bullet hit the ground — guaranteed hit on targeted enemy
             if (newY <= BULLET_GROUND_Y) {
-                continue; // bullet lands and disappears
+                // Bullet has landed — damage the targeted enemy wherever it is
+                const targetEnemy = enemiesRef.current.find(
+                    e => e.id === b.targetEnemyId && e.alive
+                );
+                if (targetEnemy && !damagedEnemyIds.has(targetEnemy.id)) {
+                    targetEnemy.health -= BULLET_DAMAGE;
+                    damagedEnemyIds.add(targetEnemy.id);
+                    if (targetEnemy.health <= 0) {
+                        targetEnemy.alive = false;
+                        totalKills++;
+                    }
+                }
+                continue; // bullet consumed
             }
 
-            // Check collision — guaranteed hit on the targeted enemy
+            // In-flight proximity check — if bullet passes close to targeted enemy mid-arc
             const targetEnemy = enemiesRef.current.find(
                 e => e.id === b.targetEnemyId && e.alive
             );
-
-            // Distance to targeted enemy (3D)
-            const targetDist = targetEnemy
-                ? Math.sqrt((targetEnemy.x - newX) ** 2 + (targetEnemy.y - newY) ** 2 + (targetEnemy.z - newZ) ** 2)
-                : Infinity;
-
-            if (targetEnemy && targetDist < BULLET_KILL_RADIUS) {
-                // Guaranteed hit on the targeted enemy
-                targetEnemy.health -= BULLET_DAMAGE;
-                damagedEnemyIds.add(targetEnemy.id);
-                if (targetEnemy.health <= 0) {
-                    targetEnemy.alive = false;
-                    totalKills++;
+            if (targetEnemy) {
+                const targetDist = Math.sqrt(
+                    (targetEnemy.x - newX) ** 2 + (targetEnemy.y - newY) ** 2 + (targetEnemy.z - newZ) ** 2
+                );
+                if (targetDist < BULLET_KILL_RADIUS) {
+                    targetEnemy.health -= BULLET_DAMAGE;
+                    damagedEnemyIds.add(targetEnemy.id);
+                    if (targetEnemy.health <= 0) {
+                        targetEnemy.alive = false;
+                        totalKills++;
+                    }
+                    continue;
                 }
-                continue;
             }
 
-            // If targeted enemy is dead/gone, hit any nearby enemy instead
+            // If targeted enemy is dead, check for any nearby enemy
             if (!targetEnemy) {
                 const alive = enemiesRef.current.filter(
                     e => e.alive && !damagedEnemyIds.has(e.id)
