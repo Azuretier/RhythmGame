@@ -13,11 +13,32 @@ interface Props {
 
 export const AdvancementToast: React.FC<Props> = ({ unlockedIds, onDismiss }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const prevLengthRef = useRef(unlockedIds.length);
   const t = useTranslations();
 
   // Stable ref so the timer never resets due to parent re-renders
   const onDismissRef = useRef(onDismiss);
   onDismissRef.current = onDismiss;
+
+  // Reset currentIndex when transitioning from empty to non-empty array
+  // or if currentIndex becomes out of bounds
+  useEffect(() => {
+    if (unlockedIds.length === 0) {
+      prevLengthRef.current = 0;
+      return;
+    }
+
+    // If we went from empty (0) to non-empty, reset currentIndex
+    if (prevLengthRef.current === 0 && unlockedIds.length > 0) {
+      setCurrentIndex(0);
+    }
+    // If currentIndex is out of bounds, reset
+    else if (currentIndex >= unlockedIds.length) {
+      setCurrentIndex(0);
+    }
+
+    prevLengthRef.current = unlockedIds.length;
+  }, [unlockedIds.length, currentIndex]);
 
   useEffect(() => {
     if (unlockedIds.length === 0) return;
