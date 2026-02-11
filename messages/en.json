@@ -166,5 +166,64 @@
             "docs": "Documentation",
             "i18n": "Internationalization"
         }
+    },
+    "minecraft_board": {
+        "title": "Minecraft Board Game",
+        "subtitle": "Explore, Mine, Craft, Survive!",
+        "playerName": "Player Name",
+        "worldName": "World Name",
+        "create": "Create",
+        "join": "Join",
+        "browse": "Browse",
+        "createWorld": "Create World",
+        "joinWorld": "Join World",
+        "roomCode": "Room Code",
+        "noRooms": "No public worlds available",
+        "players": "Players",
+        "ready": "Ready",
+        "notReady": "Not Ready",
+        "startGame": "Start Game",
+        "leave": "Leave",
+        "connecting": "Connecting...",
+        "reconnecting": "Reconnecting...",
+        "disconnected": "Disconnected from server",
+        "reconnect": "Reconnect",
+        "howToPlay": "How to Play",
+        "controls": {
+            "move": "WASD / Arrow keys to move",
+            "mine": "Click adjacent blocks to mine",
+            "craft": "E to open crafting, I for inventory",
+            "eat": "Right-click food in hotbar to eat",
+            "hotbar": "1-9 to select hotbar slot",
+            "win": "Craft the Ender Portal Frame to win!"
+        },
+        "hud": {
+            "equipped": "Equipped",
+            "fist": "Fist",
+            "armor": "Armor",
+            "kills": "Kills",
+            "mined": "Mined",
+            "craft": "Craft",
+            "inventory": "Inventory"
+        },
+        "crafting": {
+            "title": "Crafting",
+            "craftingTable": "Crafting Table",
+            "furnace": "Furnace",
+            "craft": "Craft"
+        },
+        "game": {
+            "youDied": "You Died!",
+            "respawning": "Respawning...",
+            "gameOver": "Game Over!",
+            "youWin": "You Win!",
+            "wins": "{name} Wins!",
+            "enderPortal": "Crafted the Ender Portal Frame!",
+            "backToMenu": "Back to Menu",
+            "day": "Day",
+            "dusk": "Dusk",
+            "night": "Night",
+            "dawn": "Dawn"
+        }
     }
 }

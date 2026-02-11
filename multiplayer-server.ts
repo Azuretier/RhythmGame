@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
+import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
 import type {
   ClientMessage,
   ServerMessage,
@@ -18,6 +19,7 @@ import {
   ARENA_MAX_PLAYERS,
   ARENA_QUEUE_TIMEOUT,
 } from './src/types/arena';
+import type { MCServerMessage, Direction } from './src/types/minecraft-board';
 
 // Environment configuration
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -278,6 +280,53 @@ function clearArenaTimer(playerId: string): void {
 
 function isArenaMessage(type: string): boolean {
   return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue';
+}
+
+function isMCBoardMessage(type: string): boolean {
+  return type.startsWith('mc_');
+}
+
+// ===== Minecraft Board Game System =====
+
+const mcBoardManager = new MinecraftBoardManager({
+  onSendToPlayer: (playerId: string, message: MCServerMessage) => {
+    sendToPlayer(playerId, message as unknown as ServerMessage);
+  },
+  onBroadcastToRoom: (roomCode: string, message: MCServerMessage, excludePlayerId?: string) => {
+    broadcastToMCBoard(roomCode, message as unknown as ServerMessage, excludePlayerId);
+  },
+});
+
+function broadcastToMCBoard(roomCode: string, message: ServerMessage, excludePlayerId?: string): void {
+  const playerIds = mcBoardManager.getPlayerIdsInRoom(roomCode);
+  for (const pid of playerIds) {
+    if (pid !== excludePlayerId) {
+      sendToPlayer(pid, message);
+    }
+  }
+}
+
+function sendMCBoardRoomState(roomCode: string): void {
+  const roomState = mcBoardManager.getRoomState(roomCode);
+  if (roomState) {
+    broadcastToMCBoard(roomCode, { type: 'mc_room_state', roomState } as unknown as ServerMessage);
+  }
+}
+
+function startMCBoardCountdown(roomCode: string, gameSeed: number): void {
+  let count = COUNTDOWN_SECONDS;
+  const tick = () => {
+    if (count > 0) {
+      broadcastToMCBoard(roomCode, { type: 'mc_countdown', count } as unknown as ServerMessage);
+      count--;
+      setTimeout(tick, 1000);
+    } else {
+      mcBoardManager.beginPlaying(roomCode);
+      broadcastToMCBoard(roomCode, { type: 'mc_game_started', seed: gameSeed } as unknown as ServerMessage);
+      console.log(`[MC_BOARD] Game started in room ${roomCode}`);
+    }
+  };
+  tick();
 }
 
 // ===== Message Validation =====
@@ -923,6 +972,178 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
+    // ===== Minecraft Board Game Messages =====
+
+    case 'mc_create_room': {
+      const mcMsg = message as unknown as { playerName: string; roomName?: string };
+      const existing = mcBoardManager.getRoomByPlayerId(playerId);
+      if (existing) mcBoardManager.removePlayer(playerId);
+
+      const { roomCode, player } = mcBoardManager.createRoom(
+        playerId,
+        (mcMsg.playerName || 'Player').slice(0, 16),
+        mcMsg.roomName,
+      );
+
+      const reconnectToken = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'mc_room_created',
+        roomCode,
+        playerId: player.id,
+        reconnectToken,
+      } as unknown as ServerMessage);
+
+      sendMCBoardRoomState(roomCode);
+      console.log(`[MC_BOARD] Room ${roomCode} created by ${player.name}`);
+      break;
+    }
+
+    case 'mc_join_room': {
+      const mcMsg = message as unknown as { roomCode: string; playerName: string };
+      const existing = mcBoardManager.getRoomByPlayerId(playerId);
+      if (existing) mcBoardManager.removePlayer(playerId);
+
+      const result = mcBoardManager.joinRoom(mcMsg.roomCode, playerId, (mcMsg.playerName || 'Player').slice(0, 16));
+      if (!result.success || !result.player) {
+        sendError(playerId, result.error || 'Failed to join', 'MC_JOIN_FAILED');
+        break;
+      }
+
+      const roomState = mcBoardManager.getRoomState(mcMsg.roomCode.toUpperCase());
+      if (!roomState) {
+        sendError(playerId, 'Room not found', 'MC_ROOM_NOT_FOUND');
+        break;
+      }
+
+      const reconnectToken = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'mc_joined_room',
+        roomCode: mcMsg.roomCode.toUpperCase().trim(),
+        playerId: result.player.id,
+        roomState,
+        reconnectToken,
+      } as unknown as ServerMessage);
+
+      broadcastToMCBoard(mcMsg.roomCode.toUpperCase(), {
+        type: 'mc_player_joined',
+        player: result.player,
+      } as unknown as ServerMessage, playerId);
+
+      sendMCBoardRoomState(mcMsg.roomCode.toUpperCase());
+      console.log(`[MC_BOARD] ${result.player.name} joined room ${mcMsg.roomCode}`);
+      break;
+    }
+
+    case 'mc_get_rooms': {
+      const rooms = mcBoardManager.getPublicRooms();
+      sendToPlayer(playerId, { type: 'mc_room_list', rooms } as unknown as ServerMessage);
+      break;
+    }
+
+    case 'mc_leave': {
+      const result = mcBoardManager.removePlayer(playerId);
+      if (conn?.reconnectToken) {
+        reconnectTokens.delete(conn.reconnectToken);
+      }
+      if (result.roomCode) {
+        broadcastToMCBoard(result.roomCode, {
+          type: 'mc_player_left',
+          playerId,
+        } as unknown as ServerMessage);
+        if (result.room) {
+          sendMCBoardRoomState(result.roomCode);
+        }
+        console.log(`[MC_BOARD] Player ${playerId} left room ${result.roomCode}`);
+      }
+      break;
+    }
+
+    case 'mc_ready': {
+      const mcMsg = message as unknown as { ready: boolean };
+      const result = mcBoardManager.setPlayerReady(playerId, mcMsg.ready);
+      if (!result.success) {
+        sendError(playerId, result.error || 'Failed to set ready');
+        break;
+      }
+      const room = mcBoardManager.getRoomByPlayerId(playerId);
+      if (room) {
+        broadcastToMCBoard(room.code, {
+          type: 'mc_player_ready',
+          playerId,
+          ready: mcMsg.ready,
+        } as unknown as ServerMessage);
+        sendMCBoardRoomState(room.code);
+      }
+      break;
+    }
+
+    case 'mc_start': {
+      const result = mcBoardManager.startGame(playerId);
+      if (!result.success || !result.gameSeed) {
+        sendError(playerId, result.error || 'Failed to start', 'MC_START_FAILED');
+        break;
+      }
+      const room = mcBoardManager.getRoomByPlayerId(playerId);
+      if (room) {
+        sendMCBoardRoomState(room.code);
+        startMCBoardCountdown(room.code, result.gameSeed);
+      }
+      break;
+    }
+
+    case 'mc_move': {
+      const mcMsg = message as unknown as { direction: Direction };
+      mcBoardManager.handleMove(playerId, mcMsg.direction);
+      break;
+    }
+
+    case 'mc_mine': {
+      const mcMsg = message as unknown as { x: number; y: number };
+      mcBoardManager.handleMine(playerId, mcMsg.x, mcMsg.y);
+      break;
+    }
+
+    case 'mc_cancel_mine': {
+      mcBoardManager.handleCancelMine(playerId);
+      break;
+    }
+
+    case 'mc_craft': {
+      const mcMsg = message as unknown as { recipeId: string };
+      mcBoardManager.handleCraft(playerId, mcMsg.recipeId);
+      break;
+    }
+
+    case 'mc_attack': {
+      const mcMsg = message as unknown as { targetId: string };
+      mcBoardManager.handleAttack(playerId, mcMsg.targetId);
+      break;
+    }
+
+    case 'mc_place_block': {
+      const mcMsg = message as unknown as { x: number; y: number; itemIndex: number };
+      mcBoardManager.handlePlaceBlock(playerId, mcMsg.x, mcMsg.y, mcMsg.itemIndex);
+      break;
+    }
+
+    case 'mc_eat': {
+      const mcMsg = message as unknown as { itemIndex: number };
+      mcBoardManager.handleEat(playerId, mcMsg.itemIndex);
+      break;
+    }
+
+    case 'mc_select_slot': {
+      const mcMsg = message as unknown as { slot: number };
+      mcBoardManager.handleSelectSlot(playerId, mcMsg.slot);
+      break;
+    }
+
+    case 'mc_chat': {
+      const mcMsg = message as unknown as { message: string };
+      mcBoardManager.handleChat(playerId, mcMsg.message);
+      break;
+    }
+
     default:
       sendError(playerId, `Unknown message type`, 'UNKNOWN_TYPE');
   }
@@ -946,6 +1167,12 @@ function handleDisconnect(playerId: string, reason: string): void {
   const arenaResult = arenaManager.markDisconnected(playerId);
   if (arenaResult.roomCode) {
     sendArenaState(arenaResult.roomCode);
+  }
+
+  // Handle MC board disconnect
+  const mcResult = mcBoardManager.markDisconnected(playerId);
+  if (mcResult.roomCode) {
+    sendMCBoardRoomState(mcResult.roomCode);
   }
 
   const result = roomManager.markPlayerDisconnected(playerId);
@@ -1018,6 +1245,7 @@ const server = createServer((req, res) => {
       connections: playerConnections.size,
       rooms: roomManager.getRoomCount(),
       arenas: arenaManager.getRoomCount(),
+      mcBoards: mcBoardManager.getRoomCount(),
     }));
   } else if (req.url === '/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1025,6 +1253,7 @@ const server = createServer((req, res) => {
       connections: playerConnections.size,
       rooms: roomManager.getRoomCount(),
       arenas: arenaManager.getRoomCount(),
+      mcBoards: mcBoardManager.getRoomCount(),
       arenaQueue: arenaQueue.size,
       uptime: process.uptime(),
       memory: process.memoryUsage(),
@@ -1172,6 +1401,7 @@ function shutdown(signal: string) {
     server.close(() => {
       roomManager.destroy();
       arenaManager.destroy();
+      mcBoardManager.destroy();
       console.log('[SHUTDOWN] Complete');
       process.exit(0);
     });
