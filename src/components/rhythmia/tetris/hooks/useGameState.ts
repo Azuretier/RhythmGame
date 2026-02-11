@@ -570,12 +570,10 @@ export function useGameState() {
         for (const b of currentBullets) {
             if (!b.alive) continue;
 
-            // Apply gravity to vertical velocity (semi-implicit Euler)
+            // Apply gravity and update position using Velocity Verlet (matches rendering)
             const newVy = b.vy - BULLET_GRAVITY * dt;
-
-            // Update position using updated velocity (semi-implicit Euler, matches rendering)
             const newX = b.x + b.vx * dt;
-            const newY = b.y + newVy * dt;
+            const newY = b.y + b.vy * dt - 0.5 * BULLET_GRAVITY * dt * dt;
             const newZ = b.z + b.vz * dt;
 
             // Check if bullet hit the ground — remove it (no persistence)
