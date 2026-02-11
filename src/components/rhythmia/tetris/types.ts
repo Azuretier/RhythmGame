@@ -152,6 +152,7 @@ export type Bullet = {
     vx: number;
     vy: number;
     vz: number;
+    targetEnemyId: number;
     alive: boolean;
 };
 

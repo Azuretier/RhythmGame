@@ -1,5 +1,5 @@
 import React from 'react';
-import { WORLDS, TERRAINS_PER_WORLD, ColorTheme } from '../constants';
+import { WORLDS, TERRAINS_PER_WORLD, ColorTheme, MAX_HEALTH } from '../constants';
 import type { GameMode } from '../types';
 import styles from '../VanillaGame.module.css';
 
@@ -111,23 +111,27 @@ interface TerrainProgressProps {
     terrainTotal: number;
     stageNumber: number;
     gameMode: GameMode;
+    towerHealth?: number;
 }
 
 /**
  * Progress display — mode-aware
  * Vanilla: terrain destruction progress
- * TD: enemy count indicator
+ * TD: tower HP bar
  */
-export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, gameMode }: TerrainProgressProps) {
+export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, gameMode, towerHealth }: TerrainProgressProps) {
     if (gameMode === 'td') {
+        const hp = towerHealth ?? 0;
+        const hpPct = Math.max(0, Math.min(100, (hp / MAX_HEALTH) * 100));
+        const hpColor = hpPct > 50 ? '#44ff44' : hpPct > 25 ? '#ffaa00' : '#ff4444';
         return (
             <>
                 <div className={styles.terrainLabel}>STAGE {stageNumber} — TOWER DEFENSE</div>
                 <div className={styles.terrainBar}>
-                    <div className={styles.terrainFill} style={{ width: `${terrainTotal > 0 ? Math.min(100, (terrainRemaining / 20) * 100) : 0}%`, background: terrainRemaining > 10 ? '#ff4444' : terrainRemaining > 5 ? '#ffaa00' : '#44ff44' }} />
+                    <div className={styles.terrainFill} style={{ width: `${hpPct}%`, background: hpColor }} />
                 </div>
                 <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
-                    ENEMIES: {terrainRemaining}
+                    HP: {Math.ceil(hp)} / {MAX_HEALTH}
                 </div>
             </>
         );

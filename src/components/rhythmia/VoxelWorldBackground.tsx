@@ -420,21 +420,27 @@ function createTowerModel(): THREE.Group {
     tower.add(merlon);
   }
 
-  // Conical roof
-  const roofGeo = new THREE.ConeGeometry(3.2, 3.5, 8);
-  const roof = new THREE.Mesh(roofGeo, roofMat);
-  roof.position.y = 12.5;
-  tower.add(roof);
+  // Open-top platform — flat disc so cannon is fully visible
+  const platformGeo = new THREE.CylinderGeometry(2.8, 2.8, 0.3, 8);
+  const platform = new THREE.Mesh(platformGeo, topMat);
+  platform.position.y = 9.65;
+  tower.add(platform);
 
-  // Glowing crystal orb at the very top
-  const orbGeo = new THREE.SphereGeometry(0.5, 8, 6);
+  // Thin spire rising from center to hold the orb (doesn't block cannon)
+  const spireGeo = new THREE.CylinderGeometry(0.12, 0.2, 3, 6);
+  const spire = new THREE.Mesh(spireGeo, bodyMat);
+  spire.position.y = 12.5;
+  tower.add(spire);
+
+  // Glowing crystal orb at the spire tip
+  const orbGeo = new THREE.SphereGeometry(0.45, 8, 6);
   const orb = new THREE.Mesh(orbGeo, glowMat);
-  orb.position.y = 14.8;
+  orb.position.y = 14.2;
   tower.add(orb);
 
   // Point light emanating from the orb
   const orbLight = new THREE.PointLight(0x00AAFF, 0.6, 15);
-  orbLight.position.y = 14.8;
+  orbLight.position.y = 14.2;
   tower.add(orbLight);
 
   // Window slits (dark indents) on the body
@@ -457,35 +463,39 @@ function createTowerModel(): THREE.Group {
     tower.add(win);
   }
 
-  // Turret — rotating barrel that aims at enemies
+  // Turret — rotating barrel that aims at enemies (sits above open battlements)
   const turretGroup = new THREE.Group();
-  turretGroup.position.set(0, 11.5, 0);
+  turretGroup.position.set(0, 10.8, 0);
   turretGroup.name = 'turret';
 
-  const barrelGeo = new THREE.CylinderGeometry(0.1, 0.16, 2.8, 6);
+  // Turret base mount — visible rotating platform
+  const turretBaseMat = new THREE.MeshStandardMaterial({
+    color: 0x3a3a4a, roughness: 0.8, metalness: 0.1, flatShading: true,
+  });
+  const turretBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.7, 0.8, 0.5, 8), turretBaseMat,
+  );
+  turretGroup.add(turretBase);
+
+  // Barrel — thicker and longer for visibility
+  const barrelGeo = new THREE.CylinderGeometry(0.15, 0.25, 3.5, 8);
   const barrelMat2 = new THREE.MeshStandardMaterial({
-    color: 0x3a3a3a, roughness: 0.8, metalness: 0.3, flatShading: true,
+    color: 0x3a3a3a, roughness: 0.7, metalness: 0.4, flatShading: true,
   });
   const barrel = new THREE.Mesh(barrelGeo, barrelMat2);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 0, 1.4);
+  barrel.position.set(0, 0.15, 1.75);
   turretGroup.add(barrel);
 
-  const muzzleGeo = new THREE.SphereGeometry(0.18, 6, 6);
+  // Muzzle flash sphere at barrel tip
+  const muzzleGeo = new THREE.SphereGeometry(0.28, 8, 6);
   const muzzleMat = new THREE.MeshBasicMaterial({
     color: 0x64ffb4, transparent: true, opacity: 0,
   });
   const muzzle = new THREE.Mesh(muzzleGeo, muzzleMat);
-  muzzle.position.set(0, 0, 2.9);
+  muzzle.position.set(0, 0.15, 3.6);
   muzzle.name = 'muzzle';
   turretGroup.add(muzzle);
-
-  const turretBaseMat = new THREE.MeshStandardMaterial({
-    color: 0x3a3a4a, roughness: 0.8, metalness: 0.1, flatShading: true,
-  });
-  turretGroup.add(new THREE.Mesh(
-    new THREE.BoxGeometry(0.55, 0.35, 0.55), turretBaseMat,
-  ));
 
   tower.add(turretGroup);
 
@@ -664,8 +674,8 @@ export default function VoxelWorldBackground({
     scene.fog = new THREE.Fog(0x000000, 40, 100);
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
-    camera.position.set(22, 20, 22);
-    camera.lookAt(0, 8, 0);
+    camera.position.set(22, 18, 22);
+    camera.lookAt(0, 9, 0);
 
     // Lights
     const ambient = new THREE.AmbientLight(0xffffff, 0.5);

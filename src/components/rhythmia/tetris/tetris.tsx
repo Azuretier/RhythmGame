@@ -1119,6 +1119,7 @@ export default function Rhythmia() {
             terrainTotal={gameMode === 'td' ? enemies.length : terrainTotal}
             stageNumber={stageNumber}
             gameMode={gameMode}
+            towerHealth={towerHealth}
           />
           {gameMode === 'vanilla' && (
             <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />

@@ -514,8 +514,8 @@ export function useGameState() {
             }
         }
 
-        // Calculate parabolic arc velocity from tower top to enemy's grid-based world position
-        const startY = 12;
+        // Calculate parabolic arc velocity from turret to enemy
+        const startY = 11;
         const targetY = 1.5;
         const dx = closest.gridX * GRID_TILE_SIZE;
         const dz = closest.gridZ * GRID_TILE_SIZE;
@@ -542,6 +542,7 @@ export function useGameState() {
             vx,
             vy,
             vz,
+            targetEnemyId: closest.id,
             alive: true,
         };
         setBullets(prev => [...prev, bullet]);
@@ -581,31 +582,52 @@ export function useGameState() {
                 continue; // bullet lands and disappears
             }
 
-            // Check collision with enemies
-            const alive = enemiesRef.current.filter(
-                e => e.alive && !damagedEnemyIds.has(e.id)
+            // Check collision — guaranteed hit on the targeted enemy
+            const targetEnemy = enemiesRef.current.find(
+                e => e.id === b.targetEnemyId && e.alive
             );
-            let hitEnemy: Enemy | null = null;
-            let bestDist = Infinity;
-            for (const e of alive) {
-                const ed = Math.sqrt(
-                    (e.x - newX) ** 2 + (e.y - newY) ** 2 + (e.z - newZ) ** 2
-                );
-                if (ed < bestDist) {
-                    bestDist = ed;
-                    hitEnemy = e;
-                }
-            }
 
-            if (hitEnemy && bestDist < BULLET_KILL_RADIUS) {
-                hitEnemy.health -= BULLET_DAMAGE;
-                damagedEnemyIds.add(hitEnemy.id);
-                if (hitEnemy.health <= 0) {
-                    hitEnemy.alive = false;
+            // Distance to targeted enemy (3D)
+            const targetDist = targetEnemy
+                ? Math.sqrt((targetEnemy.x - newX) ** 2 + (targetEnemy.y - newY) ** 2 + (targetEnemy.z - newZ) ** 2)
+                : Infinity;
+
+            if (targetEnemy && targetDist < BULLET_KILL_RADIUS) {
+                // Guaranteed hit on the targeted enemy
+                targetEnemy.health -= BULLET_DAMAGE;
+                damagedEnemyIds.add(targetEnemy.id);
+                if (targetEnemy.health <= 0) {
+                    targetEnemy.alive = false;
                     totalKills++;
                 }
-                // Bullet consumed on hit
                 continue;
+            }
+
+            // If targeted enemy is dead/gone, hit any nearby enemy instead
+            if (!targetEnemy) {
+                const alive = enemiesRef.current.filter(
+                    e => e.alive && !damagedEnemyIds.has(e.id)
+                );
+                let hitEnemy: Enemy | null = null;
+                let bestDist = Infinity;
+                for (const e of alive) {
+                    const ed = Math.sqrt(
+                        (e.x - newX) ** 2 + (e.y - newY) ** 2 + (e.z - newZ) ** 2
+                    );
+                    if (ed < bestDist) {
+                        bestDist = ed;
+                        hitEnemy = e;
+                    }
+                }
+                if (hitEnemy && bestDist < BULLET_KILL_RADIUS) {
+                    hitEnemy.health -= BULLET_DAMAGE;
+                    damagedEnemyIds.add(hitEnemy.id);
+                    if (hitEnemy.health <= 0) {
+                        hitEnemy.alive = false;
+                        totalKills++;
+                    }
+                    continue;
+                }
             }
 
             // Bullet still in flight
