@@ -2,7 +2,7 @@
 .panel {
   width: 100%;
   max-width: 700px;
-  max-height: 85vh;
+  height: 85vh;
   background: #0a0a0a;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -240,7 +240,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .panel {
-    max-height: 90vh;
+    height: 90vh;
   }
 
   .header {
