@@ -1,0 +1,269 @@
+/* ===== Hybrid Item Tooltip =====
+   Skeleton: Minecraft Java Edition / Wynncraft purple container
+   Flesh: Minecraft Dungeons icon+text stat rows, badges, damage values
+*/
+
+/* Radix tooltip content — no default styling, just animation */
+.tooltipContent {
+  z-index: 9999;
+  animation: tooltipFadeIn 0.15s ease-out;
+  pointer-events: none;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== Container: Java Edition Purple Box ===== */
+.tooltipContainer {
+  min-width: 200px;
+  max-width: 280px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  image-rendering: auto;
+}
+
+/* Outer border — dark purple edge (2px bevel) */
+.borderOuter {
+  background: #100020;
+  border: 2px solid #28007a;
+  border-radius: 2px;
+  padding: 1px;
+}
+
+/* Inner border — lighter purple highlight (1px inset bevel) */
+.borderInner {
+  border: 1px solid #5020a0;
+  border-radius: 1px;
+}
+
+/* Main body — deep purple translucent background */
+.tooltipBody {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 0, 48, 0.97) 0%,
+    rgba(20, 2, 50, 0.97) 100%
+  );
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ===== Header: Item Name + Power Level ===== */
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.itemName {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-shadow: 0 0 8px currentColor;
+}
+
+.powerLevel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Japanese subtitle */
+.nameJa {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.04em;
+  margin-top: -2px;
+}
+
+/* ===== Badges (Rarity / Special / Equipped) ===== */
+.badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.badge {
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  line-height: 1.3;
+}
+
+/* Golden special effect badge */
+.badgeGolden {
+  color: #FFD700;
+  background: rgba(255, 215, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.35);
+  text-shadow: 0 0 4px rgba(255, 215, 0, 0.4);
+}
+
+/* Equipped badge */
+.badgeEquipped {
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.12);
+  border-color: rgba(76, 175, 80, 0.35);
+}
+
+/* ===== Divider ===== */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(80, 32, 160, 0.6) 20%,
+    rgba(80, 32, 160, 0.6) 80%,
+    transparent 100%
+  );
+  margin: 3px 0;
+}
+
+/* ===== Stats Section: Icon + Text Rows ===== */
+.statsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.statIcon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.statValue {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.02em;
+  text-align: right;
+}
+
+/* Green tint for damage values */
+.statValueDamage {
+  color: #66ff66;
+  text-shadow: 0 0 4px rgba(102, 255, 102, 0.3);
+}
+
+/* Cyan tint for special effects */
+.statValueEffect {
+  color: #4FC3F7;
+  text-shadow: 0 0 4px rgba(79, 195, 247, 0.3);
+}
+
+/* ===== Recipe Section ===== */
+.recipeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.recipeSectionTitle {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.recipeRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 0;
+}
+
+.recipeIconWrap {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.recipeMatName {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.55);
+  flex: 1;
+}
+
+.recipeMatCount {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== Flavor / Lore Text ===== */
+.loreText {
+  font-size: 0.6rem;
+  font-style: italic;
+  color: rgba(128, 128, 128, 0.85);
+  line-height: 1.4;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* ===== Responsive ===== */
+@media screen and (max-width: 480px) {
+  .tooltipContainer {
+    min-width: 170px;
+    max-width: 240px;
+  }
+
+  .tooltipBody {
+    padding: 8px 10px;
+  }
+
+  .itemName {
+    font-size: 0.75rem;
+  }
+
+  .statIcon {
+    width: 16px;
+    height: 16px;
+    font-size: 0.65rem;
+  }
+
+  .statLabel,
+  .statValue {
+    font-size: 0.6rem;
+  }
+}
