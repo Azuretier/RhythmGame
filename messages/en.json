@@ -166,5 +166,10 @@
             "docs": "Documentation",
             "i18n": "Internationalization"
         }
+    },
+    "nav": {
+        "wiki": "Wiki",
+        "updates": "Updates",
+        "lobby": "Lobby"
     }
 }
