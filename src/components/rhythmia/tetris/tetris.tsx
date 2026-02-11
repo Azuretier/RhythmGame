@@ -1054,7 +1054,7 @@ export default function Rhythmia() {
       {/* Voxel World Background — mode-aware */}
       <VoxelWorldBackground
         seed={terrainSeed}
-        gameMode={gameMode === 'mix' ? 'vanilla' : gameMode}
+        gameMode={gameMode}
         terrainDestroyedCount={terrainDestroyedCount}
         enemies={(gameMode === 'td' || gameMode === 'mix') ? enemies : []}
         bullets={(gameMode === 'td' || gameMode === 'mix') ? bullets : []}

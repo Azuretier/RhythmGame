@@ -285,9 +285,11 @@ const VANILLA_SIZE_Z = 16;
 function generateVoxelWorld(seed: number, size: number, mode: GameMode = 'td', worldIdx: number = 0): VoxelData {
   const blocks: { x: number; y: number; z: number; color: THREE.Color }[] = [];
 
-  const heightFn = mode === 'vanilla' ? terrainHeightVanilla : terrainHeightTD;
+  // Mix mode uses vanilla terrain (hilly) with TD enemies
+  const useVanillaTerrain = mode === 'vanilla' || mode === 'mix';
+  const heightFn = useVanillaTerrain ? terrainHeightVanilla : terrainHeightTD;
 
-  if (mode === 'vanilla') {
+  if (useVanillaTerrain) {
     // Rectangular 16x20x16 terrain
     const halfX = Math.floor(VANILLA_SIZE_X / 2);
     const halfZ = Math.floor(VANILLA_SIZE_Z / 2);
@@ -503,6 +505,72 @@ interface ImpactParticle {
   decay: number;
 }
 
+// Mob color palettes — Minecraft Dungeons style
+// Each mob type has: body, head, limb colors and eye glow
+interface MobPalette {
+  body: number;
+  head: number;
+  limb: number;
+  eye: number;
+}
+
+const MOB_PALETTES: MobPalette[] = [
+  { body: 0x4a6e3a, head: 0x5a8248, limb: 0x3d5c30, eye: 0x33ff33 }, // Zombie — green
+  { body: 0xc8c8c8, head: 0xd8d8d8, limb: 0xa0a0a0, eye: 0x444444 }, // Skeleton — bone gray
+  { body: 0x2d8c2d, head: 0x33aa33, limb: 0x228822, eye: 0x000000 }, // Creeper — bright green
+  { body: 0x6b7b8d, head: 0x8b9daf, limb: 0x515f6e, eye: 0x44aaff }, // Vindicator — iron blue-gray
+  { body: 0x1a1a2e, head: 0x22223a, limb: 0x111120, eye: 0xcc44ff }, // Enderman — dark purple
+];
+
+// Body part geometry specs for Dungeons-style voxel mobs
+// Each mob has: head, body, armR, armL, legR, legL
+interface MobBodyParts {
+  head: THREE.InstancedMesh;
+  body: THREE.InstancedMesh;
+  armR: THREE.InstancedMesh;
+  armL: THREE.InstancedMesh;
+  legR: THREE.InstancedMesh;
+  legL: THREE.InstancedMesh;
+  eyes: THREE.InstancedMesh;
+}
+
+function createMobMeshes(scene: THREE.Scene): MobBodyParts {
+  const mat = new THREE.MeshStandardMaterial({
+    roughness: 0.7,
+    metalness: 0.05,
+    flatShading: true,
+  });
+
+  const eyeMat = new THREE.MeshStandardMaterial({
+    roughness: 0.2,
+    metalness: 0.3,
+    emissiveIntensity: 1.5,
+    flatShading: true,
+  });
+
+  // Geometry sizes for body parts (Minecraft proportions)
+  const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+  const bodyGeo = new THREE.BoxGeometry(0.55, 0.75, 0.35);
+  const armGeo = new THREE.BoxGeometry(0.25, 0.7, 0.25);
+  const legGeo = new THREE.BoxGeometry(0.25, 0.65, 0.25);
+  const eyeGeo = new THREE.BoxGeometry(0.12, 0.08, 0.05);
+
+  const head = new THREE.InstancedMesh(headGeo, mat.clone(), MAX_ENEMIES);
+  const body = new THREE.InstancedMesh(bodyGeo, mat.clone(), MAX_ENEMIES);
+  const armR = new THREE.InstancedMesh(armGeo, mat.clone(), MAX_ENEMIES);
+  const armL = new THREE.InstancedMesh(armGeo, mat.clone(), MAX_ENEMIES);
+  const legR = new THREE.InstancedMesh(legGeo, mat.clone(), MAX_ENEMIES);
+  const legL = new THREE.InstancedMesh(legGeo, mat.clone(), MAX_ENEMIES);
+  const eyes = new THREE.InstancedMesh(eyeGeo, eyeMat.clone(), MAX_ENEMIES * 2); // 2 eyes per mob
+
+  [head, body, armR, armL, legR, legL, eyes].forEach(m => {
+    m.count = 0;
+    scene.add(m);
+  });
+
+  return { head, body, armR, armL, legR, legL, eyes };
+}
+
 interface SceneState {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
@@ -514,9 +582,12 @@ interface SceneState {
   towerGroup: THREE.Group | null;
   turret: THREE.Group | null;
   muzzleFlash: THREE.Mesh | null;
+  // Legacy single-mesh enemy (kept for compatibility but unused now)
   enemyMesh: THREE.InstancedMesh | null;
   enemyGeo: THREE.BoxGeometry;
   enemyMat: THREE.MeshStandardMaterial;
+  // Dungeons-style multi-part mob meshes
+  mobParts: MobBodyParts | null;
   bulletMesh: THREE.InstancedMesh | null;
   bulletGeo: THREE.SphereGeometry;
   bulletMat: THREE.MeshStandardMaterial;
@@ -620,10 +691,11 @@ export default function VoxelWorldBackground({
     ss.instancedMesh = mesh;
     totalBlockCountRef.current = voxelData.count;
 
-    // TD mode: place tower at terrain center
-    if (mode === 'td') {
+    // TD and Mix modes: place tower and show enemy/bullet meshes
+    if (mode === 'td' || mode === 'mix') {
       const towerGroup = createTowerModel();
-      towerGroup.position.set(0, 0.5, 0);
+      // In mix mode, place tower higher to sit atop hilly terrain
+      towerGroup.position.set(0, mode === 'mix' ? 8 : 0.5, 0);
       ss.scene.add(towerGroup);
       ss.towerGroup = towerGroup;
 
@@ -631,12 +703,18 @@ export default function VoxelWorldBackground({
       ss.turret = towerGroup.getObjectByName('turret') as THREE.Group || null;
       ss.muzzleFlash = ss.turret?.getObjectByName('muzzle') as THREE.Mesh || null;
 
-      // Show enemy, bullet, and impact meshes
-      if (ss.enemyMesh) ss.enemyMesh.visible = true;
+      // Show mob part meshes, bullet, and impact meshes
+      if (ss.mobParts) {
+        Object.values(ss.mobParts).forEach(m => { m.visible = true; });
+      }
+      if (ss.enemyMesh) ss.enemyMesh.visible = false; // Old mesh hidden, using mob parts now
       if (ss.bulletMesh) ss.bulletMesh.visible = true;
       if (ss.impactMesh) ss.impactMesh.visible = true;
     } else {
-      // Vanilla mode: hide enemy, bullet, and impact meshes
+      // Vanilla mode: hide mob parts, bullet, and impact meshes
+      if (ss.mobParts) {
+        Object.values(ss.mobParts).forEach(m => { m.visible = false; });
+      }
       if (ss.enemyMesh) ss.enemyMesh.visible = false;
       if (ss.bulletMesh) ss.bulletMesh.visible = false;
       if (ss.impactMesh) ss.impactMesh.visible = false;
@@ -696,7 +774,7 @@ export default function VoxelWorldBackground({
       roughnessMap: roughnessMap,
     });
 
-    // Enemy instanced mesh — bright and visible
+    // Legacy enemy mesh (hidden — replaced by mob parts)
     const enemyGeo = new THREE.BoxGeometry(1.5, 2.2, 1.5);
     const enemyMat = new THREE.MeshStandardMaterial({
       color: 0xFF3333,
@@ -708,7 +786,11 @@ export default function VoxelWorldBackground({
     });
     const enemyMesh = new THREE.InstancedMesh(enemyGeo, enemyMat, MAX_ENEMIES);
     enemyMesh.count = 0;
+    enemyMesh.visible = false;
     scene.add(enemyMesh);
+
+    // Minecraft Dungeons-style voxel mob meshes
+    const mobParts = createMobMeshes(scene);
 
     // Bullet instanced mesh — green glowing projectiles (tower defense style)
     const bulletGeo = new THREE.SphereGeometry(0.2, 12, 8);
@@ -740,6 +822,7 @@ export default function VoxelWorldBackground({
       turret: null,
       muzzleFlash: null,
       enemyMesh, enemyGeo, enemyMat,
+      mobParts,
       bulletMesh, bulletGeo, bulletMat,
       impactMesh, impactGeo, impactMat,
     };
@@ -813,40 +896,122 @@ export default function VoxelWorldBackground({
           ss.towerGroup.rotation.y = ss.instancedMesh.rotation.y;
         }
 
-        // Update enemy instances
-        if (ss?.enemyMesh) {
+        // Update Minecraft Dungeons-style mob instances
+        if (ss?.mobParts) {
           const currentEnemies = enemiesRef.current.filter(e => e.alive);
-          ss.enemyMesh.count = currentEnemies.length;
+          const mp = ss.mobParts;
+          const n = currentEnemies.length;
+
+          mp.head.count = n;
+          mp.body.count = n;
+          mp.armR.count = n;
+          mp.armL.count = n;
+          mp.legR.count = n;
+          mp.legL.count = n;
+          mp.eyes.count = n * 2;
 
           const terrainRotY = ss.instancedMesh?.rotation.y ?? 0;
+          const cosR = Math.cos(terrainRotY);
+          const sinR = Math.sin(terrainRotY);
 
-          for (let i = 0; i < currentEnemies.length; i++) {
+          for (let i = 0; i < n; i++) {
             const e = currentEnemies[i];
             // Rotate enemy position with terrain
-            const cosR = Math.cos(terrainRotY);
-            const sinR = Math.sin(terrainRotY);
             const rx = e.x * cosR - e.z * sinR;
             const rz = e.x * sinR + e.z * cosR;
 
-            // Place on flat terrain surface with bobbing
-            const bobY = 1.5 + Math.sin(time * 0.005 + e.id) * 0.3;
-            dummy.position.set(rx, bobY, rz);
-            dummy.scale.set(1, 1, 1);
-            // Reset rotation then face center
-            dummy.rotation.set(0, 0, 0);
-            dummy.lookAt(new THREE.Vector3(0, bobY, 0));
-            dummy.updateMatrix();
-            ss.enemyMesh.setMatrixAt(i, dummy.matrix);
+            // Base Y position with subtle bob
+            const baseY = 1.2 + Math.sin(time * 0.004 + e.id * 1.3) * 0.12;
 
-            // Color: red-orange spectrum by enemy id
-            const hue = (e.id * 0.07) % 1;
-            enemyColor.setHSL(hue * 0.08 + 0.0, 0.95, 0.5);
-            ss.enemyMesh.setColorAt(i, enemyColor);
+            // Walking animation — sinusoidal limb swing
+            const walkPhase = time * 0.006 + e.id * 2.5;
+            const armSwing = Math.sin(walkPhase) * 0.6;
+            const legSwing = Math.sin(walkPhase) * 0.5;
+
+            // Face toward tower (center)
+            const faceAngle = Math.atan2(-rx, -rz);
+
+            // Mob type by ID for color variety
+            const palette = MOB_PALETTES[e.id % MOB_PALETTES.length];
+
+            // === HEAD === (top of body)
+            dummy.position.set(rx, baseY + 1.45, rz);
+            dummy.rotation.set(0, faceAngle, 0);
+            dummy.scale.set(1, 1, 1);
+            dummy.updateMatrix();
+            mp.head.setMatrixAt(i, dummy.matrix);
+            enemyColor.set(palette.head);
+            mp.head.setColorAt(i, enemyColor);
+
+            // === BODY === (center mass)
+            dummy.position.set(rx, baseY + 0.85, rz);
+            dummy.rotation.set(0, faceAngle, 0);
+            dummy.updateMatrix();
+            mp.body.setMatrixAt(i, dummy.matrix);
+            enemyColor.set(palette.body);
+            mp.body.setColorAt(i, enemyColor);
+
+            // === RIGHT ARM === (swings forward/back)
+            const armOffsetX = Math.sin(faceAngle) * 0.4;
+            const armOffsetZ = Math.cos(faceAngle) * 0.4;
+            dummy.position.set(rx + armOffsetX, baseY + 0.9, rz + armOffsetZ);
+            dummy.rotation.set(armSwing, faceAngle, 0);
+            dummy.updateMatrix();
+            mp.armR.setMatrixAt(i, dummy.matrix);
+            enemyColor.set(palette.limb);
+            mp.armR.setColorAt(i, enemyColor);
+
+            // === LEFT ARM === (opposite swing)
+            dummy.position.set(rx - armOffsetX, baseY + 0.9, rz - armOffsetZ);
+            dummy.rotation.set(-armSwing, faceAngle, 0);
+            dummy.updateMatrix();
+            mp.armL.setMatrixAt(i, dummy.matrix);
+            mp.armL.setColorAt(i, enemyColor);
+
+            // === RIGHT LEG === (opposite to right arm)
+            const legOffsetX = Math.sin(faceAngle) * 0.15;
+            const legOffsetZ = Math.cos(faceAngle) * 0.15;
+            dummy.position.set(rx + legOffsetX, baseY + 0.2, rz + legOffsetZ);
+            dummy.rotation.set(-legSwing, faceAngle, 0);
+            dummy.updateMatrix();
+            mp.legR.setMatrixAt(i, dummy.matrix);
+            mp.legR.setColorAt(i, enemyColor);
+
+            // === LEFT LEG ===
+            dummy.position.set(rx - legOffsetX, baseY + 0.2, rz - legOffsetZ);
+            dummy.rotation.set(legSwing, faceAngle, 0);
+            dummy.updateMatrix();
+            mp.legL.setMatrixAt(i, dummy.matrix);
+            mp.legL.setColorAt(i, enemyColor);
+
+            // === EYES === (two small glowing cubes on the face)
+            const eyeForwardX = -Math.sin(faceAngle) * 0.31;
+            const eyeForwardZ = -Math.cos(faceAngle) * 0.31;
+            const eyeSideX = Math.cos(faceAngle) * 0.12;
+            const eyeSideZ = -Math.sin(faceAngle) * 0.12;
+            const eyeY = baseY + 1.48;
+
+            // Right eye
+            dummy.position.set(rx + eyeForwardX + eyeSideX, eyeY, rz + eyeForwardZ + eyeSideZ);
+            dummy.rotation.set(0, faceAngle, 0);
+            dummy.scale.set(1, 1, 1);
+            dummy.updateMatrix();
+            mp.eyes.setMatrixAt(i * 2, dummy.matrix);
+            enemyColor.set(palette.eye);
+            mp.eyes.setColorAt(i * 2, enemyColor);
+
+            // Left eye
+            dummy.position.set(rx + eyeForwardX - eyeSideX, eyeY, rz + eyeForwardZ - eyeSideZ);
+            dummy.updateMatrix();
+            mp.eyes.setMatrixAt(i * 2 + 1, dummy.matrix);
+            mp.eyes.setColorAt(i * 2 + 1, enemyColor);
           }
 
-          if (currentEnemies.length > 0) {
-            ss.enemyMesh.instanceMatrix.needsUpdate = true;
-            if (ss.enemyMesh.instanceColor) ss.enemyMesh.instanceColor.needsUpdate = true;
+          if (n > 0) {
+            [mp.head, mp.body, mp.armR, mp.armL, mp.legR, mp.legL, mp.eyes].forEach(m => {
+              m.instanceMatrix.needsUpdate = true;
+              if (m.instanceColor) m.instanceColor.needsUpdate = true;
+            });
           }
         }
 
@@ -1013,8 +1178,8 @@ export default function VoxelWorldBackground({
           // Project enemy position to screen (with terrain rotation)
           const rx = e.x * cosR - e.z * sinR;
           const rz = e.x * sinR + e.z * cosR;
-          const bobY = 1.5 + Math.sin(time * 0.005 + e.id) * 0.3;
-          projVec.set(rx, bobY + 2.0, rz);
+          const bobY = 1.2 + Math.sin(time * 0.004 + e.id * 1.3) * 0.12;
+          projVec.set(rx, bobY + 2.2, rz);
           projVec.project(camera);
 
           // Convert NDC to canvas pixels
@@ -1066,6 +1231,17 @@ export default function VoxelWorldBackground({
       }
       if (sceneStateRef.current?.enemyMesh) {
         sceneStateRef.current.enemyMesh.dispose();
+      }
+      if (sceneStateRef.current?.mobParts) {
+        Object.values(sceneStateRef.current.mobParts).forEach((m: THREE.InstancedMesh) => {
+          m.geometry.dispose();
+          if (Array.isArray(m.material)) {
+            m.material.forEach(mat => mat.dispose());
+          } else {
+            m.material.dispose();
+          }
+          m.dispose();
+        });
       }
       if (sceneStateRef.current?.bulletMesh) {
         sceneStateRef.current.bulletMesh.dispose();
