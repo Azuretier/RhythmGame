@@ -395,6 +395,11 @@ export function getUpdateStats() {
   const merged = PR_UPDATES.filter(pr => pr.merged);
   const categories = getUpdatesByCategory();
   
+  // Sort by date to ensure correct date range calculation
+  const sortedByDate = [...merged].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  
   return {
     total: PR_UPDATES.length,
     merged: merged.length,
@@ -407,8 +412,8 @@ export function getUpdateStats() {
       i18n: categories.get('i18n')?.length || 0,
     },
     dateRange: {
-      start: merged[0]?.date || '',
-      end: merged[merged.length - 1]?.date || '',
+      start: sortedByDate[0]?.date || '',
+      end: sortedByDate[sortedByDate.length - 1]?.date || '',
     }
   };
 }

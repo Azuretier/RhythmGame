@@ -3,7 +3,7 @@ import { BOARD_WIDTH, BOARD_HEIGHT, COLORS, ColorTheme, getThemedColor } from '.
 import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
-import { AdvancementsMenu } from '@/components/rhythmia/AdvancementsMenu';
+import Advancements from '@/components/rhythmia/Advancements';
 import type { Piece, Board as BoardType } from '../types';
 import styles from '../VanillaGame.module.css';
 
@@ -218,7 +218,7 @@ export function Board({
                             )}
                         </>
                     ) : (
-                        <AdvancementsMenu onClose={() => setShowAdvancements(false)} />
+                        <Advancements embedded onClose={() => setShowAdvancements(false)} />
                     )}
                 </div>
             )}

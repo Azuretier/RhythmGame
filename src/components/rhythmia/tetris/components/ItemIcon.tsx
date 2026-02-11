@@ -6,13 +6,272 @@ interface ItemIconProps {
     className?: string;
 }
 
+// ===== Isometric 3D Constants =====
+const COS30 = 0.866025;
+const SIN30 = 0.5;
+
+// Pixel grid resolution per face
+const GRID = 5;
+const CELL = 1 / GRID;
+
+// ===== Isometric Coordinate Transform =====
+// Converts UV (0-1) face-space coordinates to screen (x,y)
+function fp(
+    face: 'top' | 'left' | 'right',
+    u: number, v: number,
+    cx: number, cy: number, e: number,
+): [number, number] {
+    switch (face) {
+        case 'top':
+            // Origin=center, U→topRight, V→topLeft
+            return [
+                cx + u * e * COS30 - v * e * COS30,
+                cy - u * e * SIN30 - v * e * SIN30,
+            ];
+        case 'left':
+            // Origin=topLeft, U→center(right), V→bottomLeft(down)
+            return [
+                cx - e * COS30 + u * e * COS30,
+                cy - e * SIN30 + u * e * SIN30 + v * e,
+            ];
+        case 'right':
+            // Origin=center, U→topRight, V→bottom(down)
+            return [
+                cx + u * e * COS30,
+                cy - u * e * SIN30 + v * e,
+            ];
+    }
+}
+
+// Build polygon points string for a face-space pixel rectangle
+function pixelPoly(
+    face: 'top' | 'left' | 'right',
+    u: number, v: number, du: number, dv: number,
+    cx: number, cy: number, e: number,
+): string {
+    return [
+        fp(face, u, v, cx, cy, e),
+        fp(face, u + du, v, cx, cy, e),
+        fp(face, u + du, v + dv, cx, cy, e),
+        fp(face, u, v + dv, cx, cy, e),
+    ].map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+}
+
+// ===== Ore Texture Grids (5x5 per face) =====
+// 0 = stone base, 1 = ore spot, 2 = stone variant (darker/lighter)
+type FaceGrid = number[][];
+type OreTexture = { top: FaceGrid; left: FaceGrid; right: FaceGrid };
+
+const ORE_TEXTURES: Record<string, OreTexture> = {
+    stone: {
+        top:   [[2,0,2,0,2],[0,2,0,2,0],[2,0,2,0,2],[0,2,0,2,0],[2,0,2,0,2]],
+        left:  [[0,2,0,2,0],[2,0,2,0,2],[0,2,0,2,0],[2,0,2,0,2],[0,2,0,2,0]],
+        right: [[2,0,0,2,0],[0,2,2,0,2],[2,0,0,2,0],[0,2,2,0,2],[2,0,0,2,0]],
+    },
+    iron: {
+        top:   [[0,1,1,0,0],[0,0,0,0,2],[2,0,0,1,0],[0,0,0,0,0],[1,0,0,1,2]],
+        left:  [[0,0,2,0,0],[0,1,1,0,2],[0,0,0,0,0],[2,0,0,1,1],[0,0,2,0,0]],
+        right: [[0,2,1,0,0],[0,0,0,0,2],[1,1,0,0,0],[0,0,0,2,0],[0,0,0,1,2]],
+    },
+    crystal: {
+        top:   [[0,0,1,0,2],[2,0,0,1,0],[0,0,0,0,0],[1,1,0,0,2],[0,0,2,0,1]],
+        left:  [[1,0,0,2,0],[0,0,0,0,0],[2,0,1,1,0],[0,0,0,0,2],[0,2,0,0,1]],
+        right: [[0,2,0,0,1],[0,0,0,0,0],[0,1,0,2,0],[2,0,0,0,0],[1,0,2,0,0]],
+    },
+    gold: {
+        top:   [[1,0,0,2,0],[0,0,1,0,0],[2,0,0,0,2],[0,0,0,0,0],[0,1,2,0,1]],
+        left:  [[0,0,1,0,2],[2,0,0,0,0],[1,0,2,0,0],[0,0,0,0,2],[0,2,0,1,0]],
+        right: [[0,1,0,0,2],[0,0,0,0,0],[2,0,1,0,0],[0,0,0,2,0],[0,0,2,0,1]],
+    },
+    obsidian: {
+        top:   [[1,0,2,0,1],[0,0,0,1,0],[2,1,0,0,2],[0,0,0,0,0],[1,0,2,1,0]],
+        left:  [[0,1,0,2,0],[2,0,0,0,1],[0,0,2,0,0],[1,0,0,0,2],[0,2,0,1,0]],
+        right: [[2,0,1,0,0],[0,0,0,2,0],[1,0,0,0,1],[0,2,0,0,0],[0,0,1,2,0]],
+    },
+    star: {
+        top:   [[0,2,1,0,2],[0,0,0,0,0],[2,0,0,2,0],[1,0,0,0,0],[0,2,0,0,1]],
+        left:  [[2,1,0,0,0],[0,0,0,2,0],[0,0,0,0,1],[0,2,0,0,0],[1,0,2,0,0]],
+        right: [[1,0,0,2,0],[0,0,0,0,0],[2,0,0,0,1],[0,0,2,0,0],[0,2,0,1,2]],
+    },
+};
+
+// ===== Ore Color Definitions =====
+// Each ore has three color tiers per face: stone base, stone variant, ore spots
+// Face shading: top=brightest, right=medium, left=darkest (standard isometric lighting)
+type FaceColors = { top: string; left: string; right: string };
+type OreColors = {
+    stone: FaceColors;
+    stoneAlt: FaceColors;
+    ore: FaceColors;
+    edge: string;
+    glow?: string;
+};
+
+const ORE_COLORS: Record<string, OreColors> = {
+    stone: {
+        stone:    { top: '#9E9E9E', left: '#6E6E6E', right: '#838383' },
+        stoneAlt: { top: '#8C8C8C', left: '#5F5F5F', right: '#757575' },
+        ore:      { top: '#ABABAB', left: '#7D7D7D', right: '#919191' },
+        edge: '#505050',
+    },
+    iron: {
+        stone:    { top: '#9E9E9E', left: '#6E6E6E', right: '#838383' },
+        stoneAlt: { top: '#8E8E8E', left: '#626262', right: '#787878' },
+        ore:      { top: '#D4B896', left: '#9E7B55', right: '#BA9878' },
+        edge: '#505050',
+    },
+    crystal: {
+        stone:    { top: '#9E9E9E', left: '#6E6E6E', right: '#838383' },
+        stoneAlt: { top: '#8E8E8E', left: '#626262', right: '#787878' },
+        ore:      { top: '#5CE8F2', left: '#2A9BA3', right: '#40CCD6' },
+        edge: '#505050',
+        glow: 'rgba(79,195,247,0.25)',
+    },
+    gold: {
+        stone:    { top: '#9E9E9E', left: '#6E6E6E', right: '#838383' },
+        stoneAlt: { top: '#8E8E8E', left: '#626262', right: '#787878' },
+        ore:      { top: '#FFE040', left: '#C4960E', right: '#E0BE20' },
+        edge: '#505050',
+        glow: 'rgba(255,215,0,0.2)',
+    },
+    obsidian: {
+        stone:    { top: '#301848', left: '#180C28', right: '#241238' },
+        stoneAlt: { top: '#281240', left: '#120820', right: '#1E0E30' },
+        ore:      { top: '#B040D0', left: '#701890', right: '#9028B0' },
+        edge: '#401A60',
+        glow: 'rgba(156,39,176,0.3)',
+    },
+    star: {
+        stone:    { top: '#ECECEC', left: '#B0B0B0', right: '#CFCFCF' },
+        stoneAlt: { top: '#E0E0E0', left: '#A4A4A4', right: '#C3C3C3' },
+        ore:      { top: '#FFE880', left: '#D0A840', right: '#E8C860' },
+        edge: '#909090',
+        glow: 'rgba(255,255,255,0.3)',
+    },
+};
+
+// Material item IDs that render as ore blocks
+const ORE_ITEMS = new Set(['stone', 'iron', 'crystal', 'gold', 'obsidian', 'star']);
+
+// ===== Render 3D Ore Block =====
+function renderOreBlock(
+    itemId: string,
+    cx: number, cy: number, e: number,
+) {
+    const texture = ORE_TEXTURES[itemId];
+    const colors = ORE_COLORS[itemId];
+    if (!texture || !colors) return null;
+
+    const faces: ('top' | 'left' | 'right')[] = ['left', 'right', 'top'];
+    const faceGrids = { top: texture.top, left: texture.left, right: texture.right };
+
+    const pixels: React.ReactElement[] = [];
+    let key = 0;
+
+    for (const face of faces) {
+        const grid = faceGrids[face];
+        for (let row = 0; row < GRID; row++) {
+            for (let col = 0; col < GRID; col++) {
+                const cellValue = grid[row][col];
+                let color: string;
+                if (cellValue === 1) {
+                    color = colors.ore[face];
+                } else if (cellValue === 2) {
+                    color = colors.stoneAlt[face];
+                } else {
+                    color = colors.stone[face];
+                }
+
+                const u = col * CELL;
+                const v = row * CELL;
+                pixels.push(
+                    <polygon
+                        key={key++}
+                        points={pixelPoly(face, u, v, CELL, CELL, cx, cy, e)}
+                        fill={color}
+                    />
+                );
+            }
+        }
+    }
+
+    return pixels;
+}
+
 /**
- * SVG-based item icons replacing emoji.
- * Each item has a distinct geometric/material-inspired design.
+ * Isometric 3D Minecraft ore block icons for material items.
+ * Weapon card icons use flat SVG designs.
  */
 export function ItemIcon({ itemId, size = 20, className }: ItemIconProps) {
     const half = size / 2;
 
+    if (ORE_ITEMS.has(itemId)) {
+        const e = size * 0.44;
+        const cx = half;
+        const cy = half;
+        const colors = ORE_COLORS[itemId];
+
+        // Isometric cube vertices
+        const top: [number, number] = [cx, cy - e];
+        const topLeft: [number, number] = [cx - e * COS30, cy - e * SIN30];
+        const topRight: [number, number] = [cx + e * COS30, cy - e * SIN30];
+        const center: [number, number] = [cx, cy];
+        const bottomLeft: [number, number] = [cx - e * COS30, cy + e * SIN30];
+        const bottomRight: [number, number] = [cx + e * COS30, cy + e * SIN30];
+        const bottom: [number, number] = [cx, cy + e];
+
+        const sw = size > 16 ? 0.7 : 0.5;
+
+        // Drop shadow color matches ore type for subtle 3D depth
+        const shadowColor = colors.glow || 'rgba(0,0,0,0.3)';
+
+        return (
+            <svg
+                width={size}
+                height={size}
+                viewBox={`0 0 ${size} ${size}`}
+                fill="none"
+                className={className}
+                style={{
+                    display: 'block',
+                    filter: `drop-shadow(0 1px 2px ${shadowColor})`,
+                    shapeRendering: 'crispEdges',
+                }}
+            >
+                {/* Glow effect for rare+ items */}
+                {colors.glow && (
+                    <circle
+                        cx={cx}
+                        cy={cy}
+                        r={e * 1.3}
+                        fill={colors.glow}
+                    />
+                )}
+
+                {/* Pixel-textured faces (draw order: left, right, top) */}
+                {renderOreBlock(itemId, cx, cy, e)}
+
+                {/* Edge wireframe for 3D definition */}
+                <g stroke={colors.edge} strokeWidth={sw} fill="none" strokeLinejoin="round">
+                    {/* Outer silhouette */}
+                    <polygon points={`${top[0]},${top[1]} ${topRight[0]},${topRight[1]} ${bottomRight[0]},${bottomRight[1]} ${bottom[0]},${bottom[1]} ${bottomLeft[0]},${bottomLeft[1]} ${topLeft[0]},${topLeft[1]}`} />
+                    {/* Inner edges (face boundaries) */}
+                    <line x1={topLeft[0]} y1={topLeft[1]} x2={center[0]} y2={center[1]} />
+                    <line x1={center[0]} y1={center[1]} x2={topRight[0]} y2={topRight[1]} />
+                    <line x1={center[0]} y1={center[1]} x2={bottom[0]} y2={bottom[1]} />
+                </g>
+
+                {/* Specular highlight on top face */}
+                <polygon
+                    points={`${top[0]},${top[1]} ${topRight[0]},${topRight[1]} ${center[0]},${center[1]} ${topLeft[0]},${topLeft[1]}`}
+                    fill="white"
+                    opacity={0.08}
+                />
+            </svg>
+        );
+    }
+
+    // Weapon card icons — keep flat SVG designs
     return (
         <svg
             width={size}
@@ -22,253 +281,14 @@ export function ItemIcon({ itemId, size = 20, className }: ItemIconProps) {
             className={className}
             style={{ display: 'block' }}
         >
-            {renderIcon(itemId, size, half)}
+            {renderWeaponIcon(itemId, size, half)}
         </svg>
     );
 }
 
-function renderIcon(itemId: string, size: number, half: number) {
+// ===== Weapon Card SVG Icons =====
+function renderWeaponIcon(itemId: string, size: number, half: number) {
     switch (itemId) {
-        // Stone Fragment — faceted rock shard
-        case 'stone':
-            return (
-                <g>
-                    <defs>
-                        <linearGradient id="stone-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#B0B0B0" />
-                            <stop offset="100%" stopColor="#6B6B6B" />
-                        </linearGradient>
-                    </defs>
-                    <polygon
-                        points={`${half * 0.6},${size * 0.1} ${size * 0.85},${size * 0.3} ${size * 0.9},${size * 0.7} ${half},${size * 0.92} ${size * 0.12},${size * 0.65} ${size * 0.2},${size * 0.25}`}
-                        fill="url(#stone-grad)"
-                        stroke="#9E9E9E"
-                        strokeWidth="0.5"
-                    />
-                    <line
-                        x1={half * 0.6} y1={size * 0.1}
-                        x2={half} y2={size * 0.5}
-                        stroke="#C0C0C0"
-                        strokeWidth="0.4"
-                        opacity="0.6"
-                    />
-                    <line
-                        x1={size * 0.85} y1={size * 0.3}
-                        x2={half} y2={size * 0.5}
-                        stroke="#808080"
-                        strokeWidth="0.4"
-                        opacity="0.5"
-                    />
-                    <line
-                        x1={half} y1={size * 0.5}
-                        x2={half} y2={size * 0.92}
-                        stroke="#808080"
-                        strokeWidth="0.3"
-                        opacity="0.4"
-                    />
-                </g>
-            );
-
-        // Iron Ore — metallic angular chunk with rust tint
-        case 'iron':
-            return (
-                <g>
-                    <defs>
-                        <linearGradient id="iron-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#D4956B" />
-                            <stop offset="50%" stopColor="#B87333" />
-                            <stop offset="100%" stopColor="#8B5A2B" />
-                        </linearGradient>
-                    </defs>
-                    <rect
-                        x={size * 0.15} y={size * 0.2}
-                        width={size * 0.7} height={size * 0.6}
-                        rx={size * 0.06}
-                        fill="url(#iron-grad)"
-                        stroke="#A0673A"
-                        strokeWidth="0.5"
-                    />
-                    <rect
-                        x={size * 0.25} y={size * 0.3}
-                        width={size * 0.2} height={size * 0.15}
-                        rx={size * 0.02}
-                        fill="#C8874F"
-                        opacity="0.7"
-                    />
-                    <rect
-                        x={size * 0.55} y={size * 0.55}
-                        width={size * 0.15} height={size * 0.12}
-                        rx={size * 0.02}
-                        fill="#9A6030"
-                        opacity="0.5"
-                    />
-                    <line
-                        x1={size * 0.15} y1={size * 0.5}
-                        x2={size * 0.85} y2={size * 0.5}
-                        stroke="#6B3E1F"
-                        strokeWidth="0.3"
-                        opacity="0.3"
-                    />
-                </g>
-            );
-
-        // Crystal Shard — faceted gemstone with light refraction
-        case 'crystal':
-            return (
-                <g>
-                    <defs>
-                        <linearGradient id="crystal-grad" x1="20%" y1="0%" x2="80%" y2="100%">
-                            <stop offset="0%" stopColor="#B3E5FC" />
-                            <stop offset="40%" stopColor="#4FC3F7" />
-                            <stop offset="100%" stopColor="#0288D1" />
-                        </linearGradient>
-                    </defs>
-                    <polygon
-                        points={`${half},${size * 0.05} ${size * 0.78},${size * 0.35} ${size * 0.7},${size * 0.75} ${half},${size * 0.95} ${size * 0.3},${size * 0.75} ${size * 0.22},${size * 0.35}`}
-                        fill="url(#crystal-grad)"
-                        stroke="#81D4FA"
-                        strokeWidth="0.5"
-                    />
-                    <polygon
-                        points={`${half},${size * 0.05} ${size * 0.78},${size * 0.35} ${half},${size * 0.45} ${size * 0.22},${size * 0.35}`}
-                        fill="#B3E5FC"
-                        opacity="0.4"
-                    />
-                    <line
-                        x1={half} y1={size * 0.05}
-                        x2={half} y2={size * 0.95}
-                        stroke="#E1F5FE"
-                        strokeWidth="0.3"
-                        opacity="0.5"
-                    />
-                    <line
-                        x1={size * 0.22} y1={size * 0.35}
-                        x2={size * 0.78} y2={size * 0.35}
-                        stroke="#E1F5FE"
-                        strokeWidth="0.3"
-                        opacity="0.4"
-                    />
-                </g>
-            );
-
-        // Gold Nugget — rounded gold with metallic shine
-        case 'gold':
-            return (
-                <g>
-                    <defs>
-                        <radialGradient id="gold-grad" cx="35%" cy="35%" r="65%">
-                            <stop offset="0%" stopColor="#FFF176" />
-                            <stop offset="40%" stopColor="#FFD700" />
-                            <stop offset="100%" stopColor="#C49000" />
-                        </radialGradient>
-                    </defs>
-                    <ellipse
-                        cx={half} cy={half * 1.05}
-                        rx={half * 0.72} ry={half * 0.65}
-                        fill="url(#gold-grad)"
-                        stroke="#DAA520"
-                        strokeWidth="0.5"
-                    />
-                    <ellipse
-                        cx={half * 0.78} cy={half * 0.8}
-                        rx={half * 0.22} ry={half * 0.14}
-                        fill="#FFF9C4"
-                        opacity="0.6"
-                        transform={`rotate(-20 ${half * 0.78} ${half * 0.8})`}
-                    />
-                    <circle
-                        cx={half * 1.25} cy={half * 1.2}
-                        r={half * 0.12}
-                        fill="#B8860B"
-                        opacity="0.3"
-                    />
-                </g>
-            );
-
-        // Obsidian Core — dark sphere with inner purple glow
-        case 'obsidian':
-            return (
-                <g>
-                    <defs>
-                        <radialGradient id="obs-grad" cx="40%" cy="40%" r="60%">
-                            <stop offset="0%" stopColor="#CE93D8" />
-                            <stop offset="40%" stopColor="#9C27B0" />
-                            <stop offset="100%" stopColor="#2A0030" />
-                        </radialGradient>
-                        <radialGradient id="obs-inner" cx="50%" cy="50%" r="40%">
-                            <stop offset="0%" stopColor="#E040FB" stopOpacity="0.5" />
-                            <stop offset="100%" stopColor="transparent" />
-                        </radialGradient>
-                    </defs>
-                    <circle
-                        cx={half} cy={half}
-                        r={half * 0.75}
-                        fill="url(#obs-grad)"
-                        stroke="#7B1FA2"
-                        strokeWidth="0.5"
-                    />
-                    <circle
-                        cx={half} cy={half}
-                        r={half * 0.35}
-                        fill="url(#obs-inner)"
-                    />
-                    <ellipse
-                        cx={half * 0.75} cy={half * 0.72}
-                        rx={half * 0.18} ry={half * 0.08}
-                        fill="#F3E5F5"
-                        opacity="0.35"
-                        transform={`rotate(-30 ${half * 0.75} ${half * 0.72})`}
-                    />
-                </g>
-            );
-
-        // Star Fragment — multi-pointed star with radiant glow
-        case 'star':
-            return (
-                <g>
-                    <defs>
-                        <radialGradient id="star-grad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stopColor="#FFFFFF" />
-                            <stop offset="50%" stopColor="#E0E0E0" />
-                            <stop offset="100%" stopColor="#9E9E9E" />
-                        </radialGradient>
-                        <radialGradient id="star-glow" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.4" />
-                            <stop offset="100%" stopColor="transparent" />
-                        </radialGradient>
-                    </defs>
-                    <circle
-                        cx={half} cy={half}
-                        r={half * 0.85}
-                        fill="url(#star-glow)"
-                    />
-                    {(() => {
-                        const points: string[] = [];
-                        for (let i = 0; i < 8; i++) {
-                            const angle = (i * Math.PI * 2) / 8 - Math.PI / 2;
-                            const r = i % 2 === 0 ? half * 0.72 : half * 0.32;
-                            points.push(`${half + r * Math.cos(angle)},${half + r * Math.sin(angle)}`);
-                        }
-                        return (
-                            <polygon
-                                points={points.join(' ')}
-                                fill="url(#star-grad)"
-                                stroke="#FFFFFF"
-                                strokeWidth="0.4"
-                            />
-                        );
-                    })()}
-                    <circle
-                        cx={half} cy={half}
-                        r={half * 0.15}
-                        fill="#FFFFFF"
-                        opacity="0.8"
-                    />
-                </g>
-            );
-
-        // ===== Weapon Cards =====
-
         // Stone Blade — simple angular sword
         case 'stone_blade':
             return (
@@ -300,7 +320,7 @@ function renderIcon(itemId: string, size: number, half: number) {
                 </g>
             );
 
-        // Iron Pickaxe — crossed pickaxe shape
+        // Iron Pickaxe
         case 'iron_pickaxe':
             return (
                 <g>
@@ -326,7 +346,7 @@ function renderIcon(itemId: string, size: number, half: number) {
                 </g>
             );
 
-        // Crystal Wand — elegant wand with crystal tip
+        // Crystal Wand
         case 'crystal_wand':
             return (
                 <g>
@@ -357,7 +377,7 @@ function renderIcon(itemId: string, size: number, half: number) {
                 </g>
             );
 
-        // Gold Hammer — heavy golden hammer
+        // Gold Hammer
         case 'gold_hammer':
             return (
                 <g>
@@ -391,7 +411,7 @@ function renderIcon(itemId: string, size: number, half: number) {
                 </g>
             );
 
-        // Obsidian Edge — dark crystal blade with purple edge
+        // Obsidian Edge
         case 'obsidian_edge':
             return (
                 <g>
@@ -430,7 +450,7 @@ function renderIcon(itemId: string, size: number, half: number) {
                 </g>
             );
 
-        // Star Cannon — futuristic energy weapon
+        // Star Cannon
         case 'star_cannon':
             return (
                 <g>

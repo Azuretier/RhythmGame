@@ -136,6 +136,10 @@ export const DEFAULT_ARR = 33;   // Auto Repeat Rate - delay between each auto-r
 // Set to 0 for instant movement (common in competitive play)
 export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 
+// ===== Lock Delay Settings =====
+export const LOCK_DELAY = 500;     // Grace period (ms) after piece lands before locking
+export const MAX_LOCK_MOVES = 15;  // Max moves/rotations on ground before forced lock
+
 // ===== Terrain Settings =====
 // Number of terrains (stages) to clear before advancing to the next world
 export const TERRAINS_PER_WORLD = 4;

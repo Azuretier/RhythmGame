@@ -5,26 +5,14 @@ import styles from '../VanillaGame.module.css';
 
 interface TitleScreenProps {
     onStart: (mode: GameMode) => void;
-    worldIdx?: number;
-    stageNumber?: number;
 }
 
 /**
- * Title screen component with game mode selection and world display
+ * Title screen component with game mode selection (black screen, no world info)
  */
-export function TitleScreen({ onStart, worldIdx = 0, stageNumber = 1 }: TitleScreenProps) {
-    const world = WORLDS[worldIdx];
-    const terrainsCleared = (stageNumber - 1) % TERRAINS_PER_WORLD;
-    const isMaxWorld = worldIdx >= WORLDS.length - 1;
-
+export function TitleScreen({ onStart }: TitleScreenProps) {
     return (
         <div className={styles.titleScreen}>
-            {/* World display */}
-            <div className={styles.titleWorldDisplay}>
-                <div className={styles.titleWorldName}>{world.name}</div>
-                <div className={styles.titleWorldLabel}>WORLD {worldIdx + 1}</div>
-            </div>
-            <p>リズムに乗ってブロックを積め！</p>
             <div className={styles.modeSelect}>
                 <button className={styles.modeBtn} onClick={() => onStart('vanilla')}>
                     <span className={styles.modeBtnIcon}>🎵</span>
@@ -37,28 +25,6 @@ export function TitleScreen({ onStart, worldIdx = 0, stageNumber = 1 }: TitleScr
                     <span className={styles.modeBtnDesc}>タワーを守れ！</span>
                 </button>
             </div>
-            {/* World progression info */}
-            {!isMaxWorld ? (
-                <div className={styles.titleWorldProgress}>
-                    <div className={styles.titleProgressBar}>
-                        {Array.from({ length: TERRAINS_PER_WORLD }).map((_, i) => (
-                            <div
-                                key={i}
-                                className={`${styles.titleProgressPip} ${i < terrainsCleared ? styles.titleProgressPipFilled : ''}`}
-                            />
-                        ))}
-                    </div>
-                    <div className={styles.titleProgressText}>
-                        Clear {TERRAINS_PER_WORLD - terrainsCleared} terrain{TERRAINS_PER_WORLD - terrainsCleared !== 1 ? 's' : ''} to Next World
-                    </div>
-                </div>
-            ) : (
-                <div className={styles.titleWorldProgress}>
-                    <div className={styles.titleProgressText}>
-                        FINAL WORLD — {TERRAINS_PER_WORLD - terrainsCleared} terrain{TERRAINS_PER_WORLD - terrainsCleared !== 1 ? 's' : ''} remaining
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

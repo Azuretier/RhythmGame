@@ -21,3 +21,4 @@ export { CraftingUI } from './CraftingUI';
 export { TerrainParticles } from './TerrainParticles';
 export { WorldTransition, GamePhaseIndicator } from './WorldTransition';
 export { HealthManaHUD } from './HealthManaHUD';
+export { TutorialGuide, hasTutorialBeenSeen } from './TutorialGuide';

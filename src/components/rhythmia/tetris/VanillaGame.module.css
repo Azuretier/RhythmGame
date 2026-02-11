@@ -404,7 +404,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
+  background: #000000;
   z-index: 200;
   gap: 24px;
 }
@@ -1305,7 +1305,7 @@
   opacity: 0.7;
 }
 
-/* Icon wrapper with subtle radial glow */
+/* Icon wrapper with subtle radial glow + 3D ore bob */
 .itemCardIconWrap {
   width: 28px;
   height: 28px;
@@ -1314,6 +1314,12 @@
   justify-content: center;
   border-radius: 6px;
   margin-bottom: 2px;
+  animation: oreBlockBob 3s ease-in-out infinite;
+}
+
+@keyframes oreBlockBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
 }
 
 /* Large count number — dominant visual */
@@ -2162,5 +2168,239 @@
 
   .vBarLabel {
     font-size: 0.5rem;
+  }
+}
+
+/* ===== Tutorial Guide (HSR-style) ===== */
+.tutorialOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  cursor: pointer;
+}
+
+.tutorialVisible {
+  opacity: 1;
+}
+
+/* Corner decorations — thin geometric L-shapes */
+.tutCorner {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-color: rgba(255, 255, 255, 0.12);
+  border-style: solid;
+  border-width: 0;
+}
+
+.tutCornerTL { top: 24px; left: 24px; border-top-width: 1px; border-left-width: 1px; }
+.tutCornerTR { top: 24px; right: 24px; border-top-width: 1px; border-right-width: 1px; }
+.tutCornerBL { bottom: 24px; left: 24px; border-bottom-width: 1px; border-left-width: 1px; }
+.tutCornerBR { bottom: 24px; right: 24px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* Subtle horizontal scan line */
+.tutScanLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  animation: tutScan 4s linear infinite;
+}
+
+@keyframes tutScan {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+/* Top label */
+.tutTopLabel {
+  position: absolute;
+  top: 40px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.4em;
+}
+
+/* Main content area */
+.tutContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tutStepIn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Step indicator dots */
+.tutStepIndicator {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tutStepDot {
+  width: 24px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 1px;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tutStepDotActive {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.tutStepDotDone {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Step title */
+.tutStepTitle {
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  font-weight: 200;
+  color: white;
+  letter-spacing: 0.3em;
+}
+
+.tutStepSubtitle {
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+  margin-top: -12px;
+}
+
+/* Separator line */
+.tutSeparator {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+/* Control items */
+.tutItems {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 240px;
+}
+
+.tutItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  transition: border-color 0.2s ease;
+}
+
+.tutItem:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.tutItemKey {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.1em;
+  min-width: 80px;
+  text-align: center;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.tutItemLabel {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.08em;
+}
+
+/* Bottom bar */
+.tutBottomBar {
+  position: absolute;
+  bottom: 40px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.tutSkipBtn,
+.tutNextBtn {
+  padding: 8px 24px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tutSkipBtn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tutNextBtn {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.tutNextBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.tutProgressText {
+  font-size: 0.65rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.15em;
+}
+
+/* Mobile adjustments */
+@media screen and (max-width: 480px) {
+  .tutItems {
+    min-width: 200px;
+  }
+
+  .tutItemKey {
+    min-width: 60px;
+    font-size: 0.65rem;
+  }
+
+  .tutItemLabel {
+    font-size: 0.7rem;
+  }
+
+  .tutBottomBar {
+    bottom: 24px;
+    gap: 16px;
   }
 }
