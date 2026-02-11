@@ -135,6 +135,30 @@ export function useGameState() {
 
     const damageMultiplier = (baseDamageMultiplier + shopDamageBonus) * rabadonsMultiplier;
 
+    // Compute stat modifiers from shop items
+    const shopStatModifiers = (() => {
+        const modifiers = {
+            beatWindow: 0,     // additive modifier to beat window tolerance
+            itemDrop: 0,       // additive modifier to item drop rate
+            das: 0,            // additive modifier to DAS (negative = faster)
+        };
+        for (const item of purchasedShopItems) {
+            const def = SHOP_ITEM_MAP[item.itemId];
+            if (!def) continue;
+            for (const stat of def.stats) {
+                if (stat.key === 'beatWindow') modifiers.beatWindow += stat.value;
+                else if (stat.key === 'itemDrop') modifiers.itemDrop += stat.value;
+                else if (stat.key === 'das') modifiers.das += stat.value;
+            }
+        }
+        return modifiers;
+    })();
+
+    // Apply stat modifiers to base values
+    const effectiveDas = Math.max(1, Math.round(das * (1 + shopStatModifiers.das)));
+    const effectiveItemDropMultiplier = 1 + shopStatModifiers.itemDrop;
+    const effectiveBeatWindowModifier = 0.40 + shopStatModifiers.beatWindow; // base window is 0.40 (40% of beat cycle)
+
     // Refs for accessing current values in callbacks (avoids stale closures)
     const gameLoopRef = useRef<number | null>(null);
     const beatTimerRef = useRef<number | null>(null);
@@ -167,6 +191,11 @@ export function useGameState() {
     const bulletsRef = useRef<Bullet[]>(bullets);
     const towerHealthRef = useRef(towerHealth);
     const gameModeRef = useRef<GameMode>(gameMode);
+
+    // Effective stat modifiers from shop items
+    const effectiveDasRef = useRef(effectiveDas);
+    const effectiveItemDropMultiplierRef = useRef(effectiveItemDropMultiplier);
+    const effectiveBeatWindowModifierRef = useRef(effectiveBeatWindowModifier);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -201,6 +230,9 @@ export function useGameState() {
     useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
+    useEffect(() => { effectiveDasRef.current = effectiveDas; }, [effectiveDas]);
+    useEffect(() => { effectiveItemDropMultiplierRef.current = effectiveItemDropMultiplier; }, [effectiveItemDropMultiplier]);
+    useEffect(() => { effectiveBeatWindowModifierRef.current = effectiveBeatWindowModifier; }, [effectiveBeatWindowModifier]);
 
     // Shop refs
     const goldRef = useRef(gold);
@@ -302,7 +334,8 @@ export function useGameState() {
 
     // Spawn floating items from terrain destruction
     const spawnItemDrops = useCallback((damage: number, originX: number, originY: number) => {
-        const itemCount = Math.max(1, Math.floor(damage * ITEMS_PER_TERRAIN_DAMAGE));
+        const baseItemCount = damage * ITEMS_PER_TERRAIN_DAMAGE;
+        const itemCount = Math.max(1, Math.floor(baseItemCount * effectiveItemDropMultiplierRef.current));
         const now = Date.now();
         const newItems: FloatingItem[] = [];
 
@@ -925,6 +958,9 @@ export function useGameState() {
         enemiesRef,
         bulletsRef,
         gameModeRef,
+        effectiveDasRef,
+        effectiveItemDropMultiplierRef,
+        effectiveBeatWindowModifierRef,
         keyStatesRef,
         gameLoopRef,
         beatTimerRef,

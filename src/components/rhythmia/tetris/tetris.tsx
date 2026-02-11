@@ -177,6 +177,8 @@ export default function Rhythmia() {
     damageMultiplierRef,
     enemiesRef,
     gameModeRef,
+    effectiveDasRef,
+    effectiveBeatWindowModifierRef,
     keyStatesRef,
     gameLoopRef,
     beatTimerRef,
@@ -326,7 +328,7 @@ export default function Rhythmia() {
 
     const dx = direction === 'left' ? -1 : 1;
     const timeSincePress = currentTime - state.pressTime;
-    const currentDas = dasRef.current;
+    const currentDas = effectiveDasRef.current;
     const currentArr = arrRef.current;
 
     if (!state.dasCharged) {
@@ -351,7 +353,7 @@ export default function Rhythmia() {
         }
       }
     }
-  }, [movePiece, keyStatesRef, isPausedRef, gameOverRef, dasRef, arrRef]);
+  }, [movePiece, keyStatesRef, isPausedRef, gameOverRef, effectiveDasRef, arrRef]);
 
   // Process soft drop (SDF)
   const processSoftDrop = useCallback((currentTime: number) => {
@@ -397,9 +399,13 @@ export default function Rhythmia() {
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
     const mode = gameModeRef.current;
 
-    // Beat judgment
+    // Beat judgment - use effective beat window modifier from shop items
     const currentBeatPhase = beatPhaseRef.current;
-    const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
+    const beatWindowModifier = effectiveBeatWindowModifierRef.current;
+    // beatWindowModifier is 0.40 (40% of cycle) at base, can increase with items
+    // Split the window equally: half after the beat (phase > threshold), half before (phase < threshold)
+    const windowHalf = beatWindowModifier / 2;
+    const onBeat = currentBeatPhase > (1 - windowHalf) || currentBeatPhase < windowHalf;
     let mult = 1;
     let currentCombo = comboRef.current; // Track the combo value to use for calculations
 
