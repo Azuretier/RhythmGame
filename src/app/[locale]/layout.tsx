@@ -8,6 +8,7 @@ import { routing } from '@/i18n/routing';
 
 import Provider from '../provider';
 import { VersionProvider } from '@/lib/version/context';
+import { ProfileProvider } from '@/lib/profile/context';
 
 import { GoogleAnalytics } from "@next/third-parties/google";
 
@@ -121,11 +122,13 @@ export default async function LocaleLayout({ children, params }: Props) {
             </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }}>
                 <NextIntlClientProvider messages={messages}>
-                    <VersionProvider>
-                        <Provider>
-                            {children}
-                        </Provider>
-                    </VersionProvider>
+                    <ProfileProvider>
+                        <VersionProvider>
+                            <Provider>
+                                {children}
+                            </Provider>
+                        </VersionProvider>
+                    </ProfileProvider>
                 </NextIntlClientProvider>
                 {gaId && <GoogleAnalytics gaId={gaId} />}
             </body>

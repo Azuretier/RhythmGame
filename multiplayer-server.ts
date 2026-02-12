@@ -47,6 +47,8 @@ interface PlayerConnection {
   isAlive: boolean;
   lastActivity: number;
   reconnectToken?: string;
+  profileName?: string;
+  profileIcon?: string;
 }
 
 // Ranked matchmaking queue
@@ -133,6 +135,16 @@ function broadcastOnlineCount(): void {
       } catch {}
     }
   });
+}
+
+function getOnlineUsers(): { name: string; icon: string }[] {
+  const users: { name: string; icon: string }[] = [];
+  playerConnections.forEach((conn) => {
+    if (conn.profileName && conn.ws.readyState === WebSocket.OPEN) {
+      users.push({ name: conn.profileName, icon: conn.profileIcon || '' });
+    }
+  });
+  return users;
 }
 
 function sendError(playerId: string, message: string, code?: string): void {
@@ -513,6 +525,21 @@ function handleMessage(playerId: string, raw: string): void {
   switch (message.type) {
     case 'pong': {
       if (conn) conn.isAlive = true;
+      break;
+    }
+
+    case 'set_profile': {
+      const profileMsg = message as unknown as { name: string; icon: string };
+      if (conn) {
+        conn.profileName = (profileMsg.name || '').slice(0, 20);
+        conn.profileIcon = (profileMsg.icon || '').slice(0, 30);
+      }
+      break;
+    }
+
+    case 'get_online_users': {
+      const users = getOnlineUsers();
+      sendToPlayer(playerId, { type: 'online_users', users } as ServerMessage);
       break;
     }
 

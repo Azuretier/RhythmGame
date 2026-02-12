@@ -554,5 +554,23 @@
         "wiki": "Wiki",
         "updates": "Updates",
         "lobby": "Lobby"
+    },
+    "profile": {
+        "iconTitle": "Choose Your Icon",
+        "iconSubtitle": "Pick an icon that represents you",
+        "nameTitle": "Enter Your Name",
+        "nameSubtitle": "This name will be visible to other players",
+        "nameLabel": "Nickname",
+        "namePlaceholder": "Name",
+        "friendCodeLabel": "Friend Code",
+        "langTitle": "Language",
+        "langSubtitle": "Select your display language",
+        "confirmTitle": "Confirm Profile",
+        "confirmSubtitle": "Does everything look good?",
+        "next": "Next",
+        "back": "Back",
+        "onlineTitle": "Online Players",
+        "onlineCount": "{count} online",
+        "noOnlineUsers": "No players online right now"
     }
 }

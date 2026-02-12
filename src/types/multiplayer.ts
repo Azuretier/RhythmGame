@@ -143,7 +143,9 @@ export type ClientMessage =
   | QueueRankedMessage
   | CancelRankedMessage
   | ArenaGenericMessage
-  | MCBoardGenericMessage;
+  | MCBoardGenericMessage
+  | SetProfileMessage
+  | GetOnlineUsersMessage;
 
 // ===== Server -> Client Messages =====
 
@@ -241,6 +243,26 @@ export interface OnlineCountMessage {
   count: number;
 }
 
+export interface OnlineUser {
+  name: string;
+  icon: string;
+}
+
+export interface OnlineUsersMessage {
+  type: 'online_users';
+  users: OnlineUser[];
+}
+
+export interface SetProfileMessage {
+  type: 'set_profile';
+  name: string;
+  icon: string;
+}
+
+export interface GetOnlineUsersMessage {
+  type: 'get_online_users';
+}
+
 export interface ServerShutdownMessage {
   type: 'server_shutdown';
   message: string;
@@ -278,6 +300,7 @@ export type ServerMessage =
   | ReconnectedMessage
   | RematchStartedMessage
   | OnlineCountMessage
+  | OnlineUsersMessage
   | ServerShutdownMessage
   | RankedMatchFoundMessage
   | RankedQueuedMessage;

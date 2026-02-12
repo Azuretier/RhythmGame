@@ -3,12 +3,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import type { ServerMessage } from '@/types/multiplayer';
+import type { ServerMessage, OnlineUser } from '@/types/multiplayer';
 import { getUnlockedCount } from '@/lib/advancements/storage';
 import { ADVANCEMENTS, BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
+import { useProfile } from '@/lib/profile/context';
 import Advancements from '../../components/rhythmia/Advancements';
+import ProfileSetup from '../../components/profile/ProfileSetup';
+import OnlineUsers from '../../components/profile/OnlineUsers';
 import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '../../components/rhythmia/rhythmia.module.css';
+import onlineStyles from '../../components/profile/OnlineUsers.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import { FaDiscord } from 'react-icons/fa';
@@ -23,11 +27,15 @@ export default function RhythmiaPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [onlineCount, setOnlineCount] = useState(0);
     const [showAdvancements, setShowAdvancements] = useState(false);
+    const [showOnlineUsers, setShowOnlineUsers] = useState(false);
+    const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
     const [unlockedCount, setUnlockedCount] = useState(0);
     const wsRef = useRef<WebSocket | null>(null);
+    const profileSentRef = useRef(false);
 
     const t = useTranslations();
     const router = useRouter();
+    const { profile, showProfileSetup } = useProfile();
 
     const isArenaLocked = unlockedCount < BATTLE_ARENA_REQUIRED_ADVANCEMENTS;
 
@@ -46,6 +54,18 @@ export default function RhythmiaPage() {
         }
     }, [gameMode, showAdvancements]);
 
+    // Send profile to WebSocket server when profile is available
+    const sendProfileToWs = useCallback(() => {
+        if (profile && wsRef.current?.readyState === WebSocket.OPEN && !profileSentRef.current) {
+            wsRef.current.send(JSON.stringify({
+                type: 'set_profile',
+                name: profile.name,
+                icon: profile.icon,
+            }));
+            profileSentRef.current = true;
+        }
+    }, [profile]);
+
     // Connect to multiplayer WebSocket at page load for accurate online count
     const connectMultiplayerWs = useCallback(() => {
         if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -53,12 +73,27 @@ export default function RhythmiaPage() {
 
         const wsUrl = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
         const ws = new WebSocket(wsUrl);
+        profileSentRef.current = false;
+
+        ws.onopen = () => {
+            // Send profile info once connected
+            if (profile) {
+                ws.send(JSON.stringify({
+                    type: 'set_profile',
+                    name: profile.name,
+                    icon: profile.icon,
+                }));
+                profileSentRef.current = true;
+            }
+        };
 
         ws.onmessage = (event) => {
             try {
                 const message: ServerMessage = JSON.parse(event.data);
                 if (message.type === 'online_count') {
                     setOnlineCount(message.count);
+                } else if (message.type === 'online_users') {
+                    setOnlineUsers(message.users);
                 } else if (message.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong' }));
                 }
@@ -67,10 +102,11 @@ export default function RhythmiaPage() {
 
         ws.onclose = () => {
             wsRef.current = null;
+            profileSentRef.current = false;
         };
 
         wsRef.current = ws;
-    }, []);
+    }, [profile]);
 
     useEffect(() => {
         connectMultiplayerWs();
@@ -82,6 +118,18 @@ export default function RhythmiaPage() {
             }
         };
     }, [connectMultiplayerWs]);
+
+    // Send profile when it becomes available after WS is already connected
+    useEffect(() => {
+        sendProfileToWs();
+    }, [sendProfileToWs]);
+
+    const requestOnlineUsers = () => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'get_online_users' }));
+        }
+        setShowOnlineUsers(true);
+    };
 
     const launchGame = (mode: GameMode) => {
         if (mode === 'multiplayer' && isArenaLocked) return;
@@ -141,9 +189,14 @@ export default function RhythmiaPage() {
 
     return (
         <div className={styles.page}>
+            {/* Profile setup overlay */}
+            <AnimatePresence>
+                {showProfileSetup && <ProfileSetup />}
+            </AnimatePresence>
+
             {/* Loading overlay */}
             <AnimatePresence>
-                {isLoading && (
+                {isLoading && !showProfileSetup && (
                     <motion.div
                         className={styles.loadingOverlay}
                         initial={{ opacity: 1 }}
@@ -153,6 +206,16 @@ export default function RhythmiaPage() {
                         <div className={styles.loader}></div>
                         <div className={styles.loadingText}>{t('lobby.loading')}</div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Online users panel */}
+            <AnimatePresence>
+                {showOnlineUsers && (
+                    <OnlineUsers
+                        users={onlineUsers}
+                        onClose={() => setShowOnlineUsers(false)}
+                    />
                 )}
             </AnimatePresence>
 
@@ -186,10 +249,13 @@ export default function RhythmiaPage() {
                         >
                             {t('advancements.button', { count: unlockedCount, total: ADVANCEMENTS.length })}
                         </button>
-                        <div className={styles.statusItem}>
+                        <button
+                            className={onlineStyles.onlineButton}
+                            onClick={requestOnlineUsers}
+                        >
                             <span className={styles.statusDot}></span>
                             <span>{t('lobby.onlineCount', { count: onlineCount })}</span>
-                        </div>
+                        </button>
                         <div className={styles.statusItem}>
                             <span>v{rhythmiaConfig.version}</span>
                         </div>
