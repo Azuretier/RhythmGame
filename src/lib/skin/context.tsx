@@ -51,6 +51,22 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Listen for skin-restored events from GoogleSyncProvider
+  useEffect(() => {
+    const handleSkinRestored = (event: CustomEvent<string>) => {
+      const skin = getSkinById(event.detail);
+      if (skin) {
+        setCurrentSkin(skin);
+        applySkinToDocument(skin.colors);
+      }
+    };
+
+    window.addEventListener('skin-restored', handleSkinRestored as EventListener);
+    return () => {
+      window.removeEventListener('skin-restored', handleSkinRestored as EventListener);
+    };
+  }, []);
+
   const setSkin = useCallback((skinId: string) => {
     const skin = getSkinById(skinId);
     if (!skin) return;

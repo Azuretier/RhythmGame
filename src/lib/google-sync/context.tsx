@@ -133,6 +133,10 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
           const localProfile = getStoredProfile();
           if (!localProfile) {
             setStoredProfile(remoteUserData.profile);
+            // Dispatch event so ProfileProvider can update its React state
+            window.dispatchEvent(new CustomEvent('profile-restored', { 
+              detail: remoteUserData.profile 
+            }));
           }
         }
 
@@ -141,6 +145,10 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
           const localSkin = getStoredSkinId();
           if (!localSkin || localSkin === 'azure') {
             setStoredSkinId(remoteUserData.skinId);
+            // Dispatch event so SkinProvider can update its React state
+            window.dispatchEvent(new CustomEvent('skin-restored', { 
+              detail: remoteUserData.skinId 
+            }));
           }
         }
       }

@@ -34,6 +34,20 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Listen for profile-restored events from GoogleSyncProvider
+  useEffect(() => {
+    const handleProfileRestored = (event: CustomEvent<UserProfile>) => {
+      setProfileState(event.detail);
+      setIsProfileSetup(true);
+      setShowProfileSetup(false);
+    };
+
+    window.addEventListener('profile-restored', handleProfileRestored as EventListener);
+    return () => {
+      window.removeEventListener('profile-restored', handleProfileRestored as EventListener);
+    };
+  }, []);
+
   const setProfile = useCallback((newProfile: UserProfile) => {
     setProfileState(newProfile);
     setStoredProfile(newProfile);
