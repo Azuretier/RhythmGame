@@ -584,10 +584,13 @@
     "forYou": {
         "title": "FOR YOU",
         "subtitle": "Curated based on your progress",
+        "prefLabel": "What are you interested in?",
+        "generate": "GENERATE",
         "loading": "GENERATING",
         "error": "Could not load recommendations",
         "retry": "RETRY",
         "refresh": "REFRESH",
+        "emptyHint": "Pick your interests and hit Generate",
         "watchOnYouTube": "Watch on YouTube",
         "types": {
             "tutorial": "TUTORIAL",

@@ -1,5 +1,14 @@
 {
   "youtubeChannel": "https://www.youtube.com/@rhythmia_official",
+  "preferences": [
+    { "id": "fundamentals", "en": "Fundamentals", "ja": "基礎" },
+    { "id": "techniques", "en": "Techniques", "ja": "テクニック" },
+    { "id": "competitive", "en": "Competitive", "ja": "対戦" },
+    { "id": "rhythm", "en": "Rhythm & Music", "ja": "リズム＆音楽" },
+    { "id": "items", "en": "Items & Crafting", "ja": "アイテム＆クラフト" },
+    { "id": "speed", "en": "Speed", "ja": "スピード" },
+    { "id": "videos", "en": "Videos", "ja": "動画" }
+  ],
   "tutorials": [
     { "id": "tut-tspin", "topic": "T-Spin", "tags": ["technique", "advanced"] },
     { "id": "tut-stacking", "topic": "Clean Stacking", "tags": ["fundamentals", "beginner"] },

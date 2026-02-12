@@ -9,6 +9,7 @@ interface ForYouRequest {
     unlockedAdvancements: number;
     totalAdvancements: number;
     recentCategories?: string[];
+    preferences?: string[];
 }
 
 interface ContentCard {
@@ -29,7 +30,7 @@ function resolveVideoUrl(url?: string): string {
 export async function POST(request: NextRequest) {
     try {
         const body: ForYouRequest = await request.json();
-        const { locale, unlockedAdvancements, totalAdvancements, recentCategories } = body;
+        const { locale, unlockedAdvancements, totalAdvancements, recentCategories, preferences } = body;
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
@@ -55,12 +56,21 @@ export async function POST(request: NextRequest) {
             url: resolveVideoUrl(v.url),
         }));
 
+        const prefNames = (preferences || []).map(id => {
+            const pref = forYouConfig.preferences.find((p: { id: string }) => p.id === id);
+            return pref ? pref.en : id;
+        });
+        const prefsLine = prefNames.length > 0
+            ? `- Player interests: ${prefNames.join(', ')}`
+            : '- Player interests: none specified (give a balanced mix)';
+
         const prompt = `You are a content curator for RHYTHMIA, a rhythm x tetris fusion puzzle game. Generate personalized content recommendations for a player.
 
 Player context:
 - Skill level: ${skillLevel} (${unlockedAdvancements}/${totalAdvancements} advancements unlocked, ${progressPercent}%)
 - Language: ${locale === 'ja' ? 'Japanese' : 'English'}
 - Recent activity categories: ${recentCategories?.join(', ') || 'none'}
+${prefsLine}
 
 Available tutorials: ${JSON.stringify(forYouConfig.tutorials.map(t => t.topic))}
 Available videos: ${JSON.stringify(videoList)}
@@ -74,11 +84,11 @@ Generate exactly 6 content cards as a JSON array. Each card should have:
 - "tags": array of 1-3 short tags
 - "difficulty": "beginner" | "intermediate" | "advanced"
 
-Mix the types: include 2 tutorials, 2 videos, and 2 tips. Prioritize content that matches the player's skill level. For beginner players, focus on fundamentals. For advanced players, focus on competitive strategies and optimization.
+Mix the types: include 2 tutorials, 2 videos, and 2 tips. Heavily prioritize content that matches the player's stated interests. If they chose specific topics like "Competitive" or "Rhythm & Music", focus the majority of cards on those areas. Also consider the player's skill level.
 
 For videos, reference actual video titles from the available list and include a "url" field with the video's URL from the list above. If a video has no specific URL, use the YouTube channel URL.
 
-For tips, generate unique gameplay advice relevant to the player's progress level.
+For tips, generate unique gameplay advice relevant to the player's interests and progress level.
 
 Return ONLY the JSON array, no markdown fencing, no explanation.`;
 

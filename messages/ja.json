@@ -584,10 +584,13 @@
     "forYou": {
         "title": "おすすめ",
         "subtitle": "あなたの進捗に合わせてセレクト",
+        "prefLabel": "興味のあるジャンルを選んでください",
+        "generate": "生成する",
         "loading": "生成中",
         "error": "おすすめを読み込めませんでした",
         "retry": "再試行",
         "refresh": "更新",
+        "emptyHint": "興味を選んで「生成する」を押してください",
         "watchOnYouTube": "YouTubeで見る",
         "types": {
             "tutorial": "チュートリアル",
