@@ -1,0 +1,197 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    background: #0a0a0a;
+}
+
+.content {
+    max-width: 560px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Icon */
+.iconWrapper {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 28px;
+    border: 1px solid rgba(255, 80, 80, 0.2);
+    border-radius: 16px;
+    background: rgba(255, 80, 80, 0.05);
+}
+
+.icon {
+    font-size: 1.5rem;
+    color: rgba(255, 80, 80, 0.5);
+}
+
+.iconSlash {
+    position: absolute;
+    width: 70%;
+    height: 1.5px;
+    background: rgba(255, 80, 80, 0.4);
+    transform: rotate(-45deg);
+    border-radius: 1px;
+}
+
+/* Heading */
+.title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+}
+
+.description {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.7;
+    font-weight: 300;
+    max-width: 420px;
+}
+
+/* Divider */
+.divider {
+    width: 40px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 32px 0;
+}
+
+/* CTA */
+.ctaHeading {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 8px;
+}
+
+.ctaDescription {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1.6;
+    font-weight: 300;
+    max-width: 400px;
+    margin-bottom: 28px;
+}
+
+/* Link Grid */
+.linkGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 32px;
+}
+
+.linkCard {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.02);
+    text-decoration: none;
+    transition: all 0.25s;
+    text-align: left;
+}
+
+.linkCard:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.linkIcon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.linkTitle {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.02em;
+    margin-bottom: 3px;
+}
+
+.linkDescription {
+    display: block;
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 300;
+    line-height: 1.4;
+}
+
+/* Card accents */
+.discord .linkIcon {
+    background: rgba(88, 101, 242, 0.12);
+    color: rgba(88, 101, 242, 0.8);
+}
+
+.discord:hover {
+    border-color: rgba(88, 101, 242, 0.25);
+}
+
+.youtube .linkIcon {
+    background: rgba(255, 80, 80, 0.1);
+    color: rgba(255, 80, 80, 0.8);
+}
+
+.youtube:hover {
+    border-color: rgba(255, 80, 80, 0.25);
+}
+
+.github .linkIcon {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.github:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Back link */
+.backLink {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    transition: color 0.2s;
+}
+
+.backLink:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .container {
+        padding: 24px 16px;
+    }
+
+    .linkCard {
+        padding: 14px 16px;
+    }
+}

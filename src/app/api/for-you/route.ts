@@ -22,8 +22,8 @@ interface ContentCard {
     difficulty?: 'beginner' | 'intermediate' | 'advanced';
 }
 
-function resolveVideoUrl(url?: string): string {
-    return url || forYouConfig.youtubeChannel;
+function resolveVideoUrl(url?: string): string | undefined {
+    return url || undefined;
 }
 
 export async function POST(request: NextRequest) {
