@@ -819,7 +819,6 @@
         "onlineTitle": "Online Players",
         "onlineCount": "{count} online",
         "noOnlineUsers": "No players online right now",
-        "noOnlineUsers": "No players online right now",
         "privateProfile": "Private Profile",
         "privateProfileDesc": "Your name and icon are hidden from the online players list",
         "publicProfile": "Public Profile",
