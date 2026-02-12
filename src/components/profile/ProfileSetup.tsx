@@ -70,6 +70,18 @@ export default function ProfileSetup() {
     };
     setProfile(profile);
 
+    // Log site entry to Discord (fire-and-forget)
+    fetch('/api/site-entry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: profile.name,
+        icon: profile.icon,
+        friendCode: profile.friendCode,
+        locale: profile.locale,
+      }),
+    }).catch(() => {});
+
     // Switch locale if different from current
     if (selectedLocale !== locale) {
       router.replace(pathname, { locale: selectedLocale });
