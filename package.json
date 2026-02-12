@@ -11,6 +11,7 @@
     "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@next/third-parties": "^16.1.6",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-accordion": "^1.2.12",

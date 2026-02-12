@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import type { ServerMessage, OnlineUser } from '@/types/multiplayer';
 import { getUnlockedCount } from '@/lib/advancements/storage';
 import { ADVANCEMENTS, BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { useProfile } from '@/lib/profile/context';
 import Advancements from '../../components/rhythmia/Advancements';
+import ForYouTab from '../../components/rhythmia/ForYouTab';
 import ProfileSetup from '../../components/profile/ProfileSetup';
 import OnlineUsers from '../../components/profile/OnlineUsers';
 import rhythmiaConfig from '../../../rhythmia.config.json';
@@ -34,6 +35,7 @@ export default function RhythmiaPage() {
     const profileSentRef = useRef(false);
 
     const t = useTranslations();
+    const locale = useLocale();
     const router = useRouter();
     const { profile, showProfileSetup } = useProfile();
 
@@ -402,6 +404,20 @@ export default function RhythmiaPage() {
                             <button className={styles.playButton}>{t('arena.quickMatch')}</button>
                         </motion.div>
                     </div>
+
+                    {/* For You Section */}
+                    <motion.div
+                        className={styles.forYouSection}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+                        transition={{ duration: 0.6, delay: 0.7 }}
+                    >
+                        <ForYouTab
+                            locale={locale}
+                            unlockedAdvancements={unlockedCount}
+                            totalAdvancements={ADVANCEMENTS.length}
+                        />
+                    </motion.div>
 
                     {/* Loyalty widget — visible immediately on landing */}
                     <LoyaltyWidget />

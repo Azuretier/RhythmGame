@@ -1,0 +1,282 @@
+/* For You Tab */
+.forYouContainer {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.sectionHeader {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.sectionTitle {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 6px;
+}
+
+.sectionSubtitle {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 0.15em;
+    font-weight: 300;
+}
+
+/* Card Grid */
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: 100%;
+}
+
+/* Card */
+.card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.card:hover::before {
+    opacity: 1;
+}
+
+/* Card type accent lines */
+.card.tutorial::before {
+    background: linear-gradient(90deg, rgba(100, 180, 255, 0.6), transparent);
+}
+
+.card.video::before {
+    background: linear-gradient(90deg, rgba(255, 80, 80, 0.6), transparent);
+}
+
+.card.tip::before {
+    background: linear-gradient(90deg, rgba(255, 200, 60, 0.6), transparent);
+}
+
+/* Card Header */
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.typeIcon {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.typeLabel {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.diffBadge {
+    margin-left: auto;
+    padding: 2px 8px;
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.diff_beginner {
+    border-color: rgba(80, 200, 120, 0.3);
+    color: rgba(80, 200, 120, 0.7);
+}
+
+.diff_intermediate {
+    border-color: rgba(255, 180, 50, 0.3);
+    color: rgba(255, 180, 50, 0.7);
+}
+
+.diff_advanced {
+    border-color: rgba(255, 80, 80, 0.3);
+    color: rgba(255, 80, 80, 0.7);
+}
+
+/* Card Content */
+.cardTitle {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 8px;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+}
+
+.cardDescription {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.6;
+    font-weight: 300;
+    margin-bottom: 12px;
+}
+
+/* Tags */
+.tagList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.tag {
+    padding: 2px 8px;
+    font-size: 0.6rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.04em;
+}
+
+/* YouTube Link */
+.cardLink {
+    font-size: 0.65rem;
+    color: rgba(255, 80, 80, 0.7);
+    letter-spacing: 0.05em;
+    font-weight: 500;
+    transition: color 0.25s;
+}
+
+.card:hover .cardLink {
+    color: rgba(255, 80, 80, 1);
+}
+
+/* Refresh */
+.refreshRow {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.refreshButton {
+    padding: 8px 20px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.refreshButton:hover {
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Loading */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 16px;
+}
+
+.loadingSpinner {
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loadingText {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.2em;
+}
+
+/* Error */
+.errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 16px;
+}
+
+.errorText {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.1em;
+}
+
+.retryButton {
+    padding: 8px 20px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.retryButton:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cardGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .cardGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
