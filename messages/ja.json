@@ -15,9 +15,7 @@
         "battle": "バトル",
         "back": "← 戻る",
         "online": "オンライン",
-        "onlineCount": "{count} オンライン",
-        "serversTab": "サーバー",
-        "forYouTab": "おすすめ"
+        "onlineCount": "{count} オンライン"
     },
     "vanilla": {
         "badge": "公式",

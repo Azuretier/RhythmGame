@@ -569,7 +569,6 @@
   pointer-events: none;
 }
 
-/* Lobby Tabs */
 /* Responsive */
 @media (max-width: 768px) {
   .header {
