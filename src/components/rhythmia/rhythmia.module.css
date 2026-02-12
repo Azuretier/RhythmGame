@@ -143,13 +143,16 @@
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  color: #000000;
+}
+
+:global(.dark) .logo {
   color: #ffffff;
-  opacity: 0.95;
 }
 
 .logoAccent {
   font-weight: 400;
-  opacity: 0.45;
+  color: #ec2828;
 }
 
 .statusBar {
