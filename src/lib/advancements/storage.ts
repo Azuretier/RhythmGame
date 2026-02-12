@@ -23,6 +23,9 @@ function getDefaultStats(): PlayerStats {
     totalMultiplayerGames: 0,
     totalHardDrops: 0,
     totalPiecesPlaced: 0,
+    totalVisits: 0,
+    bestStreak: 0,
+    pollsVoted: 0,
   };
 }
 
@@ -254,4 +257,26 @@ export function checkLiveMultiplayerAdvancements(sessionStats: MultiplayerGameEn
 export function getUnlockedCount(): number {
   const state = loadAdvancementState();
   return state.unlockedIds.length;
+}
+
+/**
+ * Sync loyalty stats (visits, streaks, polls) into the advancement system.
+ * Checks for newly unlocked loyalty advancements, saves, and syncs to Firestore.
+ */
+export function syncLoyaltyStats(loyaltyStats: { totalVisits: number; bestStreak: number; pollsVoted: number }): AdvancementState {
+  const state = loadAdvancementState();
+
+  state.stats.totalVisits = loyaltyStats.totalVisits;
+  state.stats.bestStreak = loyaltyStats.bestStreak;
+  state.stats.pollsVoted = loyaltyStats.pollsVoted;
+
+  const updated = checkNewAdvancements(state);
+  saveAdvancementState(updated);
+
+  syncToFirestore(updated);
+  for (const advId of updated.newlyUnlockedIds) {
+    writeNotification(advId);
+  }
+
+  return updated;
 }
