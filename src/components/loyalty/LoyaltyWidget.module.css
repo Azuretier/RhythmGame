@@ -1,0 +1,246 @@
+/* Loyalty Widget — Compact inline widget for lobby */
+.widget {
+  width: 100%;
+  max-width: 900px;
+  margin-top: 32px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 24px 28px;
+}
+
+/* Top row: tier info + streak */
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tierSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tierIcon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.tierInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.tierName {
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+}
+
+.tierLabel {
+  font-size: 0.55rem;
+  opacity: 0.3;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* Streak section */
+.streakSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.streakDays {
+  display: flex;
+  gap: 4px;
+}
+
+.streakDot {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  opacity: 0.35;
+  letter-spacing: 0;
+}
+
+.streakDot.filled {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  opacity: 1;
+}
+
+.streakDot.today {
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.08);
+}
+
+.streakLabel {
+  font-size: 0.55rem;
+  opacity: 0.3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Progress bar */
+.progressRow {
+  margin-bottom: 16px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  opacity: 0.25;
+  letter-spacing: 0.04em;
+}
+
+/* Mini roadmap */
+.miniRoadmap {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.miniStep {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s;
+}
+
+.miniStep.active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.miniStep.completed {
+  opacity: 0.4;
+}
+
+.miniStepIcon {
+  font-size: 0.85rem;
+}
+
+.miniStepName {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+}
+
+.miniStep.active .miniStepName {
+  opacity: 1;
+}
+
+/* Stats row */
+.statsRow {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+
+.statItem {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.statValue {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: 0.55rem;
+  opacity: 0.25;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* View all button */
+.viewAll {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.viewAll:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .widget {
+    margin-top: 24px;
+  }
+
+  .topRow {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .streakSection {
+    align-items: flex-start;
+  }
+
+  .miniRoadmap {
+    flex-wrap: wrap;
+  }
+
+  .miniStep {
+    min-width: calc(50% - 4px);
+  }
+
+  .statsRow {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+}

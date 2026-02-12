@@ -9,24 +9,27 @@
     },
     "lobby": {
         "loading": "LOADING",
-        "selectServer": "SELECT SERVER",
-        "chooseMode": "Choose your mode",
+        "selectServer": "SELECT MODE",
+        "chooseMode": "Choose your game mode",
         "play": "PLAY",
         "battle": "BATTLE",
         "back": "← Back",
         "online": "Online",
-        "onlineCount": "{count} online"
+        "onlineCount": "{count} online",
+        "loyalty": "Loyalty"
     },
     "vanilla": {
-        "badge": "OFFICIAL",
-        "title": "Single Player",
-        "gameTitle": "RHYTHMIA — VANILLA"
+        "badge": "SOLO",
+        "title": "RHYTHMIA",
+        "subtitle": "Classic Rhythm Puzzle",
+        "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+        "gameTitle": "RHYTHMIA"
     },
     "multiplayer": {
         "badge": "1v1",
-        "title": "BATTLE ARENA",
-        "gameTitle": "BATTLE ARENA — 1v1",
-        "subtitle": "Multiplayer 1v1",
+        "title": "1v1 BATTLE",
+        "gameTitle": "1v1 BATTLE",
+        "subtitle": "Ranked Multiplayer",
         "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
         "features": {
             "vs": "1v1",
@@ -91,11 +94,36 @@
         "mp_streak_5": { "name": "Domination", "desc": "Win 5 matches in a row" },
         "mp_streak_10": { "name": "Unbreakable", "desc": "Win 10 matches in a row" },
         "mp_games_10": { "name": "Arena Regular", "desc": "Play 10 multiplayer matches" },
-        "mp_games_50": { "name": "Arena Veteran", "desc": "Play 50 multiplayer matches" }
+        "mp_games_50": { "name": "Arena Veteran", "desc": "Play 50 multiplayer matches" },
+        "loyalty_streak_3": { "name": "3-Day Streak", "desc": "Visit 3 days in a row" },
+        "loyalty_streak_7": { "name": "Weekly Rhythm", "desc": "Visit 7 days in a row" },
+        "loyalty_streak_14": { "name": "Fortnight Beat", "desc": "Visit 14 days in a row" },
+        "loyalty_streak_30": { "name": "Monthly Pulse", "desc": "Visit 30 days in a row" },
+        "loyalty_visits_5": { "name": "Regular", "desc": "Visit 5 times" },
+        "loyalty_visits_25": { "name": "Familiar Face", "desc": "Visit 25 times" },
+        "loyalty_visits_100": { "name": "Part of the Family", "desc": "Visit 100 times" },
+        "loyalty_games_10": { "name": "Player", "desc": "Play 10 games" },
+        "loyalty_games_50": { "name": "Enthusiast", "desc": "Play 50 games" },
+        "loyalty_games_200": { "name": "Devotee", "desc": "Play 200 games" },
+        "loyalty_polls_1": { "name": "First Vote", "desc": "Vote in your first poll" },
+        "loyalty_polls_5": { "name": "Active Voter", "desc": "Vote in 5 polls" },
+        "loyalty_polls_10": { "name": "Community Voice", "desc": "Vote in 10 polls" }
     },
     "arena": {
-        "title": "ARENA",
-        "subtitle": "9-PLAYER RHYTHM BATTLE",
+        "badge": "9P",
+        "title": "RHYTHM ARENA",
+        "subtitle": "9-Player Battle Royale",
+        "description": "9 players, 1 rhythm. Shared chaos, synced tempo, random gimmicks. Stay on beat or the tempo collapses.",
+        "features": {
+            "players": "9 Players",
+            "chaos": "Chaos",
+            "sync": "Rhythm Sync"
+        },
+        "stats": {
+            "players": "Players",
+            "bpm": "BPM",
+            "status": "Status"
+        },
         "maxPlayers": "{count} Players Max",
         "quickMatch": "QUICK MATCH",
         "createArena": "Create Arena",
@@ -144,20 +172,112 @@
         "backToLobby": "Back to Lobby"
     },
     "footer": {
-        "copyright": "RHYTHMIA © 2025"
+        "copyright": "azuretier.net © 2025"
     },
     "localeSwitcher": {
         "label": "Language",
         "en": "English",
         "ja": "日本語"
     },
+    "loyalty": {
+        "meta": {
+            "title": "Loyalty Program | RHYTHMIA - Azuretier",
+            "description": "Track your loyalty tier, earn badges, maintain streaks, and engage with the RHYTHMIA community."
+        },
+        "backToLobby": "\u2190 Back",
+        "currentTier": "CURRENT LOYALTY TIER",
+        "xpToNext": "{xp} XP to next tier",
+        "maxTier": "MAX TIER REACHED",
+        "streakDays": "DAY STREAK",
+        "viewAll": "VIEW ALL ADVANCEMENTS & DETAILS",
+        "tiers": {
+            "new_beat": "New Beat",
+            "syncopated": "Syncopated",
+            "in_rhythm": "In Rhythm",
+            "maestro": "Maestro"
+        },
+        "stats": {
+            "visits": "VISITS",
+            "streak": "STREAK",
+            "games": "GAMES",
+            "badges": "ADVANCEMENTS"
+        },
+        "sections": {
+            "tierRoadmap": "TIER ROADMAP",
+            "streak": "LOGIN STREAK",
+            "badges": "RECENT ADVANCEMENTS",
+            "community": "COMMUNITY VOICE",
+            "howItWorks": "HOW IT WORKS"
+        },
+        "badges": {
+            "streak_3": { "icon": "\uD83D\uDD25", "name": "3-Day Streak", "desc": "Visit 3 days in a row" },
+            "streak_7": { "icon": "\uD83D\uDD25", "name": "Weekly Rhythm", "desc": "Visit 7 days in a row" },
+            "streak_14": { "icon": "\uD83D\uDD25", "name": "Fortnight Beat", "desc": "Visit 14 days in a row" },
+            "streak_30": { "icon": "\uD83D\uDD25", "name": "Monthly Pulse", "desc": "Visit 30 days in a row" },
+            "visits_5": { "icon": "\uD83D\uDC63", "name": "Regular", "desc": "Visit 5 times" },
+            "visits_25": { "icon": "\uD83D\uDC63", "name": "Familiar Face", "desc": "Visit 25 times" },
+            "visits_100": { "icon": "\uD83D\uDC63", "name": "Part of the Family", "desc": "Visit 100 times" },
+            "games_10": { "icon": "\uD83C\uDFAE", "name": "Player", "desc": "Play 10 games" },
+            "games_50": { "icon": "\uD83C\uDFAE", "name": "Enthusiast", "desc": "Play 50 games" },
+            "games_200": { "icon": "\uD83C\uDFAE", "name": "Devotee", "desc": "Play 200 games" },
+            "polls_1": { "icon": "\uD83D\uDDF3\uFE0F", "name": "First Vote", "desc": "Vote in your first poll" },
+            "polls_5": { "icon": "\uD83D\uDDF3\uFE0F", "name": "Active Voter", "desc": "Vote in 5 polls" },
+            "polls_10": { "icon": "\uD83D\uDDF3\uFE0F", "name": "Community Voice", "desc": "Vote in 10 polls" }
+        },
+        "poll": {
+            "question": "What should the next RHYTHMIA game mode be?",
+            "options": {
+                "0": "Co-op Mode (2v2 team battles)",
+                "1": "Survival Mode (endless waves)",
+                "2": "Tournament Mode (bracket elimination)",
+                "3": "Zen Mode (relaxed, no pressure)"
+            },
+            "vote": "VOTE",
+            "voted": "Thanks for voting!",
+            "loading": "Loading poll...",
+            "submitting": "Submitting...",
+            "noPoll": "No active poll right now.",
+            "totalVotes": "{count} votes"
+        },
+        "strategy": {
+            "0": {
+                "step": "STEP 01",
+                "title": "Play & Earn XP",
+                "desc": "Every game you play, every visit you make, and every achievement you unlock earns you XP toward your loyalty tier."
+            },
+            "1": {
+                "step": "STEP 02",
+                "title": "Build Your Streak",
+                "desc": "Visit daily to keep your streak alive. Longer streaks earn bonus XP and unlock exclusive streak badges."
+            },
+            "2": {
+                "step": "STEP 03",
+                "title": "Climb the Tiers",
+                "desc": "Progress from New Beat to Maestro. Each tier brings you closer to the core of the RHYTHMIA community."
+            },
+            "3": {
+                "step": "STEP 04",
+                "title": "Shape the Future",
+                "desc": "Vote in community polls, earn badges, and help decide what comes next for RHYTHMIA."
+            }
+        }
+    },
     "updates": {
         "title": "Recent Updates",
+        "pageTitle": "Development Updates",
+        "pageSubtitle": "Follow the latest changes and improvements to RHYTHMIA",
         "recentUpdates": "Recent updates",
         "prsMerged": "PRs merged",
+        "merged": "Merged",
+        "features": "Features",
+        "enhancements": "Enhancements",
+        "fixes": "Fixes",
         "all": "All",
         "viewPR": "View PR",
         "viewAllPRs": "View all PRs",
+        "viewAllPRsGithub": "View all PRs on GitHub",
+        "changes": "changes",
+        "change": "change",
         "categories": {
             "feature": "Features",
             "enhancement": "Enhancements",
@@ -166,5 +286,69 @@
             "docs": "Documentation",
             "i18n": "Internationalization"
         }
+    },
+    "minecraft_board": {
+        "title": "Minecraft Board Game",
+        "subtitle": "Explore, Mine, Craft, Survive!",
+        "playerName": "Player Name",
+        "worldName": "World Name",
+        "create": "Create",
+        "join": "Join",
+        "browse": "Browse",
+        "createWorld": "Create World",
+        "joinWorld": "Join World",
+        "roomCode": "Room Code",
+        "noRooms": "No public worlds available",
+        "players": "Players",
+        "ready": "Ready",
+        "notReady": "Not Ready",
+        "startGame": "Start Game",
+        "leave": "Leave",
+        "connecting": "Connecting...",
+        "reconnecting": "Reconnecting...",
+        "disconnected": "Disconnected from server",
+        "reconnect": "Reconnect",
+        "howToPlay": "How to Play",
+        "controls": {
+            "move": "WASD / Arrow keys to move",
+            "mine": "Click adjacent blocks to mine",
+            "craft": "E to open crafting, I for inventory",
+            "eat": "Right-click food in hotbar to eat",
+            "hotbar": "1-9 to select hotbar slot",
+            "win": "Craft the Ender Portal Frame to win!"
+        },
+        "hud": {
+            "equipped": "Equipped",
+            "fist": "Fist",
+            "armor": "Armor",
+            "kills": "Kills",
+            "mined": "Mined",
+            "craft": "Craft",
+            "inventory": "Inventory"
+        },
+        "crafting": {
+            "title": "Crafting",
+            "craftingTable": "Crafting Table",
+            "furnace": "Furnace",
+            "craft": "Craft"
+        },
+        "game": {
+            "youDied": "You Died!",
+            "respawning": "Respawning...",
+            "gameOver": "Game Over!",
+            "youWin": "You Win!",
+            "wins": "{name} Wins!",
+            "enderPortal": "Crafted the Ender Portal Frame!",
+            "backToMenu": "Back to Menu",
+            "day": "Day",
+            "dusk": "Dusk",
+            "night": "Night",
+            "dawn": "Dawn"
+        }
+    },
+    "nav": {
+        "wiki": "Wiki",
+        "updates": "Updates",
+        "lobby": "Lobby"
     }
 }

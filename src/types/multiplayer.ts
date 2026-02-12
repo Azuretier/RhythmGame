@@ -108,6 +108,27 @@ export interface ArenaGenericMessage {
   [key: string]: unknown;
 }
 
+// Minecraft Board Game client messages
+export interface MCBoardGenericMessage {
+  type:
+    | 'mc_create_room'
+    | 'mc_join_room'
+    | 'mc_get_rooms'
+    | 'mc_leave'
+    | 'mc_ready'
+    | 'mc_start'
+    | 'mc_move'
+    | 'mc_mine'
+    | 'mc_cancel_mine'
+    | 'mc_craft'
+    | 'mc_attack'
+    | 'mc_place_block'
+    | 'mc_eat'
+    | 'mc_select_slot'
+    | 'mc_chat';
+  [key: string]: unknown;
+}
+
 export type ClientMessage =
   | CreateRoomMessage
   | JoinRoomMessage
@@ -121,7 +142,8 @@ export type ClientMessage =
   | RematchMessage
   | QueueRankedMessage
   | CancelRankedMessage
-  | ArenaGenericMessage;
+  | ArenaGenericMessage
+  | MCBoardGenericMessage;
 
 // ===== Server -> Client Messages =====
 
