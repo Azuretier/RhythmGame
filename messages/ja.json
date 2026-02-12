@@ -167,6 +167,65 @@
             "i18n": "国際化"
         }
     },
+    "minecraft_board": {
+        "title": "マインクラフト ボードゲーム",
+        "subtitle": "探索して、採掘して、クラフトして、生き残れ！",
+        "playerName": "プレイヤー名",
+        "worldName": "ワールド名",
+        "create": "作成",
+        "join": "参加",
+        "browse": "一覧",
+        "createWorld": "ワールドを作成",
+        "joinWorld": "ワールドに参加",
+        "roomCode": "ルームコード",
+        "noRooms": "公開ワールドがありません",
+        "players": "プレイヤー",
+        "ready": "準備完了",
+        "notReady": "未準備",
+        "startGame": "ゲーム開始",
+        "leave": "退出",
+        "connecting": "接続中...",
+        "reconnecting": "再接続中...",
+        "disconnected": "サーバーから切断されました",
+        "reconnect": "再接続",
+        "howToPlay": "遊び方",
+        "controls": {
+            "move": "WASD / 矢印キーで移動",
+            "mine": "隣のブロックをクリックして採掘",
+            "craft": "Eでクラフト、Iでインベントリ",
+            "eat": "ホットバーの食料を右クリックで食べる",
+            "hotbar": "1-9でホットバースロット選択",
+            "win": "エンダーポータルフレームをクラフトして勝利！"
+        },
+        "hud": {
+            "equipped": "装備中",
+            "fist": "素手",
+            "armor": "防具",
+            "kills": "キル数",
+            "mined": "採掘数",
+            "craft": "クラフト",
+            "inventory": "インベントリ"
+        },
+        "crafting": {
+            "title": "クラフト",
+            "craftingTable": "作業台",
+            "furnace": "かまど",
+            "craft": "作成"
+        },
+        "game": {
+            "youDied": "死んでしまった！",
+            "respawning": "リスポーン中...",
+            "gameOver": "ゲームオーバー！",
+            "youWin": "勝利！",
+            "wins": "{name}の勝利！",
+            "enderPortal": "エンダーポータルフレームを作成しました！",
+            "backToMenu": "メニューに戻る",
+            "day": "昼",
+            "dusk": "夕暮れ",
+            "night": "夜",
+            "dawn": "夜明け"
+        }
+    },
     "nav": {
         "wiki": "Wiki",
         "updates": "アップデート",
