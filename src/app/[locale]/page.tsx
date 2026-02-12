@@ -230,123 +230,118 @@ export default function RhythmiaPage() {
                         <p>{t('lobby.chooseMode')}</p>
                     </motion.div>
 
-                    <motion.div
-                        className={styles.serverGrid}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 20 : 0 }}
-                        transition={{ duration: 0.35 }}
-                    >
-                                {/* Vanilla Server */}
-                                <motion.div
-                                    className={`${styles.serverCard} ${styles.vanilla}`}
-                                    onClick={() => launchGame('vanilla')}
-                                    initial={{ opacity: 0, y: 40 }}
-                                    animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                                    transition={{ duration: 0.6, delay: 0.3 }}
-                                    whileHover={{ y: -8, transition: { duration: 0.25 } }}
-                                >
-                                    <span className={styles.cardBadge}>{t('vanilla.badge')}</span>
-                                    <h2 className={styles.cardTitle}>{t('vanilla.title')}</h2>
-                                    <button className={styles.playButton}>{t('lobby.play')}</button>
-                                </motion.div>
+                    <div className={styles.serverGrid}>
+                        {/* Vanilla Server */}
+                        <motion.div
+                            className={`${styles.serverCard} ${styles.vanilla}`}
+                            onClick={() => launchGame('vanilla')}
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                            whileHover={{ y: -8, transition: { duration: 0.25 } }}
+                        >
+                            <span className={styles.cardBadge}>{t('vanilla.badge')}</span>
+                            <h2 className={styles.cardTitle}>{t('vanilla.title')}</h2>
+                            <button className={styles.playButton}>{t('lobby.play')}</button>
+                        </motion.div>
 
-                                {/* Multiplayer Server (locked until 3 advancements) */}
-                                <motion.div
-                                    className={`${styles.serverCard} ${styles.multiplayer} ${isArenaLocked ? styles.lockedCard : ''}`}
-                                    onClick={() => launchGame('multiplayer')}
-                                    initial={{ opacity: 0, y: 40 }}
-                                    animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                                    transition={{ duration: 0.6, delay: 0.45 }}
-                                    whileHover={isArenaLocked ? {} : { y: -8, transition: { duration: 0.25 } }}
-                                >
-                                    {isArenaLocked && (
-                                        <div className={styles.lockOverlay}>
-                                            <svg className={styles.lockIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                            </svg>
-                                            <div className={styles.lockText}>
-                                                {t('advancements.lockMessage', {
-                                                    current: unlockedCount,
-                                                    required: BATTLE_ARENA_REQUIRED_ADVANCEMENTS,
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
-                                    <span className={`${styles.cardBadge} ${styles.new}`}>{t('multiplayer.badge')}</span>
-                                    <h2 className={styles.cardTitle}>{t('multiplayer.title')}</h2>
-                                    <p className={styles.cardSubtitle}>{t('multiplayer.subtitle')}</p>
-                                    <p className={styles.cardDescription}>
-                                        {t('multiplayer.description')}
-                                    </p>
-                                    <div className={styles.cardFeatures}>
-                                        <span className={styles.featureTag}>{t('multiplayer.features.vs')}</span>
-                                        <span className={styles.featureTag}>{t('multiplayer.features.websocket')}</span>
-                                        <span className={styles.featureTag}>{t('multiplayer.features.ranked')}</span>
+                        {/* Multiplayer Server (locked until 3 advancements) */}
+                        <motion.div
+                            className={`${styles.serverCard} ${styles.multiplayer} ${isArenaLocked ? styles.lockedCard : ''}`}
+                            onClick={() => launchGame('multiplayer')}
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
+                            transition={{ duration: 0.6, delay: 0.45 }}
+                            whileHover={isArenaLocked ? {} : { y: -8, transition: { duration: 0.25 } }}
+                        >
+                            {isArenaLocked && (
+                                <div className={styles.lockOverlay}>
+                                    <svg className={styles.lockIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                    </svg>
+                                    <div className={styles.lockText}>
+                                        {t('advancements.lockMessage', {
+                                            current: unlockedCount,
+                                            required: BATTLE_ARENA_REQUIRED_ADVANCEMENTS,
+                                        })}
                                     </div>
-                                    <div className={styles.cardStats}>
-                                        <div className={styles.stat}>
-                                            <div className={styles.statValue}>VS</div>
-                                            <div className={styles.statLabel}>{t('multiplayer.stats.mode')}</div>
-                                        </div>
-                                        <div className={styles.stat}>
-                                            <div className={styles.statValue}>1v1</div>
-                                            <div className={styles.statLabel}>{t('multiplayer.stats.battle')}</div>
-                                        </div>
-                                        <div className={styles.stat}>
-                                            <div className={styles.statValue}>LIVE</div>
-                                            <div className={styles.statLabel}>{t('multiplayer.stats.status')}</div>
-                                        </div>
-                                    </div>
-                                    <button className={`${styles.playButton} ${isArenaLocked ? styles.lockedButton : ''}`} disabled={isArenaLocked}>
-                                        {isArenaLocked ? t('advancements.locked') : t('lobby.battle')}
-                                    </button>
-                                </motion.div>
+                                </div>
+                            )}
+                            <span className={`${styles.cardBadge} ${styles.new}`}>{t('multiplayer.badge')}</span>
+                            <h2 className={styles.cardTitle}>{t('multiplayer.title')}</h2>
+                            <p className={styles.cardSubtitle}>{t('multiplayer.subtitle')}</p>
+                            <p className={styles.cardDescription}>
+                                {t('multiplayer.description')}
+                            </p>
+                            <div className={styles.cardFeatures}>
+                                <span className={styles.featureTag}>{t('multiplayer.features.vs')}</span>
+                                <span className={styles.featureTag}>{t('multiplayer.features.websocket')}</span>
+                                <span className={styles.featureTag}>{t('multiplayer.features.ranked')}</span>
+                            </div>
+                            <div className={styles.cardStats}>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>VS</div>
+                                    <div className={styles.statLabel}>{t('multiplayer.stats.mode')}</div>
+                                </div>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>1v1</div>
+                                    <div className={styles.statLabel}>{t('multiplayer.stats.battle')}</div>
+                                </div>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>LIVE</div>
+                                    <div className={styles.statLabel}>{t('multiplayer.stats.status')}</div>
+                                </div>
+                            </div>
+                            <button className={`${styles.playButton} ${isArenaLocked ? styles.lockedButton : ''}`} disabled={isArenaLocked}>
+                                {isArenaLocked ? t('advancements.locked') : t('lobby.battle')}
+                            </button>
+                        </motion.div>
 
-                                {/* 9-Player Arena */}
-                                <motion.div
-                                    className={`${styles.serverCard} ${styles.multiplayer}`}
-                                    onClick={() => router.push('/arena')}
-                                    initial={{ opacity: 0, y: 40 }}
-                                    animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                                    transition={{ duration: 0.6, delay: 0.6 }}
-                                    whileHover={{ y: -8, transition: { duration: 0.25 } }}
-                                >
-                                    <span className={`${styles.cardBadge} ${styles.new}`}>9P</span>
-                                    <h2 className={styles.cardTitle}>{t('arena.title')}</h2>
-                                    <p className={styles.cardSubtitle}>{t('arena.subtitle')}</p>
-                                    <p className={styles.cardDescription}>
-                                        9 players, 1 rhythm. Shared chaos, synced tempo, random gimmicks. Stay on beat or the tempo collapses.
-                                    </p>
-                                    <div className={styles.cardFeatures}>
-                                        <span className={styles.featureTag}>9 Players</span>
-                                        <span className={styles.featureTag}>Chaos</span>
-                                        <span className={styles.featureTag}>Rhythm Sync</span>
-                                    </div>
-                                    <div className={styles.cardStats}>
-                                        <div className={styles.stat}>
-                                            <div className={styles.statValue}>9</div>
-                                            <div className={styles.statLabel}>Players</div>
-                                        </div>
-                                        <div className={styles.stat}>
-                                            <div className={styles.statValue}>120+</div>
-                                            <div className={styles.statLabel}>BPM</div>
-                                        </div>
-                                        <div className={styles.stat}>
-                                            <div className={styles.statValue}>LIVE</div>
-                                            <div className={styles.statLabel}>Status</div>
-                                        </div>
-                                    </div>
-                                    <button className={styles.playButton}>{t('arena.quickMatch')}</button>
-                                </motion.div>
-                            </motion.div>
+                        {/* 9-Player Arena */}
+                        <motion.div
+                            className={`${styles.serverCard} ${styles.multiplayer}`}
+                            onClick={() => router.push('/arena')}
+                            initial={{ opacity: 0, y: 40 }}
+                            animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
+                            transition={{ duration: 0.6, delay: 0.6 }}
+                            whileHover={{ y: -8, transition: { duration: 0.25 } }}
+                        >
+                            <span className={`${styles.cardBadge} ${styles.new}`}>9P</span>
+                            <h2 className={styles.cardTitle}>{t('arena.title')}</h2>
+                            <p className={styles.cardSubtitle}>{t('arena.subtitle')}</p>
+                            <p className={styles.cardDescription}>
+                                9 players, 1 rhythm. Shared chaos, synced tempo, random gimmicks. Stay on beat or the tempo collapses.
+                            </p>
+                            <div className={styles.cardFeatures}>
+                                <span className={styles.featureTag}>9 Players</span>
+                                <span className={styles.featureTag}>Chaos</span>
+                                <span className={styles.featureTag}>Rhythm Sync</span>
+                            </div>
+                            <div className={styles.cardStats}>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>9</div>
+                                    <div className={styles.statLabel}>Players</div>
+                                </div>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>120+</div>
+                                    <div className={styles.statLabel}>BPM</div>
+                                </div>
+                                <div className={styles.stat}>
+                                    <div className={styles.statValue}>LIVE</div>
+                                    <div className={styles.statLabel}>Status</div>
+                                </div>
+                            </div>
+                            <button className={styles.playButton}>{t('arena.quickMatch')}</button>
+                        </motion.div>
+                    </div>
 
                     {/* For You Section */}
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 20 : 0 }}
-                        transition={{ duration: 0.5, delay: 0.7 }}
-                        style={{ width: '100%', display: 'flex', justifyContent: 'center', marginTop: '3rem' }}
+                        className={styles.forYouSection}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+                        transition={{ duration: 0.6, delay: 0.7 }}
                     >
                         <ForYouTab
                             locale={locale}

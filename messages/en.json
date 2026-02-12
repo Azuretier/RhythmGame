@@ -227,9 +227,7 @@
         }
     },
     "forYou": {
-        "heading": "FOR YOU",
-        "headingSubtitle": "Personalized tutorials and tips",
-        "title": "RECOMMENDED",
+        "title": "FOR YOU",
         "subtitle": "Curated based on your progress",
         "loading": "GENERATING",
         "error": "Could not load recommendations",

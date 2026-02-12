@@ -2,9 +2,10 @@
 .page {
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: #000000;
-  height: 100vh;
+  min-height: 100vh;
   max-width: 100%;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   color: #ffffff;
   position: relative;
   box-sizing: border-box;
@@ -198,8 +199,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
+  padding: 40px 20px 60px;
 }
 
 .heroText {
@@ -567,6 +567,15 @@
   color: rgba(255, 255, 255, 0.3) !important;
   cursor: not-allowed !important;
   pointer-events: none;
+}
+
+/* For You section */
+.forYouSection {
+  width: 100%;
+  max-width: 900px;
+  margin-top: 48px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Responsive */
