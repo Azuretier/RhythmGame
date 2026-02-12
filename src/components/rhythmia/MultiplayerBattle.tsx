@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MultiplayerBattle.module.css';
 import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/multiplayer';
-import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements } from '@/lib/advancements/storage';
+import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
 
 // ===== Types =====
@@ -470,6 +470,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (fresh.length > 0) {
       fresh.forEach(id => liveNotifiedRef.current.add(id));
       setToastIds(prev => [...prev, ...fresh]);
+      // Instantly persist unlocks so progress survives mid-game exits
+      saveLiveUnlocks(fresh);
     }
   }, []);
 

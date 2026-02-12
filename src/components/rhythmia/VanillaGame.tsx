@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VanillaGame.module.css';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
+import { recordGameEnd, checkLiveGameAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
 
 // ===== Types =====
@@ -331,6 +331,8 @@ export const Rhythmia: React.FC = () => {
     if (fresh.length > 0) {
       fresh.forEach(id => liveNotifiedRef.current.add(id));
       setToastIds(prev => [...prev, ...fresh]);
+      // Instantly persist unlocks so progress survives mid-game exits
+      saveLiveUnlocks(fresh);
     }
   }, []);
 
