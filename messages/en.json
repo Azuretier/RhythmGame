@@ -15,9 +15,7 @@
         "battle": "BATTLE",
         "back": "← Back",
         "online": "Online",
-        "onlineCount": "{count} online",
-        "serversTab": "Servers",
-        "forYouTab": "For You"
+        "onlineCount": "{count} online"
     },
     "vanilla": {
         "badge": "OFFICIAL",
