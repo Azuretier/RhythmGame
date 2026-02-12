@@ -1,30 +1,168 @@
 {
   "youtubeChannel": "https://www.youtube.com/@rhythmia_official",
   "tutorials": [
-    { "id": "tut-tspin", "topic": "T-Spin", "tags": ["technique", "advanced"] },
-    { "id": "tut-stacking", "topic": "Clean Stacking", "tags": ["fundamentals", "beginner"] },
-    { "id": "tut-combos", "topic": "Combo Chains", "tags": ["technique", "intermediate"] },
-    { "id": "tut-opener", "topic": "Openers & Setups", "tags": ["strategy", "advanced"] },
-    { "id": "tut-rhythm", "topic": "Rhythm Timing", "tags": ["rhythm", "core"] },
-    { "id": "tut-downstack", "topic": "Downstacking", "tags": ["recovery", "intermediate"] },
-    { "id": "tut-harddrop", "topic": "Hard Drop Speed", "tags": ["speed", "fundamentals"] },
-    { "id": "tut-garbage", "topic": "Garbage Management", "tags": ["multiplayer", "strategy"] },
-    { "id": "tut-finesse", "topic": "Finesse & Efficiency", "tags": ["speed", "advanced"] },
-    { "id": "tut-back2back", "topic": "Back-to-Back Chains", "tags": ["scoring", "intermediate"] },
-    { "id": "tut-crafting", "topic": "Crafting System Guide", "tags": ["items", "core"] },
-    { "id": "tut-items", "topic": "Item Strategy", "tags": ["items", "strategy"] },
-    { "id": "tut-ranked", "topic": "Ranked Climbing Tips", "tags": ["multiplayer", "competitive"] },
-    { "id": "tut-worlds", "topic": "World Progression", "tags": ["worlds", "exploration"] }
+    {
+      "id": "tut-tspin",
+      "topic": "T-Spin",
+      "tags": [
+        "technique",
+        "advanced"
+      ]
+    },
+    {
+      "id": "tut-stacking",
+      "topic": "Clean Stacking",
+      "tags": [
+        "fundamentals",
+        "beginner"
+      ]
+    },
+    {
+      "id": "tut-combos",
+      "topic": "Combo Chains",
+      "tags": [
+        "technique",
+        "intermediate"
+      ]
+    },
+    {
+      "id": "tut-opener",
+      "topic": "Openers & Setups",
+      "tags": [
+        "strategy",
+        "advanced"
+      ]
+    },
+    {
+      "id": "tut-rhythm",
+      "topic": "Rhythm Timing",
+      "tags": [
+        "rhythm",
+        "core"
+      ]
+    },
+    {
+      "id": "tut-downstack",
+      "topic": "Downstacking",
+      "tags": [
+        "recovery",
+        "intermediate"
+      ]
+    },
+    {
+      "id": "tut-harddrop",
+      "topic": "Hard Drop Speed",
+      "tags": [
+        "speed",
+        "fundamentals"
+      ]
+    },
+    {
+      "id": "tut-garbage",
+      "topic": "Garbage Management",
+      "tags": [
+        "multiplayer",
+        "strategy"
+      ]
+    },
+    {
+      "id": "tut-finesse",
+      "topic": "Finesse & Efficiency",
+      "tags": [
+        "speed",
+        "advanced"
+      ]
+    },
+    {
+      "id": "tut-back2back",
+      "topic": "Back-to-Back Chains",
+      "tags": [
+        "scoring",
+        "intermediate"
+      ]
+    },
+    {
+      "id": "tut-crafting",
+      "topic": "Crafting System Guide",
+      "tags": [
+        "items",
+        "core"
+      ]
+    },
+    {
+      "id": "tut-items",
+      "topic": "Item Strategy",
+      "tags": [
+        "items",
+        "strategy"
+      ]
+    },
+    {
+      "id": "tut-ranked",
+      "topic": "Ranked Climbing Tips",
+      "tags": [
+        "multiplayer",
+        "competitive"
+      ]
+    },
+    {
+      "id": "tut-worlds",
+      "topic": "World Progression",
+      "tags": [
+        "worlds",
+        "exploration"
+      ]
+    }
   ],
   "videos": [
-    { "id": "vid-beginner", "title": "RHYTHMIA Beginner Guide", "category": "guide", "url": "" },
-    { "id": "vid-tspin-tutorial", "title": "T-Spin Tutorial - From Zero to Hero", "category": "tutorial", "url": "" },
-    { "id": "vid-ranked-guide", "title": "How to Climb Ranked", "category": "competitive", "url": "" },
-    { "id": "vid-advanced-combos", "title": "Advanced Combo Techniques", "category": "tutorial", "url": "" },
-    { "id": "vid-update-showcase", "title": "Latest Update Showcase", "category": "news", "url": "" },
-    { "id": "vid-music-showcase", "title": "RHYTHMIA OST Preview", "category": "music", "url": "" },
-    { "id": "vid-multiplayer-tips", "title": "1v1 Battle Tips & Tricks", "category": "competitive", "url": "" },
-    { "id": "vid-world-tour", "title": "World Tour - All Stages", "category": "showcase", "url": "" }
+    {
+      "id": "vid-beginner",
+      "title": "RHYTHMIA Beginner Guide",
+      "category": "guide",
+      "url": ""
+    },
+    {
+      "id": "vid-tspin-tutorial",
+      "title": "T-Spin Tutorial - From Zero to Hero",
+      "category": "tutorial",
+      "url": "https://youtu.be/aa573goA1WA"
+    },
+    {
+      "id": "vid-ranked-guide",
+      "title": "How to Climb Ranked",
+      "category": "competitive",
+      "url": ""
+    },
+    {
+      "id": "vid-advanced-combos",
+      "title": "Advanced Combo Techniques",
+      "category": "tutorial",
+      "url": ""
+    },
+    {
+      "id": "vid-update-showcase",
+      "title": "Latest Update Showcase",
+      "category": "news",
+      "url": ""
+    },
+    {
+      "id": "vid-music-showcase",
+      "title": "RHYTHMIA OST Preview",
+      "category": "music",
+      "url": ""
+    },
+    {
+      "id": "vid-multiplayer-tips",
+      "title": "1v1 Battle Tips & Tricks",
+      "category": "competitive",
+      "url": ""
+    },
+    {
+      "id": "vid-world-tour",
+      "title": "World Tour - All Stages",
+      "category": "showcase",
+      "url": ""
+    }
   ],
   "fallback": {
     "beginner": {
@@ -34,7 +172,10 @@
           "id": "fb-stacking",
           "title": "Clean Stacking Basics",
           "description": "Master the fundamentals of building a clean board",
-          "tags": ["fundamentals", "beginner"],
+          "tags": [
+            "fundamentals",
+            "beginner"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -42,7 +183,10 @@
           "id": "fb-vid-beginner",
           "title": "RHYTHMIA Beginner Guide",
           "description": "Learn the basics with this video walkthrough",
-          "tags": ["guide", "video"],
+          "tags": [
+            "guide",
+            "video"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -50,7 +194,10 @@
           "id": "fb-tip-rhythm",
           "title": "Drop to the Beat",
           "description": "Time your piece drops to the rhythm for bonus points",
-          "tags": ["rhythm", "scoring"],
+          "tags": [
+            "rhythm",
+            "scoring"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -58,7 +205,10 @@
           "id": "fb-harddrop",
           "title": "Hard Drop Mastery",
           "description": "Speed up your gameplay with hard drop techniques",
-          "tags": ["speed", "fundamentals"],
+          "tags": [
+            "speed",
+            "fundamentals"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -66,7 +216,9 @@
           "id": "fb-vid-ost",
           "title": "RHYTHMIA OST Preview",
           "description": "Listen to the game soundtrack",
-          "tags": ["music"],
+          "tags": [
+            "music"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -74,7 +226,9 @@
           "id": "fb-tip-adv",
           "title": "Collect Advancements",
           "description": "Unlock 3 advancements to access the Battle Arena",
-          "tags": ["progression"],
+          "tags": [
+            "progression"
+          ],
           "difficulty": "beginner"
         }
       ],
@@ -84,7 +238,10 @@
           "id": "fb-stacking",
           "title": "基本スタッキングガイド",
           "description": "きれいに積む基本テクニックをマスターしよう",
-          "tags": ["fundamentals", "beginner"],
+          "tags": [
+            "fundamentals",
+            "beginner"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -92,7 +249,10 @@
           "id": "fb-vid-beginner",
           "title": "RHYTHMIA 初心者ガイド",
           "description": "ゲームの基本を動画で学ぼう",
-          "tags": ["guide", "video"],
+          "tags": [
+            "guide",
+            "video"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -100,7 +260,10 @@
           "id": "fb-tip-rhythm",
           "title": "リズムに合わせてドロップ",
           "description": "ビートに合わせてピースを落とすとボーナスポイント獲得",
-          "tags": ["rhythm", "scoring"],
+          "tags": [
+            "rhythm",
+            "scoring"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -108,7 +271,10 @@
           "id": "fb-harddrop",
           "title": "ハードドロップ活用法",
           "description": "スピードアップのためのハードドロップテクニック",
-          "tags": ["speed", "fundamentals"],
+          "tags": [
+            "speed",
+            "fundamentals"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -116,7 +282,9 @@
           "id": "fb-vid-ost",
           "title": "RHYTHMIA サウンドトラック",
           "description": "ゲームの音楽を聴いてみよう",
-          "tags": ["music"],
+          "tags": [
+            "music"
+          ],
           "difficulty": "beginner"
         },
         {
@@ -124,7 +292,9 @@
           "id": "fb-tip-adv",
           "title": "進捗を集めよう",
           "description": "進捗を3つ解除してバトルアリーナを開放しよう",
-          "tags": ["progression"],
+          "tags": [
+            "progression"
+          ],
           "difficulty": "beginner"
         }
       ]
@@ -136,7 +306,10 @@
           "id": "fb-tspin",
           "title": "T-Spin Mastery Guide",
           "description": "All T-Spin patterns and setups explained",
-          "tags": ["technique", "advanced"],
+          "tags": [
+            "technique",
+            "advanced"
+          ],
           "difficulty": "advanced"
         },
         {
@@ -144,7 +317,10 @@
           "id": "fb-vid-ranked",
           "title": "How to Climb Ranked",
           "description": "Strategies for climbing the ranked ladder",
-          "tags": ["competitive", "ranked"],
+          "tags": [
+            "competitive",
+            "ranked"
+          ],
           "difficulty": "advanced"
         },
         {
@@ -152,7 +328,10 @@
           "id": "fb-tip-b2b",
           "title": "Keep Back-to-Back Alive",
           "description": "Maintain B2B chains to maximize your attack power",
-          "tags": ["scoring", "strategy"],
+          "tags": [
+            "scoring",
+            "strategy"
+          ],
           "difficulty": "intermediate"
         },
         {
@@ -160,7 +339,10 @@
           "id": "fb-garbage",
           "title": "Garbage Line Management",
           "description": "Master dealing with garbage lines in battles",
-          "tags": ["multiplayer", "strategy"],
+          "tags": [
+            "multiplayer",
+            "strategy"
+          ],
           "difficulty": "intermediate"
         },
         {
@@ -168,7 +350,10 @@
           "id": "fb-vid-combos",
           "title": "Advanced Combo Techniques",
           "description": "Send massive garbage with consecutive combos",
-          "tags": ["technique", "competitive"],
+          "tags": [
+            "technique",
+            "competitive"
+          ],
           "difficulty": "advanced"
         },
         {
@@ -176,7 +361,10 @@
           "id": "fb-tip-finesse",
           "title": "Finesse Makes the Difference",
           "description": "Place pieces with minimal key presses for maximum speed",
-          "tags": ["speed", "optimization"],
+          "tags": [
+            "speed",
+            "optimization"
+          ],
           "difficulty": "advanced"
         }
       ],
@@ -186,7 +374,10 @@
           "id": "fb-tspin",
           "title": "Tスピン完全攻略",
           "description": "Tスピンの全パターンとセットアップを解説",
-          "tags": ["technique", "advanced"],
+          "tags": [
+            "technique",
+            "advanced"
+          ],
           "difficulty": "advanced"
         },
         {
@@ -194,7 +385,10 @@
           "id": "fb-vid-ranked",
           "title": "ランク戦攻略ガイド",
           "description": "ランク戦で勝つための戦略を動画で解説",
-          "tags": ["competitive", "ranked"],
+          "tags": [
+            "competitive",
+            "ranked"
+          ],
           "difficulty": "advanced"
         },
         {
@@ -202,7 +396,10 @@
           "id": "fb-tip-b2b",
           "title": "Back-to-Backを維持",
           "description": "B2Bチェインを維持して火力を最大化しよう",
-          "tags": ["scoring", "strategy"],
+          "tags": [
+            "scoring",
+            "strategy"
+          ],
           "difficulty": "intermediate"
         },
         {
@@ -210,7 +407,10 @@
           "id": "fb-garbage",
           "title": "お邪魔ライン対策",
           "description": "対戦でのお邪魔ライン対処法をマスター",
-          "tags": ["multiplayer", "strategy"],
+          "tags": [
+            "multiplayer",
+            "strategy"
+          ],
           "difficulty": "intermediate"
         },
         {
@@ -218,7 +418,10 @@
           "id": "fb-vid-combos",
           "title": "上級コンボテクニック",
           "description": "連続コンボで大量のラインを送り込む方法",
-          "tags": ["technique", "competitive"],
+          "tags": [
+            "technique",
+            "competitive"
+          ],
           "difficulty": "advanced"
         },
         {
@@ -226,7 +429,10 @@
           "id": "fb-tip-finesse",
           "title": "フィネスで差をつけろ",
           "description": "最小限のキー入力で正確にピースを配置しよう",
-          "tags": ["speed", "optimization"],
+          "tags": [
+            "speed",
+            "optimization"
+          ],
           "difficulty": "advanced"
         }
       ]
