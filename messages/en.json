@@ -225,5 +225,10 @@
             "night": "Night",
             "dawn": "Dawn"
         }
+    },
+    "nav": {
+        "wiki": "Wiki",
+        "updates": "Updates",
+        "lobby": "Lobby"
     }
 }

@@ -192,6 +192,18 @@ export default function RhythmiaPage() {
                         <div className={styles.statusItem}>
                             <span>v{rhythmiaConfig.version}</span>
                         </div>
+                        <button
+                            className={styles.advButton}
+                            onClick={() => router.push('/wiki')}
+                        >
+                            Wiki
+                        </button>
+                        <button
+                            className={styles.advButton}
+                            onClick={() => router.push('/updates')}
+                        >
+                            {t('nav.updates')}
+                        </button>
                         <LocaleSwitcher />
                         <a
                             href="https://discord.gg/7mBCasYkJY"

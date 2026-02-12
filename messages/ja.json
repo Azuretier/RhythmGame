@@ -225,5 +225,10 @@
             "night": "夜",
             "dawn": "夜明け"
         }
+    },
+    "nav": {
+        "wiki": "Wiki",
+        "updates": "アップデート",
+        "lobby": "ロビー"
     }
 }
