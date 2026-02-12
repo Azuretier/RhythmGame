@@ -90,61 +90,67 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
 
       <div className={styles.updatesList}>
         <AnimatePresence mode="popLayout">
-          {displayUpdates.map((update) => (
-            <motion.div
-              key={update.number}
-              className={styles.updateCard}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              layout
-            >
-              <div className={styles.updateHeader}>
-                <span
-                  className={styles.categoryBadge}
-                  style={{
-                    backgroundColor: CATEGORY_COLORS[update.category],
-                  }}
-                >
-                  {CATEGORY_ICONS[update.category]} {getCategoryLabel(update.category)}
-                </span>
-                <span className={styles.prNumber}>#{update.number}</span>
-              </div>
-              
-              <h3 className={styles.updateTitle}>{update.title}</h3>
-              
-              <p className={styles.updateDescription}>{update.description}</p>
+          {displayUpdates.map((update) => {
+            const displayTitle = locale === 'ja' ? update.titleJa : update.title;
+            const displayDescription = locale === 'ja' ? update.descriptionJa : update.description;
+            const displayHighlights = locale === 'ja' ? update.highlightsJa : update.highlights;
+            
+            return (
+              <motion.div
+                key={update.number}
+                className={styles.updateCard}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                layout
+              >
+                <div className={styles.updateHeader}>
+                  <span
+                    className={styles.categoryBadge}
+                    style={{
+                      backgroundColor: CATEGORY_COLORS[update.category],
+                    }}
+                  >
+                    {CATEGORY_ICONS[update.category]} {getCategoryLabel(update.category)}
+                  </span>
+                  <span className={styles.prNumber}>#{update.number}</span>
+                </div>
+                
+                <h3 className={styles.updateTitle}>{displayTitle}</h3>
+                
+                <p className={styles.updateDescription}>{displayDescription}</p>
 
-              {update.highlights && update.highlights.length > 0 && (
-                <ul className={styles.highlights}>
-                  {update.highlights.map((highlight, idx) => (
-                    <li key={idx} className={styles.highlightItem}>
-                      {highlight}
-                    </li>
-                  ))}
-                </ul>
-              )}
+                {displayHighlights && displayHighlights.length > 0 && (
+                  <ul className={styles.highlights}>
+                    {displayHighlights.map((highlight, idx) => (
+                      <li key={idx} className={styles.highlightItem}>
+                        {highlight}
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-              <div className={styles.updateFooter}>
-                <span className={styles.updateDate}>
-                  {new Date(update.date).toLocaleDateString(locale === 'ja' ? 'ja-JP' : 'en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-                <a
-                  href={`https://github.com/Azuretier/azuretier.net/pull/${update.number}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.prLink}
-                >
-                  {t('updates.viewPR')} →
-                </a>
-              </div>
-            </motion.div>
-          ))}
+                <div className={styles.updateFooter}>
+                  <span className={styles.updateDate}>
+                    {new Date(update.date).toLocaleDateString(locale === 'ja' ? 'ja-JP' : 'en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </span>
+                  <a
+                    href={`https://github.com/Azuretier/azuretier.net/pull/${update.number}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.prLink}
+                  >
+                    {t('updates.viewPR')} →
+                  </a>
+                </div>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
 

@@ -160,36 +160,42 @@ export default function UpdatesPage() {
                 </div>
 
                 <div className={styles.dateUpdates}>
-                  {updates.map((update) => (
-                    <div key={update.number} className={styles.updateCard}>
-                      <div className={styles.updateTop}>
-                        <span
-                          className={styles.categoryTag}
-                          style={{ color: CATEGORY_COLORS[update.category], borderColor: CATEGORY_COLORS[update.category] }}
+                  {updates.map((update) => {
+                    const displayTitle = locale === 'ja' ? update.titleJa : update.title;
+                    const displayDescription = locale === 'ja' ? update.descriptionJa : update.description;
+                    const displayHighlights = locale === 'ja' ? update.highlightsJa : update.highlights;
+                    
+                    return (
+                      <div key={update.number} className={styles.updateCard}>
+                        <div className={styles.updateTop}>
+                          <span
+                            className={styles.categoryTag}
+                            style={{ color: CATEGORY_COLORS[update.category], borderColor: CATEGORY_COLORS[update.category] }}
+                          >
+                            {getCategoryLabel(update.category)}
+                          </span>
+                          <span className={styles.prNum}>#{update.number}</span>
+                        </div>
+                        <h3 className={styles.updateTitle}>{displayTitle}</h3>
+                        <p className={styles.updateDesc}>{displayDescription}</p>
+                        {displayHighlights && displayHighlights.length > 0 && (
+                          <ul className={styles.highlights}>
+                            {displayHighlights.map((h, i) => (
+                              <li key={i}>{h}</li>
+                            ))}
+                          </ul>
+                        )}
+                        <a
+                          href={`https://github.com/Azuretier/azuretier.net/pull/${update.number}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.prLink}
                         >
-                          {getCategoryLabel(update.category)}
-                        </span>
-                        <span className={styles.prNum}>#{update.number}</span>
+                          {t('updates.viewPR')} &rarr;
+                        </a>
                       </div>
-                      <h3 className={styles.updateTitle}>{update.title}</h3>
-                      <p className={styles.updateDesc}>{update.description}</p>
-                      {update.highlights && update.highlights.length > 0 && (
-                        <ul className={styles.highlights}>
-                          {update.highlights.map((h, i) => (
-                            <li key={i}>{h}</li>
-                          ))}
-                        </ul>
-                      )}
-                      <a
-                        href={`https://github.com/Azuretier/azuretier.net/pull/${update.number}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.prLink}
-                      >
-                        {t('updates.viewPR')} &rarr;
-                      </a>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </motion.div>
             ))}
