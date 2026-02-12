@@ -943,6 +943,13 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
   }, [moveHorizontal, moveDown, rotatePiece, hardDrop, holdPiece]);
 
+  // Persist advancement unlocks on component unmount (e.g., player leaves mid-game)
+  useEffect(() => {
+    return () => {
+      pushLiveAdvancementCheck();
+    };
+  }, [pushLiveAdvancementCheck]);
+
   // ===== Render =====
   const board = boardRef.current;
   const piece = pieceRef.current;

@@ -939,6 +939,13 @@ export const Rhythmia: React.FC = () => {
     return () => window.removeEventListener('resize', updateCellSize);
   }, [gameStarted]);
 
+  // Persist advancement unlocks on component unmount (e.g., player leaves mid-game)
+  useEffect(() => {
+    return () => {
+      pushLiveAdvancementCheck();
+    };
+  }, [pushLiveAdvancementCheck]);
+
   // ===== Render Helpers =====
   const getDisplayBoard = useCallback(() => {
     const display = board.map(r => r.map(c => c ? { ...c } : null));
