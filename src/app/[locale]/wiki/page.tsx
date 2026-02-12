@@ -1,14 +1,15 @@
 import { Metadata } from 'next';
+import { getMessages } from 'next-intl/server';
 import WikiPage from '@/components/wiki/WikiPage';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
+  const messages = await getMessages({ locale });
+  const wiki = (messages as Record<string, Record<string, Record<string, string>>>).wiki;
 
   return {
-    title: locale === 'ja' ? 'Wiki | RHYTHMIA - Azuretier' : 'Wiki | RHYTHMIA - Azuretier',
-    description: locale === 'ja'
-      ? 'RHYTHMIAの攻略Wiki。ゲームモード、ワールド、ランク戦、アイテム、クラフト、進捗など全システムを網羅。'
-      : 'The complete RHYTHMIA wiki. Game modes, worlds, ranked system, items, crafting, advancements, and more.',
+    title: wiki?.meta?.title || 'Wiki | RHYTHMIA - Azuretier',
+    description: wiki?.meta?.description || 'The complete RHYTHMIA wiki. Game modes, worlds, ranked system, items, crafting, advancements, and more.',
   };
 }
 

@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
+import { initAppCheck } from "@/lib/firebase/initAppCheck";
 
 const firebaseConfig = {
   //apiKey: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_API_KEY,
@@ -32,8 +33,9 @@ if (typeof window !== 'undefined' && isConfigured) {
   } catch (error) {
     app = initializeApp(firebaseConfig, 'rhythmia');
   }
-  
+
   if (app) {
+    initAppCheck(app);
     db = getFirestore(app);
     auth = getAuth(app);
   }

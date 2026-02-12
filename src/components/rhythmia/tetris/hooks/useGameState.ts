@@ -939,6 +939,8 @@ export function useGameState() {
         setSdf,
         setColorTheme,
         setGamePhase,
+        setShowInventory,
+        setShowShop,
 
         // Refs
         boardRef,

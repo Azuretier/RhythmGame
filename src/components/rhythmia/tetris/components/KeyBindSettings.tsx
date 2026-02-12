@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { KeyBindings } from '../types';
-import { DEFAULT_KEY_BINDINGS } from '../constants';
+import type { Keybindings } from '../types';
+import { DEFAULT_KEYBINDINGS } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface KeyBindSettingsProps {
-    bindings: KeyBindings;
-    onUpdate: (bindings: KeyBindings) => void;
+    bindings: Keybindings;
+    onUpdate: (bindings: Keybindings) => void;
     onBack: () => void;
 }
 
-const BIND_LABELS: Record<keyof KeyBindings, { name: string; nameJa: string }> = {
+const BIND_LABELS: Record<keyof Keybindings, { name: string; nameJa: string }> = {
     inventory: { name: 'Inventory', nameJa: 'インベントリ' },
     shop: { name: 'Shop', nameJa: 'ショップ' },
-    forge: { name: 'Forge', nameJa: '鍛造' },
 };
 
 function formatKey(key: string): string {
@@ -29,8 +28,8 @@ function formatKey(key: string): string {
  * Allows remapping inventory (E), shop (L), and forge (F) keys.
  */
 export function KeyBindSettings({ bindings, onUpdate, onBack }: KeyBindSettingsProps) {
-    const [listening, setListening] = useState<keyof KeyBindings | null>(null);
-    const [current, setCurrent] = useState<KeyBindings>({ ...bindings });
+    const [listening, setListening] = useState<keyof Keybindings | null>(null);
+    const [current, setCurrent] = useState<Keybindings>({ ...bindings });
 
     // Listen for key press when rebinding
     useEffect(() => {
@@ -61,7 +60,7 @@ export function KeyBindSettings({ bindings, onUpdate, onBack }: KeyBindSettingsP
     }, [listening, current, onUpdate]);
 
     const resetDefaults = useCallback(() => {
-        const defaults = { ...DEFAULT_KEY_BINDINGS };
+        const defaults = { ...DEFAULT_KEYBINDINGS };
         setCurrent(defaults);
         onUpdate(defaults);
     }, [onUpdate]);
@@ -72,7 +71,7 @@ export function KeyBindSettings({ bindings, onUpdate, onBack }: KeyBindSettingsP
             <span className={styles.keyBindSubtitle}>キー設定</span>
 
             <div className={styles.keyBindList}>
-                {(Object.keys(BIND_LABELS) as (keyof KeyBindings)[]).map(action => (
+                {(Object.keys(BIND_LABELS) as (keyof Keybindings)[]).map(action => (
                     <div key={action} className={styles.keyBindRow}>
                         <div className={styles.keyBindLabelWrap}>
                             <span className={styles.keyBindLabel}>{BIND_LABELS[action].name}</span>

@@ -51,7 +51,7 @@ export default function WhatsNewBanner({ autoShow = true, dismissible = true }: 
     if (latestUpdate) {
       localStorage.setItem(LAST_SEEN_VERSION, latestUpdate.number.toString());
     }
-    window.location.href = `/${locale === 'en' ? 'en/' : ''}updates`;
+    window.location.href = `/${locale === 'ja' ? '' : `${locale}/`}updates`;
   };
 
   if (isDismissed) return null;

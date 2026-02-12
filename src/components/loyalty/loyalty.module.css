@@ -1,0 +1,568 @@
+/* Loyalty Page — Minimal Black & White Theme */
+.page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  background: #000000;
+  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  color: #ffffff;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Header */
+.header {
+  padding: 32px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.35em;
+  color: #ffffff;
+  opacity: 0.9;
+}
+
+.backLink {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  transition: all 0.25s;
+}
+
+.backLink:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Container */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px 60px;
+}
+
+/* Hero / Tier Display */
+.tierDisplay {
+  text-align: center;
+  padding: 48px 0 40px;
+}
+
+.tierIcon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  display: block;
+  opacity: 0.9;
+}
+
+.tierName {
+  font-size: 1.6rem;
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  margin-bottom: 6px;
+}
+
+.tierLabel {
+  font-size: 0.7rem;
+  opacity: 0.3;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+
+/* XP Progress Bar */
+.progressContainer {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.progressBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  opacity: 0.3;
+  letter-spacing: 0.05em;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 40px 0;
+}
+
+.statCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 20px 16px;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+
+.statCard:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.statValue {
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #ffffff;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4px;
+}
+
+.statLabel {
+  font-size: 0.6rem;
+  opacity: 0.3;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Section titles */
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 20px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Tier Roadmap */
+.tierRoadmap {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.tierStep {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 20px 16px;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.tierStep.active {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tierStep.completed {
+  opacity: 0.5;
+}
+
+.tierStepIcon {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.tierStepName {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+
+.tierStepXP {
+  font-size: 0.6rem;
+  opacity: 0.3;
+  letter-spacing: 0.05em;
+}
+
+.tierStepCheck {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+/* Streak Display */
+.streakSection {
+  margin-bottom: 40px;
+}
+
+.streakDisplay {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.streakFlame {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.streakInfo {
+  flex: 1;
+}
+
+.streakCount {
+  font-size: 1.8rem;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.streakCountLabel {
+  font-size: 0.65rem;
+  opacity: 0.3;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.streakDays {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.streakDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  opacity: 0.4;
+  letter-spacing: 0;
+}
+
+.streakDot.filled {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  opacity: 1;
+}
+
+.streakDot.today {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+/* Badges Grid */
+.badgesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.badgeCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 16px 12px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.badgeCard.unlocked {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.badgeCard.locked {
+  opacity: 0.35;
+}
+
+.badgeIcon {
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.badgeName {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+}
+
+.badgeDesc {
+  font-size: 0.55rem;
+  opacity: 0.4;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+}
+
+.emptyAdvancements {
+  text-align: center;
+  font-size: 0.75rem;
+  opacity: 0.25;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 40px 0;
+  margin-bottom: 40px;
+}
+
+/* Community Poll */
+.pollSection {
+  margin-bottom: 40px;
+}
+
+.pollCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 28px;
+}
+
+.pollQuestion {
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+  opacity: 0.85;
+}
+
+.pollTotalVotes {
+  font-size: 0.75rem;
+  opacity: 0.35;
+  margin-bottom: 20px;
+  letter-spacing: 0.05em;
+}
+
+.pollOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pollOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pollOption:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.pollOption.selected {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.pollRadio {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pollRadio.checked {
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.pollRadio.checked::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.pollResults {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pollResultBar {
+  position: relative;
+}
+
+.pollResultLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+  opacity: 0.7;
+}
+
+.pollResultTrack {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.pollResultFill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pollVoteButton {
+  width: 100%;
+  padding: 12px;
+  margin-top: 16px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #000000;
+  background: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pollVoteButton:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.pollVoteButton:disabled {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+/* Strategy Cards */
+.strategyGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.strategyCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 24px 20px;
+  transition: border-color 0.3s;
+}
+
+.strategyCard:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.strategyStep {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+
+.strategyTitle {
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.strategyDesc {
+  font-size: 0.75rem;
+  line-height: 1.7;
+  opacity: 0.4;
+  font-weight: 300;
+}
+
+/* Footer */
+.footer {
+  padding: 24px 40px;
+  text-align: center;
+  font-size: 0.7rem;
+  opacity: 0.2;
+  letter-spacing: 0.15em;
+  font-weight: 300;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 20px;
+  }
+
+  .container {
+    padding: 0 16px 40px;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tierRoadmap {
+    flex-direction: column;
+  }
+
+  .strategyGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .streakDisplay {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .streakDays {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .badgesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

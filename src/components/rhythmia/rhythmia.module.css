@@ -3,9 +3,10 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: #000000;
   min-height: 100vh;
+  height: 100vh;
   max-width: 100%;
-  overflow-y: auto;
   overflow-x: hidden;
+  overflow-y: auto;
   color: #ffffff;
   position: relative;
   box-sizing: border-box;
@@ -120,9 +121,7 @@
 .container {
   position: relative;
   z-index: 1;
-  overflow: hidden;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -141,11 +140,16 @@
 }
 
 .logo {
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0.35em;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: #ffffff;
-  opacity: 0.9;
+  opacity: 0.95;
+}
+
+.logoAccent {
+  font-weight: 400;
+  opacity: 0.45;
 }
 
 .statusBar {
@@ -226,10 +230,11 @@
 /* Server selection grid */
 .serverGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 420px));
-  gap: 24px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   width: 100%;
-  max-width: 900px;
+  max-width: 1080px;
+  align-items: start;
   justify-content: center;
 }
 
@@ -239,7 +244,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 36px 28px;
+  padding: 28px 24px;
   cursor: pointer;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
@@ -589,6 +594,8 @@
   .serverGrid {
     grid-template-columns: 1fr;
     padding: 0 16px;
+    max-width: 420px;
+    margin: 0 auto;
   }
 
   .heroText h1 {

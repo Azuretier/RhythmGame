@@ -156,28 +156,36 @@ export type Bullet = {
     alive: boolean;
 };
 
-// ===== Shop System =====
+// ===== Keybindings =====
+export type KeybindAction = 'inventory' | 'shop';
+
+export type Keybindings = {
+    [K in KeybindAction]: string;
+};
+
+export const DEFAULT_KEYBINDINGS: Keybindings = {
+    inventory: 'e',
+    shop: 'l',
+};
+
+// ===== Shop Item (buyable in shop) =====
 export type ShopItem = {
     id: string;
     name: string;
     nameJa: string;
-    category: 'material' | 'weapon';
-    price: number;
     icon: string;
     color: string;
     glowColor: string;
-    rarity: ItemRarity;
     description: string;
     descriptionJa: string;
-    stats?: { label: string; value: string }[];
-    buildsFrom?: { itemId: string; price: number }[];
-};
-
-// ===== Key Bindings =====
-export type KeyBindings = {
-    inventory: string;
-    shop: string;
-    forge: string;
+    cost: { itemId: string; count: number }[];
+    /** Weapon card ID produced if this is a weapon purchase */
+    producesCardId?: string;
+    /** Stats to display */
+    stats: { label: string; value: string; color?: string }[];
+    /** Component items shown in build tree */
+    components?: string[];
+    rarity: ItemRarity;
 };
 
 // ===== Terrain Particle =====

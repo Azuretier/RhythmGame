@@ -801,3 +801,83 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ===== Arena Game Side Panels (Hold / Next) ===== */
+.arenaSidePanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  min-width: 60px;
+}
+
+.arenaSidePanelLabel {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* Piece preview grid (used for hold/next display) */
+.piecePreviewGrid {
+  display: flex;
+  flex-direction: column;
+}
+
+.piecePreviewRow {
+  display: flex;
+}
+
+.piecePreviewCell {
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-sizing: border-box;
+}
+
+.piecePreviewCell.filled {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.piecePreviewEmpty {
+  width: 48px;
+  height: 48px;
+}
+
+/* Game stats in HUD */
+.arenaGameStats {
+  display: flex;
+  gap: 16px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+}
+
+.arenaGameStats span {
+  font-variant-numeric: tabular-nums;
+}
+
+.arenaStatValue {
+  color: var(--arena-accent);
+  font-weight: 500;
+}
+
+/* Game over overlay on board */
+.boardGameOver {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10;
+}
+
+.boardGameOverText {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: var(--arena-danger);
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 20px rgba(255, 51, 102, 0.3);
+}

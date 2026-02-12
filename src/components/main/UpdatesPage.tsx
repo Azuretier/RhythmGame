@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { PR_UPDATES, getUpdateStats, type PRUpdate } from '@/lib/updates/changelog';
+import { PR_UPDATES, getUpdateStats, getLocalizedPRContent, type PRUpdate } from '@/lib/updates/changelog';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import styles from './UpdatesPage.module.css';
 
@@ -17,23 +17,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   i18n: '#34d399',
 };
 
-const CATEGORY_LABELS_EN: Record<string, string> = {
-  feature: 'Feature',
-  enhancement: 'Enhancement',
-  fix: 'Fix',
-  refactor: 'Refactor',
-  docs: 'Docs',
-  i18n: 'i18n',
-};
 
-const CATEGORY_LABELS_JA: Record<string, string> = {
-  feature: '新機能',
-  enhancement: '改善',
-  fix: '修正',
-  refactor: 'リファクタ',
-  docs: 'ドキュメント',
-  i18n: '国際化',
-};
 
 // Group updates by date
 function groupByDate(updates: PRUpdate[]): Map<string, PRUpdate[]> {
@@ -50,7 +34,7 @@ function groupByDate(updates: PRUpdate[]): Map<string, PRUpdate[]> {
 export default function UpdatesPage() {
   const locale = useLocale();
   const router = useRouter();
-  const ja = locale === 'ja';
+  const t = useTranslations();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const stats = getUpdateStats();
@@ -66,7 +50,11 @@ export default function UpdatesPage() {
   });
 
   const dateGroups = groupByDate(sortedUpdates);
-  const categoryLabels = ja ? CATEGORY_LABELS_JA : CATEGORY_LABELS_EN;
+  
+  // Get category labels from translations
+  const getCategoryLabel = (category: string): string => {
+    return t(`updates.categories.${category}`);
+  };
 
   return (
     <div className={styles.page}>
@@ -74,10 +62,10 @@ export default function UpdatesPage() {
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <button className={styles.backBtn} onClick={() => router.push('/')}>
-            {ja ? '← ロビー' : '← Lobby'}
+            ← {t('nav.lobby')}
           </button>
-          <span className={styles.logo}>RHYTHMIA</span>
-          <span className={styles.updatesLabel}>{ja ? 'アップデート' : 'UPDATES'}</span>
+          <span className={styles.logo}>azuretier.net</span>
+          <span className={styles.updatesLabel}>{t('nav.updates')}</span>
         </div>
         <div className={styles.headerRight}>
           <button className={styles.navLink} onClick={() => router.push('/wiki')}>
@@ -96,29 +84,27 @@ export default function UpdatesPage() {
           transition={{ duration: 0.5 }}
         >
           <h1 className={styles.heroTitle}>
-            {ja ? '開発アップデート' : 'Development Updates'}
+            {t('updates.pageTitle')}
           </h1>
           <p className={styles.heroSubtitle}>
-            {ja
-              ? 'RHYTHMIAの最新の変更と改善をご覧ください'
-              : 'Follow the latest changes and improvements to RHYTHMIA'}
+            {t('updates.pageSubtitle')}
           </p>
           <div className={styles.statsRow}>
             <div className={styles.statPill}>
               <span className={styles.statNum}>{stats.merged}</span>
-              <span className={styles.statText}>{ja ? 'マージ済' : 'Merged'}</span>
+              <span className={styles.statText}>{t('updates.merged')}</span>
             </div>
             <div className={styles.statPill}>
               <span className={styles.statNum}>{stats.byCategory.feature}</span>
-              <span className={styles.statText}>{ja ? '新機能' : 'Features'}</span>
+              <span className={styles.statText}>{t('updates.features')}</span>
             </div>
             <div className={styles.statPill}>
               <span className={styles.statNum}>{stats.byCategory.enhancement}</span>
-              <span className={styles.statText}>{ja ? '改善' : 'Enhancements'}</span>
+              <span className={styles.statText}>{t('updates.enhancements')}</span>
             </div>
             <div className={styles.statPill}>
               <span className={styles.statNum}>{stats.byCategory.fix}</span>
-              <span className={styles.statText}>{ja ? '修正' : 'Fixes'}</span>
+              <span className={styles.statText}>{t('updates.fixes')}</span>
             </div>
           </div>
         </motion.div>
@@ -129,7 +115,7 @@ export default function UpdatesPage() {
             className={`${styles.filterBtn} ${!selectedCategory ? styles.filterActive : ''}`}
             onClick={() => setSelectedCategory(null)}
           >
-            {ja ? 'すべて' : 'All'}
+            {t('updates.all')}
           </button>
           {Object.entries(stats.byCategory).map(([cat, count]) => (
             count > 0 && (
@@ -139,7 +125,7 @@ export default function UpdatesPage() {
                 onClick={() => setSelectedCategory(cat)}
                 style={{ '--filter-color': CATEGORY_COLORS[cat] } as React.CSSProperties}
               >
-                {categoryLabels[cat]}
+                {getCategoryLabel(cat)}
                 <span className={styles.filterCount}>{count}</span>
               </button>
             )
@@ -162,48 +148,52 @@ export default function UpdatesPage() {
                 <div className={styles.dateHeader}>
                   <div className={styles.dateDot} />
                   <span className={styles.dateText}>
-                    {new Date(date).toLocaleDateString(ja ? 'ja-JP' : 'en-US', {
+                    {new Date(date).toLocaleDateString({ ja: 'ja-JP', en: 'en-US', th: 'th-TH', es: 'es-ES', fr: 'fr-FR' }[locale] || 'en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
                     })}
                   </span>
                   <span className={styles.dateCount}>
-                    {updates.length} {ja ? '件' : updates.length === 1 ? 'change' : 'changes'}
+                    {updates.length} {updates.length === 1 ? t('updates.change') : t('updates.changes')}
                   </span>
                 </div>
 
                 <div className={styles.dateUpdates}>
-                  {updates.map((update) => (
-                    <div key={update.number} className={styles.updateCard}>
-                      <div className={styles.updateTop}>
-                        <span
-                          className={styles.categoryTag}
-                          style={{ color: CATEGORY_COLORS[update.category], borderColor: CATEGORY_COLORS[update.category] }}
+                  {updates.map((update) => {
+                    const localizedContent = getLocalizedPRContent(update, locale);
+                    
+                    return (
+                      <div key={update.number} className={styles.updateCard}>
+                        <div className={styles.updateTop}>
+                          <span
+                            className={styles.categoryTag}
+                            style={{ color: CATEGORY_COLORS[update.category], borderColor: CATEGORY_COLORS[update.category] }}
+                          >
+                            {getCategoryLabel(update.category)}
+                          </span>
+                          <span className={styles.prNum}>#{update.number}</span>
+                        </div>
+                        <h3 className={styles.updateTitle}>{localizedContent.title}</h3>
+                        <p className={styles.updateDesc}>{localizedContent.description}</p>
+                        {localizedContent.highlights && localizedContent.highlights.length > 0 && (
+                          <ul className={styles.highlights}>
+                            {localizedContent.highlights.map((h, i) => (
+                              <li key={i}>{h}</li>
+                            ))}
+                          </ul>
+                        )}
+                        <a
+                          href={`https://github.com/Azuretier/azuretier.net/pull/${update.number}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.prLink}
                         >
-                          {categoryLabels[update.category]}
-                        </span>
-                        <span className={styles.prNum}>#{update.number}</span>
+                          {t('updates.viewPR')} &rarr;
+                        </a>
                       </div>
-                      <h3 className={styles.updateTitle}>{update.title}</h3>
-                      <p className={styles.updateDesc}>{update.description}</p>
-                      {update.highlights && update.highlights.length > 0 && (
-                        <ul className={styles.highlights}>
-                          {update.highlights.map((h, i) => (
-                            <li key={i}>{h}</li>
-                          ))}
-                        </ul>
-                      )}
-                      <a
-                        href={`https://github.com/Azuretier/azuretier.net/pull/${update.number}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={styles.prLink}
-                      >
-                        {ja ? 'PRを見る' : 'View PR'} &rarr;
-                      </a>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </motion.div>
             ))}
@@ -218,7 +208,7 @@ export default function UpdatesPage() {
             rel="noopener noreferrer"
             className={styles.viewAllBtn}
           >
-            {ja ? 'GitHubですべてのPRを見る' : 'View all PRs on GitHub'} &rarr;
+            {t('updates.viewAllPRsGithub')} &rarr;
           </a>
         </div>
       </main>

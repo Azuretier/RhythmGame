@@ -244,121 +244,32 @@ export const WEAPON_CARDS: WeaponCard[] = [
 
 export const WEAPON_CARD_MAP: Record<string, WeaponCard> = Object.fromEntries(WEAPON_CARDS.map(c => [c.id, c]));
 
-// ===== Shop Item Definitions =====
-import type { ShopItem, KeyBindings } from './types';
+// ===== Shop Items — purchasable weapons using ore currency =====
+import type { ShopItem } from './types';
 
-export const SHOP_ITEMS: ShopItem[] = [
-    // Materials — buyable with gold (score)
-    {
-        id: 'stone', name: 'Stone Fragment', nameJa: '石片', category: 'material',
-        price: 100, icon: '🪨', color: '#8B8B8B', glowColor: '#A0A0A0', rarity: 'common',
-        description: 'A common stone fragment.', descriptionJa: '採掘で得られる一般的な石片。',
-        stats: [{ label: 'Type', value: 'Material' }, { label: 'Drop Rate', value: 'High' }],
-    },
-    {
-        id: 'iron', name: 'Iron Ore', nameJa: '鉄鉱石', category: 'material',
-        price: 200, icon: '⛏️', color: '#B87333', glowColor: '#D4956B', rarity: 'common',
-        description: 'Raw iron ore for forging.', descriptionJa: '鍛造に使われる鉄鉱石。',
-        stats: [{ label: 'Type', value: 'Material' }, { label: 'Drop Rate', value: 'Medium' }],
-    },
-    {
-        id: 'crystal', name: 'Crystal Shard', nameJa: '水晶片', category: 'material',
-        price: 500, icon: '💎', color: '#4FC3F7', glowColor: '#81D4FA', rarity: 'uncommon',
-        description: 'A glowing crystal shard.', descriptionJa: '輝く水晶の破片。',
-        stats: [{ label: 'Type', value: 'Material' }, { label: 'Drop Rate', value: 'Low' }],
-    },
-    {
-        id: 'gold', name: 'Gold Nugget', nameJa: '金塊', category: 'material',
-        price: 1000, icon: '✨', color: '#FFD700', glowColor: '#FFECB3', rarity: 'rare',
-        description: 'A rare gold nugget.', descriptionJa: '貴重な金の塊。',
-        stats: [{ label: 'Type', value: 'Material' }, { label: 'Drop Rate', value: 'Very Low' }],
-    },
-    {
-        id: 'obsidian', name: 'Obsidian Core', nameJa: '黒曜核', category: 'material',
-        price: 2500, icon: '🔮', color: '#9C27B0', glowColor: '#CE93D8', rarity: 'epic',
-        description: 'An obsidian core pulsing with energy.', descriptionJa: 'エネルギーが脈打つ黒曜核。',
-        stats: [{ label: 'Type', value: 'Material' }, { label: 'Drop Rate', value: 'Rare' }],
-    },
-    {
-        id: 'star', name: 'Star Fragment', nameJa: '星の欠片', category: 'material',
-        price: 5000, icon: '⭐', color: '#E0E0E0', glowColor: '#FFFFFF', rarity: 'legendary',
-        description: 'A fragment of a fallen star.', descriptionJa: '流れ星の欠片。',
-        stats: [{ label: 'Type', value: 'Material' }, { label: 'Drop Rate', value: 'Ultra Rare' }],
-    },
-    // Weapons — buyable directly with gold
-    {
-        id: 'stone_blade', name: 'Stone Blade', nameJa: '石の刃', category: 'weapon',
-        price: 500, icon: '🗡️', color: '#9E9E9E', glowColor: '#BDBDBD', rarity: 'common',
-        description: '+10% terrain damage', descriptionJa: '地形ダメージ+10%',
-        stats: [{ label: 'Damage', value: '+10%' }, { label: 'Type', value: 'Blade' }],
-        buildsFrom: [{ itemId: 'stone', price: 100 }],
-    },
-    {
-        id: 'iron_pickaxe', name: 'Iron Pickaxe', nameJa: '鉄のピッケル', category: 'weapon',
-        price: 800, icon: '⛏️', color: '#B87333', glowColor: '#D4956B', rarity: 'common',
-        description: '+20% terrain damage', descriptionJa: '地形ダメージ+20%',
-        stats: [{ label: 'Damage', value: '+20%' }, { label: 'Type', value: 'Pickaxe' }],
-        buildsFrom: [{ itemId: 'iron', price: 200 }],
-    },
-    {
-        id: 'crystal_wand', name: 'Crystal Wand', nameJa: '水晶の杖', category: 'weapon',
-        price: 1500, icon: '🪄', color: '#4FC3F7', glowColor: '#81D4FA', rarity: 'uncommon',
-        description: '+30% damage, wider beat window', descriptionJa: 'ダメージ+30%、ビート判定拡大',
-        stats: [{ label: 'Damage', value: '+30%' }, { label: 'Special', value: 'Wide Beat' }],
-        buildsFrom: [{ itemId: 'crystal', price: 500 }, { itemId: 'stone', price: 100 }],
-    },
-    {
-        id: 'gold_hammer', name: 'Gold Hammer', nameJa: '黄金のハンマー', category: 'weapon',
-        price: 2500, icon: '🔨', color: '#FFD700', glowColor: '#FFECB3', rarity: 'rare',
-        description: '+40% terrain damage', descriptionJa: '地形ダメージ+40%',
-        stats: [{ label: 'Damage', value: '+40%' }, { label: 'Type', value: 'Hammer' }],
-        buildsFrom: [{ itemId: 'gold', price: 1000 }, { itemId: 'iron', price: 200 }],
-    },
-    {
-        id: 'obsidian_edge', name: 'Obsidian Edge', nameJa: '黒曜の刃', category: 'weapon',
-        price: 4000, icon: '🌑', color: '#9C27B0', glowColor: '#CE93D8', rarity: 'epic',
-        description: '+60% damage, shatter effect', descriptionJa: 'ダメージ+60%、粉砕効果',
-        stats: [{ label: 'Damage', value: '+60%' }, { label: 'Special', value: 'Shatter' }],
-        buildsFrom: [{ itemId: 'obsidian', price: 2500 }, { itemId: 'iron', price: 200 }],
-    },
-    {
-        id: 'star_cannon', name: 'Star Cannon', nameJa: '星砲', category: 'weapon',
-        price: 8000, icon: '💫', color: '#E0E0E0', glowColor: '#FFFFFF', rarity: 'legendary',
-        description: '+80% damage, burst particles', descriptionJa: 'ダメージ+80%、爆発効果',
-        stats: [{ label: 'Damage', value: '+80%' }, { label: 'Special', value: 'Burst' }],
-        buildsFrom: [{ itemId: 'star', price: 5000 }, { itemId: 'crystal', price: 500 }],
-    },
-];
-
-export const SHOP_ITEM_MAP: Record<string, ShopItem> = Object.fromEntries(SHOP_ITEMS.map(i => [i.id, i]));
-
-// ===== Key Bindings =====
-export const DEFAULT_KEY_BINDINGS: KeyBindings = {
-    inventory: 'e',
-    shop: 'l',
-    forge: 'f',
-};
-
-const KEY_BINDINGS_STORAGE_KEY = 'rhythmia-keybindings';
-
-export function loadKeyBindings(): KeyBindings {
-    if (typeof window === 'undefined') return { ...DEFAULT_KEY_BINDINGS };
-    try {
-        const saved = localStorage.getItem(KEY_BINDINGS_STORAGE_KEY);
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            return { ...DEFAULT_KEY_BINDINGS, ...parsed };
-        }
-    } catch { /* ignore */ }
-    return { ...DEFAULT_KEY_BINDINGS };
-}
-
-export function saveKeyBindings(bindings: KeyBindings): void {
-    if (typeof window === 'undefined') return;
-    try {
-        localStorage.setItem(KEY_BINDINGS_STORAGE_KEY, JSON.stringify(bindings));
-    } catch { /* ignore */ }
-}
+export const SHOP_ITEMS: ShopItem[] = WEAPON_CARDS.map(card => ({
+    id: card.id,
+    name: card.name,
+    nameJa: card.nameJa,
+    icon: card.icon,
+    color: card.color,
+    glowColor: card.glowColor,
+    description: card.description,
+    descriptionJa: card.descriptionJa,
+    cost: card.recipe,
+    producesCardId: card.id,
+    stats: [
+        { label: 'Damage', value: `+${Math.round((card.damageMultiplier - 1) * 100)}%`, color: '#FF6B6B' },
+        ...(card.specialEffect === 'wide_beat' ? [{ label: 'Beat Window', value: 'Extended', color: '#4FC3F7' }] : []),
+        ...(card.specialEffect === 'shatter' ? [{ label: 'Special', value: 'Shatter', color: '#CE93D8' }] : []),
+        ...(card.specialEffect === 'burst' ? [{ label: 'Special', value: 'Burst', color: '#FFFFFF' }] : []),
+    ],
+    components: card.recipe.map(r => r.itemId),
+    rarity: card.damageMultiplier >= 1.8 ? 'legendary' :
+            card.damageMultiplier >= 1.5 ? 'epic' :
+            card.damageMultiplier >= 1.3 ? 'rare' :
+            card.damageMultiplier >= 1.2 ? 'uncommon' : 'common',
+}));
 
 // Items dropped per terrain damage unit
 export const ITEMS_PER_TERRAIN_DAMAGE = 0.3;
