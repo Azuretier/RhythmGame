@@ -127,11 +127,14 @@ function broadcastToRoom(roomCode: string, message: ServerMessage, excludePlayer
 
 function broadcastOnlineCount(): void {
   const count = playerConnections.size;
-  const message: ServerMessage = { type: 'online_count', count };
+  const users = getOnlineUsers();
+  const countMsg = JSON.stringify({ type: 'online_count', count } as ServerMessage);
+  const usersMsg = JSON.stringify({ type: 'online_users', users } as ServerMessage);
   playerConnections.forEach((conn) => {
     if (conn.ws.readyState === WebSocket.OPEN) {
       try {
-        conn.ws.send(JSON.stringify(message));
+        conn.ws.send(countMsg);
+        conn.ws.send(usersMsg);
       } catch {}
     }
   });
@@ -533,6 +536,8 @@ function handleMessage(playerId: string, raw: string): void {
       if (conn) {
         conn.profileName = (profileMsg.name || '').slice(0, 20);
         conn.profileIcon = (profileMsg.icon || '').slice(0, 30);
+        // Broadcast updated online users so all clients see the new profile
+        broadcastOnlineCount();
       }
       break;
     }
