@@ -939,12 +939,25 @@ export const Rhythmia: React.FC = () => {
     return () => window.removeEventListener('resize', updateCellSize);
   }, [gameStarted]);
 
-  // Persist advancement unlocks on component unmount (e.g., player leaves mid-game)
+  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
   useEffect(() => {
     return () => {
-      pushLiveAdvancementCheck();
+      // Only record stats if game hasn't ended normally (player left via back button)
+      if (!gameOverRef.current) {
+        recordGameEnd({
+          score: scoreRef.current,
+          lines: linesRef.current,
+          tSpins: gameTSpinsRef.current,
+          bestCombo: gameBestComboRef.current,
+          perfectBeats: gamePerfectBeatsRef.current,
+          worldsCleared: gameWorldsClearedRef.current,
+          tetrisClears: gameTetrisClearsRef.current,
+          hardDrops: gameHardDropsRef.current,
+          piecesPlaced: gamePiecesPlacedRef.current,
+        });
+      }
     };
-  }, [pushLiveAdvancementCheck]);
+  }, []);
 
   // ===== Render Helpers =====
   const getDisplayBoard = useCallback(() => {
