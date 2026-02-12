@@ -89,6 +89,10 @@ app.prepare().then(() => {
           socket.to(result.roomId!).emit('room:player-joined', player);
         }
 
+        // Broadcast full player list to ensure all clients are in sync
+        const allPlayers = gameManager.getPlayersArray(result.room!);
+        io.to(result.roomId!).emit('room:players-sync', allPlayers);
+
         console.log(`${playerName} joined room: ${roomCode}`);
       } catch (error) {
         console.error('Error joining room:', error);

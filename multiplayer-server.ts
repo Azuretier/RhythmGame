@@ -409,11 +409,21 @@ function createRankedRoom(
   clearRankedTimer(player1Id);
   clearRankedTimer(player2Id);
 
-  // Leave any existing rooms
+  // Leave any existing rooms and notify their players
   const existing1 = roomManager.getRoomByPlayerId(player1Id);
-  if (existing1) roomManager.removePlayerFromRoom(player1Id);
+  if (existing1) {
+    const oldCode1 = existing1.code;
+    roomManager.removePlayerFromRoom(player1Id);
+    broadcastToRoom(oldCode1, { type: 'player_left', playerId: player1Id, reason: 'left' });
+    sendRoomState(oldCode1);
+  }
   const existing2 = roomManager.getRoomByPlayerId(player2Id);
-  if (existing2) roomManager.removePlayerFromRoom(player2Id);
+  if (existing2) {
+    const oldCode2 = existing2.code;
+    roomManager.removePlayerFromRoom(player2Id);
+    broadcastToRoom(oldCode2, { type: 'player_left', playerId: player2Id, reason: 'left' });
+    sendRoomState(oldCode2);
+  }
 
   // Create room with player1 as host
   const { roomCode } = roomManager.createRoom(player1Id, player1.playerName, 'Ranked Match', false, 2);
@@ -467,9 +477,14 @@ function spawnAIMatch(playerId: string): void {
   rankedQueue.delete(playerId);
   clearRankedTimer(playerId);
 
-  // Leave any existing room
+  // Leave any existing room and notify its players
   const existing = roomManager.getRoomByPlayerId(playerId);
-  if (existing) roomManager.removePlayerFromRoom(playerId);
+  if (existing) {
+    const oldCode = existing.code;
+    roomManager.removePlayerFromRoom(playerId);
+    broadcastToRoom(oldCode, { type: 'player_left', playerId, reason: 'left' });
+    sendRoomState(oldCode);
+  }
 
   // Create room with player as host
   const { roomCode } = roomManager.createRoom(playerId, queued.playerName, 'Ranked Match', false, 2);
@@ -544,10 +559,17 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'create_room': {
-      // Leave any existing room
+      // Leave any existing room and notify its players
       const existing = roomManager.getRoomByPlayerId(playerId);
       if (existing) {
+        const oldRoomCode = existing.code;
         roomManager.removePlayerFromRoom(playerId);
+        broadcastToRoom(oldRoomCode, {
+          type: 'player_left',
+          playerId,
+          reason: 'left',
+        });
+        sendRoomState(oldRoomCode);
       }
 
       const { roomCode, player } = roomManager.createRoom(
@@ -572,10 +594,17 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'join_room': {
-      // Leave any existing room
+      // Leave any existing room and notify its players
       const existing = roomManager.getRoomByPlayerId(playerId);
       if (existing) {
+        const oldRoomCode = existing.code;
         roomManager.removePlayerFromRoom(playerId);
+        broadcastToRoom(oldRoomCode, {
+          type: 'player_left',
+          playerId,
+          reason: 'left',
+        });
+        sendRoomState(oldRoomCode);
       }
 
       const result = roomManager.joinRoom(message.roomCode, playerId, message.playerName);
@@ -756,10 +785,17 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'queue_ranked': {
-      // Remove from any existing room
+      // Remove from any existing room and notify its players
       const existing = roomManager.getRoomByPlayerId(playerId);
       if (existing) {
+        const oldRoomCode = existing.code;
         roomManager.removePlayerFromRoom(playerId);
+        broadcastToRoom(oldRoomCode, {
+          type: 'player_left',
+          playerId,
+          reason: 'left',
+        });
+        sendRoomState(oldRoomCode);
       }
 
       // Remove from queue if already in it
@@ -823,7 +859,15 @@ function handleMessage(playerId: string, raw: string): void {
 
     case 'create_arena': {
       const existing = arenaManager.getRoomByPlayerId(playerId);
-      if (existing) arenaManager.removePlayer(playerId);
+      if (existing) {
+        const oldArenaCode = existing.code;
+        arenaManager.removePlayer(playerId);
+        broadcastToArena(oldArenaCode, {
+          type: 'arena_player_left',
+          playerId,
+        } as unknown as ServerMessage);
+        sendArenaState(oldArenaCode);
+      }
 
       const { roomCode, player } = arenaManager.createRoom(
         playerId,
@@ -846,7 +890,15 @@ function handleMessage(playerId: string, raw: string): void {
 
     case 'join_arena': {
       const existing = arenaManager.getRoomByPlayerId(playerId);
-      if (existing) arenaManager.removePlayer(playerId);
+      if (existing) {
+        const oldArenaCode = existing.code;
+        arenaManager.removePlayer(playerId);
+        broadcastToArena(oldArenaCode, {
+          type: 'arena_player_left',
+          playerId,
+        } as unknown as ServerMessage);
+        sendArenaState(oldArenaCode);
+      }
 
       const arenaMsg = message as unknown as { arenaCode: string; playerName: string };
       const result = arenaManager.joinRoom(arenaMsg.arenaCode, playerId, arenaMsg.playerName);
@@ -882,7 +934,15 @@ function handleMessage(playerId: string, raw: string): void {
 
     case 'queue_arena': {
       const existing = arenaManager.getRoomByPlayerId(playerId);
-      if (existing) arenaManager.removePlayer(playerId);
+      if (existing) {
+        const oldArenaCode = existing.code;
+        arenaManager.removePlayer(playerId);
+        broadcastToArena(oldArenaCode, {
+          type: 'arena_player_left',
+          playerId,
+        } as unknown as ServerMessage);
+        sendArenaState(oldArenaCode);
+      }
 
       arenaQueue.delete(playerId);
       clearArenaTimer(playerId);
@@ -1004,7 +1064,15 @@ function handleMessage(playerId: string, raw: string): void {
     case 'mc_create_room': {
       const mcMsg = message as unknown as { playerName: string; roomName?: string };
       const existing = mcBoardManager.getRoomByPlayerId(playerId);
-      if (existing) mcBoardManager.removePlayer(playerId);
+      if (existing) {
+        const oldMcCode = existing.code;
+        mcBoardManager.removePlayer(playerId);
+        broadcastToMCBoard(oldMcCode, {
+          type: 'mc_player_left',
+          playerId,
+        } as unknown as ServerMessage);
+        sendMCBoardRoomState(oldMcCode);
+      }
 
       const { roomCode, player } = mcBoardManager.createRoom(
         playerId,
@@ -1028,7 +1096,15 @@ function handleMessage(playerId: string, raw: string): void {
     case 'mc_join_room': {
       const mcMsg = message as unknown as { roomCode: string; playerName: string };
       const existing = mcBoardManager.getRoomByPlayerId(playerId);
-      if (existing) mcBoardManager.removePlayer(playerId);
+      if (existing) {
+        const oldMcCode = existing.code;
+        mcBoardManager.removePlayer(playerId);
+        broadcastToMCBoard(oldMcCode, {
+          type: 'mc_player_left',
+          playerId,
+        } as unknown as ServerMessage);
+        sendMCBoardRoomState(oldMcCode);
+      }
 
       const result = mcBoardManager.joinRoom(mcMsg.roomCode, playerId, (mcMsg.playerName || 'Player').slice(0, 16));
       if (!result.success || !result.player) {
