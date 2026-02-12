@@ -153,6 +153,8 @@
 
 .logoAccent {
   color: #ec2828;
+  font-size: 0.55em;
+  vertical-align: super;
 }
 
 .statusBar {
