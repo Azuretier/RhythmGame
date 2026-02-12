@@ -16,4 +16,23 @@ body {
     height: 100%;
 }
 
+/* Skin CSS variables — defaults (Azure theme) */
+:root {
+    --skin-accent: #007FFF;
+    --skin-accent-light: #3399FF;
+    --skin-accent-dim: rgba(0, 127, 255, 0.15);
+    --skin-background: #000000;
+    --skin-surface: rgba(255, 255, 255, 0.03);
+    --skin-foreground: #ffffff;
+    --skin-subtext: rgba(255, 255, 255, 0.45);
+    --skin-border: rgba(255, 255, 255, 0.08);
+    --skin-border-hover: rgba(255, 255, 255, 0.18);
+
+    /* Tailwind mapping */
+    --background: var(--skin-background);
+    --foreground: var(--skin-foreground);
+    --border: var(--skin-border);
+    --subtext: var(--skin-subtext);
+}
+
 /* Existing CSS content below */

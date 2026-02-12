@@ -1,0 +1,132 @@
+'use client';
+
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
+import { useSkin } from '@/lib/skin/context';
+import { useProfile } from '@/lib/profile/context';
+import { getIconById } from '@/lib/profile/types';
+import type { Skin } from '@/lib/skin/types';
+import styles from './SkinCustomizer.module.css';
+
+interface SkinCustomizerProps {
+  onClose: () => void;
+}
+
+function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolean; onSelect: () => void }) {
+  return (
+    <motion.button
+      className={`${styles.skinCard} ${isActive ? styles.skinCardActive : ''}`}
+      onClick={onSelect}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
+      style={{
+        '--swatch-accent': skin.colors.accent,
+        '--swatch-bg': skin.colors.background,
+        '--swatch-surface': skin.colors.surface,
+        '--swatch-fg': skin.colors.foreground,
+        '--swatch-border': skin.colors.border,
+      } as React.CSSProperties}
+    >
+      <div className={styles.swatchPreview}>
+        <div className={styles.swatchBg}>
+          <div className={styles.swatchHeader} />
+          <div className={styles.swatchCards}>
+            <div className={styles.swatchCard} />
+            <div className={styles.swatchCard} />
+          </div>
+          <div className={styles.swatchButton} />
+        </div>
+      </div>
+      <div className={styles.skinInfo}>
+        <div className={styles.skinName}>{skin.name}</div>
+        <div className={styles.skinNameJa}>{skin.nameJa}</div>
+      </div>
+      {isActive && (
+        <div className={styles.activeBadge}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+      )}
+    </motion.button>
+  );
+}
+
+export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
+  const t = useTranslations('skin');
+  const { currentSkin, setSkin, skins } = useSkin();
+  const { profile } = useProfile();
+
+  const iconData = profile ? getIconById(profile.icon) : null;
+
+  return (
+    <motion.div
+      className={styles.overlay}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+    >
+      <motion.div
+        className={styles.panel}
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 40, scale: 0.95 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      >
+        {/* Header with profile info */}
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
+            {profile && iconData && (
+              <div
+                className={styles.profileIcon}
+                style={{ backgroundColor: iconData.bgColor, color: iconData.color }}
+              >
+                {iconData.emoji}
+              </div>
+            )}
+            <div className={styles.headerText}>
+              <h2 className={styles.title}>{t('title')}</h2>
+              {profile && (
+                <div className={styles.profileName}>{profile.name}</div>
+              )}
+            </div>
+          </div>
+          <button className={styles.closeButton} onClick={onClose}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Section label */}
+        <div className={styles.sectionLabel}>{t('selectSkin')}</div>
+
+        {/* Skin grid */}
+        <div className={styles.skinGrid}>
+          {skins.map((skin) => (
+            <SkinSwatch
+              key={skin.id}
+              skin={skin}
+              isActive={currentSkin.id === skin.id}
+              onSelect={() => setSkin(skin.id)}
+            />
+          ))}
+        </div>
+
+        {/* Current skin info */}
+        <div className={styles.currentInfo}>
+          <div className={styles.currentLabel}>{t('currentSkin')}</div>
+          <div className={styles.currentName}>
+            <span
+              className={styles.currentDot}
+              style={{ background: currentSkin.colors.accent }}
+            />
+            {currentSkin.name} — {currentSkin.nameJa}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

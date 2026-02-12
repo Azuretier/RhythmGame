@@ -554,5 +554,11 @@
         "wiki": "วิกิ",
         "updates": "อัปเดต",
         "lobby": "ล็อบบี้"
+    },
+    "skin": {
+        "title": "โปรไฟล์ & สกิน",
+        "selectSkin": "เลือกสกินสี",
+        "currentSkin": "สกินปัจจุบัน",
+        "profileButton": "โปรไฟล์"
     }
 }

@@ -818,5 +818,11 @@
         "onlineTitle": "オンラインのプレイヤー",
         "onlineCount": "{count}人がオンライン",
         "noOnlineUsers": "現在オンラインのプレイヤーはいません"
+    },
+    "skin": {
+        "title": "プロフィール & スキン",
+        "selectSkin": "カラースキンを選択",
+        "currentSkin": "現在のスキン",
+        "profileButton": "プロフィール"
     }
 }

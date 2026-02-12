@@ -11,6 +11,7 @@ import Advancements from '../../components/rhythmia/Advancements';
 import ForYouTab from '../../components/rhythmia/ForYouTab';
 import ProfileSetup from '../../components/profile/ProfileSetup';
 import OnlineUsers from '../../components/profile/OnlineUsers';
+import SkinCustomizer from '../../components/profile/SkinCustomizer';
 import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '../../components/rhythmia/rhythmia.module.css';
 import onlineStyles from '../../components/profile/OnlineUsers.module.css';
@@ -31,6 +32,7 @@ export default function RhythmiaPage() {
     const [showOnlineUsers, setShowOnlineUsers] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
     const [unlockedCount, setUnlockedCount] = useState(0);
+    const [showSkinCustomizer, setShowSkinCustomizer] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
     const profileSentRef = useRef(false);
 
@@ -236,6 +238,13 @@ export default function RhythmiaPage() {
                 )}
             </AnimatePresence>
 
+            {/* Skin customizer panel */}
+            <AnimatePresence>
+                {showSkinCustomizer && (
+                    <SkinCustomizer onClose={() => setShowSkinCustomizer(false)} />
+                )}
+            </AnimatePresence>
+
             <div className={styles.container}>
                 <motion.header
                     className={styles.header}
@@ -272,6 +281,12 @@ export default function RhythmiaPage() {
                             onClick={() => router.push('/updates')}
                         >
                             {t('nav.updates')}
+                        </button>
+                        <button
+                            className={styles.advButton}
+                            onClick={() => setShowSkinCustomizer(true)}
+                        >
+                            {t('skin.profileButton')}
                         </button>
                         <LocaleSwitcher />
                         <a

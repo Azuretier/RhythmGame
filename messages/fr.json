@@ -554,5 +554,11 @@
         "wiki": "Wiki",
         "updates": "Mises à jour",
         "lobby": "Lobby"
+    },
+    "skin": {
+        "title": "Profil & Skin",
+        "selectSkin": "Choisir un Skin de Couleur",
+        "currentSkin": "Skin Actuel",
+        "profileButton": "Profil"
     }
 }

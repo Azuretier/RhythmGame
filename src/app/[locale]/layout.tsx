@@ -9,6 +9,7 @@ import { routing } from '@/i18n/routing';
 import Provider from '../provider';
 import { VersionProvider } from '@/lib/version/context';
 import { ProfileProvider } from '@/lib/profile/context';
+import { SkinProvider } from '@/lib/skin/context';
 
 import { GoogleAnalytics } from "@next/third-parties/google";
 
@@ -123,11 +124,13 @@ export default async function LocaleLayout({ children, params }: Props) {
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }}>
                 <NextIntlClientProvider messages={messages}>
                     <ProfileProvider>
-                        <VersionProvider>
-                            <Provider>
-                                {children}
-                            </Provider>
-                        </VersionProvider>
+                        <SkinProvider>
+                            <VersionProvider>
+                                <Provider>
+                                    {children}
+                                </Provider>
+                            </VersionProvider>
+                        </SkinProvider>
                     </ProfileProvider>
                 </NextIntlClientProvider>
                 {gaId && <GoogleAnalytics gaId={gaId} />}

@@ -818,5 +818,11 @@
         "onlineTitle": "Online Players",
         "onlineCount": "{count} online",
         "noOnlineUsers": "No players online right now"
+    },
+    "skin": {
+        "title": "Profile & Skin",
+        "selectSkin": "Select Color Skin",
+        "currentSkin": "Current Skin",
+        "profileButton": "Profile"
     }
 }
