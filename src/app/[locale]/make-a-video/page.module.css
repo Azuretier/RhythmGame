@@ -1,0 +1,152 @@
+.container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.content {
+    width: 100%;
+    max-width: 560px;
+}
+
+.backLink {
+    display: inline-block;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    margin-bottom: 40px;
+    transition: color 0.2s;
+}
+
+.backLink:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Hero */
+.hero {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.icon {
+    display: block;
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 14px;
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(255, 80, 80, 0.8);
+    border: 1px solid rgba(255, 80, 80, 0.25);
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.02em;
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.description {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.8;
+    font-weight: 300;
+}
+
+/* Ideas */
+.ideas {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    padding: 28px;
+    margin-bottom: 40px;
+}
+
+.ideasTitle {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 16px;
+}
+
+.ideasList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ideasList li {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.5;
+    font-weight: 300;
+    padding-left: 18px;
+    position: relative;
+}
+
+.ideasList li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: rgba(255, 80, 80, 0.5);
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.ctaButton {
+    display: inline-block;
+    padding: 12px 32px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 80, 80, 0.9);
+    background: rgba(255, 80, 80, 0.08);
+    border: 1px solid rgba(255, 80, 80, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-decoration: none;
+}
+
+.ctaButton:hover {
+    color: #fff;
+    background: rgba(255, 80, 80, 0.15);
+    border-color: rgba(255, 80, 80, 0.5);
+}
+
+.secondaryLink {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.secondaryLink:hover {
+    color: rgba(255, 255, 255, 0.6);
+}

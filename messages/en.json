@@ -589,13 +589,6 @@
         "retry": "RETRY",
         "refresh": "REFRESH",
         "watchOnYouTube": "Watch on YouTube",
-        "makeAVideo": {
-            "heading": "BE A CREATOR",
-            "title": "Show Us Your RHYTHMIA Skills!",
-            "description": "Got epic gameplay? Share your T-Spins, perfect clears, or wild combos! Create a video for RHYTHMIA and inspire the community. We can't wait to see what you make!",
-            "cta": "Visit our channel for ideas →",
-            "tapToLearnMore": "Click to learn more →"
-        },
         "types": {
             "tutorial": "TUTORIAL",
             "video": "VIDEO",
@@ -825,5 +818,18 @@
         "onlineTitle": "Online Players",
         "onlineCount": "{count} online",
         "noOnlineUsers": "No players online right now"
+    },
+    "makeAVideo": {
+        "back": "Back",
+        "badge": "NO VIDEO YET",
+        "title": "Show Us Your RHYTHMIA Skills!",
+        "description": "This video hasn't been made yet — and that's where you come in. Record a gameplay clip, tutorial, or review of RHYTHMIA and share it with the community. We can't wait to see what you create!",
+        "ideasTitle": "VIDEO IDEAS",
+        "idea1": "Record your best T-Spin or Perfect Clear moments",
+        "idea2": "Create a beginner's guide or advanced strategy tutorial",
+        "idea3": "Review your favorite game mode or the latest update",
+        "idea4": "Show off a ranked climb or an epic multiplayer battle",
+        "cta": "Visit Our Channel for Inspiration →",
+        "backToGame": "Back to RHYTHMIA"
     }
 }

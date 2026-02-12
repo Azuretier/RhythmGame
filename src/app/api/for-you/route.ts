@@ -18,14 +18,13 @@ interface ContentCard {
     description: string;
     tags?: string[];
     url?: string;
+    hasVideoUrl?: boolean;
     thumbnail?: string;
     difficulty?: 'beginner' | 'intermediate' | 'advanced';
 }
 
-function resolveVideoUrl(url?: string): string | undefined {
-    // Empty string means no URL - keep it as empty string for frontend detection
-    if (url === '') return '';
-    return url || undefined;
+function resolveVideoUrl(url?: string): string {
+    return url || forYouConfig.youtubeChannel;
 }
 
 export async function POST(request: NextRequest) {
@@ -78,7 +77,7 @@ Generate exactly 6 content cards as a JSON array. Each card should have:
 
 Mix the types: include 2 tutorials, 2 videos, and 2 tips. Prioritize content that matches the player's skill level. For beginner players, focus on fundamentals. For advanced players, focus on competitive strategies and optimization.
 
-For videos, reference actual video titles from the available list and include a "url" field ONLY if the video has a specific URL in the list. If a video has an empty or missing URL, omit the "url" field entirely or set it to an empty string.
+For videos, reference actual video titles from the available list and include a "url" field with the video's URL from the list above. If a video has no specific URL, use the YouTube channel URL.
 
 For tips, generate unique gameplay advice relevant to the player's progress level.
 
@@ -100,6 +99,7 @@ Return ONLY the JSON array, no markdown fencing, no explanation.`;
                 tags: Array.isArray(card.tags) ? card.tags.slice(0, 3) : [],
                 difficulty: ['beginner', 'intermediate', 'advanced'].includes(card.difficulty ?? '') ? card.difficulty : 'beginner',
                 url: resolveVideoUrl(card.url),
+                hasVideoUrl: card.type === 'video' && !!card.url,
             }));
         } catch {
             cards = getFallbackContent(locale, unlockedAdvancements, totalAdvancements);
@@ -126,5 +126,6 @@ function getFallbackContent(locale: string, unlocked: number, total: number): Co
     return cards.map((card) => ({
         ...card,
         url: card.type === 'video' ? resolveVideoUrl(card.url) : card.url,
+        hasVideoUrl: card.type === 'video' && !!card.url,
     }));
 }
