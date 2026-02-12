@@ -824,5 +824,16 @@
         "selectSkin": "カラースキンを選択",
         "currentSkin": "現在のスキン",
         "profileButton": "プロフィール"
+    },
+    "googleSync": {
+        "sectionTitle": "Googleアカウント同期",
+        "description": "Googleアカウントでサインインすると、プロフィール、進捗、ロイヤルティ、スキン設定を他のデバイスと同期できます。",
+        "signIn": "Googleでサインイン",
+        "signOut": "サインアウト",
+        "linking": "接続中...",
+        "syncing": "同期中...",
+        "syncNow": "今すぐ同期",
+        "synced": "同期完了",
+        "error": "同期に失敗しました"
     }
 }

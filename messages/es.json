@@ -560,5 +560,16 @@
         "selectSkin": "Seleccionar Skin de Color",
         "currentSkin": "Skin Actual",
         "profileButton": "Perfil"
+    },
+    "googleSync": {
+        "sectionTitle": "Sincronizar con Google",
+        "description": "Inicia sesion con Google para sincronizar tu perfil, logros, lealtad y configuracion de skin entre dispositivos.",
+        "signIn": "Iniciar sesion con Google",
+        "signOut": "Cerrar sesion",
+        "linking": "Conectando...",
+        "syncing": "Sincronizando...",
+        "syncNow": "Sincronizar ahora",
+        "synced": "Sincronizado",
+        "error": "Error de sincronizacion"
     }
 }

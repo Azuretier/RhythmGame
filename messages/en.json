@@ -824,5 +824,16 @@
         "selectSkin": "Select Color Skin",
         "currentSkin": "Current Skin",
         "profileButton": "Profile"
+    },
+    "googleSync": {
+        "sectionTitle": "Google Account Sync",
+        "description": "Sign in with Google to sync your profile, advancements, loyalty progress, and skin settings across devices.",
+        "signIn": "Sign in with Google",
+        "signOut": "Sign out",
+        "linking": "Connecting...",
+        "syncing": "Syncing...",
+        "syncNow": "Sync now",
+        "synced": "Synced",
+        "error": "Sync failed"
     }
 }
