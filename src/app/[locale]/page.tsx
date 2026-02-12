@@ -17,7 +17,6 @@ import styles from '../../components/rhythmia/rhythmia.module.css';
 import onlineStyles from '../../components/profile/OnlineUsers.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
-import { FaDiscord } from 'react-icons/fa';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
 import LoyaltyWidget from '../../components/loyalty/LoyaltyWidget';
 import { useRouter } from '@/i18n/navigation';
@@ -291,15 +290,6 @@ export default function RhythmiaPage() {
                             {t('skin.profileButton')}
                         </button>
                         <LocaleSwitcher />
-                        <a
-                            href="https://discord.gg/7mBCasYkJY"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.discordLink}
-                            aria-label="Discord"
-                        >
-                            <FaDiscord size={16} />
-                        </a>
                     </div>
                 </motion.header>
 
