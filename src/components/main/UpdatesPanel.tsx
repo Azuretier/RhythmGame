@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
-import { PR_UPDATES, getRecentUpdates, getUpdatesByCategory, getUpdateStats, type PRUpdate } from '@/lib/updates/changelog';
+import { PR_UPDATES, getRecentUpdates, getUpdatesByCategory, getUpdateStats, getLocalizedPRContent, type PRUpdate } from '@/lib/updates/changelog';
 import styles from './UpdatesPanel.module.css';
 
 interface UpdatesPanelProps {
@@ -91,9 +91,7 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
       <div className={styles.updatesList}>
         <AnimatePresence mode="popLayout">
           {displayUpdates.map((update) => {
-            const displayTitle = locale === 'ja' ? update.titleJa : update.title;
-            const displayDescription = locale === 'ja' ? update.descriptionJa : update.description;
-            const displayHighlights = locale === 'ja' ? update.highlightsJa : update.highlights;
+            const localizedContent = getLocalizedPRContent(update, locale);
             
             return (
               <motion.div
@@ -117,13 +115,13 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
                   <span className={styles.prNumber}>#{update.number}</span>
                 </div>
                 
-                <h3 className={styles.updateTitle}>{displayTitle}</h3>
+                <h3 className={styles.updateTitle}>{localizedContent.title}</h3>
                 
-                <p className={styles.updateDescription}>{displayDescription}</p>
+                <p className={styles.updateDescription}>{localizedContent.description}</p>
 
-                {displayHighlights && displayHighlights.length > 0 && (
+                {localizedContent.highlights && localizedContent.highlights.length > 0 && (
                   <ul className={styles.highlights}>
-                    {displayHighlights.map((highlight, idx) => (
+                    {localizedContent.highlights.map((highlight, idx) => (
                       <li key={idx} className={styles.highlightItem}>
                         {highlight}
                       </li>

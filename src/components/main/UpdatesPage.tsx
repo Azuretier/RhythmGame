@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { PR_UPDATES, getUpdateStats, type PRUpdate } from '@/lib/updates/changelog';
+import { PR_UPDATES, getUpdateStats, getLocalizedPRContent, type PRUpdate } from '@/lib/updates/changelog';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import styles from './UpdatesPage.module.css';
 
@@ -161,9 +161,7 @@ export default function UpdatesPage() {
 
                 <div className={styles.dateUpdates}>
                   {updates.map((update) => {
-                    const displayTitle = locale === 'ja' ? update.titleJa : update.title;
-                    const displayDescription = locale === 'ja' ? update.descriptionJa : update.description;
-                    const displayHighlights = locale === 'ja' ? update.highlightsJa : update.highlights;
+                    const localizedContent = getLocalizedPRContent(update, locale);
                     
                     return (
                       <div key={update.number} className={styles.updateCard}>
@@ -176,11 +174,11 @@ export default function UpdatesPage() {
                           </span>
                           <span className={styles.prNum}>#{update.number}</span>
                         </div>
-                        <h3 className={styles.updateTitle}>{displayTitle}</h3>
-                        <p className={styles.updateDesc}>{displayDescription}</p>
-                        {displayHighlights && displayHighlights.length > 0 && (
+                        <h3 className={styles.updateTitle}>{localizedContent.title}</h3>
+                        <p className={styles.updateDesc}>{localizedContent.description}</p>
+                        {localizedContent.highlights && localizedContent.highlights.length > 0 && (
                           <ul className={styles.highlights}>
-                            {displayHighlights.map((h, i) => (
+                            {localizedContent.highlights.map((h, i) => (
                               <li key={i}>{h}</li>
                             ))}
                           </ul>

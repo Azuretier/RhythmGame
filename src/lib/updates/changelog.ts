@@ -16,6 +16,18 @@ export interface PRUpdate {
   highlightsJa?: string[];
 }
 
+/**
+ * Get localized PR content based on the current locale
+ */
+export function getLocalizedPRContent(update: PRUpdate, locale: string) {
+  const isJapanese = locale === 'ja';
+  return {
+    title: isJapanese ? update.titleJa : update.title,
+    description: isJapanese ? update.descriptionJa : update.description,
+    highlights: isJapanese ? update.highlightsJa : update.highlights,
+  };
+}
+
 export const PR_UPDATES: PRUpdate[] = [
   {
     number: 104,
