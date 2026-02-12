@@ -311,6 +311,8 @@
 .langCheck {
   color: var(--skin-accent, #007FFF);
   flex-shrink: 0;
+}
+
 /* Privacy Toggle */
 .privacySection {
   padding: 0 28px 24px;
@@ -399,6 +401,9 @@
   }
 
   .langGrid {
+    padding: 0 20px 20px;
+  }
+
   .privacySection {
     padding: 0 20px 20px;
   }
