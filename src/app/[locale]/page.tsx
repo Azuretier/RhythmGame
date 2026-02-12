@@ -65,6 +65,7 @@ export default function RhythmiaPage() {
                 type: 'set_profile',
                 name: profile.name,
                 icon: profile.icon,
+                isPrivate: profile.isPrivate,
             }));
             profileSentRef.current = true;
         }
@@ -86,6 +87,7 @@ export default function RhythmiaPage() {
                     type: 'set_profile',
                     name: profile.name,
                     icon: profile.icon,
+                    isPrivate: profile.isPrivate,
                 }));
                 profileSentRef.current = true;
             }

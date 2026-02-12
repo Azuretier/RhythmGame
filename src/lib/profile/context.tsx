@@ -7,6 +7,7 @@ import { getStoredProfile, setStoredProfile } from './storage';
 interface ProfileContextType {
   profile: UserProfile | null;
   setProfile: (profile: UserProfile) => void;
+  updateProfile: (updates: Partial<UserProfile>) => void;
   isProfileSetup: boolean;
   showProfileSetup: boolean;
   setShowProfileSetup: (show: boolean) => void;
@@ -36,9 +37,16 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     setShowProfileSetup(false);
   };
 
+  const updateProfile = (updates: Partial<UserProfile>) => {
+    if (!profile) return;
+    const updated = { ...profile, ...updates };
+    setProfileState(updated);
+    setStoredProfile(updated);
+  };
+
   return (
     <ProfileContext.Provider
-      value={{ profile, setProfile, isProfileSetup, showProfileSetup, setShowProfileSetup }}
+      value={{ profile, setProfile, updateProfile, isProfileSetup, showProfileSetup, setShowProfileSetup }}
     >
       {children}
     </ProfileContext.Provider>
