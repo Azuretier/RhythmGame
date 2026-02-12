@@ -177,7 +177,7 @@ export default function RhythmiaPage() {
                     animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? -20 : 0 }}
                     transition={{ duration: 0.6, delay: 0.1 }}
                 >
-                    <div className={styles.logo}>RHYTHMIA</div>
+                    <div className={styles.logo}>azuretier<span className={styles.logoAccent}>.net</span></div>
                     <div className={styles.statusBar}>
                         <button
                             className={styles.advButton}
@@ -229,7 +229,7 @@ export default function RhythmiaPage() {
                     </motion.div>
 
                     <div className={styles.serverGrid}>
-                        {/* Vanilla Server */}
+                        {/* Rhythmia (Solo Mode) */}
                         <motion.div
                             className={`${styles.serverCard} ${styles.vanilla}`}
                             onClick={() => launchGame('vanilla')}
@@ -240,6 +240,8 @@ export default function RhythmiaPage() {
                         >
                             <span className={styles.cardBadge}>{t('vanilla.badge')}</span>
                             <h2 className={styles.cardTitle}>{t('vanilla.title')}</h2>
+                            <p className={styles.cardSubtitle}>{t('vanilla.subtitle')}</p>
+                            <p className={styles.cardDescription}>{t('vanilla.description')}</p>
                             <button className={styles.playButton}>{t('lobby.play')}</button>
                         </motion.div>
 
@@ -305,29 +307,29 @@ export default function RhythmiaPage() {
                             transition={{ duration: 0.6, delay: 0.6 }}
                             whileHover={{ y: -8, transition: { duration: 0.25 } }}
                         >
-                            <span className={`${styles.cardBadge} ${styles.new}`}>9P</span>
+                            <span className={`${styles.cardBadge} ${styles.new}`}>{t('arena.badge')}</span>
                             <h2 className={styles.cardTitle}>{t('arena.title')}</h2>
                             <p className={styles.cardSubtitle}>{t('arena.subtitle')}</p>
                             <p className={styles.cardDescription}>
-                                9 players, 1 rhythm. Shared chaos, synced tempo, random gimmicks. Stay on beat or the tempo collapses.
+                                {t('arena.description')}
                             </p>
                             <div className={styles.cardFeatures}>
-                                <span className={styles.featureTag}>9 Players</span>
-                                <span className={styles.featureTag}>Chaos</span>
-                                <span className={styles.featureTag}>Rhythm Sync</span>
+                                <span className={styles.featureTag}>{t('arena.features.players')}</span>
+                                <span className={styles.featureTag}>{t('arena.features.chaos')}</span>
+                                <span className={styles.featureTag}>{t('arena.features.sync')}</span>
                             </div>
                             <div className={styles.cardStats}>
                                 <div className={styles.stat}>
                                     <div className={styles.statValue}>9</div>
-                                    <div className={styles.statLabel}>Players</div>
+                                    <div className={styles.statLabel}>{t('arena.stats.players')}</div>
                                 </div>
                                 <div className={styles.stat}>
                                     <div className={styles.statValue}>120+</div>
-                                    <div className={styles.statLabel}>BPM</div>
+                                    <div className={styles.statLabel}>{t('arena.stats.bpm')}</div>
                                 </div>
                                 <div className={styles.stat}>
                                     <div className={styles.statValue}>LIVE</div>
-                                    <div className={styles.statLabel}>Status</div>
+                                    <div className={styles.statLabel}>{t('arena.stats.status')}</div>
                                 </div>
                             </div>
                             <button className={styles.playButton}>{t('arena.quickMatch')}</button>

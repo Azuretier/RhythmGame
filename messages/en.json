@@ -9,8 +9,8 @@
     },
     "lobby": {
         "loading": "LOADING",
-        "selectServer": "SELECT SERVER",
-        "chooseMode": "Choose your mode",
+        "selectServer": "SELECT MODE",
+        "chooseMode": "Choose your game mode",
         "play": "PLAY",
         "battle": "BATTLE",
         "back": "← Back",
@@ -18,15 +18,17 @@
         "onlineCount": "{count} online"
     },
     "vanilla": {
-        "badge": "OFFICIAL",
-        "title": "Single Player",
-        "gameTitle": "RHYTHMIA — VANILLA"
+        "badge": "SOLO",
+        "title": "RHYTHMIA",
+        "subtitle": "Classic Rhythm Puzzle",
+        "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+        "gameTitle": "RHYTHMIA"
     },
     "multiplayer": {
         "badge": "1v1",
-        "title": "BATTLE ARENA",
-        "gameTitle": "BATTLE ARENA — 1v1",
-        "subtitle": "Multiplayer 1v1",
+        "title": "1v1 BATTLE",
+        "gameTitle": "1v1 BATTLE",
+        "subtitle": "Ranked Multiplayer",
         "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
         "features": {
             "vs": "1v1",
@@ -94,8 +96,20 @@
         "mp_games_50": { "name": "Arena Veteran", "desc": "Play 50 multiplayer matches" }
     },
     "arena": {
-        "title": "ARENA",
-        "subtitle": "9-PLAYER RHYTHM BATTLE",
+        "badge": "9P",
+        "title": "RHYTHM ARENA",
+        "subtitle": "9-Player Battle Royale",
+        "description": "9 players, 1 rhythm. Shared chaos, synced tempo, random gimmicks. Stay on beat or the tempo collapses.",
+        "features": {
+            "players": "9 Players",
+            "chaos": "Chaos",
+            "sync": "Rhythm Sync"
+        },
+        "stats": {
+            "players": "Players",
+            "bpm": "BPM",
+            "status": "Status"
+        },
         "maxPlayers": "{count} Players Max",
         "quickMatch": "QUICK MATCH",
         "createArena": "Create Arena",
@@ -144,7 +158,7 @@
         "backToLobby": "Back to Lobby"
     },
     "footer": {
-        "copyright": "RHYTHMIA © 2025"
+        "copyright": "azuretier.net © 2025"
     },
     "localeSwitcher": {
         "label": "Language",

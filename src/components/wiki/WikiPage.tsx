@@ -206,7 +206,7 @@ export default function WikiPage() {
           <button className={styles.backBtn} onClick={() => router.push('/')}>
             {ja ? '← ロビー' : '← Lobby'}
           </button>
-          <span className={styles.logo}>RHYTHMIA</span>
+          <span className={styles.logo}>azuretier.net</span>
           <span className={styles.wikiLabel}>WIKI</span>
         </div>
         <div className={styles.headerRight}>
