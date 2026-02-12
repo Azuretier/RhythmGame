@@ -104,6 +104,14 @@ messages/               i18n translation files (ja.json, en.json)
 
 Set `NEXT_PUBLIC_MULTIPLAYER_URL` on Vercel to point to the Railway WebSocket URL (`wss://...`), and set `ALLOWED_ORIGINS` on Railway to the Vercel domain.
 
+## Documentation
+
+- [CHANGELOG.md](./CHANGELOG.md) - Version history and release notes
+- [RELEASE_MANAGEMENT.md](./RELEASE_MANAGEMENT.md) - Release process and tagging guidelines
+- [PR_ANALYSIS_v0.0.3_to_current.md](./PR_ANALYSIS_v0.0.3_to_current.md) - Analysis of changes since v0.0.3
+- [CLAUDE.md](./CLAUDE.md) - AI assistant guide for the project
+- [create-release.sh](./create-release.sh) - Helper script for creating releases
+
 ## License
 
 Private repository.
