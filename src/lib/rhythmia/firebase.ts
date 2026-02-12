@@ -3,8 +3,6 @@ import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
 import { initAppCheck } from "@/lib/firebase/initAppCheck";
 
-import { initAppCheck } from "@/lib/firebase/initAppCheck";
-
 const firebaseConfig = {
   //apiKey: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_API_KEY,
   //authDomain: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_AUTH_DOMAIN,
