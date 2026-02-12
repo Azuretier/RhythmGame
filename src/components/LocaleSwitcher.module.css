@@ -1,31 +1,108 @@
-.switcher {
-    display: flex;
-    gap: 4px;
+.wrapper {
+    position: relative;
     margin-left: 12px;
+    z-index: 100;
 }
 
-.localeButton {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.6);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
+/* Trigger button */
+.trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: 'Orbitron', sans-serif;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 
-.localeButton:hover {
-    background: rgba(255, 189, 67, 0.2);
+.trigger:hover {
+    background: rgba(255, 189, 67, 0.15);
     border-color: rgba(255, 189, 67, 0.4);
-    color: rgba(255, 255, 255, 0.9);
+    color: #fff;
 }
 
-.localeButton.active {
-    background: rgba(255, 189, 67, 0.3);
-    border-color: #ffbd43;
+.flag {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.label {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.chevron {
+    display: inline-flex;
+    font-size: 10px;
+    color: rgba(255, 189, 67, 0.7);
+    margin-left: 2px;
+}
+
+/* Dropdown menu */
+.dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 180px;
+    list-style: none;
+    margin: 0;
+    padding: 4px;
+    background: rgba(18, 18, 24, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 189, 67, 0.2);
+    border-radius: 10px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    overflow: hidden;
+}
+
+/* Individual option */
+.option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.option:hover {
+    background: rgba(255, 189, 67, 0.12);
+    color: #fff;
+}
+
+.option.active {
+    background: rgba(255, 189, 67, 0.15);
     color: #ffbd43;
+    font-weight: 600;
+}
+
+.optionLabel {
+    flex: 1;
+}
+
+.check {
+    font-size: 11px;
+    color: #ffbd43;
+    font-weight: 700;
 }
