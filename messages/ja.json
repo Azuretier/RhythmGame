@@ -353,5 +353,23 @@
         "wiki": "Wiki",
         "updates": "アップデート",
         "lobby": "ロビー"
+    },
+    "profile": {
+        "iconTitle": "アイコンを選択",
+        "iconSubtitle": "自分を表すアイコンを選んでください",
+        "nameTitle": "ニックネームを入力",
+        "nameSubtitle": "他のプレイヤーに表示される名前です",
+        "nameLabel": "ニックネーム",
+        "namePlaceholder": "なまえ",
+        "friendCodeLabel": "フレンドコード",
+        "langTitle": "言語設定",
+        "langSubtitle": "表示言語を選択してください",
+        "confirmTitle": "プロフィール確認",
+        "confirmSubtitle": "この内容でよろしいですか？",
+        "next": "つぎへ",
+        "back": "もどる",
+        "onlineTitle": "オンラインのプレイヤー",
+        "onlineCount": "{count}人がオンライン",
+        "noOnlineUsers": "現在オンラインのプレイヤーはいません"
     }
 }
