@@ -23,6 +23,8 @@ interface ContentCard {
 }
 
 function resolveVideoUrl(url?: string): string | undefined {
+    // Empty string means no URL - keep it as empty string for frontend detection
+    if (url === '') return '';
     return url || undefined;
 }
 
@@ -76,7 +78,7 @@ Generate exactly 6 content cards as a JSON array. Each card should have:
 
 Mix the types: include 2 tutorials, 2 videos, and 2 tips. Prioritize content that matches the player's skill level. For beginner players, focus on fundamentals. For advanced players, focus on competitive strategies and optimization.
 
-For videos, reference actual video titles from the available list and include a "url" field with the video's URL from the list above. If a video has no specific URL, use the YouTube channel URL.
+For videos, reference actual video titles from the available list and include a "url" field ONLY if the video has a specific URL in the list. If a video has an empty or missing URL, omit the "url" field entirely or set it to an empty string.
 
 For tips, generate unique gameplay advice relevant to the player's progress level.
 
@@ -97,7 +99,7 @@ Return ONLY the JSON array, no markdown fencing, no explanation.`;
                 description: String(card.description || '').slice(0, 150),
                 tags: Array.isArray(card.tags) ? card.tags.slice(0, 3) : [],
                 difficulty: ['beginner', 'intermediate', 'advanced'].includes(card.difficulty ?? '') ? card.difficulty : 'beginner',
-                url: card.url || undefined,
+                url: card.url === '' ? '' : (card.url || undefined),
             }));
         } catch {
             cards = getFallbackContent(locale, unlockedAdvancements, totalAdvancements);

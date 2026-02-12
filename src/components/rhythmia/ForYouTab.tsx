@@ -69,8 +69,8 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
 
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
 
-    const hasVideoWithoutUrl = cards.some((card) => card.type === 'video' && !card.url);
-    const displayCards = cards.filter((card) => !(card.type === 'video' && !card.url));
+    const hasVideoWithoutUrl = cards.some((card) => card.type === 'video' && (!card.url || card.url === ''));
+    const displayCards = cards.filter((card) => !(card.type === 'video' && (!card.url || card.url === '')));
 
     if (loading) {
         return (

@@ -590,10 +590,10 @@
         "refresh": "更新",
         "watchOnYouTube": "YouTubeで見る",
         "makeAVideo": {
-            "heading": "最初の一人になろう",
-            "title": "動画を作ってみませんか？",
-            "description": "まだ動画がありません。RHYTHMIAのゲームプレイやレビューを撮影して、コミュニティに共有しよう！",
-            "cta": "チャンネルを見る →"
+            "heading": "クリエイターになろう",
+            "title": "あなたのRHYTHMIAプレイを見せて！",
+            "description": "すごいプレイはありますか？Tスピン、パフェ、コンボ技を動画で共有しよう！RHYTHMIAの動画を作って、コミュニティをワクワクさせましょう！",
+            "cta": "チャンネルでアイデアをチェック →"
         },
         "types": {
             "tutorial": "チュートリアル",
