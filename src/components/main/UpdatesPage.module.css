@@ -2,7 +2,8 @@
 .page {
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: #000;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   color: #fff;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
