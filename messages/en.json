@@ -92,7 +92,20 @@
         "mp_streak_5": { "name": "Domination", "desc": "Win 5 matches in a row" },
         "mp_streak_10": { "name": "Unbreakable", "desc": "Win 10 matches in a row" },
         "mp_games_10": { "name": "Arena Regular", "desc": "Play 10 multiplayer matches" },
-        "mp_games_50": { "name": "Arena Veteran", "desc": "Play 50 multiplayer matches" }
+        "mp_games_50": { "name": "Arena Veteran", "desc": "Play 50 multiplayer matches" },
+        "loyalty_streak_3": { "name": "3-Day Streak", "desc": "Visit 3 days in a row" },
+        "loyalty_streak_7": { "name": "Weekly Rhythm", "desc": "Visit 7 days in a row" },
+        "loyalty_streak_14": { "name": "Fortnight Beat", "desc": "Visit 14 days in a row" },
+        "loyalty_streak_30": { "name": "Monthly Pulse", "desc": "Visit 30 days in a row" },
+        "loyalty_visits_5": { "name": "Regular", "desc": "Visit 5 times" },
+        "loyalty_visits_25": { "name": "Familiar Face", "desc": "Visit 25 times" },
+        "loyalty_visits_100": { "name": "Part of the Family", "desc": "Visit 100 times" },
+        "loyalty_games_10": { "name": "Player", "desc": "Play 10 games" },
+        "loyalty_games_50": { "name": "Enthusiast", "desc": "Play 50 games" },
+        "loyalty_games_200": { "name": "Devotee", "desc": "Play 200 games" },
+        "loyalty_polls_1": { "name": "First Vote", "desc": "Vote in your first poll" },
+        "loyalty_polls_5": { "name": "Active Voter", "desc": "Vote in 5 polls" },
+        "loyalty_polls_10": { "name": "Community Voice", "desc": "Vote in 10 polls" }
     },
     "arena": {
         "title": "ARENA",
@@ -162,7 +175,7 @@
         "xpToNext": "{xp} XP to next tier",
         "maxTier": "MAX TIER REACHED",
         "streakDays": "DAY STREAK",
-        "viewAll": "VIEW ALL BADGES & DETAILS",
+        "viewAll": "VIEW ALL ADVANCEMENTS & DETAILS",
         "tiers": {
             "new_beat": "New Beat",
             "syncopated": "Syncopated",
@@ -173,12 +186,12 @@
             "visits": "VISITS",
             "streak": "STREAK",
             "games": "GAMES",
-            "badges": "BADGES"
+            "badges": "ADVANCEMENTS"
         },
         "sections": {
             "tierRoadmap": "TIER ROADMAP",
             "streak": "LOGIN STREAK",
-            "badges": "BADGES",
+            "badges": "RECENT ADVANCEMENTS",
             "community": "COMMUNITY VOICE",
             "howItWorks": "HOW IT WORKS"
         },

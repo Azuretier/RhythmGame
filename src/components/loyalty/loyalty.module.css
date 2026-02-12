@@ -325,6 +325,16 @@
   line-height: 1.4;
 }
 
+.emptyAdvancements {
+  text-align: center;
+  font-size: 0.75rem;
+  opacity: 0.25;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 40px 0;
+  margin-bottom: 40px;
+}
+
 /* Community Poll */
 .pollSection {
   margin-bottom: 40px;

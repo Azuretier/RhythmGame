@@ -92,7 +92,20 @@
         "mp_streak_5": { "name": "ドミネーション", "desc": "5連勝達成" },
         "mp_streak_10": { "name": "アンブレイカブル", "desc": "10連勝達成" },
         "mp_games_10": { "name": "アリーナ常連", "desc": "マルチプレイヤー10戦" },
-        "mp_games_50": { "name": "アリーナベテラン", "desc": "マルチプレイヤー50戦" }
+        "mp_games_50": { "name": "アリーナベテラン", "desc": "マルチプレイヤー50戦" },
+        "loyalty_streak_3": { "name": "3日ストリーク", "desc": "3日連続訪問" },
+        "loyalty_streak_7": { "name": "ウィークリーリズム", "desc": "7日連続訪問" },
+        "loyalty_streak_14": { "name": "フォートナイトビート", "desc": "14日連続訪問" },
+        "loyalty_streak_30": { "name": "マンスリーパルス", "desc": "30日連続訪問" },
+        "loyalty_visits_5": { "name": "レギュラー", "desc": "5回訪問" },
+        "loyalty_visits_25": { "name": "おなじみの顔", "desc": "25回訪問" },
+        "loyalty_visits_100": { "name": "ファミリーの一員", "desc": "100回訪問" },
+        "loyalty_games_10": { "name": "プレイヤー", "desc": "10ゲームプレイ" },
+        "loyalty_games_50": { "name": "エンスージアスト", "desc": "50ゲームプレイ" },
+        "loyalty_games_200": { "name": "ディボーティー", "desc": "200ゲームプレイ" },
+        "loyalty_polls_1": { "name": "初投票", "desc": "最初の投票に参加" },
+        "loyalty_polls_5": { "name": "アクティブ投票者", "desc": "5回投票" },
+        "loyalty_polls_10": { "name": "コミュニティの声", "desc": "10回投票" }
     },
     "arena": {
         "title": "ARENA",
@@ -162,7 +175,7 @@
         "xpToNext": "次のティアまで {xp} XP",
         "maxTier": "最高ティア到達",
         "streakDays": "日連続",
-        "viewAll": "バッジ＆詳細を見る",
+        "viewAll": "進捗＆詳細を見る",
         "tiers": {
             "new_beat": "ニュービート",
             "syncopated": "シンコペーション",
@@ -173,12 +186,12 @@
             "visits": "訪問",
             "streak": "ストリーク",
             "games": "ゲーム",
-            "badges": "バッジ"
+            "badges": "進捗"
         },
         "sections": {
             "tierRoadmap": "ティアロードマップ",
             "streak": "ログインストリーク",
-            "badges": "バッジ",
+            "badges": "最近の進捗",
             "community": "コミュニティの声",
             "howItWorks": "仕組み"
         },

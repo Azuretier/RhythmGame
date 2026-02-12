@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import {
   LOYALTY_TIERS,
-  LOYALTY_BADGES,
   getTierByXP,
   tierProgress,
   xpToNextTier,
@@ -20,15 +19,18 @@ import {
   syncLoyaltyToFirestore,
 } from '@/lib/loyalty';
 import type { LoyaltyState, Poll } from '@/lib/loyalty';
-import { loadAdvancementState } from '@/lib/advancements/storage';
+import { ADVANCEMENTS, loadAdvancementState, syncLoyaltyStats } from '@/lib/advancements';
+import type { AdvancementState } from '@/lib/advancements';
 import styles from './loyalty.module.css';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function LoyaltyDashboard() {
   const t = useTranslations('loyalty');
+  const tAdv = useTranslations('advancements');
   const locale = useLocale();
   const [state, setState] = useState<LoyaltyState | null>(null);
+  const [advState, setAdvState] = useState<AdvancementState | null>(null);
 
   // Poll state — driven by Firestore
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -41,13 +43,21 @@ export default function LoyaltyDashboard() {
   useEffect(() => {
     // Loyalty state (local)
     let loyaltyState = recordDailyVisit();
-    const advState = loadAdvancementState();
+    const advancementState = loadAdvancementState();
     loyaltyState = syncFromGameplay(
-      advState.stats.totalGamesPlayed,
-      advState.stats.totalScore,
-      advState.unlockedIds.length,
+      advancementState.stats.totalGamesPlayed,
+      advancementState.stats.totalScore,
+      advancementState.unlockedIds.length,
     );
     setState(loyaltyState);
+
+    // Sync loyalty stats into advancements system
+    const updatedAdv = syncLoyaltyStats({
+      totalVisits: loyaltyState.stats.totalVisits,
+      bestStreak: loyaltyState.stats.bestStreak,
+      pollsVoted: loyaltyState.stats.pollsVoted,
+    });
+    setAdvState(updatedAdv);
 
     // Auth + poll (async)
     (async () => {
@@ -98,6 +108,14 @@ export default function LoyaltyDashboard() {
       const updated = recordPollVote();
       setState(updated);
       syncLoyaltyToFirestore(updated);
+
+      // Sync updated poll count into advancements
+      const updatedAdv = syncLoyaltyStats({
+        totalVisits: updated.stats.totalVisits,
+        bestStreak: updated.stats.bestStreak,
+        pollsVoted: updated.stats.pollsVoted,
+      });
+      setAdvState(updatedAdv);
     }
 
     setIsVoting(false);
@@ -110,6 +128,15 @@ export default function LoyaltyDashboard() {
   const nextTierXP = xpToNextTier(state.xp);
 
   const pollText = (obj: { ja: string; en: string }) => (locale === 'ja' ? obj.ja : obj.en);
+
+  // Recent advancements — last 8 unlocked, newest first
+  const recentAdvancements = advState
+    ? advState.unlockedIds
+        .slice(-8)
+        .reverse()
+        .map((id) => ADVANCEMENTS.find((a) => a.id === id))
+        .filter(Boolean)
+    : [];
 
   return (
     <div className={styles.page}>
@@ -181,7 +208,7 @@ export default function LoyaltyDashboard() {
           </div>
           <div className={styles.statCard}>
             <div className={styles.statValue}>
-              {state.unlockedBadgeIds.length}/{LOYALTY_BADGES.length}
+              {advState ? advState.unlockedIds.length : 0}/{ADVANCEMENTS.length}
             </div>
             <div className={styles.statLabel}>{t('stats.badges')}</div>
           </div>
@@ -252,34 +279,35 @@ export default function LoyaltyDashboard() {
           </div>
         </motion.div>
 
-        {/* Badges */}
+        {/* Recent Advancements */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5 }}
         >
           <h2 className={styles.sectionTitle}>{t('sections.badges')}</h2>
-          <div className={styles.badgesGrid}>
-            {LOYALTY_BADGES.map((badge) => {
-              const isUnlocked = state.unlockedBadgeIds.includes(badge.id);
-              return (
+          {recentAdvancements.length > 0 ? (
+            <div className={styles.badgesGrid}>
+              {recentAdvancements.map((adv) => adv && (
                 <div
-                  key={badge.id}
-                  className={`${styles.badgeCard} ${isUnlocked ? styles.unlocked : styles.locked}`}
+                  key={adv.id}
+                  className={`${styles.badgeCard} ${styles.unlocked}`}
                 >
-                  <span className={styles.badgeIcon}>
-                    {t(`badges.${badge.id}.icon`)}
-                  </span>
+                  <span className={styles.badgeIcon}>{adv.icon}</span>
                   <div className={styles.badgeName}>
-                    {t(`badges.${badge.id}.name`)}
+                    {tAdv(`${adv.id}.name`)}
                   </div>
                   <div className={styles.badgeDesc}>
-                    {t(`badges.${badge.id}.desc`)}
+                    {tAdv(`${adv.id}.desc`)}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyAdvancements}>
+              {tAdv('locked')}
+            </div>
+          )}
         </motion.div>
 
         {/* Community Poll — Firestore backed */}

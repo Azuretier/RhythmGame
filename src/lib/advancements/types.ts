@@ -4,7 +4,8 @@ export type AdvancementCategory =
   | 'tspin'
   | 'combo'
   | 'general'
-  | 'multiplayer';
+  | 'multiplayer'
+  | 'loyalty';
 
 export interface Advancement {
   id: string;
@@ -32,6 +33,10 @@ export interface PlayerStats {
   totalMultiplayerGames: number;
   totalHardDrops: number;
   totalPiecesPlaced: number;
+  // Loyalty stats
+  totalVisits: number;
+  bestStreak: number;
+  pollsVoted: number;
 }
 
 export interface AdvancementState {

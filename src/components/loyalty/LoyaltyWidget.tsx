@@ -13,7 +13,7 @@ import {
   syncFromGameplay,
 } from '@/lib/loyalty';
 import type { LoyaltyState } from '@/lib/loyalty';
-import { loadAdvancementState } from '@/lib/advancements/storage';
+import { ADVANCEMENTS, loadAdvancementState, syncLoyaltyStats } from '@/lib/advancements';
 import styles from './LoyaltyWidget.module.css';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -22,6 +22,7 @@ export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
   const router = useRouter();
   const [state, setState] = useState<LoyaltyState | null>(null);
+  const [advUnlocked, setAdvUnlocked] = useState(0);
 
   useEffect(() => {
     let loyaltyState = recordDailyVisit();
@@ -34,6 +35,14 @@ export default function LoyaltyWidget() {
     );
 
     setState(loyaltyState);
+
+    // Sync loyalty stats into advancements system
+    const updatedAdv = syncLoyaltyStats({
+      totalVisits: loyaltyState.stats.totalVisits,
+      bestStreak: loyaltyState.stats.bestStreak,
+      pollsVoted: loyaltyState.stats.pollsVoted,
+    });
+    setAdvUnlocked(updatedAdv.unlockedIds.length);
   }, []);
 
   if (!state) return null;
@@ -135,7 +144,7 @@ export default function LoyaltyWidget() {
           <span className={styles.statLabel}>{t('stats.games')}</span>
         </div>
         <div className={styles.statItem}>
-          <span className={styles.statValue}>{state.unlockedBadgeIds.length}</span>
+          <span className={styles.statValue}>{advUnlocked}/{ADVANCEMENTS.length}</span>
           <span className={styles.statLabel}>{t('stats.badges')}</span>
         </div>
       </div>
