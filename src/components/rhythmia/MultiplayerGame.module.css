@@ -113,10 +113,10 @@
 /* Mode Grid */
 .modeGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
   width: 100%;
-  max-width: 500px;
+  max-width: 640px;
 }
 
 .modeCard {
@@ -158,6 +158,23 @@
 
 .modeCard.ranked .modeTitle {
   color: rgba(255, 215, 0, 0.9);
+}
+
+.modeCard.mobBattle {
+  border-color: rgba(76, 175, 80, 0.15);
+}
+
+.modeCard.mobBattle:hover {
+  border-color: rgba(76, 175, 80, 0.35);
+  background: rgba(76, 175, 80, 0.04);
+}
+
+.modeCard.mobBattle .modeIcon {
+  color: rgba(76, 175, 80, 0.8);
+}
+
+.modeCard.mobBattle .modeTitle {
+  color: rgba(76, 175, 80, 0.95);
 }
 
 .modeIcon {

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import styles from './MultiplayerGame.module.css';
 import MultiplayerBattle from './MultiplayerBattle';
+import MobBattle from './MobBattle';
 import RankedMatch from './RankedMatch';
 import type {
   ServerMessage,
@@ -12,7 +13,7 @@ import type {
 } from '@/types/multiplayer';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
-type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished' | 'ranked';
+type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished' | 'ranked' | 'mob-battle';
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const PING_TIMEOUT = 60000; // Consider connection dead if no ping from server in 60s
@@ -45,6 +46,7 @@ export default function MultiplayerGame() {
   const [gameSeed, setGameSeed] = useState<number>(0);
   const [countdownNumber, setCountdownNumber] = useState<number | null>(null);
   const [gameResult, setGameResult] = useState<{ winnerId: string } | null>(null);
+  const [isMobBattle, setIsMobBattle] = useState(false);
 
   // ===== WebSocket Connection =====
   const connectWebSocketRef = useRef<() => void>(() => {});
@@ -286,6 +288,9 @@ export default function MultiplayerGame() {
     sessionStorage.removeItem('mp_nextMode');
     if (nextMode === 'ranked') {
       setMode('ranked');
+    } else if (nextMode === 'mob-battle') {
+      setIsMobBattle(true);
+      setMode('room-browser');
     } else {
       setMode('room-browser');
     }
@@ -340,6 +345,7 @@ export default function MultiplayerGame() {
     roomCodeRef.current = '';
     sessionStorage.removeItem('mp_reconnectToken');
     setRoomState(null);
+    setIsMobBattle(false);
     setMode('room-browser');
     setError(null);
   }, [send]);
@@ -423,6 +429,25 @@ export default function MultiplayerGame() {
               <div className={styles.modeIcon}>RANK</div>
               <div className={styles.modeTitle}>Ranked Match</div>
               <p className={styles.modeDesc}>Climb the ranks with AI fallback matchmaking</p>
+            </div>
+            <div
+              className={`${styles.modeCard} ${styles.mobBattle}`}
+              onClick={() => {
+                if (connectionStatus !== 'connected') {
+                  connectWebSocket();
+                }
+                setIsMobBattle(true);
+                if (playerName.trim().length >= 2) {
+                  setMode('room-browser');
+                } else {
+                  setMode('name-entry');
+                  sessionStorage.setItem('mp_nextMode', 'mob-battle');
+                }
+              }}
+            >
+              <div className={styles.modeIcon}>MOB</div>
+              <div className={styles.modeTitle}>Mob Battle</div>
+              <p className={styles.modeDesc}>Summon monsters to destroy your opponent&apos;s base</p>
             </div>
           </div>
         </div>
@@ -639,8 +664,22 @@ export default function MultiplayerGame() {
       )}
 
       {/* Playing */}
-      {mode === 'playing' && roomState && wsRef.current && (
+      {mode === 'playing' && roomState && wsRef.current && !isMobBattle && (
         <MultiplayerBattle
+          ws={wsRef.current}
+          roomCode={roomState.code}
+          playerId={playerIdRef.current}
+          playerName={playerName}
+          opponents={opponents}
+          gameSeed={gameSeed}
+          onGameEnd={handleGameEnd}
+          onBackToLobby={handleBackToLobby}
+        />
+      )}
+
+      {/* Playing - Mob Battle */}
+      {mode === 'playing' && roomState && wsRef.current && isMobBattle && (
+        <MobBattle
           ws={wsRef.current}
           roomCode={roomState.code}
           playerId={playerIdRef.current}

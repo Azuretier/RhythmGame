@@ -1,0 +1,709 @@
+.container {
+  min-height: 100vh;
+  background: #000000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* Battle Arena */
+.battleArena {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 1100px;
+  margin-top: 4px;
+}
+
+/* Player Sides */
+.playerSide,
+.opponentSide {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  max-width: 480px;
+}
+
+.opponentSide {
+  flex-direction: row-reverse;
+}
+
+/* Side Panel (Hold + Next) */
+.sidePanel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.holdBox,
+.nextBox {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.panelLabel {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.previewGrid {
+  display: grid;
+  gap: 1px;
+}
+
+.previewCell {
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.02);
+  image-rendering: pixelated;
+}
+
+.previewCell.filled {
+  border-radius: 0;
+}
+
+.emptyPreview {
+  width: 48px;
+  height: 24px;
+}
+
+.nextItem {
+  padding: 4px 0;
+}
+
+/* Board Section */
+.boardSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.playerHeader,
+.opponentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.opponentHeader {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.playerName,
+.opponentName {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+
+.opponentName {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.playerScore,
+.opponentScore {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #ffffff;
+}
+
+.opponentScore {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Gold Display */
+.goldDisplay {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #FFD700;
+}
+
+.goldIcon {
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: #FFD700;
+  background: rgba(255, 215, 0, 0.15);
+  border-radius: 2px;
+  padding: 1px 4px;
+  letter-spacing: 0;
+}
+
+.goldAmount {
+  font-variant-numeric: tabular-nums;
+}
+
+/* HP Bar */
+.hpBarContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hpBarLabel {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.hpBarTrack {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hpBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #66BB6A);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.hpBarFill.hpWarning {
+  background: linear-gradient(90deg, #FF9800, #FFA726);
+}
+
+.hpBarFill.hpCritical {
+  background: linear-gradient(90deg, #F44336, #EF5350);
+  animation: hpPulse 0.8s ease-in-out infinite;
+}
+
+.hpBarFill.hpEnemy {
+  background: linear-gradient(90deg, #E53935, #EF5350);
+}
+
+.hpBarFill.hpEnemy.hpWarning {
+  background: linear-gradient(90deg, #FF9800, #FFA726);
+}
+
+.hpBarFill.hpEnemy.hpCritical {
+  background: linear-gradient(90deg, #F44336, #EF5350);
+  animation: hpPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes hpPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.hpBarValue {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* Mob Lane */
+.mobLane {
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+}
+
+.mobLaneTrack {
+  position: relative;
+  height: 36px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.01) 50%,
+    rgba(255, 60, 60, 0.06) 100%
+  );
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mobLaneBase {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  background: rgba(255, 60, 60, 0.15);
+  border-left: 1px solid rgba(255, 60, 60, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.45rem;
+  font-weight: 600;
+  color: rgba(255, 60, 60, 0.6);
+  letter-spacing: 0.1em;
+}
+
+.mobUnit {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  transition: left 0.05s linear;
+  z-index: 2;
+}
+
+.mobUnit.mobHit {
+  animation: mobHitFlash 0.2s ease-out;
+}
+
+@keyframes mobHitFlash {
+  0% { filter: brightness(3); transform: translate(-50%, -50%) scale(1.3); }
+  100% { filter: brightness(1); transform: translate(-50%, -50%) scale(1); }
+}
+
+.mobIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.mobHpBar {
+  width: 20px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.mobHpFill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.15s ease;
+}
+
+/* Board */
+.boardWrap {
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+}
+
+.opponentBoardWrap {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.board {
+  display: grid;
+  gap: 1px;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+.cell {
+  aspect-ratio: 1 / 1;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0;
+  transition: background-color 0.08s;
+  image-rendering: pixelated;
+}
+
+.cell.filled {
+  border-radius: 0;
+}
+
+.cell.ghost {
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Stats Row */
+.statsRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+/* VS Divider */
+.vsDivider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  align-self: center;
+  gap: 2px;
+}
+
+.vsText {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.2em;
+}
+
+.vsSubtext {
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: rgba(255, 215, 0, 0.4);
+  letter-spacing: 0.15em;
+  white-space: nowrap;
+}
+
+/* Mob Shop */
+.mobShop {
+  width: 100%;
+  max-width: 1100px;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.shopToggle {
+  width: 100%;
+  padding: 8px 16px;
+  background: rgba(255, 215, 0, 0.06);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 6px;
+  color: rgba(255, 215, 0, 0.7);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.shopToggle:hover {
+  background: rgba(255, 215, 0, 0.1);
+  border-color: rgba(255, 215, 0, 0.25);
+}
+
+.shopGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 8px 0;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+}
+
+.shopOpen .shopGrid {
+  max-height: 300px;
+  opacity: 1;
+  padding: 8px 0;
+}
+
+.mobCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: white;
+  text-align: left;
+}
+
+.mobCard:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 215, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.mobCard:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.mobCardDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.mobCardIcon {
+  font-size: 1.3rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.mobCardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobCardName {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.03em;
+}
+
+.mobCardStats {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.02em;
+}
+
+.mobCardCost {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #FFD700;
+  flex-shrink: 0;
+}
+
+.mobCardKey {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-right: 4px;
+  font-weight: 500;
+}
+
+/* Mobile Controls */
+.controls {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  width: min(350px, 90vw);
+  margin-top: 8px;
+}
+
+.controlRow {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.ctrlBtn {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.3rem;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  transition: all 0.1s;
+}
+
+.ctrlBtn:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ctrlBtnDisabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.dropBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Game Over Overlay */
+.gameOverOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 200;
+  gap: 24px;
+  padding: 20px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.gameOverTitle {
+  font-size: clamp(2rem, 8vw, 4rem);
+  font-weight: 200;
+  color: #ffffff;
+  letter-spacing: 0.2em;
+}
+
+.finalStats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.statBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 300;
+  min-width: 180px;
+}
+
+.statBlockLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+}
+
+.backBtn {
+  padding: 12px 36px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: #ffffff;
+  border: none;
+  border-radius: 8px;
+  color: #000000;
+  cursor: pointer;
+  letter-spacing: 0.15em;
+  transition: all 0.25s;
+}
+
+.backBtn:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .battleArena {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .playerSide,
+  .opponentSide {
+    max-width: 100%;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .opponentSide {
+    flex-direction: row;
+  }
+
+  .opponentSide .boardSection {
+    transform: scale(0.7);
+    transform-origin: top center;
+  }
+
+  .vsDivider {
+    flex-direction: row;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .vsText {
+    font-size: 0.9rem;
+  }
+
+  .controls {
+    display: flex;
+  }
+
+  .sidePanel {
+    width: 55px;
+  }
+
+  .previewCell {
+    width: 10px;
+    height: 10px;
+  }
+
+  .shopGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 8px;
+  }
+
+  .playerHeader,
+  .opponentHeader {
+    padding: 4px 10px;
+  }
+
+  .playerName,
+  .opponentName {
+    font-size: 0.75rem;
+  }
+
+  .ctrlBtn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+
+  .shopGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mobCard {
+    padding: 6px 8px;
+  }
+}
