@@ -29,6 +29,7 @@ html.dark {
     --skin-accent-hover: #0066CC;
     --skin-surface: rgba(255, 255, 255, 0.05);
     --skin-surface-hover: rgba(255, 255, 255, 0.08);
+    --skin-menu-bg: rgba(10, 10, 10, 0.95);
     color-scheme: dark;
 }
 
@@ -42,6 +43,7 @@ html.light {
     --skin-accent-hover: #0066CC;
     --skin-surface: rgba(0, 0, 0, 0.03);
     --skin-surface-hover: rgba(0, 0, 0, 0.06);
+    --skin-menu-bg: rgba(255, 255, 255, 0.95);
     color-scheme: light;
 }
 
@@ -55,6 +57,7 @@ html.kawaii {
     --skin-accent-hover: #ff4785;
     --skin-surface: rgba(255, 100, 160, 0.08);
     --skin-surface-hover: rgba(255, 100, 160, 0.14);
+    --skin-menu-bg: rgba(26, 16, 32, 0.95);
     color-scheme: dark;
 }
 

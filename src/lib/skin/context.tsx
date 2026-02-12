@@ -17,11 +17,6 @@ interface SkinContextType {
 
 const SkinContext = createContext<SkinContextType | undefined>(undefined);
 
-/** Maps skin IDs to the class name applied to <html> via next-themes */
-function skinToTheme(skin: SkinId): string {
-  return skin;
-}
-
 export function SkinProvider({ children }: { children: ReactNode }) {
   const { setTheme } = useTheme();
   const [currentSkin, setCurrentSkin] = useState<SkinId>('dark');
@@ -29,22 +24,23 @@ export function SkinProvider({ children }: { children: ReactNode }) {
 
   const isKawaiiUnlocked = kawaiiProgress >= KAWAII_REQUIRED_ADVANCEMENTS;
 
-  // Restore from localStorage on mount
+  // Restore from localStorage on mount and ensure HTML class is synced
   useEffect(() => {
     const stored = getStoredSkin();
     const unlocked = getUnlockedCount();
     setKawaiiProgress(unlocked);
 
-    if (stored) {
-      // If stored skin is kawaii but no longer unlocked, fall back to dark
-      if (stored === 'kawaii' && unlocked < KAWAII_REQUIRED_ADVANCEMENTS) {
-        setCurrentSkin('dark');
-        setStoredSkin('dark');
-        setTheme('dark');
-      } else {
-        setCurrentSkin(stored);
-        setTheme(skinToTheme(stored));
-      }
+    if (stored && stored === 'kawaii' && unlocked < KAWAII_REQUIRED_ADVANCEMENTS) {
+      // Stored skin is kawaii but no longer unlocked, fall back to dark
+      setCurrentSkin('dark');
+      setStoredSkin('dark');
+      setTheme('dark');
+    } else if (stored) {
+      setCurrentSkin(stored);
+      setTheme(stored);
+    } else {
+      // No stored skin — ensure the default dark theme class is applied
+      setTheme('dark');
     }
   }, [setTheme]);
 
@@ -58,20 +54,29 @@ export function SkinProvider({ children }: { children: ReactNode }) {
 
     setCurrentSkin(skin);
     setStoredSkin(skin);
-    setTheme(skinToTheme(skin));
+    setTheme(skin);
   }, [setTheme]);
 
-  // Periodically refresh kawaii unlock status
-  const refreshKawaiiProgress = useCallback(() => {
-    const unlocked = getUnlockedCount();
-    setKawaiiProgress(unlocked);
-  }, []);
-
+  // On focus, refresh kawaii progress and validate current skin
   useEffect(() => {
-    // Check on focus (user might have unlocked advancements in another tab/game)
-    window.addEventListener('focus', refreshKawaiiProgress);
-    return () => window.removeEventListener('focus', refreshKawaiiProgress);
-  }, [refreshKawaiiProgress]);
+    function handleFocus() {
+      const unlocked = getUnlockedCount();
+      setKawaiiProgress(unlocked);
+
+      // If kawaii is active but no longer unlocked, fall back to dark
+      setCurrentSkin((prev) => {
+        if (prev === 'kawaii' && unlocked < KAWAII_REQUIRED_ADVANCEMENTS) {
+          setStoredSkin('dark');
+          setTheme('dark');
+          return 'dark';
+        }
+        return prev;
+      });
+    }
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [setTheme]);
 
   return (
     <SkinContext.Provider value={{
