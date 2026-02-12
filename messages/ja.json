@@ -818,7 +818,11 @@
         "back": "もどる",
         "onlineTitle": "オンラインのプレイヤー",
         "onlineCount": "{count}人がオンライン",
-        "noOnlineUsers": "現在オンラインのプレイヤーはいません"
+        "noOnlineUsers": "現在オンラインのプレイヤーはいません",
+        "privateProfile": "非公開プロフィール",
+        "privateProfileDesc": "名前とアイコンがオンラインプレイヤー一覧に表示されません",
+        "publicProfile": "公開プロフィール",
+        "publicProfileDesc": "名前とアイコンが他のプレイヤーに表示されます"
     },
     "skin": {
         "title": "プロフィール & スキン",

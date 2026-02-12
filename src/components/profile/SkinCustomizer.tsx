@@ -8,6 +8,32 @@ import { getIconById } from '@/lib/profile/types';
 import type { Skin } from '@/lib/skin/types';
 import styles from './SkinCustomizer.module.css';
 
+function PrivacyToggle() {
+  const t = useTranslations('profile');
+  const { profile, updateProfile } = useProfile();
+  if (!profile) return null;
+
+  const isPrivate = profile.isPrivate;
+
+  return (
+    <button
+      className={`${styles.privacyToggle} ${isPrivate ? styles.privacyToggleActive : ''}`}
+      onClick={() => updateProfile({ isPrivate: !isPrivate })}
+      type="button"
+    >
+      <div className={styles.privacyIcon}>{isPrivate ? '🔒' : '🌐'}</div>
+      <div className={styles.privacyText}>
+        <div className={styles.privacyLabel}>
+          {t(isPrivate ? 'privateProfile' : 'publicProfile')}
+        </div>
+        <div className={styles.privacyDesc}>
+          {t(isPrivate ? 'privateProfileDesc' : 'publicProfileDesc')}
+        </div>
+      </div>
+    </button>
+  );
+}
+
 interface SkinCustomizerProps {
   onClose: () => void;
 }
@@ -125,6 +151,11 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
             />
             {currentSkin.name} — {currentSkin.nameJa}
           </div>
+        </div>
+
+        {/* Privacy setting */}
+        <div className={styles.privacySection}>
+          <PrivacyToggle />
         </div>
       </motion.div>
     </motion.div>

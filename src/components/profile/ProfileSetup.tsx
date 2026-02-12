@@ -26,6 +26,7 @@ export default function ProfileSetup() {
   const [selectedIcon, setSelectedIcon] = useState<string>('icon_rhythm');
   const [name, setName] = useState('');
   const [selectedLocale, setSelectedLocale] = useState<'ja' | 'en'>(locale === 'en' ? 'en' : 'ja');
+  const [isPrivate, setIsPrivate] = useState(false);
 
   const friendCode = useMemo(() => generateFriendCode(), []);
 
@@ -66,21 +67,24 @@ export default function ProfileSetup() {
       icon: selectedIcon,
       friendCode,
       locale: selectedLocale,
+      isPrivate,
       createdAt: Date.now(),
     };
     setProfile(profile);
 
-    // Log site entry to Discord (fire-and-forget)
-    fetch('/api/site-entry', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: profile.name,
-        icon: profile.icon,
-        friendCode: profile.friendCode,
-        locale: profile.locale,
-      }),
-    }).catch(() => {});
+    // Log site entry to Discord (fire-and-forget) — skip for private profiles
+    if (!isPrivate) {
+      fetch('/api/site-entry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: profile.name,
+          icon: profile.icon,
+          friendCode: profile.friendCode,
+          locale: profile.locale,
+        }),
+      }).catch(() => {});
+    }
 
     // Switch locale if different from current
     if (selectedLocale !== locale) {
@@ -283,6 +287,22 @@ export default function ProfileSetup() {
                   </div>
                 </div>
               </div>
+
+              <button
+                className={`${styles.privacyToggle} ${isPrivate ? styles.privacyToggleActive : ''}`}
+                onClick={() => setIsPrivate(!isPrivate)}
+                type="button"
+              >
+                <div className={styles.privacyIcon}>{isPrivate ? '🔒' : '🌐'}</div>
+                <div className={styles.privacyText}>
+                  <div className={styles.privacyLabel}>
+                    {t(isPrivate ? 'privateProfile' : 'publicProfile')}
+                  </div>
+                  <div className={styles.privacyDesc}>
+                    {t(isPrivate ? 'privateProfileDesc' : 'publicProfileDesc')}
+                  </div>
+                </div>
+              </button>
 
               <div className={styles.buttons}>
                 <button className={styles.btnBack} onClick={goBack}>
