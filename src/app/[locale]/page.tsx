@@ -174,13 +174,7 @@ export default function RhythmiaPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <div className={styles.gameHeader}>
-                    <span className={styles.gameTitle}>{t('vanilla.gameTitle')}</span>
-                    <button className={styles.backButton} onClick={closeGame}>
-                        {t('lobby.back')}
-                    </button>
-                </div>
-                <VanillaGame />
+                <VanillaGame onQuit={closeGame} />
             </motion.div>
         );
     }
@@ -194,13 +188,7 @@ export default function RhythmiaPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <div className={styles.gameHeader}>
-                    <span className={styles.gameTitle}>{t('multiplayer.gameTitle')}</span>
-                    <button className={styles.backButton} onClick={closeGame}>
-                        {t('lobby.back')}
-                    </button>
-                </div>
-                <MultiplayerGame />
+                <MultiplayerGame onQuit={closeGame} />
             </motion.div>
         );
     }

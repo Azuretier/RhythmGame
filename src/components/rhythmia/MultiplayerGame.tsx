@@ -18,7 +18,11 @@ type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'coun
 const MAX_RECONNECT_ATTEMPTS = 5;
 const PING_TIMEOUT = 60000; // Consider connection dead if no ping from server in 60s
 
-export default function MultiplayerGame() {
+interface MultiplayerGameProps {
+  onQuit?: () => void;
+}
+
+export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
   // Connection
   const wsRef = useRef<WebSocket | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
@@ -450,6 +454,11 @@ export default function MultiplayerGame() {
               <p className={styles.modeDesc}>Summon monsters to destroy your opponent&apos;s base</p>
             </div>
           </div>
+          {onQuit && (
+            <button className={styles.backBtn} onClick={onQuit}>
+              ← Back to Title
+            </button>
+          )}
         </div>
       )}
 

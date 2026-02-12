@@ -18,6 +18,7 @@ interface BoardProps {
     score: number;
     onRestart: () => void;
     onResume?: () => void;
+    onQuit?: () => void;
     colorTheme?: ColorTheme;
     onThemeChange?: (theme: ColorTheme) => void;
     worldIdx?: number;
@@ -43,6 +44,7 @@ export function Board({
     score,
     onRestart,
     onResume,
+    onQuit,
     colorTheme = 'stage',
     onThemeChange,
     worldIdx = 0,
@@ -191,9 +193,19 @@ export function Board({
                 <div className={styles.gameover} style={{ display: 'flex' }}>
                     <h2>GAME OVER</h2>
                     <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
-                    <button className={styles.restartBtn} onClick={onRestart}>
-                        もう一度
-                    </button>
+                    <div className={styles.pauseMenuButtons}>
+                        <button className={styles.pauseMenuBtn} onClick={onRestart}>
+                            もう一度
+                        </button>
+                        {onQuit && (
+                            <button
+                                className={`${styles.pauseMenuBtn} ${styles.pauseMenuQuitBtn}`}
+                                onClick={onQuit}
+                            >
+                                Back to Title
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -233,6 +245,15 @@ export function Board({
                                     >
                                         <span className={styles.pauseMenuBtnIcon}>⌨</span>
                                         Key Bindings
+                                    </button>
+                                )}
+                                {onQuit && (
+                                    <button
+                                        className={`${styles.pauseMenuBtn} ${styles.pauseMenuQuitBtn}`}
+                                        onClick={onQuit}
+                                    >
+                                        <span className={styles.pauseMenuBtnIcon}>🚪</span>
+                                        Save and Quit to Title
                                     </button>
                                 )}
                             </div>

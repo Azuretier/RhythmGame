@@ -60,11 +60,15 @@ import {
   KeyBindSettings,
 } from './components';
 
+interface RhythmiaProps {
+  onQuit?: () => void;
+}
+
 /**
  * Rhythmia - A rhythm-based Tetris game with full game loop:
  * World Creation → Dig → Item Drop → Craft → Firepower → Collapse → Reload → Next World
  */
-export default function Rhythmia() {
+export default function Rhythmia({ onQuit }: RhythmiaProps) {
   // Device type detection for responsive layouts
   const deviceInfo = useDeviceType();
   const { type: deviceType, isLandscape } = deviceInfo;
@@ -1236,6 +1240,7 @@ export default function Rhythmia() {
                 score={score}
                 onRestart={() => startGame(gameMode)}
                 onResume={() => { setIsPaused(false); setShowInventory(false); setShowShop(false); }}
+                onQuit={onQuit}
                 colorTheme={colorTheme}
                 onThemeChange={setColorTheme}
                 worldIdx={worldIdx}
