@@ -1,14 +1,15 @@
 import { Metadata } from 'next';
+import { getMessages } from 'next-intl/server';
 import UpdatesPage from '@/components/main/UpdatesPage';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
+  const messages = await getMessages({ locale });
+  const updates = (messages as Record<string, Record<string, string>>).updates;
 
   return {
-    title: locale === 'ja' ? '開発アップデート | RHYTHMIA - Azuretier' : 'Development Updates | RHYTHMIA - Azuretier',
-    description: locale === 'ja'
-      ? 'RHYTHMIAの最新機能、改善、修正を確認しよう。'
-      : 'Check out the latest features, improvements, and fixes for RHYTHMIA.',
+    title: `${updates?.pageTitle || 'Development Updates'} | RHYTHMIA - Azuretier`,
+    description: updates?.pageSubtitle || 'Follow the latest changes and improvements to RHYTHMIA',
   };
 }
 

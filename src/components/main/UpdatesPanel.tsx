@@ -131,7 +131,7 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
 
                 <div className={styles.updateFooter}>
                   <span className={styles.updateDate}>
-                    {new Date(update.date).toLocaleDateString(locale === 'ja' ? 'ja-JP' : 'en-US', {
+                    {new Date(update.date).toLocaleDateString({ ja: 'ja-JP', en: 'en-US', th: 'th-TH', es: 'es-ES', fr: 'fr-FR' }[locale] || 'en-US', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',

@@ -148,7 +148,7 @@ export default function UpdatesPage() {
                 <div className={styles.dateHeader}>
                   <div className={styles.dateDot} />
                   <span className={styles.dateText}>
-                    {new Date(date).toLocaleDateString(locale === 'ja' ? 'ja-JP' : 'en-US', {
+                    {new Date(date).toLocaleDateString({ ja: 'ja-JP', en: 'en-US', th: 'th-TH', es: 'es-ES', fr: 'fr-FR' }[locale] || 'en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
