@@ -32,6 +32,7 @@ const GIMMICK_LABELS: Record<string, string> = {
 
 // Mini board renderer for opponent preview
 function MiniBoardView({ board }: { board: (null | { color: string })[][] }) {
+  if (!board || !Array.isArray(board)) return null;
   const visibleRows = board.slice(Math.max(0, board.length - 16));
 
   return (
@@ -946,7 +947,7 @@ export default function ArenaGame() {
                     className={`${styles.opponentMini} ${!opp.alive ? styles.eliminated : ''}`}
                   >
                     <div className={styles.opponentName}>{opp.name}</div>
-                    {oppBoard ? (
+                    {oppBoard?.board ? (
                       <MiniBoardView board={oppBoard.board} />
                     ) : (
                       <div className={styles.opponentMiniBoard}>

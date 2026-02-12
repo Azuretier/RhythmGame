@@ -61,6 +61,7 @@ export function useArenaSocket() {
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastPingRef = useRef<number>(Date.now());
   const pingCheckTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pendingMessagesRef = useRef<object[]>([]);
 
   // Arena state
   const [phase, setPhase] = useState<ArenaPhase>('lobby');
@@ -114,6 +115,8 @@ export function useArenaSocket() {
   const send = useCallback((data: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
+    } else if (wsRef.current?.readyState === WebSocket.CONNECTING) {
+      pendingMessagesRef.current.push(data);
     }
   }, []);
 
@@ -276,6 +279,17 @@ export function useArenaSocket() {
       setError(null);
       reconnectAttemptsRef.current = 0;
       lastPingRef.current = Date.now();
+
+      // Flush any messages queued while connecting
+      const pending = pendingMessagesRef.current;
+      pendingMessagesRef.current = [];
+      for (const msg of pending) {
+        try {
+          ws.send(JSON.stringify(msg));
+        } catch {
+          // Connection may have closed between open event and send
+        }
+      }
     };
 
     ws.onmessage = (event) => {
@@ -304,10 +318,8 @@ export function useArenaSocket() {
 
   connectWebSocketRef.current = connectWebSocket;
 
-  // Connect on mount
+  // Ping timeout check and cleanup (connection is initiated by user action)
   useEffect(() => {
-    connectWebSocket();
-
     pingCheckTimerRef.current = setInterval(() => {
       if (
         wsRef.current?.readyState === WebSocket.OPEN &&
@@ -330,8 +342,9 @@ export function useArenaSocket() {
         wsRef.current.close();
         wsRef.current = null;
       }
+      pendingMessagesRef.current = [];
     };
-  }, [connectWebSocket]);
+  }, []);
 
   // ===== Actions =====
 
