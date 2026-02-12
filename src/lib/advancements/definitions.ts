@@ -63,6 +63,21 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'mp_streak_10', category: 'multiplayer', icon: '👑', threshold: 10, statKey: 'bestMultiplayerWinStreak' },
   { id: 'mp_games_10', category: 'multiplayer', icon: '⚔️', threshold: 10, statKey: 'totalMultiplayerGames' },
   { id: 'mp_games_50', category: 'multiplayer', icon: '⚔️', threshold: 50, statKey: 'totalMultiplayerGames' },
+
+  // === Loyalty ===
+  { id: 'loyalty_streak_3', category: 'loyalty', icon: '🔥', threshold: 3, statKey: 'bestStreak' },
+  { id: 'loyalty_streak_7', category: 'loyalty', icon: '🔥', threshold: 7, statKey: 'bestStreak' },
+  { id: 'loyalty_streak_14', category: 'loyalty', icon: '🔥', threshold: 14, statKey: 'bestStreak' },
+  { id: 'loyalty_streak_30', category: 'loyalty', icon: '🔥', threshold: 30, statKey: 'bestStreak' },
+  { id: 'loyalty_visits_5', category: 'loyalty', icon: '👣', threshold: 5, statKey: 'totalVisits' },
+  { id: 'loyalty_visits_25', category: 'loyalty', icon: '👣', threshold: 25, statKey: 'totalVisits' },
+  { id: 'loyalty_visits_100', category: 'loyalty', icon: '👣', threshold: 100, statKey: 'totalVisits' },
+  { id: 'loyalty_games_10', category: 'loyalty', icon: '🎮', threshold: 10, statKey: 'totalGamesPlayed' },
+  { id: 'loyalty_games_50', category: 'loyalty', icon: '🎮', threshold: 50, statKey: 'totalGamesPlayed' },
+  { id: 'loyalty_games_200', category: 'loyalty', icon: '🎮', threshold: 200, statKey: 'totalGamesPlayed' },
+  { id: 'loyalty_polls_1', category: 'loyalty', icon: '🗳️', threshold: 1, statKey: 'pollsVoted' },
+  { id: 'loyalty_polls_5', category: 'loyalty', icon: '🗳️', threshold: 5, statKey: 'pollsVoted' },
+  { id: 'loyalty_polls_10', category: 'loyalty', icon: '🗳️', threshold: 10, statKey: 'pollsVoted' },
 ];
 
 export const BATTLE_ARENA_REQUIRED_ADVANCEMENTS = 3;
