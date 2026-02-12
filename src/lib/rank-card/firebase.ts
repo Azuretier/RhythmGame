@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { initAppCheck } from "@/lib/firebase/initAppCheck";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_RANKCARD_FIREBASE_API_KEY,
@@ -18,6 +19,7 @@ try {
   app = initializeApp(firebaseConfig, 'rank-card');
 }
 
+if (typeof window !== 'undefined') initAppCheck(app);
 const db = getFirestore(app);
 
 export { db };
