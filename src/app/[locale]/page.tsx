@@ -17,11 +17,9 @@ import LocaleSwitcher from '../../components/LocaleSwitcher';
 import { useRouter } from '@/i18n/navigation';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
-type LobbyTab = 'servers' | 'for-you';
 
 export default function RhythmiaPage() {
     const [gameMode, setGameMode] = useState<GameMode>('lobby');
-    const [lobbyTab, setLobbyTab] = useState<LobbyTab>('servers');
     const [isLoading, setIsLoading] = useState(true);
     const [onlineCount, setOnlineCount] = useState(0);
     const [showAdvancements, setShowAdvancements] = useState(false);
@@ -228,41 +226,16 @@ export default function RhythmiaPage() {
                         animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
                         transition={{ duration: 0.7, delay: 0.2 }}
                     >
-                        <h1>{lobbyTab === 'servers' ? t('lobby.selectServer') : t('forYou.heading')}</h1>
-                        <p>{lobbyTab === 'servers' ? t('lobby.chooseMode') : t('forYou.headingSubtitle')}</p>
+                        <h1>{t('lobby.selectServer')}</h1>
+                        <p>{t('lobby.chooseMode')}</p>
                     </motion.div>
 
-                    {/* Tab Navigation */}
                     <motion.div
-                        className={styles.lobbyTabs}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: isLoading ? 0 : 1 }}
-                        transition={{ duration: 0.5, delay: 0.25 }}
+                        className={styles.serverGrid}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 20 : 0 }}
+                        transition={{ duration: 0.35 }}
                     >
-                        <button
-                            className={`${styles.lobbyTab} ${lobbyTab === 'servers' ? styles.lobbyTabActive : ''}`}
-                            onClick={() => setLobbyTab('servers')}
-                        >
-                            {t('lobby.serversTab')}
-                        </button>
-                        <button
-                            className={`${styles.lobbyTab} ${lobbyTab === 'for-you' ? styles.lobbyTabActive : ''}`}
-                            onClick={() => setLobbyTab('for-you')}
-                        >
-                            {t('lobby.forYouTab')}
-                        </button>
-                    </motion.div>
-
-                    <AnimatePresence mode="wait">
-                        {lobbyTab === 'servers' ? (
-                            <motion.div
-                                key="servers"
-                                className={styles.serverGrid}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 20 : 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.35 }}
-                            >
                                 {/* Vanilla Server */}
                                 <motion.div
                                     className={`${styles.serverCard} ${styles.vanilla}`}
@@ -367,23 +340,20 @@ export default function RhythmiaPage() {
                                     <button className={styles.playButton}>{t('arena.quickMatch')}</button>
                                 </motion.div>
                             </motion.div>
-                        ) : (
-                            <motion.div
-                                key="for-you"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                transition={{ duration: 0.35 }}
-                                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-                            >
-                                <ForYouTab
-                                    locale={locale}
-                                    unlockedAdvancements={unlockedCount}
-                                    totalAdvancements={ADVANCEMENTS.length}
-                                />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+
+                    {/* For You Section */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 20 : 0 }}
+                        transition={{ duration: 0.5, delay: 0.7 }}
+                        style={{ width: '100%', display: 'flex', justifyContent: 'center', marginTop: '3rem' }}
+                    >
+                        <ForYouTab
+                            locale={locale}
+                            unlockedAdvancements={unlockedCount}
+                            totalAdvancements={ADVANCEMENTS.length}
+                        />
+                    </motion.div>
                 </main>
 
                 <motion.footer
