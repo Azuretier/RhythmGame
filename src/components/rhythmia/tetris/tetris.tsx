@@ -1122,6 +1122,26 @@ export default function Rhythmia() {
     };
   }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, keybindings, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI]);
 
+  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
+  useEffect(() => {
+    return () => {
+      // Only record stats if game hasn't ended normally (player left via back button)
+      if (!gameOverRef.current && !advRecordedRef.current) {
+        recordGameEnd({
+          score: scoreRef.current,
+          lines: linesRef.current,
+          tSpins: 0,
+          bestCombo: gameBestComboRef.current,
+          perfectBeats: gamePerfectBeatsRef.current,
+          worldsCleared: gameWorldsClearedRef.current,
+          tetrisClears: gameTetrisClearsRef.current,
+          hardDrops: gameHardDropsRef.current,
+          piecesPlaced: gamePiecesPlacedRef.current,
+        });
+      }
+    };
+  }, []);
+
   const world = WORLDS[worldIdx];
 
   return (

@@ -254,6 +254,32 @@ export function checkLiveMultiplayerAdvancements(sessionStats: MultiplayerGameEn
   return qualifying;
 }
 
+/**
+ * Instantly persist newly unlocked advancement IDs mid-game.
+ * Only saves the unlock flags (not session stats) so recordGameEnd()
+ * can still accumulate stats correctly without double-counting.
+ * Syncs to Firestore and writes notifications for each new unlock.
+ */
+export function saveLiveUnlocks(newIds: string[]): void {
+  if (newIds.length === 0) return;
+
+  const state = loadAdvancementState();
+  const deduped = newIds.filter(id => !state.unlockedIds.includes(id));
+  if (deduped.length === 0) return;
+
+  const updated = {
+    ...state,
+    unlockedIds: [...state.unlockedIds, ...deduped],
+    newlyUnlockedIds: deduped,
+  };
+
+  saveAdvancementState(updated);
+  syncToFirestore(updated);
+  for (const advId of deduped) {
+    writeNotification(advId);
+  }
+}
+
 export function getUnlockedCount(): number {
   const state = loadAdvancementState();
   return state.unlockedIds.length;
