@@ -257,6 +257,7 @@ export interface SetProfileMessage {
   type: 'set_profile';
   name: string;
   icon: string;
+  isPrivate?: boolean;
 }
 
 export interface GetOnlineUsersMessage {

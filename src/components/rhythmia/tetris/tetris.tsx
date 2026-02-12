@@ -60,11 +60,15 @@ import {
   KeyBindSettings,
 } from './components';
 
+interface RhythmiaProps {
+  onQuit?: () => void;
+}
+
 /**
  * Rhythmia - A rhythm-based Tetris game with full game loop:
  * World Creation → Dig → Item Drop → Craft → Firepower → Collapse → Reload → Next World
  */
-export default function Rhythmia() {
+export default function Rhythmia({ onQuit }: RhythmiaProps) {
   // Device type detection for responsive layouts
   const deviceInfo = useDeviceType();
   const { type: deviceType, isLandscape } = deviceInfo;
@@ -1122,6 +1126,26 @@ export default function Rhythmia() {
     };
   }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, keybindings, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI]);
 
+  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
+  useEffect(() => {
+    return () => {
+      // Only record stats if game hasn't ended normally (player left via back button)
+      if (!gameOverRef.current && !advRecordedRef.current) {
+        recordGameEnd({
+          score: scoreRef.current,
+          lines: linesRef.current,
+          tSpins: 0,
+          bestCombo: gameBestComboRef.current,
+          perfectBeats: gamePerfectBeatsRef.current,
+          worldsCleared: gameWorldsClearedRef.current,
+          tetrisClears: gameTetrisClearsRef.current,
+          hardDrops: gameHardDropsRef.current,
+          piecesPlaced: gamePiecesPlacedRef.current,
+        });
+      }
+    };
+  }, []);
+
   const world = WORLDS[worldIdx];
 
   return (
@@ -1216,6 +1240,7 @@ export default function Rhythmia() {
                 score={score}
                 onRestart={() => startGame(gameMode)}
                 onResume={() => { setIsPaused(false); setShowInventory(false); setShowShop(false); }}
+                onQuit={onQuit}
                 colorTheme={colorTheme}
                 onThemeChange={setColorTheme}
                 worldIdx={worldIdx}

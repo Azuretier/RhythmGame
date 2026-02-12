@@ -79,11 +79,18 @@ export function useGameSocket(): UseGameSocketReturn {
     });
 
     socketInstance.on('room:player-joined', (player) => {
-      setPlayers((prev) => [...prev, player]);
+      setPlayers((prev) => {
+        const exists = prev.some((p) => p.id === player.id);
+        return exists ? prev : [...prev, player];
+      });
     });
 
     socketInstance.on('room:player-left', (playerId) => {
       setPlayers((prev) => prev.filter((p) => p.id !== playerId));
+    });
+
+    socketInstance.on('room:players-sync', (syncedPlayers) => {
+      setPlayers(syncedPlayers);
     });
 
     socketInstance.on('room:player-disconnected', (playerId) => {

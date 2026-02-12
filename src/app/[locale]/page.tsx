@@ -17,7 +17,7 @@ import styles from '../../components/rhythmia/rhythmia.module.css';
 import onlineStyles from '../../components/profile/OnlineUsers.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
-import { FaDiscord } from 'react-icons/fa';
+import LocaleSwitcher from '../../components/LocaleSwitcher';
 import LoyaltyWidget from '../../components/loyalty/LoyaltyWidget';
 import { useRouter } from '@/i18n/navigation';
 
@@ -64,6 +64,7 @@ export default function RhythmiaPage() {
                 type: 'set_profile',
                 name: profile.name,
                 icon: profile.icon,
+                isPrivate: profile.isPrivate,
             }));
             profileSentRef.current = true;
         }
@@ -85,6 +86,7 @@ export default function RhythmiaPage() {
                     type: 'set_profile',
                     name: profile.name,
                     icon: profile.icon,
+                    isPrivate: profile.isPrivate,
                 }));
                 profileSentRef.current = true;
             }
@@ -127,6 +129,18 @@ export default function RhythmiaPage() {
         sendProfileToWs();
     }, [sendProfileToWs]);
 
+    // Re-send profile to WS when privacy setting changes
+    useEffect(() => {
+        if (profile && wsRef.current?.readyState === WebSocket.OPEN && profileSentRef.current) {
+            wsRef.current.send(JSON.stringify({
+                type: 'set_profile',
+                name: profile.name,
+                icon: profile.icon,
+                isPrivate: profile.isPrivate,
+            }));
+        }
+    }, [profile?.isPrivate]); // eslint-disable-line react-hooks/exhaustive-deps
+
     const requestOnlineUsers = () => {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ type: 'get_online_users' }));
@@ -159,13 +173,7 @@ export default function RhythmiaPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <div className={styles.gameHeader}>
-                    <span className={styles.gameTitle}>{t('vanilla.gameTitle')}</span>
-                    <button className={styles.backButton} onClick={closeGame}>
-                        {t('lobby.back')}
-                    </button>
-                </div>
-                <VanillaGame />
+                <VanillaGame onQuit={closeGame} />
             </motion.div>
         );
     }
@@ -179,13 +187,7 @@ export default function RhythmiaPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <div className={styles.gameHeader}>
-                    <span className={styles.gameTitle}>{t('multiplayer.gameTitle')}</span>
-                    <button className={styles.backButton} onClick={closeGame}>
-                        {t('lobby.back')}
-                    </button>
-                </div>
-                <MultiplayerGame />
+                <MultiplayerGame onQuit={closeGame} />
             </motion.div>
         );
     }
@@ -287,15 +289,7 @@ export default function RhythmiaPage() {
                         >
                             {t('skin.profileButton')}
                         </button>
-                        <a
-                            href="https://discord.gg/7mBCasYkJY"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.discordLink}
-                            aria-label="Discord"
-                        >
-                            <FaDiscord size={16} />
-                        </a>
+                        <LocaleSwitcher />
                     </div>
                 </motion.header>
 

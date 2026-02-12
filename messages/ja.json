@@ -511,6 +511,7 @@
         "viewPR": "PRを見る",
         "viewAllPRs": "すべてのPRを見る",
         "viewAllPRsGithub": "GitHubですべてのPRを見る",
+        "videoTitle": "アップデート概要",
         "changes": "件",
         "change": "件",
         "categories": {
@@ -817,7 +818,11 @@
         "back": "もどる",
         "onlineTitle": "オンラインのプレイヤー",
         "onlineCount": "{count}人がオンライン",
-        "noOnlineUsers": "現在オンラインのプレイヤーはいません"
+        "noOnlineUsers": "現在オンラインのプレイヤーはいません",
+        "privateProfile": "非公開プロフィール",
+        "privateProfileDesc": "名前とアイコンがオンラインプレイヤー一覧に表示されません",
+        "publicProfile": "公開プロフィール",
+        "publicProfileDesc": "名前とアイコンが他のプレイヤーに表示されます"
     },
     "skin": {
         "title": "プロフィール & スキン",
