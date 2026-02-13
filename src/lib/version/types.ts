@@ -2,7 +2,7 @@
  * UI Version type definitions
  */
 
-export const UI_VERSIONS = ['1.0.0', '1.0.1'] as const;
+export const UI_VERSIONS = ['1.0.0', '1.0.1', '1.0.2'] as const;
 export type UIVersion = typeof UI_VERSIONS[number];
 
 // Alias for backward compatibility
@@ -24,6 +24,11 @@ export const VERSION_METADATA: Record<UIVersion, UIVersionMetadata> = {
     id: '1.0.1',
     name: 'Patreon UI',
     description: 'Patreon-style creator layout with profile and content feed',
+  },
+  '1.0.2': {
+    id: '1.0.2',
+    name: 'Minecraft: Switch Edition',
+    description: 'Legacy console edition menu with panorama background',
   },
 };
 

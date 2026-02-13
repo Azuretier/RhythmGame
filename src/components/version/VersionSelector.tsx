@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { UIVersion, VERSION_METADATA, UI_VERSIONS } from "@/lib/version/types";
-import { MessageCircle, Heart } from "lucide-react";
+import { MessageCircle, Heart, Gamepad2 } from "lucide-react";
 
 interface VersionSelectorProps {
   onSelect: (version: UIVersion) => void;
@@ -15,6 +15,8 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
         return <MessageCircle className="w-12 h-12" />;
       case "1.0.1":
         return <Heart className="w-12 h-12" />;
+      case "1.0.2":
+        return <Gamepad2 className="w-12 h-12" />;
     }
   };
 
@@ -31,7 +33,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ delay: 0.1 }}
-          className="relative max-w-4xl mx-4 p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 shadow-2xl"
+          className="relative max-w-5xl mx-4 p-8 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl border border-gray-700 shadow-2xl"
         >
           {/* Background effects */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 rounded-2xl pointer-events-none" />
@@ -57,7 +59,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
               later.
             </motion.p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {UI_VERSIONS.map((version, index) => {
                 const metadata = VERSION_METADATA[version];
                 return (

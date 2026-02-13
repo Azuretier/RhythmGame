@@ -26,6 +26,8 @@ export default function FloatingVersionSwitcher() {
       window.location.href = '/';
     } else if (version === '1.0.1') {
       window.location.href = '/current';
+    } else if (version === '1.0.2') {
+      window.location.href = '/';
     }
   };
 
