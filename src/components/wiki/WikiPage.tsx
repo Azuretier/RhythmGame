@@ -7,40 +7,42 @@ import { useRouter } from '@/i18n/navigation';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import styles from './WikiPage.module.css';
 
-// --- Primary tab IDs (L1) ---
-type PrimaryTab = 'game-overview' | 'community-resources' | 'updates';
+// --- Primary pages (left sidebar) ---
+type Page = 'game-overview' | 'community-resources' | 'updates';
 
-const PRIMARY_TABS: { id: PrimaryTab; labelKey: string; icon: string }[] = [
-  { id: 'game-overview', labelKey: 'sectionGameOverview', icon: '01' },
-  { id: 'community-resources', labelKey: 'sectionCommunityResources', icon: '02' },
-  { id: 'updates', labelKey: 'sectionUpdates', icon: '03' },
+// --- Sub-sections for "On This Page" (right sidebar) ---
+type SubSection =
+  | 'overview' | 'modes' | 'worlds' | 'controls'
+  | 'ranked' | 'advancements' | 'crafting' | 'tower-defense';
+
+interface NavItem {
+  id: Page;
+  labelKey: string;
+  subsections?: { id: SubSection; labelKey: string }[];
+}
+
+const NAV_ITEMS: NavItem[] = [
+  {
+    id: 'game-overview',
+    labelKey: 'sectionGameOverview',
+    subsections: [
+      { id: 'overview', labelKey: 'sectionOverview' },
+      { id: 'modes', labelKey: 'sectionModes' },
+      { id: 'worlds', labelKey: 'sectionWorlds' },
+      { id: 'controls', labelKey: 'sectionControls' },
+      { id: 'ranked', labelKey: 'sectionRanked' },
+      { id: 'advancements', labelKey: 'sectionAdvancements' },
+      { id: 'crafting', labelKey: 'sectionCrafting' },
+      { id: 'tower-defense', labelKey: 'sectionTowerDefense' },
+    ],
+  },
+  { id: 'community-resources', labelKey: 'sectionCommunityResources' },
+  { id: 'updates', labelKey: 'sectionUpdates' },
 ];
 
-// --- Mini-tab IDs (L2) — only shown for Game Overview ---
-type MiniTab =
-  | 'overview'
-  | 'modes'
-  | 'worlds'
-  | 'controls'
-  | 'ranked'
-  | 'advancements'
-  | 'crafting'
-  | 'tower-defense';
+const SUB_IDS: SubSection[] = NAV_ITEMS[0].subsections!.map((s) => s.id);
 
-const MINI_TABS: { id: MiniTab; labelKey: string; icon: string }[] = [
-  { id: 'overview', labelKey: 'sectionOverview', icon: 'I' },
-  { id: 'modes', labelKey: 'sectionModes', icon: 'II' },
-  { id: 'worlds', labelKey: 'sectionWorlds', icon: 'III' },
-  { id: 'controls', labelKey: 'sectionControls', icon: 'IV' },
-  { id: 'ranked', labelKey: 'sectionRanked', icon: 'V' },
-  { id: 'advancements', labelKey: 'sectionAdvancements', icon: 'VI' },
-  { id: 'crafting', labelKey: 'sectionCrafting', icon: 'VII' },
-  { id: 'tower-defense', labelKey: 'sectionTowerDefense', icon: 'VIII' },
-];
-
-const MINI_TAB_IDS: MiniTab[] = MINI_TABS.map((t) => t.id);
-
-// --- Static data (unchanged) ---
+// --- Static data ---
 const WORLDS_DATA = [
   { nameKey: 'melodia', bpm: 100, color: '#FF6B9D' },
   { nameKey: 'harmonia', bpm: 110, color: '#4ECDC4' },
@@ -93,48 +95,26 @@ const CONTROLS_DATA = [
 ] as const;
 
 const ADVANCEMENT_CATEGORIES = [
-  {
-    categoryKey: 'catLines',
-    items: [
-      { nameKey: 'lineBeginner', descKey: 'lineBeginnerDesc' },
-      { nameKey: 'lineApprentice', descKey: 'lineApprenticeDesc' },
-      { nameKey: 'lineExpert', descKey: 'lineExpertDesc' },
-      { nameKey: 'lineMaster', descKey: 'lineMasterDesc' },
-      { nameKey: 'lineLegend', descKey: 'lineLegendDesc' },
-    ],
-  },
-  {
-    categoryKey: 'catScore',
-    items: [
-      { nameKey: 'scoreRookie', descKey: 'scoreRookieDesc' },
-      { nameKey: 'scoreHunter', descKey: 'scoreHunterDesc' },
-      { nameKey: 'scoreMaster', descKey: 'scoreMasterDesc' },
-      { nameKey: 'scoreLegend', descKey: 'scoreLegendDesc' },
-    ],
-  },
-  {
-    categoryKey: 'catTSpin',
-    items: [
-      { nameKey: 'firstTwist', descKey: 'firstTwistDesc' },
-      { nameKey: 'spinDoctor', descKey: 'spinDoctorDesc' },
-      { nameKey: 'tSpinExpert', descKey: 'tSpinExpertDesc' },
-      { nameKey: 'tSpinLegend', descKey: 'tSpinLegendDesc' },
-    ],
-  },
-  {
-    categoryKey: 'catMultiplayer',
-    items: [
-      { nameKey: 'firstVictory', descKey: 'firstVictoryDesc' },
-      { nameKey: 'arenaFighter', descKey: 'arenaFighterDesc' },
-      { nameKey: 'arenaChampion', descKey: 'arenaChampionDesc' },
-      { nameKey: 'hotStreak', descKey: 'hotStreakDesc' },
-      { nameKey: 'unbreakable', descKey: 'unbreakableDesc' },
-    ],
-  },
+  { categoryKey: 'catLines', items: [
+    { nameKey: 'lineBeginner', descKey: 'lineBeginnerDesc' }, { nameKey: 'lineApprentice', descKey: 'lineApprenticeDesc' },
+    { nameKey: 'lineExpert', descKey: 'lineExpertDesc' }, { nameKey: 'lineMaster', descKey: 'lineMasterDesc' },
+    { nameKey: 'lineLegend', descKey: 'lineLegendDesc' },
+  ]},
+  { categoryKey: 'catScore', items: [
+    { nameKey: 'scoreRookie', descKey: 'scoreRookieDesc' }, { nameKey: 'scoreHunter', descKey: 'scoreHunterDesc' },
+    { nameKey: 'scoreMaster', descKey: 'scoreMasterDesc' }, { nameKey: 'scoreLegend', descKey: 'scoreLegendDesc' },
+  ]},
+  { categoryKey: 'catTSpin', items: [
+    { nameKey: 'firstTwist', descKey: 'firstTwistDesc' }, { nameKey: 'spinDoctor', descKey: 'spinDoctorDesc' },
+    { nameKey: 'tSpinExpert', descKey: 'tSpinExpertDesc' }, { nameKey: 'tSpinLegend', descKey: 'tSpinLegendDesc' },
+  ]},
+  { categoryKey: 'catMultiplayer', items: [
+    { nameKey: 'firstVictory', descKey: 'firstVictoryDesc' }, { nameKey: 'arenaFighter', descKey: 'arenaFighterDesc' },
+    { nameKey: 'arenaChampion', descKey: 'arenaChampionDesc' }, { nameKey: 'hotStreak', descKey: 'hotStreakDesc' },
+    { nameKey: 'unbreakable', descKey: 'unbreakableDesc' },
+  ]},
 ] as const;
 
-// --- Community Resources: Video gallery data ---
-// To add a new video, append an object to this array.
 const COMMUNITY_VIDEOS = [
   { id: 'vid-tspin-tutorial', title: 'T-Spin Tutorial - From Zero to Hero', category: 'tutorial', embedId: 'aa573goA1WA', accent: '#f87171' },
   { id: 'vid-beginner', title: 'RHYTHMIA Beginner Guide', category: 'guide', embedId: '', accent: '#60a5fa' },
@@ -144,8 +124,6 @@ const COMMUNITY_VIDEOS = [
   { id: 'vid-multiplayer-tips', title: '1v1 Battle Tips & Tricks', category: 'competitive', embedId: '', accent: '#a78bfa' },
 ] as const;
 
-// --- Updates: Version video slider data ---
-// To add a new version video, prepend an object to this array.
 const UPDATE_VIDEOS = [
   { version: 'v0.0.2', title: 'azuretier.net v0.0.2 Update Overview', embedId: 'bcwz2j6N_kA', date: '2025-05' },
   { version: 'v0.0.1', title: 'azuretier.net v0.0.1 Launch Trailer', embedId: '', date: '2025-03' },
@@ -154,22 +132,20 @@ const UPDATE_VIDEOS = [
 export default function WikiPage() {
   const t = useTranslations('wiki');
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<PrimaryTab>('game-overview');
-  const [activeMini, setActiveMini] = useState<MiniTab>('overview');
+  const [activePage, setActivePage] = useState<Page>('game-overview');
+  const [activeSub, setActiveSub] = useState<SubSection>('overview');
   const contentRef = useRef<HTMLElement>(null);
   const isClickScrolling = useRef(false);
   const clickScrollTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  const switchPrimaryTab = (tab: PrimaryTab) => {
-    setActiveTab(tab);
-    if (tab === 'game-overview') {
-      setActiveMini('overview');
-    }
+  const switchPage = (page: Page) => {
+    setActivePage(page);
+    if (page === 'game-overview') setActiveSub('overview');
     contentRef.current?.scrollTo({ top: 0 });
   };
 
-  const scrollToMini = (id: MiniTab) => {
-    setActiveMini(id);
+  const scrollToSub = (id: SubSection) => {
+    setActiveSub(id);
     isClickScrolling.current = true;
     clearTimeout(clickScrollTimer.current);
 
@@ -178,49 +154,32 @@ export default function WikiPage() {
     if (el && container) {
       const containerRect = container.getBoundingClientRect();
       const elRect = el.getBoundingClientRect();
-      const offset = elRect.top - containerRect.top + container.scrollTop;
-      container.scrollTo({ top: offset, behavior: 'smooth' });
+      container.scrollTo({ top: elRect.top - containerRect.top + container.scrollTop, behavior: 'smooth' });
     }
 
-    clickScrollTimer.current = setTimeout(() => {
-      isClickScrolling.current = false;
-    }, 800);
+    clickScrollTimer.current = setTimeout(() => { isClickScrolling.current = false; }, 800);
   };
 
   const handleScroll = useCallback(() => {
-    if (isClickScrolling.current || activeTab !== 'game-overview') return;
-
+    if (isClickScrolling.current || activePage !== 'game-overview') return;
     const container = contentRef.current;
     if (!container) return;
     const containerRect = container.getBoundingClientRect();
 
-    const isAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 10;
-    if (isAtBottom) {
-      for (const s of [...MINI_TAB_IDS].reverse()) {
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 10) {
+      for (const s of [...SUB_IDS].reverse()) {
         const el = document.getElementById(`wiki-${s}`);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top < containerRect.bottom) {
-            setActiveMini(s);
-            return;
-          }
-        }
+        if (el && el.getBoundingClientRect().top < containerRect.bottom) { setActiveSub(s); return; }
       }
     }
-
-    for (const s of [...MINI_TAB_IDS].reverse()) {
+    for (const s of [...SUB_IDS].reverse()) {
       const el = document.getElementById(`wiki-${s}`);
-      if (el) {
-        const relativeTop = el.getBoundingClientRect().top - containerRect.top;
-        if (relativeTop < 100) {
-          setActiveMini(s);
-          return;
-        }
-      }
+      if (el && el.getBoundingClientRect().top - containerRect.top < 100) { setActiveSub(s); return; }
     }
-  }, [activeTab]);
+  }, [activePage]);
 
-  const hasMiniTabs = activeTab === 'game-overview';
+  const currentNav = NAV_ITEMS.find((n) => n.id === activePage);
+  const hasRightToc = !!currentNav?.subsections;
 
   return (
     <div className={styles.page}>
@@ -241,134 +200,80 @@ export default function WikiPage() {
         </div>
       </header>
 
-      {/* ===== Primary Tab Bar ===== */}
-      <div className={styles.tabBar}>
-        {PRIMARY_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            className={`${styles.tabBtn} ${activeTab === tab.id ? styles.tabBtnActive : ''}`}
-            onClick={() => switchPrimaryTab(tab.id)}
-          >
-            <span className={styles.tabNum}>{tab.icon}</span>
-            <span>{t(tab.labelKey)}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ===== Body: optional mini sidebar + content ===== */}
+      {/* ===== 3-Column Layout ===== */}
       <div className={styles.layout}>
-        {/* Mini sidebar — only for Game Overview tab */}
-        {hasMiniTabs && (
-          <nav className={styles.miniSidebar}>
-            {MINI_TABS.map((m) => (
-              <button
-                key={m.id}
-                className={`${styles.miniItem} ${activeMini === m.id ? styles.miniActive : ''}`}
-                onClick={() => scrollToMini(m.id)}
-                title={t(m.labelKey)}
-              >
-                <span className={styles.miniIcon}>{m.icon}</span>
-                <span className={styles.miniLabel}>{t(m.labelKey)}</span>
-              </button>
-            ))}
-          </nav>
-        )}
 
-        {/* Main content — switches based on active primary tab */}
+        {/* LEFT SIDEBAR — main navigation */}
+        <nav className={styles.sidebar}>
+          <div className={styles.sidebarBrand}>RHYTHMIA</div>
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              className={`${styles.sidebarItem} ${activePage === item.id ? styles.sidebarActive : ''}`}
+              onClick={() => switchPage(item.id)}
+            >
+              {t(item.labelKey)}
+            </button>
+          ))}
+          <div className={styles.sidebarDivider} />
+          <div className={styles.sidebarFooter}>v0.0.2 beta</div>
+        </nav>
+
+        {/* CENTER — scrollable content */}
         <main
           ref={contentRef}
-          className={`${styles.content} ${!hasMiniTabs ? styles.contentFull : ''}`}
+          className={`${styles.content} ${!hasRightToc ? styles.contentWide : ''}`}
           onScroll={handleScroll}
         >
           <AnimatePresence mode="wait">
-            {/* ============================================================ */}
-            {/*  TAB 1: GAME OVERVIEW                                        */}
-            {/* ============================================================ */}
-            {activeTab === 'game-overview' && (
-              <motion.div
-                key="game-overview"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-              >
-                {/* OVERVIEW */}
+            {/* ====== GAME OVERVIEW ====== */}
+            {activePage === 'game-overview' && (
+              <motion.div key="go" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 <section id="wiki-overview" className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('overviewTitle')}</h2>
                   <p className={styles.paragraph}>{t('overviewDesc')}</p>
                   <div className={styles.featureGrid}>
-                    <div className={styles.featureCard}>
-                      <div className={styles.featureIcon}>10x20</div>
-                      <div className={styles.featureLabel}>{t('boardSize')}</div>
-                    </div>
-                    <div className={styles.featureCard}>
-                      <div className={styles.featureIcon}>7</div>
-                      <div className={styles.featureLabel}>{t('tetrominoes')}</div>
-                    </div>
-                    <div className={styles.featureCard}>
-                      <div className={styles.featureIcon}>5</div>
-                      <div className={styles.featureLabel}>{t('worldsLabel')}</div>
-                    </div>
-                    <div className={styles.featureCard}>
-                      <div className={styles.featureIcon}>SRS</div>
-                      <div className={styles.featureLabel}>{t('rotationSystem')}</div>
-                    </div>
-                    <div className={styles.featureCard}>
-                      <div className={styles.featureIcon}>45+</div>
-                      <div className={styles.featureLabel}>{t('advancementsLabel')}</div>
-                    </div>
-                    <div className={styles.featureCard}>
-                      <div className={styles.featureIcon}>9</div>
-                      <div className={styles.featureLabel}>{t('rankTiersLabel')}</div>
-                    </div>
+                    {[
+                      { icon: '10x20', label: 'boardSize' }, { icon: '7', label: 'tetrominoes' },
+                      { icon: '5', label: 'worldsLabel' }, { icon: 'SRS', label: 'rotationSystem' },
+                      { icon: '45+', label: 'advancementsLabel' }, { icon: '9', label: 'rankTiersLabel' },
+                    ].map((f) => (
+                      <div key={f.label} className={styles.featureCard}>
+                        <div className={styles.featureIcon}>{f.icon}</div>
+                        <div className={styles.featureLabel}>{t(f.label)}</div>
+                      </div>
+                    ))}
                   </div>
                   <div className={styles.infoBox}>
                     <div className={styles.infoBoxTitle}>{t('coreMechanics')}</div>
                     <ul className={styles.infoList}>
-                      <li>{t('mechanic1')}</li>
-                      <li>{t('mechanic2')}</li>
-                      <li>{t('mechanic3')}</li>
-                      <li>{t('mechanic4')}</li>
-                      <li>{t('mechanic5')}</li>
+                      <li>{t('mechanic1')}</li><li>{t('mechanic2')}</li><li>{t('mechanic3')}</li>
+                      <li>{t('mechanic4')}</li><li>{t('mechanic5')}</li>
                     </ul>
                   </div>
                 </section>
 
-                {/* GAME MODES */}
                 <section id="wiki-modes" className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('modesTitle')}</h2>
                   <div className={styles.modeGrid}>
-                    <div className={styles.modeCard}>
-                      <div className={styles.modeHeader}><span className={styles.modeBadge}>VANILLA</span></div>
-                      <h3 className={styles.modeTitle}>{t('vanillaTitle')}</h3>
-                      <p className={styles.modeDesc}>{t('vanillaDesc')}</p>
-                      <div className={styles.modeFeatures}>
-                        <span>{t('terrainDestruction')}</span><span>{t('itemDrops')}</span>
-                        <span>{t('craftingFeat')}</span><span>{t('worldProgression')}</span>
+                    {[
+                      { badge: 'VANILLA', title: 'vanillaTitle', desc: 'vanillaDesc', feats: ['terrainDestruction','itemDrops','craftingFeat','worldProgression'] },
+                      { badge: '1v1', title: 'battleTitle', desc: 'battleDesc', feats: ['WebSocket','rankedFeat','aiFallback'], note: 'battleNote' },
+                      { badge: '9P', title: 'arenaTitle', desc: 'arenaDesc', feats: ['ninePlayers','rhythmSync','gimmicks','chaosLabel'] },
+                    ].map((m) => (
+                      <div key={m.badge} className={styles.modeCard}>
+                        <div className={styles.modeHeader}><span className={styles.modeBadge}>{m.badge}</span></div>
+                        <h3 className={styles.modeTitle}>{t(m.title)}</h3>
+                        <p className={styles.modeDesc}>{t(m.desc)}</p>
+                        <div className={styles.modeFeatures}>
+                          {m.feats.map((f) => <span key={f}>{f === 'WebSocket' ? f : t(f)}</span>)}
+                        </div>
+                        {m.note && <div className={styles.modeNote}>{t(m.note)}</div>}
                       </div>
-                    </div>
-                    <div className={styles.modeCard}>
-                      <div className={styles.modeHeader}><span className={styles.modeBadge}>1v1</span></div>
-                      <h3 className={styles.modeTitle}>{t('battleTitle')}</h3>
-                      <p className={styles.modeDesc}>{t('battleDesc')}</p>
-                      <div className={styles.modeFeatures}>
-                        <span>WebSocket</span><span>{t('rankedFeat')}</span><span>{t('aiFallback')}</span>
-                      </div>
-                      <div className={styles.modeNote}>{t('battleNote')}</div>
-                    </div>
-                    <div className={styles.modeCard}>
-                      <div className={styles.modeHeader}><span className={styles.modeBadge}>9P</span></div>
-                      <h3 className={styles.modeTitle}>{t('arenaTitle')}</h3>
-                      <p className={styles.modeDesc}>{t('arenaDesc')}</p>
-                      <div className={styles.modeFeatures}>
-                        <span>{t('ninePlayers')}</span><span>{t('rhythmSync')}</span>
-                        <span>{t('gimmicks')}</span><span>{t('chaosLabel')}</span>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </section>
 
-                {/* WORLDS */}
                 <section id="wiki-worlds" className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('worldsSectionTitle')}</h2>
                   <p className={styles.paragraph}>{t('worldsDesc')}</p>
@@ -380,189 +285,96 @@ export default function WikiPage() {
                           <div className={styles.worldName}>{t(w.nameKey)}</div>
                           <div className={styles.worldBpm}>{w.bpm} BPM</div>
                         </div>
-                        <div className={styles.worldBar}>
-                          <div className={styles.worldBarFill} style={{ width: `${((w.bpm - 80) / 100) * 100}%` }} />
-                        </div>
+                        <div className={styles.worldBar}><div className={styles.worldBarFill} style={{ width: `${((w.bpm - 80) / 100) * 100}%` }} /></div>
                       </div>
                     ))}
                   </div>
                   <div className={styles.infoBox}>
                     <div className={styles.infoBoxTitle}>{t('worldProgressionTitle')}</div>
-                    <ul className={styles.infoList}>
-                      <li>{t('worldProg1')}</li><li>{t('worldProg2')}</li>
-                      <li>{t('worldProg3')}</li><li>{t('worldProg4')}</li>
-                    </ul>
+                    <ul className={styles.infoList}><li>{t('worldProg1')}</li><li>{t('worldProg2')}</li><li>{t('worldProg3')}</li><li>{t('worldProg4')}</li></ul>
                   </div>
                 </section>
 
-                {/* CONTROLS */}
                 <section id="wiki-controls" className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('controlsTitle')}</h2>
                   <p className={styles.paragraph}>{t('controlsDesc')}</p>
                   <div className={styles.tableWrapper}>
                     <table className={styles.table}>
                       <thead><tr><th>{t('actionHeader')}</th><th>{t('defaultKey')}</th></tr></thead>
-                      <tbody>
-                        {CONTROLS_DATA.map((c) => (
-                          <tr key={c.actionKey}><td>{t(c.actionKey)}</td><td><code className={styles.keyCode}>{c.key}</code></td></tr>
-                        ))}
-                      </tbody>
+                      <tbody>{CONTROLS_DATA.map((c) => <tr key={c.actionKey}><td>{t(c.actionKey)}</td><td><code className={styles.keyCode}>{c.key}</code></td></tr>)}</tbody>
                     </table>
                   </div>
                   <div className={styles.infoBox}>
                     <div className={styles.infoBoxTitle}>{t('timingSettings')}</div>
                     <div className={styles.timingGrid}>
-                      <div className={styles.timingItem}><div className={styles.timingLabel}>DAS</div><div className={styles.timingValue}>167ms</div><div className={styles.timingDesc}>{t('dasDesc')}</div></div>
-                      <div className={styles.timingItem}><div className={styles.timingLabel}>ARR</div><div className={styles.timingValue}>33ms</div><div className={styles.timingDesc}>{t('arrDesc')}</div></div>
-                      <div className={styles.timingItem}><div className={styles.timingLabel}>SDF</div><div className={styles.timingValue}>50ms</div><div className={styles.timingDesc}>{t('sdfDesc')}</div></div>
-                      <div className={styles.timingItem}><div className={styles.timingLabel}>{t('lockDelay')}</div><div className={styles.timingValue}>500ms</div><div className={styles.timingDesc}>{t('lockDelayDesc')}</div></div>
+                      {[{ l:'DAS',v:'167ms',d:'dasDesc'},{l:'ARR',v:'33ms',d:'arrDesc'},{l:'SDF',v:'50ms',d:'sdfDesc'},{l:'lockDelay',v:'500ms',d:'lockDelayDesc'}].map((x)=>(
+                        <div key={x.l} className={styles.timingItem}><div className={styles.timingLabel}>{x.l==='lockDelay'?t(x.l):x.l}</div><div className={styles.timingValue}>{x.v}</div><div className={styles.timingDesc}>{t(x.d)}</div></div>
+                      ))}
                     </div>
                   </div>
                 </section>
 
-                {/* RANKED */}
                 <section id="wiki-ranked" className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('rankedTitle')}</h2>
                   <p className={styles.paragraph}>{t('rankedDesc')}</p>
                   <div className={styles.tableWrapper}>
                     <table className={styles.table}>
                       <thead><tr><th>{t('tierHeader')}</th><th>{t('pointsHeader')}</th><th>{t('busFareHeader')}</th><th>{t('winRewardHeader')}</th></tr></thead>
-                      <tbody>
-                        {RANK_TIERS_DATA.map((tier) => (
-                          <tr key={tier.nameKey}>
-                            <td><span className={styles.tierName} style={{ color: tier.color }}>{t(tier.nameKey)}</span></td>
-                            <td>{tier.points}</td>
-                            <td>{tier.busFare > 0 ? `-${tier.busFare}` : '0'}</td>
-                            <td className={styles.positive}>+{tier.winReward}</td>
-                          </tr>
-                        ))}
-                      </tbody>
+                      <tbody>{RANK_TIERS_DATA.map((tier)=><tr key={tier.nameKey}><td><span className={styles.tierName} style={{color:tier.color}}>{t(tier.nameKey)}</span></td><td>{tier.points}</td><td>{tier.busFare>0?`-${tier.busFare}`:'0'}</td><td className={styles.positive}>+{tier.winReward}</td></tr>)}</tbody>
                     </table>
                   </div>
                   <div className={styles.infoBox}><div className={styles.infoBoxTitle}>{t('streakTitle')}</div><p className={styles.infoText}>{t('streakDesc')}</p></div>
                   <div className={styles.infoBox}><div className={styles.infoBoxTitle}>{t('matchmakingTitle')}</div><ul className={styles.infoList}><li>{t('matchmaking1')}</li><li>{t('matchmaking2')}</li><li>{t('matchmaking3')}</li></ul></div>
                 </section>
 
-                {/* ADVANCEMENTS */}
                 <section id="wiki-advancements" className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('advancementsTitle')}</h2>
                   <p className={styles.paragraph}>{t('advancementsDesc')}</p>
-                  {ADVANCEMENT_CATEGORIES.map((cat) => (
+                  {ADVANCEMENT_CATEGORIES.map((cat)=>(
                     <div key={cat.categoryKey} className={styles.advCategory}>
                       <h3 className={styles.advCategoryTitle}>{t(cat.categoryKey)}</h3>
-                      <div className={styles.advList}>
-                        {cat.items.map((adv) => (
-                          <div key={adv.nameKey} className={styles.advItem}>
-                            <div className={styles.advName}>{t(adv.nameKey)}</div>
-                            <div className={styles.advDesc}>{t(adv.descKey)}</div>
-                          </div>
-                        ))}
-                      </div>
+                      <div className={styles.advList}>{cat.items.map((a)=><div key={a.nameKey} className={styles.advItem}><div className={styles.advName}>{t(a.nameKey)}</div><div className={styles.advDesc}>{t(a.descKey)}</div></div>)}</div>
                     </div>
                   ))}
-                  <div className={styles.infoBox}>
-                    <div className={styles.infoBoxTitle}>{t('additionalCatTitle')}</div>
-                    <ul className={styles.infoList}>
-                      <li>{t('additionalCat1')}</li><li>{t('additionalCat2')}</li><li>{t('additionalCat3')}</li>
-                      <li>{t('additionalCat4')}</li><li>{t('additionalCat5')}</li><li>{t('additionalCat6')}</li>
-                      <li>{t('additionalCat7')}</li>
-                    </ul>
-                  </div>
+                  <div className={styles.infoBox}><div className={styles.infoBoxTitle}>{t('additionalCatTitle')}</div><ul className={styles.infoList}><li>{t('additionalCat1')}</li><li>{t('additionalCat2')}</li><li>{t('additionalCat3')}</li><li>{t('additionalCat4')}</li><li>{t('additionalCat5')}</li><li>{t('additionalCat6')}</li><li>{t('additionalCat7')}</li></ul></div>
                 </section>
 
-                {/* CRAFTING */}
                 <section id="wiki-crafting" className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('craftingTitle')}</h2>
                   <p className={styles.paragraph}>{t('craftingDesc')}</p>
                   <h3 className={styles.subTitle}>{t('materialsTitle')}</h3>
-                  <div className={styles.tableWrapper}>
-                    <table className={styles.table}>
-                      <thead><tr><th>{t('materialHeader')}</th><th>{t('rarityHeader')}</th><th>{t('dropRateHeader')}</th></tr></thead>
-                      <tbody>
-                        {ITEMS_DATA.map((item) => (
-                          <tr key={item.nameKey}><td><span style={{ color: item.color }}>{t(item.nameKey)}</span></td><td>{t(item.rarityKey)}</td><td>{item.drop}</td></tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <div className={styles.tableWrapper}><table className={styles.table}><thead><tr><th>{t('materialHeader')}</th><th>{t('rarityHeader')}</th><th>{t('dropRateHeader')}</th></tr></thead><tbody>{ITEMS_DATA.map((i)=><tr key={i.nameKey}><td><span style={{color:i.color}}>{t(i.nameKey)}</span></td><td>{t(i.rarityKey)}</td><td>{i.drop}</td></tr>)}</tbody></table></div>
                   <h3 className={styles.subTitle}>{t('weaponsTitle')}</h3>
-                  <div className={styles.tableWrapper}>
-                    <table className={styles.table}>
-                      <thead><tr><th>{t('weaponHeader')}</th><th>{t('damageHeader')}</th><th>{t('specialHeader')}</th><th>{t('recipeHeader')}</th></tr></thead>
-                      <tbody>
-                        {WEAPONS_DATA.map((w) => (
-                          <tr key={w.nameKey}><td><span style={{ color: w.color }}>{t(w.nameKey)}</span></td><td>{w.damage}</td><td>{w.specialKey ? t(w.specialKey) : '—'}</td><td className={styles.recipeCell}>{t(w.recipeKey)}</td></tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  <div className={styles.tableWrapper}><table className={styles.table}><thead><tr><th>{t('weaponHeader')}</th><th>{t('damageHeader')}</th><th>{t('specialHeader')}</th><th>{t('recipeHeader')}</th></tr></thead><tbody>{WEAPONS_DATA.map((w)=><tr key={w.nameKey}><td><span style={{color:w.color}}>{t(w.nameKey)}</span></td><td>{w.damage}</td><td>{w.specialKey?t(w.specialKey):'—'}</td><td className={styles.recipeCell}>{t(w.recipeKey)}</td></tr>)}</tbody></table></div>
                 </section>
 
-                {/* TOWER DEFENSE */}
                 <section id="wiki-tower-defense" className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('towerDefenseTitle')}</h2>
                   <p className={styles.paragraph}>{t('towerDefenseDesc')}</p>
                   <div className={styles.statsGrid}>
-                    <div className={styles.statCard}><div className={styles.statCardValue}>100</div><div className={styles.statCardLabel}>{t('towerHP')}</div></div>
-                    <div className={styles.statCard}><div className={styles.statCardValue}>15</div><div className={styles.statCardLabel}>{t('enemyReachDMG')}</div></div>
-                    <div className={styles.statCard}><div className={styles.statCardValue}>3</div><div className={styles.statCardLabel}>{t('enemyHP')}</div></div>
-                    <div className={styles.statCard}><div className={styles.statCardValue}>2</div><div className={styles.statCardLabel}>{t('killsPerLine')}</div></div>
+                    {[{v:'100',l:'towerHP'},{v:'15',l:'enemyReachDMG'},{v:'3',l:'enemyHP'},{v:'2',l:'killsPerLine'}].map((s)=><div key={s.l} className={styles.statCard}><div className={styles.statCardValue}>{s.v}</div><div className={styles.statCardLabel}>{t(s.l)}</div></div>)}
                   </div>
-                  <div className={styles.infoBox}>
-                    <div className={styles.infoBoxTitle}>{t('gridSystem')}</div>
-                    <ul className={styles.infoList}>
-                      <li>{t('grid1')}</li><li>{t('grid2')}</li><li>{t('grid3')}</li><li>{t('grid4')}</li><li>{t('grid5')}</li>
-                    </ul>
-                  </div>
+                  <div className={styles.infoBox}><div className={styles.infoBoxTitle}>{t('gridSystem')}</div><ul className={styles.infoList}><li>{t('grid1')}</li><li>{t('grid2')}</li><li>{t('grid3')}</li><li>{t('grid4')}</li><li>{t('grid5')}</li></ul></div>
                 </section>
 
                 <footer className={styles.wikiFooter}>RHYTHMIA Wiki &mdash; v0.0.2 beta</footer>
               </motion.div>
             )}
 
-            {/* ============================================================ */}
-            {/*  TAB 2: COMMUNITY RESOURCES                                  */}
-            {/* ============================================================ */}
-            {activeTab === 'community-resources' && (
-              <motion.div
-                key="community-resources"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-              >
+            {/* ====== COMMUNITY RESOURCES ====== */}
+            {activePage === 'community-resources' && (
+              <motion.div key="cr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 <section className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('communityResourcesTitle')}</h2>
                   <p className={styles.paragraph}>{t('communityResourcesDesc')}</p>
-
                   <div className={styles.videoGallery}>
-                    {COMMUNITY_VIDEOS.map((video) => (
-                      <div
-                        key={video.id}
-                        className={styles.videoCard}
-                        style={{ '--card-accent': video.accent } as React.CSSProperties}
-                      >
+                    {COMMUNITY_VIDEOS.map((v) => (
+                      <div key={v.id} className={styles.videoCard} style={{ '--card-accent': v.accent } as React.CSSProperties}>
                         <div className={styles.videoCardThumb}>
-                          {video.embedId ? (
-                            <iframe
-                              src={`https://www.youtube-nocookie.com/embed/${video.embedId}`}
-                              title={video.title}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              className={styles.videoCardIframe}
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className={styles.videoCardPlaceholder}>
-                              <span className={styles.videoCardPlayIcon}>&#9654;</span>
-                              <span className={styles.videoCardSoon}>{t('videoComingSoon')}</span>
-                            </div>
-                          )}
+                          {v.embedId ? <iframe src={`https://www.youtube-nocookie.com/embed/${v.embedId}`} title={v.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen className={styles.videoCardIframe} loading="lazy" />
+                            : <div className={styles.videoCardPlaceholder}><span className={styles.videoCardPlayIcon}>&#9654;</span><span className={styles.videoCardSoon}>{t('videoComingSoon')}</span></div>}
                         </div>
-                        <div className={styles.videoCardBody}>
-                          <span className={styles.videoCardCategory}>{video.category}</span>
-                          <h3 className={styles.videoCardTitle}>{video.title}</h3>
-                        </div>
+                        <div className={styles.videoCardBody}><span className={styles.videoCardCategory}>{v.category}</span><h3 className={styles.videoCardTitle}>{v.title}</h3></div>
                       </div>
                     ))}
                   </div>
@@ -570,56 +382,47 @@ export default function WikiPage() {
               </motion.div>
             )}
 
-            {/* ============================================================ */}
-            {/*  TAB 3: UPDATES                                              */}
-            {/* ============================================================ */}
-            {activeTab === 'updates' && (
-              <motion.div
-                key="updates"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25 }}
-              >
+            {/* ====== UPDATES ====== */}
+            {activePage === 'updates' && (
+              <motion.div key="up" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 <section className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('updatesTitle')}</h2>
                   <p className={styles.paragraph}>{t('updatesDesc')}</p>
-
-                  <div className={styles.updatesSlider}>
-                    <div className={styles.updatesTrack}>
-                      {UPDATE_VIDEOS.map((vid) => (
-                        <div key={vid.version} className={styles.updateSlide}>
-                          <div className={styles.updateSlideThumb}>
-                            {vid.embedId ? (
-                              <iframe
-                                src={`https://www.youtube-nocookie.com/embed/${vid.embedId}`}
-                                title={vid.title}
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowFullScreen
-                                className={styles.updateSlideIframe}
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className={styles.updateSlidePlaceholder}>
-                                <span className={styles.videoCardPlayIcon}>&#9654;</span>
-                                <span className={styles.videoCardSoon}>{t('videoComingSoon')}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className={styles.updateSlideInfo}>
-                            <span className={styles.updateSlideVersion}>{vid.version}</span>
-                            <span className={styles.updateSlideDate}>{vid.date}</span>
-                          </div>
-                          <h3 className={styles.updateSlideTitle}>{vid.title}</h3>
+                  <div className={styles.updatesSlider}><div className={styles.updatesTrack}>
+                    {UPDATE_VIDEOS.map((vid) => (
+                      <div key={vid.version} className={styles.updateSlide}>
+                        <div className={styles.updateSlideThumb}>
+                          {vid.embedId ? <iframe src={`https://www.youtube-nocookie.com/embed/${vid.embedId}`} title={vid.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen className={styles.updateSlideIframe} loading="lazy" />
+                            : <div className={styles.updateSlidePlaceholder}><span className={styles.videoCardPlayIcon}>&#9654;</span><span className={styles.videoCardSoon}>{t('videoComingSoon')}</span></div>}
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                        <div className={styles.updateSlideInfo}><span className={styles.updateSlideVersion}>{vid.version}</span><span className={styles.updateSlideDate}>{vid.date}</span></div>
+                        <h3 className={styles.updateSlideTitle}>{vid.title}</h3>
+                      </div>
+                    ))}
+                  </div></div>
                 </section>
               </motion.div>
             )}
           </AnimatePresence>
         </main>
+
+        {/* RIGHT SIDEBAR — "On This Page" TOC */}
+        {hasRightToc && currentNav?.subsections && (
+          <aside className={styles.tocSidebar}>
+            <div className={styles.tocHeader}>{t('contents')}</div>
+            <div className={styles.tocList}>
+              {currentNav.subsections.map((sub) => (
+                <button
+                  key={sub.id}
+                  className={`${styles.tocItem} ${activeSub === sub.id ? styles.tocActive : ''}`}
+                  onClick={() => scrollToSub(sub.id)}
+                >
+                  {t(sub.labelKey)}
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );
