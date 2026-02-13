@@ -26,6 +26,102 @@
     font-weight: 300;
 }
 
+/* Help Preferences Input */
+.helpForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 28px;
+    gap: 10px;
+}
+
+.helpInputWrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 480px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    transition: border-color 0.25s, background 0.25s;
+}
+
+.helpInputWrapper:focus-within {
+    border-color: rgba(0, 127, 255, 0.4);
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.helpInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.02em;
+    font-weight: 300;
+}
+
+.helpInput::placeholder {
+    color: rgba(255, 255, 255, 0.22);
+    font-weight: 300;
+    letter-spacing: 0.04em;
+}
+
+.helpSubmit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin-right: 4px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s;
+    flex-shrink: 0;
+}
+
+.helpSubmit:hover:not(:disabled) {
+    color: rgba(0, 127, 255, 0.9);
+    background: rgba(0, 127, 255, 0.08);
+}
+
+.helpSubmit:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+.helpSpinner {
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-top-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+.clearQuery {
+    padding: 4px 12px;
+    font-size: 0.6rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clearQuery:hover {
+    color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
 /* Card Grid */
 .cardGrid {
     display: grid;

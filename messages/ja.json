@@ -585,6 +585,9 @@
     "forYou": {
         "title": "おすすめ",
         "subtitle": "あなたの進捗に合わせてセレクト",
+        "helpPlaceholder": "何についてヘルプが必要ですか？",
+        "helpSubmitLabel": "検索",
+        "clearQuery": "検索をクリア",
         "loading": "生成中",
         "error": "おすすめを読み込めませんでした",
         "retry": "再試行",

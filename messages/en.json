@@ -585,6 +585,9 @@
     "forYou": {
         "title": "FOR YOU",
         "subtitle": "Curated based on your progress",
+        "helpPlaceholder": "What do you need help with?",
+        "helpSubmitLabel": "Search",
+        "clearQuery": "CLEAR SEARCH",
         "loading": "GENERATING",
         "error": "Could not load recommendations",
         "retry": "RETRY",

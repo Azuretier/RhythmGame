@@ -36,9 +36,11 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
     const [cards, setCards] = useState<ContentCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [helpInput, setHelpInput] = useState('');
+    const [activeQuery, setActiveQuery] = useState('');
     const t = useTranslations('forYou');
 
-    const fetchContent = useCallback(async () => {
+    const fetchContent = useCallback(async (query?: string) => {
         setLoading(true);
         setError(false);
         try {
@@ -49,6 +51,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                     locale,
                     unlockedAdvancements,
                     totalAdvancements,
+                    helpPreference: query || undefined,
                 }),
             });
             if (!res.ok) throw new Error('Failed to fetch');
@@ -61,31 +64,19 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
         }
     }, [locale, unlockedAdvancements, totalAdvancements]);
 
+    const handleSubmit = useCallback((e?: React.FormEvent) => {
+        e?.preventDefault();
+        const trimmed = helpInput.trim();
+        setActiveQuery(trimmed);
+        fetchContent(trimmed);
+    }, [helpInput, fetchContent]);
+
     useEffect(() => {
         fetchContent();
-    }, [fetchContent]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
-
-    if (loading) {
-        return (
-            <div className={styles.loadingContainer}>
-                <div className={styles.loadingSpinner} />
-                <span className={styles.loadingText}>{t('loading')}</span>
-            </div>
-        );
-    }
-
-    if (error || cards.length === 0) {
-        return (
-            <div className={styles.errorContainer}>
-                <span className={styles.errorText}>{t('error')}</span>
-                <button className={styles.retryButton} onClick={fetchContent}>
-                    {t('retry')}
-                </button>
-            </div>
-        );
-    }
 
     return (
         <div className={styles.forYouContainer}>
@@ -94,6 +85,60 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                 <p className={styles.sectionSubtitle}>{t('subtitle')}</p>
             </div>
 
+            <form className={styles.helpForm} onSubmit={handleSubmit}>
+                <div className={styles.helpInputWrapper}>
+                    <input
+                        type="text"
+                        className={styles.helpInput}
+                        value={helpInput}
+                        onChange={(e) => setHelpInput(e.target.value)}
+                        placeholder={t('helpPlaceholder')}
+                        maxLength={120}
+                        disabled={loading}
+                    />
+                    <button
+                        type="submit"
+                        className={styles.helpSubmit}
+                        disabled={loading}
+                        aria-label={t('helpSubmitLabel')}
+                    >
+                        {loading ? (
+                            <div className={styles.helpSpinner} />
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M2 8H14M9 3L14 8L9 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        )}
+                    </button>
+                </div>
+                {activeQuery && !loading && (
+                    <motion.button
+                        type="button"
+                        className={styles.clearQuery}
+                        onClick={() => { setActiveQuery(''); setHelpInput(''); fetchContent(); }}
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        {t('clearQuery')}
+                    </motion.button>
+                )}
+            </form>
+
+            {loading ? (
+                <div className={styles.loadingContainer}>
+                    <div className={styles.loadingSpinner} />
+                    <span className={styles.loadingText}>{t('loading')}</span>
+                </div>
+            ) : error || cards.length === 0 ? (
+                <div className={styles.errorContainer}>
+                    <span className={styles.errorText}>{t('error')}</span>
+                    <button className={styles.retryButton} onClick={() => fetchContent(activeQuery)}>
+                        {t('retry')}
+                    </button>
+                </div>
+            ) : (
+            <>
             <div className={styles.cardGrid}>
                 <AnimatePresence mode="wait">
                     {cards.map((card, index) => (
@@ -139,10 +184,12 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
             </div>
 
             <div className={styles.refreshRow}>
-                <button className={styles.refreshButton} onClick={fetchContent}>
+                <button className={styles.refreshButton} onClick={() => fetchContent(activeQuery)}>
                     {t('refresh')}
                 </button>
             </div>
+            </>
+            )}
         </div>
     );
 }
