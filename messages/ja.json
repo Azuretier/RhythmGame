@@ -795,7 +795,17 @@
         "grid2": "グリッド範囲: 中心から±18タイル",
         "grid3": "敵はマンハッタン距離18のリングからスポーン",
         "grid4": "タレット射撃間隔: 1,000ms、弾速: 18単位/秒",
-        "grid5": "弾丸は放物線軌道（重力加速度: 40単位/秒²）"
+        "grid5": "弾丸は放物線軌道（重力加速度: 40単位/秒²）",
+        "sectionGameOverview": "ゲーム概要",
+        "sectionCommunityResources": "コミュニティリソース",
+        "sectionUpdates": "アップデート",
+        "gameOverviewTitle": "ゲーム概要",
+        "communityResourcesTitle": "コミュニティリソース",
+        "communityResourcesDesc": "RHYTHMIAコミュニティが厳選したチュートリアル、ガイド、動画でゲームプレイを向上させよう。",
+        "updatesTitle": "バージョンアップデート",
+        "updatesDesc": "最新バージョンの概要動画をチェックして、RHYTHMIAの新機能を確認しよう。",
+        "videoComingSoon": "近日公開",
+        "watchVideo": "視聴する"
     },
     "nav": {
         "wiki": "Wiki",

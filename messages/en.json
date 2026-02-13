@@ -795,7 +795,17 @@
         "grid2": "Grid extends 18 tiles from center in each direction",
         "grid3": "Enemies spawn on the Manhattan distance 18 perimeter",
         "grid4": "Turret fires every 1,000ms, bullet speed: 18 units/sec",
-        "grid5": "Bullets follow parabolic arcs (gravity: 40 units/sec²)"
+        "grid5": "Bullets follow parabolic arcs (gravity: 40 units/sec²)",
+        "sectionGameOverview": "Game Overview",
+        "sectionCommunityResources": "Community Resources",
+        "sectionUpdates": "Updates",
+        "gameOverviewTitle": "Game Overview",
+        "communityResourcesTitle": "Community Resources",
+        "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
+        "updatesTitle": "Version Updates",
+        "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+        "videoComingSoon": "Coming Soon",
+        "watchVideo": "Watch"
     },
     "nav": {
         "wiki": "Wiki",

@@ -8,6 +8,7 @@ import LocaleSwitcher from '@/components/LocaleSwitcher';
 import styles from './WikiPage.module.css';
 
 type WikiSection =
+  | 'game-overview'
   | 'overview'
   | 'modes'
   | 'worlds'
@@ -15,9 +16,12 @@ type WikiSection =
   | 'ranked'
   | 'advancements'
   | 'crafting'
-  | 'tower-defense';
+  | 'tower-defense'
+  | 'community-resources'
+  | 'updates';
 
 const SECTION_IDS: WikiSection[] = [
+  'game-overview',
   'overview',
   'modes',
   'worlds',
@@ -26,20 +30,31 @@ const SECTION_IDS: WikiSection[] = [
   'advancements',
   'crafting',
   'tower-defense',
+  'community-resources',
+  'updates',
 ];
 
-const SECTION_ICONS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+// 2-tier sidebar structure: L1 = parent headers, L2 = child items
+interface SidebarItem {
+  id: WikiSection;
+  labelKey: string;
+  level: 1 | 2;
+  icon?: string;
+}
 
-const SECTION_LABEL_KEYS = [
-  'sectionOverview',
-  'sectionModes',
-  'sectionWorlds',
-  'sectionControls',
-  'sectionRanked',
-  'sectionAdvancements',
-  'sectionCrafting',
-  'sectionTowerDefense',
-] as const;
+const SIDEBAR_ITEMS: SidebarItem[] = [
+  { id: 'game-overview', labelKey: 'sectionGameOverview', level: 1 },
+  { id: 'overview', labelKey: 'sectionOverview', level: 2, icon: 'I' },
+  { id: 'modes', labelKey: 'sectionModes', level: 2, icon: 'II' },
+  { id: 'worlds', labelKey: 'sectionWorlds', level: 2, icon: 'III' },
+  { id: 'controls', labelKey: 'sectionControls', level: 2, icon: 'IV' },
+  { id: 'ranked', labelKey: 'sectionRanked', level: 2, icon: 'V' },
+  { id: 'advancements', labelKey: 'sectionAdvancements', level: 2, icon: 'VI' },
+  { id: 'crafting', labelKey: 'sectionCrafting', level: 2, icon: 'VII' },
+  { id: 'tower-defense', labelKey: 'sectionTowerDefense', level: 2, icon: 'VIII' },
+  { id: 'community-resources', labelKey: 'sectionCommunityResources', level: 1 },
+  { id: 'updates', labelKey: 'sectionUpdates', level: 1 },
+];
 
 const WORLDS_DATA = [
   { nameKey: 'melodia', bpm: 100, color: '#FF6B9D' },
@@ -133,10 +148,75 @@ const ADVANCEMENT_CATEGORIES = [
   },
 ] as const;
 
+// --- Community Resources: Video gallery data ---
+// To add a new video, append an object to this array.
+const COMMUNITY_VIDEOS = [
+  {
+    id: 'vid-tspin-tutorial',
+    title: 'T-Spin Tutorial - From Zero to Hero',
+    category: 'tutorial',
+    embedId: 'aa573goA1WA',
+    accent: '#f87171',
+  },
+  {
+    id: 'vid-beginner',
+    title: 'RHYTHMIA Beginner Guide',
+    category: 'guide',
+    embedId: '',
+    accent: '#60a5fa',
+  },
+  {
+    id: 'vid-ranked-guide',
+    title: 'How to Climb Ranked',
+    category: 'competitive',
+    embedId: '',
+    accent: '#a78bfa',
+  },
+  {
+    id: 'vid-advanced-combos',
+    title: 'Advanced Combo Techniques',
+    category: 'tutorial',
+    embedId: '',
+    accent: '#f87171',
+  },
+  {
+    id: 'vid-music-showcase',
+    title: 'RHYTHMIA OST Preview',
+    category: 'music',
+    embedId: '',
+    accent: '#34d399',
+  },
+  {
+    id: 'vid-multiplayer-tips',
+    title: '1v1 Battle Tips & Tricks',
+    category: 'competitive',
+    embedId: '',
+    accent: '#a78bfa',
+  },
+] as const;
+
+// --- Updates: Version video slider data ---
+// To add a new version video, prepend an object to this array.
+// The slider is fully modular — no layout changes needed.
+const UPDATE_VIDEOS = [
+  {
+    version: 'v0.0.2',
+    title: 'azuretier.net v0.0.2 Update Overview',
+    embedId: 'bcwz2j6N_kA',
+    date: '2025-05',
+  },
+  {
+    version: 'v0.0.1',
+    title: 'azuretier.net v0.0.1 Launch Trailer',
+    embedId: '',
+    date: '2025-03',
+  },
+] as const;
+
 export default function WikiPage() {
   const t = useTranslations('wiki');
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState<WikiSection>('overview');
+  const [activeSection, setActiveSection] = useState<WikiSection>('game-overview');
   const contentRef = useRef<HTMLElement>(null);
   const isClickScrolling = useRef(false);
   const clickScrollTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -214,25 +294,35 @@ export default function WikiPage() {
       </header>
 
       <div className={styles.layout}>
-        {/* Sidebar navigation */}
+        {/* 2-tier sidebar navigation */}
         <nav className={styles.sidebar}>
           <div className={styles.sidebarTitle}>
             {t('contents')}
           </div>
-          {SECTION_IDS.map((id, i) => (
+          {SIDEBAR_ITEMS.map((item) => (
             <button
-              key={id}
-              className={`${styles.sidebarItem} ${activeSection === id ? styles.sidebarActive : ''}`}
-              onClick={() => scrollToSection(id)}
+              key={item.id}
+              className={`
+                ${item.level === 1 ? styles.sidebarL1 : styles.sidebarItem}
+                ${activeSection === item.id ? styles.sidebarActive : ''}
+              `}
+              onClick={() => scrollToSection(item.id)}
             >
-              <span className={styles.sidebarNum}>{SECTION_ICONS[i]}</span>
-              <span>{t(SECTION_LABEL_KEYS[i])}</span>
+              {item.icon && <span className={styles.sidebarNum}>{item.icon}</span>}
+              <span>{t(item.labelKey)}</span>
             </button>
           ))}
         </nav>
 
         {/* Main content */}
         <main ref={contentRef} className={styles.content} onScroll={handleScroll}>
+
+          {/* ================================================================ */}
+          {/*  L1: GAME OVERVIEW                                               */}
+          {/* ================================================================ */}
+          <div id="wiki-game-overview" className={styles.l1Section}>
+            <h1 className={styles.l1Title}>{t('gameOverviewTitle')}</h1>
+          </div>
 
           {/* === OVERVIEW === */}
           <section id="wiki-overview" className={styles.section}>
@@ -241,9 +331,9 @@ export default function WikiPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className={styles.sectionTitle}>
+              <h2 className={styles.sectionTitle}>
                 {t('overviewTitle')}
-              </h1>
+              </h2>
               <p className={styles.paragraph}>
                 {t('overviewDesc')}
               </p>
@@ -577,6 +667,89 @@ export default function WikiPage() {
                 <li>{t('grid4')}</li>
                 <li>{t('grid5')}</li>
               </ul>
+            </div>
+          </section>
+
+          {/* ================================================================ */}
+          {/*  L1: COMMUNITY RESOURCES                                         */}
+          {/* ================================================================ */}
+          <section id="wiki-community-resources" className={styles.section}>
+            <div className={styles.l1Section}>
+              <h1 className={styles.l1Title}>{t('communityResourcesTitle')}</h1>
+            </div>
+            <p className={styles.paragraph}>{t('communityResourcesDesc')}</p>
+
+            <div className={styles.videoGallery}>
+              {COMMUNITY_VIDEOS.map((video) => (
+                <div
+                  key={video.id}
+                  className={styles.videoCard}
+                  style={{ '--card-accent': video.accent } as React.CSSProperties}
+                >
+                  <div className={styles.videoCardThumb}>
+                    {video.embedId ? (
+                      <iframe
+                        src={`https://www.youtube-nocookie.com/embed/${video.embedId}`}
+                        title={video.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        className={styles.videoCardIframe}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className={styles.videoCardPlaceholder}>
+                        <span className={styles.videoCardPlayIcon}>&#9654;</span>
+                        <span className={styles.videoCardSoon}>{t('videoComingSoon')}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.videoCardBody}>
+                    <span className={styles.videoCardCategory}>{video.category}</span>
+                    <h3 className={styles.videoCardTitle}>{video.title}</h3>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ================================================================ */}
+          {/*  L1: UPDATES — Horizontal scroll video slider                    */}
+          {/* ================================================================ */}
+          <section id="wiki-updates" className={styles.section}>
+            <div className={styles.l1Section}>
+              <h1 className={styles.l1Title}>{t('updatesTitle')}</h1>
+            </div>
+            <p className={styles.paragraph}>{t('updatesDesc')}</p>
+
+            <div className={styles.updatesSlider}>
+              <div className={styles.updatesTrack}>
+                {UPDATE_VIDEOS.map((vid) => (
+                  <div key={vid.version} className={styles.updateSlide}>
+                    <div className={styles.updateSlideThumb}>
+                      {vid.embedId ? (
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/${vid.embedId}`}
+                          title={vid.title}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                          className={styles.updateSlideIframe}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className={styles.updateSlidePlaceholder}>
+                          <span className={styles.videoCardPlayIcon}>&#9654;</span>
+                          <span className={styles.videoCardSoon}>{t('videoComingSoon')}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.updateSlideInfo}>
+                      <span className={styles.updateSlideVersion}>{vid.version}</span>
+                      <span className={styles.updateSlideDate}>{vid.date}</span>
+                    </div>
+                    <h3 className={styles.updateSlideTitle}>{vid.title}</h3>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 
