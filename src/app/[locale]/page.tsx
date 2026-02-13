@@ -304,6 +304,23 @@ export default function RhythmiaPage() {
                         <p>{t('lobby.chooseMode')}</p>
                     </motion.div>
 
+                    {/* For You Section — personalized experience shown first */}
+                    <motion.div
+                        className={styles.forYouSection}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                    >
+                        <ForYouTab
+                            locale={locale}
+                            unlockedAdvancements={unlockedCount}
+                            totalAdvancements={ADVANCEMENTS.length}
+                        />
+                    </motion.div>
+
+                    {/* Loyalty widget — visible immediately on landing */}
+                    <LoyaltyWidget />
+
                     <div className={styles.serverGrid}>
                         {/* Rhythmia (Solo Mode) */}
                         <motion.div
@@ -311,7 +328,7 @@ export default function RhythmiaPage() {
                             onClick={() => launchGame('vanilla')}
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                            transition={{ duration: 0.6, delay: 0.3 }}
+                            transition={{ duration: 0.6, delay: 0.4 }}
                             whileHover={{ y: -8, transition: { duration: 0.25 } }}
                         >
                             <span className={styles.cardBadge}>{t('vanilla.badge')}</span>
@@ -327,7 +344,7 @@ export default function RhythmiaPage() {
                             onClick={() => launchGame('multiplayer')}
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                            transition={{ duration: 0.6, delay: 0.45 }}
+                            transition={{ duration: 0.6, delay: 0.55 }}
                             whileHover={isArenaLocked ? {} : { y: -8, transition: { duration: 0.25 } }}
                         >
                             {isArenaLocked && (
@@ -380,7 +397,7 @@ export default function RhythmiaPage() {
                             onClick={() => router.push('/arena')}
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                            transition={{ duration: 0.6, delay: 0.6 }}
+                            transition={{ duration: 0.6, delay: 0.7 }}
                             whileHover={{ y: -8, transition: { duration: 0.25 } }}
                         >
                             <span className={`${styles.cardBadge} ${styles.new}`}>{t('arena.badge')}</span>
@@ -411,23 +428,6 @@ export default function RhythmiaPage() {
                             <button className={styles.playButton}>{t('arena.quickMatch')}</button>
                         </motion.div>
                     </div>
-
-                    {/* For You Section */}
-                    <motion.div
-                        className={styles.forYouSection}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
-                        transition={{ duration: 0.6, delay: 0.7 }}
-                    >
-                        <ForYouTab
-                            locale={locale}
-                            unlockedAdvancements={unlockedCount}
-                            totalAdvancements={ADVANCEMENTS.length}
-                        />
-                    </motion.div>
-
-                    {/* Loyalty widget — visible immediately on landing */}
-                    <LoyaltyWidget />
                 </main>
 
                 <motion.footer
