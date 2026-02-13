@@ -795,5 +795,12 @@
         "selectLanguage": "Langue",
         "privacy": "Confidentialité",
         "profileButton": "Profil"
+    },
+    "uiTheme": {
+        "selectTheme": "Theme UI",
+        "neoFuturistic": "Neo-Futuristic",
+        "pixelNostalgia": "Pixel Nostalgia",
+        "neoDesc": "Design epure et moderne avec effets de verre givre",
+        "pixelDesc": "Esthetique retro pixel art 8-bit/16-bit avec effets CRT"
     }
 }

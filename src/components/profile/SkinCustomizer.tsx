@@ -8,6 +8,7 @@ import { useSkin } from '@/lib/skin/context';
 import { useProfile } from '@/lib/profile/context';
 import { getIconById } from '@/lib/profile/types';
 import type { Skin } from '@/lib/skin/types';
+import ThemeSwitcher from './ThemeSwitcher';
 import styles from './SkinCustomizer.module.css';
 
 const LOCALE_FLAGS: Record<string, string> = {
@@ -90,6 +91,7 @@ function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolea
 
 export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
   const t = useTranslations('skin');
+  const tTheme = useTranslations('uiTheme');
   const tLocale = useTranslations('localeSwitcher');
   const { currentSkin, setSkin, skins } = useSkin();
   const { profile } = useProfile();
@@ -172,6 +174,10 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
             {currentSkin.name} — {currentSkin.nameJa}
           </div>
         </div>
+
+        {/* UI Theme selection */}
+        <div className={styles.sectionLabel}>{tTheme('selectTheme')}</div>
+        <ThemeSwitcher />
 
         {/* Language selection */}
         <div className={styles.sectionLabel}>{t('selectLanguage')}</div>

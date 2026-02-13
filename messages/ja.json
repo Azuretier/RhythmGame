@@ -841,5 +841,12 @@
         "selectLanguage": "言語設定",
         "privacy": "プライバシー",
         "profileButton": "プロフィール"
+    },
+    "uiTheme": {
+        "selectTheme": "UIテーマ",
+        "neoFuturistic": "ネオフューチャリスティック",
+        "pixelNostalgia": "ピクセルノスタルジア",
+        "neoDesc": "フロストガラスエフェクトを備えた洗練されたモダンなデザイン",
+        "pixelDesc": "CRTエフェクトを備えたレトロ8ビット/16ビットピクセルアートスタイル"
     }
 }

@@ -795,5 +795,12 @@
         "selectLanguage": "ภาษา",
         "privacy": "ความเป็นส่วนตัว",
         "profileButton": "โปรไฟล์"
+    },
+    "uiTheme": {
+        "selectTheme": "ธีม UI",
+        "neoFuturistic": "Neo-Futuristic",
+        "pixelNostalgia": "Pixel Nostalgia",
+        "neoDesc": "ดีไซน์ทันสมัยสะอาดตาพร้อมเอฟเฟกต์กระจกฝ้า",
+        "pixelDesc": "สไตล์พิกเซลอาร์ตแบบย้อนยุค 8-bit/16-bit พร้อมเอฟเฟกต์ CRT"
     }
 }
