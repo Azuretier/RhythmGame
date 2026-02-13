@@ -840,6 +840,7 @@
         "clickToContinue": "CLICK TO CONTINUE",
         "endOfChapter": "END OF CHAPTER",
         "backToStories": "Back to Stories",
+        "log": "MESSAGE LOG",
         "sceneCount": "{count} scenes",
         "origin": {
             "title": "The First Beat",

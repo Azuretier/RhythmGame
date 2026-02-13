@@ -840,6 +840,7 @@
         "clickToContinue": "クリックで続く",
         "endOfChapter": "チャプター終了",
         "backToStories": "物語一覧に戻る",
+        "log": "メッセージログ",
         "sceneCount": "{count} シーン",
         "origin": {
             "title": "最初の鼓動",
