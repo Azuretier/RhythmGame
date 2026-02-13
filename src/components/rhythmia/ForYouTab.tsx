@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import styles from './ForYouTab.module.css';
 
 interface ContentCard {
@@ -65,6 +66,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
         fetchContent();
     }, [fetchContent]);
 
+    const router = useRouter();
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
 
     if (loading) {
@@ -105,8 +107,17 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.35, delay: index * 0.06 }}
                             whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                            onClick={() => card.url && window.open(card.url, '_blank', 'noopener,noreferrer')}
-                            style={{ cursor: card.url ? 'pointer' : 'default' }}
+                            onClick={() => {
+                                if (card.url) {
+                                    window.open(card.url, '_blank', 'noopener,noreferrer');
+                                } else if (card.type === 'video') {
+                                    const params = new URLSearchParams();
+                                    params.set('topic', card.title);
+                                    if (card.tags?.length) params.set('tags', card.tags.join(','));
+                                    router.push(`/video-not-found?${params.toString()}`);
+                                }
+                            }}
+                            style={{ cursor: card.url || card.type === 'video' ? 'pointer' : 'default' }}
                         >
                             <div className={styles.cardHeader}>
                                 <span className={styles.typeIcon}>{TYPE_ICONS[card.type] || '📌'}</span>
@@ -128,7 +139,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                                     ))}
                                 </div>
                             )}
-                            {card.url && (
+                            {(card.url || card.type === 'video') && (
                                 <div className={styles.cardLink}>
                                     {t('watchOnYouTube')} →
                                 </div>

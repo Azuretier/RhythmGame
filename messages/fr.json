@@ -582,6 +582,24 @@
             "dawn": "Aube"
         }
     },
+    "videoNotFound": {
+        "metaTitle": "Vidéo introuvable | RHYTHMIA",
+        "metaDescription": "Cette vidéo n'est pas encore disponible. Rejoignez la communauté RHYTHMIA et aidez à façonner le jeu !",
+        "title": "Vidéo pas encore disponible",
+        "topicLabel": "RECHERCHE",
+        "relatedVideos": "VIDÉOS ASSOCIÉES",
+        "viewChannel": "Voir toutes les vidéos sur YouTube",
+        "description": "Cette vidéo n'a pas encore été créée — mais elle pourrait l'être avec votre aide. RHYTHMIA est construit par sa communauté, et chaque contribution donne vie à du nouveau contenu.",
+        "ctaHeading": "PARTICIPEZ",
+        "ctaDescription": "Rejoignez la communauté, proposez des idées ou contribuez directement pour aider RHYTHMIA à grandir.",
+        "discordTitle": "Rejoindre le Discord",
+        "discordDescription": "Discutez avec les joueurs, proposez des sujets de vidéo et restez informé du nouveau contenu.",
+        "youtubeTitle": "S'abonner sur YouTube",
+        "youtubeDescription": "Regardez les tutoriels existants et soyez le premier à voir les nouvelles vidéos.",
+        "githubTitle": "Contribuer sur GitHub",
+        "githubDescription": "Aidez à construire RHYTHMIA — proposez des idées, signalez des bugs ou contribuez au code.",
+        "backToLobby": "Retour au Lobby"
+    },
     "wiki": {
         "meta": {
             "title": "Wiki | RHYTHMIA - Azuretier",

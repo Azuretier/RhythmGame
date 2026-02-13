@@ -582,6 +582,24 @@
             "dawn": "รุ่งอรุณ"
         }
     },
+    "videoNotFound": {
+        "metaTitle": "ไม่พบวิดีโอ | RHYTHMIA",
+        "metaDescription": "วิดีโอนี้ยังไม่พร้อมใช้งาน เข้าร่วมชุมชน RHYTHMIA แล้วมาช่วยกันสร้างเกม!",
+        "title": "วิดีโอยังไม่พร้อมใช้งาน",
+        "topicLabel": "กำลังค้นหา",
+        "relatedVideos": "วิดีโอที่เกี่ยวข้อง",
+        "viewChannel": "ดูวิดีโอทั้งหมดบน YouTube",
+        "description": "วิดีโอนี้ยังไม่ได้ถูกสร้างขึ้น แต่คุณสามารถช่วยทำให้มันเกิดขึ้นได้ RHYTHMIA ถูกสร้างโดยชุมชน และทุกการมีส่วนร่วมจะสร้างเนื้อหาใหม่",
+        "ctaHeading": "มีส่วนร่วม",
+        "ctaDescription": "เข้าร่วมชุมชน เสนอไอเดีย หรือมีส่วนร่วมโดยตรงเพื่อช่วยให้ RHYTHMIA เติบโต",
+        "discordTitle": "เข้าร่วม Discord",
+        "discordDescription": "พูดคุยกับผู้เล่น เสนอหัวข้อวิดีโอ และติดตามเนื้อหาใหม่",
+        "youtubeTitle": "ติดตามบน YouTube",
+        "youtubeDescription": "ดูบทเรียนที่มีอยู่และเป็นคนแรกที่ได้ดูวิดีโอใหม่",
+        "githubTitle": "มีส่วนร่วมบน GitHub",
+        "githubDescription": "ช่วยสร้าง RHYTHMIA — เสนอไอเดีย รายงานบัก หรือเขียนโค้ด",
+        "backToLobby": "กลับไปล็อบบี้"
+    },
     "wiki": {
         "meta": {
             "title": "วิกิ | RHYTHMIA - Azuretier",

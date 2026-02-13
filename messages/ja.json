@@ -596,6 +596,24 @@
             "tip": "ヒント"
         }
     },
+    "videoNotFound": {
+        "metaTitle": "動画が見つかりません | RHYTHMIA",
+        "metaDescription": "この動画はまだ公開されていません。RHYTHMIAコミュニティに参加して、一緒にゲームを作りましょう！",
+        "title": "動画はまだ公開されていません",
+        "topicLabel": "検索中",
+        "relatedVideos": "関連動画",
+        "viewChannel": "YouTubeで全動画を見る",
+        "description": "この動画はまだ制作されていません。あなたの力で実現できるかもしれません。RHYTHMIAはコミュニティによって作られており、すべての貢献が新しいコンテンツを生み出します。",
+        "ctaHeading": "参加しよう",
+        "ctaDescription": "コミュニティに参加して、アイデアを提案したり、直接貢献してRHYTHMIAを一緒に成長させましょう。",
+        "discordTitle": "Discordに参加",
+        "discordDescription": "プレイヤーと交流し、動画のアイデアを提案し、最新情報をチェック。",
+        "youtubeTitle": "YouTubeを登録",
+        "youtubeDescription": "既存のチュートリアルを視聴し、新しい動画をいち早くチェック。",
+        "githubTitle": "GitHubで貢献",
+        "githubDescription": "RHYTHMIAの開発に参加 — アイデア提案、バグ報告、コード貢献。",
+        "backToLobby": "ロビーに戻る"
+    },
     "wiki": {
         "meta": {
             "title": "Wiki | RHYTHMIA - Azuretier",
