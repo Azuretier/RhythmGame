@@ -795,5 +795,18 @@
         "selectLanguage": "ภาษา",
         "privacy": "ความเป็นส่วนตัว",
         "profileButton": "โปรไฟล์"
+    },
+    "stories": {
+        "title": "STORIES",
+        "chapter": "CHAPTER",
+        "backToLobby": "← กลับ",
+        "log": "LOG",
+        "auto": "AUTO",
+        "skip": "SKIP",
+        "menu": "MENU",
+        "logTitle": "บันทึกข้อความ",
+        "close": "ปิด",
+        "resume": "ดำเนินต่อ",
+        "chapterSelect": "เลือกบท"
     }
 }

@@ -795,5 +795,18 @@
         "selectLanguage": "Idioma",
         "privacy": "Privacidad",
         "profileButton": "Perfil"
+    },
+    "stories": {
+        "title": "STORIES",
+        "chapter": "CHAPTER",
+        "backToLobby": "← Volver",
+        "log": "LOG",
+        "auto": "AUTO",
+        "skip": "SKIP",
+        "menu": "MENU",
+        "logTitle": "Registro de Texto",
+        "close": "Cerrar",
+        "resume": "Reanudar",
+        "chapterSelect": "Selección de Capítulo"
     }
 }

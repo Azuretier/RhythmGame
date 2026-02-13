@@ -831,5 +831,18 @@
         "selectLanguage": "言語設定",
         "privacy": "プライバシー",
         "profileButton": "プロフィール"
+    },
+    "stories": {
+        "title": "STORIES",
+        "chapter": "CHAPTER",
+        "backToLobby": "← 戻る",
+        "log": "LOG",
+        "auto": "AUTO",
+        "skip": "SKIP",
+        "menu": "MENU",
+        "logTitle": "テキストログ",
+        "close": "閉じる",
+        "resume": "再開",
+        "chapterSelect": "チャプター選択"
     }
 }

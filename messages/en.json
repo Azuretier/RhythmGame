@@ -831,5 +831,18 @@
         "selectLanguage": "Language",
         "privacy": "Privacy",
         "profileButton": "Profile"
+    },
+    "stories": {
+        "title": "STORIES",
+        "chapter": "CHAPTER",
+        "backToLobby": "← Back",
+        "log": "LOG",
+        "auto": "AUTO",
+        "skip": "SKIP",
+        "menu": "MENU",
+        "logTitle": "Text Log",
+        "close": "Close",
+        "resume": "Resume",
+        "chapterSelect": "Chapter Select"
     }
 }
