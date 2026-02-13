@@ -6,7 +6,7 @@
   color: #fff;
 }
 
-/* Header */
+/* ===== Header ===== */
 .header {
   position: sticky;
   top: 0;
@@ -86,133 +86,159 @@
   background: rgba(255, 255, 255, 0.04);
 }
 
-/* Layout: sidebar + content */
-.layout {
-  display: flex;
-  min-height: calc(100vh - 57px);
-}
-
-/* ===== Sidebar — 2-Tier Hierarchy ===== */
-.sidebar {
+/* ===== Primary Tab Bar (L1) ===== */
+.tabBar {
   position: sticky;
   top: 57px;
-  width: 260px;
-  min-width: 260px;
-  height: calc(100vh - 57px);
-  overflow-y: auto;
-  padding: 24px 16px;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.01);
+  z-index: 90;
+  display: flex;
+  gap: 0;
+  padding: 0 32px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.sidebarTitle {
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.3);
-  margin-bottom: 16px;
-  padding-left: 12px;
-}
-
-/* L1: Top-level sidebar headers */
-.sidebarL1 {
+.tabBtn {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  margin-top: 16px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-  background: transparent;
-  border: none;
-  border-left: 2px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
-  text-align: left;
-}
-
-.sidebarL1:first-of-type {
-  margin-top: 0;
-}
-
-.sidebarL1:hover {
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-/* L2: Sub-items indented under L1 */
-.sidebarItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 12px 8px 20px;
+  padding: 14px 24px;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.4);
   background: transparent;
   border: none;
-  border-left: 2px solid transparent;
-  border-radius: 8px;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
-  text-align: left;
+  transition: color 0.2s, border-color 0.3s, background 0.2s;
+  white-space: nowrap;
 }
 
-.sidebarItem:hover {
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.04);
+.tabBtn:hover {
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.sidebarActive {
+.tabBtnActive {
   color: #fff;
-  background: rgba(0, 127, 255, 0.12);
-  border-left-color: rgba(0, 127, 255, 0.6);
+  border-bottom-color: #007FFF;
 }
 
-.sidebarNum {
+.tabNum {
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   color: rgba(0, 127, 255, 0.5);
-  min-width: 24px;
   font-family: 'Geist Mono', monospace;
 }
 
-.sidebarActive .sidebarNum {
+.tabBtnActive .tabNum {
   color: rgba(0, 127, 255, 0.9);
 }
 
-/* Main Content */
+/* ===== Layout: mini sidebar + content ===== */
+.layout {
+  display: flex;
+  min-height: calc(100vh - 105px); /* header 57px + tab bar ~48px */
+}
+
+/* ===== Mini Sidebar (L2 — compact, left-hand) ===== */
+.miniSidebar {
+  position: sticky;
+  top: 105px;
+  width: 56px;
+  min-width: 56px;
+  height: calc(100vh - 105px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 2px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.miniItem {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 44px;
+  height: 44px;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.miniItem:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.miniActive {
+  color: #fff;
+  background: rgba(0, 127, 255, 0.15);
+}
+
+.miniActive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 1px;
+  background: rgba(0, 127, 255, 0.7);
+}
+
+.miniIcon {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-family: 'Geist Mono', monospace;
+  line-height: 1;
+}
+
+.miniActive .miniIcon {
+  color: rgba(0, 127, 255, 0.9);
+}
+
+.miniLabel {
+  font-size: 0.5rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ===== Main Content ===== */
 .content {
   flex: 1;
   max-width: 900px;
   padding: 40px 48px;
   overflow-y: auto;
-  height: calc(100vh - 57px);
+  height: calc(100vh - 105px);
 }
 
-/* ===== L1 Section Headers ===== */
-.l1Section {
-  margin-bottom: 8px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid rgba(0, 127, 255, 0.2);
+.contentFull {
+  max-width: 960px;
+  margin: 0 auto;
 }
 
-.l1Title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #fff;
-  margin: 0;
-}
-
-/* ===== L2 Sections ===== */
+/* ===== Sections (L2) ===== */
 .section {
   padding-bottom: 48px;
   margin-bottom: 48px;
@@ -247,7 +273,7 @@
   max-width: 680px;
 }
 
-/* Feature Grid (overview) */
+/* ===== Feature Grid (overview) ===== */
 .featureGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -283,7 +309,7 @@
   text-transform: uppercase;
 }
 
-/* Info Box */
+/* ===== Info Box ===== */
 .infoBox {
   padding: 20px 24px;
   background: rgba(0, 127, 255, 0.04);
@@ -335,7 +361,7 @@
   margin: 0;
 }
 
-/* Game Modes Grid */
+/* ===== Game Modes Grid ===== */
 .modeGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -409,7 +435,7 @@
   font-style: italic;
 }
 
-/* Worlds */
+/* ===== Worlds ===== */
 .worldList {
   display: flex;
   flex-direction: column;
@@ -475,7 +501,7 @@
   opacity: 0.6;
 }
 
-/* Tables */
+/* ===== Tables ===== */
 .tableWrapper {
   overflow-x: auto;
   margin-bottom: 24px;
@@ -541,7 +567,7 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* Timing Grid */
+/* ===== Timing Grid ===== */
 .timingGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -577,7 +603,7 @@
   margin-top: 4px;
 }
 
-/* Stats Grid (Tower Defense) */
+/* ===== Stats Grid (Tower Defense) ===== */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -608,7 +634,7 @@
   margin-top: 6px;
 }
 
-/* Advancements */
+/* ===== Advancements ===== */
 .advCategory {
   margin-bottom: 24px;
 }
@@ -861,7 +887,7 @@
   margin: 8px 16px 16px;
 }
 
-/* Footer */
+/* ===== Footer ===== */
 .wikiFooter {
   padding: 32px 0;
   text-align: center;
@@ -872,13 +898,17 @@
 
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
-  .sidebar {
+  .miniSidebar {
     display: none;
   }
 
   .content {
     padding: 24px 20px;
     height: auto;
+  }
+
+  .contentFull {
+    max-width: 100%;
   }
 
   .layout {
@@ -899,6 +929,16 @@
 
   .header {
     padding: 12px 16px;
+  }
+
+  .tabBar {
+    padding: 0 16px;
+    overflow-x: auto;
+  }
+
+  .tabBtn {
+    padding: 12px 16px;
+    font-size: 0.75rem;
   }
 
   .worldCard {
@@ -924,10 +964,6 @@
   .updateSlide {
     flex: 0 0 320px;
   }
-
-  .l1Title {
-    font-size: 1.4rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -947,38 +983,40 @@
     font-size: 0.75rem;
   }
 
+  .tabBtn {
+    padding: 10px 12px;
+    font-size: 0.7rem;
+    gap: 6px;
+  }
+
   .updateSlide {
     flex: 0 0 280px;
   }
-
-  .l1Title {
-    font-size: 1.2rem;
-  }
 }
 
-/* Scrollbar */
-.sidebar::-webkit-scrollbar,
+/* ===== Scrollbar ===== */
+.miniSidebar::-webkit-scrollbar,
 .content::-webkit-scrollbar {
   width: 6px;
 }
 
-.sidebar::-webkit-scrollbar-track,
+.miniSidebar::-webkit-scrollbar-track,
 .content::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.sidebar::-webkit-scrollbar-thumb,
+.miniSidebar::-webkit-scrollbar-thumb,
 .content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
 }
 
-.sidebar::-webkit-scrollbar-thumb:hover,
+.miniSidebar::-webkit-scrollbar-thumb:hover,
 .content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.sidebar {
+.miniSidebar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
