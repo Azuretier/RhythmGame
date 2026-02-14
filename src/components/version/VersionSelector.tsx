@@ -2,24 +2,20 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { UIVersion, VERSION_METADATA, UI_VERSIONS } from "@/lib/version/types";
-import { MessageCircle, Heart, Gamepad2 } from "lucide-react";
+import { MessageCircle, Heart, Gamepad2, Box } from "lucide-react";
 
 interface VersionSelectorProps {
   onSelect: (version: UIVersion) => void;
 }
 
-export default function VersionSelector({ onSelect }: VersionSelectorProps) {
-  const getIcon = (version: UIVersion) => {
-    switch (version) {
-      case "1.0.0":
-        return <MessageCircle className="w-12 h-12" />;
-      case "1.0.1":
-        return <Heart className="w-12 h-12" />;
-      case "1.0.2":
-        return <Gamepad2 className="w-12 h-12" />;
-    }
-  };
+const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
+  current: <Gamepad2 className="w-12 h-12" />,
+  "1.0.0": <MessageCircle className="w-12 h-12" />,
+  "1.0.1": <Heart className="w-12 h-12" />,
+  "1.0.2": <Box className="w-12 h-12" />,
+};
 
+export default function VersionSelector({ onSelect }: VersionSelectorProps) {
   return (
     <AnimatePresence>
       <motion.div
@@ -59,7 +55,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
               later.
             </motion.p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {UI_VERSIONS.map((version, index) => {
                 const metadata = VERSION_METADATA[version];
                 return (
@@ -83,7 +79,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
                         transition={{ duration: 0.5 }}
                         className="p-4 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full text-blue-400 group-hover:text-blue-300 transition-colors"
                       >
-                        {getIcon(version)}
+                        {VERSION_ICONS[version]}
                       </motion.div>
 
                       {/* Title */}
@@ -93,7 +89,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
 
                       {/* Version */}
                       <span className="text-sm text-gray-500 font-mono">
-                        v{metadata.id}
+                        {version === "current" ? "latest" : `v${metadata.id}`}
                       </span>
 
                       {/* Description */}
