@@ -45,12 +45,48 @@ export default function V1_0_1_UI() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-blue-900/20">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Content Feed — personalized experience shown first */}
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-8 xl:col-span-6 lg:order-2 space-y-6"
+          >
+            <h2 className="text-3xl font-bold text-white mb-6">Recent Posts</h2>
+
+            {posts.map((post, index) => (
+              <motion.article
+                key={post.id}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 + index * 0.1 }}
+                className="bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 p-6 hover:border-gray-600 transition-colors"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="text-xl font-bold text-white">{post.title}</h3>
+                  <span className="text-sm text-gray-500">{post.date}</span>
+                </div>
+                <p className="text-gray-300 mb-4">{post.content}</p>
+                <div className="flex items-center gap-4 pt-4 border-t border-gray-700">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors"
+                  >
+                    <Heart className="w-5 h-5" />
+                    <span className="text-sm">{post.likes}</span>
+                  </motion.button>
+                </div>
+              </motion.article>
+            ))}
+          </motion.div>
+
           {/* Left Sidebar - Profile Card */}
           <motion.div
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-4 xl:col-span-3"
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-4 xl:col-span-3 lg:order-1"
           >
             <div className="sticky top-8 bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 p-6 space-y-6">
               {/* Profile Image */}
@@ -80,7 +116,7 @@ export default function V1_0_1_UI() {
 
               {/* Bio */}
               <p className="text-gray-300 text-sm text-center">
-                Building awesome projects with Next.js, TypeScript, and Discord bots. 
+                Building awesome projects with Next.js, TypeScript, and Discord bots.
                 Passionate about creating beautiful user experiences.
               </p>
 
@@ -112,48 +148,12 @@ export default function V1_0_1_UI() {
             </div>
           </motion.div>
 
-          {/* Center - Content Feed */}
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="lg:col-span-8 xl:col-span-6 space-y-6"
-          >
-            <h2 className="text-3xl font-bold text-white mb-6">Recent Posts</h2>
-            
-            {posts.map((post, index) => (
-              <motion.article
-                key={post.id}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4 + index * 0.1 }}
-                className="bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 p-6 hover:border-gray-600 transition-colors"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-xl font-bold text-white">{post.title}</h3>
-                  <span className="text-sm text-gray-500">{post.date}</span>
-                </div>
-                <p className="text-gray-300 mb-4">{post.content}</p>
-                <div className="flex items-center gap-4 pt-4 border-t border-gray-700">
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors"
-                  >
-                    <Heart className="w-5 h-5" />
-                    <span className="text-sm">{post.likes}</span>
-                  </motion.button>
-                </div>
-              </motion.article>
-            ))}
-          </motion.div>
-
           {/* Right Sidebar - Social Links */}
           <motion.div
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="lg:col-span-12 xl:col-span-3"
+            className="lg:col-span-12 xl:col-span-3 lg:order-3"
           >
             <div className="sticky top-8 bg-gray-800/50 backdrop-blur-xl rounded-2xl border border-gray-700 p-6">
               <h3 className="text-lg font-bold text-white mb-4">Connect With Me</h3>

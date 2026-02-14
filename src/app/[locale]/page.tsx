@@ -18,7 +18,7 @@ import onlineStyles from '../../components/profile/OnlineUsers.module.css';
 import VanillaGame from '../../components/rhythmia/tetris';
 import MultiplayerGame from '../../components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '../../components/LocaleSwitcher';
-import LoyaltyWidget from '../../components/loyalty/LoyaltyWidget';
+
 import { useRouter } from '@/i18n/navigation';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
@@ -294,11 +294,26 @@ export default function RhythmiaPage() {
                 </motion.header>
 
                 <main className={styles.main}>
+                    {/* For You Section — personalized experience shown first */}
+                    <motion.div
+                        className={styles.forYouSection}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                    >
+                        <ForYouTab
+                            locale={locale}
+                            unlockedAdvancements={unlockedCount}
+                            totalAdvancements={ADVANCEMENTS.length}
+                        />
+                    </motion.div>
+
+                    {/* SELECT SERVER heading — below personalized content */}
                     <motion.div
                         className={styles.heroText}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
-                        transition={{ duration: 0.7, delay: 0.2 }}
+                        transition={{ duration: 0.7, delay: 0.3 }}
                     >
                         <h1>{t('lobby.selectServer')}</h1>
                         <p>{t('lobby.chooseMode')}</p>
@@ -311,7 +326,7 @@ export default function RhythmiaPage() {
                             onClick={() => launchGame('vanilla')}
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                            transition={{ duration: 0.6, delay: 0.3 }}
+                            transition={{ duration: 0.6, delay: 0.4 }}
                             whileHover={{ y: -8, transition: { duration: 0.25 } }}
                         >
                             <span className={styles.cardBadge}>{t('vanilla.badge')}</span>
@@ -327,7 +342,7 @@ export default function RhythmiaPage() {
                             onClick={() => launchGame('multiplayer')}
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                            transition={{ duration: 0.6, delay: 0.45 }}
+                            transition={{ duration: 0.6, delay: 0.55 }}
                             whileHover={isArenaLocked ? {} : { y: -8, transition: { duration: 0.25 } }}
                         >
                             {isArenaLocked && (
@@ -380,7 +395,7 @@ export default function RhythmiaPage() {
                             onClick={() => router.push('/arena')}
                             initial={{ opacity: 0, y: 40 }}
                             animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                            transition={{ duration: 0.6, delay: 0.6 }}
+                            transition={{ duration: 0.6, delay: 0.7 }}
                             whileHover={{ y: -8, transition: { duration: 0.25 } }}
                         >
                             <span className={`${styles.cardBadge} ${styles.new}`}>{t('arena.badge')}</span>
@@ -411,23 +426,6 @@ export default function RhythmiaPage() {
                             <button className={styles.playButton}>{t('arena.quickMatch')}</button>
                         </motion.div>
                     </div>
-
-                    {/* For You Section */}
-                    <motion.div
-                        className={styles.forYouSection}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
-                        transition={{ duration: 0.6, delay: 0.7 }}
-                    >
-                        <ForYouTab
-                            locale={locale}
-                            unlockedAdvancements={unlockedCount}
-                            totalAdvancements={ADVANCEMENTS.length}
-                        />
-                    </motion.div>
-
-                    {/* Loyalty widget — visible immediately on landing */}
-                    <LoyaltyWidget />
                 </main>
 
                 <motion.footer

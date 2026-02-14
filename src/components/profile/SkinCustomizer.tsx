@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -8,6 +9,14 @@ import { useSkin } from '@/lib/skin/context';
 import { useProfile } from '@/lib/profile/context';
 import { getIconById } from '@/lib/profile/types';
 import type { Skin } from '@/lib/skin/types';
+import {
+  LOYALTY_TIERS,
+  getTierByXP,
+  tierProgress,
+  xpToNextTier,
+  recordDailyVisit,
+} from '@/lib/loyalty';
+import type { LoyaltyState } from '@/lib/loyalty';
 import styles from './SkinCustomizer.module.css';
 
 const LOCALE_FLAGS: Record<string, string> = {
@@ -90,12 +99,18 @@ function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolea
 
 export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
   const t = useTranslations('skin');
+  const tLoyalty = useTranslations('loyalty');
   const tLocale = useTranslations('localeSwitcher');
   const { currentSkin, setSkin, skins } = useSkin();
   const { profile } = useProfile();
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+  const [loyaltyState, setLoyaltyState] = useState<LoyaltyState | null>(null);
+
+  useEffect(() => {
+    setLoyaltyState(recordDailyVisit());
+  }, []);
 
   const handleLocaleChange = (newLocale: Locale) => {
     if (newLocale !== locale) {
@@ -145,6 +160,48 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
             </svg>
           </button>
         </div>
+
+        {/* Loyalty tier section */}
+        {loyaltyState && (() => {
+          const currentTier = getTierByXP(loyaltyState.xp);
+          const progress = tierProgress(loyaltyState.xp);
+          const nextXP = xpToNextTier(loyaltyState.xp);
+          return (
+            <>
+              <div className={styles.sectionLabel}>{tLoyalty('currentTier')}</div>
+              <div className={styles.loyaltySection}>
+                <div className={styles.loyaltyTier}>
+                  <span className={styles.loyaltyTierIcon}>{currentTier.icon}</span>
+                  <div className={styles.loyaltyTierInfo}>
+                    <div className={styles.loyaltyTierName} style={{ color: currentTier.color }}>
+                      {tLoyalty(`tiers.${currentTier.id}`)}
+                    </div>
+                    <div className={styles.loyaltyXP}>
+                      {loyaltyState.xp} XP
+                      {nextXP !== null && (
+                        <span className={styles.loyaltyNextXP}>
+                          {' '}&middot; {tLoyalty('xpToNext', { xp: nextXP })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.loyaltyProgress}>
+                  <div
+                    className={styles.loyaltyProgressFill}
+                    style={{ width: `${progress}%`, background: currentTier.color }}
+                  />
+                </div>
+                <button
+                  className={styles.loyaltyViewAll}
+                  onClick={() => { onClose(); router.push('/loyalty'); }}
+                >
+                  {tLoyalty('viewAll')}
+                </button>
+              </div>
+            </>
+          );
+        })()}
 
         {/* Section label */}
         <div className={styles.sectionLabel}>{t('selectSkin')}</div>
