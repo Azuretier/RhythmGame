@@ -15,6 +15,7 @@ interface SkillEffectProps {
  */
 export function FireballEffect({ castEvent, onComplete }: SkillEffectProps) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const trailRef = useRef<THREE.Mesh>(null);
   const [completed, setCompleted] = useState(false);
   const startTime = useRef(Date.now());
   
@@ -32,10 +33,18 @@ export function FireballEffect({ castEvent, onComplete }: SkillEffectProps) {
     const duration = 1.5; // seconds
     const progress = Math.min(elapsed / duration, 1);
 
-    // Lerp position
+    // Lerp position for main fireball
     meshRef.current.position.x = THREE.MathUtils.lerp(startPos.x, targetPos.x, progress);
     meshRef.current.position.y = THREE.MathUtils.lerp(startPos.y + 1, targetPos.y + 1, progress);
     meshRef.current.position.z = THREE.MathUtils.lerp(startPos.z, targetPos.z, progress);
+
+    // Trail follows slightly behind
+    if (trailRef.current) {
+      const trailProgress = Math.max(0, progress - 0.1);
+      trailRef.current.position.x = THREE.MathUtils.lerp(startPos.x, targetPos.x, trailProgress);
+      trailRef.current.position.y = THREE.MathUtils.lerp(startPos.y + 1, targetPos.y + 1, trailProgress);
+      trailRef.current.position.z = THREE.MathUtils.lerp(startPos.z, targetPos.z, trailProgress);
+    }
 
     // Rotate
     meshRef.current.rotation.x += 0.1;
@@ -61,7 +70,7 @@ export function FireballEffect({ castEvent, onComplete }: SkillEffectProps) {
         />
       </mesh>
       {/* Trail particles */}
-      <mesh ref={meshRef} position={[0, 0, -0.5]}>
+      <mesh ref={trailRef}>
         <sphereGeometry args={[0.2, 8, 8]} />
         <meshStandardMaterial
           color="#ff6b35"

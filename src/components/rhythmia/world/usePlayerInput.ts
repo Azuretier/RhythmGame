@@ -46,20 +46,20 @@ export function usePlayerInput() {
         inputRef.current.right = true;
         break;
       
-      // Skills
+      // Skills (using number keys 1-4 to avoid conflict with WASD)
       case 'q':
+      case '1':
         inputRef.current.skillQ = true;
         break;
-      case 'w':
-        // Note: 'w' is both movement and skill, movement takes priority
-        if (!inputRef.current.forward) {
-          inputRef.current.skillW = true;
-        }
+      case '2':
+        inputRef.current.skillW = true;
         break;
       case 'e':
+      case '3':
         inputRef.current.skillE = true;
         break;
       case 'r':
+      case '4':
         inputRef.current.skillR = true;
         break;
       
@@ -95,17 +95,20 @@ export function usePlayerInput() {
         inputRef.current.right = false;
         break;
       
-      // Skills
+      // Skills (using number keys 1-4 to avoid conflict with WASD)
       case 'q':
+      case '1':
         inputRef.current.skillQ = false;
         break;
-      case 'w':
+      case '2':
         inputRef.current.skillW = false;
         break;
       case 'e':
+      case '3':
         inputRef.current.skillE = false;
         break;
       case 'r':
+      case '4':
         inputRef.current.skillR = false;
         break;
       

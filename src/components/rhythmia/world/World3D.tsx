@@ -313,7 +313,7 @@ export default function World3D({ worldData, onStoryComplete }: World3DProps) {
           <kbd>WASD</kbd> Move
         </div>
         <div className={styles.helpItem}>
-          <kbd>Q W E R</kbd> Skills
+          <kbd>Q/1 2 E/3 R/4</kbd> Skills
         </div>
         <div className={styles.helpItem}>
           <kbd>F/Space</kbd> Interact
