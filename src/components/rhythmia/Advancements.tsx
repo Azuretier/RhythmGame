@@ -140,7 +140,7 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
                       {formatNumber(currentValue)} / {formatNumber(adv.threshold)}
                     </div>
                   </div>
-                  {unlocked && <div className={styles.advCheck}>✓</div>}
+                  {unlocked && <div className={styles.advCheck}>★</div>}
                 </div>
               );
             })}
