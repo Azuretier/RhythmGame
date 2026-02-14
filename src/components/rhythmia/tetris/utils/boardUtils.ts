@@ -1,4 +1,4 @@
-import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOES, WALL_KICKS_I, WALL_KICKS_JLSTZ, ROTATION_NAMES } from '../constants';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TETROMINOES, WALL_KICKS_I, WALL_KICKS_JLSTZ, ROTATION_NAMES } from '../constants';
 import type { Piece, Board } from '../types';
 
 /**
@@ -110,17 +110,21 @@ export const lockPiece = (piece: Piece, boardState: Board): Board => {
 };
 
 /**
- * Clear completed lines and return new board with cleared line count
+ * Clear completed lines and return new board with cleared line count.
+ * Only clears lines in the visible area (below BUFFER_ZONE).
+ * Buffer rows are preserved and empty rows are inserted just below the buffer.
  */
 export const clearLines = (boardState: Board): { newBoard: Board; clearedLines: number } => {
-    const newBoard = boardState.filter(row => row.some(cell => cell === null));
-    const clearedLines = BOARD_HEIGHT - newBoard.length;
+    const bufferRows = boardState.slice(0, BUFFER_ZONE);
+    const visibleRows = boardState.slice(BUFFER_ZONE);
+    const remainingVisible = visibleRows.filter(row => row.some(cell => cell === null));
+    const clearedLines = visibleRows.length - remainingVisible.length;
 
-    while (newBoard.length < BOARD_HEIGHT) {
-        newBoard.unshift(Array(BOARD_WIDTH).fill(null));
+    while (remainingVisible.length < visibleRows.length) {
+        remainingVisible.unshift(Array(BOARD_WIDTH).fill(null));
     }
 
-    return { newBoard, clearedLines };
+    return { newBoard: [...bufferRows, ...remainingVisible], clearedLines };
 };
 
 /**
@@ -135,7 +139,10 @@ export const getGhostY = (piece: Piece, boardState: Board): number => {
 };
 
 /**
- * Create initial piece spawn
+ * Create initial piece spawn.
+ * Pieces spawn in the buffer zone above the visible area.
+ * I piece body (row 1 of shape) is placed at the top of the visible area.
+ * Other pieces spawn with their body starting at the top of the visible area.
  */
 export const createSpawnPiece = (type: string): Piece => {
     const shape = getShape(type, 0);
@@ -143,6 +150,6 @@ export const createSpawnPiece = (type: string): Piece => {
         type,
         rotation: 0,
         x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-        y: type === 'I' ? -1 : 0,
+        y: type === 'I' ? BUFFER_ZONE - 1 : BUFFER_ZONE,
     };
 };
