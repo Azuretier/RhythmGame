@@ -1105,6 +1105,56 @@
         "logTitle": "Text Log",
         "close": "Close",
         "resume": "Resume",
-        "chapterSelect": "Chapter Select"
+        "chapterSelect": "Map"
+    },
+    "dungeonMap": {
+        "title": "MISSION MAP",
+        "back": "← Back",
+        "completed": "Cleared",
+        "cleared": "CLEARED",
+        "boss": "BOSS",
+        "difficulty": "DIFFICULTY",
+        "recommendedPower": "RECOMMENDED POWER",
+        "rewards": "REWARDS",
+        "startMission": "START MISSION",
+        "difficulties": {
+            "default": "Default",
+            "adventure": "Adventure",
+            "apocalypse": "Apocalypse"
+        },
+        "missions": {
+            "camp": "Camp",
+            "campDesc": "The beginning of your adventure. Gear up and set out.",
+            "creeperWoods": "Creeper Woods",
+            "creeperWoodsDesc": "Deep in the dark forest, the pulse of rhythm echoes.",
+            "soggySwamp": "Soggy Swamp",
+            "soggySwampDesc": "Navigate the fog-covered marshlands. Watch your step.",
+            "pumpkinPastures": "Pumpkin Pastures",
+            "pumpkinPasturesDesc": "Looks peaceful, but enemies lurk beneath the surface.",
+            "redstoneMines": "Redstone Mines",
+            "redstoneMinesDesc": "Seek the power that sleeps deep underground.",
+            "fieryForge": "Fiery Forge",
+            "fieryForgeDesc": "A trial by fire awaits.",
+            "highblockHalls": "Highblock Halls",
+            "highblockHallsDesc": "Face mighty foes within the grand castle walls.",
+            "obsidianPinnacle": "Obsidian Pinnacle",
+            "obsidianPinnacleDesc": "The final battle. Defeat the Arch-Illager of Discord."
+        },
+        "rewards": {
+            "100xp": "100 XP",
+            "200xp": "200 XP",
+            "250xp": "250 XP",
+            "300xp": "300 XP",
+            "350xp": "350 XP",
+            "400xp": "400 XP",
+            "500xp": "500 XP",
+            "stoneFragment": "Stone Fragment",
+            "ironOre": "Iron Ore",
+            "crystalShard": "Crystal Shard",
+            "goldNugget": "Gold Nugget",
+            "obsidianCore": "Obsidian Core",
+            "starFragment": "Star Fragment",
+            "worldTraveler": "World Traveler"
+        }
     }
 }

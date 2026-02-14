@@ -3,11 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { CHAPTERS, PARTICLE_EMOJIS } from '@/data/stories/chapters';
+import { PARTICLE_EMOJIS } from '@/data/stories/chapters';
 import type { Chapter, StoryScene, DialogueLine } from '@/data/stories/chapters';
+import type { MapMission, MissionDifficulty } from '@/data/stories/missions';
+import DungeonsMap from './DungeonsMap';
 import styles from './stories.module.css';
 
-type ViewState = 'chapter-select' | 'playing';
+type ViewState = 'map' | 'playing';
 
 interface LogEntry {
     speaker: string | null;
@@ -19,7 +21,7 @@ export default function StoryViewer() {
     const locale = useLocale();
     const router = useRouter();
 
-    const [viewState, setViewState] = useState<ViewState>('chapter-select');
+    const [viewState, setViewState] = useState<ViewState>('map');
     const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
     const [sceneIndex, setSceneIndex] = useState(0);
     const [lineIndex, setLineIndex] = useState(0);
@@ -124,7 +126,7 @@ export default function StoryViewer() {
                 // Chapter complete — return to select
                 setTransitioning(true);
                 setTimeout(() => {
-                    setViewState('chapter-select');
+                    setViewState('map');
                     setTransitioning(false);
                 }, 600);
             }
@@ -187,6 +189,14 @@ export default function StoryViewer() {
         }, 400);
     };
 
+    const handleStartMission = useCallback(
+        (chapter: Chapter, _mission: MapMission, _difficulty: MissionDifficulty) => {
+            startChapter(chapter);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+
     const skipScene = () => {
         if (!currentChapter) return;
         const nextSceneIndex = sceneIndex + 1;
@@ -200,62 +210,24 @@ export default function StoryViewer() {
         } else {
             setTransitioning(true);
             setTimeout(() => {
-                setViewState('chapter-select');
+                setViewState('map');
                 setTransitioning(false);
             }, 400);
         }
     };
 
-    // ---- Chapter Select Screen ----
-    if (viewState === 'chapter-select') {
+    // ---- Map Screen (Minecraft Dungeons-style) ----
+    if (viewState === 'map') {
         return (
-            <div className={styles.chapterSelect}>
-                <div className={styles.chapterSelectBg} />
-                <div className={styles.scanlines} />
-
-                <h1 className={styles.chapterSelectTitle}>{t('title')}</h1>
-
-                <div className={styles.chapterGrid}>
-                    {CHAPTERS.map((chapter) => (
-                        <button
-                            key={chapter.id}
-                            className={styles.chapterCard}
-                            onClick={() => startChapter(chapter)}
-                        >
-                            <div
-                                className={styles.chapterCardAccent}
-                                style={{ background: chapter.accent }}
-                            />
-                            <div className={styles.chapterCardNumber}>
-                                {t('chapter')} {String(chapter.number).padStart(2, '0')}
-                            </div>
-                            <div className={styles.chapterCardTitle}>
-                                {locale === 'en' ? chapter.titleEn : chapter.title}
-                            </div>
-                            <div className={styles.chapterCardSubtitle}>
-                                {chapter.subtitle}
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                <div className={styles.chapterSelectBack}>
-                    <button
-                        className={styles.backButton}
-                        style={{ position: 'relative', top: 'auto', left: 'auto' }}
-                        onClick={() => router.push('/')}
-                    >
-                        {t('backToLobby')}
-                    </button>
-                </div>
-
+            <>
+                <DungeonsMap onStartMission={handleStartMission} />
                 {transitioning && (
                     <div
                         className={styles.transitionOverlay}
-                        style={{ opacity: 1 }}
+                        style={{ opacity: 1, position: 'fixed', inset: 0, zIndex: 200 }}
                     />
                 )}
-            </div>
+            </>
         );
     }
 
@@ -348,7 +320,7 @@ export default function StoryViewer() {
                     className={styles.backButton}
                     style={{ position: 'relative', top: 'auto', left: 'auto' }}
                     onClick={() => {
-                        setViewState('chapter-select');
+                        setViewState('map');
                         setAutoMode(false);
                     }}
                 >
@@ -450,7 +422,7 @@ export default function StoryViewer() {
                         className={styles.menuItem}
                         onClick={() => {
                             setShowMenu(false);
-                            setViewState('chapter-select');
+                            setViewState('map');
                             setAutoMode(false);
                         }}
                     >

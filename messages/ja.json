@@ -1105,6 +1105,56 @@
         "logTitle": "テキストログ",
         "close": "閉じる",
         "resume": "再開",
-        "chapterSelect": "チャプター選択"
+        "chapterSelect": "マップ"
+    },
+    "dungeonMap": {
+        "title": "MISSION MAP",
+        "back": "← 戻る",
+        "completed": "クリア済",
+        "cleared": "クリア済",
+        "boss": "BOSS",
+        "difficulty": "難易度",
+        "recommendedPower": "推奨パワー",
+        "rewards": "報酬",
+        "startMission": "ミッション開始",
+        "difficulties": {
+            "default": "デフォルト",
+            "adventure": "アドベンチャー",
+            "apocalypse": "アポカリプス"
+        },
+        "missions": {
+            "camp": "キャンプ",
+            "campDesc": "冒険の始まり。装備を整えて出発しよう。",
+            "creeperWoods": "クリーパーの森",
+            "creeperWoodsDesc": "暗い森の奥、リズムの脈動が聴こえる。",
+            "soggySwamp": "湿地帯",
+            "soggySwampDesc": "霧に包まれた沼地を進め。足元に注意。",
+            "pumpkinPastures": "カボチャの牧場",
+            "pumpkinPasturesDesc": "穏やかに見えるが、敵は潜んでいる。",
+            "redstoneMines": "レッドストーン鉱山",
+            "redstoneMinesDesc": "地下深くに眠る力を求めて。",
+            "fieryForge": "灼熱の鍛冶場",
+            "fieryForgeDesc": "炎の試練が待ち受ける。",
+            "highblockHalls": "高層の大広間",
+            "highblockHallsDesc": "壮大な城の中で、強敵と対峙する。",
+            "obsidianPinnacle": "黒曜石の尖塔",
+            "obsidianPinnacleDesc": "最後の戦い。ディスコードの王を倒せ。"
+        },
+        "rewards": {
+            "100xp": "100 XP",
+            "200xp": "200 XP",
+            "250xp": "250 XP",
+            "300xp": "300 XP",
+            "350xp": "350 XP",
+            "400xp": "400 XP",
+            "500xp": "500 XP",
+            "stoneFragment": "石片",
+            "ironOre": "鉄鉱石",
+            "crystalShard": "水晶片",
+            "goldNugget": "金塊",
+            "obsidianCore": "黒曜核",
+            "starFragment": "星の欠片",
+            "worldTraveler": "世界旅行者"
+        }
     }
 }
