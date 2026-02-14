@@ -139,10 +139,10 @@ export const getGhostY = (piece: Piece, boardState: Board): number => {
 };
 
 /**
- * Create initial piece spawn.
- * Pieces spawn in the buffer zone above the visible area.
- * I piece body (row 1 of shape) is placed at the top of the visible area.
- * Other pieces spawn with their body starting at the top of the visible area.
+ * Create initial piece spawn (standard Tetris / SRS spawn position).
+ * All pieces spawn at y = BUFFER_ZONE - 1 so their body row sits at
+ * the top of the visible area (row BUFFER_ZONE) and any upper blocks
+ * extend into the buffer zone — matching standard guideline behaviour.
  */
 export const createSpawnPiece = (type: string): Piece => {
     const shape = getShape(type, 0);
@@ -150,6 +150,6 @@ export const createSpawnPiece = (type: string): Piece => {
         type,
         rotation: 0,
         x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-        y: type === 'I' ? BUFFER_ZONE - 1 : BUFFER_ZONE,
+        y: BUFFER_ZONE - 1,
     };
 };

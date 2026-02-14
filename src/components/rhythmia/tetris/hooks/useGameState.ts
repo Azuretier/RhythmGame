@@ -857,7 +857,7 @@ export function useGameState() {
             type,
             rotation: 0,
             x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-            y: type === 'I' ? BUFFER_ZONE - 2 : BUFFER_ZONE - 1,
+            y: BUFFER_ZONE - 1,
         };
 
         setCurrentPiece(initialPiece);
