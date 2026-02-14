@@ -126,7 +126,9 @@ export const WORLDS: World[] = [
 
 // ===== Board Dimensions =====
 export const BOARD_WIDTH = 10;
-export const BOARD_HEIGHT = 20;
+export const VISIBLE_HEIGHT = 20;
+export const BUFFER_ZONE = 4;    // Hidden rows above the visible area (standard Tetris buffer)
+export const BOARD_HEIGHT = VISIBLE_HEIGHT + BUFFER_ZONE; // Total board height (24)
 export const CELL_SIZE = 28;
 
 // ===== DAS/ARR/SDF Settings (in milliseconds) =====

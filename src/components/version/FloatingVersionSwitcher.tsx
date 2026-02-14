@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette } from 'lucide-react';
+import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Box } from 'lucide-react';
 import { useVersion } from '@/lib/version/context';
 import {
   VERSION_METADATA,
@@ -17,6 +17,7 @@ const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
   current: <Gamepad2 size={20} />,
   '1.0.0': <MessageCircle size={20} />,
   '1.0.1': <Heart size={20} />,
+  '1.0.2': <Box size={20} />,
 };
 
 export default function FloatingVersionSwitcher() {
@@ -27,16 +28,9 @@ export default function FloatingVersionSwitcher() {
     if (version === currentVersion) return;
     setVersion(version);
     setIsOpen(false);
-    
-    // Navigate to the appropriate page
-    // Use window.location.href for full reload to ensure clean state
-    if (version === '1.0.0') {
-      window.location.href = '/';
-    } else if (version === '1.0.1') {
-      window.location.href = '/current';
-    } else if (version === '1.0.2') {
-      window.location.href = '/';
-    }
+
+    // Full reload to ensure clean state when switching versions
+    window.location.href = '/';
   };
 
   const handleAccentChange = (color: AccentColor) => {

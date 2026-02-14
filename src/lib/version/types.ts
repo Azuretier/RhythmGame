@@ -2,7 +2,7 @@
  * UI Version type definitions
  */
 
-export const UI_VERSIONS = ['1.0.0', '1.0.1', '1.0.2'] as const;
+export const UI_VERSIONS = ['current', '1.0.0', '1.0.1', '1.0.2'] as const;
 export type UIVersion = typeof UI_VERSIONS[number];
 
 // Alias for backward compatibility
