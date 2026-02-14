@@ -19,7 +19,7 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 });
 
 // Hooks
-import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
+import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX, useCharacterInteraction, useSkills } from './hooks';
 
 // Utilities
 import {
@@ -58,7 +58,17 @@ import {
   TutorialGuide,
   hasTutorialBeenSeen,
   KeyBindSettings,
+  CharacterRoster,
+  DialogueBox,
+  CharacterInfo,
+  SkillBar,
+  ActiveEffectsDisplay,
+  SkillCastVFX,
 } from './components';
+
+import type { SkillSlot, SkillCastEvent } from '@/lib/character-interaction/types';
+import { SKILL_MAP } from '@/lib/character-interaction/skills';
+import type { Enemy } from './types';
 
 interface RhythmiaProps {
   onQuit?: () => void;
@@ -105,6 +115,12 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   const gameState = useGameState();
   const audio = useAudio();
   const vfx = useRhythmVFX();
+  const charInteraction = useCharacterInteraction();
+  const skills = useSkills();
+
+  // Skill cast VFX state
+  const [showSkillCastVFX, setShowSkillCastVFX] = useState(false);
+  const [skillCastColor, setSkillCastColor] = useState<string | null>(null);
   // Stable ref for vfx — useRhythmVFX() returns a new object every render,
   // so using vfx directly as an effect dependency would restart those effects
   // on every render. The ref always holds the latest value without triggering re-runs.
@@ -297,6 +313,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   destroyTerrainRef.current = destroyTerrain;
   const startNewStageRef = useRef(startNewStage);
   startNewStageRef.current = startNewStage;
+  const getShieldReductionRef = useRef(skills.getShieldReduction);
+  getShieldReductionRef.current = skills.getShieldReduction;
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -555,18 +573,20 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       }
 
       const weaponMult = damageMultiplierRef.current;
+      const skillMult = skills.getSkillDamageMultiplier();
+      const totalMult = weaponMult * skillMult;
       const center = getBoardCenter();
 
       if (mode === 'td') {
         // === TOWER DEFENSE: Kill enemies when lines are cleared ===
-        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * totalMult);
         killEnemies(killCount);
 
         // Item drops
         spawnItemDrops(killCount, center.x, center.y);
       } else {
         // === VANILLA: Destroy terrain blocks ===
-        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * totalMult);
         const remaining = destroyTerrain(damage);
         
         // Item drops from terrain
@@ -719,6 +739,124 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   const [showTutorial, setShowTutorial] = useState(false);
   const pendingModeRef = useRef<GameMode | null>(null);
 
+  // Apply skill effects to the game (damage enemies, heal tower, destroy terrain, etc.)
+  const applySkillEffects = useCallback((castEvent: SkillCastEvent) => {
+    const center = getBoardCenter();
+
+    for (const effect of castEvent.effects) {
+      switch (effect.type) {
+        case 'damage': {
+          if (castEvent.targetType === 'enemy') {
+            // Damage nearest enemy
+            const alive = enemiesRef.current.filter((e: Enemy) => e.alive);
+            if (alive.length > 0) {
+              const nearest = alive.reduce((best: Enemy, e: Enemy) => {
+                const d = Math.abs(e.gridX) + Math.abs(e.gridZ);
+                const bd = Math.abs(best.gridX) + Math.abs(best.gridZ);
+                return d < bd ? e : best;
+              });
+              nearest.health -= effect.value;
+              if (nearest.health <= 0) {
+                nearest.alive = false;
+                gameState.setEnemies((prev: Enemy[]) => prev.filter((e: Enemy) => e.alive));
+              }
+            }
+          } else if (castEvent.targetType === 'area' && effect.radius) {
+            // Damage enemies within radius
+            gameState.setEnemies((prev: Enemy[]) => prev.map((e: Enemy) => {
+              if (!e.alive) return e;
+              const dist = Math.abs(e.gridX) + Math.abs(e.gridZ);
+              if (dist <= effect.radius!) {
+                const newHp = e.health - effect.value;
+                return { ...e, health: newHp, alive: newHp > 0 };
+              }
+              return e;
+            }).filter((e: Enemy) => e.alive));
+          } else if (castEvent.targetType === 'global') {
+            // Damage all enemies
+            gameState.setEnemies((prev: Enemy[]) => prev.map((e: Enemy) => {
+              if (!e.alive) return e;
+              const newHp = e.health - effect.value;
+              return { ...e, health: newHp, alive: newHp > 0 };
+            }).filter((e: Enemy) => e.alive));
+          }
+          spawnTerrainParticles(center.x, center.y, 10, '#FF4444');
+          break;
+        }
+
+        case 'heal': {
+          setTowerHealth(prev => Math.min(MAX_HEALTH, prev + effect.value));
+          spawnTerrainParticles(center.x, center.y, 8, '#00FF88');
+          break;
+        }
+
+        case 'terrain_destroy': {
+          const remaining = destroyTerrain(effect.value);
+          spawnTerrainParticles(center.x, center.y, effect.value, '#4FC3F7');
+          if (remaining <= 0) {
+            gameWorldsClearedRef.current++;
+            const nextStage = stageNumberRef.current + 1;
+            startNewStage(nextStage);
+          }
+          break;
+        }
+
+        case 'knockback': {
+          if (effect.radius) {
+            gameState.setEnemies((prev: Enemy[]) => prev.map((e: Enemy) => {
+              if (!e.alive) return e;
+              const dist = Math.abs(e.gridX) + Math.abs(e.gridZ);
+              if (dist <= effect.radius!) {
+                // Push away from center
+                const dx = e.gridX === 0 ? (Math.random() > 0.5 ? 1 : -1) : Math.sign(e.gridX);
+                const dz = e.gridZ === 0 ? (Math.random() > 0.5 ? 1 : -1) : Math.sign(e.gridZ);
+                const newGx = Math.max(-18, Math.min(18, e.gridX + dx * effect.value));
+                const newGz = Math.max(-18, Math.min(18, e.gridZ + dz * effect.value));
+                return { ...e, gridX: newGx, gridZ: newGz, x: newGx, z: newGz };
+              }
+              return e;
+            }));
+          }
+          spawnTerrainParticles(center.x, center.y, 12, '#CC6600');
+          break;
+        }
+
+        case 'execute': {
+          if (effect.threshold) {
+            gameState.setEnemies((prev: Enemy[]) => prev.filter((e: Enemy) => {
+              if (!e.alive) return false;
+              const hpPct = e.health / e.maxHealth;
+              return hpPct > effect.threshold!;
+            }));
+          }
+          spawnTerrainParticles(center.x, center.y, 15, '#FF0000');
+          break;
+        }
+
+        // Duration-based effects (slow, stun, shield, buff_damage) are handled
+        // by the useSkills hook's activeEffects — they modify game behavior
+        // through getSkillDamageMultiplier() and getShieldReduction()
+      }
+    }
+  }, [getBoardCenter, enemiesRef, gameState, spawnTerrainParticles, setTowerHealth, destroyTerrain, startNewStage, stageNumberRef]);
+
+  // Handle casting a skill
+  const handleCastSkill = useCallback((slot: SkillSlot) => {
+    const castEvent = skills.castSkill(slot);
+    if (!castEvent) return;
+
+    // Show VFX
+    const skill = SKILL_MAP[castEvent.skillId];
+    if (skill) {
+      setSkillCastColor(skill.color);
+      setShowSkillCastVFX(true);
+      setTimeout(() => setShowSkillCastVFX(false), 400);
+    }
+
+    // Apply immediate effects
+    applySkillEffects(castEvent);
+  }, [skills, applySkillEffects]);
+
   // Actually start the game (after tutorial or directly)
   const launchGame = useCallback((mode: GameMode) => {
     initAudio();
@@ -736,7 +874,22 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     lockStartTimeRef.current = null;
     lockMovesRef.current = 0;
     setToastIds([]);
-  }, [initAudio, initGame]);
+
+    // Initialize character interaction and skills for world 0
+    charInteraction.initCharactersForWorld(0);
+    skills.resetSkills();
+
+    // Auto-select first character and load their skills
+    setTimeout(() => {
+      charInteraction.triggerEvent({ type: 'game_start' });
+      // Load default character skills (Aria — guide)
+      if (charInteraction.activeCharacters.length > 0) {
+        skills.loadCharacterSkills(charInteraction.activeCharacters[0].id);
+      } else {
+        skills.loadCharacterSkills('aria');
+      }
+    }, 1500); // After world creation animation
+  }, [initAudio, initGame, charInteraction, skills]);
 
   // Start game — intercept for tutorial on first vanilla play
   const startGame = useCallback((mode: GameMode) => {
@@ -776,6 +929,34 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       }
     }
   }, [gameOver]);
+
+  // Update characters and skills when world changes
+  useEffect(() => {
+    if (!isPlaying || gameOver) return;
+    charInteraction.initCharactersForWorld(worldIdx);
+    charInteraction.triggerEvent({ type: 'world_enter', worldIdx });
+  }, [worldIdx, isPlaying, gameOver]);
+
+  // Sync mana from score
+  useEffect(() => {
+    skills.updateMana(score);
+  }, [score, skills]);
+
+  // Check for low HP dialogue trigger
+  useEffect(() => {
+    if (towerHealth < 30 && towerHealth > 0 && isPlaying && !gameOver) {
+      charInteraction.triggerEvent({ type: 'health_low', threshold: 30 });
+    }
+  }, [towerHealth, isPlaying, gameOver]);
+
+  // Apply shield reduction to tower damage in TD mode
+  const applyShieldedDamage = useCallback((baseDamage: number): number => {
+    const reduction = skills.getShieldReduction();
+    if (reduction > 0) {
+      return Math.max(1, Math.floor(baseDamage * reduction));
+    }
+    return baseDamage;
+  }, [skills]);
 
   // Reset beat timing when unpausing to avoid desync
   useEffect(() => {
@@ -823,9 +1004,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           playKillSoundRef.current();
         }
 
-        // Apply damage when enemies reach the tower
+        // Apply damage when enemies reach the tower (reduced by active shield)
         if (reached > 0) {
-          const damage = reached * ENEMY_REACH_DAMAGE;
+          const baseDamage = reached * ENEMY_REACH_DAMAGE;
+          const shieldReduction = getShieldReductionRef.current();
+          const damage = shieldReduction > 0
+            ? Math.max(1, Math.floor(baseDamage * shieldReduction))
+            : baseDamage;
           setTowerHealthRef.current(prev => {
             const newHealth = Math.max(0, prev - damage);
             if (newHealth <= 0) {
@@ -1037,6 +1222,40 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       // Don't process game inputs while any overlay is open
       if (showCraftUI || showInventory || showShop) return;
 
+      // Handle skill keys (Q/W/E/R) — cast skills
+      const skillKey = e.key.toUpperCase() as SkillSlot;
+      if (['Q', 'W', 'E', 'R'].includes(skillKey) && !isPaused) {
+        e.preventDefault();
+        handleCastSkill(skillKey);
+        return;
+      }
+
+      // Handle character interaction (Tab to cycle, T to talk)
+      if (e.key === 'Tab' && !isPaused) {
+        e.preventDefault();
+        // Cycle to next character
+        const chars = charInteraction.activeCharacters;
+        if (chars.length > 0) {
+          const currentIdx = chars.findIndex(c => c.id === charInteraction.selectedCharacterId);
+          const nextIdx = (currentIdx + 1) % chars.length;
+          const nextChar = chars[nextIdx];
+          charInteraction.setSelectedCharacterId(nextChar.id);
+          skills.loadCharacterSkills(nextChar.id);
+          charInteraction.interactWithCharacter(nextChar.id);
+        }
+        return;
+      }
+
+      if ((e.key === 't' || e.key === 'T') && !isPaused) {
+        e.preventDefault();
+        if (charInteraction.isDialogueVisible) {
+          charInteraction.advanceDialogue();
+        } else if (charInteraction.selectedCharacterId) {
+          charInteraction.interactWithCharacter(charInteraction.selectedCharacterId);
+        }
+        return;
+      }
+
       const currentTime = performance.now();
 
       switch (e.key) {
@@ -1146,7 +1365,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, keybindings, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI]);
+  }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, keybindings, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI, handleCastSkill, charInteraction, skills]);
 
   // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
   useEffect(() => {
@@ -1236,7 +1455,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           )}
 
           <div className={styles.gameArea} ref={gameAreaRef}>
-            {/* Left sidebar: Hold + Inventory (separate containers) */}
+            {/* Left sidebar: Hold + Inventory + Characters (separate containers) */}
             <div className={styles.sidePanelLeft}>
               <div className={styles.nextWrap}>
                 <div className={styles.nextLabel}>HOLD (C)</div>
@@ -1248,6 +1467,24 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 damageMultiplier={damageMultiplier}
                 onCraftOpen={toggleCraftUI}
               />
+              {/* Character roster & info */}
+              <CharacterRoster
+                characters={charInteraction.activeCharacters}
+                selectedCharacterId={charInteraction.selectedCharacterId}
+                speakingCharacterId={charInteraction.speakingCharacterId}
+                onInteract={(id) => {
+                  charInteraction.setSelectedCharacterId(id);
+                  skills.loadCharacterSkills(id);
+                  charInteraction.interactWithCharacter(id);
+                }}
+              />
+              {charInteraction.selectedCharacterId && (
+                <CharacterInfo
+                  character={charInteraction.activeCharacters.find(
+                    c => c.id === charInteraction.selectedCharacterId
+                  ) || null}
+                />
+              )}
             </div>
 
             {/* Center column: Board + Beat bar + Stats */}
@@ -1286,6 +1523,18 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
               {gameMode === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
           </div>
+
+          {/* Skill Bar (Q/W/E/R) */}
+          <SkillBar
+            loadout={skills.loadout}
+            skillStates={skills.skillStates}
+            mana={skills.mana}
+            canCastSkill={skills.canCastSkill}
+            onCastSkill={handleCastSkill}
+          />
+
+          {/* Active skill effects indicators */}
+          <ActiveEffectsDisplay effects={skills.activeEffects} />
 
           <TouchControls
             onMoveLeft={() => moveHorizontal(-1)}
@@ -1340,6 +1589,28 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           canPurchase={canCraftCard}
           onClose={() => { setShowShop(false); setIsPaused(pauseStateBeforeOverlay); }}
           closeKey={keybindings.shop}
+        />
+      )}
+
+      {/* Skill Cast VFX flash */}
+      <SkillCastVFX skillColor={skillCastColor} isVisible={showSkillCastVFX} />
+
+      {/* Character Dialogue Box */}
+      {charInteraction.isDialogueVisible && charInteraction.speakingCharacterId && (
+        <DialogueBox
+          speaker={charInteraction.currentSpeaker}
+          speakerJa={charInteraction.currentSpeakerJa}
+          text={charInteraction.currentDialogueText}
+          textJa={charInteraction.currentDialogueTextJa}
+          characterIcon={
+            charInteraction.activeCharacters.find(c => c.id === charInteraction.speakingCharacterId)?.icon || ''
+          }
+          characterColor={
+            charInteraction.activeCharacters.find(c => c.id === charInteraction.speakingCharacterId)?.color || '#fff'
+          }
+          isVisible={charInteraction.isDialogueVisible}
+          onAdvance={charInteraction.advanceDialogue}
+          onDismiss={charInteraction.dismissDialogue}
         />
       )}
 

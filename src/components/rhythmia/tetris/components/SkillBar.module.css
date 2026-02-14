@@ -1,0 +1,246 @@
+/* ===== Skill Bar (Q/W/E/R) ===== */
+.skillBar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.skillSlots {
+  display: flex;
+  gap: 4px;
+}
+
+/* ===== Individual Skill Slot ===== */
+.skillSlot {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+
+.skillSlot.empty {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.skillSlot.ready {
+  border-color: var(--skill-color);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+}
+
+.skillSlot.ready:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 16px var(--skill-glow);
+  border-color: var(--skill-glow);
+}
+
+.skillSlot.ready:active {
+  transform: scale(0.95);
+}
+
+.skillSlot.onCooldown {
+  border-color: rgba(255, 255, 255, 0.08);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.skillSlot.noMana {
+  border-color: rgba(100, 100, 255, 0.2);
+}
+
+.skillSlot.active {
+  border-color: var(--skill-color);
+  box-shadow: 0 0 16px var(--skill-glow), inset 0 0 12px rgba(255, 255, 255, 0.05);
+  animation: activeSkillPulse 1s ease-in-out infinite;
+}
+
+@keyframes activeSkillPulse {
+  0%, 100% { box-shadow: 0 0 12px var(--skill-glow); }
+  50% { box-shadow: 0 0 24px var(--skill-glow); }
+}
+
+/* ===== Cooldown Overlay ===== */
+.cooldownOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  transition: height 0.1s linear;
+  pointer-events: none;
+}
+
+/* ===== Active Glow ===== */
+.activeGlow {
+  position: absolute;
+  inset: -2px;
+  border-radius: 10px;
+  border: 2px solid var(--skill-color);
+  opacity: 0.6;
+  animation: glowPulse 0.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* ===== Skill Icon ===== */
+.skillIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+  z-index: 1;
+}
+
+/* ===== Slot Key Binding ===== */
+.slotKey {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+  z-index: 1;
+}
+
+.skillSlot.ready .slotKey {
+  color: var(--skill-color);
+}
+
+/* ===== Cooldown Timer ===== */
+.cooldownTimer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+  z-index: 2;
+}
+
+/* ===== Mana Cost ===== */
+.manaCost {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-size: 0.5rem;
+  color: rgba(100, 150, 255, 0.6);
+  z-index: 1;
+}
+
+.manaCost.affordable {
+  color: rgba(100, 200, 255, 0.9);
+}
+
+/* ===== Mana Bar ===== */
+.manaBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.manaLabel {
+  font-size: 0.6rem;
+  color: rgba(100, 150, 255, 0.6);
+  letter-spacing: 0.1em;
+}
+
+.manaValue {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(100, 180, 255, 0.9);
+}
+
+/* ===== Active Effects Display ===== */
+.activeEffects {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 250px;
+}
+
+.effectBadge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  font-size: 0.55rem;
+}
+
+.effectProgress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.08);
+  transition: width 0.1s linear;
+}
+
+.effectType {
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.1em;
+  z-index: 1;
+}
+
+.effectTimer {
+  color: rgba(255, 255, 255, 0.5);
+  z-index: 1;
+}
+
+/* ===== Skill Cast VFX ===== */
+.castVFX {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 90;
+  animation: castFlash 0.4s ease-out forwards;
+}
+
+@keyframes castFlash {
+  0% {
+    background: radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--cast-color) 40%, transparent) 0%,
+      transparent 50%
+    );
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .skillSlot {
+    width: 44px;
+    height: 44px;
+  }
+
+  .skillIcon {
+    font-size: 1.2rem;
+  }
+
+  .cooldownTimer {
+    font-size: 1rem;
+  }
+}

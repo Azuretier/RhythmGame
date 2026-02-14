@@ -1,0 +1,224 @@
+/* ===== Character Marker (NPC icon) ===== */
+.characterMarker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.characterMarker:hover {
+  border-color: var(--char-color);
+  background: rgba(0, 0, 0, 0.8);
+  transform: translateY(-2px);
+}
+
+.characterMarker.selected {
+  border-color: var(--char-color);
+  box-shadow: 0 0 12px var(--char-glow), inset 0 0 8px rgba(255, 255, 255, 0.05);
+}
+
+.characterMarker.speaking {
+  animation: characterPulse 1s ease-in-out infinite;
+}
+
+@keyframes characterPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--char-glow); }
+  50% { box-shadow: 0 0 20px var(--char-glow); }
+}
+
+.characterIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.characterName {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+}
+
+.speechIndicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 0.8rem;
+  color: var(--char-color);
+  animation: speechBlink 0.6s ease-in-out infinite;
+}
+
+@keyframes speechBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===== Character Roster ===== */
+.characterRoster {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rosterLabel {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+.rosterList {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ===== Dialogue Box ===== */
+.dialogueOverlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 16px;
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+  animation: dialogueSlideUp 0.3s ease-out;
+}
+
+@keyframes dialogueSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.dialogueBox {
+  max-width: 640px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.92);
+  border: 1px solid var(--dialogue-color, rgba(255, 255, 255, 0.2));
+  border-radius: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.5), 0 0 8px var(--dialogue-color);
+}
+
+.dialogueSpeaker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dialogueSpeakerIcon {
+  font-size: 1.4rem;
+}
+
+.dialogueSpeakerName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--dialogue-color, #fff);
+  letter-spacing: 0.05em;
+}
+
+.dialogueSpeakerNameEn {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-left: 4px;
+}
+
+.dialogueTextContainer {
+  margin-bottom: 8px;
+}
+
+.dialogueTextJa {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.6;
+  margin: 0 0 4px 0;
+}
+
+.dialogueTextEn {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
+}
+
+.dialogueActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dialogueAdvanceHint {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.1em;
+  animation: hintPulse 2s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.dialogueDismiss {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dialogueDismiss:hover {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== Character Info Panel ===== */
+.characterInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid var(--char-color, #fff);
+}
+
+.infoIcon {
+  font-size: 1.2rem;
+}
+
+.infoDetails {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoName {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.infoRole {
+  font-size: 0.55rem;
+  color: var(--char-color);
+  letter-spacing: 0.15em;
+}

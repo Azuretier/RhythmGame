@@ -25,3 +25,5 @@ export { WorldTransition, GamePhaseIndicator } from './WorldTransition';
 export { HealthManaHUD } from './HealthManaHUD';
 export { TutorialGuide, hasTutorialBeenSeen } from './TutorialGuide';
 export { KeyBindSettings } from './KeyBindSettings';
+export { CharacterMarker, CharacterRoster, DialogueBox, CharacterInfo } from './CharacterInteraction';
+export { SkillBar, ActiveEffectsDisplay, SkillCastVFX } from './SkillBar';
