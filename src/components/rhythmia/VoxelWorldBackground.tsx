@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
-import type { Enemy, Bullet, GameMode } from './tetris/types';
+import type { Enemy, Bullet, TerrainPhase } from './tetris/types';
 import { BULLET_GRAVITY, BULLET_GROUND_Y } from './tetris/constants';
 
 // Simple seeded random for deterministic terrain
@@ -282,12 +282,12 @@ const VANILLA_SIZE_X = 16;
 const VANILLA_SIZE_Y = 20; // max height (noise-driven)
 const VANILLA_SIZE_Z = 16;
 
-function generateVoxelWorld(seed: number, size: number, mode: GameMode = 'td', worldIdx: number = 0): VoxelData {
+function generateVoxelWorld(seed: number, size: number, mode: TerrainPhase = 'td', worldIdx: number = 0): VoxelData {
   const blocks: { x: number; y: number; z: number; color: THREE.Color }[] = [];
 
-  const heightFn = mode === 'vanilla' ? terrainHeightVanilla : terrainHeightTD;
+  const heightFn = mode === 'dig' ? terrainHeightVanilla : terrainHeightTD;
 
-  if (mode === 'vanilla') {
+  if (mode === 'dig') {
     // Rectangular 16x20x16 terrain
     const halfX = Math.floor(VANILLA_SIZE_X / 2);
     const halfZ = Math.floor(VANILLA_SIZE_Z / 2);
@@ -537,7 +537,7 @@ interface SceneState {
 
 interface VoxelWorldBackgroundProps {
   seed?: number;
-  gameMode?: GameMode;
+  terrainPhase?: TerrainPhase;
   terrainDestroyedCount?: number;
   enemies?: Enemy[];
   bullets?: Bullet[];
@@ -547,7 +547,7 @@ interface VoxelWorldBackgroundProps {
 
 export default function VoxelWorldBackground({
   seed = 42,
-  gameMode = 'td',
+  terrainPhase = 'dig',
   terrainDestroyedCount = 0,
   enemies = [],
   bullets = [],
@@ -564,8 +564,8 @@ export default function VoxelWorldBackground({
   enemiesRef.current = enemies;
   const bulletsRef = useRef<Bullet[]>(bullets);
   bulletsRef.current = bullets;
-  const gameModeRef = useRef<GameMode>(gameMode);
-  gameModeRef.current = gameMode;
+  const terrainPhaseLocalRef = useRef<TerrainPhase>(terrainPhase);
+  terrainPhaseLocalRef.current = terrainPhase;
   const terrainDestroyedCountRef = useRef(terrainDestroyedCount);
   terrainDestroyedCountRef.current = terrainDestroyedCount;
   const worldIdxRef = useRef(worldIdx);
@@ -575,7 +575,7 @@ export default function VoxelWorldBackground({
   const lastDestroyedCountRef = useRef(0);
 
   // Build terrain mesh into the scene (called once)
-  const buildTerrain = useCallback((terrainSeed: number, mode: GameMode, wIdx: number = 0) => {
+  const buildTerrain = useCallback((terrainSeed: number, mode: TerrainPhase, wIdx: number = 0) => {
     const ss = sceneStateRef.current;
     if (!ss) return;
 
@@ -630,7 +630,7 @@ export default function VoxelWorldBackground({
     ss.instancedMesh = mesh;
     totalBlockCountRef.current = voxelData.count;
 
-    // TD mode: place tower at terrain center
+    // TD phase: place tower at terrain center
     if (mode === 'td') {
       const towerGroup = createTowerModel();
       towerGroup.position.set(0, 0.5, 0);
@@ -646,7 +646,7 @@ export default function VoxelWorldBackground({
       if (ss.bulletMesh) ss.bulletMesh.visible = true;
       if (ss.impactMesh) ss.impactMesh.visible = true;
     } else {
-      // Vanilla mode: hide enemy, bullet, and impact meshes
+      // Dig phase: hide enemy, bullet, and impact meshes
       if (ss.enemyMesh) ss.enemyMesh.visible = false;
       if (ss.bulletMesh) ss.bulletMesh.visible = false;
       if (ss.impactMesh) ss.impactMesh.visible = false;
@@ -1047,7 +1047,7 @@ export default function VoxelWorldBackground({
     animIdRef.current = requestAnimationFrame(animate);
 
     // Build initial terrain
-    buildTerrain(seed, gameModeRef.current, worldIdxRef.current);
+    buildTerrain(seed, terrainPhaseLocalRef.current, worldIdxRef.current);
 
     return () => {
       cancelAnimationFrame(animIdRef.current);
@@ -1095,10 +1095,10 @@ export default function VoxelWorldBackground({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Regenerate terrain when seed or worldIdx changes
+  // Regenerate terrain when seed, terrainPhase, or worldIdx changes
   useEffect(() => {
-    buildTerrain(seed, gameMode, worldIdx);
-  }, [seed, gameMode, worldIdx, buildTerrain]);
+    buildTerrain(seed, terrainPhase, worldIdx);
+  }, [seed, terrainPhase, worldIdx, buildTerrain]);
 
   // Destroy blocks when destroyedCount increases — top-to-bottom order
   // Blocks are sorted Y-descending in generateVoxelWorld, so destroying

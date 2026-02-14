@@ -1,28 +1,23 @@
 import React from 'react';
 import { WORLDS, TERRAINS_PER_WORLD, ColorTheme, MAX_HEALTH } from '../constants';
-import type { GameMode } from '../types';
+import type { TerrainPhase } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface TitleScreenProps {
-    onStart: (mode: GameMode) => void;
+    onStart: () => void;
 }
 
 /**
- * Title screen component with game mode selection (black screen, no world info)
+ * Title screen component (single start button — vanilla mode with alternating phases)
  */
 export function TitleScreen({ onStart }: TitleScreenProps) {
     return (
         <div className={styles.titleScreen}>
             <div className={styles.modeSelect}>
-                <button className={styles.modeBtn} onClick={() => onStart('vanilla')}>
+                <button className={styles.modeBtn} onClick={onStart}>
                     <span className={styles.modeBtnIcon}>🎵</span>
-                    <span className={styles.modeBtnTitle}>VANILLA</span>
-                    <span className={styles.modeBtnDesc}>地形破壊リズムゲーム</span>
-                </button>
-                <button className={`${styles.modeBtn} ${styles.modeBtnTd}`} onClick={() => onStart('td')}>
-                    <span className={styles.modeBtnIcon}>🏰</span>
-                    <span className={styles.modeBtnTitle}>TOWER DEFENSE</span>
-                    <span className={styles.modeBtnDesc}>タワーを守れ！</span>
+                    <span className={styles.modeBtnTitle}>START</span>
+                    <span className={styles.modeBtnDesc}>地形破壊 × タワーディフェンス</span>
                 </button>
             </div>
         </div>
@@ -110,34 +105,38 @@ interface TerrainProgressProps {
     terrainRemaining: number;
     terrainTotal: number;
     stageNumber: number;
-    gameMode: GameMode;
+    terrainPhase: TerrainPhase;
     towerHealth?: number;
+    tdBeatsRemaining?: number;
 }
 
 /**
- * Progress display — mode-aware
- * Vanilla: terrain destruction progress
- * TD: tower HP bar
+ * Progress display — phase-aware
+ * Dig phase: terrain destruction progress
+ * TD phase: tower HP bar + wave countdown
  */
-export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, gameMode, towerHealth }: TerrainProgressProps) {
-    if (gameMode === 'td') {
+export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, terrainPhase, towerHealth, tdBeatsRemaining }: TerrainProgressProps) {
+    if (terrainPhase === 'td') {
         const hp = towerHealth ?? 0;
         const hpPct = Math.max(0, Math.min(100, (hp / MAX_HEALTH) * 100));
         const hpColor = hpPct > 50 ? '#44ff44' : hpPct > 25 ? '#ffaa00' : '#ff4444';
         return (
             <>
-                <div className={styles.terrainLabel}>STAGE {stageNumber} — TOWER DEFENSE</div>
+                <div className={styles.terrainLabel}>STAGE {stageNumber} — DEFEND</div>
                 <div className={styles.terrainBar}>
                     <div className={styles.terrainFill} style={{ width: `${hpPct}%`, background: hpColor }} />
                 </div>
                 <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
                     HP: {Math.ceil(hp)} / {MAX_HEALTH}
+                    {tdBeatsRemaining != null && tdBeatsRemaining > 0 && (
+                        <span style={{ marginLeft: '8px', color: '#ff8888' }}>WAVE {tdBeatsRemaining}</span>
+                    )}
                 </div>
             </>
         );
     }
 
-    // Vanilla mode: terrain gauge starts full and decreases as blocks are destroyed
+    // Dig phase: terrain gauge starts full and decreases as blocks are destroyed
     const remainingPct = terrainTotal > 0 ? Math.max(0, (terrainRemaining / terrainTotal) * 100) : 100;
     return (
         <>

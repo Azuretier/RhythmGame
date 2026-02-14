@@ -1,5 +1,8 @@
 // ===== Game Mode =====
-export type GameMode = 'vanilla' | 'td';
+export type GameMode = 'vanilla';
+
+// ===== Terrain Phase (alternating within vanilla mode) =====
+export type TerrainPhase = 'dig' | 'td';
 
 // ===== Game Types =====
 
@@ -69,7 +72,8 @@ export type GamePhase =
     | 'PLAYING'
     | 'CRAFTING'
     | 'COLLAPSE'
-    | 'TRANSITION';
+    | 'TRANSITION'
+    | 'CHECKPOINT';
 
 // ===== Item System =====
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';

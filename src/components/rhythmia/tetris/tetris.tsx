@@ -6,7 +6,7 @@ import styles from './VanillaGame.module.css';
 
 // Constants and Types
 import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
-import type { Piece, GameMode, Keybindings, KeybindAction } from './types';
+import type { Piece, Keybindings, KeybindAction } from './types';
 import { DEFAULT_KEYBINDINGS } from './types';
 
 // Advancements
@@ -196,6 +196,9 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     gold,
     // Game mode
     gameMode,
+    // Terrain phase
+    terrainPhase,
+    tdBeatsRemaining,
     // Tower defense
     enemies,
     bullets,
@@ -222,6 +225,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     damageMultiplierRef,
     enemiesRef,
     gameModeRef,
+    terrainPhaseRef,
+    tdBeatsRemainingRef,
     keyStatesRef,
     gameLoopRef,
     beatTimerRef,
@@ -263,6 +268,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     toggleInventory,
     toggleShop,
     purchaseItem,
+    // Terrain phase actions
+    enterCheckpoint,
+    completeWave,
+    setTdBeatsRemaining,
     // Tower defense actions
     spawnEnemies,
     updateEnemies,
@@ -297,6 +306,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   destroyTerrainRef.current = destroyTerrain;
   const startNewStageRef = useRef(startNewStage);
   startNewStageRef.current = startNewStage;
+  const enterCheckpointRef = useRef(enterCheckpoint);
+  enterCheckpointRef.current = enterCheckpoint;
+  const completeWaveRef = useRef(completeWave);
+  completeWaveRef.current = completeWave;
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -458,13 +471,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     }
   }, []);
 
-  // Handle piece locking and game advancement — branches by game mode
+  // Handle piece locking and game advancement — branches by terrain phase
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
     // Clear lock state for new piece
     lockStartTimeRef.current = null;
     lockMovesRef.current = 0;
 
-    const mode = gameModeRef.current;
+    const phase = terrainPhaseRef.current;
 
     // Beat judgment
     const currentBeatPhase = beatPhaseRef.current;
@@ -535,26 +548,25 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       const weaponMult = damageMultiplierRef.current;
       const center = getBoardCenter();
 
-      if (mode === 'td') {
-        // === TOWER DEFENSE: Kill enemies when lines are cleared ===
+      if (phase === 'td') {
+        // === TD PHASE: Kill enemies when lines are cleared ===
         const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
         killEnemies(killCount);
 
         // Item drops
         spawnItemDrops(killCount, center.x, center.y);
       } else {
-        // === VANILLA: Destroy terrain blocks ===
+        // === DIG PHASE: Destroy terrain blocks ===
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
         const remaining = destroyTerrain(damage);
-        
+
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
 
-        // Check if terrain is fully destroyed → next stage
+        // Check if terrain is fully destroyed → enter checkpoint for TD phase
         if (remaining <= 0) {
           gameWorldsClearedRef.current++;
-          const nextStage = stageNumberRef.current + 1;
-          startNewStage(nextStage);
+          enterCheckpoint();
         }
       }
 
@@ -587,10 +599,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
   }, [
-    gameModeRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
+    terrainPhaseRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
     setCombo, setBoard, setLines, setLevel, setCurrentPiece,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
-    currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
+    currentPieceRef, vfx, killEnemies, destroyTerrain, enterCheckpoint,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
   ]);
 
@@ -693,14 +705,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   // Stable callback for toast dismiss — avoids resetting the toast timer on every render
   const dismissToast = useCallback(() => setToastIds([]), []);
 
-  // Tutorial state — shows on first vanilla play
+  // Tutorial state — shows on first play
   const [showTutorial, setShowTutorial] = useState(false);
-  const pendingModeRef = useRef<GameMode | null>(null);
 
   // Actually start the game (after tutorial or directly)
-  const launchGame = useCallback((mode: GameMode) => {
+  const launchGame = useCallback(() => {
     initAudio();
-    initGame(mode);
+    initGame('vanilla');
 
     // Reset per-game advancement tracking
     gamePerfectBeatsRef.current = 0;
@@ -716,22 +727,19 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setToastIds([]);
   }, [initAudio, initGame]);
 
-  // Start game — intercept for tutorial on first vanilla play
-  const startGame = useCallback((mode: GameMode) => {
-    if (mode === 'vanilla' && !hasTutorialBeenSeen()) {
-      pendingModeRef.current = mode;
+  // Start game — intercept for tutorial on first play
+  const startGame = useCallback(() => {
+    if (!hasTutorialBeenSeen()) {
       setShowTutorial(true);
       return;
     }
-    launchGame(mode);
+    launchGame();
   }, [launchGame]);
 
   // Tutorial completion — proceed with game launch
   const handleTutorialComplete = useCallback(() => {
     setShowTutorial(false);
-    const mode = pendingModeRef.current || 'vanilla';
-    pendingModeRef.current = null;
-    launchGame(mode);
+    launchGame();
   }, [launchGame]);
 
   // Record advancement stats when game ends
@@ -766,7 +774,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     }
   }, [isPaused, isPlaying, gameOver, lastBeatRef]);
 
-  // Beat timer for rhythm game — branches by game mode via gameModeRef
+  // Beat timer for rhythm game — branches by terrain phase via terrainPhaseRef
   // Uses refs for vfx.emit/spawnEnemies/updateEnemies to keep deps stable
   // (vfx object recreates every render, which would reset the interval)
   useEffect(() => {
@@ -785,15 +793,19 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       setBoardBeat(true);
       playDrum();
 
-      const mode = gameModeRef.current;
+      const currentTerrainPhase = terrainPhaseRef.current;
 
-      if (mode === 'td') {
-        // === Tower Defense beat logic ===
+      if (currentTerrainPhase === 'td') {
+        // === TD phase beat logic ===
         // Update existing enemies FIRST (move toward tower)
         const reached = updateEnemiesRef.current();
 
-        // Then spawn new enemies for next beat
-        spawnEnemiesRef.current(ENEMIES_PER_BEAT);
+        // Spawn new enemies if wave beats remaining
+        if (tdBeatsRemainingRef.current > 0) {
+          spawnEnemiesRef.current(ENEMIES_PER_BEAT);
+          tdBeatsRemainingRef.current--;
+          setTdBeatsRemaining(tdBeatsRemainingRef.current);
+        }
 
         // Move bullets and check collisions — returns kill count
         const kills = updateBulletsRef.current();
@@ -812,8 +824,16 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
             return newHealth;
           });
         }
+
+        // Check wave complete: no more spawning and all enemies dead
+        if (tdBeatsRemainingRef.current <= 0) {
+          const aliveCount = enemiesRef.current.filter(e => e.alive).length;
+          if (aliveCount === 0) {
+            completeWaveRef.current();
+          }
+        }
       }
-      // Vanilla mode: no enemy/bullet/tower logic — just rhythm VFX below
+      // Dig phase: no enemy/bullet/tower logic — just rhythm VFX below
 
       // VFX: beat pulse ring — intensity scales with BPM (both modes)
       const intensity = Math.min(1, (world.bpm - 80) / 100);
@@ -827,13 +847,14 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     };
   }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
 
-  // Auto-fire bullet every 1 second (independent of beat timer)
+  // Auto-fire bullet during TD phase (independent of beat timer)
   useEffect(() => {
     if (!isPlaying || gameOver) return;
-    if (gameModeRef.current !== 'td') return;
 
     const bulletTimer = window.setInterval(() => {
       if (gameOverRef.current || isPausedRef.current) return;
+      // Only fire during TD phase
+      if (terrainPhaseRef.current !== 'td') return;
       const fired = fireBulletRef.current();
       if (fired) {
         playShootSoundRef.current();
@@ -1157,10 +1178,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       {isPlaying && (
         <VoxelWorldBackground
           seed={terrainSeed}
-          gameMode={gameMode}
-          terrainDestroyedCount={terrainDestroyedCount}
-          enemies={gameMode === 'td' ? enemies : []}
-          bullets={gameMode === 'td' ? bullets : []}
+          terrainPhase={terrainPhase}
+          terrainDestroyedCount={terrainPhase === 'dig' ? terrainDestroyedCount : 0}
+          enemies={terrainPhase === 'td' ? enemies : []}
+          bullets={terrainPhase === 'td' ? bullets : []}
           onTerrainReady={handleTerrainReady}
           worldIdx={worldIdx}
         />
@@ -1177,7 +1198,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         phase={gamePhase}
         worldIdx={worldIdx}
         stageNumber={stageNumber}
-        gameMode={gameMode}
+        terrainPhase={terrainPhase}
       />
 
       {/* Tutorial Guide — shown on first vanilla play */}
@@ -1190,6 +1211,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         <TitleScreen onStart={startGame} />
       )}
 
+
       {/* Game */}
       {(isPlaying || gameOver) && (
         <div className={styles.game}>
@@ -1198,20 +1220,20 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
             phase={gamePhase}
             stageNumber={stageNumber}
             damageMultiplier={damageMultiplier}
+            terrainPhase={terrainPhase}
           />
 
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
           <TerrainProgress
-            terrainRemaining={gameMode === 'td' ? enemies.filter(e => e.alive).length : terrainTotal - terrainDestroyedCount}
-            terrainTotal={gameMode === 'td' ? enemies.length : terrainTotal}
+            terrainRemaining={terrainPhase === 'td' ? enemies.filter(e => e.alive).length : terrainTotal - terrainDestroyedCount}
+            terrainTotal={terrainPhase === 'td' ? enemies.length : terrainTotal}
             stageNumber={stageNumber}
-            gameMode={gameMode}
+            terrainPhase={terrainPhase}
             towerHealth={towerHealth}
+            tdBeatsRemaining={tdBeatsRemaining}
           />
-          {gameMode === 'vanilla' && (
-            <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
-          )}
+          <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
 
           <div className={styles.gameArea} ref={gameAreaRef}>
             {/* Left sidebar: Hold + Inventory (separate containers) */}
@@ -1238,7 +1260,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 gameOver={gameOver}
                 isPaused={isPaused && !showInventory && !showShop}
                 score={score}
-                onRestart={() => startGame(gameMode)}
+                onRestart={() => startGame()}
                 onResume={() => { setIsPaused(false); setShowInventory(false); setShowShop(false); }}
                 onQuit={onQuit}
                 colorTheme={colorTheme}
@@ -1261,7 +1283,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 <div className={styles.nextLabel}>NEXT</div>
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
               </div>
-              {gameMode === 'td' && <HealthManaHUD health={towerHealth} />}
+              {terrainPhase === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
           </div>
 

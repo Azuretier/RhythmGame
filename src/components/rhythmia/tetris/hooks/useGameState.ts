@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
-    TERRAINS_PER_WORLD,
+    TERRAINS_PER_WORLD, TD_WAVE_BEATS,
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
@@ -52,6 +52,10 @@ export function useGameState() {
 
     // Game mode
     const [gameMode, setGameMode] = useState<GameMode>('vanilla');
+
+    // Terrain phase — vanilla mode alternates between dig and td phases
+    const [terrainPhase, setTerrainPhase] = useState<TerrainPhase>('dig');
+    const [tdBeatsRemaining, setTdBeatsRemaining] = useState(0);
 
     // Rhythm game state
     const [worldIdx, setWorldIdx] = useState(0);
@@ -135,6 +139,8 @@ export function useGameState() {
     const bulletsRef = useRef<Bullet[]>(bullets);
     const towerHealthRef = useRef(towerHealth);
     const gameModeRef = useRef<GameMode>(gameMode);
+    const terrainPhaseRef = useRef<TerrainPhase>(terrainPhase);
+    const tdBeatsRemainingRef = useRef(tdBeatsRemaining);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -169,6 +175,8 @@ export function useGameState() {
     useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
+    useEffect(() => { terrainPhaseRef.current = terrainPhase; }, [terrainPhase]);
+    useEffect(() => { tdBeatsRemainingRef.current = tdBeatsRemaining; }, [tdBeatsRemaining]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -789,10 +797,78 @@ export function useGameState() {
         setGamePhase('WORLD_CREATION');
     }, []);
 
+    // Enter checkpoint — transition from dig phase to TD phase
+    const enterCheckpoint = useCallback(() => {
+        setGamePhase('COLLAPSE');
+
+        setTimeout(() => {
+            setGamePhase('CHECKPOINT');
+
+            // Switch to TD terrain
+            setTerrainPhase('td');
+            terrainPhaseRef.current = 'td';
+
+            // Reset TD state
+            setEnemies([]);
+            enemiesRef.current = [];
+            setBullets([]);
+            bulletsRef.current = [];
+            setTowerHealth(MAX_HEALTH);
+            towerHealthRef.current = MAX_HEALTH;
+            setTdBeatsRemaining(TD_WAVE_BEATS);
+            tdBeatsRemainingRef.current = TD_WAVE_BEATS;
+
+            setTimeout(() => {
+                setGamePhase('PLAYING');
+            }, 1500);
+        }, 1200);
+    }, []);
+
+    // Complete TD wave — transition back to dig phase with next stage
+    const completeWave = useCallback(() => {
+        setGamePhase('COLLAPSE');
+
+        // Clear TD entities
+        setEnemies([]);
+        enemiesRef.current = [];
+        setBullets([]);
+        bulletsRef.current = [];
+
+        setTimeout(() => {
+            setGamePhase('TRANSITION');
+
+            setTimeout(() => {
+                // Advance to next stage
+                const nextStage = stageNumberRef.current + 1;
+                startNewStage(nextStage);
+
+                // Switch to dig phase
+                setTerrainPhase('dig');
+                terrainPhaseRef.current = 'dig';
+
+                // Reset tower health for next TD phase
+                setTowerHealth(MAX_HEALTH);
+                towerHealthRef.current = MAX_HEALTH;
+
+                setGamePhase('WORLD_CREATION');
+
+                setTimeout(() => {
+                    setGamePhase('PLAYING');
+                }, 1500);
+            }, 1200);
+        }, 1200);
+    }, [startNewStage]);
+
     // Initialize/reset game
     const initGame = useCallback((mode: GameMode = 'vanilla') => {
         setGameMode(mode);
         gameModeRef.current = mode;
+
+        // Always start with dig phase
+        setTerrainPhase('dig');
+        terrainPhaseRef.current = 'dig';
+        setTdBeatsRemaining(0);
+        tdBeatsRemainingRef.current = 0;
 
         setBoard(createEmptyBoard());
         boardRef.current = createEmptyBoard();
@@ -911,6 +987,9 @@ export function useGameState() {
         gold,
         // Game mode
         gameMode,
+        // Terrain phase
+        terrainPhase,
+        tdBeatsRemaining,
 
         // Tower defense
         enemies,
@@ -967,6 +1046,8 @@ export function useGameState() {
         enemiesRef,
         bulletsRef,
         gameModeRef,
+        terrainPhaseRef,
+        tdBeatsRemainingRef,
         keyStatesRef,
         gameLoopRef,
         beatTimerRef,
@@ -996,6 +1077,10 @@ export function useGameState() {
         triggerCollapse,
         triggerTransition,
         triggerWorldCreation,
+        // Terrain phase actions
+        enterCheckpoint,
+        completeWave,
+        setTdBeatsRemaining,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,

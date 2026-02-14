@@ -1,50 +1,67 @@
 import React, { useEffect, useState } from 'react';
-import type { GamePhase, GameMode } from '../types';
-import { WORLDS } from '../constants';
+import type { GamePhase, TerrainPhase } from '../types';
+import { WORLDS, TERRAINS_PER_WORLD } from '../constants';
 import styles from '../VanillaGame.module.css';
 
 interface WorldTransitionProps {
     phase: GamePhase;
     worldIdx: number;
     stageNumber: number;
-    gameMode?: GameMode;
+    terrainPhase?: TerrainPhase;
 }
 
 /**
- * Full-screen overlay for world transitions:
+ * Full-screen overlay for world/phase transitions:
  * - WORLD_CREATION: "World Constructing..." with scanning line effect
- * - COLLAPSE: Shake + flash when terrain is fully destroyed
- * - TRANSITION: Reload/rebuild visual between worlds
+ * - COLLAPSE: Shake + flash when terrain/wave is cleared
+ * - CHECKPOINT: Ground generating for TD phase
+ * - TRANSITION: Reload/rebuild visual between stages
  */
-export function WorldTransition({ phase, worldIdx, stageNumber, gameMode = 'vanilla' }: WorldTransitionProps) {
+export function WorldTransition({ phase, worldIdx, stageNumber, terrainPhase = 'dig' }: WorldTransitionProps) {
     const [visible, setVisible] = useState(false);
     const [text, setText] = useState('');
     const [subText, setSubText] = useState('');
+
+    // Check if this is the last terrain in the current world
+    const terrainsCleared = (stageNumber - 1) % TERRAINS_PER_WORLD;
+    const isLastInWorld = terrainsCleared === TERRAINS_PER_WORLD - 1;
 
     useEffect(() => {
         if (phase === 'WORLD_CREATION') {
             setVisible(true);
             setText(`STAGE ${stageNumber}`);
-            const modeSuffix = gameMode === 'td' ? ' — TOWER DEFENSE' : '';
-            setSubText((WORLDS[worldIdx]?.name || '') + modeSuffix);
+            setSubText(WORLDS[worldIdx]?.name || '');
             const timer = setTimeout(() => setVisible(false), 1400);
             return () => clearTimeout(timer);
         } else if (phase === 'COLLAPSE') {
             setVisible(true);
-            setText(gameMode === 'td' ? 'WAVE COMPLETE!' : 'TERRAIN CLEARED!');
-            setSubText(gameMode === 'td' ? 'ウェーブクリア！' : '地形破壊完了');
+            if (terrainPhase === 'dig') {
+                // Terrain fully destroyed — entering TD
+                setText('TERRAIN CLEARED!');
+                setSubText('地形破壊完了');
+            } else {
+                // TD wave complete
+                setText('WAVE COMPLETE!');
+                setSubText('ウェーブクリア！');
+            }
             const timer = setTimeout(() => setVisible(false), 1200);
+            return () => clearTimeout(timer);
+        } else if (phase === 'CHECKPOINT') {
+            setVisible(true);
+            setText(isLastInWorld ? 'FINAL WAVE' : 'CHECKPOINT');
+            setSubText(isLastInWorld ? '最終ウェーブ — 戦場展開中...' : '戦場展開中...');
+            const timer = setTimeout(() => setVisible(false), 1400);
             return () => clearTimeout(timer);
         } else if (phase === 'TRANSITION') {
             setVisible(true);
-            setText(gameMode === 'td' ? 'NEXT WAVE' : 'NEXT WORLD');
-            setSubText(gameMode === 'td' ? '次のウェーブ準備中...' : '新世界構築中...');
+            setText('NEXT STAGE');
+            setSubText('次のステージ準備中...');
             const timer = setTimeout(() => setVisible(false), 1200);
             return () => clearTimeout(timer);
         } else {
             setVisible(false);
         }
-    }, [phase, worldIdx, stageNumber, gameMode]);
+    }, [phase, worldIdx, stageNumber, terrainPhase, isLastInWorld]);
 
     if (!visible) return null;
 
@@ -58,8 +75,8 @@ export function WorldTransition({ phase, worldIdx, stageNumber, gameMode = 'vani
                 <div className={styles.wtText}>{text}</div>
                 <div className={styles.wtSubText}>{subText}</div>
 
-                {/* Loading bar for WORLD_CREATION and TRANSITION */}
-                {(phase === 'WORLD_CREATION' || phase === 'TRANSITION') && (
+                {/* Loading bar for WORLD_CREATION, TRANSITION, and CHECKPOINT */}
+                {(phase === 'WORLD_CREATION' || phase === 'TRANSITION' || phase === 'CHECKPOINT') && (
                     <div className={styles.wtLoadBar}>
                         <div className={styles.wtLoadFill} />
                     </div>
@@ -84,18 +101,20 @@ interface GamePhaseIndicatorProps {
     phase: GamePhase;
     stageNumber: number;
     damageMultiplier: number;
+    terrainPhase?: TerrainPhase;
 }
 
 /**
  * Small HUD indicator showing current game phase
  */
-export function GamePhaseIndicator({ phase, stageNumber, damageMultiplier }: GamePhaseIndicatorProps) {
+export function GamePhaseIndicator({ phase, stageNumber, damageMultiplier, terrainPhase = 'dig' }: GamePhaseIndicatorProps) {
     const phaseLabels: Record<GamePhase, string> = {
         WORLD_CREATION: 'CONSTRUCTING',
-        PLAYING: 'DIG',
+        PLAYING: terrainPhase === 'td' ? 'DEFEND' : 'DIG',
         CRAFTING: 'FORGE',
         COLLAPSE: 'COLLAPSE',
         TRANSITION: 'RELOAD',
+        CHECKPOINT: 'CHECKPOINT',
     };
 
     return (
