@@ -432,7 +432,7 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
             >
               <div className={styles.modeIcon}>RANK</div>
               <div className={styles.modeTitle}>Ranked Match</div>
-              <p className={styles.modeDesc}>Climb the ranks with AI fallback matchmaking</p>
+              <p className={styles.modeDesc}>Climb the ranks in competitive 1v1 matchmaking</p>
             </div>
             <div
               className={`${styles.modeCard} ${styles.mobBattle}`}

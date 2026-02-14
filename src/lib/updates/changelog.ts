@@ -242,8 +242,8 @@ export const PR_UPDATES: PRUpdate[] = [
     merged: true,
     description: 'Implemented competitive ranked matchmaking',
     descriptionJa: '競争的ランクマッチメイキングを実装',
-    highlights: ['Tier-based ranking', 'TetrisAI for bot opponents', '8s timeout with AI fallback'],
-    highlightsJa: ['ティアベースのランキング', 'ボット対戦相手用TetrisAI', 'AIフォールバック付き8秒タイムアウト']
+    highlights: ['Tier-based ranking', 'Point-based matchmaking', 'Server-side queue with retry'],
+    highlightsJa: ['ティアベースのランキング', 'ポイントベースのマッチメイキング', 'サーバーサイドキューとリトライ']
   },
   {
     number: 124,

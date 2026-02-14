@@ -6,15 +6,39 @@ import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/mul
 import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
 
-// ===== Types =====
-type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
+// ===== Import shared vanilla architecture =====
+import {
+  BOARD_WIDTH,
+  BOARD_HEIGHT,
+  TETROMINOES,
+  STANDARD_COLORS,
+  LOCK_DELAY,
+  MAX_LOCK_MOVES,
+  DEFAULT_DAS,
+  DEFAULT_ARR,
+  ROTATION_NAMES,
+  WALL_KICKS_I,
+  WALL_KICKS_JLSTZ,
+  WORLDS,
+} from './tetris/constants';
+import type { Piece, Board } from './tetris/types';
+import {
+  createEmptyBoard,
+  getShape,
+  isValidPosition,
+  tryRotation,
+  lockPiece,
+  clearLines,
+  getGhostY,
+  createSpawnPiece,
+} from './tetris/utils';
+import { useAudio } from './tetris/hooks';
 
-interface Piece {
-  type: PieceType;
-  rotation: 0 | 1 | 2 | 3;
-  x: number;
-  y: number;
-}
+// ===== Multiplayer-specific constants =====
+const BPM = 120;
+const SOFT_DROP_SPEED = 50;
+const GARBAGE_MARKER = 'G';
+const GARBAGE_COLOR = '#555555';
 
 interface Props {
   ws: WebSocket;
@@ -27,101 +51,7 @@ interface Props {
   onBackToLobby: () => void;
 }
 
-// ===== Constants =====
-const W = 10;
-const H = 20;
-const BPM = 120;
-const LOCK_DELAY = 500;
-const MAX_LOCK_MOVES = 15;
-const DAS = 167; // Delayed Auto Shift
-const ARR = 33;  // Auto Repeat Rate
-const SOFT_DROP_SPEED = 50;
-const GARBAGE_COLOR = '#555555';
-
-const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
-
-const COLORS: Record<PieceType, string> = {
-  I: '#00F0F0',
-  O: '#F0F000',
-  T: '#A000F0',
-  S: '#00F000',
-  Z: '#F00000',
-  J: '#0000F0',
-  L: '#F0A000',
-};
-
-// All 4 rotation states for each piece (SRS)
-const SHAPES: Record<PieceType, number[][][]> = {
-  I: [
-    [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
-    [[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]],
-    [[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],
-    [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]],
-  ],
-  O: [
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-  ],
-  T: [
-    [[0,1,0],[1,1,1],[0,0,0]],
-    [[0,1,0],[0,1,1],[0,1,0]],
-    [[0,0,0],[1,1,1],[0,1,0]],
-    [[0,1,0],[1,1,0],[0,1,0]],
-  ],
-  S: [
-    [[0,1,1],[1,1,0],[0,0,0]],
-    [[0,1,0],[0,1,1],[0,0,1]],
-    [[0,0,0],[0,1,1],[1,1,0]],
-    [[1,0,0],[1,1,0],[0,1,0]],
-  ],
-  Z: [
-    [[1,1,0],[0,1,1],[0,0,0]],
-    [[0,0,1],[0,1,1],[0,1,0]],
-    [[0,0,0],[1,1,0],[0,1,1]],
-    [[0,1,0],[1,1,0],[1,0,0]],
-  ],
-  J: [
-    [[1,0,0],[1,1,1],[0,0,0]],
-    [[0,1,1],[0,1,0],[0,1,0]],
-    [[0,0,0],[1,1,1],[0,0,1]],
-    [[0,1,0],[0,1,0],[1,1,0]],
-  ],
-  L: [
-    [[0,0,1],[1,1,1],[0,0,0]],
-    [[0,1,0],[0,1,0],[0,1,1]],
-    [[0,0,0],[1,1,1],[1,0,0]],
-    [[1,1,0],[0,1,0],[0,1,0]],
-  ],
-};
-
-// SRS Wall Kick Data
-const ROTATION_NAMES = ['0', 'R', '2', 'L'] as const;
-
-const WALL_KICK_JLSTZ: Record<string, [number, number][]> = {
-  '0->R': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
-  'R->2': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
-  '2->L': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
-  'L->0': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
-  'R->0': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
-  '2->R': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
-  'L->2': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
-  '0->L': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
-};
-
-const WALL_KICK_I: Record<string, [number, number][]> = {
-  '0->R': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
-  'R->2': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
-  '2->L': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
-  'L->0': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
-  'R->0': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
-  '2->R': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
-  'L->2': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
-  '0->L': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
-};
-
-// ===== Seeded RNG =====
+// ===== Seeded RNG (for synchronized piece distribution) =====
 function createRNG(seed: number) {
   let s = seed;
   return () => {
@@ -130,14 +60,14 @@ function createRNG(seed: number) {
   };
 }
 
-// ===== 7-Bag Randomizer =====
-function create7Bag(rng: () => number) {
-  let bag: PieceType[] = [];
+// ===== Seeded 7-Bag Randomizer =====
+function createSeeded7Bag(rng: () => number) {
+  const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
+  let bag: string[] = [];
 
-  return (): PieceType => {
+  return (): string => {
     if (bag.length === 0) {
       bag = [...PIECE_TYPES];
-      // Fisher-Yates shuffle
       for (let i = bag.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [bag[i], bag[j]] = [bag[j], bag[i]];
@@ -147,88 +77,23 @@ function create7Bag(rng: () => number) {
   };
 }
 
-// ===== Helper Functions =====
-function getShape(type: PieceType, rotation: number): number[][] {
-  return SHAPES[type][rotation];
+// ===== Board conversion helpers (vanilla Board <-> multiplayer BoardCell) =====
+function boardToRelay(board: Board): (BoardCell | null)[][] {
+  return board.map(row =>
+    row.map(cell => {
+      if (cell === null) return null;
+      if (cell === GARBAGE_MARKER) return { color: GARBAGE_COLOR };
+      return { color: STANDARD_COLORS[cell] || '#FFFFFF' };
+    })
+  );
 }
 
-function createEmptyBoard(): (BoardCell | null)[][] {
-  return Array.from({ length: H }, () => Array(W).fill(null));
-}
-
-function isValid(piece: Piece, board: (BoardCell | null)[][]): boolean {
-  const shape = getShape(piece.type, piece.rotation);
-  for (let y = 0; y < shape.length; y++) {
-    for (let x = 0; x < shape[y].length; x++) {
-      if (shape[y][x]) {
-        const nx = piece.x + x;
-        const ny = piece.y + y;
-        if (nx < 0 || nx >= W || ny >= H) return false;
-        if (ny >= 0 && board[ny][nx]) return false;
-      }
-    }
-  }
-  return true;
-}
-
-function getWallKicks(type: PieceType, from: number, to: number): [number, number][] {
-  const key = `${ROTATION_NAMES[from]}->${ROTATION_NAMES[to]}`;
-  if (type === 'I') return WALL_KICK_I[key] || [[0, 0]];
-  if (type === 'O') return [[0, 0]];
-  return WALL_KICK_JLSTZ[key] || [[0, 0]];
-}
-
-function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][]): Piece | null {
-  const toRotation = ((piece.rotation + direction + 4) % 4) as 0 | 1 | 2 | 3;
-  const kicks = getWallKicks(piece.type, piece.rotation, toRotation);
-
-  for (const [dx, dy] of kicks) {
-    const test: Piece = { ...piece, rotation: toRotation, x: piece.x + dx, y: piece.y - dy };
-    if (isValid(test, board)) return test;
-  }
-  return null;
-}
-
-function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
-  const newBoard = board.map(row => [...row]);
-  const shape = getShape(piece.type, piece.rotation);
-  const color = COLORS[piece.type];
-
-  for (let y = 0; y < shape.length; y++) {
-    for (let x = 0; x < shape[y].length; x++) {
-      if (shape[y][x]) {
-        const ny = piece.y + y;
-        const nx = piece.x + x;
-        if (ny >= 0 && ny < H && nx >= 0 && nx < W) {
-          newBoard[ny][nx] = { color };
-        }
-      }
-    }
-  }
-  return newBoard;
-}
-
-function clearLines(board: (BoardCell | null)[][]): { board: (BoardCell | null)[][]; cleared: number } {
-  const remaining = board.filter(row => row.some(cell => cell === null));
-  const cleared = H - remaining.length;
-  while (remaining.length < H) {
-    remaining.unshift(Array(W).fill(null));
-  }
-  return { board: remaining, cleared };
-}
-
-function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
-  let gy = piece.y;
-  while (isValid({ ...piece, y: gy + 1 }, board)) gy++;
-  return gy;
-}
-
-function addGarbageLines(board: (BoardCell | null)[][], count: number, rng: () => number): (BoardCell | null)[][] {
+function addGarbageLines(board: Board, count: number, rng: () => number): Board {
   if (count <= 0) return board;
   const newBoard = board.slice(count);
   for (let i = 0; i < count; i++) {
-    const row: (BoardCell | null)[] = Array(W).fill({ color: GARBAGE_COLOR } as BoardCell);
-    const gap = Math.floor(rng() * W);
+    const row: (string | null)[] = Array(BOARD_WIDTH).fill(GARBAGE_MARKER);
+    const gap = Math.floor(rng() * BOARD_WIDTH);
     row[gap] = null;
     newBoard.push(row);
   }
@@ -248,12 +113,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
 }) => {
   const opponent = opponents[0];
 
-  // Game state
-  const boardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
+  // Shared audio hook from vanilla architecture
+  const audio = useAudio();
+
+  // Game state — using vanilla Board type (string | null cells)
+  const boardRef = useRef<Board>(createEmptyBoard());
   const pieceRef = useRef<Piece | null>(null);
-  const holdRef = useRef<PieceType | null>(null);
+  const holdRef = useRef<string | null>(null);
   const holdUsedRef = useRef(false);
-  const nextQueueRef = useRef<PieceType[]>([]);
+  const nextQueueRef = useRef<string[]>([]);
   const scoreRef = useRef(0);
   const comboRef = useRef(0);
   const linesRef = useRef(0);
@@ -270,8 +138,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
 
-  // Opponent state
-  const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
+  // Opponent state (kept as relay BoardCell for display)
+  const opponentBoardRef = useRef<(BoardCell | null)[][]>(
+    Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null))
+  );
   const opponentScoreRef = useRef(0);
   const opponentLinesRef = useRef(0);
 
@@ -279,17 +149,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const [, forceRender] = useState(0);
   const render = useCallback(() => forceRender(c => c + 1), []);
 
-  // RNG
+  // Seeded RNG
   const rngRef = useRef(createRNG(gameSeed));
-  const bagRef = useRef(create7Bag(rngRef.current));
+  const bagRef = useRef(createSeeded7Bag(rngRef.current));
   const garbageRngRef = useRef(createRNG(gameSeed + 1));
 
   // Rhythm
   const lastBeatRef = useRef(Date.now());
   const beatPhaseRef = useRef(0);
-
-  // Audio
-  const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Timers
   const dropTimerRef = useRef<number | null>(null);
@@ -304,53 +171,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const softDropTimerRef = useRef<number | null>(null);
   const lastDirRef = useRef<string>('');
 
-  // ===== Audio =====
-  const initAudio = useCallback(() => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    }
-  }, []);
-
-  const playTone = useCallback((freq: number, dur = 0.1, type: OscillatorType = 'sine') => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + dur);
-    } catch {}
-  }, []);
-
-  const playDrum = useCallback(() => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(150, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.4, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.1);
-    } catch {}
-  }, []);
-
-  const playLineClear = useCallback((count: number) => {
-    const freqs = [523, 659, 784, 1047];
-    freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
-  }, [playTone]);
-
   // ===== Relay =====
   const sendRelay = useCallback((payload: RelayPayload) => {
     if (ws.readyState === WebSocket.OPEN) {
@@ -361,7 +181,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const sendBoardUpdate = useCallback(() => {
     sendRelay({
       event: 'board_update',
-      board: boardRef.current,
+      board: boardToRelay(boardRef.current),
       score: scoreRef.current,
       lines: linesRef.current,
       combo: comboRef.current,
@@ -392,16 +212,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const type = nextQueueRef.current.shift()!;
     fillQueue();
 
-    const shape = getShape(type, 0);
-    const piece: Piece = {
-      type,
-      rotation: 0,
-      x: Math.floor((W - shape[0].length) / 2),
-      y: type === 'I' ? -1 : 0,
-    };
+    const piece = createSpawnPiece(type);
 
-    if (!isValid(piece, boardRef.current)) {
-      // Game over - can't spawn (we lost)
+    if (!isValidPosition(piece, boardRef.current)) {
       gameOverRef.current = true;
       sendGameOver();
       if (!advRecordedRef.current) {
@@ -437,7 +250,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (lockTimerRef.current) return;
     lockTimerRef.current = window.setTimeout(() => {
       lockTimerRef.current = null;
-      performLock();
+      performLockRef.current();
     }, LOCK_DELAY);
   }, []);
 
@@ -448,16 +261,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
     }
-    // If still on ground, restart
-    if (pieceRef.current && !isValid({ ...pieceRef.current, y: pieceRef.current.y + 1 }, boardRef.current)) {
+    if (pieceRef.current && !isValidPosition({ ...pieceRef.current, y: pieceRef.current.y + 1 }, boardRef.current)) {
       startLockTimer();
     }
   }, [startLockTimer]);
 
-  // Stable callback for toast dismiss — avoids resetting the toast timer on every render
+  // Stable callback for toast dismiss
   const dismissToast = useCallback(() => setToastIds([]), []);
 
-  // Push-based live advancement check — runs every performLock(), instant toast
+  // Push-based live advancement check
   const pushLiveAdvancementCheck = useCallback(() => {
     const qualifying = checkLiveMultiplayerAdvancements({
       score: scoreRef.current,
@@ -470,7 +282,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (fresh.length > 0) {
       fresh.forEach(id => liveNotifiedRef.current.add(id));
       setToastIds(prev => [...prev, ...fresh]);
-      // Instantly persist unlocks so progress survives mid-game exits
       saveLiveUnlocks(fresh);
     }
   }, []);
@@ -515,7 +326,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
       return;
     }
 
-    // Beat judgment
+    // Beat judgment (same rhythm system as vanilla)
     const phase = beatPhaseRef.current;
     const onBeat = phase > 0.8 || phase < 0.12;
     let mult = 1;
@@ -523,7 +334,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (onBeat) {
       mult = 2;
       comboRef.current++;
-      playTone(1047, 0.15, 'triangle');
+      audio.playPerfectSound();
     } else {
       comboRef.current = 0;
     }
@@ -531,7 +342,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     // Track pieces placed
     gamePiecesPlacedRef.current++;
 
-    // Lock to board
+    // Lock to board using vanilla utility
     let newBoard = lockPiece(piece, boardRef.current);
 
     // Apply pending garbage before clearing
@@ -541,8 +352,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
       pendingGarbageRef.current = 0;
     }
 
-    // Clear lines
-    const { board: clearedBoard, cleared } = clearLines(newBoard);
+    // Clear lines using vanilla utility
+    const { newBoard: clearedBoard, clearedLines: cleared } = clearLines(newBoard);
     boardRef.current = clearedBoard;
 
     if (cleared > 0) {
@@ -551,10 +362,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
       scoreRef.current += pts;
       linesRef.current += cleared;
 
-      // Send garbage
+      // Send garbage to opponent
       const garbageToSend = [0, 0, 1, 2, 4][cleared] + Math.floor(comboRef.current / 3);
       sendGarbage(garbageToSend);
-      playLineClear(cleared);
+      audio.playLineClear(cleared);
     }
 
     pieceRef.current = null;
@@ -567,32 +378,26 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     // Spawn next piece
     spawnPiece();
-  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playTone, spawnPiece, render, pushLiveAdvancementCheck]);
+  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, audio, spawnPiece, render, pushLiveAdvancementCheck]);
 
-  // Wire up startLockTimer -> performLock circular dependency
-  // performLock is already defined, we just need to ensure startLockTimer calls it
-  const startLockTimerRef = useRef(startLockTimer);
-  startLockTimerRef.current = startLockTimer;
-
+  // Stable ref for performLock (circular dependency with startLockTimer)
   const performLockRef = useRef(performLock);
   performLockRef.current = performLock;
 
-  // ===== Movement =====
+  // ===== Movement (using vanilla utilities) =====
   const moveHorizontal = useCallback((dx: number) => {
     const piece = pieceRef.current;
     if (!piece || gameOverRef.current) return false;
 
     const moved = { ...piece, x: piece.x + dx };
-    if (isValid(moved, boardRef.current)) {
+    if (isValidPosition(moved, boardRef.current)) {
       pieceRef.current = moved;
-      playTone(392, 0.04, 'square');
+      audio.playMoveSound();
 
-      // Check if piece is now on ground
-      const onGround = !isValid({ ...moved, y: moved.y + 1 }, boardRef.current);
+      const onGround = !isValidPosition({ ...moved, y: moved.y + 1 }, boardRef.current);
       if (onGround) {
         resetLockTimer();
       } else if (lockTimerRef.current) {
-        // Moved off ground
         clearTimeout(lockTimerRef.current);
         lockTimerRef.current = null;
       }
@@ -601,18 +406,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
       return true;
     }
     return false;
-  }, [playTone, resetLockTimer, render]);
+  }, [audio, resetLockTimer, render]);
 
   const moveDown = useCallback((): boolean => {
     const piece = pieceRef.current;
     if (!piece || gameOverRef.current) return false;
 
     const moved = { ...piece, y: piece.y + 1 };
-    if (isValid(moved, boardRef.current)) {
+    if (isValidPosition(moved, boardRef.current)) {
       pieceRef.current = moved;
 
-      // Check if landed
-      if (!isValid({ ...moved, y: moved.y + 1 }, boardRef.current)) {
+      if (!isValidPosition({ ...moved, y: moved.y + 1 }, boardRef.current)) {
         if (!isOnGroundRef.current) {
           isOnGroundRef.current = true;
           startLockTimer();
@@ -622,7 +426,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
       render();
       return true;
     } else {
-      // Can't move down - start lock if not already
       if (!isOnGroundRef.current) {
         isOnGroundRef.current = true;
         startLockTimer();
@@ -635,12 +438,13 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const piece = pieceRef.current;
     if (!piece || gameOverRef.current) return;
 
-    const rotated = tryRotate(piece, direction, boardRef.current);
+    // Use vanilla tryRotation utility (shared SRS wall kicks)
+    const rotated = tryRotation(piece, direction, boardRef.current);
     if (rotated) {
       pieceRef.current = rotated;
-      playTone(523, 0.06);
+      audio.playRotateSound();
 
-      const onGround = !isValid({ ...rotated, y: rotated.y + 1 }, boardRef.current);
+      const onGround = !isValidPosition({ ...rotated, y: rotated.y + 1 }, boardRef.current);
       if (onGround) {
         resetLockTimer();
       } else if (lockTimerRef.current) {
@@ -651,20 +455,21 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
       render();
     }
-  }, [playTone, resetLockTimer, render]);
+  }, [audio, resetLockTimer, render]);
 
   const hardDrop = useCallback(() => {
     const piece = pieceRef.current;
     if (!piece || gameOverRef.current) return;
 
     gameHardDropsRef.current++;
+    // Use vanilla getGhostY utility
     const gy = getGhostY(piece, boardRef.current);
     const dropDist = gy - piece.y;
     pieceRef.current = { ...piece, y: gy };
     scoreRef.current += dropDist * 2;
-    playTone(196, 0.08, 'sawtooth');
+    audio.playHardDropSound();
     performLockRef.current();
-  }, [playTone]);
+  }, [audio]);
 
   const holdPiece = useCallback(() => {
     const piece = pieceRef.current;
@@ -675,13 +480,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     holdRef.current = piece.type;
 
     if (prevHold) {
-      const shape = getShape(prevHold, 0);
-      pieceRef.current = {
-        type: prevHold,
-        rotation: 0,
-        x: Math.floor((W - shape[0].length) / 2),
-        y: prevHold === 'I' ? -1 : 0,
-      };
+      // Use vanilla createSpawnPiece utility
+      pieceRef.current = createSpawnPiece(prevHold);
       lockMovesRef.current = 0;
       isOnGroundRef.current = false;
       if (lockTimerRef.current) {
@@ -693,9 +493,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
       spawnPiece();
     }
 
-    playTone(440, 0.08);
+    audio.playTone(440, 0.08);
     render();
-  }, [spawnPiece, playTone, render]);
+  }, [spawnPiece, audio, render]);
 
   // ===== WebSocket Message Handler =====
   useEffect(() => {
@@ -742,7 +542,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
   // ===== Initialize Game =====
   useEffect(() => {
-    initAudio();
+    audio.initAudio();
 
     // Reset state
     boardRef.current = createEmptyBoard();
@@ -760,13 +560,13 @@ export const MultiplayerBattle: React.FC<Props> = ({
     advRecordedRef.current = false;
     liveNotifiedRef.current = new Set();
     setToastIds([]);
-    opponentBoardRef.current = createEmptyBoard();
+    opponentBoardRef.current = Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
     opponentScoreRef.current = 0;
     opponentLinesRef.current = 0;
 
-    // Reset RNG
+    // Reset seeded RNG
     rngRef.current = createRNG(gameSeed);
-    bagRef.current = create7Bag(rngRef.current);
+    bagRef.current = createSeeded7Bag(rngRef.current);
     garbageRngRef.current = createRNG(gameSeed + 1);
 
     lastBeatRef.current = Date.now();
@@ -811,13 +611,13 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     beatTimerRef.current = window.setInterval(() => {
       lastBeatRef.current = Date.now();
-      playDrum();
+      audio.playDrum();
     }, interval);
 
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
-  }, [playDrum]);
+  }, [audio]);
 
   // ===== Beat Phase Animation =====
   useEffect(() => {
@@ -866,8 +666,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
       moveHorizontal(dx);
       dasTimerRef.current = window.setTimeout(() => {
         dasTimerRef.current = null;
-        arrTimerRef.current = window.setInterval(() => moveHorizontal(dx), ARR);
-      }, DAS);
+        arrTimerRef.current = window.setInterval(() => moveHorizontal(dx), DEFAULT_ARR);
+      }, DEFAULT_DAS);
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -943,15 +743,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
   }, [moveHorizontal, moveDown, rotatePiece, hardDrop, holdPiece]);
 
-  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
+  // Persist advancement stats on unmount
   useEffect(() => {
     return () => {
-      // Only record stats if game hasn't ended normally (player left via back button)
       if (!gameOverRef.current) {
         recordMultiplayerGameEnd({
           score: scoreRef.current,
           lines: linesRef.current,
-          won: false, // Player left mid-game, so they didn't win
+          won: false,
           hardDrops: gameHardDropsRef.current,
           piecesPlaced: gamePiecesPlacedRef.current,
         });
@@ -973,21 +772,27 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const opponentScore = opponentScoreRef.current;
   const opponentLines = opponentLinesRef.current;
 
-  // Build display board with ghost + active piece
-  const displayBoard = board.map(row => row.map(cell => cell ? { ...cell, ghost: false } : null));
+  // Build display board using vanilla utilities
+  const displayBoard: ({ color: string; ghost: boolean } | null)[][] = board.map(row =>
+    row.map(cell => {
+      if (cell === null) return null;
+      const color = cell === GARBAGE_MARKER ? GARBAGE_COLOR : (STANDARD_COLORS[cell] || '#FFFFFF');
+      return { color, ghost: false };
+    })
+  );
 
   if (piece) {
-    // Ghost piece
     const gy = getGhostY(piece, board);
     const shape = getShape(piece.type, piece.rotation);
-    const color = COLORS[piece.type];
+    const color = STANDARD_COLORS[piece.type] || '#FFFFFF';
 
+    // Ghost piece
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
         if (shape[y][x]) {
           const by = gy + y;
           const bx = piece.x + x;
-          if (by >= 0 && by < H && bx >= 0 && bx < W && !displayBoard[by][bx]) {
+          if (by >= 0 && by < BOARD_HEIGHT && bx >= 0 && bx < BOARD_WIDTH && !displayBoard[by][bx]) {
             displayBoard[by][bx] = { color, ghost: true };
           }
         }
@@ -1000,7 +805,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         if (shape[y][x]) {
           const by = piece.y + y;
           const bx = piece.x + x;
-          if (by >= 0 && by < H && bx >= 0 && bx < W) {
+          if (by >= 0 && by < BOARD_HEIGHT && bx >= 0 && bx < BOARD_WIDTH) {
             displayBoard[by][bx] = { color, ghost: false };
           }
         }
@@ -1013,8 +818,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     row.map(cell => cell ? { ...cell, ghost: false } : null)
   );
 
-  // Next piece preview
-  const renderPreview = (type: PieceType) => {
+  // Next piece preview using vanilla getShape
+  const renderPreview = (type: string) => {
     const shape = getShape(type, 0);
     return (
       <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, auto)` }}>
@@ -1022,7 +827,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
           <div
             key={i}
             className={`${styles.previewCell} ${val ? styles.filled : ''}`}
-            style={val ? { backgroundColor: COLORS[type], boxShadow: `0 0 6px ${COLORS[type]}` } : {}}
+            style={val ? { backgroundColor: STANDARD_COLORS[type], boxShadow: `0 0 6px ${STANDARD_COLORS[type]}` } : {}}
           />
         ))}
       </div>
@@ -1076,12 +881,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 <div className={styles.garbageMeter}>
                   <div
                     className={styles.garbageFill}
-                    style={{ height: `${Math.round(Math.min(100, (pendingGarbage / H) * 100))}%` }}
+                    style={{ height: `${Math.round(Math.min(100, (pendingGarbage / BOARD_HEIGHT) * 100))}%` }}
                   />
                 </div>
               )}
 
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, auto)` }}>
                 {displayBoard.flat().map((cell, i) => (
                   <div
                     key={i}
@@ -1111,7 +916,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             </div>
 
             <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, auto)` }}>
                 {opponentDisplay.flat().map((cell, i) => (
                   <div
                     key={i}

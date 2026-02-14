@@ -274,7 +274,6 @@ export interface RankedMatchFoundMessage {
   roomCode: string;
   opponentName: string;
   opponentId: string;
-  isAI: boolean;
   gameSeed: number;
   reconnectToken: string;
 }
