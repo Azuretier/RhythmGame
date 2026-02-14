@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette } from 'lucide-react';
+import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Grid3x3 } from 'lucide-react';
 import { useVersion } from '@/lib/version/context';
 import {
   VERSION_METADATA,
@@ -17,6 +17,7 @@ const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
   current: <Gamepad2 size={20} />,
   '1.0.0': <MessageCircle size={20} />,
   '1.0.1': <Heart size={20} />,
+  '1.0.2': <Grid3x3 size={20} />,
 };
 
 export default function FloatingVersionSwitcher() {
