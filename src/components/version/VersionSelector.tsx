@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { UIVersion, VERSION_METADATA, UI_VERSIONS } from "@/lib/version/types";
-import { MessageCircle, Heart, Gamepad2 } from "lucide-react";
+import { MessageCircle, Heart, Blocks } from "lucide-react";
 
 interface VersionSelectorProps {
   onSelect: (version: UIVersion) => void;
@@ -16,7 +16,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
       case "1.0.1":
         return <Heart className="w-12 h-12" />;
       case "1.0.2":
-        return <Gamepad2 className="w-12 h-12" />;
+        return <Blocks className="w-12 h-12" />;
     }
   };
 
@@ -60,7 +60,7 @@ export default function VersionSelector({ onSelect }: VersionSelectorProps) {
             </motion.p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {UI_VERSIONS.map((version, index) => {
+              {UI_VERSIONS.filter(v => v !== 'current').map((version, index) => {
                 const metadata = VERSION_METADATA[version];
                 return (
                   <motion.button
