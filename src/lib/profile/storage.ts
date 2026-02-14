@@ -8,6 +8,11 @@ export function generateFriendCode(): string {
   return `SW-${seg()}-${seg()}-${seg()}`;
 }
 
+export function generateDefaultName(): string {
+  const id = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+  return `Player${id}`;
+}
+
 export function getStoredProfile(): UserProfile | null {
   if (typeof window === 'undefined') return null;
   try {
