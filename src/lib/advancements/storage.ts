@@ -9,6 +9,7 @@ function getDefaultStats(): PlayerStats {
     totalLines: 0,
     bestLinesPerGame: 0,
     totalTSpins: 0,
+    bestTSpinsPerGame: 0,
     totalScore: 0,
     bestScorePerGame: 0,
     totalGamesPlayed: 0,
@@ -17,12 +18,15 @@ function getDefaultStats(): PlayerStats {
     bestPerfectBeatsPerGame: 0,
     worldsCleared: 0,
     totalTetrisClears: 0,
+    bestTetrisClearsPerGame: 0,
     multiplayerWins: 0,
     multiplayerWinStreak: 0,
     bestMultiplayerWinStreak: 0,
     totalMultiplayerGames: 0,
     totalHardDrops: 0,
+    bestHardDropsPerGame: 0,
     totalPiecesPlaced: 0,
+    bestPiecesPerGame: 0,
     totalVisits: 0,
     bestStreak: 0,
     pollsVoted: 0,
@@ -119,6 +123,18 @@ export function recordGameEnd(stats: GameEndStats): AdvancementState {
   if (stats.perfectBeats > state.stats.bestPerfectBeatsPerGame) {
     state.stats.bestPerfectBeatsPerGame = stats.perfectBeats;
   }
+  if (stats.tSpins > state.stats.bestTSpinsPerGame) {
+    state.stats.bestTSpinsPerGame = stats.tSpins;
+  }
+  if (stats.tetrisClears > state.stats.bestTetrisClearsPerGame) {
+    state.stats.bestTetrisClearsPerGame = stats.tetrisClears;
+  }
+  if (stats.hardDrops > state.stats.bestHardDropsPerGame) {
+    state.stats.bestHardDropsPerGame = stats.hardDrops;
+  }
+  if (stats.piecesPlaced > state.stats.bestPiecesPerGame) {
+    state.stats.bestPiecesPerGame = stats.piecesPlaced;
+  }
 
   const updated = checkNewAdvancements(state);
   saveAdvancementState(updated);
@@ -155,6 +171,12 @@ export function recordMultiplayerGameEnd(stats: MultiplayerGameEndStats): Advanc
   }
   if (stats.lines > state.stats.bestLinesPerGame) {
     state.stats.bestLinesPerGame = stats.lines;
+  }
+  if (stats.hardDrops > state.stats.bestHardDropsPerGame) {
+    state.stats.bestHardDropsPerGame = stats.hardDrops;
+  }
+  if (stats.piecesPlaced > state.stats.bestPiecesPerGame) {
+    state.stats.bestPiecesPerGame = stats.piecesPlaced;
   }
 
   if (stats.won) {
@@ -212,6 +234,18 @@ export function checkLiveGameAdvancements(sessionStats: GameEndStats): string[] 
   if (sessionStats.perfectBeats > projected.bestPerfectBeatsPerGame) {
     projected.bestPerfectBeatsPerGame = sessionStats.perfectBeats;
   }
+  if (sessionStats.tSpins > projected.bestTSpinsPerGame) {
+    projected.bestTSpinsPerGame = sessionStats.tSpins;
+  }
+  if (sessionStats.tetrisClears > projected.bestTetrisClearsPerGame) {
+    projected.bestTetrisClearsPerGame = sessionStats.tetrisClears;
+  }
+  if (sessionStats.hardDrops > projected.bestHardDropsPerGame) {
+    projected.bestHardDropsPerGame = sessionStats.hardDrops;
+  }
+  if (sessionStats.piecesPlaced > projected.bestPiecesPerGame) {
+    projected.bestPiecesPerGame = sessionStats.piecesPlaced;
+  }
 
   const qualifying: string[] = [];
   for (const adv of ADVANCEMENTS) {
@@ -242,6 +276,12 @@ export function checkLiveMultiplayerAdvancements(sessionStats: MultiplayerGameEn
   }
   if (sessionStats.lines > projected.bestLinesPerGame) {
     projected.bestLinesPerGame = sessionStats.lines;
+  }
+  if (sessionStats.hardDrops > projected.bestHardDropsPerGame) {
+    projected.bestHardDropsPerGame = sessionStats.hardDrops;
+  }
+  if (sessionStats.piecesPlaced > projected.bestPiecesPerGame) {
+    projected.bestPiecesPerGame = sessionStats.piecesPlaced;
   }
 
   const qualifying: string[] = [];
