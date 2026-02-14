@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import styles from './ForYouTab.module.css';
 
 interface ContentCard {
@@ -21,16 +22,23 @@ interface ForYouTabProps {
     totalAdvancements: number;
 }
 
-const TYPE_ICONS: Record<string, string> = {
-    tutorial: '📖',
-    video: '▶',
-    tip: '💡',
+/** Map content types to pixel-art block textures from the public/textures directory */
+const TYPE_THUMBNAILS: Record<string, string> = {
+    tutorial: '/textures/blocks/obsidian.png',
+    video: '/textures/blocks/brick.png',
+    tip: '/textures/blocks/grass_top.png',
 };
 
 const DIFFICULTY_LABELS: Record<string, Record<string, string>> = {
     en: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
     ja: { beginner: '初級', intermediate: '中級', advanced: '上級' },
 };
+
+function getWikiUrl(card: ContentCard, locale: string): string {
+    if (card.url) return card.url;
+    const prefix = locale === 'ja' ? '' : '/en';
+    return `${prefix}/wiki`;
+}
 
 export default function ForYouTab({ locale, unlockedAdvancements, totalAdvancements }: ForYouTabProps) {
     const [cards, setCards] = useState<ContentCard[]>([]);
@@ -94,47 +102,59 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                 <p className={styles.sectionSubtitle}>{t('subtitle')}</p>
             </div>
 
-            <div className={styles.cardGrid}>
+            <div className={styles.widgetList}>
                 <AnimatePresence mode="wait">
-                    {cards.map((card, index) => (
-                        <motion.div
-                            key={card.id}
-                            className={`${styles.card} ${styles[card.type]}`}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.35, delay: index * 0.06 }}
-                            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                            onClick={() => card.url && window.open(card.url, '_blank', 'noopener,noreferrer')}
-                            style={{ cursor: card.url ? 'pointer' : 'default' }}
-                        >
-                            <div className={styles.cardHeader}>
-                                <span className={styles.typeIcon}>{TYPE_ICONS[card.type] || '📌'}</span>
-                                <span className={styles.typeLabel}>{t(`types.${card.type}`)}</span>
-                                {card.difficulty && (
-                                    <span className={`${styles.diffBadge} ${styles[`diff_${card.difficulty}`]}`}>
-                                        {diffLabels[card.difficulty]}
-                                    </span>
-                                )}
-                            </div>
-                            <h3 className={styles.cardTitle}>{card.title}</h3>
-                            <p className={styles.cardDescription}>{card.description}</p>
-                            {card.tags && card.tags.length > 0 && (
-                                <div className={styles.tagList}>
-                                    {card.tags.map((tag) => (
-                                        <span key={tag} className={styles.tag}>
-                                            {tag}
-                                        </span>
-                                    ))}
+                    {cards.map((card, index) => {
+                        const href = getWikiUrl(card, locale);
+                        const thumbnail = TYPE_THUMBNAILS[card.type];
+
+                        return (
+                            <motion.a
+                                key={card.id}
+                                href={href}
+                                target={card.url ? '_blank' : undefined}
+                                rel={card.url ? 'noopener noreferrer' : undefined}
+                                className={`${styles.widget} ${styles[card.type]}`}
+                                initial={{ opacity: 0, x: -16 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 16 }}
+                                transition={{ duration: 0.3, delay: index * 0.05 }}
+                            >
+                                {/* Pixel-art thumbnail */}
+                                <div className={styles.thumbnailFrame}>
+                                    {thumbnail ? (
+                                        <Image
+                                            src={thumbnail}
+                                            alt=""
+                                            width={36}
+                                            height={36}
+                                            className={styles.thumbnailImg}
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <span className={styles.thumbnailIcon}>📌</span>
+                                    )}
                                 </div>
-                            )}
-                            {card.url && (
-                                <div className={styles.cardLink}>
-                                    {t('watchOnYouTube')} →
+
+                                {/* Content */}
+                                <div className={styles.widgetContent}>
+                                    <div className={styles.widgetTopRow}>
+                                        <span className={styles.typeLabel}>{t(`types.${card.type}`)}</span>
+                                        {card.difficulty && (
+                                            <span className={`${styles.diffBadge} ${styles[`diff_${card.difficulty}`]}`}>
+                                                {diffLabels[card.difficulty]}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className={styles.widgetTitle}>{card.title}</h3>
+                                    <p className={styles.widgetDescription}>{card.description}</p>
                                 </div>
-                            )}
-                        </motion.div>
-                    ))}
+
+                                {/* Arrow */}
+                                <span className={styles.widgetArrow}>→</span>
+                            </motion.a>
+                        );
+                    })}
                 </AnimatePresence>
             </div>
 

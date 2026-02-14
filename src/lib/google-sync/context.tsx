@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User } from 'firebase/auth';
+import { auth } from '@/lib/rhythmia/firebase';
 import {
   isGoogleLinked,
   linkGoogleAccount,
@@ -103,8 +104,23 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
   const [isLinked, setIsLinked] = useState(false);
   const [status, setStatus] = useState<GoogleSyncStatus>('idle');
 
-  // Watch Firebase auth state
+  // Watch Firebase auth state and ensure anonymous auth is initialized
   useEffect(() => {
+    // Initialize auth (will create anonymous user if needed)
+    const initAuthAsync = async () => {
+      if (!auth) return;
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        try {
+          const { signInAnonymously } = await import('firebase/auth');
+          await signInAnonymously(auth);
+        } catch (error) {
+          console.error('[GoogleSync] Failed to initialize anonymous auth:', error);
+        }
+      }
+    };
+    initAuthAsync();
+
     const unsubscribe = onAuthChange((firebaseUser) => {
       setUser(firebaseUser);
       setIsLinked(isGoogleLinked(firebaseUser));

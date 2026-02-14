@@ -144,6 +144,58 @@
             "name": "Dios del Combo",
             "desc": "Alcanza un combo de 20"
         },
+        "combo_30": {
+            "name": "Señor del Combo",
+            "desc": "Alcanza un combo de 30"
+        },
+        "combo_50": {
+            "name": "Combo Inmortal",
+            "desc": "Alcanza un combo de 50"
+        },
+        "combo_75": {
+            "name": "Combo Trascendente",
+            "desc": "Alcanza un combo de 75"
+        },
+        "combo_100": {
+            "name": "Combo Deidad",
+            "desc": "Alcanza un combo de 100"
+        },
+        "combo_150": {
+            "name": "Combo Celestial",
+            "desc": "Alcanza un combo de 150"
+        },
+        "combo_200": {
+            "name": "Combo Eterno",
+            "desc": "Alcanza un combo de 200"
+        },
+        "total_combo_50": {
+            "name": "Colector de Combos",
+            "desc": "Acumula 50 combos en total"
+        },
+        "total_combo_100": {
+            "name": "Acumulador de Combos",
+            "desc": "Acumula 100 combos en total"
+        },
+        "total_combo_250": {
+            "name": "Veterano de Combos",
+            "desc": "Acumula 250 combos en total"
+        },
+        "total_combo_500": {
+            "name": "Maestro de Combos",
+            "desc": "Acumula 500 combos en total"
+        },
+        "total_combo_1000": {
+            "name": "Leyenda de Combos",
+            "desc": "Acumula 1.000 combos en total"
+        },
+        "total_combo_2500": {
+            "name": "Combo Mítico",
+            "desc": "Acumula 2.500 combos en total"
+        },
+        "total_combo_5000": {
+            "name": "Combo Infinito",
+            "desc": "Acumula 5.000 combos en total"
+        },
         "games_1": {
             "name": "Primeros Pasos",
             "desc": "Juega tu primera partida"
@@ -394,67 +446,67 @@
         },
         "badges": {
             "streak_3": {
-                "icon": "🔥",
+                "icon": "\uD83D\uDD25",
                 "name": "Racha de 3 Días",
                 "desc": "Visita 3 días seguidos"
             },
             "streak_7": {
-                "icon": "🔥",
+                "icon": "\uD83D\uDD25",
                 "name": "Ritmo Semanal",
                 "desc": "Visita 7 días seguidos"
             },
             "streak_14": {
-                "icon": "🔥",
+                "icon": "\uD83D\uDD25",
                 "name": "Ritmo Quincenal",
                 "desc": "Visita 14 días seguidos"
             },
             "streak_30": {
-                "icon": "🔥",
+                "icon": "\uD83D\uDD25",
                 "name": "Pulso Mensual",
                 "desc": "Visita 30 días seguidos"
             },
             "visits_5": {
-                "icon": "👣",
+                "icon": "\uD83D\uDC63",
                 "name": "Habitual",
                 "desc": "Visita 5 veces"
             },
             "visits_25": {
-                "icon": "👣",
+                "icon": "\uD83D\uDC63",
                 "name": "Cara Familiar",
                 "desc": "Visita 25 veces"
             },
             "visits_100": {
-                "icon": "👣",
+                "icon": "\uD83D\uDC63",
                 "name": "De la Familia",
                 "desc": "Visita 100 veces"
             },
             "games_10": {
-                "icon": "🎮",
+                "icon": "\uD83C\uDFAE",
                 "name": "Jugador",
                 "desc": "Juega 10 partidas"
             },
             "games_50": {
-                "icon": "🎮",
+                "icon": "\uD83C\uDFAE",
                 "name": "Entusiasta",
                 "desc": "Juega 50 partidas"
             },
             "games_200": {
-                "icon": "🎮",
+                "icon": "\uD83C\uDFAE",
                 "name": "Devoto",
                 "desc": "Juega 200 partidas"
             },
             "polls_1": {
-                "icon": "🗳️",
+                "icon": "\uD83D\uDDF3\uFE0F",
                 "name": "Primer Voto",
                 "desc": "Vota en tu primera encuesta"
             },
             "polls_5": {
-                "icon": "🗳️",
+                "icon": "\uD83D\uDDF3\uFE0F",
                 "name": "Votante Activo",
                 "desc": "Vota en 5 encuestas"
             },
             "polls_10": {
-                "icon": "🗳️",
+                "icon": "\uD83D\uDDF3\uFE0F",
                 "name": "Voz de la Comunidad",
                 "desc": "Vota en 10 encuestas"
             }
@@ -511,6 +563,7 @@
         "viewPR": "Ver PR",
         "viewAllPRs": "Ver todos los PRs",
         "viewAllPRsGithub": "Ver todos los PRs en GitHub",
+        "videoTitle": "Resumen de Actualización",
         "changes": "cambios",
         "change": "cambio",
         "categories": {
@@ -520,8 +573,7 @@
             "refactor": "Refactorizaciones",
             "docs": "Documentación",
             "i18n": "Internacionalización"
-        },
-        "videoTitle": "Resumen de Actualización"
+        }
     },
     "minecraft_board": {
         "title": "Juego de Mesa Minecraft",
@@ -792,19 +844,32 @@
         "title": "Perfil y Skin",
         "selectSkin": "Seleccionar Skin de Color",
         "currentSkin": "Skin Actual",
-        "profileButton": "Perfil",
         "selectLanguage": "Idioma",
-        "privacy": "Privacidad"
+        "privacy": "Privacidad",
+        "profileButton": "Perfil"
     },
     "googleSync": {
-        "sectionTitle": "Sincronizar con Google",
-        "description": "Inicia sesion con Google para sincronizar tu perfil, logros, lealtad y configuracion de skin entre dispositivos.",
-        "signIn": "Iniciar sesion con Google",
-        "signOut": "Cerrar sesion",
+        "sectionTitle": "Sincronización con Cuenta de Google",
+        "description": "Inicia sesión con Google para sincronizar tu perfil, logros, progreso de lealtad y configuración de skin entre dispositivos.",
+        "signIn": "Iniciar sesión con Google",
+        "signOut": "Cerrar sesión",
         "linking": "Conectando...",
         "syncing": "Sincronizando...",
         "syncNow": "Sincronizar ahora",
         "synced": "Sincronizado",
-        "error": "Error de sincronizacion"
+        "error": "Error de sincronización"
+    },
+    "stories": {
+        "title": "STORIES",
+        "chapter": "CHAPTER",
+        "backToLobby": "← Volver",
+        "log": "LOG",
+        "auto": "AUTO",
+        "skip": "SKIP",
+        "menu": "MENU",
+        "logTitle": "Registro de Texto",
+        "close": "Cerrar",
+        "resume": "Reanudar",
+        "chapterSelect": "Selección de Capítulo"
     }
 }

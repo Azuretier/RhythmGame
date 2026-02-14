@@ -9,20 +9,25 @@ function getDefaultStats(): PlayerStats {
     totalLines: 0,
     bestLinesPerGame: 0,
     totalTSpins: 0,
+    bestTSpinsPerGame: 0,
     totalScore: 0,
     bestScorePerGame: 0,
     totalGamesPlayed: 0,
     bestCombo: 0,
+    totalCombos: 0,
     totalPerfectBeats: 0,
     bestPerfectBeatsPerGame: 0,
     worldsCleared: 0,
     totalTetrisClears: 0,
+    bestTetrisClearsPerGame: 0,
     multiplayerWins: 0,
     multiplayerWinStreak: 0,
     bestMultiplayerWinStreak: 0,
     totalMultiplayerGames: 0,
     totalHardDrops: 0,
+    bestHardDropsPerGame: 0,
     totalPiecesPlaced: 0,
+    bestPiecesPerGame: 0,
     totalVisits: 0,
     bestStreak: 0,
     pollsVoted: 0,
@@ -113,11 +118,24 @@ export function recordGameEnd(stats: GameEndStats): AdvancementState {
   if (stats.lines > state.stats.bestLinesPerGame) {
     state.stats.bestLinesPerGame = stats.lines;
   }
+  state.stats.totalCombos += stats.bestCombo;
   if (stats.bestCombo > state.stats.bestCombo) {
     state.stats.bestCombo = stats.bestCombo;
   }
   if (stats.perfectBeats > state.stats.bestPerfectBeatsPerGame) {
     state.stats.bestPerfectBeatsPerGame = stats.perfectBeats;
+  }
+  if (stats.tSpins > state.stats.bestTSpinsPerGame) {
+    state.stats.bestTSpinsPerGame = stats.tSpins;
+  }
+  if (stats.tetrisClears > state.stats.bestTetrisClearsPerGame) {
+    state.stats.bestTetrisClearsPerGame = stats.tetrisClears;
+  }
+  if (stats.hardDrops > state.stats.bestHardDropsPerGame) {
+    state.stats.bestHardDropsPerGame = stats.hardDrops;
+  }
+  if (stats.piecesPlaced > state.stats.bestPiecesPerGame) {
+    state.stats.bestPiecesPerGame = stats.piecesPlaced;
   }
 
   const updated = checkNewAdvancements(state);
@@ -155,6 +173,12 @@ export function recordMultiplayerGameEnd(stats: MultiplayerGameEndStats): Advanc
   }
   if (stats.lines > state.stats.bestLinesPerGame) {
     state.stats.bestLinesPerGame = stats.lines;
+  }
+  if (stats.hardDrops > state.stats.bestHardDropsPerGame) {
+    state.stats.bestHardDropsPerGame = stats.hardDrops;
+  }
+  if (stats.piecesPlaced > state.stats.bestPiecesPerGame) {
+    state.stats.bestPiecesPerGame = stats.piecesPlaced;
   }
 
   if (stats.won) {
@@ -206,11 +230,24 @@ export function checkLiveGameAdvancements(sessionStats: GameEndStats): string[] 
   if (sessionStats.lines > projected.bestLinesPerGame) {
     projected.bestLinesPerGame = sessionStats.lines;
   }
+  projected.totalCombos += sessionStats.bestCombo;
   if (sessionStats.bestCombo > projected.bestCombo) {
     projected.bestCombo = sessionStats.bestCombo;
   }
   if (sessionStats.perfectBeats > projected.bestPerfectBeatsPerGame) {
     projected.bestPerfectBeatsPerGame = sessionStats.perfectBeats;
+  }
+  if (sessionStats.tSpins > projected.bestTSpinsPerGame) {
+    projected.bestTSpinsPerGame = sessionStats.tSpins;
+  }
+  if (sessionStats.tetrisClears > projected.bestTetrisClearsPerGame) {
+    projected.bestTetrisClearsPerGame = sessionStats.tetrisClears;
+  }
+  if (sessionStats.hardDrops > projected.bestHardDropsPerGame) {
+    projected.bestHardDropsPerGame = sessionStats.hardDrops;
+  }
+  if (sessionStats.piecesPlaced > projected.bestPiecesPerGame) {
+    projected.bestPiecesPerGame = sessionStats.piecesPlaced;
   }
 
   const qualifying: string[] = [];
@@ -243,6 +280,12 @@ export function checkLiveMultiplayerAdvancements(sessionStats: MultiplayerGameEn
   if (sessionStats.lines > projected.bestLinesPerGame) {
     projected.bestLinesPerGame = sessionStats.lines;
   }
+  if (sessionStats.hardDrops > projected.bestHardDropsPerGame) {
+    projected.bestHardDropsPerGame = sessionStats.hardDrops;
+  }
+  if (sessionStats.piecesPlaced > projected.bestPiecesPerGame) {
+    projected.bestPiecesPerGame = sessionStats.piecesPlaced;
+  }
 
   const qualifying: string[] = [];
   for (const adv of ADVANCEMENTS) {
@@ -252,6 +295,32 @@ export function checkLiveMultiplayerAdvancements(sessionStats: MultiplayerGameEn
     }
   }
   return qualifying;
+}
+
+/**
+ * Instantly persist newly unlocked advancement IDs mid-game.
+ * Only saves the unlock flags (not session stats) so recordGameEnd()
+ * can still accumulate stats correctly without double-counting.
+ * Syncs to Firestore and writes notifications for each new unlock.
+ */
+export function saveLiveUnlocks(newIds: string[]): void {
+  if (newIds.length === 0) return;
+
+  const state = loadAdvancementState();
+  const deduped = newIds.filter(id => !state.unlockedIds.includes(id));
+  if (deduped.length === 0) return;
+
+  const updated = {
+    ...state,
+    unlockedIds: [...state.unlockedIds, ...deduped],
+    newlyUnlockedIds: deduped,
+  };
+
+  saveAdvancementState(updated);
+  syncToFirestore(updated);
+  for (const advId of deduped) {
+    writeNotification(advId);
+  }
 }
 
 export function getUnlockedCount(): number {

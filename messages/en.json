@@ -68,6 +68,14 @@
             "name": "Line Legend",
             "desc": "Clear 1,000 total lines"
         },
+        "lines_2500": {
+            "name": "Line Conqueror",
+            "desc": "Clear 2,500 total lines"
+        },
+        "lines_5000": {
+            "name": "Line Immortal",
+            "desc": "Clear 5,000 total lines"
+        },
         "best_lines_10": {
             "name": "Warm Up",
             "desc": "Clear 10 lines in one game"
@@ -83,6 +91,10 @@
         "best_lines_100": {
             "name": "Unstoppable",
             "desc": "Clear 100 lines in one game"
+        },
+        "best_lines_200": {
+            "name": "Line Demigod",
+            "desc": "Clear 200 lines in one game"
         },
         "tspin_1": {
             "name": "First Twist",
@@ -100,6 +112,30 @@
             "name": "T-Spin Legend",
             "desc": "Perform 200 T-Spins"
         },
+        "tspin_500": {
+            "name": "T-Spin Grandmaster",
+            "desc": "Perform 500 T-Spins"
+        },
+        "tspin_1000": {
+            "name": "T-Spin Immortal",
+            "desc": "Perform 1,000 T-Spins"
+        },
+        "best_tspin_1": {
+            "name": "Spin Initiate",
+            "desc": "Perform 1 T-Spin in one game"
+        },
+        "best_tspin_5": {
+            "name": "Spin Specialist",
+            "desc": "Perform 5 T-Spins in one game"
+        },
+        "best_tspin_10": {
+            "name": "Spin Virtuoso",
+            "desc": "Perform 10 T-Spins in one game"
+        },
+        "best_tspin_25": {
+            "name": "Spin Prodigy",
+            "desc": "Perform 25 T-Spins in one game"
+        },
         "score_10k": {
             "name": "Score Rookie",
             "desc": "Accumulate 10,000 total score"
@@ -115,6 +151,14 @@
         "score_10m": {
             "name": "Score Legend",
             "desc": "Accumulate 10,000,000 total score"
+        },
+        "score_50m": {
+            "name": "Score Overlord",
+            "desc": "Accumulate 50,000,000 total score"
+        },
+        "score_100m": {
+            "name": "Score Immortal",
+            "desc": "Accumulate 100,000,000 total score"
         },
         "best_score_5k": {
             "name": "Nice Game",
@@ -132,6 +176,10 @@
             "name": "Legendary Game",
             "desc": "Score 500,000 in one game"
         },
+        "best_score_1m": {
+            "name": "Mythical Game",
+            "desc": "Score 1,000,000 in one game"
+        },
         "combo_3": {
             "name": "Combo Starter",
             "desc": "Reach a 3 combo"
@@ -143,6 +191,58 @@
         "combo_20": {
             "name": "Combo God",
             "desc": "Reach a 20 combo"
+        },
+        "combo_30": {
+            "name": "Combo Overlord",
+            "desc": "Reach a 30 combo"
+        },
+        "combo_50": {
+            "name": "Combo Immortal",
+            "desc": "Reach a 50 combo"
+        },
+        "combo_75": {
+            "name": "Combo Transcendent",
+            "desc": "Reach a 75 combo"
+        },
+        "combo_100": {
+            "name": "Combo Deity",
+            "desc": "Reach a 100 combo"
+        },
+        "combo_150": {
+            "name": "Combo Celestial",
+            "desc": "Reach a 150 combo"
+        },
+        "combo_200": {
+            "name": "Combo Eternal",
+            "desc": "Reach a 200 combo"
+        },
+        "total_combo_50": {
+            "name": "Combo Collector",
+            "desc": "Accumulate 50 total combo across games"
+        },
+        "total_combo_100": {
+            "name": "Combo Hoarder",
+            "desc": "Accumulate 100 total combo across games"
+        },
+        "total_combo_250": {
+            "name": "Combo Veteran",
+            "desc": "Accumulate 250 total combo across games"
+        },
+        "total_combo_500": {
+            "name": "Combo Master",
+            "desc": "Accumulate 500 total combo across games"
+        },
+        "total_combo_1000": {
+            "name": "Combo Legend",
+            "desc": "Accumulate 1,000 total combo across games"
+        },
+        "total_combo_2500": {
+            "name": "Combo Mythic",
+            "desc": "Accumulate 2,500 total combo across games"
+        },
+        "total_combo_5000": {
+            "name": "Combo Infinite",
+            "desc": "Accumulate 5,000 total combo across games"
         },
         "games_1": {
             "name": "First Steps",
@@ -160,6 +260,14 @@
             "name": "Veteran",
             "desc": "Play 100 games"
         },
+        "games_250": {
+            "name": "Hardcore Gamer",
+            "desc": "Play 250 games"
+        },
+        "games_500": {
+            "name": "Lifetime Player",
+            "desc": "Play 500 games"
+        },
         "worlds_5": {
             "name": "World Traveler",
             "desc": "Clear 5 worlds"
@@ -176,6 +284,30 @@
             "name": "Tetris Master",
             "desc": "Clear 4 lines at once 50 times"
         },
+        "tetris_100": {
+            "name": "Tetris Grandmaster",
+            "desc": "Clear 4 lines at once 100 times"
+        },
+        "tetris_200": {
+            "name": "Tetris God",
+            "desc": "Clear 4 lines at once 200 times"
+        },
+        "best_tetris_1": {
+            "name": "Four-Liner",
+            "desc": "Clear 4 lines at once in one game"
+        },
+        "best_tetris_3": {
+            "name": "Tetris Streak",
+            "desc": "Clear 4 lines at once 3 times in one game"
+        },
+        "best_tetris_5": {
+            "name": "Tetris Specialist",
+            "desc": "Clear 4 lines at once 5 times in one game"
+        },
+        "best_tetris_10": {
+            "name": "Tetris Prodigy",
+            "desc": "Clear 4 lines at once 10 times in one game"
+        },
         "perfect_beats_10": {
             "name": "Rhythm Rookie",
             "desc": "Hit 10 perfect beats in one game"
@@ -184,6 +316,26 @@
             "name": "Rhythm Master",
             "desc": "Hit 50 perfect beats in one game"
         },
+        "perfect_beats_100": {
+            "name": "Rhythm Legend",
+            "desc": "Hit 100 perfect beats in one game"
+        },
+        "total_perfect_beats_50": {
+            "name": "Beat Collector",
+            "desc": "Hit 50 total perfect beats"
+        },
+        "total_perfect_beats_200": {
+            "name": "Beat Enthusiast",
+            "desc": "Hit 200 total perfect beats"
+        },
+        "total_perfect_beats_500": {
+            "name": "Beat Virtuoso",
+            "desc": "Hit 500 total perfect beats"
+        },
+        "total_perfect_beats_1000": {
+            "name": "Beat Immortal",
+            "desc": "Hit 1,000 total perfect beats"
+        },
         "hard_drops_100": {
             "name": "Speed Dropper",
             "desc": "Perform 100 hard drops"
@@ -191,6 +343,26 @@
         "hard_drops_1000": {
             "name": "Terminal Velocity",
             "desc": "Perform 1,000 hard drops"
+        },
+        "hard_drops_5000": {
+            "name": "Meteor Strike",
+            "desc": "Perform 5,000 hard drops"
+        },
+        "best_hard_drops_50": {
+            "name": "Quick Dropper",
+            "desc": "Perform 50 hard drops in one game"
+        },
+        "best_hard_drops_100": {
+            "name": "Speed Demon",
+            "desc": "Perform 100 hard drops in one game"
+        },
+        "best_hard_drops_200": {
+            "name": "Drop Machine",
+            "desc": "Perform 200 hard drops in one game"
+        },
+        "best_hard_drops_500": {
+            "name": "Gravity Master",
+            "desc": "Perform 500 hard drops in one game"
         },
         "pieces_100": {
             "name": "Block Builder",
@@ -204,6 +376,30 @@
             "name": "Block Legend",
             "desc": "Place 10,000 pieces"
         },
+        "pieces_50000": {
+            "name": "Block Titan",
+            "desc": "Place 50,000 pieces"
+        },
+        "pieces_100000": {
+            "name": "Block Immortal",
+            "desc": "Place 100,000 pieces"
+        },
+        "best_pieces_50": {
+            "name": "Piece Placer",
+            "desc": "Place 50 pieces in one game"
+        },
+        "best_pieces_100": {
+            "name": "Piece Stacker",
+            "desc": "Place 100 pieces in one game"
+        },
+        "best_pieces_250": {
+            "name": "Piece Master",
+            "desc": "Place 250 pieces in one game"
+        },
+        "best_pieces_500": {
+            "name": "Piece Titan",
+            "desc": "Place 500 pieces in one game"
+        },
         "mp_win_1": {
             "name": "First Victory",
             "desc": "Win your first multiplayer match"
@@ -215,6 +411,14 @@
         "mp_win_50": {
             "name": "Arena Champion",
             "desc": "Win 50 multiplayer matches"
+        },
+        "mp_win_100": {
+            "name": "Arena Legend",
+            "desc": "Win 100 multiplayer matches"
+        },
+        "mp_win_200": {
+            "name": "Arena God",
+            "desc": "Win 200 multiplayer matches"
         },
         "mp_streak_3": {
             "name": "Hot Streak",
@@ -228,6 +432,14 @@
             "name": "Unbreakable",
             "desc": "Win 10 matches in a row"
         },
+        "mp_streak_15": {
+            "name": "Untouchable",
+            "desc": "Win 15 matches in a row"
+        },
+        "mp_streak_20": {
+            "name": "Invincible",
+            "desc": "Win 20 matches in a row"
+        },
         "mp_games_10": {
             "name": "Arena Regular",
             "desc": "Play 10 multiplayer matches"
@@ -235,6 +447,14 @@
         "mp_games_50": {
             "name": "Arena Veteran",
             "desc": "Play 50 multiplayer matches"
+        },
+        "mp_games_100": {
+            "name": "Arena Gladiator",
+            "desc": "Play 100 multiplayer matches"
+        },
+        "mp_games_200": {
+            "name": "Arena Warlord",
+            "desc": "Play 200 multiplayer matches"
         },
         "loyalty_streak_3": {
             "name": "3-Day Streak",
@@ -252,6 +472,14 @@
             "name": "Monthly Pulse",
             "desc": "Visit 30 days in a row"
         },
+        "loyalty_streak_60": {
+            "name": "Seasonal Beat",
+            "desc": "Visit 60 days in a row"
+        },
+        "loyalty_streak_100": {
+            "name": "Eternal Rhythm",
+            "desc": "Visit 100 days in a row"
+        },
         "loyalty_visits_5": {
             "name": "Regular",
             "desc": "Visit 5 times"
@@ -263,6 +491,14 @@
         "loyalty_visits_100": {
             "name": "Part of the Family",
             "desc": "Visit 100 times"
+        },
+        "loyalty_visits_250": {
+            "name": "Living Legend",
+            "desc": "Visit 250 times"
+        },
+        "loyalty_visits_500": {
+            "name": "Eternal Visitor",
+            "desc": "Visit 500 times"
         },
         "loyalty_games_10": {
             "name": "Player",
@@ -276,6 +512,14 @@
             "name": "Devotee",
             "desc": "Play 200 games"
         },
+        "loyalty_games_500": {
+            "name": "Obsessed",
+            "desc": "Play 500 games"
+        },
+        "loyalty_games_1000": {
+            "name": "Transcended",
+            "desc": "Play 1,000 games"
+        },
         "loyalty_polls_1": {
             "name": "First Vote",
             "desc": "Vote in your first poll"
@@ -287,6 +531,14 @@
         "loyalty_polls_10": {
             "name": "Community Voice",
             "desc": "Vote in 10 polls"
+        },
+        "loyalty_polls_25": {
+            "name": "Democracy Champion",
+            "desc": "Vote in 25 polls"
+        },
+        "loyalty_polls_50": {
+            "name": "Voice of the People",
+            "desc": "Vote in 50 polls"
         }
     },
     "arena": {
@@ -795,7 +1047,17 @@
         "grid2": "Grid extends 18 tiles from center in each direction",
         "grid3": "Enemies spawn on the Manhattan distance 18 perimeter",
         "grid4": "Turret fires every 1,000ms, bullet speed: 18 units/sec",
-        "grid5": "Bullets follow parabolic arcs (gravity: 40 units/sec²)"
+        "grid5": "Bullets follow parabolic arcs (gravity: 40 units/sec²)",
+        "sectionGameOverview": "Game Overview",
+        "sectionCommunityResources": "Community Resources",
+        "sectionUpdates": "Updates",
+        "gameOverviewTitle": "Game Overview",
+        "communityResourcesTitle": "Community Resources",
+        "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
+        "updatesTitle": "Version Updates",
+        "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+        "videoComingSoon": "Coming Soon",
+        "watchVideo": "Watch"
     },
     "nav": {
         "wiki": "Wiki",
@@ -828,9 +1090,9 @@
         "title": "Profile & Skin",
         "selectSkin": "Select Color Skin",
         "currentSkin": "Current Skin",
-        "profileButton": "Profile",
         "selectLanguage": "Language",
-        "privacy": "Privacy"
+        "privacy": "Privacy",
+        "profileButton": "Profile"
     },
     "googleSync": {
         "sectionTitle": "Google Account Sync",
@@ -842,5 +1104,18 @@
         "syncNow": "Sync now",
         "synced": "Synced",
         "error": "Sync failed"
+    },
+    "stories": {
+        "title": "STORIES",
+        "chapter": "CHAPTER",
+        "backToLobby": "← Back",
+        "log": "LOG",
+        "auto": "AUTO",
+        "skip": "SKIP",
+        "menu": "MENU",
+        "logTitle": "Text Log",
+        "close": "Close",
+        "resume": "Resume",
+        "chapterSelect": "Chapter Select"
     }
 }

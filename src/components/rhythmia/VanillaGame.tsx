@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VanillaGame.module.css';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
+import { recordGameEnd, checkLiveGameAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
 
 // ===== Types =====
@@ -331,6 +331,8 @@ export const Rhythmia: React.FC = () => {
     if (fresh.length > 0) {
       fresh.forEach(id => liveNotifiedRef.current.add(id));
       setToastIds(prev => [...prev, ...fresh]);
+      // Instantly persist unlocks so progress survives mid-game exits
+      saveLiveUnlocks(fresh);
     }
   }, []);
 
@@ -936,6 +938,26 @@ export const Rhythmia: React.FC = () => {
     window.addEventListener('resize', updateCellSize);
     return () => window.removeEventListener('resize', updateCellSize);
   }, [gameStarted]);
+
+  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
+  useEffect(() => {
+    return () => {
+      // Only record stats if game hasn't ended normally (player left via back button)
+      if (!gameOverRef.current) {
+        recordGameEnd({
+          score: scoreRef.current,
+          lines: linesRef.current,
+          tSpins: gameTSpinsRef.current,
+          bestCombo: gameBestComboRef.current,
+          perfectBeats: gamePerfectBeatsRef.current,
+          worldsCleared: gameWorldsClearedRef.current,
+          tetrisClears: gameTetrisClearsRef.current,
+          hardDrops: gameHardDropsRef.current,
+          piecesPlaced: gamePiecesPlacedRef.current,
+        });
+      }
+    };
+  }, []);
 
   // ===== Render Helpers =====
   const getDisplayBoard = useCallback(() => {

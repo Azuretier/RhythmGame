@@ -4,6 +4,7 @@ import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
+import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
   ServerMessage,
@@ -49,6 +50,7 @@ interface PlayerConnection {
   reconnectToken?: string;
   profileName?: string;
   profileIcon?: string;
+  profilePrivate?: boolean;
 }
 
 // Ranked matchmaking queue
@@ -143,7 +145,7 @@ function broadcastOnlineCount(): void {
 function getOnlineUsers(): { name: string; icon: string }[] {
   const users: { name: string; icon: string }[] = [];
   playerConnections.forEach((conn) => {
-    if (conn.profileName && conn.ws.readyState === WebSocket.OPEN) {
+    if (conn.profileName && conn.ws.readyState === WebSocket.OPEN && !conn.profilePrivate) {
       users.push({ name: conn.profileName, icon: conn.profileIcon || '' });
     }
   });
@@ -547,12 +549,18 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'set_profile': {
-      const profileMsg = message as unknown as { name: string; icon: string };
+      const profileMsg = message as unknown as { name: string; icon: string; isPrivate?: boolean };
       if (conn) {
+        const isNewProfile = !conn.profileName;
         conn.profileName = (profileMsg.name || '').slice(0, 20);
         conn.profileIcon = (profileMsg.icon || '').slice(0, 30);
+        conn.profilePrivate = !!profileMsg.isPrivate;
         // Broadcast updated online users so all clients see the new profile
         broadcastOnlineCount();
+        // Notify Discord channels when a player comes online
+        if (isNewProfile && conn.profileName) {
+          notifyPlayerOnline(conn.profileName, conn.profileIcon || '', playerConnections.size);
+        }
       }
       break;
     }
@@ -1405,7 +1413,7 @@ const heartbeatInterval = setInterval(() => {
   });
 }, HEARTBEAT_INTERVAL);
 
-// Token cleanup
+// Token cleanup + notification cooldown cleanup
 const tokenCleanupInterval = setInterval(() => {
   const now = Date.now();
   reconnectTokens.forEach((data, token) => {
@@ -1413,6 +1421,7 @@ const tokenCleanupInterval = setInterval(() => {
       reconnectTokens.delete(token);
     }
   });
+  cleanupNotificationCooldowns();
 }, 60000);
 
 // ===== Connection Handler =====

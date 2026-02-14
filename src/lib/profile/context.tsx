@@ -12,6 +12,7 @@ interface ProfileContextType {
   setProfile: (profile: UserProfile) => void;
   /** Replace profile state from cloud restore (skips Firestore write-back) */
   restoreProfile: (profile: UserProfile) => void;
+  updateProfile: (updates: Partial<UserProfile>) => void;
   isProfileSetup: boolean;
   showProfileSetup: boolean;
   setShowProfileSetup: (show: boolean) => void;
@@ -67,9 +68,21 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     setShowProfileSetup(false);
   }, []);
 
+  const updateProfile = useCallback((updates: Partial<UserProfile>) => {
+    if (!profile) return;
+    const updated = { ...profile, ...updates };
+    setProfileState(updated);
+    setStoredProfile(updated);
+
+    // Sync to Firestore if Google account is linked
+    if (auth?.currentUser && isGoogleLinked(auth.currentUser)) {
+      syncUserDataToFirestore(auth.currentUser.uid, { profile: updated });
+    }
+  }, [profile]);
+
   return (
     <ProfileContext.Provider
-      value={{ profile, setProfile, restoreProfile, isProfileSetup, showProfileSetup, setShowProfileSetup }}
+      value={{ profile, setProfile, restoreProfile, updateProfile, isProfileSetup, showProfileSetup, setShowProfileSetup }}
     >
       {children}
     </ProfileContext.Provider>

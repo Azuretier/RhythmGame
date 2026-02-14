@@ -1,22 +1,31 @@
-/**
- * Floating version switcher button for the home page
- */
-
 'use client';
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, ArrowRight, Check, Layers } from 'lucide-react';
+import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Grid3x3 } from 'lucide-react';
 import { useVersion } from '@/lib/version/context';
-import { VERSIONS, type AppVersion } from '@/lib/version/types';
-import { useRouter } from 'next/navigation';
+import {
+  VERSION_METADATA,
+  UI_VERSIONS,
+  ACCENT_COLOR_METADATA,
+  ACCENT_COLORS,
+  type UIVersion,
+  type AccentColor,
+} from '@/lib/version/types';
+
+const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
+  current: <Gamepad2 size={20} />,
+  '1.0.0': <MessageCircle size={20} />,
+  '1.0.1': <Heart size={20} />,
+  '1.0.2': <Grid3x3 size={20} />,
+};
 
 export default function FloatingVersionSwitcher() {
-  const router = useRouter();
-  const { currentVersion, setVersion } = useVersion();
+  const { currentVersion, setVersion, accentColor, setAccentColor } = useVersion();
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleVersionChange = (version: AppVersion) => {
+  const handleVersionChange = (version: UIVersion) => {
+    if (version === currentVersion) return;
     setVersion(version);
     setIsOpen(false);
     
@@ -26,26 +35,32 @@ export default function FloatingVersionSwitcher() {
       window.location.href = '/';
     } else if (version === '1.0.1') {
       window.location.href = '/current';
+    } else if (version === '1.0.2') {
+      window.location.href = '/';
     }
+  };
+
+  const handleAccentChange = (color: AccentColor) => {
+    setAccentColor(color);
   };
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating trigger button */}
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1 }}
+        transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 20 }}
         whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-8 right-8 z-50 w-14 h-14 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full shadow-2xl flex items-center justify-center hover:shadow-purple-500/50 transition-shadow"
-        title="Version Settings"
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-colors shadow-lg"
+        aria-label="Site settings"
       >
-        <Settings className="text-white" size={24} />
+        <Settings size={20} />
       </motion.button>
 
-      {/* Modal */}
+      {/* Panel */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -55,80 +70,118 @@ export default function FloatingVersionSwitcher() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
             />
 
-            {/* Modal content */}
+            {/* Settings drawer — slides up on mobile, centered modal on desktop */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl bg-slate-900 rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
+              initial={{ y: '100%', opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-50 md:fixed md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md md:right-auto"
             >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-6">
-                <div className="flex items-center gap-3">
-                  <Layers className="text-white" size={32} />
-                  <div>
-                    <h2 className="text-2xl font-black text-white">Version Selection</h2>
-                    <p className="text-white/80 text-sm">Choose your preferred interface</p>
-                  </div>
+              <div className="bg-[#1a1b1e] rounded-t-2xl md:rounded-2xl border-t border-white/10 md:border shadow-2xl max-h-[85vh] overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                  <h3 className="text-lg font-bold text-white">Site Settings</h3>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
-              </div>
 
-              {/* Content */}
-              <div className="p-6 space-y-4">
-                {Object.values(VERSIONS).map((version) => {
-                  const isSelected = currentVersion === version.id;
-                  
-                  return (
-                    <motion.button
-                      key={version.id}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleVersionChange(version.id)}
-                      className={`
-                        w-full p-5 rounded-xl border-2 transition-all text-left
-                        ${isSelected 
-                          ? 'bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-purple-400 shadow-xl'
-                          : 'bg-white/5 border-white/10 hover:border-white/30 hover:bg-white/10'
-                        }
-                      `}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-400 to-blue-400" />
-                          <span className="text-purple-300 font-mono font-bold text-sm">
-                            v{version.id}
-                          </span>
-                          {isSelected && (
-                            <div className="flex items-center gap-1 bg-purple-500/20 px-2 py-0.5 rounded-full">
-                              <Check size={12} className="text-purple-300" />
-                              <span className="text-purple-300 text-xs font-medium">Active</span>
+                <div className="p-6 space-y-6">
+                  {/* ── Version Section ── */}
+                  <section>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3">
+                      Site Version
+                    </h4>
+                    <div className="space-y-2">
+                      {UI_VERSIONS.map((versionId) => {
+                        const meta = VERSION_METADATA[versionId];
+                        const isActive = currentVersion === versionId;
+
+                        return (
+                          <button
+                            key={versionId}
+                            onClick={() => handleVersionChange(versionId)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                              isActive
+                                ? 'bg-white/10 border-white/20'
+                                : 'bg-white/[0.03] border-transparent hover:bg-white/[0.06] hover:border-white/10'
+                            }`}
+                          >
+                            <div
+                              className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
+                                isActive ? 'bg-white/15 text-white' : 'bg-white/5 text-white/40'
+                              }`}
+                            >
+                              {VERSION_ICONS[versionId]}
                             </div>
-                          )}
-                        </div>
-                        {!isSelected && (
-                          <ArrowRight className="text-white/40" size={20} />
-                        )}
-                      </div>
-                      
-                      <h3 className="text-white font-bold text-lg mb-2">
-                        {version.name}
-                      </h3>
-                      <p className="text-white/60 text-sm">
-                        {version.description}
-                      </p>
-                    </motion.button>
-                  );
-                })}
-              </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-white truncate">
+                                  {meta.name}
+                                </span>
+                                <span className="text-[10px] font-mono text-white/30">
+                                  {versionId === 'current' ? 'latest' : `v${versionId}`}
+                                </span>
+                              </div>
+                              <p className="text-xs text-white/40 truncate">{meta.description}</p>
+                            </div>
+                            {isActive && (
+                              <Check size={16} className="flex-shrink-0 text-emerald-400" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
 
-              {/* Footer */}
-              <div className="p-6 bg-white/5 border-t border-white/10">
-                <p className="text-white/40 text-xs text-center">
-                  Changing the version will reload the page with the selected interface.
-                </p>
+                  {/* ── Appearance Section ── */}
+                  <section>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Palette size={14} className="text-white/40" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                        Accent Color
+                      </h4>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {ACCENT_COLORS.map((colorId) => {
+                        const meta = ACCENT_COLOR_METADATA[colorId];
+                        const isActive = accentColor === colorId;
+
+                        return (
+                          <button
+                            key={colorId}
+                            onClick={() => handleAccentChange(colorId)}
+                            title={meta.name}
+                            className={`relative w-10 h-10 rounded-full transition-all ${
+                              isActive
+                                ? 'ring-2 ring-white/60 ring-offset-2 ring-offset-[#1a1b1e] scale-110'
+                                : 'hover:scale-110'
+                            }`}
+                            style={{ backgroundColor: meta.value }}
+                          >
+                            {isActive && (
+                              <Check size={16} className="absolute inset-0 m-auto text-white drop-shadow-md" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-3 border-t border-white/5">
+                  <p className="text-[11px] text-white/25 text-center">
+                    Settings are saved locally in your browser.
+                  </p>
+                </div>
               </div>
             </motion.div>
           </>

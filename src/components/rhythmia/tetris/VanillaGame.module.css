@@ -816,6 +816,19 @@
   color: rgba(0, 0, 0, 0.4);
 }
 
+.pauseMenuQuitBtn {
+  margin-top: 8px;
+  background: rgba(255, 60, 60, 0.1);
+  border-color: rgba(255, 60, 60, 0.25);
+  color: rgba(255, 100, 100, 0.9);
+}
+
+.pauseMenuQuitBtn:hover {
+  background: rgba(255, 60, 60, 0.2);
+  border-color: rgba(255, 60, 60, 0.5);
+  color: #ff6464;
+}
+
 /* Responsive: pause menu on smaller screens */
 @media (max-width: 480px) {
   .pauseMenuButtons {

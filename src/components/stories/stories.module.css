@@ -1,0 +1,648 @@
+/* ============================================
+   Visual Novel — Retro Pixel-Art Dithered Style
+   ============================================ */
+
+.container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+    font-family: 'VT323', 'Pixelify Sans', monospace;
+    image-rendering: pixelated;
+    cursor: default;
+    user-select: none;
+}
+
+/* ---- Scene Background ---- */
+.scene {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.sceneBg {
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.8s ease;
+}
+
+/* Dithering / halftone overlay for retro pixel effect */
+.ditherOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    opacity: 0.12;
+    background-image:
+        radial-gradient(circle, #000 1px, transparent 1px);
+    background-size: 3px 3px;
+}
+
+/* CRT scan-line overlay */
+.scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0.06;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.3) 2px,
+        rgba(0, 0, 0, 0.3) 4px
+    );
+}
+
+/* Vignette for focus */
+.vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 50%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+}
+
+/* ---- Floating Particles (butterflies / petals) ---- */
+.particles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    font-size: 16px;
+    opacity: 0;
+    animation: particleFloat 12s ease-in-out infinite;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+}
+
+.particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 14s; }
+.particle:nth-child(2) { left: 25%; animation-delay: 2s; animation-duration: 11s; }
+.particle:nth-child(3) { left: 45%; animation-delay: 4s; animation-duration: 13s; }
+.particle:nth-child(4) { left: 65%; animation-delay: 1s; animation-duration: 15s; }
+.particle:nth-child(5) { left: 80%; animation-delay: 3s; animation-duration: 12s; }
+.particle:nth-child(6) { left: 90%; animation-delay: 5s; animation-duration: 10s; }
+
+@keyframes particleFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(100vh) translateX(0) rotate(0deg) scale(0.8);
+    }
+    10% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 0.9;
+        transform: translateY(40vh) translateX(30px) rotate(180deg) scale(1);
+    }
+    90% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-20vh) translateX(-20px) rotate(360deg) scale(0.6);
+    }
+}
+
+/* ---- Character Sprite ---- */
+.characterLayer {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 180px;
+    pointer-events: none;
+}
+
+.character {
+    position: relative;
+    width: 320px;
+    height: 480px;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+    image-rendering: pixelated;
+}
+
+.characterHidden {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.characterVisible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Pixel art character placeholder — CSS silhouette */
+.characterSprite {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* ---- Text Box ---- */
+.textBoxArea {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 0 24px 16px;
+}
+
+.textBox {
+    position: relative;
+    background: linear-gradient(
+        180deg,
+        rgba(10, 8, 20, 0.92) 0%,
+        rgba(6, 4, 14, 0.96) 100%
+    );
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 20px 28px 16px;
+    backdrop-filter: blur(8px);
+    box-shadow:
+        0 -4px 20px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Pixel border decoration */
+.textBox::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.15),
+        transparent
+    );
+}
+
+.speakerName {
+    font-family: 'Press Start 2P', 'VT323', monospace;
+    font-size: 12px;
+    color: #FFD700;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+    text-transform: uppercase;
+}
+
+.dialogueText {
+    font-family: 'VT323', 'Pixelify Sans', monospace;
+    font-size: 24px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.92);
+    letter-spacing: 1px;
+    min-height: 72px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Typing cursor */
+.cursor {
+    display: inline-block;
+    width: 2px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 0.8s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Click to advance indicator */
+.advanceIndicator {
+    position: absolute;
+    bottom: 16px;
+    right: 24px;
+    animation: advanceBounce 1.2s ease-in-out infinite;
+}
+
+.advanceTriangle {
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid rgba(255, 255, 255, 0.5);
+}
+
+@keyframes advanceBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(4px); }
+}
+
+/* ---- VN Controls Bar ---- */
+.controlsBar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 11;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 24px;
+    background: rgba(0, 0, 0, 0.7);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.controlBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: uppercase;
+}
+
+.controlBtn:hover {
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.controlBtnActive {
+    color: #FFD700;
+    border-color: rgba(255, 215, 0, 0.3);
+    background: rgba(255, 215, 0, 0.08);
+}
+
+.controlKey {
+    font-family: 'VT323', monospace;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.3);
+    padding: 1px 4px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* ---- Top UI Bar ---- */
+.topBar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 12;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
+}
+
+.storyTitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.chapterInfo {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 1px;
+}
+
+/* ---- Back Button ---- */
+.backButton {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    backdrop-filter: blur(4px);
+}
+
+.backButton:hover {
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* ---- Scene Transition Overlay ---- */
+.transitionOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: #000;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+}
+
+/* ---- Log Overlay ---- */
+.logOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(8px);
+    overflow-y: auto;
+    padding: 60px 40px;
+    animation: fadeIn 0.3s ease;
+}
+
+.logHeader {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.logEntry {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.logSpeaker {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: #FFD700;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.logText {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.logClose {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    cursor: pointer;
+    letter-spacing: 1px;
+}
+
+.logClose:hover {
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ---- Menu Overlay ---- */
+.menuOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 45;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    animation: fadeIn 0.3s ease;
+}
+
+.menuTitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+}
+
+.menuItem {
+    display: block;
+    width: 240px;
+    padding: 16px 0;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    letter-spacing: 3px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.menuItem:hover {
+    color: #FFD700;
+    text-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+/* ---- Chapter Select Screen ---- */
+.chapterSelect {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #0a0812;
+    font-family: 'VT323', monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.chapterSelectBg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.15;
+    background:
+        radial-gradient(ellipse at 30% 40%, rgba(90, 50, 140, 0.4) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 60%, rgba(40, 80, 120, 0.3) 0%, transparent 60%);
+}
+
+.chapterSelectTitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.5);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+    z-index: 1;
+}
+
+.chapterGrid {
+    display: flex;
+    gap: 20px;
+    z-index: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 800px;
+    padding: 0 24px;
+}
+
+.chapterCard {
+    position: relative;
+    width: 220px;
+    padding: 24px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.chapterCard:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.chapterCardAccent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+}
+
+.chapterCardNumber {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.25);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+.chapterCardTitle {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 4px;
+}
+
+.chapterCardSubtitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.chapterSelectBack {
+    margin-top: 40px;
+    z-index: 1;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .textBox {
+        padding: 16px 20px 12px;
+        margin: 0 -8px;
+    }
+
+    .dialogueText {
+        font-size: 20px;
+        line-height: 1.6;
+    }
+
+    .speakerName {
+        font-size: 10px;
+    }
+
+    .controlBtn {
+        padding: 6px 10px;
+        font-size: 8px;
+    }
+
+    .controlKey {
+        display: none;
+    }
+
+    .character {
+        width: 240px;
+        height: 360px;
+    }
+
+    .characterLayer {
+        padding-bottom: 160px;
+    }
+
+    .chapterGrid {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .chapterCard {
+        width: 280px;
+    }
+}
+
+@media (max-width: 480px) {
+    .textBoxArea {
+        padding: 0 12px 12px;
+    }
+
+    .dialogueText {
+        font-size: 18px;
+    }
+
+    .controlsBar {
+        gap: 2px;
+        padding: 4px 12px;
+    }
+
+    .controlBtn {
+        padding: 4px 8px;
+        font-size: 7px;
+    }
+}
