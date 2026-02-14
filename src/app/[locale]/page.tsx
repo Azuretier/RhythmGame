@@ -294,7 +294,6 @@ export default function RhythmiaPage() {
                 </motion.header>
 
                 <main className={styles.main}>
-                    {/* For You Section — personalized experience shown first */}
                     <motion.div
                         className={styles.forYouSection}
                         initial={{ opacity: 0, y: 30 }}
@@ -308,6 +307,7 @@ export default function RhythmiaPage() {
                         />
                     </motion.div>
 
+                    {/* For You Section — personalized experience shown first */}
                     {/* SELECT SERVER heading — below personalized content */}
                     <motion.div
                         className={styles.heroText}
