@@ -20,22 +20,22 @@ export const VERSION_METADATA: Record<UIVersion, UIVersionMetadata> = {
   current: {
     id: 'current',
     name: 'Rhythmia',
-    description: 'Game lobby with multiplayer battles and achievements',
+    description: 'Play solo, battle 1v1, or join 9-player arenas',
   },
   '1.0.0': {
     id: '1.0.0',
     name: 'Discord UI',
-    description: 'Discord-like messenger interface with social navigation',
+    description: 'Chat with Azur to find social links and profiles',
   },
   '1.0.1': {
     id: '1.0.1',
     name: 'Patreon UI',
-    description: 'Patreon-style creator layout with profile and content feed',
+    description: 'Creator portfolio with posts and social links',
   },
   '1.0.2': {
     id: '1.0.2',
     name: 'Minecraft: Switch Edition',
-    description: 'Legacy console edition menu with panorama background',
+    description: 'Classic console menu with rotating panorama',
   },
 };
 
