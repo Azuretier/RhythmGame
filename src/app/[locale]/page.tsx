@@ -6,9 +6,19 @@ import V1_0_0_UI from '@/components/home/v1.0.0/V1_0_0_UI';
 import V1_0_1_UI from '@/components/home/v1.0.1/V1_0_1_UI';
 import V1_0_2_UI from '@/components/home/v1.0.2/V1_0_2_UI';
 import FloatingVersionSwitcher from '@/components/version/FloatingVersionSwitcher';
+import VersionSelector from '@/components/version/VersionSelector';
+import type { UIVersion } from '@/lib/version/types';
 
 export default function HomePage() {
-    const { currentVersion } = useVersion();
+    const { currentVersion, isVersionSelected, setVersion } = useVersion();
+
+    const handleVersionSelect = (version: UIVersion) => {
+        setVersion(version);
+    };
+
+    if (!isVersionSelected) {
+        return <VersionSelector onSelect={handleVersionSelect} />;
+    }
 
     const renderPage = () => {
         switch (currentVersion) {
