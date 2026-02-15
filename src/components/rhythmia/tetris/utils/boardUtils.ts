@@ -111,20 +111,19 @@ export const lockPiece = (piece: Piece, boardState: Board): Board => {
 
 /**
  * Clear completed lines and return new board with cleared line count.
- * Only clears lines in the visible area (below BUFFER_ZONE).
- * Buffer rows are preserved and empty rows are inserted just below the buffer.
+ * The entire board (buffer + visible) is treated uniformly — any full row
+ * is removed and everything above shifts down, matching standard Tetris.
+ * New empty rows are inserted at the very top (row 0).
  */
 export const clearLines = (boardState: Board): { newBoard: Board; clearedLines: number } => {
-    const bufferRows = boardState.slice(0, BUFFER_ZONE);
-    const visibleRows = boardState.slice(BUFFER_ZONE);
-    const remainingVisible = visibleRows.filter(row => row.some(cell => cell === null));
-    const clearedLines = visibleRows.length - remainingVisible.length;
+    const remaining = boardState.filter(row => row.some(cell => cell === null));
+    const clearedLines = BOARD_HEIGHT - remaining.length;
 
-    while (remainingVisible.length < visibleRows.length) {
-        remainingVisible.unshift(Array(BOARD_WIDTH).fill(null));
+    while (remaining.length < BOARD_HEIGHT) {
+        remaining.unshift(Array(BOARD_WIDTH).fill(null));
     }
 
-    return { newBoard: [...bufferRows, ...remainingVisible], clearedLines };
+    return { newBoard: remaining, clearedLines };
 };
 
 /**
