@@ -849,6 +849,17 @@
         "privacy": "ความเป็นส่วนตัว",
         "profileButton": "โปรไฟล์"
     },
+    "googleSync": {
+        "sectionTitle": "ซิงค์บัญชี Google",
+        "description": "ลงชื่อเข้าใช้ด้วย Google เพื่อซิงค์โปรไฟล์ ความสำเร็จ ความก้าวหน้าความภักดี และการตั้งค่าสกินของคุณข้ามอุปกรณ์",
+        "signIn": "ลงชื่อเข้าใช้ด้วย Google",
+        "signOut": "ออกจากระบบ",
+        "linking": "กำลังเชื่อมต่อ...",
+        "syncing": "กำลังซิงค์...",
+        "syncNow": "ซิงค์เลย",
+        "synced": "ซิงค์แล้ว",
+        "error": "การซิงค์ล้มเหลว"
+    },
     "stories": {
         "title": "STORIES",
         "chapter": "CHAPTER",

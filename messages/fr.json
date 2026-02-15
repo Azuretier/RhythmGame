@@ -849,6 +849,17 @@
         "privacy": "Confidentialité",
         "profileButton": "Profil"
     },
+    "googleSync": {
+        "sectionTitle": "Synchronisation de Compte Google",
+        "description": "Connectez-vous avec Google pour synchroniser votre profil, succès, progression de fidélité et paramètres de skin sur tous vos appareils.",
+        "signIn": "Se connecter avec Google",
+        "signOut": "Se déconnecter",
+        "linking": "Connexion...",
+        "syncing": "Synchronisation...",
+        "syncNow": "Synchroniser maintenant",
+        "synced": "Synchronisé",
+        "error": "Échec de synchronisation"
+    },
     "stories": {
         "title": "STORIES",
         "chapter": "CHAPTER",

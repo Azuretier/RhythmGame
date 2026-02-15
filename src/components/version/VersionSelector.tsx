@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { UIVersion, VERSION_METADATA, UI_VERSIONS } from "@/lib/version/types";
-import { MessageCircle, Heart, Gamepad2 } from "lucide-react";
+import { MessageCircle, Heart, Gamepad2, Grid3x3 } from "lucide-react";
 
 interface VersionSelectorProps {
   onSelect: (version: UIVersion) => void;
@@ -11,12 +11,14 @@ interface VersionSelectorProps {
 export default function VersionSelector({ onSelect }: VersionSelectorProps) {
   const getIcon = (version: UIVersion) => {
     switch (version) {
+      case "current":
+        return <Gamepad2 className="w-12 h-12" />;
       case "1.0.0":
         return <MessageCircle className="w-12 h-12" />;
       case "1.0.1":
         return <Heart className="w-12 h-12" />;
       case "1.0.2":
-        return <Gamepad2 className="w-12 h-12" />;
+        return <Grid3x3 className="w-12 h-12" />;
     }
   };
 
