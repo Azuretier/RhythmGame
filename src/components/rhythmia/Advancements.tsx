@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import type { AdvancementState, AdvancementCategory } from '@/lib/advancements/types';
+import { PixelIcon } from './PixelIcon';
 import styles from './Advancements.module.css';
 
 interface Props {
@@ -125,7 +126,7 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
                   className={`${styles.advItem} ${unlocked ? styles.unlocked : styles.locked}`}
                 >
                   <div className={styles.advIcon}>
-                    {unlocked ? adv.icon : '🔒'}
+                    <PixelIcon name={unlocked ? adv.icon : 'lock'} size={24} />
                   </div>
                   <div className={styles.advInfo}>
                     <div className={styles.advName}>{displayName}</div>
@@ -140,7 +141,7 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
                       {formatNumber(currentValue)} / {formatNumber(adv.threshold)}
                     </div>
                   </div>
-                  {unlocked && <div className={styles.advCheck}>✓</div>}
+                  {unlocked && <div className={styles.advCheck}>★</div>}
                 </div>
               );
             })}
