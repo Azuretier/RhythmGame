@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Heart, Instagram, Github, Youtube, Twitter } from "lucide-react";
+import { Heart, Instagram, Github, Youtube, Twitter, ExternalLink } from "lucide-react";
 import { FaDiscord } from "react-icons/fa";
 
 /**
@@ -79,9 +79,10 @@ export default function V1_0_1_UI() {
               </div>
 
               {/* Bio */}
-              <p className="text-gray-300 text-sm text-center">
-                Building awesome projects with Next.js, TypeScript, and Discord bots. 
-                Passionate about creating beautiful user experiences.
+              <p className="text-gray-300 text-sm text-center leading-relaxed">
+                Creator of RHYTHMIA, a rhythm-powered puzzle game. Building web experiences
+                with Next.js, TypeScript, and Discord bots. Use the settings button
+                at the bottom right to switch between different UI themes.
               </p>
 
               {/* Support Button */}
@@ -171,7 +172,8 @@ export default function V1_0_1_UI() {
                     className={`flex items-center gap-3 p-3 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 text-gray-300 ${link.color} transition-all`}
                   >
                     <div className="w-6 h-6">{link.icon}</div>
-                    <span className="text-sm font-medium">{link.label}</span>
+                    <span className="text-sm font-medium flex-1">{link.label}</span>
+                    <ExternalLink size={14} className="opacity-30" />
                   </motion.a>
                 ))}
               </div>

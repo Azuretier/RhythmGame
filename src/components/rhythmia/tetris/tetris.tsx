@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
 import type { Piece, GameMode, Keybindings, KeybindAction } from './types';
 import { DEFAULT_KEYBINDINGS } from './types';
 
@@ -508,9 +508,31 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
     const newBoard = lockPiece(piece, boardRef.current);
 
+    // Lock Out check: if ALL blocks of the piece locked entirely above the visible area, game over.
+    // This is the standard Tetris death condition — the piece is completely "out of the board."
+    const pieceShape = getShape(piece.type, piece.rotation);
+    let allAboveVisible = true;
+    for (let sy = 0; sy < pieceShape.length; sy++) {
+      for (let sx = 0; sx < pieceShape[sy].length; sx++) {
+        if (pieceShape[sy][sx]) {
+          if (piece.y + sy >= BUFFER_ZONE) {
+            allAboveVisible = false;
+          }
+        }
+      }
+    }
+    if (allAboveVisible) {
+      setBoard(newBoard);
+      boardRef.current = newBoard;
+      setGameOver(true);
+      setCurrentPiece(null);
+      currentPieceRef.current = null;
+      return;
+    }
+
     // Detect which rows will be cleared (before clearing) for VFX positioning
     const rowsToClear: number[] = [];
-    for (let y = 0; y < BOARD_HEIGHT; y++) {
+    for (let y = BUFFER_ZONE; y < BOARD_HEIGHT; y++) {
       if (newBoard[y].every(cell => cell !== null)) {
         rowsToClear.push(y);
       }
@@ -588,7 +610,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     currentPieceRef.current = spawned;
   }, [
     gameModeRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
-    setCombo, setBoard, setLines, setLevel, setCurrentPiece,
+    setCombo, setBoard, setLines, setLevel, setCurrentPiece, setGameOver,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,

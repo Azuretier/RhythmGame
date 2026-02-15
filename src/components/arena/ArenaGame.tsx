@@ -9,7 +9,7 @@ import { ARENA_MAX_PLAYERS } from '@/types/arena';
 // Tetris engine
 import { useGameState } from '@/components/rhythmia/tetris/hooks';
 import {
-  BOARD_HEIGHT, BOARD_WIDTH, COLORS, LOCK_DELAY, MAX_LOCK_MOVES,
+  BOARD_HEIGHT, BOARD_WIDTH, BUFFER_ZONE, COLORS, LOCK_DELAY, MAX_LOCK_MOVES, VISIBLE_HEIGHT,
 } from '@/components/rhythmia/tetris/constants';
 import {
   isValidPosition, lockPiece, clearLines, getShape,
@@ -121,7 +121,7 @@ export default function ArenaGame() {
     keyStatesRef, gameLoopRef, lastGravityRef,
     dasRef, arrRef, sdfRef,
     setBoard, setCurrentPiece, setHoldPiece, setCanHold,
-    setScore, setCombo, setLines, setLevel,
+    setScore, setCombo, setLines, setLevel, setGameOver,
     spawnPiece, initGame,
   } = gs;
 
@@ -275,6 +275,28 @@ export default function ArenaGame() {
     lockMovesRef.current = 0;
 
     const newBoard = lockPiece(piece, boardRef.current);
+
+    // Lock Out check: game over if ALL blocks locked above the visible area
+    const shape = getShape(piece.type, piece.rotation);
+    let allAboveVisible = true;
+    for (let sy = 0; sy < shape.length; sy++) {
+      for (let sx = 0; sx < shape[sy].length; sx++) {
+        if (shape[sy][sx]) {
+          if (piece.y + sy >= BUFFER_ZONE) {
+            allAboveVisible = false;
+          }
+        }
+      }
+    }
+    if (allAboveVisible) {
+      setBoard(newBoard);
+      boardRef.current = newBoard;
+      setGameOver(true);
+      setCurrentPiece(null);
+      currentPieceRef.current = null;
+      return;
+    }
+
     const { newBoard: clearedBoard, clearedLines: cleared } = clearLines(newBoard);
 
     setBoard(clearedBoard);
@@ -311,7 +333,8 @@ export default function ArenaGame() {
     }
 
     // Relay board state (convert piece types to colors for multiplayer protocol)
-    const relayBoard = clearedBoard.map(row =>
+    // Only send visible rows (skip buffer zone)
+    const relayBoard = clearedBoard.slice(BUFFER_ZONE).map(row =>
       row.map(cell => cell ? { color: COLORS[cell] || '#ffffff' } : null)
     );
     sendBoardRelay({
@@ -333,7 +356,7 @@ export default function ArenaGame() {
     // If spawned is null, spawnPiece sets gameOver = true
   }, [
     boardRef, levelRef, comboRef, scoreRef, linesRef,
-    setBoard, setCombo, setScore, setLines, setLevel, setCurrentPiece,
+    setBoard, setCombo, setScore, setLines, setLevel, setCurrentPiece, setGameOver,
     currentPieceRef, spawnPiece, sendAction, sendBoardRelay,
   ]);
 
@@ -560,7 +583,7 @@ export default function ArenaGame() {
   // ===== Game Over → Notify Arena Server =====
   useEffect(() => {
     if (gameOver && phase === 'playing') {
-      const relayBoard = boardRef.current.map(row =>
+      const relayBoard = boardRef.current.slice(BUFFER_ZONE).map(row =>
         row.map(cell => cell ? { color: COLORS[cell] || '#ffffff' } : null)
       );
       sendAction({ action: 'game_over', beatPhase: beatPhaseRef.current, value: scoreRef.current });
@@ -575,6 +598,7 @@ export default function ArenaGame() {
   }, [gameOver, phase, sendAction, sendBoardRelay, scoreRef, boardRef, linesRef]);
 
   // ===== Visual Board (board + ghost + current piece) =====
+  // Full board includes buffer rows; we build on the full board then slice to visible rows only.
   const visualBoard = useMemo(() => {
     const result: (null | { color: string })[][] = [];
     for (let r = 0; r < BOARD_HEIGHT; r++) {
@@ -620,7 +644,8 @@ export default function ArenaGame() {
       }
     }
 
-    return result;
+    // Only return visible rows (skip buffer zone)
+    return result.slice(BUFFER_ZONE);
   }, [board, currentPiece]);
 
   return (
