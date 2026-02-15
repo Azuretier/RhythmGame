@@ -44,13 +44,16 @@ export default function FloatingVersionSwitcher() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 20 }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-colors shadow-lg"
+        className="fixed bottom-6 right-6 z-40 h-10 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-2 text-white/70 hover:text-white hover:bg-white/20 transition-colors shadow-lg"
         aria-label="Site settings"
       >
-        <Settings size={20} />
+        <Settings size={16} />
+        <span className="text-xs font-medium tracking-wide hidden sm:inline">
+          {VERSION_METADATA[currentVersion].name}
+        </span>
       </motion.button>
 
       {/* Panel */}

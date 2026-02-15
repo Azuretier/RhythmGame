@@ -302,6 +302,7 @@ export default function RhythmiaLobby() {
                     >
                         <h1>{t('lobby.selectServer')}</h1>
                         <p>{t('lobby.chooseMode')}</p>
+                        <p className={styles.heroTagline}>{t('lobby.tagline')}</p>
                     </motion.div>
 
                     <div className={styles.serverGrid}>
