@@ -23,7 +23,6 @@ import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmV
 
 // Utilities
 import {
-  getShape,
   isValidPosition,
   tryRotation,
   lockPiece,
@@ -506,29 +505,11 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
     }
 
+    // Lock piece onto the board — blocks above the visible area (in the
+    // buffer zone) are saved in memory, matching standard Tetris behaviour.
+    // Only Block Out (piece can't spawn) ends the game; locking above
+    // the skyline does not.
     const newBoard = lockPiece(piece, boardRef.current);
-
-    // Lock Out check: if ALL blocks of the piece locked entirely above the visible area, game over.
-    // This is the standard Tetris death condition — the piece is completely "out of the board."
-    const pieceShape = getShape(piece.type, piece.rotation);
-    let allAboveVisible = true;
-    for (let sy = 0; sy < pieceShape.length; sy++) {
-      for (let sx = 0; sx < pieceShape[sy].length; sx++) {
-        if (pieceShape[sy][sx]) {
-          if (piece.y + sy >= BUFFER_ZONE) {
-            allAboveVisible = false;
-          }
-        }
-      }
-    }
-    if (allAboveVisible) {
-      setBoard(newBoard);
-      boardRef.current = newBoard;
-      setGameOver(true);
-      setCurrentPiece(null);
-      currentPieceRef.current = null;
-      return;
-    }
 
     // Detect which rows will be cleared (before clearing) for VFX positioning
     const rowsToClear: number[] = [];

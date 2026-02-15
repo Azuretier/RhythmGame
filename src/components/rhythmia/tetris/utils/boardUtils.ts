@@ -111,20 +111,19 @@ export const lockPiece = (piece: Piece, boardState: Board): Board => {
 
 /**
  * Clear completed lines and return new board with cleared line count.
- * Only clears lines in the visible area (below BUFFER_ZONE).
- * Buffer rows are preserved and empty rows are inserted just below the buffer.
+ * The entire board (buffer + visible) is treated uniformly — any full row
+ * is removed and everything above shifts down, matching standard Tetris.
+ * New empty rows are inserted at the very top (row 0).
  */
 export const clearLines = (boardState: Board): { newBoard: Board; clearedLines: number } => {
-    const bufferRows = boardState.slice(0, BUFFER_ZONE);
-    const visibleRows = boardState.slice(BUFFER_ZONE);
-    const remainingVisible = visibleRows.filter(row => row.some(cell => cell === null));
-    const clearedLines = visibleRows.length - remainingVisible.length;
+    const remaining = boardState.filter(row => row.some(cell => cell === null));
+    const clearedLines = BOARD_HEIGHT - remaining.length;
 
-    while (remainingVisible.length < visibleRows.length) {
-        remainingVisible.unshift(Array(BOARD_WIDTH).fill(null));
+    while (remaining.length < BOARD_HEIGHT) {
+        remaining.unshift(Array(BOARD_WIDTH).fill(null));
     }
 
-    return { newBoard: [...bufferRows, ...remainingVisible], clearedLines };
+    return { newBoard: remaining, clearedLines };
 };
 
 /**
@@ -139,10 +138,10 @@ export const getGhostY = (piece: Piece, boardState: Board): number => {
 };
 
 /**
- * Create initial piece spawn.
- * Pieces spawn in the buffer zone above the visible area.
- * I piece body (row 1 of shape) is placed at the top of the visible area.
- * Other pieces spawn with their body starting at the top of the visible area.
+ * Create initial piece spawn (standard Tetris / SRS spawn position).
+ * All pieces spawn at y = BUFFER_ZONE - 1 so their body row sits at
+ * the top of the visible area (row BUFFER_ZONE) and any upper blocks
+ * extend into the buffer zone — matching standard guideline behaviour.
  */
 export const createSpawnPiece = (type: string): Piece => {
     const shape = getShape(type, 0);
@@ -150,6 +149,6 @@ export const createSpawnPiece = (type: string): Piece => {
         type,
         rotation: 0,
         x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-        y: type === 'I' ? BUFFER_ZONE - 1 : BUFFER_ZONE,
+        y: BUFFER_ZONE - 1,
     };
 };
