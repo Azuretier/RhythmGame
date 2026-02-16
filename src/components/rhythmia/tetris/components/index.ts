@@ -12,8 +12,10 @@ export {
     StatsPanel,
     ThemeNav,
     JudgmentDisplay,
+    JudgmentModeToggle,
     TouchControls,
 } from './GameUI';
+export type { JudgmentDisplayMode } from './GameUI';
 export { RhythmVFX } from './RhythmVFX';
 export { FloatingItems } from './FloatingItems';
 export { ItemSlots } from './ItemSlots';
