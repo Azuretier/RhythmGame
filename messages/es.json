@@ -852,6 +852,13 @@
         "privacy": "Privacidad",
         "profileButton": "Perfil"
     },
+    "uiTheme": {
+        "selectTheme": "Tema de UI",
+        "neoFuturistic": "Neo-Futuristic",
+        "pixelNostalgia": "Pixel Nostalgia",
+        "neoDesc": "Estética elegante y moderna con efectos de vidrio esmerilado",
+        "pixelDesc": "Estética retro de pixel art 8-bit/16-bit con efectos CRT"
+    },
     "googleSync": {
         "sectionTitle": "Sincronización con Cuenta de Google",
         "description": "Inicia sesión con Google para sincronizar tu perfil, logros, progreso de lealtad y configuración de skin entre dispositivos.",
