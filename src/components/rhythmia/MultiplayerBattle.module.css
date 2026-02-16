@@ -1,538 +1,168 @@
-.container {
-  min-height: 100vh;
-  background: #000000;
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-  color: white;
+/* ===== Multiplayer-specific styles (unified with vanilla layout) ===== */
+
+/* ===== Garbage Meter (standalone in left sidebar) ===== */
+.garbageMeterStandalone {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px;
-  gap: 12px;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 8px 6px;
+}
+
+.garbageMeterLabel {
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.garbageMeterTrack {
+  width: 10px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 80, 80, 0.2);
+  border-radius: 5px;
+  position: relative;
   overflow: hidden;
-}
-
-/* Battle Arena */
-.battleArena {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  justify-content: center;
-  width: 100%;
-  max-width: 1000px;
-  margin-top: 8px;
-}
-
-/* Player Sides */
-.playerSide,
-.opponentSide {
-  display: flex;
-  gap: 8px;
-  flex: 1;
-  max-width: 450px;
-}
-
-.opponentSide {
-  flex-direction: row-reverse;
-}
-
-/* Side Panel (Hold + Next) */
-.sidePanel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 70px;
-  flex-shrink: 0;
+  justify-content: flex-end;
 }
 
-.holdBox,
-.nextBox {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.garbageMeterFill {
+  width: 100%;
+  background: linear-gradient(0deg, #ff4444, #ff8888);
+  box-shadow: 0 0 6px rgba(255, 68, 68, 0.4);
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 4px;
+}
+
+.garbageMeterCount {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: rgba(255, 100, 100, 0.8);
+  text-shadow: 0 0 4px rgba(255, 68, 68, 0.3);
+}
+
+/* ===== Opponent Mini-Panel (right sidebar) ===== */
+.opponentPanel {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 4px;
   padding: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  min-width: 100px;
 }
 
-.panelLabel {
-  font-size: 0.6rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-}
-
-.previewGrid {
-  display: grid;
-  gap: 1px;
-}
-
-.previewCell {
-  width: 12px;
-  height: 12px;
-  border-radius: 0;
-  background: rgba(255, 255, 255, 0.02);
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
-.previewCell.filled {
-  border-radius: 0;
-}
-
-.emptyPreview {
-  width: 48px;
-  height: 24px;
-}
-
-.nextItem {
-  padding: 4px 0;
-}
-
-/* Board Section */
-.boardSection {
+.opponentPanelHeader {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
-  flex: 1;
-}
-
-.playerHeader,
-.opponentHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.opponentHeader {
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.playerName,
-.opponentName {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #ffffff;
-  letter-spacing: 0.05em;
-}
-
-.opponentName {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.playerScore,
-.opponentScore {
-  font-size: 1rem;
-  font-weight: 400;
-  color: #ffffff;
-}
-
-.opponentScore {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-/* Board */
-.boardWrap {
-  position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.7);
-  overflow: hidden;
-}
-
-.opponentBoardWrap {
-  border-color: rgba(255, 255, 255, 0.06);
-}
-
-.board {
-  display: grid;
-  gap: 1px;
-  position: relative;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
-.cell {
-  aspect-ratio: 1 / 1;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 0;
-  transition: background-color 0.08s;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
-.cell.filled {
-  border-radius: 0;
-}
-
-.cell.ghost {
-  border: 1px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 0;
-  background: transparent;
-}
-
-/* Garbage Meter */
-.garbageMeter {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: rgba(255, 255, 255, 0.05);
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
-
-.garbageFill {
   width: 100%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.3));
-  transition: height 0.3s;
-  border-radius: 0 0 1px 1px;
 }
 
-/* Stats Row */
-.statsRow {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 10px;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 4px;
-  letter-spacing: 0.05em;
-}
-
-/* VS Divider */
-.vsDivider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.4);
-  padding: 0 8px;
-  align-self: center;
-  letter-spacing: 0.2em;
-}
-
-/* Mobile Controls */
-.controls {
-  display: none;
-  flex-direction: column;
-  gap: 8px;
-  width: min(350px, 90vw);
-  margin-top: 8px;
-}
-
-.controlRow {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.ctrlBtn {
-  width: 56px;
-  height: 56px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 1.3rem;
-  font-weight: 300;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  user-select: none;
-  transition: all 0.1s;
-}
-
-.ctrlBtn:active {
-  transform: scale(0.94);
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.dropBtn {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-/* Game Over Overlay */
-.gameOverOverlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.92);
-  z-index: 200;
-  gap: 24px;
-  padding: 20px;
-  animation: fadeIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-.gameOverTitle {
-  font-size: clamp(2rem, 8vw, 4rem);
-  font-weight: 200;
-  color: #ffffff;
-  letter-spacing: 0.2em;
-}
-
-.finalScores {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  font-size: 1.1rem;
-  text-align: center;
-  font-weight: 300;
-}
-
-.finalScores div {
-  padding: 10px 24px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-}
-
-.backBtn {
-  padding: 12px 36px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  background: #ffffff;
-  border: none;
-  border-radius: 8px;
-  color: #000000;
-  cursor: pointer;
-  letter-spacing: 0.15em;
-  transition: all 0.25s;
-}
-
-.backBtn:hover {
-  background: rgba(255, 255, 255, 0.85);
-  transform: translateY(-2px);
-}
-
-/* ===== Judgment Text Overlay ===== */
-.judgmentOverlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 60;
-  pointer-events: none;
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  animation: judgmentPop 0.6s ease-out forwards;
-}
-
-@keyframes judgmentPop {
-  0% {
-    opacity: 0;
-    transform: scale(0.5) translateY(10px);
-  }
-  20% {
-    opacity: 1;
-    transform: scale(1.15) translateY(-4px);
-  }
-  40% {
-    transform: scale(1) translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px);
-  }
-}
-
-/* ===== Combo Counter Overlay ===== */
-.comboOverlay {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 55;
-  pointer-events: none;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  animation: comboPulse 0.3s ease-out;
-}
-
-@keyframes comboPulse {
-  0% {
-    transform: scale(1.3);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* ===== Beat Timing Indicator ===== */
-.beatIndicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-}
-
-.beatTrack {
-  position: relative;
-  flex: 1;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.beatPerfectZoneLeft {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 20%;
-  background: rgba(0, 255, 255, 0.12);
-  border-radius: 0 3px 3px 0;
-}
-
-.beatPerfectZoneRight {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 12%;
-  background: rgba(0, 255, 255, 0.12);
-  border-radius: 3px 0 0 3px;
-}
-
-.beatCursor {
-  position: absolute;
-  top: -1px;
-  width: 3px;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 1px;
-  transform: translateX(-50%);
-  transition: left 16ms linear;
-}
-
-.beatCursorPerfect {
-  background: #00FFFF;
-  box-shadow: 0 0 6px #00FFFF, 0 0 12px rgba(0, 255, 255, 0.4);
-  width: 4px;
-}
-
-.beatLabel {
+.opponentPanelVs {
   font-size: 0.55rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 100, 100, 0.6);
   letter-spacing: 0.15em;
-  width: 54px;
-  text-align: right;
-  text-transform: uppercase;
+  padding: 2px 6px;
+  background: rgba(255, 100, 100, 0.08);
+  border: 1px solid rgba(255, 100, 100, 0.15);
+  border-radius: 3px;
+  flex-shrink: 0;
 }
 
-/* ===== Opponent Combo Indicator ===== */
-.opponentComboIndicator {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 10;
-  pointer-events: none;
+.opponentPanelName {
   font-size: 0.65rem;
-  font-weight: 600;
-  color: rgba(255, 200, 0, 0.7);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opponentPanelScore {
+  font-size: 1rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.05em;
+}
+
+/* Opponent mini board */
+.opponentMiniBoard {
+  display: grid;
+  gap: 0px;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.opponentMiniCell {
+  aspect-ratio: 1 / 1;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.opponentMiniFilled {
+  box-shadow: none;
+}
+
+.opponentPanelStats {
+  display: flex;
+  gap: 8px;
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.35);
   letter-spacing: 0.08em;
-  text-shadow: 0 0 6px rgba(255, 200, 0, 0.3);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .battleArena {
-    flex-direction: column;
-    align-items: center;
+/* ===== Responsive ===== */
+@media screen and (max-width: 480px) {
+  .opponentPanel {
+    min-width: 80px;
+    padding: 6px;
   }
 
-  .playerSide,
-  .opponentSide {
-    max-width: 100%;
-    width: 100%;
-    justify-content: center;
+  .opponentPanelScore {
+    font-size: 0.85rem;
   }
 
-  .opponentSide {
-    flex-direction: row;
-  }
-
-  .opponentSide .boardSection {
-    transform: scale(0.7);
-    transform-origin: top center;
-  }
-
-  .vsDivider {
-    font-size: 0.9rem;
-    padding: 4px 0;
-  }
-
-  .controls {
-    display: flex;
-  }
-
-  .sidePanel {
-    width: 55px;
-  }
-
-  .previewCell {
-    width: 10px;
-    height: 10px;
+  .garbageMeterTrack {
+    height: 70px;
+    width: 8px;
   }
 }
 
-@media (max-width: 480px) {
-  .container {
-    padding: 8px;
+@media screen and (max-height: 480px) and (min-width: 481px) {
+  .opponentPanel {
+    min-width: 70px;
+    padding: 4px;
   }
 
-  .playerHeader,
-  .opponentHeader {
-    padding: 6px 10px;
+  .garbageMeterTrack {
+    height: 60px;
+    width: 8px;
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  .opponentPanel {
+    min-width: 120px;
   }
 
-  .playerName,
-  .opponentName {
-    font-size: 0.75rem;
+  .opponentMiniBoard {
+    gap: 1px;
   }
 
-  .playerScore,
-  .opponentScore {
-    font-size: 0.9rem;
-  }
-
-  .ctrlBtn {
-    width: 48px;
-    height: 48px;
-    font-size: 1.1rem;
+  .opponentMiniCell {
+    border-radius: 0;
   }
 }
