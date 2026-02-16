@@ -113,6 +113,7 @@ export function useGameState() {
     const [beatPhase, setBeatPhase] = useState(0);
     const [judgmentText, setJudgmentText] = useState('');
     const [judgmentColor, setJudgmentColor] = useState('');
+    const [judgmentScore, setJudgmentScore] = useState(0);
     const [showJudgmentAnim, setShowJudgmentAnim] = useState(false);
     const [boardBeat, setBoardBeat] = useState(false);
     const [boardShake, setBoardShake] = useState(false);
@@ -268,10 +269,11 @@ export function useGameState() {
         return newPiece;
     }, [getNextFromBag]);
 
-    // Show judgment text with animation
-    const showJudgment = useCallback((text: string, color: string) => {
+    // Show judgment text with animation — optionally includes score earned
+    const showJudgment = useCallback((text: string, color: string, earnedScore?: number) => {
         setJudgmentText(text);
         setJudgmentColor(color);
+        setJudgmentScore(earnedScore ?? 0);
         setShowJudgmentAnim(false);
         requestAnimationFrame(() => {
             setShowJudgmentAnim(true);
@@ -1036,6 +1038,7 @@ export function useGameState() {
         beatPhase,
         judgmentText,
         judgmentColor,
+        judgmentScore,
         showJudgmentAnim,
         boardBeat,
         boardShake,

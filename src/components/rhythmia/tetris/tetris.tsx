@@ -43,6 +43,7 @@ import {
   BeatBar,
   StatsPanel,
   JudgmentDisplay,
+  JudgmentModeToggle,
   TouchControls,
   RhythmVFX,
   FloatingItems,
@@ -60,6 +61,7 @@ import {
   hasTutorialBeenSeen,
   KeyBindSettings,
 } from './components';
+import type { JudgmentDisplayMode } from './components';
 
 interface RhythmiaProps {
   onQuit?: () => void;
@@ -127,6 +129,25 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
   const [pauseStateBeforeOverlay, setPauseStateBeforeOverlay] = useState(false);
 
+  // Judgment display mode: 'text' (PERFECT!, GREAT!, etc.) or 'score' (+1600, etc.)
+  const [judgmentDisplayMode, setJudgmentDisplayMode] = useState<JudgmentDisplayMode>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('rhythmia_judgment_mode');
+        if (stored === 'score' || stored === 'text') return stored;
+      } catch { /* ignore */ }
+    }
+    return 'text';
+  });
+
+  const toggleJudgmentMode = useCallback(() => {
+    setJudgmentDisplayMode(prev => {
+      const next = prev === 'text' ? 'score' : 'text';
+      try { localStorage.setItem('rhythmia_judgment_mode', next); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
   const handleKeybindChange = useCallback((action: KeybindAction, key: string) => {
     setKeybindings(prev => {
       const next = { ...prev, [action]: key };
@@ -178,6 +199,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     beatPhase,
     judgmentText,
     judgmentColor,
+    judgmentScore,
     showJudgmentAnim,
     boardBeat,
     boardShake,
@@ -473,41 +495,48 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
     const mode = gameModeRef.current;
 
-    // Beat judgment
+    // Beat judgment — four timing windows based on distance from beat
     const currentBeatPhase = beatPhaseRef.current;
-    const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
+    // Distance from beat center (0.0 = exactly on beat, 0.5 = furthest away)
+    const distFromBeat = currentBeatPhase <= 0.5 ? currentBeatPhase : 1 - currentBeatPhase;
     let mult = 1;
+    let timing: 'perfect' | 'great' | 'good' | 'miss';
+
+    if (distFromBeat < 0.06) {
+      timing = 'perfect';  // ~12% of beat window (tightest)
+    } else if (distFromBeat < 0.12) {
+      timing = 'great';    // ~12% more
+    } else if (distFromBeat < 0.20) {
+      timing = 'good';     // ~16% more
+    } else {
+      timing = 'miss';     // everything else
+    }
 
     // Track pieces placed for advancements
     gamePiecesPlacedRef.current++;
 
-    if (onBeat) {
-      mult = 2;
-      const newCombo = comboRef.current + 1;
+    // Determine combo for this placement (before updating state)
+    const prevCombo = comboRef.current;
+    let newCombo = 0;
+    const onBeat = timing !== 'miss';
+
+    if (timing !== 'miss') {
+      // On-beat — determine multiplier by timing quality
+      switch (timing) {
+        case 'perfect': mult = 2;   break;
+        case 'great':   mult = 1.5; break;
+        case 'good':    mult = 1.2; break;
+      }
+      newCombo = prevCombo + 1;
       setCombo(newCombo);
-      showJudgment('PERFECT!', '#FFD700');
-      playTone(1047, 0.2, 'triangle');
-
-      // Track advancement stats
-      gamePerfectBeatsRef.current++;
-      if (newCombo > gameBestComboRef.current) {
-        gameBestComboRef.current = newCombo;
-      }
-
-      // VFX: combo change event
-      vfxRef.current.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
-
-      // VFX: fever mode trigger at combo 10+
-      if (newCombo >= 10 && comboRef.current < 10) {
-        vfxRef.current.emit({ type: 'feverStart', combo: newCombo });
-      }
     } else {
       // VFX: combo broken — end fever if active
-      if (comboRef.current >= 10) {
+      if (prevCombo >= 10) {
         vfxRef.current.emit({ type: 'feverEnd' });
       }
-      if (comboRef.current > 0) {
-        showJudgment('MISS', '#FF4444');
+      if (prevCombo > 0) {
+        // Emit combo break particle effect — intensity scales with lost combo
+        vfxRef.current.emit({ type: 'comboBreak', lostCombo: prevCombo });
       }
       setCombo(0);
       vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
@@ -534,8 +563,46 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
     // Calculate score with rhythm multiplier
     const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * levelRef.current;
-    const finalScore = baseScore * mult * Math.max(1, comboRef.current);
+    const comboMult = Math.max(1, timing !== 'miss' ? newCombo : 1);
+    const finalScore = baseScore * mult * comboMult;
     updateScore(scoreRef.current + finalScore);
+
+    // Show judgment with earned score — called after score calc so score display mode works
+    if (timing !== 'miss') {
+      const judgmentConfig = {
+        perfect: { text: 'PERFECT!', color: '#FFD700' },
+        great:   { text: 'GREAT!',   color: '#00E5FF' },
+        good:    { text: 'GOOD',     color: '#76FF03' },
+      } as const;
+
+      showJudgment(judgmentConfig[timing].text, judgmentConfig[timing].color, finalScore);
+
+      if (timing === 'perfect') {
+        playTone(1047, 0.2, 'triangle');
+      } else if (timing === 'great') {
+        playTone(880, 0.15, 'triangle');
+      } else {
+        playTone(660, 0.1, 'triangle');
+      }
+
+      // Track advancement stats
+      if (timing === 'perfect') {
+        gamePerfectBeatsRef.current++;
+      }
+      if (newCombo > gameBestComboRef.current) {
+        gameBestComboRef.current = newCombo;
+      }
+
+      // VFX: combo change event
+      vfxRef.current.emit({ type: 'comboChange', combo: newCombo, onBeat: true });
+
+      // VFX: fever mode trigger at combo 10+
+      if (newCombo >= 10 && prevCombo < 10) {
+        vfxRef.current.emit({ type: 'feverStart', combo: newCombo });
+      }
+    } else if (prevCombo > 0) {
+      showJudgment('MISS', '#FF4444', 0);
+    }
 
     if (clearedLines > 0) {
       // Track tetris clears (4 lines at once) for advancements
@@ -884,8 +951,14 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         // Direct DOM update — bypasses React for smooth cross-browser animation
         if (beatBarRef.current) {
           beatBarRef.current.style.setProperty('--beat-phase', String(phase));
-          if (phase > 0.75 || phase < 0.15) {
-            beatBarRef.current.setAttribute('data-onbeat', '');
+          // Distance from beat center for timing zone display
+          const dist = phase <= 0.5 ? phase : 1 - phase;
+          if (dist < 0.06) {
+            beatBarRef.current.setAttribute('data-onbeat', 'perfect');
+          } else if (dist < 0.12) {
+            beatBarRef.current.setAttribute('data-onbeat', 'great');
+          } else if (dist < 0.20) {
+            beatBarRef.current.setAttribute('data-onbeat', 'good');
           } else {
             beatBarRef.current.removeAttribute('data-onbeat');
           }
@@ -1344,7 +1417,14 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         text={judgmentText}
         color={judgmentColor}
         show={showJudgmentAnim}
+        score={judgmentScore}
+        displayMode={judgmentDisplayMode}
       />
+
+      {/* Judgment mode toggle (text vs score) — only shown during gameplay */}
+      {isPlaying && !gameOver && (
+        <JudgmentModeToggle mode={judgmentDisplayMode} onToggle={toggleJudgmentMode} />
+      )}
 
       {/* Advancement Toast */}
       {toastIds.length > 0 && (
