@@ -414,6 +414,22 @@ export function useArenaSocket() {
     };
   }, []);
 
+  // Clean up expired active effects periodically
+  useEffect(() => {
+    const effectCleanupTimer = setInterval(() => {
+      setActiveEffects(prev => {
+        const now = Date.now();
+        const filtered = prev.filter(e => e.expiresAt > now);
+        // Only update state if something was actually removed
+        return filtered.length === prev.length ? prev : filtered;
+      });
+    }, 500);
+
+    return () => {
+      clearInterval(effectCleanupTimer);
+    };
+  }, []);
+
   // ===== Actions =====
 
   const queueForArena = useCallback((playerName: string) => {
