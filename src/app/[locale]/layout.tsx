@@ -9,7 +9,12 @@ import { routing } from '@/i18n/routing';
 import Provider from '../provider';
 import { VersionProvider } from '@/lib/version/context';
 import { ProfileProvider } from '@/lib/profile/context';
+import { SkinProvider } from '@/lib/skin/context';
+import { UiThemeProvider } from '@/lib/theme/context';
+import { GoogleSyncProvider } from '@/lib/google-sync/context';
 
+// Vercel Analytics
+import { Analytics } from "@vercel/analytics/next"
 import { GoogleAnalytics } from "@next/third-parties/google";
 
 const geistSans = localFont({
@@ -122,13 +127,19 @@ export default async function LocaleLayout({ children, params }: Props) {
             </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }}>
                 <NextIntlClientProvider messages={messages}>
-                    <ProfileProvider>
-                        <VersionProvider>
-                            <Provider>
-                                {children}
-                            </Provider>
-                        </VersionProvider>
-                    </ProfileProvider>
+                    <UiThemeProvider>
+                        <GoogleSyncProvider>
+                            <ProfileProvider>
+                                <SkinProvider>
+                                    <VersionProvider>
+                                        <Provider>
+                                            {children}
+                                        </Provider>
+                                    </VersionProvider>
+                                </SkinProvider>
+                            </ProfileProvider>
+                        </GoogleSyncProvider>
+                    </UiThemeProvider>
                 </NextIntlClientProvider>
                 {gaId && <GoogleAnalytics gaId={gaId} />}
             </body>

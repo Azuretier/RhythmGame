@@ -16,6 +16,7 @@ import {
 } from "@/lib/version/storage";
 import V1_0_0_UI from "./v1.0.0/V1_0_0_UI";
 import V1_0_1_UI from "./v1.0.1/V1_0_1_UI";
+import V1_0_2_UI from "./v1.0.2/V1_0_2_UI";
 
 // Dynamically import background to avoid SSR issues
 const WebGLBackground = dynamic(() => import("./WebGLBackground"), {
@@ -122,6 +123,8 @@ export default function InteractiveHomepage() {
         return <V1_0_0_UI />;
       case "1.0.1":
         return <V1_0_1_UI />;
+      case "1.0.2":
+        return <V1_0_2_UI />;
       default:
         return null;
     }

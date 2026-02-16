@@ -43,6 +43,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@types/ws": "^8.18.1",
+    "@vercel/analytics": "^1.6.1",
     "bufferutil": "^4.1.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

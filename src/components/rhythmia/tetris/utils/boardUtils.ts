@@ -1,4 +1,4 @@
-import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOES, WALL_KICKS_I, WALL_KICKS_JLSTZ, ROTATION_NAMES } from '../constants';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TETROMINOES, WALL_KICKS_I, WALL_KICKS_JLSTZ, ROTATION_NAMES } from '../constants';
 import type { Piece, Board } from '../types';
 
 /**
@@ -110,17 +110,20 @@ export const lockPiece = (piece: Piece, boardState: Board): Board => {
 };
 
 /**
- * Clear completed lines and return new board with cleared line count
+ * Clear completed lines and return new board with cleared line count.
+ * The entire board (buffer + visible) is treated uniformly — any full row
+ * is removed and everything above shifts down, matching standard Tetris.
+ * New empty rows are inserted at the very top (row 0).
  */
 export const clearLines = (boardState: Board): { newBoard: Board; clearedLines: number } => {
-    const newBoard = boardState.filter(row => row.some(cell => cell === null));
-    const clearedLines = BOARD_HEIGHT - newBoard.length;
+    const remaining = boardState.filter(row => row.some(cell => cell === null));
+    const clearedLines = BOARD_HEIGHT - remaining.length;
 
-    while (newBoard.length < BOARD_HEIGHT) {
-        newBoard.unshift(Array(BOARD_WIDTH).fill(null));
+    while (remaining.length < BOARD_HEIGHT) {
+        remaining.unshift(Array(BOARD_WIDTH).fill(null));
     }
 
-    return { newBoard, clearedLines };
+    return { newBoard: remaining, clearedLines };
 };
 
 /**
@@ -135,7 +138,10 @@ export const getGhostY = (piece: Piece, boardState: Board): number => {
 };
 
 /**
- * Create initial piece spawn
+ * Create initial piece spawn (standard Tetris / SRS spawn position).
+ * All pieces spawn at y = BUFFER_ZONE - 1 so their body row sits at
+ * the top of the visible area (row BUFFER_ZONE) and any upper blocks
+ * extend into the buffer zone — matching standard guideline behaviour.
  */
 export const createSpawnPiece = (type: string): Piece => {
     const shape = getShape(type, 0);
@@ -143,6 +149,6 @@ export const createSpawnPiece = (type: string): Piece => {
         type,
         rotation: 0,
         x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-        y: type === 'I' ? -1 : 0,
+        y: BUFFER_ZONE - 1,
     };
 };

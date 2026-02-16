@@ -104,7 +104,10 @@ export interface ArenaGenericMessage {
     | 'arena_start'
     | 'arena_action'
     | 'arena_relay'
-    | 'arena_leave';
+    | 'arena_leave'
+    | 'arena_use_powerup'
+    | 'arena_emote'
+    | 'arena_set_target';
   [key: string]: unknown;
 }
 
@@ -257,6 +260,7 @@ export interface SetProfileMessage {
   type: 'set_profile';
   name: string;
   icon: string;
+  isPrivate?: boolean;
 }
 
 export interface GetOnlineUsersMessage {

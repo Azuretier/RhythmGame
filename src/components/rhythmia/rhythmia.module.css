@@ -1,13 +1,13 @@
-/* Minimal Black & White Theme */
+/* Skin-aware Theme */
 .page {
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
-  background: #000000;
+  background: var(--skin-background, #000000);
   min-height: 100vh;
   height: 100vh;
   max-width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  color: #ffffff;
+  color: var(--skin-foreground, #ffffff);
   position: relative;
   box-sizing: border-box;
 }
@@ -19,7 +19,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000000;
+  background: var(--skin-background, #000000);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,8 +30,8 @@
 .loader {
   width: 32px;
   height: 32px;
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-top-color: #ffffff;
+  border: 1.5px solid var(--skin-border, rgba(255, 255, 255, 0.1));
+  border-top-color: var(--skin-accent, #ffffff);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -90,7 +90,7 @@
   width: 6px;
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--skin-border, rgba(255, 255, 255, 0.2));
   border: none;
   padding: 0;
   cursor: pointer;
@@ -99,7 +99,7 @@
 
 .slideDotActive {
   height: 20px;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--skin-accent, rgba(255, 255, 255, 0.7));
 }
 
 .scrollHint {
@@ -107,7 +107,7 @@
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.3));
   z-index: 10;
   animation: scrollBounce 2s ease-in-out infinite;
 }
@@ -140,23 +140,26 @@
 }
 
 .logo {
+  font-family: 'Inter', var(--font-geist-sans), Arial, sans-serif;
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #ffffff;
+  color: var(--skin-foreground, #ffffff);
   opacity: 0.95;
 }
 
 .logoAccent {
-  font-weight: 400;
-  opacity: 0.45;
+  color: #ec2828;
 }
 
 .statusBar {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   font-size: 0.75rem;
-  opacity: 0.35;
+  opacity: 0.55;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .statusItem {
@@ -169,7 +172,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--skin-accent, #ffffff);
   opacity: 0.6;
   animation: statusPulse 2.5s ease-in-out infinite;
 }
@@ -188,12 +191,12 @@
 .discordLink {
   display: flex;
   align-items: center;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.7));
   transition: color 0.25s, transform 0.25s;
 }
 
 .discordLink:hover {
-  color: #ffffff;
+  color: var(--skin-foreground, #ffffff);
   transform: scale(1.15);
 }
 
@@ -216,15 +219,28 @@
   font-weight: 300;
   letter-spacing: 0.3em;
   margin-bottom: 12px;
-  color: #ffffff;
+  color: var(--skin-foreground, #ffffff);
 }
 
 .heroText p {
-  font-size: 0.8rem;
-  opacity: 0.3;
-  letter-spacing: 0.25em;
+  font-size: 0.85rem;
+  opacity: 0.5;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   font-weight: 400;
+}
+
+.heroTagline {
+  font-size: 0.8rem;
+  opacity: 0.4;
+  margin-top: 8px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  line-height: 1.6;
+  text-transform: none;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Server selection grid */
@@ -241,8 +257,8 @@
 /* Server card - minimal glassmorphism */
 .serverCard {
   position: relative;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.08));
   border-radius: 12px;
   padding: 28px 24px;
   cursor: pointer;
@@ -260,7 +276,7 @@
   border-radius: 12px;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.02) 0%,
+    var(--skin-accent-dim, rgba(255, 255, 255, 0.02)) 0%,
     transparent 100%
   );
   opacity: 0;
@@ -269,8 +285,8 @@
 }
 
 .serverCard:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--skin-border-hover, rgba(255, 255, 255, 0.18));
+  background: var(--skin-accent-dim, rgba(255, 255, 255, 0.05));
 }
 
 .serverCard:hover::before {
@@ -279,11 +295,11 @@
 
 /* Card color accents (subtle) */
 .serverCard.vanilla {
-  --card-accent: rgba(255, 255, 255, 0.7);
+  --card-accent: var(--skin-accent, rgba(255, 255, 255, 0.7));
 }
 
 .serverCard.multiplayer {
-  --card-accent: rgba(255, 255, 255, 0.7);
+  --card-accent: var(--skin-accent, rgba(255, 255, 255, 0.7));
 }
 
 .cardBadge {
@@ -295,15 +311,15 @@
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--skin-border-hover, rgba(255, 255, 255, 0.2));
   border-radius: 4px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.6));
   background: transparent;
 }
 
 .cardBadge.new {
-  border-color: rgba(255, 255, 255, 0.35);
-  color: rgba(255, 255, 255, 0.8);
+  border-color: var(--skin-accent, rgba(255, 255, 255, 0.35));
+  color: var(--skin-accent-light, rgba(255, 255, 255, 0.8));
 }
 
 .cardTitle {
@@ -311,14 +327,14 @@
   font-weight: 500;
   letter-spacing: 0.15em;
   margin-bottom: 6px;
-  color: #ffffff;
+  color: var(--skin-foreground, #ffffff);
 }
 
 .cardSubtitle {
   font-size: 0.7rem;
-  opacity: 0.3;
+  opacity: 0.45;
   margin-bottom: 16px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   font-weight: 400;
 }
@@ -326,7 +342,7 @@
 .cardDescription {
   font-size: 0.85rem;
   line-height: 1.7;
-  opacity: 0.45;
+  opacity: 0.6;
   margin-bottom: 20px;
   font-weight: 300;
 }
@@ -341,10 +357,10 @@
 .featureTag {
   padding: 4px 10px;
   font-size: 0.65rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--skin-surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.08));
   border-radius: 4px;
-  opacity: 0.5;
+  opacity: 0.65;
   letter-spacing: 0.05em;
 }
 
@@ -352,7 +368,7 @@
   display: flex;
   gap: 24px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--skin-border, rgba(255, 255, 255, 0.06));
 }
 
 .stat {
@@ -362,14 +378,14 @@
 .statValue {
   font-size: 1rem;
   font-weight: 500;
-  color: #ffffff;
+  color: var(--skin-foreground, #ffffff);
   opacity: 0.8;
   font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
   font-size: 0.6rem;
-  opacity: 0.3;
+  opacity: 0.45;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-top: 2px;
@@ -383,8 +399,8 @@
   font-weight: 500;
   letter-spacing: 0.25em;
   text-transform: uppercase;
-  color: #000000;
-  background: #ffffff;
+  color: var(--skin-background, #000000);
+  background: var(--skin-accent, #ffffff);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -392,7 +408,7 @@
 }
 
 .playButton:hover {
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--skin-accent-light, rgba(255, 255, 255, 0.85));
   transform: none;
 }
 
@@ -401,7 +417,7 @@
   padding: 24px 40px;
   text-align: center;
   font-size: 0.7rem;
-  opacity: 0.2;
+  opacity: 0.35;
   letter-spacing: 0.15em;
   font-weight: 300;
 }
@@ -413,7 +429,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000000;
+  background: var(--skin-background, #000000);
   z-index: 500;
   display: none;
   flex-direction: column;
@@ -428,8 +444,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  background: rgba(0, 0, 0, 0.95);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--skin-background, rgba(0, 0, 0, 0.95));
+  border-bottom: 1px solid var(--skin-border, rgba(255, 255, 255, 0.06));
 }
 
 .gameTitle {
@@ -446,18 +462,18 @@
   padding: 8px 16px;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.6));
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.12));
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.25s;
 }
 
 .backButton:hover {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--skin-foreground, #ffffff);
+  border-color: var(--skin-border-hover, rgba(255, 255, 255, 0.3));
+  background: var(--skin-surface, rgba(255, 255, 255, 0.05));
 }
 
 /* Online indicator */
@@ -466,14 +482,14 @@
   align-items: center;
   gap: 6px;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.4));
   margin-top: 10px;
 }
 
 .onlineDot {
   width: 5px;
   height: 5px;
-  background: #ffffff;
+  background: var(--skin-accent, #ffffff);
   border-radius: 50%;
   opacity: 0.5;
   animation: onlinePulse 2s ease-in-out infinite;
@@ -489,24 +505,24 @@
   }
 }
 
-/* Advancement button */
+/* Navigation / action button in the status bar */
 .advButton {
-  padding: 4px 12px;
-  font-size: 0.65rem;
+  padding: 5px 14px;
+  font-size: 0.7rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.5);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
+  letter-spacing: 0.06em;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.6));
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.25s;
 }
 
 .advButton:hover {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--skin-foreground, #ffffff);
+  border-color: var(--skin-border-hover, rgba(255, 255, 255, 0.3));
+  background: var(--skin-surface, rgba(255, 255, 255, 0.08));
 }
 
 /* Advancement overlay (main menu) */
@@ -555,21 +571,21 @@
 .lockIcon {
   width: 36px;
   height: 36px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.5));
 }
 
 .lockText {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.6));
+  letter-spacing: 0.05em;
   text-align: center;
-  max-width: 200px;
-  line-height: 1.5;
+  max-width: 220px;
+  line-height: 1.6;
 }
 
 .lockedButton {
-  background: rgba(255, 255, 255, 0.15) !important;
-  color: rgba(255, 255, 255, 0.3) !important;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.15)) !important;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.3)) !important;
   cursor: not-allowed !important;
   pointer-events: none;
 }
@@ -580,7 +596,7 @@
   max-width: 900px;
   margin-top: 48px;
   padding-top: 40px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--skin-border, rgba(255, 255, 255, 0.06));
 }
 
 /* Responsive */

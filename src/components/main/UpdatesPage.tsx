@@ -50,7 +50,7 @@ export default function UpdatesPage() {
   });
 
   const dateGroups = groupByDate(sortedUpdates);
-  
+
   // Get category labels from translations
   const getCategoryLabel = (category: string): string => {
     return t(`updates.categories.${category}`);
@@ -109,6 +109,28 @@ export default function UpdatesPage() {
           </div>
         </motion.div>
 
+        {/* Featured Video — v0.0.2 */}
+        <motion.div
+          className={styles.videoSection}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+        >
+          <h2 className={styles.videoHeading}>
+            <span className={styles.versionBadge}>v0.0.2</span>
+            {t('updates.videoTitle')}
+          </h2>
+          <div className={styles.videoWrapper}>
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/bcwz2j6N_kA"
+              title="azuretier.net v0.0.2 Update Overview"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className={styles.videoIframe}
+            />
+          </div>
+        </motion.div>
+
         {/* Category Filters */}
         <div className={styles.filters}>
           <button
@@ -162,7 +184,7 @@ export default function UpdatesPage() {
                 <div className={styles.dateUpdates}>
                   {updates.map((update) => {
                     const localizedContent = getLocalizedPRContent(update, locale);
-                    
+
                     return (
                       <div key={update.number} className={styles.updateCard}>
                         <div className={styles.updateTop}>
