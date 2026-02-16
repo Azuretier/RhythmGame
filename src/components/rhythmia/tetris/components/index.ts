@@ -25,3 +25,4 @@ export { WorldTransition, GamePhaseIndicator } from './WorldTransition';
 export { HealthManaHUD } from './HealthManaHUD';
 export { TutorialGuide, hasTutorialBeenSeen } from './TutorialGuide';
 export { KeyBindSettings } from './KeyBindSettings';
+export { FeatureCustomizer } from './FeatureCustomizer';

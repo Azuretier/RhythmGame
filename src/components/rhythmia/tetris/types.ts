@@ -201,3 +201,26 @@ export type TerrainParticle = {
     life: number;
     maxLife: number;
 };
+
+// ===== Feature Customizer Settings =====
+export type FeatureSettings = {
+    ghostPiece: boolean;
+    beatVfx: boolean;
+    particles: boolean;
+    items: boolean;
+    voxelBackground: boolean;
+    beatBar: boolean;
+    sound: boolean;
+    garbageMeter: boolean;
+};
+
+export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
+    ghostPiece: true,
+    beatVfx: true,
+    particles: true,
+    items: true,
+    voxelBackground: true,
+    beatBar: true,
+    sound: true,
+    garbageMeter: true,
+};

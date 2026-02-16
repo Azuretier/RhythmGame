@@ -6,8 +6,8 @@ import styles from './VanillaGame.module.css';
 
 // Constants and Types
 import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
-import type { Piece, GameMode, Keybindings, KeybindAction } from './types';
-import { DEFAULT_KEYBINDINGS } from './types';
+import type { Piece, GameMode, Keybindings, KeybindAction, FeatureSettings } from './types';
+import { DEFAULT_KEYBINDINGS, DEFAULT_FEATURE_SETTINGS } from './types';
 
 // Advancements
 import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
@@ -57,6 +57,7 @@ import {
   TutorialGuide,
   hasTutorialBeenSeen,
   KeyBindSettings,
+  FeatureCustomizer,
 } from './components';
 
 interface RhythmiaProps {
@@ -136,6 +137,22 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   const handleKeybindingsUpdate = useCallback((newBindings: Keybindings) => {
     setKeybindings(newBindings);
     try { localStorage.setItem('rhythmia_keybindings', JSON.stringify(newBindings)); } catch { /* ignore */ }
+  }, []);
+
+  // Feature settings (persisted in localStorage)
+  const [featureSettings, setFeatureSettings] = useState<FeatureSettings>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('rhythmia_features');
+        if (stored) return { ...DEFAULT_FEATURE_SETTINGS, ...JSON.parse(stored) };
+      } catch { /* ignore */ }
+    }
+    return DEFAULT_FEATURE_SETTINGS;
+  });
+
+  const handleFeatureSettingsUpdate = useCallback((newSettings: FeatureSettings) => {
+    setFeatureSettings(newSettings);
+    try { localStorage.setItem('rhythmia_features', JSON.stringify(newSettings)); } catch { /* ignore */ }
   }, []);
 
   // Per-game stat tracking for advancements
@@ -1157,7 +1174,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       style={{ ...responsiveCSSVars, position: 'relative' }}
     >
       {/* Voxel World Background — only render during gameplay */}
-      {isPlaying && (
+      {isPlaying && featureSettings.voxelBackground && (
         <VoxelWorldBackground
           seed={terrainSeed}
           gameMode={gameMode}
@@ -1170,10 +1187,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       )}
 
       {/* Terrain destruction particle effects */}
-      <TerrainParticles particles={terrainParticles} />
+      {featureSettings.particles && <TerrainParticles particles={terrainParticles} />}
 
       {/* Floating item drops from terrain */}
-      <FloatingItems items={floatingItems} />
+      {featureSettings.items && <FloatingItems items={floatingItems} />}
 
       {/* World transition overlays (creation / collapse / reload) */}
       <WorldTransition
@@ -1223,12 +1240,14 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 <div className={styles.nextLabel}>HOLD (C)</div>
                 <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
               </div>
-              <ItemSlots
-                inventory={inventory}
-                craftedCards={craftedCards}
-                damageMultiplier={damageMultiplier}
-                onCraftOpen={toggleCraftUI}
-              />
+              {featureSettings.items && (
+                <ItemSlots
+                  inventory={inventory}
+                  craftedCards={craftedCards}
+                  damageMultiplier={damageMultiplier}
+                  onCraftOpen={toggleCraftUI}
+                />
+              )}
             </div>
 
             {/* Center column: Board + Beat bar + Stats */}
@@ -1253,8 +1272,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 keybindings={keybindings}
                 onKeybindChange={handleKeybindChange}
                 onKeybindingsUpdate={handleKeybindingsUpdate}
+                featureSettings={featureSettings}
+                onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
               />
-              <BeatBar containerRef={beatBarRef} />
+              {featureSettings.beatBar && <BeatBar containerRef={beatBarRef} />}
               <StatsPanel lines={lines} level={level} />
             </div>
 
@@ -1282,16 +1303,18 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       )}
 
       {/* Rhythm VFX Canvas Overlay */}
-      <RhythmVFX
-        canvasRef={vfx.canvasRef}
-        boardRef={boardElRef}
-        onBoardGeometry={vfx.updateBoardGeometry}
-        isPlaying={isPlaying && !gameOver}
-        onStart={vfx.start}
-        onStop={vfx.stop}
-      />
+      {featureSettings.beatVfx && (
+        <RhythmVFX
+          canvasRef={vfx.canvasRef}
+          boardRef={boardElRef}
+          onBoardGeometry={vfx.updateBoardGeometry}
+          isPlaying={isPlaying && !gameOver}
+          onStart={vfx.start}
+          onStop={vfx.stop}
+        />
+      )}
       {/* Crafting UI overlay */}
-      {showCraftUI && (
+      {featureSettings.items && showCraftUI && (
         <CraftingUI
           inventory={inventory}
           craftedCards={craftedCards}
@@ -1302,7 +1325,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       )}
 
       {/* Inventory UI overlay */}
-      {showInventory && (
+      {featureSettings.items && showInventory && (
         <InventoryUI
           inventory={inventory}
           craftedCards={craftedCards}
@@ -1313,7 +1336,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       )}
 
       {/* Shop UI overlay */}
-      {showShop && (
+      {featureSettings.items && showShop && (
         <ShopUI
           inventory={inventory}
           craftedCards={craftedCards}
