@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet, TreasureWallet, FloatingTreasure } from '../types';
-import { syncTreasureStats } from '@/lib/advancements/storage';
+import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
-    ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
+    ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
     TERRAINS_PER_WORLD,
@@ -12,7 +11,7 @@ import {
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
-    TREASURES, TOTAL_TREASURE_DROP_WEIGHT, TREASURE_DROP_CHANCE, MAX_FLOATING_TREASURES, TREASURE_FLOAT_DURATION,
+    DEFAULT_ACTIVE_EFFECTS, RARITY_OFFER_WEIGHTS, CARDS_OFFERED,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -20,66 +19,28 @@ let nextFloatingId = 0;
 let nextParticleId = 0;
 let nextEnemyId = 0;
 let nextBulletId = 0;
-let nextFloatingTreasureId = 0;
 
 /**
- * Roll a random item based on drop weights
+ * Roll a random item based on drop weights.
+ * luckyBonus shifts probability toward rarer items.
  */
-function rollItem(): string {
-    let roll = Math.random() * TOTAL_DROP_WEIGHT;
-    for (const item of ITEMS) {
-        roll -= item.dropWeight;
-        if (roll <= 0) return item.id;
+function rollItem(luckyBonus: number = 0): string {
+    const adjustedWeights = ITEMS.map(item => {
+        let w = item.dropWeight;
+        if (item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary') {
+            w *= (1 + luckyBonus * 3);
+        } else if (item.rarity === 'common') {
+            w *= Math.max(0.5, 1 - luckyBonus);
+        }
+        return w;
+    });
+    const total = adjustedWeights.reduce((s, w) => s + w, 0);
+    let roll = Math.random() * total;
+    for (let i = 0; i < ITEMS.length; i++) {
+        roll -= adjustedWeights[i];
+        if (roll <= 0) return ITEMS[i].id;
     }
     return ITEMS[0].id;
-}
-
-/**
- * Roll a random treasure based on drop weights
- */
-function rollTreasure(): string {
-    let roll = Math.random() * TOTAL_TREASURE_DROP_WEIGHT;
-    for (const treasure of TREASURES) {
-        roll -= treasure.dropWeight;
-        if (roll <= 0) return treasure.id;
-    }
-    return TREASURES[0].id;
-}
-
-const DEFAULT_WALLET: TreasureWallet = {
-    gold: 0,
-    silver: 0,
-    totalGoldEarned: 0,
-    totalTreasuresCollected: 0,
-};
-
-/**
- * Load treasure wallet from localStorage
- */
-function loadTreasureWallet(): TreasureWallet {
-    if (typeof window === 'undefined') return { ...DEFAULT_WALLET };
-    try {
-        const data = localStorage.getItem('rhythmia_treasure_wallet');
-        if (data) {
-            const parsed = JSON.parse(data);
-            return { ...DEFAULT_WALLET, ...parsed };
-        }
-    } catch {
-        // ignore
-    }
-    return { ...DEFAULT_WALLET };
-}
-
-/**
- * Save treasure wallet to localStorage
- */
-function saveTreasureWallet(wallet: TreasureWallet): void {
-    if (typeof window === 'undefined') return;
-    try {
-        localStorage.setItem('rhythmia_treasure_wallet', JSON.stringify(wallet));
-    } catch {
-        // ignore
-    }
 }
 
 /**
@@ -134,40 +95,17 @@ export function useGameState() {
     const [floatingItems, setFloatingItems] = useState<FloatingItem[]>([]);
     const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
 
-    // ===== Weapon Cards =====
-    const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
-    const [showCraftUI, setShowCraftUI] = useState(false);
-
-    // ===== Inventory & Shop UI =====
-    const [showInventory, setShowInventory] = useState(false);
-    const [showShop, setShowShop] = useState(false);
-    const [gold, setGold] = useState(0);
-
-    // ===== Treasure System =====
-    const [treasureWallet, setTreasureWallet] = useState<TreasureWallet>(loadTreasureWallet);
-    const [floatingTreasures, setFloatingTreasures] = useState<FloatingTreasure[]>([]);
-    const [lastCollectedTreasureId, setLastCollectedTreasureId] = useState<string | null>(null);
-
-    // Sync treasure stats to advancement system when wallet changes
-    useEffect(() => {
-        if (treasureWallet.totalGoldEarned > 0 || treasureWallet.totalTreasuresCollected > 0) {
-            syncTreasureStats({
-                totalGoldEarned: treasureWallet.totalGoldEarned,
-                totalTreasuresCollected: treasureWallet.totalTreasuresCollected,
-            });
-        }
-    }, [treasureWallet.totalGoldEarned, treasureWallet.totalTreasuresCollected]);
+    // ===== Rogue-Like Card System =====
+    const [equippedCards, setEquippedCards] = useState<EquippedCard[]>([]);
+    const [showCardSelect, setShowCardSelect] = useState(false);
+    const [offeredCards, setOfferedCards] = useState<CardOffer[]>([]);
+    const [activeEffects, setActiveEffects] = useState<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
+    const activeEffectsRef = useRef<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
     const [bullets, setBullets] = useState<Bullet[]>([]);
     const [towerHealth, setTowerHealth] = useState(MAX_HEALTH);
-
-    // Computed: total damage multiplier from all crafted cards
-    const damageMultiplier = craftedCards.reduce((mult, card) => {
-        const def = WEAPON_CARD_MAP[card.cardId];
-        return def ? mult * def.damageMultiplier : mult;
-    }, 1);
 
     // Refs for accessing current values in callbacks (avoids stale closures)
     const gameLoopRef = useRef<number | null>(null);
@@ -196,11 +134,12 @@ export function useGameState() {
     const terrainDestroyedCountRef = useRef(terrainDestroyedCount);
     const terrainTotalRef = useRef(terrainTotal);
     const beatPhaseRef = useRef(beatPhase);
-    const damageMultiplierRef = useRef(damageMultiplier);
     const enemiesRef = useRef<Enemy[]>(enemies);
     const bulletsRef = useRef<Bullet[]>(bullets);
     const towerHealthRef = useRef(towerHealth);
     const gameModeRef = useRef<GameMode>(gameMode);
+    const inventoryRef = useRef<InventoryItem[]>(inventory);
+    const equippedCardsRef = useRef<EquippedCard[]>(equippedCards);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -230,11 +169,13 @@ export function useGameState() {
     useEffect(() => { terrainDestroyedCountRef.current = terrainDestroyedCount; }, [terrainDestroyedCount]);
     useEffect(() => { terrainTotalRef.current = terrainTotal; }, [terrainTotal]);
     useEffect(() => { beatPhaseRef.current = beatPhase; }, [beatPhase]);
-    useEffect(() => { damageMultiplierRef.current = damageMultiplier; }, [damageMultiplier]);
+    useEffect(() => { activeEffectsRef.current = activeEffects; }, [activeEffects]);
     useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
     useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
+    useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
+    useEffect(() => { equippedCardsRef.current = equippedCards; }, [equippedCards]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -248,8 +189,6 @@ export function useGameState() {
     }, []);
 
     // Spawn a new piece.
-    // Uses standard Tetris death: game over only when piece cannot spawn at all
-    // (Block Out — buffer zone is full). Lock Out is checked separately when pieces lock.
     const spawnPiece = useCallback((): Piece | null => {
         const type = nextPieceRef.current;
         const newPiece = createSpawnPiece(type);
@@ -258,8 +197,6 @@ export function useGameState() {
         setCanHold(true);
 
         if (!isValidPosition(newPiece, boardRef.current)) {
-            // Block Out: piece cannot spawn even in the buffer zone.
-            // The board is completely full up to the buffer.
             setGameOver(true);
             setIsPlaying(false);
             return null;
@@ -278,11 +215,11 @@ export function useGameState() {
         });
     }, []);
 
-    // Update score with pop animation — also grants gold
+    // Update score with pop animation — applies score boost
     const updateScore = useCallback((newScore: number) => {
-        const earned = Math.max(0, newScore - scoreRef.current);
-        setScore(newScore);
-        setGold(prev => prev + earned);
+        const rawEarned = Math.max(0, newScore - scoreRef.current);
+        const boostedEarned = Math.floor(rawEarned * activeEffectsRef.current.scoreBoostMultiplier);
+        setScore(scoreRef.current + boostedEarned);
         setScorePop(true);
         setTimeout(() => setScorePop(false), 100);
     }, []);
@@ -320,6 +257,85 @@ export function useGameState() {
         return remaining;
     }, []);
 
+    // ===== Rogue-Like Card System =====
+
+    // Compute active effects from all equipped cards
+    const computeActiveEffects = useCallback((cards: EquippedCard[]): ActiveEffects => {
+        const effects: ActiveEffects = { ...DEFAULT_ACTIVE_EFFECTS };
+        for (const ec of cards) {
+            const card = ROGUE_CARD_MAP[ec.cardId];
+            if (!card) continue;
+            const stacks = ec.stackCount;
+            switch (card.attribute) {
+                case 'combo_guard':
+                    effects.comboGuardUsesRemaining += card.attributeValue * stacks;
+                    break;
+                case 'shield':
+                    effects.shieldActive = true;
+                    break;
+                case 'terrain_surge':
+                    effects.terrainSurgeBonus += card.attributeValue * stacks;
+                    break;
+                case 'beat_extend':
+                    effects.beatExtendBonus += card.attributeValue * stacks;
+                    break;
+                case 'score_boost':
+                    effects.scoreBoostMultiplier += card.attributeValue * stacks;
+                    break;
+                case 'gravity_slow':
+                    effects.gravitySlowFactor *= Math.pow(1 - card.attributeValue, stacks);
+                    break;
+                case 'lucky_drops':
+                    effects.luckyDropsBonus += card.attributeValue * stacks;
+                    break;
+                case 'combo_amplify':
+                    effects.comboAmplifyFactor *= Math.pow(card.attributeValue, stacks);
+                    break;
+            }
+        }
+        return effects;
+    }, []);
+
+    // Generate card offers for CARD_SELECT phase
+    const generateCardOffers = useCallback((currentWorldIdx: number): CardOffer[] => {
+        const costMultiplier = 1 + currentWorldIdx * 0.25;
+        const currentInventory = inventoryRef.current;
+
+        // Weighted random selection of CARDS_OFFERED cards (no duplicates)
+        const available = [...ROGUE_CARDS];
+        const selected: typeof ROGUE_CARDS = [];
+
+        for (let i = 0; i < CARDS_OFFERED && available.length > 0; i++) {
+            const totalWeight = available.reduce((sum, c) => sum + (RARITY_OFFER_WEIGHTS[c.rarity] || 1), 0);
+            let roll = Math.random() * totalWeight;
+            let chosenIdx = 0;
+            for (let j = 0; j < available.length; j++) {
+                roll -= RARITY_OFFER_WEIGHTS[available[j].rarity] || 1;
+                if (roll <= 0) { chosenIdx = j; break; }
+            }
+            selected.push(available[chosenIdx]);
+            available.splice(chosenIdx, 1);
+        }
+
+        return selected.map(card => {
+            const scaledCost = card.baseCost.map(c => ({
+                itemId: c.itemId,
+                count: Math.ceil(c.count * costMultiplier),
+            }));
+            const affordable = scaledCost.every(c => {
+                const inv = currentInventory.find(i => i.itemId === c.itemId);
+                return inv && inv.count >= c.count;
+            });
+            return { card, scaledCost, affordable };
+        });
+    }, []);
+
+    // Reset per-stage effects (combo_guard uses, shield) at stage start
+    const resetStageEffects = useCallback(() => {
+        const freshEffects = computeActiveEffects(equippedCardsRef.current);
+        setActiveEffects(freshEffects);
+    }, [computeActiveEffects]);
+
     // Start a new terrain stage — advances world when enough terrains are cleared
     const startNewStage = useCallback((newStageNumber: number) => {
         setStageNumber(newStageNumber);
@@ -337,6 +353,97 @@ export function useGameState() {
         setTerrainSeed(newStageNumber * 7919 + 42);
         setTerrainDestroyedCount(0);
         terrainDestroyedCountRef.current = 0;
+
+        // Reset per-stage card effects
+        resetStageEffects();
+    }, [resetStageEffects]);
+
+    // Finish card select and proceed to next stage
+    const finishCardSelect = useCallback(() => {
+        setShowCardSelect(false);
+        setIsPaused(false);
+        const nextStage = stageNumberRef.current + 1;
+        startNewStage(nextStage);
+    }, [startNewStage]);
+
+    // Enter card selection phase
+    const enterCardSelect = useCallback(() => {
+        const offers = generateCardOffers(worldIdxRef.current);
+        setOfferedCards(offers);
+        setShowCardSelect(true);
+        setGamePhase('CARD_SELECT');
+        setIsPaused(true);
+    }, [generateCardOffers]);
+
+    // Select a card from offers
+    const selectCard = useCallback((cardId: string): boolean => {
+        const offer = offeredCards.find(o => o.card.id === cardId);
+        if (!offer) return false;
+
+        // Re-check affordability at selection time
+        const currentInv = inventoryRef.current;
+        const canAfford = offer.scaledCost.every(c => {
+            const inv = currentInv.find(i => i.itemId === c.itemId);
+            return inv && inv.count >= c.count;
+        });
+        if (!canAfford) return false;
+
+        // Deduct materials
+        const invCopy = currentInv.map(i => ({ ...i }));
+        for (const cost of offer.scaledCost) {
+            const item = invCopy.find(i => i.itemId === cost.itemId)!;
+            item.count -= cost.count;
+        }
+        setInventory(invCopy.filter(i => i.count > 0));
+
+        // Add or stack equipped card
+        setEquippedCards(prev => {
+            const existing = prev.find(ec => ec.cardId === cardId);
+            let updated: EquippedCard[];
+            if (existing) {
+                updated = prev.map(ec =>
+                    ec.cardId === cardId
+                        ? { ...ec, stackCount: Math.min(ec.stackCount + 1, 3) }
+                        : ec
+                );
+            } else {
+                updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+            }
+            // Recompute active effects
+            const effects = computeActiveEffects(updated);
+            setActiveEffects(effects);
+            equippedCardsRef.current = updated;
+            return updated;
+        });
+
+        finishCardSelect();
+        return true;
+    }, [offeredCards, computeActiveEffects, finishCardSelect]);
+
+    // Skip card selection (take nothing)
+    const skipCardSelect = useCallback(() => {
+        finishCardSelect();
+    }, [finishCardSelect]);
+
+    // Consume a combo guard use
+    const consumeComboGuard = useCallback((): boolean => {
+        if (activeEffectsRef.current.comboGuardUsesRemaining > 0) {
+            setActiveEffects(prev => ({
+                ...prev,
+                comboGuardUsesRemaining: prev.comboGuardUsesRemaining - 1,
+            }));
+            return true;
+        }
+        return false;
+    }, []);
+
+    // Consume shield (one-time per stage)
+    const consumeShield = useCallback((): boolean => {
+        if (activeEffectsRef.current.shieldActive) {
+            setActiveEffects(prev => ({ ...prev, shieldActive: false }));
+            return true;
+        }
+        return false;
     }, []);
 
     // ===== Item System Actions =====
@@ -346,9 +453,10 @@ export function useGameState() {
         const itemCount = Math.max(1, Math.floor(damage * ITEMS_PER_TERRAIN_DAMAGE));
         const now = Date.now();
         const newItems: FloatingItem[] = [];
+        const luckyBonus = activeEffectsRef.current.luckyDropsBonus;
 
         for (let i = 0; i < Math.min(itemCount, MAX_FLOATING_ITEMS); i++) {
-            const itemId = rollItem();
+            const itemId = rollItem(luckyBonus);
             newItems.push({
                 id: nextFloatingId++,
                 itemId,
@@ -394,77 +502,6 @@ export function useGameState() {
         }, FLOAT_DURATION + itemCount * 80 + 600);
     }, []);
 
-    // Spawn floating treasures from terrain destruction
-    const spawnTreasureDrops = useCallback((damage: number, originX: number, originY: number) => {
-        // Each point of damage has a chance to drop treasure
-        let treasureCount = 0;
-        for (let i = 0; i < damage; i++) {
-            if (Math.random() < TREASURE_DROP_CHANCE) treasureCount++;
-        }
-        if (treasureCount === 0) return;
-
-        const now = Date.now();
-        const newTreasures: FloatingTreasure[] = [];
-
-        for (let i = 0; i < Math.min(treasureCount, MAX_FLOATING_TREASURES); i++) {
-            const treasureId = rollTreasure();
-            newTreasures.push({
-                id: nextFloatingTreasureId++,
-                treasureId,
-                x: originX + (Math.random() - 0.5) * 180,
-                y: originY + (Math.random() - 0.5) * 80,
-                targetX: originX + 100,
-                targetY: originY - 50,
-                startTime: now + i * 100,
-                duration: TREASURE_FLOAT_DURATION + Math.random() * 300,
-                collected: false,
-            });
-        }
-
-        setFloatingTreasures(prev => [...prev, ...newTreasures].slice(-MAX_FLOATING_TREASURES * 2));
-
-        // Schedule treasure collection
-        setTimeout(() => {
-            setFloatingTreasures(prev => prev.map(ft =>
-                newTreasures.some(nt => nt.id === ft.id) ? { ...ft, collected: true } : ft
-            ));
-
-            // Add treasure values to wallet
-            let goldEarned = 0;
-            let treasuresCollected = 0;
-            let lastId: string | null = null;
-            for (const ft of newTreasures) {
-                const def = TREASURES.find(t => t.id === ft.treasureId);
-                if (def) {
-                    goldEarned += def.value;
-                    treasuresCollected++;
-                    lastId = ft.treasureId;
-                }
-            }
-
-            if (goldEarned > 0) {
-                setLastCollectedTreasureId(lastId);
-                setTreasureWallet(prev => {
-                    const updated = {
-                        ...prev,
-                        gold: prev.gold + goldEarned,
-                        totalGoldEarned: prev.totalGoldEarned + goldEarned,
-                        totalTreasuresCollected: prev.totalTreasuresCollected + treasuresCollected,
-                    };
-                    saveTreasureWallet(updated);
-                    return updated;
-                });
-                // Clear flash after delay
-                setTimeout(() => setLastCollectedTreasureId(null), 800);
-            }
-        }, TREASURE_FLOAT_DURATION + treasureCount * 100 + 200);
-
-        // Clean up collected floating treasures
-        setTimeout(() => {
-            setFloatingTreasures(prev => prev.filter(ft => !newTreasures.some(nt => nt.id === ft.id)));
-        }, TREASURE_FLOAT_DURATION + treasureCount * 100 + 800);
-    }, []);
-
     // Spawn terrain destruction particles
     const spawnTerrainParticles = useCallback((originX: number, originY: number, count: number, color?: string) => {
         const now = Date.now();
@@ -507,13 +544,12 @@ export function useGameState() {
         return set;
     }, []);
 
-    // Spawn enemies on the grid perimeter (Manhattan distance = GRID_SPAWN_RING from center)
+    // Spawn enemies on the grid perimeter
     const spawnEnemies = useCallback((count: number) => {
         const occupied = getOccupiedCells();
         const newEnemies: Enemy[] = [];
 
         for (let i = 0; i < count; i++) {
-            // Build list of available perimeter cells at Manhattan distance = GRID_SPAWN_RING
             const candidates: { gx: number; gz: number }[] = [];
             for (let gx = -GRID_HALF; gx <= GRID_HALF; gx++) {
                 for (let gz = -GRID_HALF; gz <= GRID_HALF; gz++) {
@@ -526,7 +562,7 @@ export function useGameState() {
                 }
             }
 
-            if (candidates.length === 0) break; // No available spawn cells
+            if (candidates.length === 0) break;
 
             const cell = candidates[Math.floor(Math.random() * candidates.length)];
             const worldX = cell.gx * GRID_TILE_SIZE;
@@ -540,7 +576,7 @@ export function useGameState() {
                 z: worldZ,
                 gridX: cell.gx,
                 gridZ: cell.gz,
-                speed: 1, // 1 tile per turn (grid system)
+                speed: 1,
                 health: ENEMY_HP,
                 maxHealth: ENEMY_HP,
                 alive: true,
@@ -550,40 +586,31 @@ export function useGameState() {
         setEnemies(prev => [...prev, ...newEnemies]);
     }, [getOccupiedCells]);
 
-    // Move enemies 1 tile toward tower using orthogonal-only movement (no diagonals).
-    // Each enemy picks the best cardinal direction (Up/Down/Left/Right) that reduces
-    // Manhattan distance to (0,0), avoiding occupied cells. Returns number that reached tower.
+    // Move enemies 1 tile toward tower
     const updateEnemies = useCallback((): number => {
         const current = enemiesRef.current;
         let reached = 0;
         const updated: Enemy[] = [];
 
-        // Build set of cells that will be occupied after movement.
-        // Process enemies closest to tower first so they get priority on cell claims.
         const sorted = current
             .filter(e => e.alive)
             .sort((a, b) => (Math.abs(a.gridX) + Math.abs(a.gridZ)) - (Math.abs(b.gridX) + Math.abs(b.gridZ)));
 
         const claimed = new Set<string>();
-
-        // Orthogonal directions: Up, Down, Left, Right
         const dirs: [number, number][] = [[0, -1], [0, 1], [-1, 0], [1, 0]];
 
         for (const e of sorted) {
             const manhattan = Math.abs(e.gridX) + Math.abs(e.gridZ);
 
-            // Check if enemy has reached the tower
             if (manhattan <= GRID_TOWER_RADIUS) {
                 reached++;
-                continue; // removed from game
+                continue;
             }
 
-            // Evaluate orthogonal neighbors — pick the one closest to (0,0)
-            let bestDist = manhattan; // staying still is the fallback
+            let bestDist = manhattan;
             let bestGx = e.gridX;
             let bestGz = e.gridZ;
 
-            // Shuffle directions to break ties randomly
             const shuffled = [...dirs].sort(() => Math.random() - 0.5);
 
             for (const [dx, dz] of shuffled) {
@@ -591,11 +618,10 @@ export function useGameState() {
                 const nz = e.gridZ + dz;
                 const nd = Math.abs(nx) + Math.abs(nz);
 
-                // Must reduce distance (move closer to tower)
                 if (nd >= manhattan) continue;
 
                 const key = `${nx},${nz}`;
-                if (claimed.has(key)) continue; // cell taken
+                if (claimed.has(key)) continue;
 
                 if (nd < bestDist) {
                     bestDist = nd;
@@ -620,8 +646,7 @@ export function useGameState() {
         return reached;
     }, []);
 
-    // Kill closest enemies (when lines are cleared) — removed instantly
-    // Uses Manhattan distance (tile distance) for sorting
+    // Kill closest enemies
     const killEnemies = useCallback((count: number) => {
         setEnemies(prev => {
             const alive = prev.filter(e => e.alive);
@@ -631,20 +656,17 @@ export function useGameState() {
                 return distA - distB;
             });
 
-            // Remove the closest ones entirely
             const toKill = Math.min(count, alive.length);
             const survivors = alive.slice(toKill);
             return survivors;
         });
     }, []);
 
-    // Fire a bullet from tower at the closest enemy (no mana cost)
-    // Uses Manhattan distance (tile distance) for targeting priority
+    // Fire a bullet from tower at the closest enemy
     const fireBullet = useCallback((): boolean => {
         const alive = enemiesRef.current.filter(e => e.alive);
         if (alive.length === 0) return false;
 
-        // Find closest enemy by Manhattan distance
         let closest = alive[0];
         let closestDist = Math.abs(closest.gridX) + Math.abs(closest.gridZ);
         for (let i = 1; i < alive.length; i++) {
@@ -655,25 +677,16 @@ export function useGameState() {
             }
         }
 
-        // Calculate parabolic arc velocity from turret to enemy
         const startY = 11;
         const targetY = 1.5;
         const dx = closest.gridX * GRID_TILE_SIZE;
         const dz = closest.gridZ * GRID_TILE_SIZE;
         const horizontalDist = Math.sqrt(dx * dx + dz * dz);
 
-        // Flight time based on horizontal speed
         const T = Math.max(0.3, horizontalDist / BULLET_SPEED);
-
-        // Horizontal velocity components
         const vx = dx / T;
         const vz = dz / T;
-
-        // Vertical velocity: solve y = y0 + vy*t - 0.5*g*t² for vy
-        // targetY = startY + vy*T - 0.5*g*T²
-        // vy = (targetY - startY + 0.5*g*T²) / T
         const vy = (targetY - startY + 0.5 * BULLET_GRAVITY * T * T) / T;
-
 
         const bullet: Bullet = {
             id: nextBulletId++,
@@ -692,7 +705,6 @@ export function useGameState() {
     }, []);
 
     // Move bullets with gravity and check collision with enemies
-    // Returns the number of enemies killed this update
     const lastBulletUpdateRef = useRef(Date.now());
     const updateBullets = useCallback((): number => {
         const currentBullets = bulletsRef.current;
@@ -702,7 +714,7 @@ export function useGameState() {
         }
 
         const now = Date.now();
-        const dt = Math.min((now - lastBulletUpdateRef.current) / 1000, 0.5); // seconds, capped
+        const dt = Math.min((now - lastBulletUpdateRef.current) / 1000, 0.5);
         lastBulletUpdateRef.current = now;
 
         const updatedBullets: Bullet[] = [];
@@ -712,15 +724,12 @@ export function useGameState() {
         for (const b of currentBullets) {
             if (!b.alive) continue;
 
-            // Apply gravity and update position using Velocity Verlet (matches rendering)
             const newVy = b.vy - BULLET_GRAVITY * dt;
             const newX = b.x + b.vx * dt;
             const newY = b.y + b.vy * dt - 0.5 * BULLET_GRAVITY * dt * dt;
             const newZ = b.z + b.vz * dt;
 
-            // Check if bullet hit the ground — guaranteed hit on targeted enemy
             if (newY <= BULLET_GROUND_Y) {
-                // Bullet has landed — damage the targeted enemy wherever it is
                 const targetEnemy = enemiesRef.current.find(
                     e => e.id === b.targetEnemyId && e.alive
                 );
@@ -732,10 +741,9 @@ export function useGameState() {
                         totalKills++;
                     }
                 }
-                continue; // bullet consumed
+                continue;
             }
 
-            // In-flight proximity check — if bullet passes close to targeted enemy mid-arc
             const targetEnemy = enemiesRef.current.find(
                 e => e.id === b.targetEnemyId && e.alive
             );
@@ -754,7 +762,6 @@ export function useGameState() {
                 }
             }
 
-            // If targeted enemy is dead, check for any nearby enemy
             if (!targetEnemy) {
                 const alive = enemiesRef.current.filter(
                     e => e.alive && !damagedEnemyIds.has(e.id)
@@ -781,7 +788,6 @@ export function useGameState() {
                 }
             }
 
-            // Bullet still in flight
             updatedBullets.push({
                 ...b,
                 x: newX,
@@ -794,7 +800,6 @@ export function useGameState() {
         setBullets(updatedBullets);
         bulletsRef.current = updatedBullets;
 
-        // Remove dead enemies
         const deadEnemies = enemiesRef.current.filter(e => !e.alive);
         if (deadEnemies.length > 0) {
             const newEnemies = enemiesRef.current.filter(e => e.alive);
@@ -804,111 +809,6 @@ export function useGameState() {
 
         return totalKills;
     }, []);
-
-    // Craft a weapon card
-    const craftCard = useCallback((cardId: string): boolean => {
-        const card = WEAPON_CARD_MAP[cardId];
-        if (!card) return false;
-
-        // Check if we have all required items
-        const inventoryCopy = inventory.map(i => ({ ...i }));
-        for (const req of card.recipe) {
-            const item = inventoryCopy.find(i => i.itemId === req.itemId);
-            if (!item || item.count < req.count) return false;
-        }
-
-        // Deduct items
-        for (const req of card.recipe) {
-            const item = inventoryCopy.find(i => i.itemId === req.itemId)!;
-            item.count -= req.count;
-        }
-
-        setInventory(inventoryCopy.filter(i => i.count > 0));
-        setCraftedCards(prev => [...prev, { cardId, craftedAt: Date.now() }]);
-        return true;
-    }, [inventory]);
-
-    // Check if a card can be crafted
-    const canCraftCard = useCallback((cardId: string): boolean => {
-        const card = WEAPON_CARD_MAP[cardId];
-        if (!card) return false;
-        return card.recipe.every(req => {
-            const item = inventory.find(i => i.itemId === req.itemId);
-            return item && item.count >= req.count;
-        });
-    }, [inventory]);
-
-    // Toggle craft UI
-    const toggleCraftUI = useCallback(() => {
-        setShowCraftUI(prev => !prev);
-        if (!showCraftUI) {
-            setGamePhase('CRAFTING');
-            setIsPaused(true);
-        } else {
-            setGamePhase('PLAYING');
-            setIsPaused(false);
-        }
-    }, [showCraftUI]);
-
-    // Toggle inventory UI
-    const toggleInventory = useCallback(() => {
-        setShowInventory(prev => {
-            const next = !prev;
-            if (next) {
-                // Close other overlays
-                setShowShop(false);
-                setShowCraftUI(false);
-                setIsPaused(true);
-            } else {
-                setIsPaused(false);
-                setGamePhase('PLAYING');
-            }
-            return next;
-        });
-    }, []);
-
-    // Toggle shop UI
-    const toggleShop = useCallback(() => {
-        setShowShop(prev => {
-            const next = !prev;
-            if (next) {
-                // Close other overlays
-                setShowInventory(false);
-                setShowCraftUI(false);
-                setIsPaused(true);
-            } else {
-                setIsPaused(false);
-                setGamePhase('PLAYING');
-            }
-            return next;
-        });
-    }, []);
-
-    // Purchase item from shop using gold
-    const purchaseItem = useCallback((itemId: string, price: number): boolean => {
-        if (gold < price) return false;
-        setGold(prev => prev - price);
-
-        // Check if it's a weapon card
-        const weaponCard = WEAPON_CARD_MAP[itemId];
-        if (weaponCard) {
-            setCraftedCards(prev => [...prev, { cardId: itemId, craftedAt: Date.now() }]);
-            return true;
-        }
-
-        // It's a material — add to inventory
-        setInventory(prev => {
-            const updated = [...prev];
-            const existing = updated.find(i => i.itemId === itemId);
-            if (existing) {
-                existing.count += 1;
-            } else {
-                updated.push({ itemId, count: 1 });
-            }
-            return updated;
-        });
-        return true;
-    }, [gold, inventory]);
 
     // Set phase to PLAYING (after world creation animation)
     const enterPlayPhase = useCallback(() => {
@@ -957,19 +857,15 @@ export function useGameState() {
         // Reset game loop state
         setGamePhase('WORLD_CREATION');
         setInventory([]);
-        setCraftedCards([]);
         setFloatingItems([]);
         setTerrainParticles([]);
-        setShowCraftUI(false);
-        setShowInventory(false);
-        setShowShop(false);
-        setGold(0);
 
-        // Reload treasure wallet (persisted across games)
-        setTreasureWallet(loadTreasureWallet());
-        setFloatingTreasures([]);
-        setLastCollectedTreasureId(null);
-        nextFloatingTreasureId = 0;
+        // Reset rogue-like card state
+        setEquippedCards([]);
+        equippedCardsRef.current = [];
+        setShowCardSelect(false);
+        setOfferedCards([]);
+        setActiveEffects(DEFAULT_ACTIVE_EFFECTS);
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -1049,17 +945,11 @@ export function useGameState() {
         inventory,
         floatingItems,
         terrainParticles,
-        craftedCards,
-        showCraftUI,
-        damageMultiplier,
-        // Inventory & Shop
-        showInventory,
-        showShop,
-        gold,
-        // Treasure system
-        treasureWallet,
-        floatingTreasures,
-        lastCollectedTreasureId,
+        // Rogue-like cards
+        equippedCards,
+        showCardSelect,
+        offeredCards,
+        activeEffects,
         // Game mode
         gameMode,
 
@@ -1090,8 +980,6 @@ export function useGameState() {
         setSdf,
         setColorTheme,
         setGamePhase,
-        setShowInventory,
-        setShowShop,
 
         // Refs
         boardRef,
@@ -1114,7 +1002,7 @@ export function useGameState() {
         terrainDestroyedCountRef,
         terrainTotalRef,
         beatPhaseRef,
-        damageMultiplierRef,
+        activeEffectsRef,
         enemiesRef,
         bulletsRef,
         gameModeRef,
@@ -1137,18 +1025,15 @@ export function useGameState() {
         // Game loop actions
         spawnItemDrops,
         spawnTerrainParticles,
-        craftCard,
-        canCraftCard,
-        toggleCraftUI,
-        toggleInventory,
-        toggleShop,
-        purchaseItem,
+        enterCardSelect,
+        selectCard,
+        skipCardSelect,
+        consumeComboGuard,
+        consumeShield,
         enterPlayPhase,
         triggerCollapse,
         triggerTransition,
         triggerWorldCreation,
-        // Treasure actions
-        spawnTreasureDrops,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,

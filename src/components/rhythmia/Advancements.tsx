@@ -13,7 +13,7 @@ interface Props {
   onClose: () => void;
 }
 
-const CATEGORY_ORDER: AdvancementCategory[] = ['general', 'lines', 'score', 'tspin', 'combo', 'multiplayer', 'loyalty', 'treasure'];
+const CATEGORY_ORDER: AdvancementCategory[] = ['general', 'lines', 'score', 'tspin', 'combo', 'multiplayer', 'loyalty'];
 
 const CATEGORY_LABELS: Record<string, Record<AdvancementCategory, string>> = {
   en: {
@@ -24,7 +24,6 @@ const CATEGORY_LABELS: Record<string, Record<AdvancementCategory, string>> = {
     combo: 'Combo',
     multiplayer: 'Multiplayer',
     loyalty: 'Loyalty',
-    treasure: 'Treasure',
   },
   ja: {
     general: '全般',
@@ -34,7 +33,6 @@ const CATEGORY_LABELS: Record<string, Record<AdvancementCategory, string>> = {
     combo: 'コンボ',
     multiplayer: 'マルチプレイ',
     loyalty: 'ロイヤルティ',
-    treasure: '金銀財宝',
   },
 };
 

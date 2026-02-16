@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { ItemType, WeaponCard } from '../types';
+import type { ItemType, RogueCard } from '../types';
 import { ITEM_MAP } from '../constants';
 import { ItemIcon } from './ItemIcon';
 import styles from './ItemTooltip.module.css';
@@ -15,11 +15,16 @@ const RARITY_CONFIG: Record<string, { label: string; color: string; badgeBg: str
     legendary: { label: 'Legendary', color: '#FFFFFF', badgeBg: 'rgba(255,255,255,0.15)' },
 };
 
-// ===== Special Effect Display Names =====
-const EFFECT_LABELS: Record<string, { label: string; icon: string }> = {
-    wide_beat: { label: 'Wider Beat Window', icon: '🎵' },
-    shatter:   { label: 'Shatter Effect',    icon: '💥' },
-    burst:     { label: 'Burst Particles',   icon: '✨' },
+// ===== Attribute Display Names =====
+const ATTRIBUTE_LABELS: Record<string, { label: string; icon: string }> = {
+    combo_guard:   { label: 'Combo Guard',    icon: '🛡️' },
+    terrain_surge: { label: 'Terrain Surge',  icon: '⛏️' },
+    beat_extend:   { label: 'Beat Extend',    icon: '🎵' },
+    score_boost:   { label: 'Score Boost',    icon: '💰' },
+    gravity_slow:  { label: 'Gravity Slow',   icon: '🪶' },
+    lucky_drops:   { label: 'Lucky Drops',    icon: '🍀' },
+    combo_amplify: { label: 'Combo Amplify',  icon: '🔥' },
+    shield:        { label: 'Shield',         icon: '🛡️' },
 };
 
 // ===== Material Item Tooltip =====
@@ -86,7 +91,7 @@ export function MaterialTooltip({ item, count }: MaterialTooltipProps) {
 
                         {/* Flavor text */}
                         <p className={styles.loreText}>
-                            Collected from terrain blocks. Used in weapon forging recipes.
+                            Collected from terrain blocks. Used as card currency.
                         </p>
                     </div>
                 </div>
@@ -95,36 +100,35 @@ export function MaterialTooltip({ item, count }: MaterialTooltipProps) {
     );
 }
 
-// ===== Weapon Card Tooltip =====
-interface WeaponTooltipProps {
-    weapon: WeaponCard;
-    equipped?: boolean;
+// ===== Rogue Card Tooltip =====
+interface RogueCardTooltipProps {
+    card: RogueCard;
+    stackCount?: number;
 }
 
-export function WeaponTooltip({ weapon, equipped }: WeaponTooltipProps) {
-    // Derive rarity from recipe complexity
-    const rarityKey = deriveWeaponRarity(weapon);
-    const rarity = RARITY_CONFIG[rarityKey];
-    const damagePercent = Math.round((weapon.damageMultiplier - 1) * 100);
-    const effect = weapon.specialEffect ? EFFECT_LABELS[weapon.specialEffect] : null;
+export function RogueCardTooltip({ card, stackCount }: RogueCardTooltipProps) {
+    const rarity = RARITY_CONFIG[card.rarity] || RARITY_CONFIG.common;
+    const attr = ATTRIBUTE_LABELS[card.attribute];
 
     return (
         <div className={styles.tooltipContainer}>
             <div className={styles.borderOuter}>
                 <div className={styles.borderInner}>
                     <div className={styles.tooltipBody}>
-                        {/* Header: Weapon Name + Damage Power */}
+                        {/* Header: Card Name + Icon */}
                         <div className={styles.header}>
-                            <span className={styles.itemName} style={{ color: rarity.color }}>
-                                {weapon.name}
+                            <span className={styles.itemName} style={{ color: card.color }}>
+                                {card.icon} {card.name}
                             </span>
-                            <span className={styles.powerLevel} style={{ color: rarity.color }}>
-                                +{damagePercent}%
-                            </span>
+                            {stackCount && stackCount > 1 && (
+                                <span className={styles.powerLevel} style={{ color: card.color }}>
+                                    x{stackCount}
+                                </span>
+                            )}
                         </div>
 
                         {/* Japanese name */}
-                        <span className={styles.nameJa}>{weapon.nameJa}</span>
+                        <span className={styles.nameJa}>{card.nameJa}</span>
 
                         {/* Badges */}
                         <div className={styles.badges}>
@@ -138,35 +142,17 @@ export function WeaponTooltip({ weapon, equipped }: WeaponTooltipProps) {
                             >
                                 {rarity.label}
                             </span>
-                            {weapon.specialEffect && (
-                                <span className={`${styles.badge} ${styles.badgeGolden}`}>
-                                    Special
-                                </span>
-                            )}
-                            {equipped && (
-                                <span className={`${styles.badge} ${styles.badgeEquipped}`}>
-                                    Equipped
-                                </span>
-                            )}
                         </div>
 
                         {/* Divider */}
                         <div className={styles.divider} />
 
-                        {/* Stats section */}
+                        {/* Attribute info */}
                         <div className={styles.statsSection}>
-                            <div className={styles.statRow}>
-                                <span className={styles.statIcon}>⚔️</span>
-                                <span className={styles.statLabel}>Terrain Damage</span>
-                                <span className={`${styles.statValue} ${styles.statValueDamage}`}>
-                                    x{weapon.damageMultiplier.toFixed(1)}
-                                </span>
-                            </div>
-
-                            {effect && (
+                            {attr && (
                                 <div className={styles.statRow}>
-                                    <span className={styles.statIcon}>{effect.icon}</span>
-                                    <span className={styles.statLabel}>{effect.label}</span>
+                                    <span className={styles.statIcon}>{attr.icon}</span>
+                                    <span className={styles.statLabel}>{attr.label}</span>
                                     <span className={`${styles.statValue} ${styles.statValueEffect}`}>
                                         Active
                                     </span>
@@ -177,31 +163,36 @@ export function WeaponTooltip({ weapon, equipped }: WeaponTooltipProps) {
                         {/* Divider */}
                         <div className={styles.divider} />
 
-                        {/* Recipe cost */}
-                        <div className={styles.recipeSection}>
-                            <span className={styles.recipeSectionTitle}>Recipe</span>
-                            {weapon.recipe.map((req, i) => {
-                                const mat = ITEM_MAP[req.itemId];
-                                if (!mat) return null;
-                                return (
-                                    <div key={i} className={styles.recipeRow}>
-                                        <div className={styles.recipeIconWrap}>
-                                            <ItemIcon itemId={req.itemId} size={14} />
-                                        </div>
-                                        <span className={styles.recipeMatName}>{mat.name}</span>
-                                        <span className={styles.recipeMatCount}>x{req.count}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Divider */}
-                        <div className={styles.divider} />
-
-                        {/* Flavor text */}
+                        {/* Card description */}
                         <p className={styles.loreText}>
-                            {weapon.description}
+                            {card.description}
                         </p>
+                        <p className={styles.loreText} style={{ opacity: 0.7 }}>
+                            {card.descriptionJa}
+                        </p>
+
+                        {/* Cost */}
+                        {card.baseCost.length > 0 && (
+                            <>
+                                <div className={styles.divider} />
+                                <div className={styles.recipeSection}>
+                                    <span className={styles.recipeSectionTitle}>Base Cost</span>
+                                    {card.baseCost.map((req, i) => {
+                                        const mat = ITEM_MAP[req.itemId];
+                                        if (!mat) return null;
+                                        return (
+                                            <div key={i} className={styles.recipeRow}>
+                                                <div className={styles.recipeIconWrap}>
+                                                    <ItemIcon itemId={req.itemId} size={14} />
+                                                </div>
+                                                <span className={styles.recipeMatName}>{mat.name}</span>
+                                                <span className={styles.recipeMatCount}>x{req.count}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -216,9 +207,9 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 
 interface ItemTooltipWrapperProps {
     item?: ItemType;
-    weapon?: WeaponCard;
+    rogueCard?: RogueCard;
     count?: number;
-    equipped?: boolean;
+    stackCount?: number;
     children: React.ReactNode;
     side?: 'top' | 'right' | 'bottom' | 'left';
     sideOffset?: number;
@@ -226,14 +217,14 @@ interface ItemTooltipWrapperProps {
 
 export function ItemTooltipWrapper({
     item,
-    weapon,
+    rogueCard,
     count,
-    equipped,
+    stackCount,
     children,
     side = 'right',
     sideOffset = 8,
 }: ItemTooltipWrapperProps) {
-    if (!item && !weapon) return <>{children}</>;
+    if (!item && !rogueCard) return <>{children}</>;
 
     return (
         <TooltipPrimitive.Provider delayDuration={200}>
@@ -249,19 +240,10 @@ export function ItemTooltipWrapper({
                         avoidCollisions
                     >
                         {item && <MaterialTooltip item={item} count={count} />}
-                        {weapon && <WeaponTooltip weapon={weapon} equipped={equipped} />}
+                        {rogueCard && <RogueCardTooltip card={rogueCard} stackCount={stackCount} />}
                     </TooltipPrimitive.Content>
                 </TooltipPrimitive.Portal>
             </TooltipPrimitive.Root>
         </TooltipPrimitive.Provider>
     );
-}
-
-// ===== Helpers =====
-function deriveWeaponRarity(weapon: WeaponCard): string {
-    if (weapon.damageMultiplier >= 1.7) return 'legendary';
-    if (weapon.damageMultiplier >= 1.5) return 'epic';
-    if (weapon.damageMultiplier >= 1.3) return 'rare';
-    if (weapon.damageMultiplier >= 1.15) return 'uncommon';
-    return 'common';
 }
