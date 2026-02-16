@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
 import {
-    BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
+    BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
@@ -181,7 +181,9 @@ export function useGameState() {
         return piece;
     }, []);
 
-    // Spawn a new piece
+    // Spawn a new piece.
+    // Uses standard Tetris death: game over only when piece cannot spawn at all
+    // (Block Out — buffer zone is full). Lock Out is checked separately when pieces lock.
     const spawnPiece = useCallback((): Piece | null => {
         const type = nextPieceRef.current;
         const newPiece = createSpawnPiece(type);
@@ -190,6 +192,8 @@ export function useGameState() {
         setCanHold(true);
 
         if (!isValidPosition(newPiece, boardRef.current)) {
+            // Block Out: piece cannot spawn even in the buffer zone.
+            // The board is completely full up to the buffer.
             setGameOver(true);
             setIsPlaying(false);
             return null;
@@ -853,7 +857,7 @@ export function useGameState() {
             type,
             rotation: 0,
             x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-            y: type === 'I' ? -2 : -1,
+            y: BUFFER_ZONE - 1,
         };
 
         setCurrentPiece(initialPiece);

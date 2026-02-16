@@ -11,6 +11,7 @@
         "loading": "LOADING",
         "selectServer": "SELECT MODE",
         "chooseMode": "Choose your game mode",
+        "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
         "play": "PLAY",
         "battle": "BATTLE",
         "back": "← Back",
@@ -601,7 +602,10 @@
         "peakChaos": "PEAK CHAOS",
         "tempoCollapses": "COLLAPSES",
         "lowestBpm": "LOW BPM",
-        "backToLobby": "Back to Lobby"
+        "backToLobby": "Back to Lobby",
+        "usePowerUp": "Power-Up",
+        "cycleTarget": "Target",
+        "emote": "Emote"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -1093,6 +1097,17 @@
         "selectLanguage": "Language",
         "privacy": "Privacy",
         "profileButton": "Profile"
+    },
+    "googleSync": {
+        "sectionTitle": "Google Account Sync",
+        "description": "Sign in with Google to sync your profile, advancements, loyalty progress, and skin settings across devices.",
+        "signIn": "Sign in with Google",
+        "signOut": "Sign out",
+        "linking": "Connecting...",
+        "syncing": "Syncing...",
+        "syncNow": "Sync now",
+        "synced": "Synced",
+        "error": "Sync failed"
     },
     "stories": {
         "title": "STORIES",

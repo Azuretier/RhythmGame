@@ -11,6 +11,7 @@
         "loading": "CARGANDO",
         "selectServer": "SELECCIONAR MODO",
         "chooseMode": "Elige tu modo de juego",
+        "tagline": "Un juego de puzzles con ritmo. Coloca bloques al compás, batalla con amigos y desbloquea logros.",
         "play": "JUGAR",
         "battle": "BATALLA",
         "back": "← Volver",
@@ -401,7 +402,10 @@
         "peakChaos": "CAOS MÁXIMO",
         "tempoCollapses": "COLAPSOS",
         "lowestBpm": "BPM MÍNIMO",
-        "backToLobby": "Volver al Lobby"
+        "backToLobby": "Volver al Lobby",
+        "usePowerUp": "Power-Up",
+        "cycleTarget": "Objetivo",
+        "emote": "Emote"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -847,6 +851,17 @@
         "selectLanguage": "Idioma",
         "privacy": "Privacidad",
         "profileButton": "Perfil"
+    },
+    "googleSync": {
+        "sectionTitle": "Sincronización con Cuenta de Google",
+        "description": "Inicia sesión con Google para sincronizar tu perfil, logros, progreso de lealtad y configuración de skin entre dispositivos.",
+        "signIn": "Iniciar sesión con Google",
+        "signOut": "Cerrar sesión",
+        "linking": "Conectando...",
+        "syncing": "Sincronizando...",
+        "syncNow": "Sincronizar ahora",
+        "synced": "Sincronizado",
+        "error": "Error de sincronización"
     },
     "stories": {
         "title": "STORIES",

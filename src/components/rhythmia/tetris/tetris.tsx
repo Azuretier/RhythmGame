@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
 import type { Piece, GameMode, Keybindings, KeybindAction } from './types';
 import { DEFAULT_KEYBINDINGS } from './types';
 
@@ -23,7 +23,6 @@ import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmV
 
 // Utilities
 import {
-  getShape,
   isValidPosition,
   tryRotation,
   lockPiece,
@@ -506,11 +505,15 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
     }
 
+    // Lock piece onto the board — blocks above the visible area (in the
+    // buffer zone) are saved in memory, matching standard Tetris behaviour.
+    // Only Block Out (piece can't spawn) ends the game; locking above
+    // the skyline does not.
     const newBoard = lockPiece(piece, boardRef.current);
 
     // Detect which rows will be cleared (before clearing) for VFX positioning
     const rowsToClear: number[] = [];
-    for (let y = 0; y < BOARD_HEIGHT; y++) {
+    for (let y = BUFFER_ZONE; y < BOARD_HEIGHT; y++) {
       if (newBoard[y].every(cell => cell !== null)) {
         rowsToClear.push(y);
       }
@@ -588,7 +591,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     currentPieceRef.current = spawned;
   }, [
     gameModeRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
-    setCombo, setBoard, setLines, setLevel, setCurrentPiece,
+    setCombo, setBoard, setLines, setLevel, setCurrentPiece, setGameOver,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,

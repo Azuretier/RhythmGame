@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BOARD_WIDTH, BOARD_HEIGHT, COLORS, ColorTheme, getThemedColor } from '../constants';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, COLORS, ColorTheme, getThemedColor } from '../constants';
 import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
@@ -104,7 +104,8 @@ export function Board({
         return getThemedColor(pieceType, colorTheme, worldIdx);
     };
 
-    // Create display board with current piece and ghost
+    // Create display board with current piece and ghost.
+    // Only the visible rows (below BUFFER_ZONE) are rendered.
     const displayBoard = React.useMemo(() => {
         const display = board.map(row => [...row]);
 
@@ -141,7 +142,8 @@ export function Board({
             }
         }
 
-        return display;
+        // Only return visible rows (skip buffer zone)
+        return display.slice(BUFFER_ZONE);
     }, [board, currentPiece]);
 
     const boardWrapClasses = [

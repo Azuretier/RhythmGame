@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect, useMemo } from 'react';
 import type { VFXEvent } from '../types';
-import { BOARD_WIDTH, BOARD_HEIGHT, WORLDS } from '../constants';
+import { BOARD_WIDTH, VISIBLE_HEIGHT, BUFFER_ZONE, WORLDS } from '../constants';
 
 // ===== Particle/Effect Base Types =====
 
@@ -237,7 +237,7 @@ export function useRhythmVFX() {
             for (let dx = 0; dx < 4; dx++) {
                 const cx = boardX + dx;
                 const cy = boardY + dy;
-                if (cx >= 0 && cx < BOARD_WIDTH && cy >= 0 && cy < BOARD_HEIGHT) {
+                if (cx >= 0 && cx < BOARD_WIDTH && cy >= 0 && cy < VISIBLE_HEIGHT) {
                     cells.push({
                         x: geo.left + cx * geo.cellSize,
                         y: geo.top + cy * geo.cellSize,
@@ -354,19 +354,22 @@ export function useRhythmVFX() {
                 spawnBeatRing(event.bpm, event.intensity);
                 break;
 
-            case 'lineClear':
-                spawnEqualizerBars(event.rows, event.count, event.onBeat);
+            case 'lineClear': {
+                // Offset rows from full board coords to visible-area coords
+                const visibleRows = event.rows.map((r: number) => r - BUFFER_ZONE);
+                spawnEqualizerBars(visibleRows, event.count, event.onBeat);
                 if (event.onBeat) {
-                    spawnGlitchParticles(event.rows, event.combo);
+                    spawnGlitchParticles(visibleRows, event.combo);
                 }
                 break;
+            }
 
             case 'rotation':
-                spawnRotationTrail(event.pieceType, event.boardX, event.boardY, '#00FFFF');
+                spawnRotationTrail(event.pieceType, event.boardX, event.boardY - BUFFER_ZONE, '#00FFFF');
                 break;
 
             case 'hardDrop':
-                spawnHardDropParticles(event.boardX, event.boardY, event.dropDistance, '#FFFFFF');
+                spawnHardDropParticles(event.boardX, event.boardY - BUFFER_ZONE, event.dropDistance, '#FFFFFF');
                 break;
 
             case 'comboChange':

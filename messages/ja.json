@@ -11,6 +11,7 @@
         "loading": "読み込み中",
         "selectServer": "モード選択",
         "chooseMode": "ゲームモードを選択してください",
+        "tagline": "リズムで動くパズルゲーム。ビートに合わせてブロックを落とし、対戦や実績を楽しもう。",
         "play": "プレイ",
         "battle": "バトル",
         "back": "← 戻る",
@@ -601,7 +602,10 @@
         "peakChaos": "最大カオス",
         "tempoCollapses": "崩壊回数",
         "lowestBpm": "最低BPM",
-        "backToLobby": "ロビーに戻る"
+        "backToLobby": "ロビーに戻る",
+        "usePowerUp": "パワーアップ",
+        "cycleTarget": "ターゲット",
+        "emote": "エモート"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -1093,6 +1097,17 @@
         "selectLanguage": "言語設定",
         "privacy": "プライバシー",
         "profileButton": "プロフィール"
+    },
+    "googleSync": {
+        "sectionTitle": "Googleアカウント同期",
+        "description": "Googleでサインインすると、プロフィール、アドバンスメント、ロイヤリティ進捗、スキン設定をデバイス間で同期できます。",
+        "signIn": "Googleでサインイン",
+        "signOut": "サインアウト",
+        "linking": "接続中...",
+        "syncing": "同期中...",
+        "syncNow": "今すぐ同期",
+        "synced": "同期完了",
+        "error": "同期失敗"
     },
     "stories": {
         "title": "STORIES",

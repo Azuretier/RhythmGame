@@ -20,7 +20,7 @@ export default function MessengerUI() {
     {
       id: "1",
       author: "Azur",
-      content: "Hey there! 👋 I'm Azur. Feel free to ask me where you can find me online!",
+      content: "Hey! I'm Azur, creator of this site. Type a platform name like **Twitter**, **YouTube**, **Discord**, **GitHub**, or **Instagram** to visit my profiles. You can also say things like \"show me your YouTube\".",
       timestamp: new Date(),
       isOwner: true,
     },
@@ -144,8 +144,12 @@ export default function MessengerUI() {
       <div className="flex-1 flex flex-col bg-[#313338]">
         {/* Chat header */}
         <div className="h-12 px-4 flex items-center gap-2 border-b border-black/20 bg-[#313338]">
-          <Hash size={20} className="text-[#80848e]" />
+          <Hash size={20} className="text-[#80848e] flex-shrink-0" />
           <h2 className="text-white font-semibold">welcome</h2>
+          <div className="hidden sm:block h-5 w-px bg-white/10 mx-1 flex-shrink-0" />
+          <span className="hidden sm:block text-[#80848e] text-xs truncate">
+            Ask about social links and profiles
+          </span>
         </div>
 
         {/* Messages */}
@@ -202,7 +206,7 @@ export default function MessengerUI() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Message Azur"
+              placeholder="Try: Twitter, YouTube, Discord..."
               className="flex-1 bg-transparent text-white placeholder-[#80848e] outline-none text-sm"
             />
             <motion.button
