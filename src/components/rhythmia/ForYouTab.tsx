@@ -81,33 +81,102 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
 
     useEffect(() => {
         fetchContent();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
 
-    if (loading) {
-        return (
-            <div className={styles.loadingContainer}>
-                <div className={styles.loadingSpinner} />
-                <span className={styles.loadingText}>{t('loading')}</span>
-            </div>
-        );
-    }
+    function renderContent() {
+        if (loading) {
+            return (
+                <div className={styles.loadingContainer}>
+                    <div className={styles.loadingSpinner} />
+                    <span className={styles.loadingText}>{t('loading')}</span>
+                </div>
+            );
+        }
 
-    if (error || cards.length === 0) {
+        if (error || cards.length === 0) {
+            return (
+                <div className={styles.errorContainer}>
+                    <span className={styles.errorText}>{t('error')}</span>
+                    <button className={styles.retryButton} onClick={() => fetchContent(activeQuery)}>
+                        {t('retry')}
+                    </button>
+                </div>
+            );
+        }
+
         return (
-            <div className={styles.errorContainer}>
-                <span className={styles.errorText}>{t('error')}</span>
-                <button className={styles.retryButton} onClick={() => fetchContent(activeQuery)}>
-                    {t('retry')}
-                </button>
-            </div>
+            <>
+                <div className={styles.widgetList}>
+                    <AnimatePresence mode="wait">
+                        {cards.map((card, index) => {
+                            const href = getWikiUrl(card, locale);
+                            const thumbnail = TYPE_THUMBNAILS[card.type];
+
+                            return (
+                                <motion.a
+                                    key={card.id}
+                                    href={href}
+                                    target={card.url ? '_blank' : undefined}
+                                    rel={card.url ? 'noopener noreferrer' : undefined}
+                                    className={`${styles.widget} ${styles[card.type]}`}
+                                    initial={{ opacity: 0, x: -16 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 16 }}
+                                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                                >
+                                    {/* Pixel-art thumbnail */}
+                                    <div className={styles.thumbnailFrame}>
+                                        {thumbnail ? (
+                                            <Image
+                                                src={thumbnail}
+                                                alt=""
+                                                width={36}
+                                                height={36}
+                                                className={styles.thumbnailImg}
+                                                unoptimized
+                                            />
+                                        ) : (
+                                            <span className={styles.thumbnailIcon}>📌</span>
+                                        )}
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className={styles.widgetContent}>
+                                        <div className={styles.widgetTopRow}>
+                                            <span className={styles.typeLabel}>{t(`types.${card.type}`)}</span>
+                                            {card.difficulty && (
+                                                <span className={`${styles.diffBadge} ${styles[`diff_${card.difficulty}`]}`}>
+                                                    {diffLabels[card.difficulty]}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <h3 className={styles.widgetTitle}>{card.title}</h3>
+                                        <p className={styles.widgetDescription}>{card.description}</p>
+                                    </div>
+
+                                    {/* Arrow */}
+                                    <span className={styles.widgetArrow}>→</span>
+                                </motion.a>
+                            );
+                        })}
+                    </AnimatePresence>
+                </div>
+
+                <div className={styles.refreshRow}>
+                    <button className={styles.refreshButton} onClick={() => fetchContent(activeQuery)}>
+                        {t('refresh')}
+                    </button>
+                </div>
+            </>
         );
     }
 
     return (
         <div className={styles.forYouContainer}>
+            {/* Persistent UI: header + form always stay visible */}
             <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>{t('title')}</h2>
                 <p className={styles.sectionSubtitle}>{t('subtitle')}</p>
@@ -134,7 +203,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                             <div className={styles.helpSpinner} />
                         ) : (
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M2 8H14M9 3L14 8L9 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M2 8H14M9 3L14 8L9 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         )}
                     </button>
@@ -153,67 +222,8 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                 )}
             </form>
 
-            <div className={styles.widgetList}>
-                <AnimatePresence mode="wait">
-                    {cards.map((card, index) => {
-                        const href = getWikiUrl(card, locale);
-                        const thumbnail = TYPE_THUMBNAILS[card.type];
-
-                        return (
-                            <motion.a
-                                key={card.id}
-                                href={href}
-                                target={card.url ? '_blank' : undefined}
-                                rel={card.url ? 'noopener noreferrer' : undefined}
-                                className={`${styles.widget} ${styles[card.type]}`}
-                                initial={{ opacity: 0, x: -16 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: 16 }}
-                                transition={{ duration: 0.3, delay: index * 0.05 }}
-                            >
-                                {/* Pixel-art thumbnail */}
-                                <div className={styles.thumbnailFrame}>
-                                    {thumbnail ? (
-                                        <Image
-                                            src={thumbnail}
-                                            alt=""
-                                            width={36}
-                                            height={36}
-                                            className={styles.thumbnailImg}
-                                            unoptimized
-                                        />
-                                    ) : (
-                                        <span className={styles.thumbnailIcon}>📌</span>
-                                    )}
-                                </div>
-
-                                {/* Content */}
-                                <div className={styles.widgetContent}>
-                                    <div className={styles.widgetTopRow}>
-                                        <span className={styles.typeLabel}>{t(`types.${card.type}`)}</span>
-                                        {card.difficulty && (
-                                            <span className={`${styles.diffBadge} ${styles[`diff_${card.difficulty}`]}`}>
-                                                {diffLabels[card.difficulty]}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <h3 className={styles.widgetTitle}>{card.title}</h3>
-                                    <p className={styles.widgetDescription}>{card.description}</p>
-                                </div>
-
-                                {/* Arrow */}
-                                <span className={styles.widgetArrow}>→</span>
-                            </motion.a>
-                        );
-                    })}
-                </AnimatePresence>
-            </div>
-
-            <div className={styles.refreshRow}>
-                <button className={styles.refreshButton} onClick={() => fetchContent(activeQuery)}>
-                    {t('refresh')}
-                </button>
-            </div>
+            {/* Conditional content: only this area swaps between loading/error/results */}
+            {renderContent()}
         </div>
     );
 }
