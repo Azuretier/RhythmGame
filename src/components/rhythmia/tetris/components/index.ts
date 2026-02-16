@@ -29,3 +29,4 @@ export { HealthManaHUD } from './HealthManaHUD';
 export { TreasureHUD } from './TreasureHUD';
 export { TutorialGuide, hasTutorialBeenSeen } from './TutorialGuide';
 export { KeyBindSettings } from './KeyBindSettings';
+export { FeatureCustomizer } from './FeatureCustomizer';
