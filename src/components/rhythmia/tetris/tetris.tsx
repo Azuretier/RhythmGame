@@ -46,6 +46,7 @@ import {
   TouchControls,
   RhythmVFX,
   FloatingItems,
+  FloatingTreasures,
   ItemSlots,
   CraftingUI,
   InventoryUI,
@@ -54,6 +55,7 @@ import {
   WorldTransition,
   GamePhaseIndicator,
   HealthManaHUD,
+  TreasureHUD,
   TutorialGuide,
   hasTutorialBeenSeen,
   KeyBindSettings,
@@ -193,6 +195,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     showInventory,
     showShop,
     gold,
+    // Treasure system
+    treasureWallet,
+    floatingTreasures,
+    lastCollectedTreasureId,
     // Game mode
     gameMode,
     // Tower defense
@@ -262,6 +268,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     toggleInventory,
     toggleShop,
     purchaseItem,
+    // Treasure actions
+    spawnTreasureDrops,
     // Tower defense actions
     spawnEnemies,
     updateEnemies,
@@ -545,13 +553,17 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
         // Item drops
         spawnItemDrops(killCount, center.x, center.y);
+        // Treasure drops
+        spawnTreasureDrops(killCount, center.x, center.y);
       } else {
         // === VANILLA: Destroy terrain blocks ===
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
         const remaining = destroyTerrain(damage);
-        
+
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
+        // Treasure drops from terrain
+        spawnTreasureDrops(damage, center.x, center.y);
 
         // Check if terrain is fully destroyed → next stage
         if (remaining <= 0) {
@@ -594,7 +606,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setCombo, setBoard, setLines, setLevel, setCurrentPiece, setGameOver,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
-    getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
+    getBoardCenter, spawnTerrainParticles, spawnItemDrops, spawnTreasureDrops, pushLiveAdvancementCheck,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -1174,6 +1186,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
       {/* Floating item drops from terrain */}
       <FloatingItems items={floatingItems} />
+      {/* Floating treasure drops (coins, gems, chests) */}
+      <FloatingTreasures treasures={floatingTreasures} />
 
       {/* World transition overlays (creation / collapse / reload) */}
       <WorldTransition
@@ -1264,6 +1278,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 <div className={styles.nextLabel}>NEXT</div>
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
               </div>
+              <TreasureHUD wallet={treasureWallet} lastCollectedId={lastCollectedTreasureId} />
               {gameMode === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
           </div>
