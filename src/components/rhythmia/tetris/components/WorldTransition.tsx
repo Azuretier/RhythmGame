@@ -83,17 +83,17 @@ export function WorldTransition({ phase, worldIdx, stageNumber, gameMode = 'vani
 interface GamePhaseIndicatorProps {
     phase: GamePhase;
     stageNumber: number;
-    damageMultiplier: number;
+    equippedCardCount: number;
 }
 
 /**
  * Small HUD indicator showing current game phase
  */
-export function GamePhaseIndicator({ phase, stageNumber, damageMultiplier }: GamePhaseIndicatorProps) {
+export function GamePhaseIndicator({ phase, stageNumber, equippedCardCount }: GamePhaseIndicatorProps) {
     const phaseLabels: Record<GamePhase, string> = {
         WORLD_CREATION: 'CONSTRUCTING',
         PLAYING: 'DIG',
-        CRAFTING: 'FORGE',
+        CARD_SELECT: 'CARDS',
         COLLAPSE: 'COLLAPSE',
         TRANSITION: 'RELOAD',
     };
@@ -102,8 +102,8 @@ export function GamePhaseIndicator({ phase, stageNumber, damageMultiplier }: Gam
         <div className={styles.phaseIndicator}>
             <span className={styles.phaseDot} data-phase={phase} />
             <span className={styles.phaseLabel}>{phaseLabels[phase]}</span>
-            {damageMultiplier > 1 && (
-                <span className={styles.phaseMult}>DMG x{damageMultiplier.toFixed(1)}</span>
+            {equippedCardCount > 0 && (
+                <span className={styles.phaseMult}>{equippedCardCount} CARDS</span>
             )}
         </div>
     );

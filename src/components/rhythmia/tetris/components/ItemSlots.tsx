@@ -1,15 +1,14 @@
 import React from 'react';
-import type { InventoryItem, CraftedCard } from '../types';
-import { ITEM_MAP, WEAPON_CARD_MAP } from '../constants';
-import { ItemIcon, WeaponIcon } from './ItemIcon';
+import type { InventoryItem, EquippedCard, ActiveEffects } from '../types';
+import { ITEM_MAP, ROGUE_CARD_MAP } from '../constants';
+import { ItemIcon } from './ItemIcon';
 import { ItemTooltipWrapper } from './ItemTooltip';
 import styles from '../VanillaGame.module.css';
 
 interface ItemSlotsProps {
     inventory: InventoryItem[];
-    craftedCards: CraftedCard[];
-    damageMultiplier: number;
-    onCraftOpen: () => void;
+    equippedCards: EquippedCard[];
+    activeEffects: ActiveEffects;
 }
 
 const RARITY_LABEL: Record<string, string> = {
@@ -23,17 +22,17 @@ const RARITY_LABEL: Record<string, string> = {
 /**
  * Modern card-style inventory display
  * Glass-morphism cards with SVG icons, large count typography, and rarity accents
- * Hybrid tooltips: Java Edition purple container + Dungeons icon/stat content
+ * Shows equipped rogue cards and active effect summary
  */
-export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOpen }: ItemSlotsProps) {
+export function ItemSlots({ inventory, equippedCards, activeEffects }: ItemSlotsProps) {
     return (
         <div className={styles.itemSlotsPanel}>
             {/* Panel header */}
             <div className={styles.itemSlotsHeader}>
                 <span className={styles.itemSlotsTitle}>INVENTORY</span>
-                {damageMultiplier > 1 && (
+                {equippedCards.length > 0 && (
                     <span className={styles.damageMultBadge}>
-                        x{damageMultiplier.toFixed(1)}
+                        {equippedCards.length} CARDS
                     </span>
                 )}
             </div>
@@ -88,38 +87,60 @@ export function ItemSlots({ inventory, craftedCards, damageMultiplier, onCraftOp
                 })}
             </div>
 
-            {/* Crafted weapon cards */}
-            {craftedCards.length > 0 && (
-                <div className={styles.weaponCardSlots}>
-                    {craftedCards.map((cc, idx) => {
-                        const card = WEAPON_CARD_MAP[cc.cardId];
+            {/* Equipped rogue cards */}
+            {equippedCards.length > 0 && (
+                <div className={styles.equippedCardSlots}>
+                    {equippedCards.map((ec, idx) => {
+                        const card = ROGUE_CARD_MAP[ec.cardId];
                         if (!card) return null;
                         return (
-                            <ItemTooltipWrapper
+                            <div
                                 key={idx}
-                                weapon={card}
-                                equipped
-                                side="right"
+                                className={styles.equippedCardSlot}
+                                style={{
+                                    borderColor: `${card.color}50`,
+                                    background: `linear-gradient(135deg, ${card.color}12, transparent)`,
+                                }}
                             >
-                                <div
-                                    className={styles.weaponCardSlot}
-                                    style={{
-                                        borderColor: `${card.color}50`,
-                                        background: `linear-gradient(135deg, ${card.color}12, transparent)`,
-                                    }}
-                                >
-                                    <WeaponIcon cardId={cc.cardId} size={16} glowColor={card.glowColor} />
-                                </div>
-                            </ItemTooltipWrapper>
+                                <span className={styles.equippedCardIcon}>{card.icon}</span>
+                                {ec.stackCount > 1 && (
+                                    <span className={styles.equippedCardStack}>x{ec.stackCount}</span>
+                                )}
+                            </div>
                         );
                     })}
                 </div>
             )}
 
-            {/* Craft button */}
-            <button className={styles.craftButton} onClick={onCraftOpen}>
-                FORGE
-            </button>
+            {/* Active effects summary */}
+            {equippedCards.length > 0 && (
+                <div className={styles.effectsSummary}>
+                    {activeEffects.comboGuardUsesRemaining > 0 && (
+                        <span className={styles.effectBadge}>GUARD: {activeEffects.comboGuardUsesRemaining}</span>
+                    )}
+                    {activeEffects.shieldActive && (
+                        <span className={styles.effectBadge}>SHIELD</span>
+                    )}
+                    {activeEffects.terrainSurgeBonus > 0 && (
+                        <span className={styles.effectBadge}>SURGE +{Math.round(activeEffects.terrainSurgeBonus * 100)}%</span>
+                    )}
+                    {activeEffects.beatExtendBonus > 0 && (
+                        <span className={styles.effectBadge}>BEAT +{Math.round(activeEffects.beatExtendBonus * 100)}%</span>
+                    )}
+                    {activeEffects.scoreBoostMultiplier > 1 && (
+                        <span className={styles.effectBadge}>SCORE x{activeEffects.scoreBoostMultiplier.toFixed(1)}</span>
+                    )}
+                    {activeEffects.gravitySlowFactor < 1 && (
+                        <span className={styles.effectBadge}>SLOW {Math.round((1 - activeEffects.gravitySlowFactor) * 100)}%</span>
+                    )}
+                    {activeEffects.luckyDropsBonus > 0 && (
+                        <span className={styles.effectBadge}>LUCK +{Math.round(activeEffects.luckyDropsBonus * 100)}%</span>
+                    )}
+                    {activeEffects.comboAmplifyFactor > 1 && (
+                        <span className={styles.effectBadge}>COMBO x{activeEffects.comboAmplifyFactor.toFixed(1)}</span>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
