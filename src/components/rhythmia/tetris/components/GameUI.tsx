@@ -154,23 +154,45 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, g
 
 interface BeatBarProps {
     /** Ref attached to the container div — parent's rAF loop sets
-     *  --beat-phase CSS var and data-onbeat attribute directly on this element
-     *  to bypass React re-render batching for smooth cross-browser animation. */
+     *  --beat-pos CSS var (remapped so center = beat moment) and
+     *  data-onbeat attribute directly on this element to bypass
+     *  React re-render batching for smooth cross-browser animation. */
     containerRef?: React.Ref<HTMLDivElement>;
 }
 
 /**
- * Beat timing indicator bar — cursor sweeps left→right each beat interval.
- * Cursor position is driven by a CSS custom property (--beat-phase) and
- * the on-beat glow by a data-onbeat attribute, both set from the parent's
- * requestAnimationFrame loop for frame-precise, re-render-free animation.
+ * Center-target beat bar — the cursor oscillates toward the center target
+ * as the beat approaches. Concentric timing zones radiate from center:
+ *   CENTER: PERFECT (gold) → GREAT (cyan) → GOOD (green) → MISS (edges)
+ *
+ * Phase is remapped in the parent's rAF loop:
+ *   --beat-pos = (phase + 0.5) % 1
+ * so 0.5 (center) = exactly on beat, edges = furthest from beat.
  */
 export function BeatBar({ containerRef }: BeatBarProps) {
     return (
         <div ref={containerRef} className={styles.beatBar}>
-            <div className={styles.beatTargetLeft} />
-            <div className={styles.beatTargetRight} />
+            {/* Timing zone backgrounds — symmetric from center */}
+            <div className={styles.beatZoneGood} />
+            <div className={styles.beatZoneGreat} />
+            <div className={styles.beatZonePerfect} />
+            {/* Center target needle */}
+            <div className={styles.beatTarget} />
+            {/* Tick marks for visual rhythm reference */}
+            <div className={styles.beatTicks}>
+                <div className={styles.beatTick} style={{ left: '10%' }} />
+                <div className={styles.beatTick} style={{ left: '20%' }} />
+                <div className={styles.beatTick} style={{ left: '30%' }} />
+                <div className={styles.beatTick} style={{ left: '40%' }} />
+                <div className={styles.beatTick} style={{ left: '60%' }} />
+                <div className={styles.beatTick} style={{ left: '70%' }} />
+                <div className={styles.beatTick} style={{ left: '80%' }} />
+                <div className={styles.beatTick} style={{ left: '90%' }} />
+            </div>
+            {/* Moving cursor */}
             <div className={styles.beatCursor} />
+            {/* Beat flash — pulses on hit */}
+            <div className={styles.beatFlash} />
         </div>
     );
 }

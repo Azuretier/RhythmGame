@@ -867,6 +867,14 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       setBoardBeat(true);
       playDrum();
 
+      // Beat flash on the beat bar
+      if (beatBarRef.current) {
+        beatBarRef.current.removeAttribute('data-beat');
+        // Force reflow to restart animation
+        void beatBarRef.current.offsetWidth;
+        beatBarRef.current.setAttribute('data-beat', '');
+      }
+
       const mode = gameModeRef.current;
 
       if (mode === 'td') {
@@ -949,10 +957,14 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         beatPhaseRef.current = phase;
 
         // Direct DOM update — bypasses React for smooth cross-browser animation
+        // Remap phase so center (0.5) = beat moment, edges = furthest from beat
+        const beatPos = (phase + 0.5) % 1;
+        const dist = phase <= 0.5 ? phase : 1 - phase;
+
         if (beatBarRef.current) {
-          beatBarRef.current.style.setProperty('--beat-phase', String(phase));
-          // Distance from beat center for timing zone display
-          const dist = phase <= 0.5 ? phase : 1 - phase;
+          beatBarRef.current.style.setProperty('--beat-pos', String(beatPos));
+
+          // Set timing zone for cursor glow color
           if (dist < 0.06) {
             beatBarRef.current.setAttribute('data-onbeat', 'perfect');
           } else if (dist < 0.12) {

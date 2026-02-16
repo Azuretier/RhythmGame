@@ -284,74 +284,175 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* Beat indicator — cursor sweeps left→right, target zones mark the on-beat window */
+/* ===== Center-Target Beat Bar =====
+ * The beat target is at the CENTER of the bar. Cursor oscillates toward center
+ * as the beat approaches. Timing zones radiate outward from center:
+ *   PERFECT (gold, ±6%) → GREAT (cyan, ±12%) → GOOD (green, ±20%) → MISS (edges)
+ * Phase is remapped: --beat-pos = (phase + 0.5) % 1
+ *   so 0.5 = beat center, 0.0/1.0 = furthest from beat. */
 .beatBar {
   width: 100%;
   max-width: 100%;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
   overflow: hidden;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Timing zone: GOOD (outer ring, phase 0–20% left and 80–100% right) */
-.beatTargetLeft {
+/* --- Timing zone backgrounds (symmetric from center) --- */
+
+/* GOOD zone: center ±20% → left: 30%, width: 40% */
+.beatZoneGood {
   position: absolute;
-  left: 0;
+  left: 30%;
   top: 0;
   bottom: 0;
-  width: 20%;
-  background: linear-gradient(to right, rgba(118, 255, 3, 0.06), rgba(118, 255, 3, 0.03));
-  border-right: 1px solid rgba(118, 255, 3, 0.12);
-  border-radius: 8px 0 0 8px;
+  width: 40%;
+  background: linear-gradient(
+    to right,
+    rgba(118, 255, 3, 0.0) 0%,
+    rgba(118, 255, 3, 0.05) 20%,
+    rgba(118, 255, 3, 0.05) 80%,
+    rgba(118, 255, 3, 0.0) 100%
+  );
+  border-left: 1px solid rgba(118, 255, 3, 0.08);
+  border-right: 1px solid rgba(118, 255, 3, 0.08);
 }
 
-.beatTargetRight {
+/* GREAT zone: center ±12% → left: 38%, width: 24% */
+.beatZoneGreat {
   position: absolute;
-  right: 0;
+  left: 38%;
   top: 0;
   bottom: 0;
-  width: 20%;
-  background: linear-gradient(to left, rgba(118, 255, 3, 0.06), rgba(118, 255, 3, 0.03));
-  border-left: 1px solid rgba(118, 255, 3, 0.12);
-  border-radius: 0 8px 8px 0;
+  width: 24%;
+  background: linear-gradient(
+    to right,
+    rgba(0, 229, 255, 0.0) 0%,
+    rgba(0, 229, 255, 0.06) 20%,
+    rgba(0, 229, 255, 0.06) 80%,
+    rgba(0, 229, 255, 0.0) 100%
+  );
+  border-left: 1px solid rgba(0, 229, 255, 0.1);
+  border-right: 1px solid rgba(0, 229, 255, 0.1);
 }
 
-/* Moving cursor — positioned via CSS custom property set by rAF (no React re-render needed) */
+/* PERFECT zone: center ±6% → left: 44%, width: 12% */
+.beatZonePerfect {
+  position: absolute;
+  left: 44%;
+  top: 0;
+  bottom: 0;
+  width: 12%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 215, 0, 0.0) 0%,
+    rgba(255, 215, 0, 0.1) 30%,
+    rgba(255, 215, 0, 0.1) 70%,
+    rgba(255, 215, 0, 0.0) 100%
+  );
+  border-left: 1px solid rgba(255, 215, 0, 0.12);
+  border-right: 1px solid rgba(255, 215, 0, 0.12);
+}
+
+/* Center target needle — fixed marker at 50% */
+.beatTarget {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: rgba(255, 215, 0, 0.25);
+  z-index: 1;
+}
+
+/* Small tick marks for rhythm reference */
+.beatTicks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.beatTick {
+  position: absolute;
+  top: 40%;
+  bottom: 40%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(-50%);
+}
+
+/* Moving cursor — positioned via --beat-pos CSS var */
 .beatCursor {
   position: absolute;
   top: 2px;
   bottom: 2px;
   width: 4px;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 2px;
-  z-index: 2;
+  z-index: 3;
   transform: translateX(-50%);
-  left: calc(var(--beat-phase, 0) * 100%);
-  transition: background 0.05s, box-shadow 0.05s, width 0.05s;
+  left: calc(var(--beat-pos, 0.5) * 100%);
 }
 
-/* GOOD timing glow */
+/* Beat flash — glows at center on beat */
+.beatFlash {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 215, 0, 0.4) 0%,
+    rgba(255, 215, 0, 0) 100%
+  );
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Beat pulse animation */
+.beatBar[data-beat] .beatFlash {
+  animation: beatPulse 0.2s ease-out forwards;
+}
+
+@keyframes beatPulse {
+  0% { width: 8px; opacity: 1; }
+  100% { width: 80px; opacity: 0; }
+}
+
+/* --- Cursor appearance by timing zone --- */
+
+/* GOOD timing */
 .beatBar[data-onbeat="good"] .beatCursor {
   background: #76FF03;
   box-shadow: 0 0 6px rgba(118, 255, 3, 0.5), 0 0 12px rgba(118, 255, 3, 0.2);
   width: 5px;
 }
 
-/* GREAT timing glow */
+/* GREAT timing */
 .beatBar[data-onbeat="great"] .beatCursor {
   background: #00E5FF;
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.6), 0 0 16px rgba(0, 229, 255, 0.3);
   width: 5px;
 }
 
-/* PERFECT timing glow */
+/* PERFECT timing */
 .beatBar[data-onbeat="perfect"] .beatCursor {
   background: #FFD700;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.7), 0 0 20px rgba(255, 215, 0, 0.4);
   width: 6px;
+}
+
+/* Glow the center target when cursor is in PERFECT zone */
+.beatBar[data-onbeat="perfect"] .beatTarget {
+  background: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
 }
 
 /* Judgment display */
