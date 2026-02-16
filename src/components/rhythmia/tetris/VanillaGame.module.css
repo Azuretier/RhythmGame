@@ -2184,6 +2184,119 @@
   }
 }
 
+/* ===== Treasure HUD ===== */
+.treasureHUD {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(10, 10, 20, 0.65);
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  border-radius: 10px;
+  backdrop-filter: blur(12px);
+  position: relative;
+  min-width: 80px;
+}
+
+.treasureRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.treasureGold {
+  border-bottom: 1px solid rgba(255, 215, 0, 0.08);
+  padding-bottom: 4px;
+}
+
+.treasureIcon {
+  font-size: 0.85rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.4));
+}
+
+.treasureValue {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #FFD700;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.3);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.15s ease, text-shadow 0.15s ease;
+}
+
+.treasureFlash {
+  transform: scale(1.25);
+  text-shadow: 0 0 14px rgba(255, 215, 0, 0.7);
+}
+
+.treasureValueSmall {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.treasurePickup {
+  position: absolute;
+  right: -4px;
+  top: -18px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  animation: treasureFloat 0.6s ease-out forwards;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes treasureFloat {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+/* Floating treasure animation (reuses floatingItem pattern) */
+.floatingTreasure {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+  font-size: 1.2rem;
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
+  animation: treasureBob 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes treasureBob {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+/* Responsive: small screens */
+@media (max-width: 480px) {
+  .treasureHUD {
+    padding: 5px 7px;
+    gap: 4px;
+    min-width: 60px;
+    border-radius: 8px;
+  }
+
+  .treasureIcon {
+    font-size: 0.7rem;
+  }
+
+  .treasureValue {
+    font-size: 0.75rem;
+  }
+
+  .treasureValueSmall {
+    font-size: 0.6rem;
+  }
+}
+
 /* ===== Tutorial Guide (HSR-style) ===== */
 .tutorialOverlay {
   position: fixed;

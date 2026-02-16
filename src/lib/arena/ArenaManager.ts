@@ -6,6 +6,10 @@ import type {
   GimmickType,
   ArenaRanking,
   ArenaSessionStats,
+  PowerUpType,
+  EmoteType,
+  TargetMode,
+  ArenaFeedEvent,
 } from '@/types/arena';
 import {
   ARENA_MAX_PLAYERS,
@@ -16,8 +20,10 @@ import {
   ARENA_CHAOS_FRENZY_THRESHOLD,
   ARENA_TEMPO_COLLAPSE_THRESHOLD,
   ARENA_TICK_RATE,
+  ARENA_POWERUP_SPAWN_CHANCE,
   GIMMICK_DURATIONS,
   GIMMICK_WEIGHTS,
+  POWERUP_DEFS,
 } from '@/types/arena';
 
 // ===== Arena Room (Server-side) =====
@@ -58,6 +64,12 @@ export interface ArenaRoom {
 
   // Elimination tracking
   eliminationOrder: string[];
+
+  // Power-up tracking
+  totalPowerUpsSpawned: number;
+
+  // Event feed ID counter
+  feedEventId: number;
 }
 
 // ===== Callbacks for server integration =====
@@ -94,20 +106,7 @@ export class ArenaRoomManager {
     const sanitizedName = (playerName || 'Player').slice(0, 20);
     const sanitizedRoomName = (roomName || `${sanitizedName}'s Arena`).slice(0, 30);
 
-    const player: ArenaPlayer = {
-      id: playerId,
-      name: sanitizedName,
-      ready: false,
-      connected: true,
-      alive: true,
-      score: 0,
-      lines: 0,
-      combo: 0,
-      syncAccuracy: 1.0,
-      chaosContribution: 0,
-      kills: 0,
-      placement: null,
-    };
+    const player: ArenaPlayer = this.createPlayer(playerId, sanitizedName);
 
     const room: ArenaRoom = {
       code: roomCode,
@@ -133,6 +132,8 @@ export class ArenaRoomManager {
       peakBpm: ARENA_BASE_BPM,
       lowestBpm: ARENA_BASE_BPM,
       eliminationOrder: [],
+      totalPowerUpsSpawned: 0,
+      feedEventId: 0,
     };
 
     this.rooms.set(roomCode, room);
@@ -159,20 +160,7 @@ export class ArenaRoomManager {
       return { success: true, player: existing };
     }
 
-    const player: ArenaPlayer = {
-      id: playerId,
-      name: (playerName || 'Player').slice(0, 20),
-      ready: false,
-      connected: true,
-      alive: true,
-      score: 0,
-      lines: 0,
-      combo: 0,
-      syncAccuracy: 1.0,
-      chaosContribution: 0,
-      kills: 0,
-      placement: null,
-    };
+    const player: ArenaPlayer = this.createPlayer(playerId, (playerName || 'Player').slice(0, 20));
 
     room.players.push(player);
     this.playerToRoom.set(playerId, normalized);
@@ -224,7 +212,7 @@ export class ArenaRoomManager {
     room.gameStartedAt = Date.now();
     room.lastBeatTime = Date.now();
 
-    // Initialize sync map
+    // Initialize sync map and reset player state
     for (const p of room.players) {
       room.syncMap.set(p.id, 1.0);
       p.alive = true;
@@ -235,6 +223,11 @@ export class ArenaRoomManager {
       p.chaosContribution = 0;
       p.kills = 0;
       p.placement = null;
+      p.heldPowerUp = null;
+      p.powerUpsUsed = 0;
+      p.activeEffects = [];
+      p.targetMode = 'random';
+      p.targetId = null;
     }
 
     // Start the game tick loop
@@ -359,11 +352,40 @@ export class ArenaRoomManager {
       room.peakChaos = room.chaosLevel;
     }
 
-    // Line clears send garbage proportional to lines cleared
+    // Line clears send garbage to targeted player (or random)
     if (action.action === 'line_clear' && action.value && action.value >= 2) {
       const garbageLines = Math.max(0, (action.value || 0) - 1);
       if (garbageLines > 0) {
-        this.broadcastGarbageToAll(room, playerId, garbageLines);
+        // Check if player has a shield active
+        const targetId = this.resolveGarbageTarget(room, player);
+        if (targetId) {
+          const target = room.players.find(p => p.id === targetId);
+          const shielded = target?.activeEffects.some(e => e.type === 'shield' && e.expiresAt > Date.now());
+          if (shielded) {
+            // Shield absorbs garbage
+            this.broadcastFeedEvent(room, `${target!.name}'s SHIELD blocked ${garbageLines} garbage!`, '#00aaff');
+          } else {
+            this.sendGarbageToPlayer(room, playerId, targetId, garbageLines);
+          }
+        } else {
+          this.broadcastGarbageToAll(room, playerId, garbageLines);
+        }
+      }
+    }
+
+    // Power-up spawning: line clears and on-beat tetris give a chance
+    if ((action.action === 'line_clear' || action.action === 'tetris_clear') && !player.heldPowerUp) {
+      const spawnChance = action.action === 'tetris_clear' ? 0.6 : ARENA_POWERUP_SPAWN_CHANCE;
+      if (Math.random() < spawnChance) {
+        const powerUp = this.pickRandomPowerUp();
+        player.heldPowerUp = powerUp;
+        room.totalPowerUpsSpawned++;
+        this.callbacks.onSendToPlayer(playerId, {
+          type: 'arena_powerup_spawned',
+          playerId,
+          powerUp,
+        });
+        this.broadcastFeedEvent(room, `${player.name} found ${POWERUP_DEFS[powerUp].label}!`, POWERUP_DEFS[powerUp].color);
       }
     }
 
@@ -430,6 +452,13 @@ export class ArenaRoomManager {
     // Track beat transitions
     if (beatElapsed < beatInterval / ARENA_TICK_RATE) {
       room.lastBeatTime = now - beatElapsed;
+    }
+
+    // 1b. Clean up expired active effects
+    for (const p of room.players) {
+      if (p.activeEffects.length > 0) {
+        p.activeEffects = p.activeEffects.filter(e => e.expiresAt > now);
+      }
     }
 
     // 2. Chaos decay
@@ -697,6 +726,7 @@ export class ArenaRoomManager {
         lines: p.lines,
         kills: p.kills,
         avgSync: Math.round(p.syncAccuracy * 100) / 100,
+        powerUpsUsed: p.powerUpsUsed,
       }));
 
     const stats: ArenaSessionStats = {
@@ -718,6 +748,195 @@ export class ArenaRoomManager {
     });
 
     this.callbacks.onSessionEnd(room.code);
+  }
+
+  // ===== Power-Up System =====
+
+  handleUsePowerUp(playerId: string, targetId?: string): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room || room.status !== 'playing') return;
+
+    const player = room.players.find(p => p.id === playerId);
+    if (!player || !player.alive || !player.heldPowerUp) return;
+
+    const powerUp = player.heldPowerUp;
+    player.heldPowerUp = null;
+    player.powerUpsUsed++;
+
+    // Resolve target
+    const resolvedTargetId = targetId || this.resolveGarbageTarget(room, player);
+    const target = resolvedTargetId ? room.players.find(p => p.id === resolvedTargetId) : null;
+
+    // Apply power-up effect
+    const now = Date.now();
+    switch (powerUp) {
+      case 'shield':
+        player.activeEffects.push({ type: 'shield', expiresAt: now + 5000 });
+        this.broadcastFeedEvent(room, `${player.name} activated SHIELD!`, '#00aaff');
+        break;
+
+      case 'garbage_bomb':
+        if (target && target.alive) {
+          const shielded = target.activeEffects.some(e => e.type === 'shield' && e.expiresAt > now);
+          if (shielded) {
+            this.broadcastFeedEvent(room, `${target.name}'s SHIELD blocked BOMB from ${player.name}!`, '#00aaff');
+          } else {
+            this.sendGarbageToPlayer(room, playerId, target.id, 4);
+            this.broadcastFeedEvent(room, `${player.name} BOMBED ${target.name} with 4 lines!`, '#ff3366');
+          }
+        }
+        break;
+
+      case 'score_boost':
+        player.activeEffects.push({ type: 'score_boost', expiresAt: now + 6000 });
+        this.broadcastFeedEvent(room, `${player.name} activated 2x BOOST!`, '#ffaa00');
+        break;
+
+      case 'freeze_target':
+        if (target && target.alive) {
+          target.activeEffects.push({ type: 'freeze_target', expiresAt: now + 3000 });
+          this.callbacks.onSendToPlayer(target.id, {
+            type: 'arena_powerup_used',
+            playerId,
+            playerName: player.name,
+            powerUp: 'freeze_target',
+            targetId: target.id,
+            targetName: target.name,
+          });
+          this.broadcastFeedEvent(room, `${player.name} FROZE ${target.name}!`, '#aa88ff');
+        }
+        break;
+
+      case 'heal':
+        // Client-side: remove garbage rows. Server just notifies.
+        this.broadcastFeedEvent(room, `${player.name} used HEAL!`, '#00ff88');
+        break;
+
+      case 'chaos_surge':
+        room.chaosLevel = Math.min(100, room.chaosLevel + 15);
+        if (room.chaosLevel > room.peakChaos) room.peakChaos = room.chaosLevel;
+        this.broadcastFeedEvent(room, `${player.name} unleashed CHAOS SURGE! (+15)`, '#ff6600');
+        break;
+    }
+
+    // Broadcast power-up usage
+    this.callbacks.onBroadcast(roomCode, {
+      type: 'arena_powerup_used',
+      playerId,
+      playerName: player.name,
+      powerUp,
+      targetId: target?.id,
+      targetName: target?.name,
+    });
+  }
+
+  handleEmote(playerId: string, emote: EmoteType): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room) return;
+
+    const player = room.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    this.callbacks.onBroadcast(roomCode, {
+      type: 'arena_emote_sent',
+      playerId,
+      playerName: player.name,
+      emote,
+    }, playerId);
+  }
+
+  handleSetTarget(playerId: string, targetMode: TargetMode, targetId?: string): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room) return;
+
+    const player = room.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    player.targetMode = targetMode;
+    player.targetId = targetId || null;
+  }
+
+  private resolveGarbageTarget(room: ArenaRoom, player: ArenaPlayer): string | null {
+    const alive = room.players.filter(p => p.id !== player.id && p.alive && p.connected);
+    if (alive.length === 0) return null;
+
+    switch (player.targetMode) {
+      case 'manual':
+        if (player.targetId) {
+          const target = alive.find(p => p.id === player.targetId);
+          if (target) return target.id;
+        }
+        // Fall through to random if manual target is dead
+        return alive[Math.floor(Math.random() * alive.length)].id;
+
+      case 'ko_leader': {
+        // Target the player with the most kills
+        const sorted = [...alive].sort((a, b) => b.kills - a.kills);
+        return sorted[0].id;
+      }
+
+      case 'nearest': {
+        // Target the player with the closest score
+        const sorted = [...alive].sort(
+          (a, b) => Math.abs(a.score - player.score) - Math.abs(b.score - player.score)
+        );
+        return sorted[0].id;
+      }
+
+      case 'random':
+      default:
+        return alive[Math.floor(Math.random() * alive.length)].id;
+    }
+  }
+
+  private sendGarbageToPlayer(room: ArenaRoom, fromPlayerId: string, toPlayerId: string, lines: number): void {
+    const target = room.players.find(p => p.id === toPlayerId);
+    if (!target || !target.alive || !target.connected) return;
+
+    this.callbacks.onSendToPlayer(toPlayerId, {
+      type: 'arena_relayed',
+      fromPlayerId,
+      payload: {
+        event: 'garbage',
+        lines,
+      },
+    });
+  }
+
+  private pickRandomPowerUp(): PowerUpType {
+    const types = Object.keys(POWERUP_DEFS) as PowerUpType[];
+    const weights = types.map(t => POWERUP_DEFS[t].weight);
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let rand = Math.random() * totalWeight;
+
+    for (let i = 0; i < types.length; i++) {
+      rand -= weights[i];
+      if (rand <= 0) return types[i];
+    }
+    return types[0];
+  }
+
+  private broadcastFeedEvent(room: ArenaRoom, text: string, color: string): void {
+    room.feedEventId++;
+    const event: ArenaFeedEvent = {
+      id: `feed_${room.code}_${room.feedEventId}`,
+      text,
+      color,
+      timestamp: Date.now(),
+    };
+    this.callbacks.onBroadcast(room.code, {
+      type: 'arena_event_feed',
+      event,
+    });
   }
 
   // ===== Queries =====
@@ -774,6 +993,28 @@ export class ArenaRoomManager {
   }
 
   // ===== Utilities =====
+
+  private createPlayer(playerId: string, name: string): ArenaPlayer {
+    return {
+      id: playerId,
+      name,
+      ready: false,
+      connected: true,
+      alive: true,
+      score: 0,
+      lines: 0,
+      combo: 0,
+      syncAccuracy: 1.0,
+      chaosContribution: 0,
+      kills: 0,
+      placement: null,
+      heldPowerUp: null,
+      powerUpsUsed: 0,
+      activeEffects: [],
+      targetMode: 'random',
+      targetId: null,
+    };
+  }
 
   private generateRoomCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
