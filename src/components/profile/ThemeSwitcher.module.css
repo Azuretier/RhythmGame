@@ -1,0 +1,285 @@
+/* ThemeSwitcher */
+.wrapper {
+  padding: 0 28px 24px;
+}
+
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* Individual theme card */
+.themeCard {
+  position: relative;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 2px solid var(--skin-border, rgba(255, 255, 255, 0.06));
+  border-radius: var(--theme-radius, 10px);
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  text-align: left;
+  color: inherit;
+}
+
+.themeCard:hover {
+  border-color: var(--skin-border-hover, rgba(255, 255, 255, 0.15));
+  background: var(--skin-accent-dim, rgba(255, 255, 255, 0.04));
+}
+
+.themeCardActive {
+  border-color: var(--skin-accent, #007FFF) !important;
+  background: var(--skin-accent-dim, rgba(0, 127, 255, 0.08)) !important;
+}
+
+/* Preview container */
+.previewContainer {
+  width: 100%;
+  aspect-ratio: 16/10;
+  overflow: hidden;
+}
+
+/* ==========================================
+   Neo-Futuristic Preview
+   ========================================== */
+.neoPreview {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0a0a1a, #0d0d2b);
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.neoNavBar {
+  display: flex;
+  gap: 3px;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.neoDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.neoContent {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+}
+
+.neoCard {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.neoCardLine {
+  height: 3px;
+  width: 80%;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.neoCardLineShort {
+  height: 3px;
+  width: 50%;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.neoGlow {
+  position: absolute;
+  bottom: -10px;
+  right: -10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--skin-accent, #007FFF);
+  opacity: 0.15;
+  filter: blur(15px);
+}
+
+/* ==========================================
+   Pixel Nostalgia Preview
+   ========================================== */
+.pixelPreview {
+  width: 100%;
+  height: 100%;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  image-rendering: pixelated;
+}
+
+.pixelTitleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 6px;
+  background: var(--skin-accent, #007FFF);
+  border-bottom: 2px solid #000;
+}
+
+.pixelTitleText {
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: 5px;
+  color: #000;
+  letter-spacing: 0.1em;
+}
+
+.pixelCloseBtn {
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: 5px;
+  color: #000;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 1px 3px;
+  border: 1px solid #000;
+  line-height: 1;
+}
+
+.pixelContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+}
+
+.pixelCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pixelLine {
+  height: 3px;
+  width: 75%;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.pixelLineShort {
+  height: 3px;
+  width: 45%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pixelBtn {
+  align-self: flex-end;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: 5px;
+  color: #000;
+  background: var(--skin-accent, #007FFF);
+  padding: 3px 8px;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+  letter-spacing: 0.1em;
+}
+
+.pixelScanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.2) 2px,
+    rgba(0, 0, 0, 0.2) 4px
+  );
+  pointer-events: none;
+}
+
+/* Active badge overlays */
+.previewBadge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--skin-accent, #007FFF);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.previewBadgePixel {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+  background: var(--skin-accent, #007FFF);
+  border: 2px solid #000;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  z-index: 2;
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* Theme info below preview */
+.themeInfo {
+  padding: 10px 12px;
+}
+
+.themeName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--skin-foreground, #ffffff);
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.themeDesc {
+  font-size: 0.6rem;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.4));
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .wrapper {
+    padding: 0 20px 20px;
+  }
+
+  .themeGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
