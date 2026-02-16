@@ -540,9 +540,9 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     if (timing !== 'miss') {
       // On-beat — determine multiplier by timing quality
       switch (timing) {
-        case 'perfect': mult = 2;   break;
-        case 'great':   mult = 1.5; break;
-        case 'good':    mult = 1.2; break;
+        case 'perfect': mult = 2; break;
+        case 'great': mult = 1.5; break;
+        case 'good': mult = 1.2; break;
       }
       newCombo = prevCombo + 1;
       setCombo(newCombo);
@@ -588,8 +588,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     if (timing !== 'miss') {
       const judgmentConfig = {
         perfect: { text: 'PERFECT!', color: '#FFD700' },
-        great:   { text: 'GREAT!',   color: '#00E5FF' },
-        good:    { text: 'GOOD',     color: '#76FF03' },
+        great: { text: 'GREAT!', color: '#00E5FF' },
+        good: { text: 'GOOD', color: '#76FF03' },
       } as const;
 
       showJudgment(judgmentConfig[timing].text, judgmentConfig[timing].color, finalScore);
@@ -1276,8 +1276,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
       {/* Floating item drops from terrain */}
       {featureSettings.items && (
-        <FloatingItems items={floatingItems} />
-        <FloatingTreasures treasures={floatingTreasures} />
+        <div>
+          <FloatingItems items={floatingItems} />
+          <FloatingTreasures treasures={floatingTreasures} />
+        </div>
       )}
 
       {/* World transition overlays (creation / collapse / reload) */}
