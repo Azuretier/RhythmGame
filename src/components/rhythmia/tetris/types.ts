@@ -59,6 +59,7 @@ export type VFXEvent =
     | { type: 'rotation'; pieceType: string; boardX: number; boardY: number; fromRotation: number; toRotation: number }
     | { type: 'hardDrop'; pieceType: string; boardX: number; boardY: number; dropDistance: number }
     | { type: 'comboChange'; combo: number; onBeat: boolean }
+    | { type: 'comboBreak'; lostCombo: number }
     | { type: 'feverStart'; combo: number }
     | { type: 'feverEnd' };
 
