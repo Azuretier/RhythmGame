@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Tag } from 'lucide-react';
+import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Tag, Box } from 'lucide-react';
 import { useGitHubTags } from '@/hooks/useGitHubTags';
 import { useVersion } from '@/lib/version/context';
 import {
@@ -18,6 +18,7 @@ const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
   current: <Gamepad2 size={20} />,
   '1.0.0': <MessageCircle size={20} />,
   '1.0.1': <Heart size={20} />,
+  '1.0.2': <Box size={20} />,
 };
 
 export default function FloatingVersionSwitcher() {
