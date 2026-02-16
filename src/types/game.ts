@@ -44,6 +44,7 @@ export interface ServerToClientEvents {
   }) => void;
   'room:player-joined': (player: Player) => void;
   'room:player-left': (playerId: string) => void;
+  'room:players-sync': (players: Player[]) => void;
   'room:player-disconnected': (playerId: string) => void;
   'room:player-reconnected': (playerId: string) => void;
   'room:state-changed': (state: RoomState) => void;

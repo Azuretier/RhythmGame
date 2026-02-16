@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BOARD_WIDTH, BOARD_HEIGHT, COLORS, ColorTheme, getThemedColor } from '../constants';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, COLORS, ColorTheme, getThemedColor } from '../constants';
 import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
@@ -18,6 +18,7 @@ interface BoardProps {
     score: number;
     onRestart: () => void;
     onResume?: () => void;
+    onQuit?: () => void;
     colorTheme?: ColorTheme;
     onThemeChange?: (theme: ColorTheme) => void;
     worldIdx?: number;
@@ -43,6 +44,7 @@ export function Board({
     score,
     onRestart,
     onResume,
+    onQuit,
     colorTheme = 'stage',
     onThemeChange,
     worldIdx = 0,
@@ -102,7 +104,8 @@ export function Board({
         return getThemedColor(pieceType, colorTheme, worldIdx);
     };
 
-    // Create display board with current piece and ghost
+    // Create display board with current piece and ghost.
+    // Only the visible rows (below BUFFER_ZONE) are rendered.
     const displayBoard = React.useMemo(() => {
         const display = board.map(row => [...row]);
 
@@ -139,7 +142,8 @@ export function Board({
             }
         }
 
-        return display;
+        // Only return visible rows (skip buffer zone)
+        return display.slice(BUFFER_ZONE);
     }, [board, currentPiece]);
 
     const boardWrapClasses = [
@@ -191,9 +195,19 @@ export function Board({
                 <div className={styles.gameover} style={{ display: 'flex' }}>
                     <h2>GAME OVER</h2>
                     <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
-                    <button className={styles.restartBtn} onClick={onRestart}>
-                        もう一度
-                    </button>
+                    <div className={styles.pauseMenuButtons}>
+                        <button className={styles.pauseMenuBtn} onClick={onRestart}>
+                            もう一度
+                        </button>
+                        {onQuit && (
+                            <button
+                                className={`${styles.pauseMenuBtn} ${styles.pauseMenuQuitBtn}`}
+                                onClick={onQuit}
+                            >
+                                Back to Title
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -233,6 +247,15 @@ export function Board({
                                     >
                                         <span className={styles.pauseMenuBtnIcon}>⌨</span>
                                         Key Bindings
+                                    </button>
+                                )}
+                                {onQuit && (
+                                    <button
+                                        className={`${styles.pauseMenuBtn} ${styles.pauseMenuQuitBtn}`}
+                                        onClick={onQuit}
+                                    >
+                                        <span className={styles.pauseMenuBtnIcon}>🚪</span>
+                                        Save and Quit to Title
                                     </button>
                                 )}
                             </div>

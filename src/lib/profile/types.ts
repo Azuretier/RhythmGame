@@ -3,6 +3,7 @@ export interface UserProfile {
   icon: string;
   friendCode: string;
   locale: 'ja' | 'en';
+  isPrivate: boolean;
   createdAt: number;
 }
 

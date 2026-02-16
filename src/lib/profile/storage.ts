@@ -13,7 +13,12 @@ export function getStoredProfile(): UserProfile | null {
   try {
     const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as UserProfile;
+    const parsed = JSON.parse(raw);
+    // Backward compatibility: default isPrivate to false for older profiles
+    if (typeof parsed.isPrivate !== 'boolean') {
+      parsed.isPrivate = false;
+    }
+    return parsed as UserProfile;
   } catch {
     return null;
   }

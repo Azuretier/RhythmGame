@@ -12,10 +12,13 @@ export {
     StatsPanel,
     ThemeNav,
     JudgmentDisplay,
+    JudgmentModeToggle,
     TouchControls,
 } from './GameUI';
+export type { JudgmentDisplayMode } from './GameUI';
 export { RhythmVFX } from './RhythmVFX';
 export { FloatingItems } from './FloatingItems';
+export { FloatingTreasures } from './FloatingTreasures';
 export { ItemSlots } from './ItemSlots';
 export { CraftingUI } from './CraftingUI';
 export { InventoryUI } from './InventoryUI';
@@ -23,5 +26,6 @@ export { ShopUI } from './ShopUI';
 export { TerrainParticles } from './TerrainParticles';
 export { WorldTransition, GamePhaseIndicator } from './WorldTransition';
 export { HealthManaHUD } from './HealthManaHUD';
+export { TreasureHUD } from './TreasureHUD';
 export { TutorialGuide, hasTutorialBeenSeen } from './TutorialGuide';
 export { KeyBindSettings } from './KeyBindSettings';
