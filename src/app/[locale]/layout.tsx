@@ -127,20 +127,19 @@ export default async function LocaleLayout({ children, params }: Props) {
             </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }}>
                 <NextIntlClientProvider messages={messages}>
-                            <UiThemeProvider>
-                    <GoogleSyncProvider>
-                        <ProfileProvider>
-                            <SkinProvider>
-                                <UiThemeProvider>
+                    <UiThemeProvider>
+                        <GoogleSyncProvider>
+                            <ProfileProvider>
+                                <SkinProvider>
                                     <VersionProvider>
                                         <Provider>
                                             {children}
                                         </Provider>
                                     </VersionProvider>
-                                </UiThemeProvider>
-                            </SkinProvider>
-                        </ProfileProvider>
-                    </GoogleSyncProvider>
+                                </SkinProvider>
+                            </ProfileProvider>
+                        </GoogleSyncProvider>
+                    </UiThemeProvider>
                 </NextIntlClientProvider>
                 {gaId && <GoogleAnalytics gaId={gaId} />}
             </body>
