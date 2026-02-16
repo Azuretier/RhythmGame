@@ -307,7 +307,6 @@ export default function RhythmiaPage() {
                         />
                     </motion.div>
 
-                    {/* For You Section — personalized experience shown first */}
                     {/* SELECT SERVER heading — below personalized content */}
                     <motion.div
                         className={styles.heroText}
@@ -319,6 +318,7 @@ export default function RhythmiaPage() {
                         <p>{t('lobby.chooseMode')}</p>
                     </motion.div>
 
+                    {/* For You Section — personalized experience shown first */}
                     <div className={styles.serverGrid}>
                         {/* Rhythmia (Solo Mode) */}
                         <motion.div
