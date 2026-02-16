@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, memo } from "react";
 import * as THREE from "three";
+import { useMouseManipulate } from "@/hooks/useMouseManipulate";
 
 interface WebGLBackgroundProps {
   onLoaded?: () => void;
@@ -13,6 +14,7 @@ const WebGLBackground = memo(({ onLoaded }: WebGLBackgroundProps) => {
   const animationFrameRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
   const resizeHandlerRef = useRef<(() => void) | null>(null);
+  const mouseRef = useMouseManipulate({ smoothing: 0.06 });
 
   useEffect(() => {
     if (isInitializedRef.current || !containerRef.current) return;
@@ -55,6 +57,9 @@ const WebGLBackground = memo(({ onLoaded }: WebGLBackgroundProps) => {
           u_resolution: {
             value: new THREE.Vector2(window.innerWidth, window.innerHeight),
           },
+          u_mouse: {
+            value: new THREE.Vector2(0, 0),
+          },
         };
 
         const material = new THREE.ShaderMaterial({
@@ -82,6 +87,7 @@ const WebGLBackground = memo(({ onLoaded }: WebGLBackgroundProps) => {
           if (!rendererRef.current) return;
 
           uniforms.u_time.value = clock.getElapsedTime();
+          uniforms.u_mouse.value.set(mouseRef.current.x, mouseRef.current.y);
           renderer.render(scene, camera);
           animationFrameRef.current = requestAnimationFrame(animate);
         }
