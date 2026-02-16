@@ -1,21 +1,27 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { UIVersion, VERSION_METADATA, UI_VERSIONS } from '@/lib/version/types';
-import { MessageCircle, Heart, Gamepad2, Box } from 'lucide-react';
-
-const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
-  current: <Gamepad2 className="w-10 h-10" />,
-  '1.0.0': <MessageCircle className="w-10 h-10" />,
-  '1.0.1': <Heart className="w-10 h-10" />,
-  '1.0.2': <Box className="w-10 h-10" />,
-};
+import { motion, AnimatePresence } from "framer-motion";
+import { UIVersion, VERSION_METADATA, UI_VERSIONS } from "@/lib/version/types";
+import { MessageCircle, Heart, Gamepad2, Grid3x3 } from "lucide-react";
 
 interface VersionSelectorProps {
   onSelect: (version: UIVersion) => void;
 }
 
 export default function VersionSelector({ onSelect }: VersionSelectorProps) {
+  const getIcon = (version: UIVersion) => {
+    switch (version) {
+      case "current":
+        return <Gamepad2 className="w-12 h-12" />;
+      case "1.0.0":
+        return <MessageCircle className="w-12 h-12" />;
+      case "1.0.1":
+        return <Heart className="w-12 h-12" />;
+      case "1.0.2":
+        return <Grid3x3 className="w-12 h-12" />;
+    }
+  };
+
   return (
     <AnimatePresence>
       <motion.div

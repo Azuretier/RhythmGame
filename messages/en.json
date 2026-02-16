@@ -540,6 +540,46 @@
         "loyalty_polls_50": {
             "name": "Voice of the People",
             "desc": "Vote in 50 polls"
+        },
+        "gold_100": {
+            "name": "Coin Picker",
+            "desc": "Earn 100 total gold"
+        },
+        "gold_1000": {
+            "name": "Coin Collector",
+            "desc": "Earn 1,000 total gold"
+        },
+        "gold_5000": {
+            "name": "Treasure Hunter",
+            "desc": "Earn 5,000 total gold"
+        },
+        "gold_25000": {
+            "name": "Golden King",
+            "desc": "Earn 25,000 total gold"
+        },
+        "gold_100000": {
+            "name": "Legendary Tycoon",
+            "desc": "Earn 100,000 total gold"
+        },
+        "treasure_10": {
+            "name": "Treasure Found",
+            "desc": "Collect 10 treasures"
+        },
+        "treasure_50": {
+            "name": "Treasure Seeker",
+            "desc": "Collect 50 treasures"
+        },
+        "treasure_200": {
+            "name": "Treasure Master",
+            "desc": "Collect 200 treasures"
+        },
+        "treasure_500": {
+            "name": "Treasure Guardian",
+            "desc": "Collect 500 treasures"
+        },
+        "treasure_1000": {
+            "name": "Lord of Riches",
+            "desc": "Collect 1,000 treasures"
         }
     },
     "arena": {
@@ -602,7 +642,10 @@
         "peakChaos": "PEAK CHAOS",
         "tempoCollapses": "COLLAPSES",
         "lowestBpm": "LOW BPM",
-        "backToLobby": "Back to Lobby"
+        "backToLobby": "Back to Lobby",
+        "usePowerUp": "Power-Up",
+        "cycleTarget": "Target",
+        "emote": "Emote"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -1094,6 +1137,17 @@
         "selectLanguage": "Language",
         "privacy": "Privacy",
         "profileButton": "Profile"
+    },
+    "googleSync": {
+        "sectionTitle": "Google Account Sync",
+        "description": "Sign in with Google to sync your profile, advancements, loyalty progress, and skin settings across devices.",
+        "signIn": "Sign in with Google",
+        "signOut": "Sign out",
+        "linking": "Connecting...",
+        "syncing": "Syncing...",
+        "syncNow": "Sync now",
+        "synced": "Synced",
+        "error": "Sync failed"
     },
     "stories": {
         "title": "STORIES",

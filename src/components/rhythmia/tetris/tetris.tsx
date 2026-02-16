@@ -23,7 +23,6 @@ import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmV
 
 // Utilities
 import {
-  getShape,
   isValidPosition,
   tryRotation,
   lockPiece,
@@ -47,6 +46,7 @@ import {
   TouchControls,
   RhythmVFX,
   FloatingItems,
+  FloatingTreasures,
   ItemSlots,
   CraftingUI,
   InventoryUI,
@@ -55,6 +55,7 @@ import {
   WorldTransition,
   GamePhaseIndicator,
   HealthManaHUD,
+  TreasureHUD,
   TutorialGuide,
   hasTutorialBeenSeen,
   KeyBindSettings,
@@ -194,6 +195,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     showInventory,
     showShop,
     gold,
+    // Treasure system
+    treasureWallet,
+    floatingTreasures,
+    lastCollectedTreasureId,
     // Game mode
     gameMode,
     // Tower defense
@@ -263,6 +268,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     toggleInventory,
     toggleShop,
     purchaseItem,
+    // Treasure actions
+    spawnTreasureDrops,
     // Tower defense actions
     spawnEnemies,
     updateEnemies,
@@ -506,29 +513,11 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
     }
 
+    // Lock piece onto the board — blocks above the visible area (in the
+    // buffer zone) are saved in memory, matching standard Tetris behaviour.
+    // Only Block Out (piece can't spawn) ends the game; locking above
+    // the skyline does not.
     const newBoard = lockPiece(piece, boardRef.current);
-
-    // Lock Out check: if ALL blocks of the piece locked entirely above the visible area, game over.
-    // This is the standard Tetris death condition — the piece is completely "out of the board."
-    const pieceShape = getShape(piece.type, piece.rotation);
-    let allAboveVisible = true;
-    for (let sy = 0; sy < pieceShape.length; sy++) {
-      for (let sx = 0; sx < pieceShape[sy].length; sx++) {
-        if (pieceShape[sy][sx]) {
-          if (piece.y + sy >= BUFFER_ZONE) {
-            allAboveVisible = false;
-          }
-        }
-      }
-    }
-    if (allAboveVisible) {
-      setBoard(newBoard);
-      boardRef.current = newBoard;
-      setGameOver(true);
-      setCurrentPiece(null);
-      currentPieceRef.current = null;
-      return;
-    }
 
     // Detect which rows will be cleared (before clearing) for VFX positioning
     const rowsToClear: number[] = [];
@@ -564,13 +553,17 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
         // Item drops
         spawnItemDrops(killCount, center.x, center.y);
+        // Treasure drops
+        spawnTreasureDrops(killCount, center.x, center.y);
       } else {
         // === VANILLA: Destroy terrain blocks ===
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
         const remaining = destroyTerrain(damage);
-        
+
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
+        // Treasure drops from terrain
+        spawnTreasureDrops(damage, center.x, center.y);
 
         // Check if terrain is fully destroyed → next stage
         if (remaining <= 0) {
@@ -613,7 +606,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setCombo, setBoard, setLines, setLevel, setCurrentPiece, setGameOver,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, startNewStage,
-    getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
+    getBoardCenter, spawnTerrainParticles, spawnItemDrops, spawnTreasureDrops, pushLiveAdvancementCheck,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -1193,6 +1186,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
       {/* Floating item drops from terrain */}
       <FloatingItems items={floatingItems} />
+      {/* Floating treasure drops (coins, gems, chests) */}
+      <FloatingTreasures treasures={floatingTreasures} />
 
       {/* World transition overlays (creation / collapse / reload) */}
       <WorldTransition
@@ -1283,6 +1278,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 <div className={styles.nextLabel}>NEXT</div>
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
               </div>
+              <TreasureHUD wallet={treasureWallet} lastCollectedId={lastCollectedTreasureId} />
               {gameMode === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
           </div>

@@ -15,6 +15,48 @@ export const ARENA_CHAOS_DECAY_RATE = 0.5; // Per second
 export const ARENA_CHAOS_GIMMICK_THRESHOLD = 40;
 export const ARENA_CHAOS_FRENZY_THRESHOLD = 75;
 export const ARENA_TEMPO_COLLAPSE_THRESHOLD = 0.3; // If avg sync < 30%, tempo collapses
+export const ARENA_POWERUP_SPAWN_CHANCE = 0.25; // 25% chance on line clear
+export const ARENA_MAX_POWERUPS = 1; // Max held power-ups per player
+
+// ===== Power-Up System =====
+
+export type PowerUpType =
+  | 'shield'        // Block incoming garbage for 5s
+  | 'garbage_bomb'  // Send 4 garbage to targeted player
+  | 'score_boost'   // 2x score multiplier for 6s
+  | 'freeze_target' // Slow target's gravity for 3s
+  | 'heal'          // Remove up to 3 garbage rows
+  | 'chaos_surge';  // Instantly add 15 chaos
+
+export interface PowerUp {
+  type: PowerUpType;
+  /** Display name */
+  label: string;
+}
+
+export const POWERUP_DEFS: Record<PowerUpType, { label: string; weight: number; color: string }> = {
+  shield:       { label: 'SHIELD',      weight: 20, color: '#00aaff' },
+  garbage_bomb: { label: 'BOMB',        weight: 25, color: '#ff3366' },
+  score_boost:  { label: 'BOOST',       weight: 15, color: '#ffaa00' },
+  freeze_target:{ label: 'FREEZE',      weight: 15, color: '#aa88ff' },
+  heal:         { label: 'HEAL',        weight: 15, color: '#00ff88' },
+  chaos_surge:  { label: 'CHAOS SURGE', weight: 10, color: '#ff6600' },
+};
+
+// ===== Emote System =====
+
+export type EmoteType = 'gg' | 'nice' | 'rip' | 'hype';
+
+export const EMOTE_DEFS: Record<EmoteType, { label: string; emoji: string }> = {
+  gg:   { label: 'GG',    emoji: 'GG' },
+  nice: { label: 'Nice!', emoji: 'Nice!' },
+  rip:  { label: 'RIP',   emoji: 'RIP' },
+  hype: { label: '!!!',   emoji: '!!!' },
+};
+
+// ===== Target Mode =====
+
+export type TargetMode = 'random' | 'nearest' | 'ko_leader' | 'manual';
 
 // ===== Arena Player =====
 
@@ -34,6 +76,21 @@ export interface ArenaPlayer {
   /** Number of eliminations this player caused */
   kills: number;
   placement: number | null;
+  /** Currently held power-up (null = none) */
+  heldPowerUp: PowerUpType | null;
+  /** Number of power-ups used this session */
+  powerUpsUsed: number;
+  /** Active status effects */
+  activeEffects: ActiveEffect[];
+  /** Garbage target preference */
+  targetMode: TargetMode;
+  /** Manual target player ID */
+  targetId: string | null;
+}
+
+export interface ActiveEffect {
+  type: PowerUpType;
+  expiresAt: number;
 }
 
 // ===== Arena Room State =====
@@ -114,7 +171,9 @@ export type ArenaActionType =
   | 'combo'
   | 't_spin'
   | 'tetris_clear'  // 4-line clear
-  | 'game_over';
+  | 'game_over'
+  | 'use_powerup'   // Activate held power-up
+  | 'send_emote';   // Quick emote
 
 export interface ArenaAction {
   action: ArenaActionType;
@@ -170,6 +229,22 @@ export interface ArenaLeaveMessage {
   type: 'arena_leave';
 }
 
+export interface ArenaUsePowerUpMessage {
+  type: 'arena_use_powerup';
+  targetId?: string; // For targeted power-ups
+}
+
+export interface ArenaEmoteMessage {
+  type: 'arena_emote';
+  emote: EmoteType;
+}
+
+export interface ArenaSetTargetMessage {
+  type: 'arena_set_target';
+  targetMode: TargetMode;
+  targetId?: string; // For manual targeting
+}
+
 export type ArenaClientMessage =
   | CreateArenaMessage
   | JoinArenaMessage
@@ -179,7 +254,10 @@ export type ArenaClientMessage =
   | ArenaStartMessage
   | ArenaActionMessage
   | ArenaRelayMessage
-  | ArenaLeaveMessage;
+  | ArenaLeaveMessage
+  | ArenaUsePowerUpMessage
+  | ArenaEmoteMessage
+  | ArenaSetTargetMessage;
 
 // ===== Server → Client Messages =====
 
@@ -293,6 +371,40 @@ export interface ArenaTempoCollapseMessage {
   bpmDeviation: number;
 }
 
+export interface ArenaPowerUpSpawnedMessage {
+  type: 'arena_powerup_spawned';
+  playerId: string;
+  powerUp: PowerUpType;
+}
+
+export interface ArenaPowerUpUsedMessage {
+  type: 'arena_powerup_used';
+  playerId: string;
+  playerName: string;
+  powerUp: PowerUpType;
+  targetId?: string;
+  targetName?: string;
+}
+
+export interface ArenaEmoteSentMessage {
+  type: 'arena_emote_sent';
+  playerId: string;
+  playerName: string;
+  emote: EmoteType;
+}
+
+export interface ArenaEventFeedMessage {
+  type: 'arena_event_feed';
+  event: ArenaFeedEvent;
+}
+
+export interface ArenaFeedEvent {
+  id: string;
+  text: string;
+  color: string;
+  timestamp: number;
+}
+
 export type ArenaServerMessage =
   | ArenaCreatedMessage
   | ArenaJoinedMessage
@@ -309,7 +421,11 @@ export type ArenaServerMessage =
   | ArenaRelayedMessage
   | ArenaSessionEndMessage
   | ArenaQueuedMessage
-  | ArenaTempoCollapseMessage;
+  | ArenaTempoCollapseMessage
+  | ArenaPowerUpSpawnedMessage
+  | ArenaPowerUpUsedMessage
+  | ArenaEmoteSentMessage
+  | ArenaEventFeedMessage;
 
 // ===== Relay Payload =====
 
@@ -333,6 +449,7 @@ export interface ArenaRanking {
   lines: number;
   kills: number;
   avgSync: number;
+  powerUpsUsed: number;
 }
 
 export interface ArenaSessionStats {

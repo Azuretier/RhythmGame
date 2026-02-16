@@ -402,7 +402,10 @@
         "peakChaos": "โกลาหลสูงสุด",
         "tempoCollapses": "จังหวะพัง",
         "lowestBpm": "BPM ต่ำสุด",
-        "backToLobby": "กลับล็อบบี้"
+        "backToLobby": "กลับล็อบบี้",
+        "usePowerUp": "พาวเวอร์อัพ",
+        "cycleTarget": "เป้าหมาย",
+        "emote": "อิโมท"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -848,6 +851,17 @@
         "selectLanguage": "ภาษา",
         "privacy": "ความเป็นส่วนตัว",
         "profileButton": "โปรไฟล์"
+    },
+    "googleSync": {
+        "sectionTitle": "ซิงค์บัญชี Google",
+        "description": "ลงชื่อเข้าใช้ด้วย Google เพื่อซิงค์โปรไฟล์ ความสำเร็จ ความก้าวหน้าความภักดี และการตั้งค่าสกินของคุณข้ามอุปกรณ์",
+        "signIn": "ลงชื่อเข้าใช้ด้วย Google",
+        "signOut": "ออกจากระบบ",
+        "linking": "กำลังเชื่อมต่อ...",
+        "syncing": "กำลังซิงค์...",
+        "syncNow": "ซิงค์เลย",
+        "synced": "ซิงค์แล้ว",
+        "error": "การซิงค์ล้มเหลว"
     },
     "stories": {
         "title": "STORIES",

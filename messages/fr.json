@@ -402,7 +402,10 @@
         "peakChaos": "CHAOS MAX",
         "tempoCollapses": "EFFONDREMENTS",
         "lowestBpm": "BPM MIN",
-        "backToLobby": "Retour au Lobby"
+        "backToLobby": "Retour au Lobby",
+        "usePowerUp": "Power-Up",
+        "cycleTarget": "Cible",
+        "emote": "Emote"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -848,6 +851,17 @@
         "selectLanguage": "Langue",
         "privacy": "Confidentialité",
         "profileButton": "Profil"
+    },
+    "googleSync": {
+        "sectionTitle": "Synchronisation de Compte Google",
+        "description": "Connectez-vous avec Google pour synchroniser votre profil, succès, progression de fidélité et paramètres de skin sur tous vos appareils.",
+        "signIn": "Se connecter avec Google",
+        "signOut": "Se déconnecter",
+        "linking": "Connexion...",
+        "syncing": "Synchronisation...",
+        "syncNow": "Synchroniser maintenant",
+        "synced": "Synchronisé",
+        "error": "Échec de synchronisation"
     },
     "stories": {
         "title": "STORIES",
