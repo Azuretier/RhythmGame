@@ -73,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             alternateLocale: ['ja_JP', 'en_US', 'th_TH', 'es_ES', 'fr_FR'].filter(l => l !== ({ ja: 'ja_JP', en: 'en_US', th: 'th_TH', es: 'es_ES', fr: 'fr_FR' }[locale] || 'en_US')),
             type: 'website',
             url: locale === 'ja' ? baseUrl : `${baseUrl}/${locale}`,
-            siteName: 'Azuretia',
+            siteName: 'Flatmeer',
         },
         twitter: {
             card: 'summary_large_image',
@@ -96,7 +96,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "Azuretia",
+        "name": "Flatmeer",
         "operatingSystem": "Web",
         "applicationCategory": "GameApplication",
         "genre": ["PuzzleGame", "MusicGame"],
@@ -109,7 +109,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         }[locale] || "A browser-based puzzle game merging Tetris and rhythm mechanics.",
         "author": {
             "@type": "Person",
-            "name": "Azuretier"
+            "name": "Flatmeer"
         }
     };
 

@@ -1,11 +1,11 @@
 {
     "meta": {
-        "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
+        "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Flatmeer",
         "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
         "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-        "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+        "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Flatmeer.",
         "ogType": "website",
-        "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+        "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Flatmeer"
     },
     "lobby": {
         "loading": "LOADING",
@@ -617,7 +617,7 @@
     },
     "loyalty": {
         "meta": {
-            "title": "Loyalty Program | RHYTHMIA - Azuretier",
+            "title": "Loyalty Program | RHYTHMIA - Flatmeer",
             "description": "Track your loyalty tier, earn badges, maintain streaks, and engage with the RHYTHMIA community."
         },
         "backToLobby": "← Back",
@@ -851,7 +851,7 @@
     },
     "wiki": {
         "meta": {
-            "title": "Wiki | RHYTHMIA - Azuretier",
+            "title": "Wiki | RHYTHMIA - Flatmeer",
             "description": "The complete RHYTHMIA wiki. Game modes, worlds, ranked system, items, crafting, advancements, and more."
         },
         "backToLobby": "← Lobby",

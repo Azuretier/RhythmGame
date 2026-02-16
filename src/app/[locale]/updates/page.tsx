@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const updates = (messages as Record<string, Record<string, string>>).updates;
 
   return {
-    title: `${updates?.pageTitle || 'Development Updates'} | RHYTHMIA - Azuretier`,
+    title: `${updates?.pageTitle || 'Development Updates'} | RHYTHMIA - Flatmeer`,
     description: updates?.pageSubtitle || 'Follow the latest changes and improvements to RHYTHMIA',
   };
 }

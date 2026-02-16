@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const wiki = (messages as Record<string, Record<string, Record<string, string>>>).wiki;
 
   return {
-    title: wiki?.meta?.title || 'Wiki | RHYTHMIA - Azuretier',
+    title: wiki?.meta?.title || 'Wiki | RHYTHMIA - Flatmeer',
     description: wiki?.meta?.description || 'The complete RHYTHMIA wiki. Game modes, worlds, ranked system, items, crafting, advancements, and more.',
   };
 }

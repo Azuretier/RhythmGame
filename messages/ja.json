@@ -1,11 +1,11 @@
 {
     "meta": {
-        "title": "RHYTHMIA | リズム×テトリスの新感覚パズルゲーム - Azuretier",
+        "title": "RHYTHMIA | リズム×テトリスの新感覚パズルゲーム - Flatmeer",
         "description": "音楽とパズルが完全融合！RHYTHMIA（リズミア）は、リズムに合わせてブロックを消す新感覚の無料ブラウザゲームです。テトリスの戦略性と音ゲーの爽快感を今すぐ体験しよう。",
         "ogTitle": "RHYTHMIA - 究極のリズムパズル体験をブラウザで",
-        "ogDescription": "【音ゲー×テトリス】音楽の鼓動でブロックを操れ。Azuretierが贈る全く新しい落ち物パズルゲーム、RHYTHMIAをプレイ。",
+        "ogDescription": "【音ゲー×テトリス】音楽の鼓動でブロックを操れ。Flatmeerが贈る全く新しい落ち物パズルゲーム、RHYTHMIAをプレイ。",
         "ogType": "website",
-        "keywords": "RHYTHMIA,リズミア,テトリス,音ゲー,リズムゲーム,落ち物パズル,無料ゲーム,ブラウザゲーム,Azuretier"
+        "keywords": "RHYTHMIA,リズミア,テトリス,音ゲー,リズムゲーム,落ち物パズル,無料ゲーム,ブラウザゲーム,Flatmeer"
     },
     "lobby": {
         "loading": "読み込み中",
@@ -617,7 +617,7 @@
     },
     "loyalty": {
         "meta": {
-            "title": "ロイヤルティプログラム | RHYTHMIA - Azuretier",
+            "title": "ロイヤルティプログラム | RHYTHMIA - Flatmeer",
             "description": "ロイヤルティティア、バッジ、ストリーク、コミュニティ参加を追跡しよう。"
         },
         "backToLobby": "← 戻る",
@@ -851,7 +851,7 @@
     },
     "wiki": {
         "meta": {
-            "title": "Wiki | RHYTHMIA - Azuretier",
+            "title": "Wiki | RHYTHMIA - Flatmeer",
             "description": "RHYTHMIAの攻略Wiki。ゲームモード、ワールド、ランク戦、アイテム、クラフト、進捗など全システムを網羅。"
         },
         "backToLobby": "← ロビー",

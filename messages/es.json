@@ -1,11 +1,11 @@
 {
     "meta": {
-        "title": "RHYTHMIA | Juego de Puzzles de Ritmo x Tetris - Azuretier",
+        "title": "RHYTHMIA | Juego de Puzzles de Ritmo x Tetris - Flatmeer",
         "description": "¡Experimenta la fusión definitiva de música y puzzles! Juega RHYTHMIA, el juego gratuito de Tetris rítmico en el navegador. Sigue el ritmo, elimina bloques y sube en la clasificación.",
         "ogTitle": "RHYTHMIA - La Experiencia de Puzzle Rítmico de Nueva Generación",
-        "ogDescription": "¿Puedes seguir el ritmo? Entra en RHYTHMIA, una mezcla de alta energía de acción rítmica y puzzles clásicos de bloques. Juega gratis en Azuretier.",
+        "ogDescription": "¿Puedes seguir el ritmo? Entra en RHYTHMIA, una mezcla de alta energía de acción rítmica y puzzles clásicos de bloques. Juega gratis en Flatmeer.",
         "ogType": "website",
-        "keywords": "RHYTHMIA, Tetris, Juego de Ritmo, Puzzle Musical, Juego Online Gratis, Juego de Navegador, Puzzle de Bloques, Arcade, Azuretier"
+        "keywords": "RHYTHMIA, Tetris, Juego de Ritmo, Puzzle Musical, Juego Online Gratis, Juego de Navegador, Puzzle de Bloques, Arcade, Flatmeer"
     },
     "lobby": {
         "loading": "CARGANDO",
@@ -417,7 +417,7 @@
     },
     "loyalty": {
         "meta": {
-            "title": "Programa de Lealtad | RHYTHMIA - Azuretier",
+            "title": "Programa de Lealtad | RHYTHMIA - Flatmeer",
             "description": "Rastrea tu nivel de lealtad, gana insignias, mantén rachas y participa en la comunidad RHYTHMIA."
         },
         "backToLobby": "← Volver",
@@ -637,7 +637,7 @@
     },
     "wiki": {
         "meta": {
-            "title": "Wiki | RHYTHMIA - Azuretier",
+            "title": "Wiki | RHYTHMIA - Flatmeer",
             "description": "La wiki completa de RHYTHMIA. Modos de juego, mundos, sistema clasificatorio, objetos, crafteo, logros y más."
         },
         "backToLobby": "← Lobby",
