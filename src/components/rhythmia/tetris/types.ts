@@ -156,6 +156,42 @@ export type Bullet = {
     alive: boolean;
 };
 
+// ===== Treasure System =====
+export type TreasureRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export type TreasureType = {
+    id: string;
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    rarity: TreasureRarity;
+    /** Gold value of this treasure */
+    value: number;
+    /** Drop weight (probability) */
+    dropWeight: number;
+};
+
+export type TreasureWallet = {
+    gold: number;
+    silver: number;
+    totalGoldEarned: number;
+    totalTreasuresCollected: number;
+};
+
+export type FloatingTreasure = {
+    id: number;
+    treasureId: string;
+    x: number;
+    y: number;
+    targetX: number;
+    targetY: number;
+    startTime: number;
+    duration: number;
+    collected: boolean;
+};
+
 // ===== Keybindings =====
 export type KeybindAction = 'inventory' | 'shop';
 
