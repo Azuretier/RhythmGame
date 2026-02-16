@@ -35,4 +35,483 @@ body {
     --subtext: var(--skin-subtext);
 }
 
+/* ============================================================
+   UI THEME SYSTEM — Neo-Futuristic & Pixel Nostalgia
+   ============================================================ */
+
+/* Theme custom property defaults (Neo-Futuristic is the default) */
+:root {
+    --theme-font-heading: 'Inter', 'Orbitron', sans-serif;
+    --theme-font-body: 'Inter', sans-serif;
+    --theme-font-mono: var(--font-geist-mono), monospace;
+    --theme-radius: 12px;
+    --theme-radius-sm: 8px;
+    --theme-radius-lg: 16px;
+    --theme-border-width: 1px;
+    --theme-transition: 0.2s ease;
+    --theme-shadow: 0 0 20px rgba(0, 127, 255, 0.08);
+    --theme-shadow-hover: 0 0 30px rgba(0, 127, 255, 0.15);
+    --theme-glass-bg: rgba(255, 255, 255, 0.03);
+    --theme-glass-blur: 12px;
+    --theme-btn-transform-active: scale(0.97);
+    --theme-scanline-opacity: 0;
+    --theme-pixel-rendering: auto;
+}
+
+/* ============================================================
+   THEME: Neo-Futuristic
+   Sleek, clean, frosted glass, neon accents, smooth animations
+   ============================================================ */
+.theme-neo-futuristic {
+    --theme-font-heading: 'Inter', 'Orbitron', sans-serif;
+    --theme-font-body: 'Inter', sans-serif;
+    --theme-font-mono: var(--font-geist-mono), monospace;
+    --theme-radius: 12px;
+    --theme-radius-sm: 8px;
+    --theme-radius-lg: 16px;
+    --theme-border-width: 1px;
+    --theme-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --theme-shadow: 0 0 20px var(--skin-accent-dim);
+    --theme-shadow-hover: 0 0 35px var(--skin-accent-dim), 0 0 8px var(--skin-accent-dim);
+    --theme-glass-bg: rgba(255, 255, 255, 0.03);
+    --theme-glass-blur: 12px;
+    --theme-btn-transform-active: scale(0.97);
+    --theme-scanline-opacity: 0;
+    --theme-pixel-rendering: auto;
+}
+
+/* Neo-Futuristic: frosted glass panels */
+.theme-neo-futuristic .neo-panel,
+.theme-neo-futuristic [data-theme-panel] {
+    background: var(--theme-glass-bg);
+    backdrop-filter: blur(var(--theme-glass-blur));
+    -webkit-backdrop-filter: blur(var(--theme-glass-blur));
+    border: var(--theme-border-width) solid var(--skin-border);
+    border-radius: var(--theme-radius);
+    transition: all var(--theme-transition);
+}
+
+.theme-neo-futuristic [data-theme-panel]:hover {
+    border-color: var(--skin-border-hover);
+    box-shadow: var(--theme-shadow-hover);
+}
+
+/* Neo-Futuristic: buttons with glow */
+.theme-neo-futuristic .neo-btn,
+.theme-neo-futuristic [data-theme-btn] {
+    font-family: var(--theme-font-body);
+    border-radius: var(--theme-radius-sm);
+    border: var(--theme-border-width) solid var(--skin-border);
+    background: var(--theme-glass-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--skin-foreground);
+    transition: all var(--theme-transition);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.theme-neo-futuristic [data-theme-btn]:hover {
+    border-color: var(--skin-accent);
+    box-shadow: 0 0 20px var(--skin-accent-dim), inset 0 0 20px var(--skin-accent-dim);
+    background: var(--skin-accent-dim);
+}
+
+.theme-neo-futuristic [data-theme-btn]:active {
+    transform: var(--theme-btn-transform-active);
+}
+
+/* Neo-Futuristic: primary button */
+.theme-neo-futuristic [data-theme-btn-primary] {
+    font-family: var(--theme-font-body);
+    border-radius: var(--theme-radius-sm);
+    border: var(--theme-border-width) solid var(--skin-accent);
+    background: linear-gradient(135deg, var(--skin-accent), var(--skin-accent-light));
+    color: #ffffff;
+    font-weight: 600;
+    transition: all var(--theme-transition);
+    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.theme-neo-futuristic [data-theme-btn-primary]:hover {
+    box-shadow: 0 0 25px var(--skin-accent-dim), 0 4px 15px rgba(0, 0, 0, 0.3);
+    filter: brightness(1.1);
+}
+
+.theme-neo-futuristic [data-theme-btn-primary]:active {
+    transform: var(--theme-btn-transform-active);
+}
+
+/* Neo-Futuristic: dialog */
+.theme-neo-futuristic [data-theme-dialog] {
+    background: rgba(10, 10, 20, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: var(--theme-border-width) solid var(--skin-border);
+    border-radius: var(--theme-radius-lg);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.5), 0 0 30px var(--skin-accent-dim);
+}
+
+/* Neo-Futuristic: input fields */
+.theme-neo-futuristic [data-theme-input] {
+    font-family: var(--theme-font-body);
+    border-radius: var(--theme-radius-sm);
+    border: var(--theme-border-width) solid var(--skin-border);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--skin-foreground);
+    transition: all var(--theme-transition);
+}
+
+.theme-neo-futuristic [data-theme-input]:focus {
+    outline: none;
+    border-color: var(--skin-accent);
+    box-shadow: 0 0 15px var(--skin-accent-dim);
+}
+
+/* Neo-Futuristic: cards */
+.theme-neo-futuristic [data-theme-card] {
+    background: var(--theme-glass-bg);
+    backdrop-filter: blur(var(--theme-glass-blur));
+    -webkit-backdrop-filter: blur(var(--theme-glass-blur));
+    border: var(--theme-border-width) solid var(--skin-border);
+    border-radius: var(--theme-radius);
+    transition: all var(--theme-transition);
+}
+
+.theme-neo-futuristic [data-theme-card]:hover {
+    border-color: var(--skin-border-hover);
+    box-shadow: var(--theme-shadow-hover);
+    transform: translateY(-2px);
+}
+
+/* Neo-Futuristic: headings */
+.theme-neo-futuristic [data-theme-heading] {
+    font-family: var(--theme-font-heading);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--skin-foreground);
+}
+
+/* Neo-Futuristic: text */
+.theme-neo-futuristic [data-theme-text] {
+    font-family: var(--theme-font-body);
+    color: var(--skin-foreground);
+    line-height: 1.6;
+}
+
+/* Neo-Futuristic: navigation/toolbar */
+.theme-neo-futuristic [data-theme-nav] {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: var(--theme-border-width) solid var(--skin-border);
+}
+
+/* ============================================================
+   THEME: Pixel Nostalgia
+   Retro 8-bit/16-bit, pixel fonts, CRT scanlines, hard edges
+   ============================================================ */
+.theme-pixel-nostalgia {
+    --theme-font-heading: 'Press Start 2P', 'Silkscreen', monospace;
+    --theme-font-body: 'VT323', 'Pixelify Sans', monospace;
+    --theme-font-mono: 'VT323', 'Press Start 2P', monospace;
+    --theme-radius: 0px;
+    --theme-radius-sm: 0px;
+    --theme-radius-lg: 0px;
+    --theme-border-width: 3px;
+    --theme-transition: 0s;
+    --theme-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+    --theme-shadow-hover: 6px 6px 0px rgba(0, 0, 0, 0.8);
+    --theme-glass-bg: rgba(0, 0, 0, 0.9);
+    --theme-glass-blur: 0px;
+    --theme-btn-transform-active: translateY(3px);
+    --theme-scanline-opacity: 1;
+    --theme-pixel-rendering: pixelated;
+}
+
+/* Pixel Nostalgia: global font override */
+.theme-pixel-nostalgia {
+    font-family: var(--theme-font-body);
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Pixel Nostalgia: CRT scanline overlay */
+.theme-pixel-nostalgia::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+    opacity: var(--theme-scanline-opacity);
+}
+
+/* Pixel Nostalgia: panels with thick pixel borders */
+.theme-pixel-nostalgia .neo-panel,
+.theme-pixel-nostalgia [data-theme-panel] {
+    background: var(--skin-background);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    border-radius: var(--theme-radius);
+    box-shadow: var(--theme-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: none;
+}
+
+.theme-pixel-nostalgia [data-theme-panel]:hover {
+    border-color: var(--skin-accent);
+    box-shadow: var(--theme-shadow-hover);
+}
+
+/* Pixel Nostalgia: buttons with retro press effect */
+.theme-pixel-nostalgia [data-theme-btn] {
+    font-family: var(--theme-font-body);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    border-radius: var(--theme-radius);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    background: var(--skin-background);
+    color: var(--skin-foreground);
+    box-shadow: var(--theme-shadow);
+    cursor: pointer;
+    transition: none;
+    position: relative;
+    text-transform: uppercase;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.theme-pixel-nostalgia [data-theme-btn]:hover {
+    background: var(--skin-accent-dim);
+    border-color: var(--skin-accent);
+    color: var(--skin-accent);
+    box-shadow: var(--theme-shadow);
+}
+
+.theme-pixel-nostalgia [data-theme-btn]:active {
+    transform: var(--theme-btn-transform-active);
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
+}
+
+/* Pixel Nostalgia: primary button */
+.theme-pixel-nostalgia [data-theme-btn-primary] {
+    font-family: var(--theme-font-body);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    border-radius: var(--theme-radius);
+    border: var(--theme-border-width) solid var(--skin-accent);
+    background: var(--skin-accent);
+    color: var(--skin-background);
+    box-shadow: var(--theme-shadow);
+    cursor: pointer;
+    transition: none;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.theme-pixel-nostalgia [data-theme-btn-primary]:hover {
+    background: var(--skin-accent-light);
+    border-color: var(--skin-accent-light);
+}
+
+.theme-pixel-nostalgia [data-theme-btn-primary]:active {
+    transform: var(--theme-btn-transform-active);
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
+}
+
+/* Pixel Nostalgia: dialog */
+.theme-pixel-nostalgia [data-theme-dialog] {
+    background: var(--skin-background);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    border-radius: var(--theme-radius);
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.8);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Pixel Nostalgia: dialog title bar (retro window) */
+.theme-pixel-nostalgia [data-theme-dialog-header] {
+    background: var(--skin-accent);
+    color: var(--skin-background);
+    font-family: var(--theme-font-heading);
+    font-size: 0.6rem;
+    padding: 6px 10px;
+    border-bottom: var(--theme-border-width) solid var(--skin-foreground);
+    letter-spacing: 0.1em;
+}
+
+/* Pixel Nostalgia: input fields */
+.theme-pixel-nostalgia [data-theme-input] {
+    font-family: var(--theme-font-body);
+    font-size: 1rem;
+    border-radius: var(--theme-radius);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    background: rgba(0, 0, 0, 0.9);
+    color: var(--skin-accent);
+    box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.5);
+    transition: none;
+}
+
+.theme-pixel-nostalgia [data-theme-input]:focus {
+    outline: none;
+    border-color: var(--skin-accent);
+    box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* Pixel Nostalgia: cards */
+.theme-pixel-nostalgia [data-theme-card] {
+    background: var(--skin-background);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    border-radius: var(--theme-radius);
+    box-shadow: var(--theme-shadow);
+    transition: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.theme-pixel-nostalgia [data-theme-card]:hover {
+    border-color: var(--skin-accent);
+    box-shadow: var(--theme-shadow-hover);
+    transform: none;
+}
+
+/* Pixel Nostalgia: headings with pixel font */
+.theme-pixel-nostalgia [data-theme-heading] {
+    font-family: var(--theme-font-heading);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: var(--skin-accent);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+}
+
+/* Pixel Nostalgia: text */
+.theme-pixel-nostalgia [data-theme-text] {
+    font-family: var(--theme-font-body);
+    font-size: 1.1rem;
+    color: var(--skin-foreground);
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+}
+
+/* Pixel Nostalgia: navigation/toolbar */
+.theme-pixel-nostalgia [data-theme-nav] {
+    background: var(--skin-background);
+    border-bottom: var(--theme-border-width) solid var(--skin-foreground);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Pixel Nostalgia: pixel art image rendering */
+.theme-pixel-nostalgia img,
+.theme-pixel-nostalgia [data-theme-icon] {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Pixel Nostalgia: dithered background pattern */
+.theme-pixel-nostalgia [data-theme-dithered] {
+    background-image:
+        radial-gradient(var(--skin-accent-dim) 1px, transparent 1px);
+    background-size: 4px 4px;
+}
+
+/* Pixel Nostalgia: pixel grid background */
+.theme-pixel-nostalgia [data-theme-grid-bg] {
+    background-image:
+        linear-gradient(var(--skin-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--skin-border) 1px, transparent 1px);
+    background-size: 16px 16px;
+}
+
+/* ============================================================
+   THEME-AWARE UTILITY CLASSES
+   Use these across both themes for adaptive styling
+   ============================================================ */
+
+/* Heading that adapts to theme */
+[data-theme-heading] {
+    font-family: var(--theme-font-heading);
+    color: var(--skin-foreground);
+}
+
+/* Body text that adapts to theme */
+[data-theme-text] {
+    font-family: var(--theme-font-body);
+    color: var(--skin-foreground);
+}
+
+/* Panel / surface that adapts to theme */
+[data-theme-panel] {
+    font-family: var(--theme-font-body);
+    border-radius: var(--theme-radius);
+    border: var(--theme-border-width) solid var(--skin-border);
+    transition: all var(--theme-transition);
+}
+
+/* Button that adapts to theme */
+[data-theme-btn] {
+    font-family: var(--theme-font-body);
+    border-radius: var(--theme-radius-sm);
+    transition: all var(--theme-transition);
+}
+
+/* Card that adapts to theme */
+[data-theme-card] {
+    font-family: var(--theme-font-body);
+    border-radius: var(--theme-radius);
+    transition: all var(--theme-transition);
+}
+
+/* ============================================================
+   SkinCustomizer Panel — Theme-Aware Overrides
+   These override the CSS module styles when pixel theme is active
+   ============================================================ */
+
+/* Pixel Nostalgia: override SkinCustomizer panel */
+.theme-pixel-nostalgia .pixel-override-panel {
+    border-radius: 0 !important;
+    border-width: 3px !important;
+    border-color: var(--skin-foreground) !important;
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.theme-pixel-nostalgia .pixel-override-panel * {
+    font-family: var(--theme-font-body) !important;
+}
+
+.theme-pixel-nostalgia .pixel-override-panel h2 {
+    font-family: var(--theme-font-heading) !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.08em !important;
+}
+
+/* Pixel Nostalgia: SkinCustomizer buttons */
+.theme-pixel-nostalgia .pixel-override-btn {
+    border-radius: 0 !important;
+    border-width: 2px !important;
+    border-color: var(--skin-foreground) !important;
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.8) !important;
+    transition: none !important;
+}
+
+.theme-pixel-nostalgia .pixel-override-btn:active {
+    transform: translateY(2px) !important;
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8) !important;
+}
+
 /* Existing CSS content below */

@@ -31,6 +31,8 @@ function getDefaultStats(): PlayerStats {
     totalVisits: 0,
     bestStreak: 0,
     pollsVoted: 0,
+    totalGoldEarned: 0,
+    totalTreasuresCollected: 0,
   };
 }
 
@@ -332,6 +334,27 @@ export function getUnlockedCount(): number {
  * Sync loyalty stats (visits, streaks, polls) into the advancement system.
  * Checks for newly unlocked loyalty advancements, saves, and syncs to Firestore.
  */
+/**
+ * Sync treasure wallet stats into the advancement system.
+ * Checks for newly unlocked treasure advancements, saves, and syncs to Firestore.
+ */
+export function syncTreasureStats(treasureStats: { totalGoldEarned: number; totalTreasuresCollected: number }): AdvancementState {
+  const state = loadAdvancementState();
+
+  state.stats.totalGoldEarned = treasureStats.totalGoldEarned;
+  state.stats.totalTreasuresCollected = treasureStats.totalTreasuresCollected;
+
+  const updated = checkNewAdvancements(state);
+  saveAdvancementState(updated);
+
+  syncToFirestore(updated);
+  for (const advId of updated.newlyUnlockedIds) {
+    writeNotification(advId);
+  }
+
+  return updated;
+}
+
 export function syncLoyaltyStats(loyaltyStats: { totalVisits: number; bestStreak: number; pollsVoted: number }): AdvancementState {
   const state = loadAdvancementState();
 

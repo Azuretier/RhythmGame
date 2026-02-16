@@ -226,23 +226,52 @@ export function ThemeNav({ colorTheme, onThemeChange }: ThemeNavProps) {
     );
 }
 
+export type JudgmentDisplayMode = 'text' | 'score';
+
 interface JudgmentDisplayProps {
     text: string;
     color: string;
     show: boolean;
+    score?: number;
+    displayMode?: JudgmentDisplayMode;
 }
 
 /**
- * Judgment text display (PERFECT!, etc.)
+ * Judgment text display — switchable between timing text (PERFECT!, GREAT!, etc.)
+ * and earned score (+1600, etc.)
  */
-export function JudgmentDisplay({ text, color, show }: JudgmentDisplayProps) {
+export function JudgmentDisplay({ text, color, show, score = 0, displayMode = 'text' }: JudgmentDisplayProps) {
+    const displayText = displayMode === 'score' && score > 0
+        ? `+${score.toLocaleString()}`
+        : text;
+
     return (
         <div
             className={`${styles.judgment} ${show ? styles.show : ''}`}
             style={{ color, textShadow: `0 0 30px ${color}` }}
         >
-            {text}
+            {displayText}
         </div>
+    );
+}
+
+interface JudgmentModeToggleProps {
+    mode: JudgmentDisplayMode;
+    onToggle: () => void;
+}
+
+/**
+ * Toggle button for switching between score and text judgment display
+ */
+export function JudgmentModeToggle({ mode, onToggle }: JudgmentModeToggleProps) {
+    return (
+        <button
+            className={styles.judgmentModeToggle}
+            onClick={onToggle}
+            title={mode === 'text' ? 'Switch to score display' : 'Switch to text display'}
+        >
+            {mode === 'text' ? 'ABC' : '123'}
+        </button>
     );
 }
 

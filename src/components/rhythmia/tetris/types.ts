@@ -59,6 +59,7 @@ export type VFXEvent =
     | { type: 'rotation'; pieceType: string; boardX: number; boardY: number; fromRotation: number; toRotation: number }
     | { type: 'hardDrop'; pieceType: string; boardX: number; boardY: number; dropDistance: number }
     | { type: 'comboChange'; combo: number; onBeat: boolean }
+    | { type: 'comboBreak'; lostCombo: number }
     | { type: 'feverStart'; combo: number }
     | { type: 'feverEnd' };
 
@@ -154,6 +155,42 @@ export type Bullet = {
     vz: number;
     targetEnemyId: number;
     alive: boolean;
+};
+
+// ===== Treasure System =====
+export type TreasureRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export type TreasureType = {
+    id: string;
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    rarity: TreasureRarity;
+    /** Gold value of this treasure */
+    value: number;
+    /** Drop weight (probability) */
+    dropWeight: number;
+};
+
+export type TreasureWallet = {
+    gold: number;
+    silver: number;
+    totalGoldEarned: number;
+    totalTreasuresCollected: number;
+};
+
+export type FloatingTreasure = {
+    id: number;
+    treasureId: string;
+    x: number;
+    y: number;
+    targetX: number;
+    targetY: number;
+    startTime: number;
+    duration: number;
+    collected: boolean;
 };
 
 // ===== Keybindings =====
