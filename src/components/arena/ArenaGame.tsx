@@ -3,8 +3,9 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useArenaSocket } from '@/hooks/useArenaSocket';
 import { useTranslations } from 'next-intl';
-import type { ArenaBoardPayload } from '@/types/arena';
-import { ARENA_MAX_PLAYERS } from '@/types/arena';
+import type { ArenaBoardPayload, ArenaFeedEvent, EmoteType, TargetMode } from '@/types/arena';
+import { ARENA_MAX_PLAYERS, POWERUP_DEFS, EMOTE_DEFS } from '@/types/arena';
+import type { PowerUpType } from '@/types/arena';
 
 // Tetris engine
 import { useGameState } from '@/components/rhythmia/tetris/hooks';
@@ -73,6 +74,147 @@ function PiecePreview({ pieceType }: { pieceType: string | null }) {
   );
 }
 
+// Event feed overlay
+function EventFeed({ events }: { events: ArenaFeedEvent[] }) {
+  if (events.length === 0) return null;
+  return (
+    <div className={styles.eventFeed}>
+      {events.map((ev) => (
+        <div
+          key={ev.id}
+          className={styles.feedItem}
+          style={{ color: ev.color }}
+        >
+          {ev.text}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Power-up indicator (shows held power-up + active effects)
+function PowerUpHUD({
+  heldPowerUp,
+  activeEffects,
+  onUse,
+}: {
+  heldPowerUp: PowerUpType | null;
+  activeEffects: { type: PowerUpType; expiresAt: number }[];
+  onUse: () => void;
+}) {
+  return (
+    <div className={styles.powerUpHud}>
+      <div
+        className={`${styles.powerUpSlot} ${heldPowerUp ? styles.hasPowerUp : ''}`}
+        onClick={heldPowerUp ? onUse : undefined}
+        title={heldPowerUp ? `Press E to use ${POWERUP_DEFS[heldPowerUp].label}` : 'No power-up'}
+      >
+        {heldPowerUp ? (
+          <>
+            <div
+              className={styles.powerUpIcon}
+              style={{ background: POWERUP_DEFS[heldPowerUp].color }}
+            />
+            <span className={styles.powerUpLabel}>{POWERUP_DEFS[heldPowerUp].label}</span>
+            <span className={styles.powerUpKey}>[E]</span>
+          </>
+        ) : (
+          <span className={styles.powerUpEmpty}>--</span>
+        )}
+      </div>
+      {activeEffects.length > 0 && (
+        <div className={styles.activeEffects}>
+          {activeEffects.map((eff, i) => (
+            <div
+              key={`${eff.type}-${i}`}
+              className={styles.activeEffect}
+              style={{ borderColor: POWERUP_DEFS[eff.type].color, color: POWERUP_DEFS[eff.type].color }}
+            >
+              {POWERUP_DEFS[eff.type].label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Emote bubble overlay on mini board
+function EmoteBubble({ emote }: { emote: EmoteType }) {
+  return (
+    <div className={styles.emoteBubble}>
+      {EMOTE_DEFS[emote].emoji}
+    </div>
+  );
+}
+
+// Target mode selector
+function TargetSelector({
+  currentMode,
+  opponents,
+  manualTargetId,
+  onSelectMode,
+}: {
+  currentMode: TargetMode;
+  opponents: { id: string; name: string; alive: boolean }[];
+  manualTargetId: string | null;
+  onSelectMode: (mode: TargetMode, targetId?: string) => void;
+}) {
+  const modes: { mode: TargetMode; label: string }[] = [
+    { mode: 'random', label: 'RNG' },
+    { mode: 'ko_leader', label: 'KOs' },
+    { mode: 'nearest', label: 'NEAR' },
+  ];
+
+  return (
+    <div className={styles.targetSelector}>
+      <div className={styles.targetLabel}>TARGET</div>
+      <div className={styles.targetModes}>
+        {modes.map(({ mode, label }) => (
+          <button
+            key={mode}
+            className={`${styles.targetModeBtn} ${currentMode === mode ? styles.targetModeActive : ''}`}
+            onClick={() => onSelectMode(mode)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className={styles.targetPlayers}>
+        {opponents.filter(o => o.alive).map(opp => (
+          <button
+            key={opp.id}
+            className={`${styles.targetPlayerBtn} ${currentMode === 'manual' && manualTargetId === opp.id ? styles.targetPlayerActive : ''}`}
+            onClick={() => onSelectMode('manual', opp.id)}
+            title={opp.name}
+          >
+            {opp.name.slice(0, 4)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Emote bar
+function EmoteBar({ onSendEmote }: { onSendEmote: (emote: EmoteType) => void }) {
+  const emotes: EmoteType[] = ['gg', 'nice', 'rip', 'hype'];
+  return (
+    <div className={styles.emoteBar}>
+      {emotes.map((emote, i) => (
+        <button
+          key={emote}
+          className={styles.emoteBtn}
+          onClick={() => onSendEmote(emote)}
+          title={`Press ${i + 1}`}
+        >
+          {EMOTE_DEFS[emote].emoji}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function ArenaGame() {
   const t = useTranslations('arena');
 
@@ -109,6 +251,15 @@ export default function ArenaGame() {
     sendAction,
     sendBoardRelay,
     leaveArena,
+    heldPowerUp,
+    activeEffects,
+    usePowerUp,
+    feedEvents,
+    emoteMap,
+    sendEmote,
+    targetMode,
+    manualTargetId,
+    setTargetMode,
   } = useArenaSocket();
 
   // ===== Tetris Game State =====
@@ -270,6 +421,10 @@ export default function ArenaGame() {
   const holdPieceRef = useRef(holdPiece);
   holdPieceRef.current = holdPiece;
 
+  // Stable ref for activeEffects to check score_boost in handlePieceLock
+  const activeEffectsRef = useRef(activeEffects);
+  activeEffectsRef.current = activeEffects;
+
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
     lockStartTimeRef.current = null;
     lockMovesRef.current = 0;
@@ -314,7 +469,12 @@ export default function ArenaGame() {
 
     // Score calculation
     const base = dropDistance * 2 + [0, 100, 300, 500, 800][cleared] * levelRef.current;
-    const finalScore = base * mult * Math.max(1, comboRef.current);
+    // Apply 2x multiplier if score_boost power-up is active
+    const hasScoreBoost = activeEffectsRef.current.some(
+      e => e.type === 'score_boost' && e.expiresAt > Date.now()
+    );
+    const boostMultiplier = hasScoreBoost ? 2 : 1;
+    const finalScore = base * mult * Math.max(1, comboRef.current) * boostMultiplier;
     setScore(prev => prev + finalScore);
 
     setLines(prev => {
@@ -554,6 +714,37 @@ export default function ArenaGame() {
           e.preventDefault();
           hardDrop();
           break;
+        case 'e':
+        case 'E':
+          e.preventDefault();
+          usePowerUp();
+          break;
+        case '1':
+          e.preventDefault();
+          sendEmote('gg');
+          break;
+        case '2':
+          e.preventDefault();
+          sendEmote('nice');
+          break;
+        case '3':
+          e.preventDefault();
+          sendEmote('rip');
+          break;
+        case '4':
+          e.preventDefault();
+          sendEmote('hype');
+          break;
+        case 'Tab':
+          e.preventDefault();
+          // Cycle target mode
+          {
+            const modes: TargetMode[] = ['random', 'ko_leader', 'nearest'];
+            const currentIdx = modes.indexOf(targetMode);
+            const nextMode = modes[(currentIdx + 1) % modes.length];
+            setTargetMode(nextMode);
+          }
+          break;
       }
     };
 
@@ -578,7 +769,7 @@ export default function ArenaGame() {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, [phase, isPlaying, gameOver, moveHorizontal, movePiece, rotatePiece,
-    hardDrop, holdCurrentPiece, setScore, keyStatesRef]);
+    hardDrop, holdCurrentPiece, setScore, keyStatesRef, usePowerUp, sendEmote, targetMode, setTargetMode]);
 
   // ===== Game Over → Notify Arena Server =====
   useEffect(() => {
@@ -914,6 +1105,12 @@ export default function ArenaGame() {
               <span>LV <span className={styles.arenaStatValue}>{level}</span></span>
             </div>
 
+            <PowerUpHUD
+              heldPowerUp={heldPowerUp}
+              activeEffects={activeEffects}
+              onUse={() => usePowerUp()}
+            />
+
             <div className={styles.tempoDisplay}>
               <div className={`${styles.beatIndicator} ${onBeat ? styles.onBeat : ''}`} />
               <div className={styles.bpmValue}>{Math.round(bpm)}</div>
@@ -953,10 +1150,17 @@ export default function ArenaGame() {
                 )}
               </div>
 
-              {/* Next piece */}
+              {/* Next piece + controls */}
               <div className={styles.arenaSidePanel}>
                 <div className={styles.arenaSidePanelLabel}>NEXT</div>
                 <PiecePreview pieceType={nextPiece || null} />
+                <TargetSelector
+                  currentMode={targetMode}
+                  opponents={opponents.map(o => ({ id: o.id, name: o.name, alive: o.alive }))}
+                  manualTargetId={manualTargetId}
+                  onSelectMode={setTargetMode}
+                />
+                <EmoteBar onSendEmote={sendEmote} />
               </div>
             </div>
 
@@ -965,29 +1169,41 @@ export default function ArenaGame() {
               {opponents.map((opp) => {
                 const oppBoard = opponentBoards.get(opp.id);
                 const oppSync = syncMap[opp.id] ?? 1.0;
+                const oppEmote = emoteMap.get(opp.id);
+                const isTargeted = (targetMode === 'manual' && manualTargetId === opp.id);
 
                 return (
                   <div
                     key={opp.id}
-                    className={`${styles.opponentMini} ${!opp.alive ? styles.eliminated : ''}`}
+                    className={`${styles.opponentMini} ${!opp.alive ? styles.eliminated : ''} ${isTargeted ? styles.targeted : ''}`}
+                    onClick={() => opp.alive && setTargetMode('manual', opp.id)}
                   >
-                    <div className={styles.opponentName}>{opp.name}</div>
-                    {oppBoard?.board ? (
-                      <MiniBoardView board={oppBoard.board} />
-                    ) : (
-                      <div className={styles.opponentMiniBoard}>
-                        {Array.from({ length: 10 }).map((_, ri) => (
-                          <div key={ri} className={styles.miniRow}>
-                            {Array.from({ length: 10 }).map((__, ci) => (
-                              <div key={ci} className={styles.miniCell} />
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className={styles.opponentName}>
+                      {opp.name}
+                      {isTargeted && <span className={styles.targetBadge}>TGT</span>}
+                    </div>
+                    <div className={styles.opponentBoardWrap}>
+                      {oppEmote && oppEmote.expiresAt > Date.now() && (
+                        <EmoteBubble emote={oppEmote.emote} />
+                      )}
+                      {oppBoard?.board ? (
+                        <MiniBoardView board={oppBoard.board} />
+                      ) : (
+                        <div className={styles.opponentMiniBoard}>
+                          {Array.from({ length: 10 }).map((_, ri) => (
+                            <div key={ri} className={styles.miniRow}>
+                              {Array.from({ length: 10 }).map((__, ci) => (
+                                <div key={ci} className={styles.miniCell} />
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className={styles.opponentStats}>
                       <span>{oppBoard?.score ?? 0}</span>
                       <span>{oppBoard?.lines ?? 0}L</span>
+                      <span>{opp.kills}KO</span>
                     </div>
                     <div className={styles.opponentSync}>
                       <div
@@ -1001,6 +1217,9 @@ export default function ArenaGame() {
             </div>
           </div>
 
+          {/* Event Feed */}
+          <EventFeed events={feedEvents} />
+
           {/* Overlays */}
           {showCollapse && <div className={styles.tempoCollapseOverlay} />}
           {showElimBanner && lastElimination && (
@@ -1008,6 +1227,13 @@ export default function ArenaGame() {
               {lastElimination.playerName} {t('eliminated')} #{lastElimination.placement}
             </div>
           )}
+
+          {/* Keyboard hints */}
+          <div className={styles.keyHints}>
+            <span>[E] {t('usePowerUp')}</span>
+            <span>[Tab] {t('cycleTarget')}</span>
+            <span>[1-4] {t('emote')}</span>
+          </div>
         </div>
       )}
 
@@ -1039,6 +1265,7 @@ export default function ArenaGame() {
                 <div className={styles.rankingName}>{r.playerName}</div>
                 <div className={styles.rankingStat}>{r.score} pts</div>
                 <div className={styles.rankingStat}>{r.kills} KO</div>
+                <div className={styles.rankingStat}>{r.powerUpsUsed} PWR</div>
                 <div className={styles.rankingStat}>{Math.round(r.avgSync * 100)}%</div>
               </div>
             ))}

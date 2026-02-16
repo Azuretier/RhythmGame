@@ -602,7 +602,10 @@
         "peakChaos": "最大カオス",
         "tempoCollapses": "崩壊回数",
         "lowestBpm": "最低BPM",
-        "backToLobby": "ロビーに戻る"
+        "backToLobby": "ロビーに戻る",
+        "usePowerUp": "パワーアップ",
+        "cycleTarget": "ターゲット",
+        "emote": "エモート"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
