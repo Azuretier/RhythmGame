@@ -421,6 +421,10 @@ export default function ArenaGame() {
   const holdPieceRef = useRef(holdPiece);
   holdPieceRef.current = holdPiece;
 
+  // Stable ref for activeEffects to check score_boost in handlePieceLock
+  const activeEffectsRef = useRef(activeEffects);
+  activeEffectsRef.current = activeEffects;
+
   const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
     lockStartTimeRef.current = null;
     lockMovesRef.current = 0;
@@ -465,7 +469,12 @@ export default function ArenaGame() {
 
     // Score calculation
     const base = dropDistance * 2 + [0, 100, 300, 500, 800][cleared] * levelRef.current;
-    const finalScore = base * mult * Math.max(1, comboRef.current);
+    // Apply 2x multiplier if score_boost power-up is active
+    const hasScoreBoost = activeEffectsRef.current.some(
+      e => e.type === 'score_boost' && e.expiresAt > Date.now()
+    );
+    const boostMultiplier = hasScoreBoost ? 2 : 1;
+    const finalScore = base * mult * Math.max(1, comboRef.current) * boostMultiplier;
     setScore(prev => prev + finalScore);
 
     setLines(prev => {
