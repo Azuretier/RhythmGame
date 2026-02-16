@@ -315,10 +315,10 @@ export default function RhythmiaPage() {
                         transition={{ duration: 0.7, delay: 0.3 }}
                     >
                         <h1>{t('lobby.selectServer')}</h1>
+                        {/* For You Section — personalized experience shown first */}
                         <p>{t('lobby.chooseMode')}</p>
                     </motion.div>
 
-                    {/* For You Section — personalized experience shown first */}
                     <div className={styles.serverGrid}>
                         {/* Rhythmia (Solo Mode) */}
                         <motion.div
