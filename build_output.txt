@@ -1,0 +1,20 @@
+笆ｲ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local
+
+笞 The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+笨・Compiled successfully in 3.2s
+  Running TypeScript ...
+Failed to compile.
+
+./deprecated/current/page.tsx:10:24
+Type error: Cannot find module '@/components/main/realistic-rain' or its corresponding type declarations.
+
+   8 | import { auth } from "@/lib/portfolio/firebase";
+   9 | import { Cake, GraduationCap, Send, Folder, Share2, ChevronRight, Star, Github, Youtube, Instagram, MessageCircle, Sun, Moon, MapPin, Mail, Globe, Sparkles, TrendingUp, Clock as ClockIcon, ExternalLink, User as UserIcon, BarChart3, Terminal, Settings, X, Minimize2, Maximize2, FolderOpen, Image as ImageIcon, Music, Film, BookOpen, Bot, Command, Zap, Shield, Heart, Code, HelpCircle, ChevronDown, ChevronUp, Copy, Check, ArrowLeft, ArrowRight, Layers, Server, Database, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Battery, BatteryCharging, Cpu, HardDrive, Thermometer, Users, Hash, Mic, Headphones, AtSign, Send as SendIcon, Smile, Paperclip, PenSquare, Calendar, Tag, Eye, ThumbsUp, MessageSquare as CommentIcon, Rss, Bookmark, MoreHorizontal, Wifi, Bluetooth, Monitor, Activity, Zap as ZapIcon } from "lucide-react"
+> 10 | import RainEffect from '@/components/main/realistic-rain';
+     |                        ^
+  11 | import WindowFrame from "@/components/portfolio/WindowFrame";
+  12 | import { signInAnonymously, onAuthStateChanged, User } from "firebase/auth";
+  13 | import { TerminalLineType, TRANSLATIONS, SNS_LINKS, MUSIC_TRACKS, THEMES, PROFILE_INFO, DISCORD_SERVERS, PROJECTS, VISITOR_DATA, NEWS_HEADLINES, AZURE_DOCS, BLOG_POSTS, TERMINAL_COMMANDS } from "@/components/portfolio/data";
+Next.js build worker exited with code: 1 and signal: null
