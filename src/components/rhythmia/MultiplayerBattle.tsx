@@ -1,1217 +1,961 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import styles from './MultiplayerBattle.module.css';
-import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/multiplayer';
-import type { FeatureSettings } from './tetris/types';
-import { DEFAULT_FEATURE_SETTINGS } from './tetris/types';
-import { FeatureCustomizer } from './tetris/components/FeatureCustomizer';
-import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
-import AdvancementToast from './AdvancementToast';
+import type { Player, BoardCell, ServerMessage, RelayPayload } from '@/types/multiplayer';
+import {
+    BOARD_WIDTH,
+    BOARD_HEIGHT,
+    COLORS,
+    TETROMINOES,
+    LOCK_DELAY,
+    MAX_LOCK_MOVES,
+    DEFAULT_DAS,
+    DEFAULT_ARR,
+    DEFAULT_SDF,
+    PIECE_TYPES,
+} from './tetris/constants';
+import type { Piece, Board, KeyState } from './tetris/types';
+import {
+    createEmptyBoard,
+    shuffleBag,
+    getShape,
+    isValidPosition,
+    tryRotation,
+    lockPiece,
+    clearLines,
+    createSpawnPiece,
+    getGhostY,
+} from './tetris/utils/boardUtils';
 
-// ===== Types =====
-type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
+// ===== Garbage Calculation =====
+// Standard competitive Tetris: 1-line=0, 2-line=1, 3-line=2, 4-line(Tetris)=4
+const GARBAGE_TABLE = [0, 0, 1, 2, 4];
 
-interface Piece {
-  type: PieceType;
-  rotation: 0 | 1 | 2 | 3;
-  x: number;
-  y: number;
+// ===== Seeded RNG for deterministic piece bags =====
+function seededRandom(seed: number): () => number {
+    let s = seed;
+    return () => {
+        s = (s * 1103515245 + 12345) & 0x7fffffff;
+        return s / 0x7fffffff;
+    };
 }
 
-interface Props {
-  ws: WebSocket;
-  roomCode: string;
-  playerId: string;
-  playerName: string;
-  opponents: Player[];
-  gameSeed: number;
-  onGameEnd: (winnerId: string) => void;
-  onBackToLobby: () => void;
-}
-
-// ===== Constants =====
-const W = 10;
-const H = 20;
-const BPM = 120;
-const LOCK_DELAY = 500;
-const MAX_LOCK_MOVES = 15;
-const DAS = 167; // Delayed Auto Shift
-const ARR = 33;  // Auto Repeat Rate
-const SOFT_DROP_SPEED = 50;
-const GARBAGE_COLOR = '#555555';
-
-const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
-
-const COLORS: Record<PieceType, string> = {
-  I: '#00F0F0',
-  O: '#F0F000',
-  T: '#A000F0',
-  S: '#00F000',
-  Z: '#F00000',
-  J: '#0000F0',
-  L: '#F0A000',
-};
-
-// All 4 rotation states for each piece (SRS)
-const SHAPES: Record<PieceType, number[][][]> = {
-  I: [
-    [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
-    [[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]],
-    [[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],
-    [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]],
-  ],
-  O: [
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-  ],
-  T: [
-    [[0,1,0],[1,1,1],[0,0,0]],
-    [[0,1,0],[0,1,1],[0,1,0]],
-    [[0,0,0],[1,1,1],[0,1,0]],
-    [[0,1,0],[1,1,0],[0,1,0]],
-  ],
-  S: [
-    [[0,1,1],[1,1,0],[0,0,0]],
-    [[0,1,0],[0,1,1],[0,0,1]],
-    [[0,0,0],[0,1,1],[1,1,0]],
-    [[1,0,0],[1,1,0],[0,1,0]],
-  ],
-  Z: [
-    [[1,1,0],[0,1,1],[0,0,0]],
-    [[0,0,1],[0,1,1],[0,1,0]],
-    [[0,0,0],[1,1,0],[0,1,1]],
-    [[0,1,0],[1,1,0],[1,0,0]],
-  ],
-  J: [
-    [[1,0,0],[1,1,1],[0,0,0]],
-    [[0,1,1],[0,1,0],[0,1,0]],
-    [[0,0,0],[1,1,1],[0,0,1]],
-    [[0,1,0],[0,1,0],[1,1,0]],
-  ],
-  L: [
-    [[0,0,1],[1,1,1],[0,0,0]],
-    [[0,1,0],[0,1,0],[0,1,1]],
-    [[0,0,0],[1,1,1],[1,0,0]],
-    [[1,1,0],[0,1,0],[0,1,0]],
-  ],
-};
-
-// SRS Wall Kick Data
-const ROTATION_NAMES = ['0', 'R', '2', 'L'] as const;
-
-const WALL_KICK_JLSTZ: Record<string, [number, number][]> = {
-  '0->R': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
-  'R->2': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
-  '2->L': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
-  'L->0': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
-  'R->0': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
-  '2->R': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
-  'L->2': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
-  '0->L': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
-};
-
-const WALL_KICK_I: Record<string, [number, number][]> = {
-  '0->R': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
-  'R->2': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
-  '2->L': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
-  'L->0': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
-  'R->0': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
-  '2->R': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
-  'L->2': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
-  '0->L': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
-};
-
-// ===== Seeded RNG =====
-function createRNG(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    return s / 0x7fffffff;
-  };
-}
-
-// ===== 7-Bag Randomizer =====
-function create7Bag(rng: () => number) {
-  let bag: PieceType[] = [];
-
-  return (): PieceType => {
-    if (bag.length === 0) {
-      bag = [...PIECE_TYPES];
-      // Fisher-Yates shuffle
-      for (let i = bag.length - 1; i > 0; i--) {
+function seededShuffleBag(rng: () => number): string[] {
+    const pieces = [...PIECE_TYPES];
+    for (let i = pieces.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
-        [bag[i], bag[j]] = [bag[j], bag[i]];
-      }
+        [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
     }
-    return bag.pop()!;
-  };
+    return pieces;
 }
 
-// ===== Helper Functions =====
-function getShape(type: PieceType, rotation: number): number[][] {
-  return SHAPES[type][rotation];
+// ===== Opponent Board State =====
+interface OpponentState {
+    board: (BoardCell | null)[][];
+    score: number;
+    lines: number;
+    combo: number;
+    piece?: string;
+    hold?: string | null;
+    dead: boolean;
 }
 
-function createEmptyBoard(): (BoardCell | null)[][] {
-  return Array.from({ length: H }, () => Array(W).fill(null));
-}
-
-function isValid(piece: Piece, board: (BoardCell | null)[][]): boolean {
-  const shape = getShape(piece.type, piece.rotation);
-  for (let y = 0; y < shape.length; y++) {
-    for (let x = 0; x < shape[y].length; x++) {
-      if (shape[y][x]) {
-        const nx = piece.x + x;
-        const ny = piece.y + y;
-        if (nx < 0 || nx >= W || ny >= H) return false;
-        if (ny >= 0 && board[ny][nx]) return false;
-      }
-    }
-  }
-  return true;
-}
-
-function getWallKicks(type: PieceType, from: number, to: number): [number, number][] {
-  const key = `${ROTATION_NAMES[from]}->${ROTATION_NAMES[to]}`;
-  if (type === 'I') return WALL_KICK_I[key] || [[0, 0]];
-  if (type === 'O') return [[0, 0]];
-  return WALL_KICK_JLSTZ[key] || [[0, 0]];
-}
-
-function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][]): Piece | null {
-  const toRotation = ((piece.rotation + direction + 4) % 4) as 0 | 1 | 2 | 3;
-  const kicks = getWallKicks(piece.type, piece.rotation, toRotation);
-
-  for (const [dx, dy] of kicks) {
-    const test: Piece = { ...piece, rotation: toRotation, x: piece.x + dx, y: piece.y - dy };
-    if (isValid(test, board)) return test;
-  }
-  return null;
-}
-
-function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
-  const newBoard = board.map(row => [...row]);
-  const shape = getShape(piece.type, piece.rotation);
-  const color = COLORS[piece.type];
-
-  for (let y = 0; y < shape.length; y++) {
-    for (let x = 0; x < shape[y].length; x++) {
-      if (shape[y][x]) {
-        const ny = piece.y + y;
-        const nx = piece.x + x;
-        if (ny >= 0 && ny < H && nx >= 0 && nx < W) {
-          newBoard[ny][nx] = { color };
-        }
-      }
-    }
-  }
-  return newBoard;
-}
-
-function clearLines(board: (BoardCell | null)[][]): { board: (BoardCell | null)[][]; cleared: number } {
-  const remaining = board.filter(row => row.some(cell => cell === null));
-  const cleared = H - remaining.length;
-  while (remaining.length < H) {
-    remaining.unshift(Array(W).fill(null));
-  }
-  return { board: remaining, cleared };
-}
-
-function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
-  let gy = piece.y;
-  while (isValid({ ...piece, y: gy + 1 }, board)) gy++;
-  return gy;
-}
-
-function addGarbageLines(board: (BoardCell | null)[][], count: number, rng: () => number): (BoardCell | null)[][] {
-  if (count <= 0) return board;
-  const newBoard = board.slice(count);
-  for (let i = 0; i < count; i++) {
-    const row: (BoardCell | null)[] = Array(W).fill({ color: GARBAGE_COLOR } as BoardCell);
-    const gap = Math.floor(rng() * W);
-    row[gap] = null;
-    newBoard.push(row);
-  }
-  return newBoard;
+// ===== Props Interface =====
+interface MultiplayerBattleProps {
+    ws: WebSocket;
+    roomCode: string;
+    playerId: string;
+    playerName: string;
+    opponents: Player[];
+    gameSeed: number;
+    onGameEnd: (winnerId: string) => void;
+    onBackToLobby: () => void;
 }
 
 // ===== Component =====
-export const MultiplayerBattle: React.FC<Props> = ({
-  ws,
-  roomCode,
-  playerId,
-  playerName,
-  opponents,
-  gameSeed,
-  onGameEnd,
-  onBackToLobby,
-}) => {
-  const opponent = opponents[0];
+export default function MultiplayerBattle({
+    ws,
+    roomCode,
+    playerId,
+    playerName,
+    opponents,
+    gameSeed,
+    onGameEnd,
+    onBackToLobby,
+}: MultiplayerBattleProps) {
+    // ===== Local Game State =====
+    const [board, setBoard] = useState<Board>(createEmptyBoard);
+    const [currentPiece, setCurrentPiece] = useState<Piece | null>(null);
+    const [nextPieceType, setNextPieceType] = useState('');
+    const [holdPieceType, setHoldPieceType] = useState<string | null>(null);
+    const [canHold, setCanHold] = useState(true);
+    const [score, setScore] = useState(0);
+    const [lines, setLines] = useState(0);
+    const [level, setLevel] = useState(1);
+    const [combo, setCombo] = useState(0);
+    const [gameOver, setGameOver] = useState(false);
+    const [gameEnded, setGameEnded] = useState(false);
+    const [winnerId, setWinnerId] = useState<string | null>(null);
 
-  // Game state
-  const boardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
-  const pieceRef = useRef<Piece | null>(null);
-  const holdRef = useRef<PieceType | null>(null);
-  const holdUsedRef = useRef(false);
-  const nextQueueRef = useRef<PieceType[]>([]);
-  const scoreRef = useRef(0);
-  const comboRef = useRef(0);
-  const linesRef = useRef(0);
-  const gameOverRef = useRef(false);
-  const lockTimerRef = useRef<number | null>(null);
-  const lockMovesRef = useRef(0);
-  const isOnGroundRef = useRef(false);
-  const pendingGarbageRef = useRef(0);
+    // Garbage queue (pending lines to be added when next piece locks)
+    const [garbageQueue, setGarbageQueue] = useState(0);
 
-  // Per-game stat tracking for advancements
-  const gameHardDropsRef = useRef(0);
-  const gamePiecesPlacedRef = useRef(0);
-  const advRecordedRef = useRef(false);
-  const liveNotifiedRef = useRef<Set<string>>(new Set());
-  const [toastIds, setToastIds] = useState<string[]>([]);
-
-  // Feature settings (persisted in localStorage)
-  const [featureSettings, setFeatureSettings] = useState<FeatureSettings>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('rhythmia_features');
-        if (stored) return { ...DEFAULT_FEATURE_SETTINGS, ...JSON.parse(stored) };
-      } catch { /* ignore */ }
-    }
-    return DEFAULT_FEATURE_SETTINGS;
-  });
-  const [showFeatures, setShowFeatures] = useState(false);
-
-  const handleFeatureSettingsUpdate = useCallback((newSettings: FeatureSettings) => {
-    setFeatureSettings(newSettings);
-    try { localStorage.setItem('rhythmia_features', JSON.stringify(newSettings)); } catch { /* ignore */ }
-  }, []);
-
-  // Opponent state
-  const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
-  const opponentScoreRef = useRef(0);
-  const opponentLinesRef = useRef(0);
-
-  // For re-rendering
-  const [, forceRender] = useState(0);
-  const render = useCallback(() => forceRender(c => c + 1), []);
-
-  // RNG
-  const rngRef = useRef(createRNG(gameSeed));
-  const bagRef = useRef(create7Bag(rngRef.current));
-  const garbageRngRef = useRef(createRNG(gameSeed + 1));
-
-  // Rhythm
-  const lastBeatRef = useRef(Date.now());
-  const beatPhaseRef = useRef(0);
-
-  // Audio
-  const audioCtxRef = useRef<AudioContext | null>(null);
-
-  // Timers
-  const dropTimerRef = useRef<number | null>(null);
-  const beatTimerRef = useRef<number | null>(null);
-  const beatAnimRef = useRef<number | null>(null);
-  const syncTimerRef = useRef<number | null>(null);
-
-  // Input state
-  const keysRef = useRef<Set<string>>(new Set());
-  const dasTimerRef = useRef<number | null>(null);
-  const arrTimerRef = useRef<number | null>(null);
-  const softDropTimerRef = useRef<number | null>(null);
-  const lastDirRef = useRef<string>('');
-
-  // ===== Audio =====
-  const initAudio = useCallback(() => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    }
-  }, []);
-
-  const playTone = useCallback((freq: number, dur = 0.1, type: OscillatorType = 'sine') => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = type;
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + dur);
-    } catch {}
-  }, []);
-
-  const playDrum = useCallback(() => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(150, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.4, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.1);
-    } catch {}
-  }, []);
-
-  const playLineClear = useCallback((count: number) => {
-    const freqs = [523, 659, 784, 1047];
-    freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
-  }, [playTone]);
-
-  // ===== Relay =====
-  const sendRelay = useCallback((payload: RelayPayload) => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'relay', payload }));
-    }
-  }, [ws]);
-
-  const sendBoardUpdate = useCallback(() => {
-    sendRelay({
-      event: 'board_update',
-      board: boardRef.current,
-      score: scoreRef.current,
-      lines: linesRef.current,
-      combo: comboRef.current,
-      piece: pieceRef.current?.type,
-      hold: holdRef.current,
+    // Opponent states
+    const [opponentStates, setOpponentStates] = useState<Record<string, OpponentState>>(() => {
+        const states: Record<string, OpponentState> = {};
+        for (const opp of opponents) {
+            states[opp.id] = {
+                board: Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null)),
+                score: 0,
+                lines: 0,
+                combo: 0,
+                dead: false,
+            };
+        }
+        return states;
     });
-  }, [sendRelay]);
 
-  const sendGarbage = useCallback((lines: number) => {
-    if (lines > 0) {
-      sendRelay({ event: 'garbage', lines });
-    }
-  }, [sendRelay]);
+    // ===== Refs for game loop access =====
+    const boardRef = useRef<Board>(createEmptyBoard());
+    const currentPieceRef = useRef<Piece | null>(null);
+    const pieceBagRef = useRef<string[]>([]);
+    const nextPieceTypeRef = useRef('');
+    const holdPieceTypeRef = useRef<string | null>(null);
+    const canHoldRef = useRef(true);
+    const scoreRef = useRef(0);
+    const linesRef = useRef(0);
+    const levelRef = useRef(1);
+    const comboRef = useRef(0);
+    const gameOverRef = useRef(false);
+    const gameEndedRef = useRef(false);
+    const garbageQueueRef = useRef(0);
 
-  const sendGameOver = useCallback(() => {
-    sendRelay({ event: 'game_over' });
-  }, [sendRelay]);
+    // RNG for deterministic bags
+    const rngRef = useRef(seededRandom(gameSeed));
 
-  // ===== Piece Queue =====
-  const fillQueue = useCallback(() => {
-    while (nextQueueRef.current.length < 5) {
-      nextQueueRef.current.push(bagRef.current());
-    }
-  }, []);
+    // DAS/ARR/SDF
+    const dasRef = useRef(DEFAULT_DAS);
+    const arrRef = useRef(DEFAULT_ARR);
+    const sdfRef = useRef(DEFAULT_SDF);
 
-  const spawnPiece = useCallback((): boolean => {
-    fillQueue();
-    const type = nextQueueRef.current.shift()!;
-    fillQueue();
-
-    const shape = getShape(type, 0);
-    const piece: Piece = {
-      type,
-      rotation: 0,
-      x: Math.floor((W - shape[0].length) / 2),
-      y: type === 'I' ? -1 : 0,
-    };
-
-    if (!isValid(piece, boardRef.current)) {
-      // Game over - can't spawn (we lost)
-      gameOverRef.current = true;
-      sendGameOver();
-      if (!advRecordedRef.current) {
-        advRecordedRef.current = true;
-        const result = recordMultiplayerGameEnd({
-          score: scoreRef.current,
-          lines: linesRef.current,
-          won: false,
-          hardDrops: gameHardDropsRef.current,
-          piecesPlaced: gamePiecesPlacedRef.current,
-        });
-        if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
-      }
-      onGameEnd(opponent?.id || '');
-      render();
-      return false;
-    }
-
-    pieceRef.current = piece;
-    holdUsedRef.current = false;
-    lockMovesRef.current = 0;
-    isOnGroundRef.current = false;
-    if (lockTimerRef.current) {
-      clearTimeout(lockTimerRef.current);
-      lockTimerRef.current = null;
-    }
-    render();
-    return true;
-  }, [fillQueue, sendGameOver, onGameEnd, opponent, render]);
-
-  // ===== Lock Delay =====
-  const startLockTimer = useCallback(() => {
-    if (lockTimerRef.current) return;
-    lockTimerRef.current = window.setTimeout(() => {
-      lockTimerRef.current = null;
-      performLock();
-    }, LOCK_DELAY);
-  }, []);
-
-  const resetLockTimer = useCallback(() => {
-    if (lockMovesRef.current >= MAX_LOCK_MOVES) return;
-    lockMovesRef.current++;
-    if (lockTimerRef.current) {
-      clearTimeout(lockTimerRef.current);
-      lockTimerRef.current = null;
-    }
-    // If still on ground, restart
-    if (pieceRef.current && !isValid({ ...pieceRef.current, y: pieceRef.current.y + 1 }, boardRef.current)) {
-      startLockTimer();
-    }
-  }, [startLockTimer]);
-
-  // Stable callback for toast dismiss — avoids resetting the toast timer on every render
-  const dismissToast = useCallback(() => setToastIds([]), []);
-
-  // Push-based live advancement check — runs every performLock(), instant toast
-  const pushLiveAdvancementCheck = useCallback(() => {
-    const qualifying = checkLiveMultiplayerAdvancements({
-      score: scoreRef.current,
-      lines: linesRef.current,
-      won: false,
-      hardDrops: gameHardDropsRef.current,
-      piecesPlaced: gamePiecesPlacedRef.current,
+    // Key states
+    const keyStatesRef = useRef<Record<string, KeyState>>({
+        left: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+        right: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
+        down: { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 },
     });
-    const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
-    if (fresh.length > 0) {
-      fresh.forEach(id => liveNotifiedRef.current.add(id));
-      setToastIds(prev => [...prev, ...fresh]);
-      // Instantly persist unlocks so progress survives mid-game exits
-      saveLiveUnlocks(fresh);
-    }
-  }, []);
 
-  // ===== Core Game Logic =====
-  const performLock = useCallback(() => {
-    const piece = pieceRef.current;
-    if (!piece || gameOverRef.current) return;
+    // Game loop refs
+    const gameLoopRef = useRef<number | null>(null);
+    const lastGravityRef = useRef(0);
+    const lockStartTimeRef = useRef<number | null>(null);
+    const lockMovesRef = useRef(0);
 
-    if (lockTimerRef.current) {
-      clearTimeout(lockTimerRef.current);
-      lockTimerRef.current = null;
-    }
+    // Relay throttle
+    const lastRelayRef = useRef(0);
+    const RELAY_INTERVAL = 100; // ms
 
-    // Check if piece is above board
-    const shape = getShape(piece.type, piece.rotation);
-    let aboveBoard = false;
-    for (let y = 0; y < shape.length; y++) {
-      for (let x = 0; x < shape[y].length; x++) {
-        if (shape[y][x] && piece.y + y < 0) {
-          aboveBoard = true;
+    // ===== Keep refs in sync =====
+    useEffect(() => { boardRef.current = board; }, [board]);
+    useEffect(() => { currentPieceRef.current = currentPiece; }, [currentPiece]);
+    useEffect(() => { scoreRef.current = score; }, [score]);
+    useEffect(() => { linesRef.current = lines; }, [lines]);
+    useEffect(() => { levelRef.current = level; }, [level]);
+    useEffect(() => { comboRef.current = combo; }, [combo]);
+    useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
+    useEffect(() => { gameEndedRef.current = gameEnded; }, [gameEnded]);
+    useEffect(() => { garbageQueueRef.current = garbageQueue; }, [garbageQueue]);
+
+    // ===== WebSocket Send =====
+    const send = useCallback((data: object) => {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(data));
         }
-      }
-    }
+    }, [ws]);
 
-    if (aboveBoard) {
-      gameOverRef.current = true;
-      sendGameOver();
-      if (!advRecordedRef.current) {
-        advRecordedRef.current = true;
-        const result = recordMultiplayerGameEnd({
-          score: scoreRef.current,
-          lines: linesRef.current,
-          won: false,
-          hardDrops: gameHardDropsRef.current,
-          piecesPlaced: gamePiecesPlacedRef.current,
+    const sendRelay = useCallback((payload: RelayPayload) => {
+        send({ type: 'relay', payload });
+    }, [send]);
+
+    // ===== Piece Bag System =====
+    const getNextFromBag = useCallback((): string => {
+        if (pieceBagRef.current.length === 0) {
+            pieceBagRef.current = seededShuffleBag(rngRef.current);
+        }
+        return pieceBagRef.current.shift()!;
+    }, []);
+
+    // ===== Spawn Piece =====
+    const spawnPiece = useCallback((): Piece | null => {
+        const type = nextPieceTypeRef.current;
+        const newPiece = createSpawnPiece(type);
+
+        const nextType = getNextFromBag();
+        setNextPieceType(nextType);
+        nextPieceTypeRef.current = nextType;
+        setCanHold(true);
+        canHoldRef.current = true;
+
+        if (!isValidPosition(newPiece, boardRef.current)) {
+            return null; // topped out
+        }
+
+        return newPiece;
+    }, [getNextFromBag]);
+
+    // ===== Apply Garbage =====
+    const applyGarbage = useCallback((count: number, boardState: Board): Board => {
+        if (count <= 0) return boardState;
+        const newBoard = boardState.map(row => [...row]);
+        // Remove top rows
+        for (let i = 0; i < count; i++) {
+            newBoard.shift();
+        }
+        // Add garbage rows at bottom with one random gap
+        for (let i = 0; i < count; i++) {
+            const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+            const garbageRow: (string | null)[] = Array(BOARD_WIDTH).fill('G');
+            garbageRow[gapCol] = null;
+            newBoard.push(garbageRow);
+        }
+        return newBoard;
+    }, []);
+
+    // ===== Relay Board State =====
+    const relayBoardState = useCallback(() => {
+        const now = Date.now();
+        if (now - lastRelayRef.current < RELAY_INTERVAL) return;
+        lastRelayRef.current = now;
+
+        const piece = currentPieceRef.current;
+        // Convert board to BoardCell format for relay
+        const relayBoard: (BoardCell | null)[][] = boardRef.current.map(row =>
+            row.map(cell => (cell ? { color: COLORS[cell] || cell } : null))
+        );
+
+        sendRelay({
+            event: 'board_update',
+            board: relayBoard,
+            score: scoreRef.current,
+            lines: linesRef.current,
+            combo: comboRef.current,
+            piece: piece?.type,
+            hold: holdPieceTypeRef.current,
         });
-        if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
-      }
-      onGameEnd(opponent?.id || '');
-      render();
-      return;
-    }
+    }, [sendRelay]);
 
-    // Beat judgment
-    const phase = beatPhaseRef.current;
-    const onBeat = phase > 0.8 || phase < 0.12;
-    let mult = 1;
+    // ===== Handle Piece Lock =====
+    const handlePieceLock = useCallback((piece: Piece, dropDistance = 0) => {
+        lockStartTimeRef.current = null;
+        lockMovesRef.current = 0;
 
-    if (onBeat) {
-      mult = 2;
-      comboRef.current++;
-      playTone(1047, 0.15, 'triangle');
-    } else {
-      comboRef.current = 0;
-    }
+        const newBoard = lockPiece(piece, boardRef.current);
+        const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
 
-    // Track pieces placed
-    gamePiecesPlacedRef.current++;
-
-    // Lock to board
-    let newBoard = lockPiece(piece, boardRef.current);
-
-    // Apply pending garbage before clearing
-    const garbage = pendingGarbageRef.current;
-    if (garbage > 0) {
-      newBoard = addGarbageLines(newBoard, garbage, garbageRngRef.current);
-      pendingGarbageRef.current = 0;
-    }
-
-    // Clear lines
-    const { board: clearedBoard, cleared } = clearLines(newBoard);
-    boardRef.current = clearedBoard;
-
-    if (cleared > 0) {
-      const base = [0, 100, 300, 500, 800][cleared];
-      const pts = base * mult * Math.max(1, comboRef.current);
-      scoreRef.current += pts;
-      linesRef.current += cleared;
-
-      // Send garbage
-      const garbageToSend = [0, 0, 1, 2, 4][cleared] + Math.floor(comboRef.current / 3);
-      sendGarbage(garbageToSend);
-      playLineClear(cleared);
-    }
-
-    pieceRef.current = null;
-
-    // Live advancement check after stats update
-    pushLiveAdvancementCheck();
-
-    // Send state update
-    sendBoardUpdate();
-
-    // Spawn next piece
-    spawnPiece();
-  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playTone, spawnPiece, render, pushLiveAdvancementCheck]);
-
-  // Wire up startLockTimer -> performLock circular dependency
-  // performLock is already defined, we just need to ensure startLockTimer calls it
-  const startLockTimerRef = useRef(startLockTimer);
-  startLockTimerRef.current = startLockTimer;
-
-  const performLockRef = useRef(performLock);
-  performLockRef.current = performLock;
-
-  // ===== Movement =====
-  const moveHorizontal = useCallback((dx: number) => {
-    const piece = pieceRef.current;
-    if (!piece || gameOverRef.current) return false;
-
-    const moved = { ...piece, x: piece.x + dx };
-    if (isValid(moved, boardRef.current)) {
-      pieceRef.current = moved;
-      playTone(392, 0.04, 'square');
-
-      // Check if piece is now on ground
-      const onGround = !isValid({ ...moved, y: moved.y + 1 }, boardRef.current);
-      if (onGround) {
-        resetLockTimer();
-      } else if (lockTimerRef.current) {
-        // Moved off ground
-        clearTimeout(lockTimerRef.current);
-        lockTimerRef.current = null;
-      }
-
-      render();
-      return true;
-    }
-    return false;
-  }, [playTone, resetLockTimer, render]);
-
-  const moveDown = useCallback((): boolean => {
-    const piece = pieceRef.current;
-    if (!piece || gameOverRef.current) return false;
-
-    const moved = { ...piece, y: piece.y + 1 };
-    if (isValid(moved, boardRef.current)) {
-      pieceRef.current = moved;
-
-      // Check if landed
-      if (!isValid({ ...moved, y: moved.y + 1 }, boardRef.current)) {
-        if (!isOnGroundRef.current) {
-          isOnGroundRef.current = true;
-          startLockTimer();
+        // Apply pending garbage AFTER clearing
+        const garbage = garbageQueueRef.current;
+        let finalBoard = clearedBoard;
+        if (garbage > 0 && clearedLines === 0) {
+            finalBoard = applyGarbage(garbage, clearedBoard);
+            setGarbageQueue(0);
+            garbageQueueRef.current = 0;
+        } else if (garbage > 0 && clearedLines > 0) {
+            // Cancel out garbage with cleared lines
+            const remaining = Math.max(0, garbage - clearedLines);
+            setGarbageQueue(remaining);
+            garbageQueueRef.current = remaining;
         }
-      }
 
-      render();
-      return true;
-    } else {
-      // Can't move down - start lock if not already
-      if (!isOnGroundRef.current) {
-        isOnGroundRef.current = true;
-        startLockTimer();
-      }
-      return false;
-    }
-  }, [startLockTimer, render]);
+        setBoard(finalBoard);
+        boardRef.current = finalBoard;
 
-  const rotatePiece = useCallback((direction: 1 | -1) => {
-    const piece = pieceRef.current;
-    if (!piece || gameOverRef.current) return;
+        // Score
+        const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * levelRef.current;
+        const newCombo = clearedLines > 0 ? comboRef.current + 1 : 0;
+        setCombo(newCombo);
+        comboRef.current = newCombo;
+        const finalScore = baseScore * Math.max(1, newCombo);
+        setScore(prev => prev + finalScore);
 
-    const rotated = tryRotate(piece, direction, boardRef.current);
-    if (rotated) {
-      pieceRef.current = rotated;
-      playTone(523, 0.06);
+        // Lines & Level
+        if (clearedLines > 0) {
+            setLines(prev => {
+                const newLines = prev + clearedLines;
+                const newLevel = Math.floor(newLines / 10) + 1;
+                setLevel(newLevel);
+                levelRef.current = newLevel;
+                linesRef.current = newLines;
+                return newLines;
+            });
 
-      const onGround = !isValid({ ...rotated, y: rotated.y + 1 }, boardRef.current);
-      if (onGround) {
-        resetLockTimer();
-      } else if (lockTimerRef.current) {
-        clearTimeout(lockTimerRef.current);
-        lockTimerRef.current = null;
-        isOnGroundRef.current = false;
-      }
-
-      render();
-    }
-  }, [playTone, resetLockTimer, render]);
-
-  const hardDrop = useCallback(() => {
-    const piece = pieceRef.current;
-    if (!piece || gameOverRef.current) return;
-
-    gameHardDropsRef.current++;
-    const gy = getGhostY(piece, boardRef.current);
-    const dropDist = gy - piece.y;
-    pieceRef.current = { ...piece, y: gy };
-    scoreRef.current += dropDist * 2;
-    playTone(196, 0.08, 'sawtooth');
-    performLockRef.current();
-  }, [playTone]);
-
-  const holdPiece = useCallback(() => {
-    const piece = pieceRef.current;
-    if (!piece || gameOverRef.current || holdUsedRef.current) return;
-
-    holdUsedRef.current = true;
-    const prevHold = holdRef.current;
-    holdRef.current = piece.type;
-
-    if (prevHold) {
-      const shape = getShape(prevHold, 0);
-      pieceRef.current = {
-        type: prevHold,
-        rotation: 0,
-        x: Math.floor((W - shape[0].length) / 2),
-        y: prevHold === 'I' ? -1 : 0,
-      };
-      lockMovesRef.current = 0;
-      isOnGroundRef.current = false;
-      if (lockTimerRef.current) {
-        clearTimeout(lockTimerRef.current);
-        lockTimerRef.current = null;
-      }
-    } else {
-      pieceRef.current = null;
-      spawnPiece();
-    }
-
-    playTone(440, 0.08);
-    render();
-  }, [spawnPiece, playTone, render]);
-
-  // ===== WebSocket Message Handler =====
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      try {
-        const msg: ServerMessage = JSON.parse(event.data);
-        if (msg.type === 'relayed' && msg.fromPlayerId !== playerId) {
-          const payload = msg.payload;
-          if (payload.event === 'board_update') {
-            opponentBoardRef.current = payload.board;
-            opponentScoreRef.current = payload.score;
-            opponentLinesRef.current = payload.lines;
-            render();
-          } else if (payload.event === 'garbage') {
-            pendingGarbageRef.current += payload.lines;
-            render();
-          } else if (payload.event === 'game_over') {
-            if (!gameOverRef.current) {
-              gameOverRef.current = true;
-              if (!advRecordedRef.current) {
-                advRecordedRef.current = true;
-                const result = recordMultiplayerGameEnd({
-                  score: scoreRef.current,
-                  lines: linesRef.current,
-                  won: true,
-                  hardDrops: gameHardDropsRef.current,
-                  piecesPlaced: gamePiecesPlacedRef.current,
-                });
-                if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
-              }
-              onGameEnd(playerId);
-              render();
+            // Send garbage to opponents
+            const garbageToSend = GARBAGE_TABLE[Math.min(clearedLines, 4)];
+            if (garbageToSend > 0) {
+                sendRelay({ event: 'garbage', lines: garbageToSend });
             }
-          }
-        } else if (msg.type === 'ping') {
-          ws.send(JSON.stringify({ type: 'pong' }));
         }
-      } catch {}
-    };
 
-    ws.addEventListener('message', handler);
-    return () => ws.removeEventListener('message', handler);
-  }, [ws, playerId, onGameEnd, render]);
+        // Spawn next piece
+        const spawned = spawnPiece();
+        if (!spawned) {
+            // Topped out
+            setGameOver(true);
+            gameOverRef.current = true;
+            sendRelay({ event: 'game_over' });
+            return;
+        }
 
-  // ===== Initialize Game =====
-  useEffect(() => {
-    initAudio();
+        setCurrentPiece(spawned);
+        currentPieceRef.current = spawned;
 
-    // Reset state
-    boardRef.current = createEmptyBoard();
-    pieceRef.current = null;
-    holdRef.current = null;
-    holdUsedRef.current = false;
-    nextQueueRef.current = [];
-    scoreRef.current = 0;
-    comboRef.current = 0;
-    linesRef.current = 0;
-    gameOverRef.current = false;
-    pendingGarbageRef.current = 0;
-    gameHardDropsRef.current = 0;
-    gamePiecesPlacedRef.current = 0;
-    advRecordedRef.current = false;
-    liveNotifiedRef.current = new Set();
-    setToastIds([]);
-    opponentBoardRef.current = createEmptyBoard();
-    opponentScoreRef.current = 0;
-    opponentLinesRef.current = 0;
+        // Relay board state
+        relayBoardState();
+    }, [applyGarbage, sendRelay, spawnPiece, relayBoardState]);
 
-    // Reset RNG
-    rngRef.current = createRNG(gameSeed);
-    bagRef.current = create7Bag(rngRef.current);
-    garbageRngRef.current = createRNG(gameSeed + 1);
+    const handlePieceLockRef = useRef(handlePieceLock);
+    handlePieceLockRef.current = handlePieceLock;
 
-    lastBeatRef.current = Date.now();
+    // ===== Movement Functions =====
+    const movePiece = useCallback((dx: number, dy: number): boolean => {
+        const piece = currentPieceRef.current;
+        if (!piece || gameOverRef.current) return false;
 
-    // Fill queue and spawn first piece
-    fillQueue();
-    spawnPiece();
+        const newPiece: Piece = { ...piece, x: piece.x + dx, y: piece.y + dy };
+        if (isValidPosition(newPiece, boardRef.current)) {
+            setCurrentPiece(newPiece);
+            currentPieceRef.current = newPiece;
+            return true;
+        }
+        return false;
+    }, []);
 
-    // Send initial state
-    setTimeout(() => sendBoardUpdate(), 100);
-
-    return () => {
-      if (lockTimerRef.current) clearTimeout(lockTimerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameSeed]);
-
-  // ===== Drop Timer =====
-  useEffect(() => {
-    if (gameOverRef.current) return;
-
-    const level = Math.floor(linesRef.current / 10) + 1;
-    const speed = Math.max(100, 1000 - (level - 1) * 80);
-
-    dropTimerRef.current = window.setInterval(() => {
-      if (!gameOverRef.current) {
-        moveDown();
-      }
-    }, speed);
-
-    return () => {
-      if (dropTimerRef.current) clearInterval(dropTimerRef.current);
-    };
-  }, [moveDown]);
-
-  // ===== Beat Timer =====
-  useEffect(() => {
-    if (gameOverRef.current) return;
-
-    const interval = 60000 / BPM;
-    lastBeatRef.current = Date.now();
-
-    beatTimerRef.current = window.setInterval(() => {
-      lastBeatRef.current = Date.now();
-      playDrum();
-    }, interval);
-
-    return () => {
-      if (beatTimerRef.current) clearInterval(beatTimerRef.current);
-    };
-  }, [playDrum]);
-
-  // ===== Beat Phase Animation =====
-  useEffect(() => {
-    if (gameOverRef.current) return;
-
-    const update = () => {
-      if (!gameOverRef.current) {
-        const interval = 60000 / BPM;
-        const elapsed = Date.now() - lastBeatRef.current;
-        beatPhaseRef.current = (elapsed % interval) / interval;
-        beatAnimRef.current = requestAnimationFrame(update);
-      }
-    };
-    beatAnimRef.current = requestAnimationFrame(update);
-
-    return () => {
-      if (beatAnimRef.current) cancelAnimationFrame(beatAnimRef.current);
-    };
-  }, []);
-
-  // ===== Periodic Board Sync =====
-  useEffect(() => {
-    if (gameOverRef.current) return;
-
-    syncTimerRef.current = window.setInterval(() => {
-      if (!gameOverRef.current) {
-        sendBoardUpdate();
-      }
-    }, 500);
-
-    return () => {
-      if (syncTimerRef.current) clearInterval(syncTimerRef.current);
-    };
-  }, [sendBoardUpdate]);
-
-  // ===== Keyboard Controls =====
-  useEffect(() => {
-    const clearDAS = () => {
-      if (dasTimerRef.current) { clearTimeout(dasTimerRef.current); dasTimerRef.current = null; }
-      if (arrTimerRef.current) { clearInterval(arrTimerRef.current); arrTimerRef.current = null; }
-    };
-
-    const startDAS = (dir: string, dx: number) => {
-      clearDAS();
-      lastDirRef.current = dir;
-      moveHorizontal(dx);
-      dasTimerRef.current = window.setTimeout(() => {
-        dasTimerRef.current = null;
-        arrTimerRef.current = window.setInterval(() => moveHorizontal(dx), ARR);
-      }, DAS);
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (gameOverRef.current) return;
-      if (keysRef.current.has(e.key)) return;
-      keysRef.current.add(e.key);
-
-      switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault();
-          startDAS('left', -1);
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          startDAS('right', 1);
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          softDropTimerRef.current = window.setInterval(() => moveDown(), SOFT_DROP_SPEED);
-          break;
-        case 'ArrowUp':
-        case 'x':
-        case 'X':
-          e.preventDefault();
-          rotatePiece(1);
-          break;
-        case 'z':
-        case 'Z':
-        case 'Control':
-          e.preventDefault();
-          rotatePiece(-1);
-          break;
-        case ' ':
-          e.preventDefault();
-          hardDrop();
-          break;
-        case 'Shift':
-        case 'c':
-        case 'C':
-          e.preventDefault();
-          holdPiece();
-          break;
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      keysRef.current.delete(e.key);
-
-      switch (e.key) {
-        case 'ArrowLeft':
-          if (lastDirRef.current === 'left') clearDAS();
-          break;
-        case 'ArrowRight':
-          if (lastDirRef.current === 'right') clearDAS();
-          break;
-        case 'ArrowDown':
-          if (softDropTimerRef.current) {
-            clearInterval(softDropTimerRef.current);
-            softDropTimerRef.current = null;
-          }
-          break;
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
-      clearDAS();
-      if (softDropTimerRef.current) clearInterval(softDropTimerRef.current);
-    };
-  }, [moveHorizontal, moveDown, rotatePiece, hardDrop, holdPiece]);
-
-  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
-  useEffect(() => {
-    return () => {
-      // Only record stats if game hasn't ended normally (player left via back button)
-      if (!gameOverRef.current) {
-        recordMultiplayerGameEnd({
-          score: scoreRef.current,
-          lines: linesRef.current,
-          won: false, // Player left mid-game, so they didn't win
-          hardDrops: gameHardDropsRef.current,
-          piecesPlaced: gamePiecesPlacedRef.current,
-        });
-      }
-    };
-  }, []);
-
-  // ===== Render =====
-  const board = boardRef.current;
-  const piece = pieceRef.current;
-  const hold = holdRef.current;
-  const nextQueue = nextQueueRef.current;
-  const score = scoreRef.current;
-  const combo = comboRef.current;
-  const lines = linesRef.current;
-  const gameOver = gameOverRef.current;
-  const pendingGarbage = pendingGarbageRef.current;
-  const opponentBoard = opponentBoardRef.current;
-  const opponentScore = opponentScoreRef.current;
-  const opponentLines = opponentLinesRef.current;
-
-  // Build display board with ghost + active piece
-  const displayBoard = board.map(row => row.map(cell => cell ? { ...cell, ghost: false } : null));
-
-  if (piece) {
-    const shape = getShape(piece.type, piece.rotation);
-    const color = COLORS[piece.type];
-
-    // Ghost piece (conditional on feature setting)
-    if (featureSettings.ghostPiece) {
-      const gy = getGhostY(piece, board);
-      for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-          if (shape[y][x]) {
-            const by = gy + y;
-            const bx = piece.x + x;
-            if (by >= 0 && by < H && bx >= 0 && bx < W && !displayBoard[by][bx]) {
-              displayBoard[by][bx] = { color, ghost: true };
+    const moveHorizontal = useCallback((dx: number): boolean => {
+        const result = movePiece(dx, 0);
+        if (result && lockStartTimeRef.current !== null) {
+            const piece = currentPieceRef.current;
+            if (piece) {
+                if (isValidPosition({ ...piece, y: piece.y + 1 }, boardRef.current)) {
+                    lockStartTimeRef.current = null;
+                } else if (lockMovesRef.current < MAX_LOCK_MOVES) {
+                    lockMovesRef.current++;
+                    lockStartTimeRef.current = performance.now();
+                }
             }
-          }
         }
-      }
-    }
+        return result;
+    }, [movePiece]);
 
-    // Active piece
-    for (let y = 0; y < shape.length; y++) {
-      for (let x = 0; x < shape[y].length; x++) {
-        if (shape[y][x]) {
-          const by = piece.y + y;
-          const bx = piece.x + x;
-          if (by >= 0 && by < H && bx >= 0 && bx < W) {
-            displayBoard[by][bx] = { color, ghost: false };
-          }
+    const rotatePiece = useCallback((direction: 1 | -1) => {
+        const piece = currentPieceRef.current;
+        if (!piece || gameOverRef.current) return;
+
+        const rotated = tryRotation(piece, direction, boardRef.current);
+        if (rotated) {
+            setCurrentPiece(rotated);
+            currentPieceRef.current = rotated;
+
+            if (lockStartTimeRef.current !== null) {
+                if (isValidPosition({ ...rotated, y: rotated.y + 1 }, boardRef.current)) {
+                    lockStartTimeRef.current = null;
+                } else if (lockMovesRef.current < MAX_LOCK_MOVES) {
+                    lockMovesRef.current++;
+                    lockStartTimeRef.current = performance.now();
+                }
+            }
         }
-      }
-    }
-  }
+    }, []);
 
-  // Opponent display board
-  const opponentDisplay = opponentBoard.map(row =>
-    row.map(cell => cell ? { ...cell, ghost: false } : null)
-  );
+    const hardDrop = useCallback(() => {
+        const piece = currentPieceRef.current;
+        if (!piece || gameOverRef.current) return;
 
-  // Next piece preview
-  const renderPreview = (type: PieceType) => {
-    const shape = getShape(type, 0);
+        let newPiece = { ...piece };
+        let dropDistance = 0;
+        while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, boardRef.current)) {
+            newPiece.y++;
+            dropDistance++;
+        }
+
+        lockStartTimeRef.current = null;
+        lockMovesRef.current = 0;
+        handlePieceLockRef.current(newPiece, dropDistance);
+    }, []);
+
+    const holdCurrentPiece = useCallback(() => {
+        const piece = currentPieceRef.current;
+        if (!piece || gameOverRef.current || !canHoldRef.current) return;
+
+        lockStartTimeRef.current = null;
+        lockMovesRef.current = 0;
+
+        const currentType = piece.type;
+
+        if (holdPieceTypeRef.current === null) {
+            setHoldPieceType(currentType);
+            holdPieceTypeRef.current = currentType;
+            const spawned = spawnPiece();
+            if (!spawned) {
+                setGameOver(true);
+                gameOverRef.current = true;
+                sendRelay({ event: 'game_over' });
+                return;
+            }
+            setCurrentPiece(spawned);
+            currentPieceRef.current = spawned;
+        } else {
+            const heldType = holdPieceTypeRef.current;
+            setHoldPieceType(currentType);
+            holdPieceTypeRef.current = currentType;
+
+            const newPiece = createSpawnPiece(heldType);
+            if (isValidPosition(newPiece, boardRef.current)) {
+                setCurrentPiece(newPiece);
+                currentPieceRef.current = newPiece;
+            } else {
+                setHoldPieceType(heldType);
+                holdPieceTypeRef.current = heldType;
+                return;
+            }
+        }
+
+        setCanHold(false);
+        canHoldRef.current = false;
+    }, [spawnPiece, sendRelay]);
+
+    // ===== DAS/ARR Processing =====
+    const processHorizontalDasArr = useCallback((direction: 'left' | 'right', currentTime: number) => {
+        const state = keyStatesRef.current[direction];
+        if (!state.pressed || gameOverRef.current) return;
+
+        const dx = direction === 'left' ? -1 : 1;
+        const timeSincePress = currentTime - state.pressTime;
+        const currentDas = dasRef.current;
+        const currentArr = arrRef.current;
+
+        if (!state.dasCharged) {
+            if (timeSincePress >= currentDas) {
+                state.dasCharged = true;
+                state.lastMoveTime = currentTime;
+                if (currentArr === 0) {
+                    while (moveHorizontal(dx)) { }
+                } else {
+                    moveHorizontal(dx);
+                }
+            }
+        } else {
+            if (currentArr === 0) {
+                while (moveHorizontal(dx)) { }
+            } else {
+                if (currentTime - state.lastMoveTime >= currentArr) {
+                    moveHorizontal(dx);
+                    state.lastMoveTime = currentTime;
+                }
+            }
+        }
+    }, [moveHorizontal]);
+
+    const processSoftDrop = useCallback((currentTime: number) => {
+        const state = keyStatesRef.current.down;
+        if (!state.pressed || gameOverRef.current) return;
+
+        const currentSdf = sdfRef.current;
+        if (currentSdf === 0) {
+            while (movePiece(0, 1)) {
+                setScore(prev => prev + 1);
+            }
+        } else if (currentTime - state.lastMoveTime >= currentSdf) {
+            if (movePiece(0, 1)) {
+                setScore(prev => prev + 1);
+            }
+            state.lastMoveTime = currentTime;
+        }
+    }, [movePiece]);
+
+    // Tick (gravity)
+    const tick = useCallback(() => {
+        const piece = currentPieceRef.current;
+        if (!piece || gameOverRef.current) return;
+
+        const newPiece: Piece = { ...piece, y: piece.y + 1 };
+        if (isValidPosition(newPiece, boardRef.current)) {
+            setCurrentPiece(newPiece);
+            currentPieceRef.current = newPiece;
+        }
+    }, []);
+
+    // ===== Initialize Game =====
+    useEffect(() => {
+        // Set up initial piece bag from seed
+        rngRef.current = seededRandom(gameSeed);
+        pieceBagRef.current = seededShuffleBag(rngRef.current);
+
+        const boardState = createEmptyBoard();
+        setBoard(boardState);
+        boardRef.current = boardState;
+
+        // First piece from bag
+        const firstType = pieceBagRef.current.shift()!;
+        const secondType = pieceBagRef.current.shift()!;
+
+        setNextPieceType(secondType);
+        nextPieceTypeRef.current = secondType;
+
+        const piece = createSpawnPiece(firstType);
+        setCurrentPiece(piece);
+        currentPieceRef.current = piece;
+
+        setScore(0);
+        scoreRef.current = 0;
+        setLines(0);
+        linesRef.current = 0;
+        setLevel(1);
+        levelRef.current = 1;
+        setCombo(0);
+        comboRef.current = 0;
+        setGameOver(false);
+        gameOverRef.current = false;
+        setGameEnded(false);
+        gameEndedRef.current = false;
+        setHoldPieceType(null);
+        holdPieceTypeRef.current = null;
+        setCanHold(true);
+        canHoldRef.current = true;
+        setGarbageQueue(0);
+        garbageQueueRef.current = 0;
+        setWinnerId(null);
+    }, [gameSeed]);
+
+    // ===== Game Loop =====
+    useEffect(() => {
+        if (gameOver) return;
+
+        const gameLoop = (currentTime: number) => {
+            if (gameOverRef.current) return;
+
+            processHorizontalDasArr('left', currentTime);
+            processHorizontalDasArr('right', currentTime);
+            processSoftDrop(currentTime);
+
+            const speed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
+            if (currentTime - lastGravityRef.current >= speed) {
+                tick();
+                lastGravityRef.current = currentTime;
+            }
+
+            // Lock delay
+            const piece = currentPieceRef.current;
+            if (piece) {
+                const onGround = !isValidPosition({ ...piece, y: piece.y + 1 }, boardRef.current);
+                if (onGround) {
+                    if (lockStartTimeRef.current === null) {
+                        lockStartTimeRef.current = currentTime;
+                    } else if (currentTime - lockStartTimeRef.current >= LOCK_DELAY) {
+                        handlePieceLockRef.current(piece);
+                    }
+                } else {
+                    lockStartTimeRef.current = null;
+                }
+            }
+
+            // Periodic relay
+            relayBoardState();
+
+            gameLoopRef.current = requestAnimationFrame(gameLoop);
+        };
+
+        lastGravityRef.current = performance.now();
+        gameLoopRef.current = requestAnimationFrame(gameLoop);
+
+        return () => {
+            if (gameLoopRef.current) cancelAnimationFrame(gameLoopRef.current);
+        };
+    }, [gameOver, tick, processHorizontalDasArr, processSoftDrop, relayBoardState]);
+
+    // ===== Keyboard Input =====
+    useEffect(() => {
+        if (gameOver) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.repeat || gameOverRef.current) return;
+
+            const currentTime = performance.now();
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (!keyStatesRef.current.left.pressed) {
+                        keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+                        keyStatesRef.current.left = {
+                            pressed: true, dasCharged: false, lastMoveTime: currentTime, pressTime: currentTime,
+                        };
+                        moveHorizontal(-1);
+                    }
+                    break;
+
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (!keyStatesRef.current.right.pressed) {
+                        keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+                        keyStatesRef.current.right = {
+                            pressed: true, dasCharged: false, lastMoveTime: currentTime, pressTime: currentTime,
+                        };
+                        moveHorizontal(1);
+                    }
+                    break;
+
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (!keyStatesRef.current.down.pressed) {
+                        keyStatesRef.current.down = {
+                            pressed: true, dasCharged: false, lastMoveTime: currentTime, pressTime: currentTime,
+                        };
+                        if (movePiece(0, 1)) {
+                            setScore(prev => prev + 1);
+                        }
+                    }
+                    break;
+
+                case 'ArrowUp':
+                case 'x':
+                case 'X':
+                    e.preventDefault();
+                    rotatePiece(1);
+                    break;
+
+                case 'z':
+                case 'Z':
+                case 'Control':
+                    e.preventDefault();
+                    rotatePiece(-1);
+                    break;
+
+                case 'c':
+                case 'C':
+                case 'Shift':
+                    e.preventDefault();
+                    holdCurrentPiece();
+                    break;
+
+                case ' ':
+                    e.preventDefault();
+                    hardDrop();
+                    break;
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            switch (e.key) {
+                case 'ArrowLeft':
+                    keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+                    break;
+                case 'ArrowRight':
+                    keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+                    break;
+                case 'ArrowDown':
+                    keyStatesRef.current.down = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        };
+    }, [gameOver, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece]);
+
+    // ===== Handle Server Messages =====
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            try {
+                const msg: ServerMessage = JSON.parse(event.data);
+
+                if (msg.type === 'relayed') {
+                    const payload = msg.payload;
+
+                    if (payload.event === 'board_update') {
+                        setOpponentStates(prev => ({
+                            ...prev,
+                            [msg.fromPlayerId]: {
+                                ...prev[msg.fromPlayerId],
+                                board: payload.board,
+                                score: payload.score,
+                                lines: payload.lines,
+                                combo: payload.combo,
+                                piece: payload.piece,
+                                hold: payload.hold,
+                            },
+                        }));
+                    }
+
+                    if (payload.event === 'garbage') {
+                        setGarbageQueue(prev => {
+                            const newVal = prev + payload.lines;
+                            garbageQueueRef.current = newVal;
+                            return newVal;
+                        });
+                    }
+
+                    if (payload.event === 'game_over') {
+                        setOpponentStates(prev => ({
+                            ...prev,
+                            [msg.fromPlayerId]: {
+                                ...prev[msg.fromPlayerId],
+                                dead: true,
+                            },
+                        }));
+
+                        // Check if all opponents are dead → we win
+                        setOpponentStates(prevStates => {
+                            const updatedStates = {
+                                ...prevStates,
+                                [msg.fromPlayerId]: { ...prevStates[msg.fromPlayerId], dead: true },
+                            };
+                            const allDead = Object.values(updatedStates).every(o => o.dead);
+                            if (allDead && !gameEndedRef.current) {
+                                setGameEnded(true);
+                                gameEndedRef.current = true;
+                                setWinnerId(playerId);
+                                // Defer onGameEnd to avoid state update during render
+                                setTimeout(() => onGameEnd(playerId), 100);
+                            }
+                            return updatedStates;
+                        });
+                    }
+
+                    if (payload.event === 'ko') {
+                        if (!gameEndedRef.current) {
+                            setGameEnded(true);
+                            gameEndedRef.current = true;
+                            setWinnerId(payload.winnerId);
+                            setTimeout(() => onGameEnd(payload.winnerId), 100);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('[MultiplayerBattle] Parse error:', err);
+            }
+        };
+
+        ws.addEventListener('message', handleMessage);
+        return () => ws.removeEventListener('message', handleMessage);
+    }, [ws, playerId, onGameEnd]);
+
+    // When local player dies, check if game should end
+    useEffect(() => {
+        if (gameOver && !gameEndedRef.current) {
+            // If only 1 opponent and they're still alive, they win
+            const aliveOpponents = Object.entries(opponentStates).filter(([, o]) => !o.dead);
+            if (aliveOpponents.length === 1) {
+                setGameEnded(true);
+                gameEndedRef.current = true;
+                const winnerId = aliveOpponents[0][0];
+                setWinnerId(winnerId);
+                setTimeout(() => onGameEnd(winnerId), 100);
+            }
+        }
+    }, [gameOver, opponentStates, onGameEnd]);
+
+    // ===== Render Helpers =====
+
+    // Player display board with current piece and ghost
+    const displayBoard = useMemo(() => {
+        const display = board.map(row => [...row]);
+
+        if (currentPiece) {
+            const shape = getShape(currentPiece.type, currentPiece.rotation);
+
+            // Ghost
+            const ghostY = getGhostY(currentPiece, board);
+            if (ghostY !== currentPiece.y) {
+                for (let y = 0; y < shape.length; y++) {
+                    for (let x = 0; x < shape[y].length; x++) {
+                        if (shape[y][x]) {
+                            const boardY = ghostY + y;
+                            const boardX = currentPiece.x + x;
+                            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                                if (display[boardY][boardX] === null) {
+                                    display[boardY][boardX] = `ghost-${currentPiece.type}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Current piece
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        const boardY = currentPiece.y + y;
+                        const boardX = currentPiece.x + x;
+                        if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                            display[boardY][boardX] = currentPiece.type;
+                        }
+                    }
+                }
+            }
+        }
+
+        return display;
+    }, [board, currentPiece]);
+
+    // ===== Preview Piece Renderer =====
+    const renderPreviewPiece = useCallback((type: string | null | undefined) => {
+        if (!type) return null;
+        const shape = TETROMINOES[type]?.[0];
+        if (!shape) return null;
+
+        // Determine grid size for the piece
+        const size = shape.length;
+        return (
+            <div
+                className={styles.previewGrid}
+                style={{ gridTemplateColumns: `repeat(${size}, 12px)`, gridTemplateRows: `repeat(${size}, 12px)` }}
+            >
+                {shape.flat().map((val, i) => (
+                    <div
+                        key={i}
+                        className={`${styles.previewCell} ${val ? styles.previewCellFilled : ''}`}
+                        style={val ? { backgroundColor: COLORS[type] || '#fff' } : {}}
+                    />
+                ))}
+            </div>
+        );
+    }, []);
+
     return (
-      <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, auto)` }}>
-        {shape.flat().map((val, i) => (
-          <div
-            key={i}
-            className={`${styles.previewCell} ${val ? styles.filled : ''}`}
-            style={val ? { backgroundColor: COLORS[type], boxShadow: `0 0 6px ${COLORS[type]}` } : {}}
-          />
-        ))}
-      </div>
+        <div className={styles.container}>
+            <div className={styles.battleArena}>
+                {/* ===== Player Section ===== */}
+                <div className={styles.playerSection}>
+                    <div className={styles.playerLabel}>{playerName}</div>
+
+                    <div className={styles.playerBoard}>
+                        {/* Left panel: Hold */}
+                        <div className={styles.sidePanel}>
+                            <div className={styles.previewBox}>
+                                <div className={styles.previewLabel}>HOLD</div>
+                                {renderPreviewPiece(holdPieceType)}
+                            </div>
+                        </div>
+
+                        {/* Board */}
+                        <div className={styles.boardContainer}>
+                            {/* Garbage indicator */}
+                            {garbageQueue > 0 && (
+                                <div className={styles.garbageIndicator}>
+                                    {Array.from({ length: Math.min(garbageQueue, 20) }).map((_, i) => (
+                                        <div key={i} className={styles.garbageBar} />
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className={styles.board}>
+                                {displayBoard.flat().map((cell, i) => {
+                                    const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
+                                    const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
+                                    const color = pieceType ? (COLORS[pieceType as string] || (pieceType === 'G' ? '#666' : '#fff')) : '';
+
+                                    return (
+                                        <div
+                                            key={i}
+                                            className={`${styles.cell} ${cell && !isGhost ? styles.cellFilled : ''} ${isGhost ? styles.cellGhost : ''}`}
+                                            style={cell && !isGhost ? {
+                                                backgroundColor: color,
+                                                boxShadow: `0 0 4px ${color}`,
+                                            } : isGhost ? {
+                                                borderColor: `${color}40`,
+                                            } : {}}
+                                        />
+                                    );
+                                })}
+                            </div>
+
+                            {/* Game over overlay */}
+                            {gameOver && (
+                                <div className={styles.gameOverOverlay}>
+                                    <div className={`${styles.resultTitle} ${winnerId === playerId ? styles.resultWin : styles.resultLoss}`}>
+                                        {winnerId === playerId ? 'VICTORY!' : gameEnded ? 'DEFEAT' : 'K.O.'}
+                                    </div>
+                                    {gameEnded && (
+                                        <button className={styles.backBtn} onClick={onBackToLobby}>
+                                            Back to Lobby
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right panel: Next */}
+                        <div className={styles.sidePanel}>
+                            <div className={styles.previewBox}>
+                                <div className={styles.previewLabel}>NEXT</div>
+                                {renderPreviewPiece(nextPieceType)}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className={styles.statsHUD}>
+                        <div className={styles.stat}>
+                            <div className={styles.statValue}>{score.toLocaleString()}</div>
+                            <div className={styles.statLabel}>Score</div>
+                        </div>
+                        <div className={styles.stat}>
+                            <div className={styles.statValue}>{lines}</div>
+                            <div className={styles.statLabel}>Lines</div>
+                        </div>
+                        <div className={styles.stat}>
+                            <div className={styles.statValue}>{level}</div>
+                            <div className={styles.statLabel}>Level</div>
+                        </div>
+                        <div className={styles.stat}>
+                            <div className={styles.statValue}>{combo > 0 ? `${combo}x` : '-'}</div>
+                            <div className={styles.statLabel}>Combo</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ===== Opponent Section ===== */}
+                <div className={styles.opponentSection}>
+                    {opponents.map(opp => {
+                        const state = opponentStates[opp.id];
+                        if (!state) return null;
+
+                        return (
+                            <div key={opp.id} className={`${styles.opponentCard} ${state.dead ? styles.opponentDead : ''}`}>
+                                <div className={styles.opponentName}>{opp.name}</div>
+
+                                <div style={{ position: 'relative' }}>
+                                    <div className={styles.opponentBoard}>
+                                        {state.board.flat().map((cell, i) => (
+                                            <div
+                                                key={i}
+                                                className={`${styles.opponentCell} ${cell ? styles.opponentCellFilled : ''}`}
+                                                style={cell ? {
+                                                    backgroundColor: (cell as BoardCell)?.color || '#666',
+                                                } : {}}
+                                            />
+                                        ))}
+                                    </div>
+
+                                    {state.dead && (
+                                        <div className={styles.opponentDeadOverlay}>K.O.</div>
+                                    )}
+                                </div>
+
+                                <div className={styles.opponentStats}>
+                                    <span>SCORE: <span className={styles.opponentStatValue}>{state.score.toLocaleString()}</span></span>
+                                    <span>LINES: <span className={styles.opponentStatValue}>{state.lines}</span></span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
     );
-  };
-
-  const handleControlClick = (action: string) => {
-    if (gameOver) return;
-    switch (action) {
-      case 'left': moveHorizontal(-1); break;
-      case 'right': moveHorizontal(1); break;
-      case 'down': moveDown(); break;
-      case 'rotateCW': rotatePiece(1); break;
-      case 'rotateCCW': rotatePiece(-1); break;
-      case 'drop': hardDrop(); break;
-      case 'hold': holdPiece(); break;
-    }
-  };
-
-  return (
-    <div className={styles.container}>
-      {/* Settings gear button */}
-      <button
-        className={styles.settingsGearBtn}
-        onClick={() => setShowFeatures(prev => !prev)}
-        aria-label="Feature settings"
-      >
-        🎛
-      </button>
-
-      {/* Feature Customizer Overlay */}
-      {showFeatures && (
-        <div className={styles.featureOverlay}>
-          <FeatureCustomizer
-            settings={featureSettings}
-            onUpdate={handleFeatureSettingsUpdate}
-            onBack={() => setShowFeatures(false)}
-            mode="multiplayer"
-          />
-        </div>
-      )}
-
-      <div className={styles.battleArena}>
-        {/* Player Side */}
-        <div className={styles.playerSide}>
-          {/* Hold + Next */}
-          <div className={styles.sidePanel}>
-            <div className={styles.holdBox}>
-              <div className={styles.panelLabel}>HOLD</div>
-              {hold ? renderPreview(hold) : <div className={styles.emptyPreview} />}
-            </div>
-            <div className={styles.nextBox}>
-              <div className={styles.panelLabel}>NEXT</div>
-              {nextQueue.slice(0, 3).map((type, i) => (
-                <div key={i} className={styles.nextItem}>
-                  {renderPreview(type)}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Board */}
-          <div className={styles.boardSection}>
-            <div className={styles.playerHeader}>
-              <div className={styles.playerName}>{playerName}</div>
-              <div className={styles.playerScore}>{score.toLocaleString()}</div>
-            </div>
-
-            <div className={styles.boardWrap}>
-              {/* Garbage meter */}
-              {featureSettings.garbageMeter && pendingGarbage > 0 && (
-                <div className={styles.garbageMeter}>
-                  <div
-                    className={styles.garbageFill}
-                    style={{ height: `${Math.round(Math.min(100, (pendingGarbage / H) * 100))}%` }}
-                  />
-                </div>
-              )}
-
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
-                {displayBoard.flat().map((cell, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.cell} ${cell && !cell.ghost ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''}`}
-                    style={cell && !cell.ghost ? { backgroundColor: cell.color, boxShadow: `0 0 8px ${cell.color}40` } : cell?.ghost ? { borderColor: `${cell.color}40` } : {}}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className={styles.statsRow}>
-              <span>Lines: {lines}</span>
-              <span>Combo: {combo}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* VS Divider */}
-        <div className={styles.vsDivider}>VS</div>
-
-        {/* Opponent Side */}
-        <div className={styles.opponentSide}>
-          <div className={styles.boardSection}>
-            <div className={styles.opponentHeader}>
-              <div className={styles.opponentName}>{opponent?.name || 'Opponent'}</div>
-              <div className={styles.opponentScore}>{opponentScore.toLocaleString()}</div>
-            </div>
-
-            <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
-                {opponentDisplay.flat().map((cell, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.cell} ${cell ? styles.filled : ''}`}
-                    style={cell ? { backgroundColor: cell.color, boxShadow: `0 0 6px ${cell.color}40` } : {}}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className={styles.statsRow}>
-              <span>Lines: {opponentLines}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Controls */}
-      <div className={styles.controls}>
-        <div className={styles.controlRow}>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('hold'); }} onClick={() => handleControlClick('hold')}>H</button>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCCW'); }} onClick={() => handleControlClick('rotateCCW')}>&#x21BA;</button>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCW'); }} onClick={() => handleControlClick('rotateCW')}>&#x21BB;</button>
-          <button className={`${styles.ctrlBtn} ${styles.dropBtn}`} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('drop'); }} onClick={() => handleControlClick('drop')}>&#x2B07;</button>
-        </div>
-        <div className={styles.controlRow}>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('left'); }} onClick={() => handleControlClick('left')}>&#x2190;</button>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('down'); }} onClick={() => handleControlClick('down')}>&#x2193;</button>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('right'); }} onClick={() => handleControlClick('right')}>&#x2192;</button>
-        </div>
-      </div>
-
-      {/* Game Over Overlay */}
-      {gameOver && (
-        <div className={styles.gameOverOverlay}>
-          <h2 className={styles.gameOverTitle}>
-            GAME OVER
-          </h2>
-          <div className={styles.finalScores}>
-            <div>{playerName}: {score.toLocaleString()}</div>
-            <div>{opponent?.name || 'Opponent'}: {opponentScore.toLocaleString()}</div>
-          </div>
-          <button className={styles.backBtn} onClick={onBackToLobby}>
-            Back to Lobby
-          </button>
-        </div>
-      )}
-
-      {/* Advancement Toast */}
-      {toastIds.length > 0 && (
-        <AdvancementToast
-          unlockedIds={toastIds}
-          onDismiss={dismissToast}
-        />
-      )}
-    </div>
-  );
-};
-
-export default MultiplayerBattle;
+}
