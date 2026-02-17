@@ -1,5 +1,8 @@
 // ===== Game Mode =====
-export type GameMode = 'vanilla' | 'td';
+export type GameMode = 'vanilla';
+
+// ===== Terrain Phase (alternating within vanilla mode) =====
+export type TerrainPhase = 'dig' | 'td';
 
 // ===== Game Types =====
 
@@ -59,18 +62,19 @@ export type VFXEvent =
     | { type: 'rotation'; pieceType: string; boardX: number; boardY: number; fromRotation: number; toRotation: number }
     | { type: 'hardDrop'; pieceType: string; boardX: number; boardY: number; dropDistance: number }
     | { type: 'comboChange'; combo: number; onBeat: boolean }
+    | { type: 'comboBreak'; lostCombo: number }
     | { type: 'feverStart'; combo: number }
     | { type: 'feverEnd' };
 
 export type VFXEmitter = (event: VFXEvent) => void;
-
 // ===== Game Loop Phase =====
 export type GamePhase =
     | 'WORLD_CREATION'
     | 'PLAYING'
-    | 'CARD_SELECT'
+    | 'CRAFTING'
     | 'COLLAPSE'
-    | 'TRANSITION';
+    | 'TRANSITION'
+    | 'CHECKPOINT';
 
 // ===== Item System =====
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
@@ -104,19 +108,8 @@ export type FloatingItem = {
     collected: boolean;
 };
 
-// ===== Card Attribute System =====
-export type CardAttribute =
-    | 'combo_guard'     // Missed beat doesn't break combo (limited uses per stage)
-    | 'terrain_surge'   // +% terrain damage on perfect beats
-    | 'beat_extend'     // Wider beat timing window
-    | 'score_boost'     // +% score multiplier
-    | 'gravity_slow'    // -% piece gravity speed
-    | 'lucky_drops'     // Higher rarity material drop rates
-    | 'combo_amplify'   // Combo multiplier grows faster
-    | 'shield';         // First miss per stage doesn't break combo
-
-// ===== Rogue-Like Card =====
-export type RogueCard = {
+// ===== Weapon Cards =====
+export type WeaponCard = {
     id: string;
     name: string;
     nameJa: string;
@@ -125,37 +118,14 @@ export type RogueCard = {
     glowColor: string;
     description: string;
     descriptionJa: string;
-    rarity: ItemRarity;
-    baseCost: { itemId: string; count: number }[];
-    attribute: CardAttribute;
-    /** Per-attribute numeric value (uses for combo_guard, % for terrain_surge, etc.) */
-    attributeValue: number;
+    damageMultiplier: number;
+    specialEffect?: string;
+    recipe: { itemId: string; count: number }[];
 };
 
-// ===== Equipped Card (player's deck) =====
-export type EquippedCard = {
+export type CraftedCard = {
     cardId: string;
-    equippedAt: number;
-    stackCount: number;
-};
-
-// ===== Active Attribute Effects (runtime tracking) =====
-export type ActiveEffects = {
-    comboGuardUsesRemaining: number;
-    shieldActive: boolean;
-    terrainSurgeBonus: number;
-    beatExtendBonus: number;
-    scoreBoostMultiplier: number;
-    gravitySlowFactor: number;
-    luckyDropsBonus: number;
-    comboAmplifyFactor: number;
-};
-
-// ===== Card Selection Offer =====
-export type CardOffer = {
-    card: RogueCard;
-    scaledCost: { itemId: string; count: number }[];
-    affordable: boolean;
+    craftedAt: number;
 };
 
 // ===== Tower Defense =====
@@ -191,6 +161,74 @@ export type Bullet = {
     alive: boolean;
 };
 
+// ===== Treasure System =====
+export type TreasureRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export type TreasureType = {
+    id: string;
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    rarity: TreasureRarity;
+    /** Gold value of this treasure */
+    value: number;
+    /** Drop weight (probability) */
+    dropWeight: number;
+};
+
+export type TreasureWallet = {
+    gold: number;
+    silver: number;
+    totalGoldEarned: number;
+    totalTreasuresCollected: number;
+};
+
+export type FloatingTreasure = {
+    id: number;
+    treasureId: string;
+    x: number;
+    y: number;
+    targetX: number;
+    targetY: number;
+    startTime: number;
+    duration: number;
+    collected: boolean;
+};
+
+// ===== Keybindings =====
+export type KeybindAction = 'inventory' | 'shop';
+
+export type Keybindings = {
+    [K in KeybindAction]: string;
+};
+
+export const DEFAULT_KEYBINDINGS: Keybindings = {
+    inventory: 'e',
+    shop: 'l',
+};
+
+// ===== Shop Item (buyable in shop) =====
+export type ShopItem = {
+    id: string;
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    description: string;
+    descriptionJa: string;
+    cost: { itemId: string; count: number }[];
+    /** Weapon card ID produced if this is a weapon purchase */
+    producesCardId?: string;
+    /** Stats to display */
+    stats: { label: string; value: string; color?: string }[];
+    /** Component items shown in build tree */
+    components?: string[];
+    rarity: ItemRarity;
+};
+
 // ===== Terrain Particle =====
 export type TerrainParticle = {
     id: number;
@@ -203,4 +241,27 @@ export type TerrainParticle = {
     opacity: number;
     life: number;
     maxLife: number;
+};
+
+// ===== Feature Customizer Settings =====
+export type FeatureSettings = {
+    ghostPiece: boolean;
+    beatVfx: boolean;
+    particles: boolean;
+    items: boolean;
+    voxelBackground: boolean;
+    beatBar: boolean;
+    sound: boolean;
+    garbageMeter: boolean;
+};
+
+export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
+    ghostPiece: true,
+    beatVfx: true,
+    particles: true,
+    items: true,
+    voxelBackground: true,
+    beatBar: true,
+    sound: true,
+    garbageMeter: true,
 };

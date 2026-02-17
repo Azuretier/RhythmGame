@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, COLORS, ColorTheme, getThemedColor } from '../constants';
 import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import Advancements from '@/components/rhythmia/Advancements';
-import type { Piece, Board as BoardType } from '../types';
+import { KeyBindSettings } from './KeyBindSettings';
+import { FeatureCustomizer } from './FeatureCustomizer';
+import type { Piece, Board as BoardType, Keybindings, KeybindAction, FeatureSettings } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface BoardProps {
@@ -24,6 +26,11 @@ interface BoardProps {
     combo?: number;
     beatPhase?: number;
     boardElRef?: React.Ref<HTMLDivElement>;
+    keybindings?: Keybindings;
+    onKeybindChange?: (action: KeybindAction, key: string) => void;
+    onKeybindingsUpdate?: (bindings: Keybindings) => void;
+    featureSettings?: FeatureSettings;
+    onFeatureSettingsUpdate?: (settings: FeatureSettings) => void;
 }
 
 /**
@@ -47,10 +54,38 @@ export function Board({
     combo = 0,
     beatPhase = 0,
     boardElRef,
+    keybindings,
+    onKeybindChange,
+    onKeybindingsUpdate,
+    featureSettings,
+    onFeatureSettingsUpdate,
 }: BoardProps) {
     const isFever = combo >= 10;
     const [showAdvancements, setShowAdvancements] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [showKeyBinds, setShowKeyBinds] = useState(false);
+    const [showFeatures, setShowFeatures] = useState(false);
     const [unlockedCount, setUnlockedCount] = useState(0);
+    const [rebindingAction, setRebindingAction] = useState<KeybindAction | null>(null);
+
+    // Listen for keybind rebinding
+    useEffect(() => {
+        if (!rebindingAction) return;
+        const handler = (e: KeyboardEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.key === 'Escape') {
+                setRebindingAction(null);
+                return;
+            }
+            if (onKeybindChange) {
+                onKeybindChange(rebindingAction, e.key.toLowerCase());
+            }
+            setRebindingAction(null);
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [rebindingAction, onKeybindChange]);
 
     // Load advancement count when pause menu opens
     useEffect(() => {
@@ -59,6 +94,10 @@ export function Board({
             setUnlockedCount(state.unlockedIds.length);
         } else {
             setShowAdvancements(false);
+            setShowSettings(false);
+            setShowKeyBinds(false);
+            setShowFeatures(false);
+            setRebindingAction(null);
         }
     }, [isPaused, gameOver]);
 
@@ -80,8 +119,9 @@ export function Board({
         if (currentPiece) {
             const shape = getShape(currentPiece.type, currentPiece.rotation);
 
+            const showGhost = featureSettings?.ghostPiece !== false;
             const ghostY = getGhostY(currentPiece, board);
-            if (ghostY !== currentPiece.y) {
+            if (showGhost && ghostY !== currentPiece.y) {
                 for (let y = 0; y < shape.length; y++) {
                     for (let x = 0; x < shape[y].length; x++) {
                         if (shape[y][x]) {
@@ -179,10 +219,23 @@ export function Board({
                 </div>
             )}
 
-            {/* Overlay for Paused — main menu, advancements, or key bindings sub-panel */}
+            {/* Overlay for Paused — main menu, advancements, key bindings, or features sub-panel */}
             {isPaused && !gameOver && (
                 <div className={styles.gameover} style={{ display: 'flex' }}>
-                    {!showAdvancements ? (
+                    {showKeyBinds && keybindings && onKeybindingsUpdate ? (
+                        <KeyBindSettings
+                            bindings={keybindings}
+                            onUpdate={onKeybindingsUpdate}
+                            onBack={() => setShowKeyBinds(false)}
+                        />
+                    ) : showFeatures && featureSettings && onFeatureSettingsUpdate ? (
+                        <FeatureCustomizer
+                            settings={featureSettings}
+                            onUpdate={onFeatureSettingsUpdate}
+                            onBack={() => setShowFeatures(false)}
+                            mode="singleplayer"
+                        />
+                    ) : !showAdvancements ? (
                         <>
                             <h2>PAUSED</h2>
                             <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
@@ -202,6 +255,24 @@ export function Board({
                                         {unlockedCount}/{totalCount}
                                     </span>
                                 </button>
+                                {featureSettings && onFeatureSettingsUpdate && (
+                                    <button
+                                        className={styles.pauseMenuBtn}
+                                        onClick={() => setShowFeatures(true)}
+                                    >
+                                        <span className={styles.pauseMenuBtnIcon}>🎛</span>
+                                        Features
+                                    </button>
+                                )}
+                                {keybindings && onKeybindingsUpdate && (
+                                    <button
+                                        className={styles.pauseMenuBtn}
+                                        onClick={() => setShowKeyBinds(true)}
+                                    >
+                                        <span className={styles.pauseMenuBtnIcon}>⌨</span>
+                                        Key Bindings
+                                    </button>
+                                )}
                                 {onQuit && (
                                     <button
                                         className={`${styles.pauseMenuBtn} ${styles.pauseMenuQuitBtn}`}
@@ -240,6 +311,42 @@ export function Board({
                                 </div>
                             )}
                         </>
+                    ) : showSettings ? (
+                        <div className={styles.settingsPanel}>
+                            <div className={styles.settingsHeader}>
+                                <button className={styles.settingsBack} onClick={() => setShowSettings(false)}>
+                                    &#x2190; Back
+                                </button>
+                                <h3 className={styles.settingsTitle}>KEYBINDINGS</h3>
+                            </div>
+                            <div className={styles.settingsBody}>
+                                {keybindings && (
+                                    <>
+                                        <div className={styles.keybindRow}>
+                                            <span className={styles.keybindLabel}>Inventory</span>
+                                            <button
+                                                className={`${styles.keybindKey} ${rebindingAction === 'inventory' ? styles.keybindKeyActive : ''}`}
+                                                onClick={() => setRebindingAction('inventory')}
+                                            >
+                                                {rebindingAction === 'inventory' ? 'Press a key...' : keybindings.inventory.toUpperCase()}
+                                            </button>
+                                        </div>
+                                        <div className={styles.keybindRow}>
+                                            <span className={styles.keybindLabel}>Shop</span>
+                                            <button
+                                                className={`${styles.keybindKey} ${rebindingAction === 'shop' ? styles.keybindKeyActive : ''}`}
+                                                onClick={() => setRebindingAction('shop')}
+                                            >
+                                                {rebindingAction === 'shop' ? 'Press a key...' : keybindings.shop.toUpperCase()}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                            <div className={styles.settingsHint}>
+                                Click a key binding, then press the new key. Press ESC to cancel.
+                            </div>
+                        </div>
                     ) : (
                         <Advancements onClose={() => setShowAdvancements(false)} />
                     )}

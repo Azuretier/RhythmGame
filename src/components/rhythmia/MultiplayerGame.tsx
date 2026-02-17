@@ -8,12 +8,12 @@ import RankedMatch from './RankedMatch';
 import type {
   ServerMessage,
   RoomState,
-  Player,
   PublicRoomInfo,
 } from '@/types/multiplayer';
+import { useProfile } from '@/lib/profile/context';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
-type GameMode = 'lobby' | 'name-entry' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished' | 'ranked' | 'mob-battle';
+type GameMode = 'lobby' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished' | 'ranked' | 'mob-battle';
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const PING_TIMEOUT = 60000; // Consider connection dead if no ping from server in 60s
@@ -23,6 +23,9 @@ interface MultiplayerGameProps {
 }
 
 export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
+  // Profile
+  const { profile } = useProfile();
+
   // Connection
   const wsRef = useRef<WebSocket | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
@@ -36,7 +39,7 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
 
   // UI state
   const [mode, setMode] = useState<GameMode>('lobby');
-  const [playerName, setPlayerName] = useState('');
+  const playerName = profile?.name || 'Player';
   const [error, setError] = useState<string | null>(null);
 
   // Room state
@@ -286,21 +289,6 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
   }, [mode, send]);
 
   // ===== Actions =====
-  const handleNameSubmit = useCallback(() => {
-    if (playerName.trim().length < 2) return;
-    const nextMode = sessionStorage.getItem('mp_nextMode');
-    sessionStorage.removeItem('mp_nextMode');
-    if (nextMode === 'ranked') {
-      setMode('ranked');
-    } else if (nextMode === 'mob-battle') {
-      setIsMobBattle(true);
-      setMode('room-browser');
-    } else {
-      setMode('room-browser');
-    }
-    setError(null);
-  }, [playerName]);
-
   const createRoom = useCallback(() => {
     send({
       type: 'create_room',
@@ -409,7 +397,7 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
                 if (connectionStatus !== 'connected') {
                   connectWebSocket();
                 }
-                setMode('name-entry');
+                setMode('room-browser');
               }}
             >
               <div className={styles.modeIcon}>VS</div>
@@ -422,12 +410,7 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
                 if (connectionStatus !== 'connected') {
                   connectWebSocket();
                 }
-                if (playerName.trim().length >= 2) {
-                  setMode('ranked');
-                } else {
-                  setMode('name-entry');
-                  sessionStorage.setItem('mp_nextMode', 'ranked');
-                }
+                setMode('ranked');
               }}
             >
               <div className={styles.modeIcon}>RANK</div>
@@ -441,12 +424,7 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
                   connectWebSocket();
                 }
                 setIsMobBattle(true);
-                if (playerName.trim().length >= 2) {
-                  setMode('room-browser');
-                } else {
-                  setMode('name-entry');
-                  sessionStorage.setItem('mp_nextMode', 'mob-battle');
-                }
+                setMode('room-browser');
               }}
             >
               <div className={styles.modeIcon}>MOB</div>
@@ -459,33 +437,6 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
               ← Back to Title
             </button>
           )}
-        </div>
-      )}
-
-      {/* Name Entry */}
-      {mode === 'name-entry' && (
-        <div className={styles.nameEntryScreen}>
-          <div className={styles.onlineTitle}>Enter Your Name</div>
-          <input
-            type="text"
-            className={styles.nameInput}
-            placeholder="Player Name"
-            value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleNameSubmit()}
-            maxLength={12}
-            autoFocus
-          />
-          <button
-            className={styles.nameBtn}
-            onClick={handleNameSubmit}
-            disabled={playerName.trim().length < 2}
-          >
-            Next
-          </button>
-          <button className={styles.backBtn} onClick={() => setMode('lobby')}>
-            Back
-          </button>
         </div>
       )}
 
@@ -589,7 +540,7 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
             </div>
           </div>
 
-          <button className={styles.backBtn} onClick={() => setMode('name-entry')}>
+          <button className={styles.backBtn} onClick={() => { setMode('lobby'); setIsMobBattle(false); }}>
             Back
           </button>
         </div>

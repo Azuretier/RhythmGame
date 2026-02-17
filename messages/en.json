@@ -1122,6 +1122,13 @@
         "privacy": "Privacy",
         "profileButton": "Profile"
     },
+    "uiTheme": {
+        "selectTheme": "UI Theme",
+        "neoFuturistic": "Neo-Futuristic",
+        "pixelNostalgia": "Pixel Nostalgia",
+        "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
+        "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    },
     "googleSync": {
         "sectionTitle": "Google Account Sync",
         "description": "Sign in with Google to sync your profile, advancements, loyalty progress, and skin settings across devices.",
