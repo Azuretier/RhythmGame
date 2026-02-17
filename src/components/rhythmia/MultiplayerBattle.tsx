@@ -8,7 +8,7 @@ import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnl
 import AdvancementToast from './AdvancementToast';
 import { useRhythmVFX } from './tetris/hooks/useRhythmVFX';
 import { RhythmVFX } from './tetris/components/RhythmVFX';
-import { BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, WORLDS, getThemedColor, PIECE_TYPES as EXPORTED_PIECE_TYPES } from './tetris/constants';
+import { BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, WORLDS, getThemedColor, PIECE_TYPES } from './tetris/constants';
 import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
@@ -49,7 +49,6 @@ const DAS = 167; // Delayed Auto Shift
 const ARR = 33;  // Auto Repeat Rate
 const SOFT_DROP_SPEED = 50;
 const GARBAGE_COLOR = '#555555';
-const PIECE_TYPES: PieceType[] = EXPORTED_PIECE_TYPES as PieceType[];
 
 // All 4 rotation states for each piece (SRS)
 const SHAPES: Record<PieceType, number[][][]> = {
@@ -137,7 +136,7 @@ function create7Bag(rng: () => number) {
 
   return (): PieceType => {
     if (bag.length === 0) {
-      bag = [...PIECE_TYPES];
+      bag = [...PIECE_TYPES] as PieceType[];
       // Fisher-Yates shuffle
       for (let i = bag.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
