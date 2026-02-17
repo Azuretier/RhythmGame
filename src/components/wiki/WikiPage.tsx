@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import styles from './WikiPage.module.css';
+import forYouConfig from '../../../for-you.config.json';
 
 // --- Primary pages (left sidebar) ---
 type Page = 'game-overview' | 'community-resources' | 'updates';
@@ -115,14 +117,89 @@ const ADVANCEMENT_CATEGORIES = [
   ]},
 ] as const;
 
-const COMMUNITY_VIDEOS = [
-  { id: 'vid-tspin-tutorial', title: 'T-Spin Tutorial - From Zero to Hero', category: 'tutorial', embedId: 'aa573goA1WA', accent: '#f87171' },
-  { id: 'vid-beginner', title: 'RHYTHMIA Beginner Guide', category: 'guide', embedId: '', accent: '#60a5fa' },
-  { id: 'vid-ranked-guide', title: 'How to Climb Ranked', category: 'competitive', embedId: '', accent: '#a78bfa' },
-  { id: 'vid-advanced-combos', title: 'Advanced Combo Techniques', category: 'tutorial', embedId: '', accent: '#f87171' },
-  { id: 'vid-music-showcase', title: 'RHYTHMIA OST Preview', category: 'music', embedId: '', accent: '#34d399' },
-  { id: 'vid-multiplayer-tips', title: '1v1 Battle Tips & Tricks', category: 'competitive', embedId: '', accent: '#a78bfa' },
-] as const;
+// --- Helpers for config-driven resources ---
+function extractEmbedId(url: string): string {
+  if (!url) return '';
+  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (shortMatch) return shortMatch[1];
+  const longMatch = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (longMatch) return longMatch[1];
+  return '';
+}
+
+const CATEGORY_ACCENT: Record<string, string> = {
+  guide: '#60a5fa', tutorial: '#f87171', competitive: '#a78bfa',
+  music: '#34d399', news: '#fbbf24', showcase: '#fbbf24',
+};
+
+const TAG_ACCENT: Record<string, string> = {
+  technique: '#f87171', advanced: '#f87171', fundamentals: '#60a5fa',
+  beginner: '#60a5fa', strategy: '#a78bfa', intermediate: '#a78bfa',
+  rhythm: '#34d399', core: '#34d399', items: '#34d399',
+  speed: '#fbbf24', scoring: '#fbbf24', recovery: '#60a5fa',
+  multiplayer: '#a78bfa', worlds: '#4ECDC4', exploration: '#4ECDC4',
+  competitive: '#a78bfa',
+};
+
+const TUTORIAL_WIKI_MAP: Record<string, SubSection> = {
+  'tut-tspin': 'controls', 'tut-stacking': 'overview', 'tut-combos': 'overview',
+  'tut-opener': 'modes', 'tut-rhythm': 'overview', 'tut-downstack': 'controls',
+  'tut-harddrop': 'controls', 'tut-garbage': 'ranked', 'tut-finesse': 'controls',
+  'tut-back2back': 'overview', 'tut-crafting': 'crafting', 'tut-items': 'crafting',
+  'tut-ranked': 'ranked', 'tut-worlds': 'worlds',
+};
+
+const TUTORIAL_THUMB_MAP: Record<string, string> = {
+  technique: '/textures/blocks/obsidian.png', fundamentals: '/textures/blocks/stone.png',
+  strategy: '/textures/blocks/wood_top.png', rhythm: '/textures/blocks/grass_top.png',
+  recovery: '/textures/blocks/dirt.png', speed: '/textures/blocks/sand.png',
+  scoring: '/textures/blocks/brick.png', items: '/textures/blocks/leaves.png',
+  multiplayer: '/textures/blocks/brick.png', worlds: '/textures/blocks/water.png',
+  core: '/textures/blocks/grass_top.png', competitive: '/textures/blocks/obsidian.png',
+  exploration: '/textures/blocks/water.png',
+};
+
+// --- Video order (real embeds first, then beginner→advanced→entertainment→news) ---
+const VIDEO_ORDER = [
+  'vid-tspin-tutorial', 'vid-beginner', 'vid-ranked-guide', 'vid-advanced-combos',
+  'vid-multiplayer-tips', 'vid-music-showcase', 'vid-update-showcase', 'vid-world-tour',
+];
+
+const SORTED_VIDEOS = VIDEO_ORDER
+  .map((id) => {
+    const v = forYouConfig.videos.find((x) => x.id === id);
+    if (!v) return null;
+    const titleKey = `res_${v.id.replace(/-/g, '_')}`;
+    return {
+      id: v.id, titleKey, category: v.category,
+      embedId: extractEmbedId(v.url),
+      accent: CATEGORY_ACCENT[v.category] || '#60a5fa',
+    };
+  })
+  .filter(Boolean) as { id: string; titleKey: string; category: string; embedId: string; accent: string }[];
+
+// --- Tutorial order (learning progression: fundamentals→intermediate→advanced→systems) ---
+const TUTORIAL_ORDER = [
+  'tut-stacking', 'tut-harddrop', 'tut-rhythm',
+  'tut-combos', 'tut-back2back', 'tut-downstack',
+  'tut-tspin', 'tut-opener', 'tut-finesse',
+  'tut-garbage', 'tut-ranked',
+  'tut-crafting', 'tut-items', 'tut-worlds',
+];
+
+const SORTED_TUTORIALS = TUTORIAL_ORDER
+  .map((id) => {
+    const tut = forYouConfig.tutorials.find((x) => x.id === id);
+    if (!tut) return null;
+    const titleKey = `res_${tut.id.replace(/-/g, '_')}`;
+    return {
+      id: tut.id, titleKey, tags: tut.tags,
+      accent: TAG_ACCENT[tut.tags[0]] || '#60a5fa',
+      wikiTarget: TUTORIAL_WIKI_MAP[tut.id] as SubSection | undefined,
+      thumb: TUTORIAL_THUMB_MAP[tut.tags[0]] || '/textures/blocks/obsidian.png',
+    };
+  })
+  .filter(Boolean) as { id: string; titleKey: string; tags: string[]; accent: string; wikiTarget?: SubSection; thumb: string }[];
 
 const UPDATE_VIDEOS = [
   { version: 'v0.0.2', title: 'azuretier.net v0.0.2 Update Overview', embedId: 'bcwz2j6N_kA', date: '2025-05' },
@@ -366,18 +443,61 @@ export default function WikiPage() {
               <motion.div key="cr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 <section className={styles.section}>
                   <h2 className={styles.sectionTitle}>{t('communityResourcesTitle')}</h2>
-                  <p className={styles.paragraph}>{t('communityResourcesDesc')}</p>
+
+                  {/* Videos */}
+                  <h3 className={styles.resourceSectionTitle}>{t('resourceVideosTitle')}</h3>
                   <div className={styles.videoGallery}>
-                    {COMMUNITY_VIDEOS.map((v) => (
+                    {SORTED_VIDEOS.map((v) => (
                       <div key={v.id} className={styles.videoCard} style={{ '--card-accent': v.accent } as React.CSSProperties}>
                         <div className={styles.videoCardThumb}>
-                          {v.embedId ? <iframe src={`https://www.youtube-nocookie.com/embed/${v.embedId}`} title={v.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen className={styles.videoCardIframe} loading="lazy" />
-                            : <div className={styles.videoCardPlaceholder}><span className={styles.videoCardPlayIcon}>&#9654;</span><span className={styles.videoCardSoon}>{t('videoComingSoon')}</span></div>}
+                          {v.embedId ? (
+                            <iframe src={`https://www.youtube-nocookie.com/embed/${v.embedId}`} title={t(v.titleKey)} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen className={styles.videoCardIframe} loading="lazy" />
+                          ) : (
+                            <div className={styles.videoCardPlaceholder}><span className={styles.videoCardPlayIcon}>&#9654;</span><span className={styles.videoCardSoon}>{t('videoComingSoon')}</span></div>
+                          )}
                         </div>
-                        <div className={styles.videoCardBody}><span className={styles.videoCardCategory}>{v.category}</span><h3 className={styles.videoCardTitle}>{v.title}</h3></div>
+                        <div className={styles.videoCardBody}>
+                          <span className={styles.videoCardCategory}>{v.category}</span>
+                          <h3 className={styles.videoCardTitle}>{t(v.titleKey)}</h3>
+                        </div>
                       </div>
                     ))}
                   </div>
+
+                  {/* Tutorials */}
+                  <h3 className={styles.resourceSectionTitle}>{t('resourceTutorialsTitle')}</h3>
+                  <div className={styles.resourceList}>
+                    {SORTED_TUTORIALS.map((tut) => (
+                      <button
+                        key={tut.id}
+                        className={styles.resourceWidget}
+                        onClick={() => {
+                          if (tut.wikiTarget) {
+                            switchPage('game-overview');
+                            setTimeout(() => scrollToSub(tut.wikiTarget!), 150);
+                          }
+                        }}
+                        style={{ '--resource-accent': tut.accent } as React.CSSProperties}
+                      >
+                        <div className={styles.resourceThumb}>
+                          <Image src={tut.thumb} alt="" width={28} height={28} className={styles.resourceThumbImg} unoptimized />
+                        </div>
+                        <div className={styles.resourceContent}>
+                          <div className={styles.resourceTopRow}>
+                            <span className={styles.resourceType}>{t('resourceTypeTutorial')}</span>
+                            <span className={styles.resourceTag}>{tut.tags[0]}</span>
+                          </div>
+                          <h3 className={styles.resourceTitle}>{t(tut.titleKey)}</h3>
+                        </div>
+                        <span className={styles.resourceArrow}>&rarr;</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* YouTube Channel */}
+                  <a href={forYouConfig.youtubeChannel} target="_blank" rel="noopener noreferrer" className={styles.channelLink}>
+                    {t('visitChannel')} &rarr;
+                  </a>
                 </section>
               </motion.div>
             )}
