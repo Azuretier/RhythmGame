@@ -227,6 +227,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     gameModeRef,
     terrainPhaseRef,
     tdBeatsRemainingRef,
+    gamePhaseRef,
     keyStatesRef,
     gameLoopRef,
     beatTimerRef,
@@ -826,7 +827,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         }
 
         // Check wave complete: no more spawning and all enemies dead
-        if (tdBeatsRemainingRef.current <= 0) {
+        if (tdBeatsRemainingRef.current <= 0 && gamePhaseRef.current === 'PLAYING') {
           const aliveCount = enemiesRef.current.filter(e => e.alive).length;
           if (aliveCount === 0) {
             completeWaveRef.current();

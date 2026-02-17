@@ -141,6 +141,7 @@ export function useGameState() {
     const gameModeRef = useRef<GameMode>(gameMode);
     const terrainPhaseRef = useRef<TerrainPhase>(terrainPhase);
     const tdBeatsRemainingRef = useRef(tdBeatsRemaining);
+    const gamePhaseRef = useRef<GamePhase>(gamePhase);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -177,6 +178,7 @@ export function useGameState() {
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
     useEffect(() => { terrainPhaseRef.current = terrainPhase; }, [terrainPhase]);
     useEffect(() => { tdBeatsRemainingRef.current = tdBeatsRemaining; }, [tdBeatsRemaining]);
+    useEffect(() => { gamePhaseRef.current = gamePhase; }, [gamePhase]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -800,9 +802,11 @@ export function useGameState() {
     // Enter checkpoint — transition from dig phase to TD phase
     const enterCheckpoint = useCallback(() => {
         setGamePhase('COLLAPSE');
+        gamePhaseRef.current = 'COLLAPSE';
 
         setTimeout(() => {
             setGamePhase('CHECKPOINT');
+            gamePhaseRef.current = 'CHECKPOINT';
 
             // Switch to TD terrain
             setTerrainPhase('td');
@@ -820,6 +824,7 @@ export function useGameState() {
 
             setTimeout(() => {
                 setGamePhase('PLAYING');
+                gamePhaseRef.current = 'PLAYING';
             }, 1500);
         }, 1200);
     }, []);
@@ -827,6 +832,7 @@ export function useGameState() {
     // Complete TD wave — transition back to dig phase with next stage
     const completeWave = useCallback(() => {
         setGamePhase('COLLAPSE');
+        gamePhaseRef.current = 'COLLAPSE';
 
         // Clear TD entities
         setEnemies([]);
@@ -836,6 +842,7 @@ export function useGameState() {
 
         setTimeout(() => {
             setGamePhase('TRANSITION');
+            gamePhaseRef.current = 'TRANSITION';
 
             setTimeout(() => {
                 // Advance to next stage
@@ -851,9 +858,11 @@ export function useGameState() {
                 towerHealthRef.current = MAX_HEALTH;
 
                 setGamePhase('WORLD_CREATION');
+                gamePhaseRef.current = 'WORLD_CREATION';
 
                 setTimeout(() => {
                     setGamePhase('PLAYING');
+                    gamePhaseRef.current = 'PLAYING';
                 }, 1500);
             }, 1200);
         }, 1200);
@@ -1048,6 +1057,7 @@ export function useGameState() {
         gameModeRef,
         terrainPhaseRef,
         tdBeatsRemainingRef,
+        gamePhaseRef,
         keyStatesRef,
         gameLoopRef,
         beatTimerRef,
