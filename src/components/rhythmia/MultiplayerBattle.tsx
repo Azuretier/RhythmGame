@@ -73,6 +73,17 @@ const STAGE_COLORS: string[] = [
   '#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A29BFE', '#00F0F0', '#F0A000'
 ];
 
+// Piece type to stage color mapping (for performance)
+const STAGE_COLOR_MAP: Record<PieceType, string> = {
+  I: STAGE_COLORS[0],
+  O: STAGE_COLORS[1],
+  T: STAGE_COLORS[2],
+  S: STAGE_COLORS[3],
+  Z: STAGE_COLORS[4],
+  J: STAGE_COLORS[5],
+  L: STAGE_COLORS[6],
+};
+
 // All 4 rotation states for each piece (SRS)
 const SHAPES: Record<PieceType, number[][][]> = {
   I: [
@@ -317,9 +328,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (colorTheme === 'monochrome') {
       return MONOCHROME_COLORS[type];
     } else if (colorTheme === 'stage') {
-      // Use piece type index to select from stage colors
-      const index = PIECE_TYPES.indexOf(type);
-      return STAGE_COLORS[index % STAGE_COLORS.length];
+      return STAGE_COLOR_MAP[type];
     }
     // default: standard
     return COLORS[type];
