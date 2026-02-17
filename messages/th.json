@@ -402,10 +402,7 @@
         "peakChaos": "โกลาหลสูงสุด",
         "tempoCollapses": "จังหวะพัง",
         "lowestBpm": "BPM ต่ำสุด",
-        "backToLobby": "กลับล็อบบี้",
-        "usePowerUp": "พาวเวอร์อัพ",
-        "cycleTarget": "เป้าหมาย",
-        "emote": "อิโมท"
+        "backToLobby": "กลับล็อบบี้"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"

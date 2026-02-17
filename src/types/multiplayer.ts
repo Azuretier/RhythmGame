@@ -104,10 +104,7 @@ export interface ArenaGenericMessage {
     | 'arena_start'
     | 'arena_action'
     | 'arena_relay'
-    | 'arena_leave'
-    | 'arena_use_powerup'
-    | 'arena_emote'
-    | 'arena_set_target';
+    | 'arena_leave';
   [key: string]: unknown;
 }
 

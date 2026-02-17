@@ -540,46 +540,6 @@
         "loyalty_polls_50": {
             "name": "Voice of the People",
             "desc": "Vote in 50 polls"
-        },
-        "gold_100": {
-            "name": "Coin Picker",
-            "desc": "Earn 100 total gold"
-        },
-        "gold_1000": {
-            "name": "Coin Collector",
-            "desc": "Earn 1,000 total gold"
-        },
-        "gold_5000": {
-            "name": "Treasure Hunter",
-            "desc": "Earn 5,000 total gold"
-        },
-        "gold_25000": {
-            "name": "Golden King",
-            "desc": "Earn 25,000 total gold"
-        },
-        "gold_100000": {
-            "name": "Legendary Tycoon",
-            "desc": "Earn 100,000 total gold"
-        },
-        "treasure_10": {
-            "name": "Treasure Found",
-            "desc": "Collect 10 treasures"
-        },
-        "treasure_50": {
-            "name": "Treasure Seeker",
-            "desc": "Collect 50 treasures"
-        },
-        "treasure_200": {
-            "name": "Treasure Master",
-            "desc": "Collect 200 treasures"
-        },
-        "treasure_500": {
-            "name": "Treasure Guardian",
-            "desc": "Collect 500 treasures"
-        },
-        "treasure_1000": {
-            "name": "Lord of Riches",
-            "desc": "Collect 1,000 treasures"
         }
     },
     "arena": {
@@ -642,10 +602,7 @@
         "peakChaos": "PEAK CHAOS",
         "tempoCollapses": "COLLAPSES",
         "lowestBpm": "LOW BPM",
-        "backToLobby": "Back to Lobby",
-        "usePowerUp": "Power-Up",
-        "cycleTarget": "Target",
-        "emote": "Emote"
+        "backToLobby": "Back to Lobby"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -1101,7 +1058,34 @@
         "updatesTitle": "Version Updates",
         "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
         "videoComingSoon": "Coming Soon",
-        "watchVideo": "Watch"
+        "watchVideo": "Watch",
+        "resourceVideosTitle": "Videos",
+        "resourceTutorialsTitle": "Tutorials",
+        "resourceTypeTutorial": "TUTORIAL",
+        "resourceTypeVideo": "VIDEO",
+        "visitChannel": "Visit YouTube Channel",
+        "res_vid_beginner": "RHYTHMIA Beginner Guide",
+        "res_vid_tspin_tutorial": "T-Spin Tutorial - From Zero to Hero",
+        "res_vid_ranked_guide": "How to Climb Ranked",
+        "res_vid_advanced_combos": "Advanced Combo Techniques",
+        "res_vid_update_showcase": "Latest Update Showcase",
+        "res_vid_music_showcase": "RHYTHMIA OST Preview",
+        "res_vid_multiplayer_tips": "1v1 Battle Tips & Tricks",
+        "res_vid_world_tour": "World Tour - All Stages",
+        "res_tut_tspin": "T-Spin",
+        "res_tut_stacking": "Clean Stacking",
+        "res_tut_combos": "Combo Chains",
+        "res_tut_opener": "Openers & Setups",
+        "res_tut_rhythm": "Rhythm Timing",
+        "res_tut_downstack": "Downstacking",
+        "res_tut_harddrop": "Hard Drop Speed",
+        "res_tut_garbage": "Garbage Management",
+        "res_tut_finesse": "Finesse & Efficiency",
+        "res_tut_back2back": "Back-to-Back Chains",
+        "res_tut_crafting": "Crafting System Guide",
+        "res_tut_items": "Item Strategy",
+        "res_tut_ranked": "Ranked Climbing Tips",
+        "res_tut_worlds": "World Progression"
     },
     "nav": {
         "wiki": "Wiki",

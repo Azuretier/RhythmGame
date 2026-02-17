@@ -15,8 +15,6 @@ import type {
   ArenaClientMessage,
   ArenaAction,
   ArenaBoardPayload,
-  EmoteType,
-  TargetMode,
 } from './src/types/arena';
 import {
   ARENA_MAX_PLAYERS,
@@ -298,7 +296,7 @@ function clearArenaTimer(playerId: string): void {
 }
 
 function isArenaMessage(type: string): boolean {
-  return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue' || type === 'arena_use_powerup' || type === 'arena_emote' || type === 'arena_set_target';
+  return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue';
 }
 
 function isMCBoardMessage(type: string): boolean {
@@ -1049,24 +1047,6 @@ function handleMessage(playerId: string, raw: string): void {
     case 'arena_relay': {
       const relayMsg = message as unknown as { payload: ArenaBoardPayload };
       arenaManager.handleRelay(playerId, relayMsg.payload);
-      break;
-    }
-
-    case 'arena_use_powerup': {
-      const pupMsg = message as unknown as { targetId?: string };
-      arenaManager.handleUsePowerUp(playerId, pupMsg.targetId);
-      break;
-    }
-
-    case 'arena_emote': {
-      const emoteMsg = message as unknown as { emote: EmoteType };
-      arenaManager.handleEmote(playerId, emoteMsg.emote);
-      break;
-    }
-
-    case 'arena_set_target': {
-      const targetMsg = message as unknown as { targetMode: TargetMode; targetId?: string };
-      arenaManager.handleSetTarget(playerId, targetMsg.targetMode, targetMsg.targetId);
       break;
     }
 
