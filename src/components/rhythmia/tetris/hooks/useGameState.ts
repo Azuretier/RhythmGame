@@ -801,6 +801,9 @@ export function useGameState() {
 
     // Enter checkpoint — transition from dig phase to TD phase
     const enterCheckpoint = useCallback(() => {
+        // Guard against multiple calls during phase transitions
+        if (gamePhaseRef.current !== 'PLAYING') return;
+        
         setGamePhase('COLLAPSE');
         gamePhaseRef.current = 'COLLAPSE';
 
@@ -831,6 +834,9 @@ export function useGameState() {
 
     // Complete TD wave — transition back to dig phase with next stage
     const completeWave = useCallback(() => {
+        // Guard against multiple calls during phase transitions
+        if (gamePhaseRef.current !== 'PLAYING') return;
+        
         setGamePhase('COLLAPSE');
         gamePhaseRef.current = 'COLLAPSE';
 
