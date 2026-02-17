@@ -6,13 +6,14 @@ import { useTranslations, useLocale } from 'next-intl';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import type { AdvancementState, AdvancementCategory } from '@/lib/advancements/types';
+import { PixelIcon } from './PixelIcon';
 import styles from './Advancements.module.css';
 
 interface Props {
   onClose: () => void;
 }
 
-const CATEGORY_ORDER: AdvancementCategory[] = ['general', 'lines', 'score', 'tspin', 'combo', 'multiplayer', 'loyalty'];
+const CATEGORY_ORDER: AdvancementCategory[] = ['general', 'lines', 'score', 'tspin', 'combo', 'multiplayer', 'loyalty', 'treasure'];
 
 const CATEGORY_LABELS: Record<string, Record<AdvancementCategory, string>> = {
   en: {
@@ -23,6 +24,7 @@ const CATEGORY_LABELS: Record<string, Record<AdvancementCategory, string>> = {
     combo: 'Combo',
     multiplayer: 'Multiplayer',
     loyalty: 'Loyalty',
+    treasure: 'Treasure',
   },
   ja: {
     general: '全般',
@@ -32,6 +34,7 @@ const CATEGORY_LABELS: Record<string, Record<AdvancementCategory, string>> = {
     combo: 'コンボ',
     multiplayer: 'マルチプレイ',
     loyalty: 'ロイヤルティ',
+    treasure: '金銀財宝',
   },
 };
 
@@ -125,7 +128,7 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
                   className={`${styles.advItem} ${unlocked ? styles.unlocked : styles.locked}`}
                 >
                   <div className={styles.advIcon}>
-                    {unlocked ? adv.icon : '🔒'}
+                    <PixelIcon name={unlocked ? adv.icon : 'lock'} size={24} />
                   </div>
                   <div className={styles.advInfo}>
                     <div className={styles.advName}>{displayName}</div>
@@ -140,7 +143,7 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
                       {formatNumber(currentValue)} / {formatNumber(adv.threshold)}
                     </div>
                   </div>
-                  {unlocked && <div className={styles.advCheck}>✓</div>}
+                  {unlocked && <div className={styles.advCheck}>★</div>}
                 </div>
               );
             })}

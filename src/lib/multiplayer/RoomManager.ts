@@ -10,6 +10,7 @@ export interface Room {
   isPublic: boolean;
   maxPlayers: number;
   createdAt: number;
+  lastActivity: number;
   gameStartedAt?: number;
   gameSeed?: number;
 }
@@ -30,10 +31,10 @@ export class MultiplayerRoomManager {
 
     this.rooms.forEach((room, code) => {
       const connectedPlayers = room.players.filter(p => p.connected);
-      if (connectedPlayers.length === 0 && now - room.createdAt > this.ROOM_TIMEOUT) {
+      if (connectedPlayers.length === 0 && now - room.lastActivity > this.ROOM_TIMEOUT) {
         toDelete.push(code);
       }
-      if (room.status === 'finished' && now - (room.gameStartedAt || room.createdAt) > this.ROOM_TIMEOUT) {
+      if (room.status === 'finished' && now - room.lastActivity > this.ROOM_TIMEOUT) {
         toDelete.push(code);
       }
     });
@@ -61,6 +62,13 @@ export class MultiplayerRoomManager {
       attempts++;
     } while (this.rooms.has(code));
     return code;
+  }
+
+  private touchRoom(roomCode: string): void {
+    const room = this.rooms.get(roomCode);
+    if (room) {
+      room.lastActivity = Date.now();
+    }
   }
 
   getRoomCount(): number {
@@ -107,6 +115,7 @@ export class MultiplayerRoomManager {
       connected: true,
     };
 
+    const now = Date.now();
     const room: Room = {
       code: roomCode,
       name: sanitizedRoomName,
@@ -116,7 +125,8 @@ export class MultiplayerRoomManager {
       status: 'waiting',
       isPublic,
       maxPlayers: Math.min(Math.max(maxPlayers, 2), 8),
-      createdAt: Date.now(),
+      createdAt: now,
+      lastActivity: now,
     };
 
     this.rooms.set(roomCode, room);
@@ -161,6 +171,7 @@ export class MultiplayerRoomManager {
 
     room.players.push(player);
     this.playerToRoom.set(playerId, normalizedCode);
+    this.touchRoom(normalizedCode);
 
     return { success: true, player };
   }
@@ -251,6 +262,7 @@ export class MultiplayerRoomManager {
     if (player) {
       player.connected = true;
     }
+    this.touchRoom(roomCode);
 
     return { roomCode, room };
   }
@@ -270,6 +282,7 @@ export class MultiplayerRoomManager {
     if (!player) return { success: false, error: 'Player not found' };
 
     player.ready = ready;
+    this.touchRoom(roomCode);
     return { success: true };
   }
 
@@ -297,6 +310,7 @@ export class MultiplayerRoomManager {
     room.status = 'countdown';
     room.gameStartedAt = Date.now();
     room.gameSeed = gameSeed;
+    this.touchRoom(roomCode);
 
     return { success: true, gameSeed };
   }
@@ -325,6 +339,7 @@ export class MultiplayerRoomManager {
     room.players.forEach(p => {
       p.ready = false;
     });
+    this.touchRoom(roomCode);
 
     return true;
   }

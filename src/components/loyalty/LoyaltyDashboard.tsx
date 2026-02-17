@@ -21,6 +21,7 @@ import {
 import type { LoyaltyState, Poll } from '@/lib/loyalty';
 import { ADVANCEMENTS, loadAdvancementState, syncLoyaltyStats } from '@/lib/advancements';
 import type { AdvancementState } from '@/lib/advancements';
+import { PixelIcon } from '@/components/rhythmia/PixelIcon';
 import styles from './loyalty.module.css';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -293,7 +294,7 @@ export default function LoyaltyDashboard() {
                   key={adv.id}
                   className={`${styles.badgeCard} ${styles.unlocked}`}
                 >
-                  <span className={styles.badgeIcon}>{adv.icon}</span>
+                  <span className={styles.badgeIcon}><PixelIcon name={adv.icon} size={20} /></span>
                   <div className={styles.badgeName}>
                     {tAdv(`${adv.id}.name`)}
                   </div>

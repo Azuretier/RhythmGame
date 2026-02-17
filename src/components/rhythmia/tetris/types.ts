@@ -1,5 +1,8 @@
 // ===== Game Mode =====
-export type GameMode = 'vanilla' | 'td';
+export type GameMode = 'vanilla';
+
+// ===== Terrain Phase (alternating within vanilla mode) =====
+export type TerrainPhase = 'dig' | 'td';
 
 // ===== Game Types =====
 
@@ -59,6 +62,7 @@ export type VFXEvent =
     | { type: 'rotation'; pieceType: string; boardX: number; boardY: number; fromRotation: number; toRotation: number }
     | { type: 'hardDrop'; pieceType: string; boardX: number; boardY: number; dropDistance: number }
     | { type: 'comboChange'; combo: number; onBeat: boolean }
+    | { type: 'comboBreak'; lostCombo: number }
     | { type: 'feverStart'; combo: number }
     | { type: 'feverEnd' };
 
@@ -69,7 +73,8 @@ export type GamePhase =
     | 'PLAYING'
     | 'CRAFTING'
     | 'COLLAPSE'
-    | 'TRANSITION';
+    | 'TRANSITION'
+    | 'CHECKPOINT';
 
 // ===== Item System =====
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
@@ -156,6 +161,42 @@ export type Bullet = {
     alive: boolean;
 };
 
+// ===== Treasure System =====
+export type TreasureRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export type TreasureType = {
+    id: string;
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    rarity: TreasureRarity;
+    /** Gold value of this treasure */
+    value: number;
+    /** Drop weight (probability) */
+    dropWeight: number;
+};
+
+export type TreasureWallet = {
+    gold: number;
+    silver: number;
+    totalGoldEarned: number;
+    totalTreasuresCollected: number;
+};
+
+export type FloatingTreasure = {
+    id: number;
+    treasureId: string;
+    x: number;
+    y: number;
+    targetX: number;
+    targetY: number;
+    startTime: number;
+    duration: number;
+    collected: boolean;
+};
+
 // ===== Keybindings =====
 export type KeybindAction = 'inventory' | 'shop';
 
@@ -200,4 +241,27 @@ export type TerrainParticle = {
     opacity: number;
     life: number;
     maxLife: number;
+};
+
+// ===== Feature Customizer Settings =====
+export type FeatureSettings = {
+    ghostPiece: boolean;
+    beatVfx: boolean;
+    particles: boolean;
+    items: boolean;
+    voxelBackground: boolean;
+    beatBar: boolean;
+    sound: boolean;
+    garbageMeter: boolean;
+};
+
+export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
+    ghostPiece: true,
+    beatVfx: true,
+    particles: true,
+    items: true,
+    voxelBackground: true,
+    beatBar: true,
+    sound: true,
+    garbageMeter: true,
 };

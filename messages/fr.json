@@ -11,6 +11,7 @@
         "loading": "CHARGEMENT",
         "selectServer": "CHOISIR LE MODE",
         "chooseMode": "Choisissez votre mode de jeu",
+        "tagline": "Un jeu de puzzle rythmique. Posez des blocs en rythme, affrontez vos amis et débloquez des succès.",
         "play": "JOUER",
         "battle": "COMBAT",
         "back": "← Retour",
@@ -143,6 +144,58 @@
         "combo_20": {
             "name": "Dieu du Combo",
             "desc": "Atteignez un combo de 20"
+        },
+        "combo_30": {
+            "name": "Seigneur du Combo",
+            "desc": "Atteignez un combo de 30"
+        },
+        "combo_50": {
+            "name": "Combo Immortel",
+            "desc": "Atteignez un combo de 50"
+        },
+        "combo_75": {
+            "name": "Combo Transcendant",
+            "desc": "Atteignez un combo de 75"
+        },
+        "combo_100": {
+            "name": "Combo Divinité",
+            "desc": "Atteignez un combo de 100"
+        },
+        "combo_150": {
+            "name": "Combo Céleste",
+            "desc": "Atteignez un combo de 150"
+        },
+        "combo_200": {
+            "name": "Combo Éternel",
+            "desc": "Atteignez un combo de 200"
+        },
+        "total_combo_50": {
+            "name": "Collecteur de Combos",
+            "desc": "Accumulez 50 combos au total"
+        },
+        "total_combo_100": {
+            "name": "Accumulateur de Combos",
+            "desc": "Accumulez 100 combos au total"
+        },
+        "total_combo_250": {
+            "name": "Vétéran des Combos",
+            "desc": "Accumulez 250 combos au total"
+        },
+        "total_combo_500": {
+            "name": "Maître des Combos",
+            "desc": "Accumulez 500 combos au total"
+        },
+        "total_combo_1000": {
+            "name": "Légende des Combos",
+            "desc": "Accumulez 1 000 combos au total"
+        },
+        "total_combo_2500": {
+            "name": "Combo Mythique",
+            "desc": "Accumulez 2 500 combos au total"
+        },
+        "total_combo_5000": {
+            "name": "Combo Infini",
+            "desc": "Accumulez 5 000 combos au total"
         },
         "games_1": {
             "name": "Premiers Pas",
@@ -349,7 +402,10 @@
         "peakChaos": "CHAOS MAX",
         "tempoCollapses": "EFFONDREMENTS",
         "lowestBpm": "BPM MIN",
-        "backToLobby": "Retour au Lobby"
+        "backToLobby": "Retour au Lobby",
+        "usePowerUp": "Power-Up",
+        "cycleTarget": "Cible",
+        "emote": "Emote"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -795,5 +851,36 @@
         "selectLanguage": "Langue",
         "privacy": "Confidentialité",
         "profileButton": "Profil"
+    },
+    "uiTheme": {
+        "selectTheme": "Theme UI",
+        "neoFuturistic": "Neo-Futuristic",
+        "pixelNostalgia": "Pixel Nostalgia",
+        "neoDesc": "Design epure et moderne avec effets de verre givre",
+        "pixelDesc": "Esthetique retro pixel art 8-bit/16-bit avec effets CRT"
+    },
+    "googleSync": {
+        "sectionTitle": "Synchronisation de Compte Google",
+        "description": "Connectez-vous avec Google pour synchroniser votre profil, succès, progression de fidélité et paramètres de skin sur tous vos appareils.",
+        "signIn": "Se connecter avec Google",
+        "signOut": "Se déconnecter",
+        "linking": "Connexion...",
+        "syncing": "Synchronisation...",
+        "syncNow": "Synchroniser maintenant",
+        "synced": "Synchronisé",
+        "error": "Échec de synchronisation"
+    },
+    "stories": {
+        "title": "STORIES",
+        "chapter": "CHAPTER",
+        "backToLobby": "← Retour",
+        "log": "LOG",
+        "auto": "AUTO",
+        "skip": "SKIP",
+        "menu": "MENU",
+        "logTitle": "Journal de Texte",
+        "close": "Fermer",
+        "resume": "Reprendre",
+        "chapterSelect": "Sélection de Chapitre"
     }
 }

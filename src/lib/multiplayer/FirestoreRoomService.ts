@@ -4,14 +4,16 @@
  */
 
 import { Firestore } from 'firebase-admin/firestore';
-import { RoomState, Player } from '@/types/multiplayer';
+import type { RoomState } from '@/types/multiplayer';
+
+type FirestoreRoomStatus = 'open' | 'countdown' | 'in_game' | 'finished';
 
 export interface FirestoreRoomDocument {
   name: string;
   code: string;
   createdAt: number;
   updatedAt: number;
-  status: 'open' | 'in_game';
+  status: FirestoreRoomStatus;
   maxPlayers: number;
   hostId: string;
   players: {
@@ -20,6 +22,15 @@ export interface FirestoreRoomDocument {
     isHost: boolean;
     joinedAt: number;
   }[];
+}
+
+function mapRoomStatus(status: RoomState['status']): FirestoreRoomStatus {
+  switch (status) {
+    case 'waiting': return 'open';
+    case 'countdown': return 'countdown';
+    case 'playing': return 'in_game';
+    case 'finished': return 'finished';
+  }
 }
 
 export class FirestoreRoomService {
@@ -41,7 +52,7 @@ export class FirestoreRoomService {
       code: roomState.code,
       createdAt: roomState.createdAt || now,
       updatedAt: now,
-      status: roomState.status === 'playing' ? 'in_game' : 'open',
+      status: mapRoomStatus(roomState.status),
       maxPlayers: roomState.maxPlayers || 8,
       hostId: roomState.hostId,
       players: roomState.players.map((p) => ({
@@ -128,7 +139,7 @@ export class FirestoreRoomService {
    */
   async updateRoomStatus(
     roomCode: string,
-    status: 'open' | 'in_game'
+    status: FirestoreRoomStatus,
   ): Promise<void> {
     await this.db
       .collection(this.roomsCollection)
