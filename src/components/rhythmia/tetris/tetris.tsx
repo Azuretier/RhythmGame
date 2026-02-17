@@ -19,6 +19,7 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
+import { useKeybinds } from './hooks/useKeybinds';
 
 // Utilities
 import {
@@ -261,6 +262,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setTowerHealth,
     towerHealthRef,
   } = gameState;
+
+  const {
+    das, arr, sdf,
+    setDas, setArr, setSdf,
+  } = gameState;
+
+  const { keybinds, setKeybind, resetKeybinds, defaults: defaultKeybinds } = useKeybinds();
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
 
@@ -1240,6 +1248,16 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 combo={combo}
                 beatPhase={beatPhase}
                 boardElRef={boardElRef}
+                das={das}
+                arr={arr}
+                sdf={sdf}
+                onDasChange={setDas}
+                onArrChange={setArr}
+                onSdfChange={setSdf}
+                keybinds={keybinds}
+                onKeybindChange={setKeybind}
+                onKeybindsReset={resetKeybinds}
+                defaultKeybinds={defaultKeybinds}
               />
               <BeatBar containerRef={beatBarRef} />
               <StatsPanel lines={lines} level={level} />
