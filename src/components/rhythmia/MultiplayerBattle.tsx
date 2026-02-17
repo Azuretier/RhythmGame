@@ -8,7 +8,7 @@ import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnl
 import AdvancementToast from './AdvancementToast';
 import { useRhythmVFX } from './tetris/hooks/useRhythmVFX';
 import { RhythmVFX } from './tetris/components/RhythmVFX';
-import { BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, WORLDS } from './tetris/constants';
+import { BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, WORLDS, getThemedColor, PIECE_TYPES as EXPORTED_PIECE_TYPES } from './tetris/constants';
 import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
@@ -49,18 +49,7 @@ const DAS = 167; // Delayed Auto Shift
 const ARR = 33;  // Auto Repeat Rate
 const SOFT_DROP_SPEED = 50;
 const GARBAGE_COLOR = '#555555';
-
-const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
-
-const COLORS: Record<PieceType, string> = {
-  I: '#00F0F0',
-  O: '#F0F000',
-  T: '#A000F0',
-  S: '#00F000',
-  Z: '#F00000',
-  J: '#0000F0',
-  L: '#F0A000',
-};
+const PIECE_TYPES: PieceType[] = EXPORTED_PIECE_TYPES as PieceType[];
 
 // All 4 rotation states for each piece (SRS)
 const SHAPES: Record<PieceType, number[][][]> = {
@@ -201,10 +190,10 @@ function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][
   return null;
 }
 
-function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
+function lockPiece(piece: Piece, board: (BoardCell | null)[][], worldIdx: number): (BoardCell | null)[][] {
   const newBoard = board.map(row => [...row]);
   const shape = getShape(piece.type, piece.rotation);
-  const color = COLORS[piece.type];
+  const color = getThemedColor(piece.type, 'stage', worldIdx);
 
   for (let y = 0; y < shape.length; y++) {
     for (let x = 0; x < shape[y].length; x++) {
@@ -733,7 +722,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     gamePiecesPlacedRef.current++;
 
     // Lock to board
-    let newBoard = lockPiece(piece, boardRef.current);
+    let newBoard = lockPiece(piece, boardRef.current, worldIdx);
 
     // Apply pending garbage before clearing
     const garbage = pendingGarbageRef.current;
@@ -1281,7 +1270,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
   if (piece) {
     const gy = getGhostY(piece, board);
     const shape = getShape(piece.type, piece.rotation);
-    const color = COLORS[piece.type];
+    const color = getThemedColor(piece.type, 'stage', worldIdx);
 
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
@@ -1314,13 +1303,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
   const renderPreview = (type: PieceType) => {
     const shape = getShape(type, 0);
+    const color = getThemedColor(type, 'stage', worldIdx);
     return (
       <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, auto)` }}>
         {shape.flat().map((val, i) => (
           <div
             key={i}
             className={`${styles.previewCell} ${val ? styles.filled : ''}`}
-            style={val ? { backgroundColor: COLORS[type], boxShadow: `0 0 6px ${COLORS[type]}` } : {}}
+            style={val ? { backgroundColor: color, boxShadow: `0 0 6px ${color}` } : {}}
           />
         ))}
       </div>
@@ -1422,7 +1412,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 </div>
               )}
 
-              <div ref={playerBoardDomRef} className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
+              <div ref={playerBoardDomRef} className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
                 {displayBoard.flat().map((cell, i) => (
                   <div
                     key={i}
@@ -1485,7 +1475,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 </div>
               )}
 
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
                 {opponentDisplay.flat().map((cell, i) => (
                   <div
                     key={i}
