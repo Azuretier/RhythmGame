@@ -43,6 +43,10 @@ const GARBAGE_COLOR = '#555555';
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
+// ===== Color Themes =====
+type ColorTheme = 'standard' | 'stage' | 'monochrome';
+
+// Standard Tetris colors (default)
 const COLORS: Record<PieceType, string> = {
   I: '#00F0F0',
   O: '#F0F000',
@@ -52,6 +56,22 @@ const COLORS: Record<PieceType, string> = {
   J: '#0000F0',
   L: '#F0A000',
 };
+
+// Monochrome colors (shades of white/gray)
+const MONOCHROME_COLORS: Record<PieceType, string> = {
+  I: '#FFFFFF',
+  O: '#E0E0E0',
+  T: '#C0C0C0',
+  S: '#D0D0D0',
+  Z: '#B0B0B0',
+  L: '#F0F0F0',
+  J: '#A0A0A0',
+};
+
+// Stage colors (BPM-based world colors - simplified for multiplayer)
+const STAGE_COLORS: string[] = [
+  '#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A29BFE', '#00F0F0', '#F0A000'
+];
 
 // All 4 rotation states for each piece (SRS)
 const SHAPES: Record<PieceType, number[][][]> = {
@@ -192,10 +212,9 @@ function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][
   return null;
 }
 
-function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
+function lockPiece(piece: Piece, board: (BoardCell | null)[][], color: string): (BoardCell | null)[][] {
   const newBoard = board.map(row => [...row]);
   const shape = getShape(piece.type, piece.rotation);
-  const color = COLORS[piece.type];
 
   for (let y = 0; y < shape.length; y++) {
     for (let x = 0; x < shape[y].length; x++) {
@@ -289,6 +308,22 @@ export const MultiplayerBattle: React.FC<Props> = ({
     setFeatureSettings(newSettings);
     try { localStorage.setItem('rhythmia_features', JSON.stringify(newSettings)); } catch { /* ignore */ }
   }, []);
+
+  // Color theme state
+  const [colorTheme, setColorTheme] = useState<ColorTheme>('standard');
+
+  // Helper function to get color based on theme
+  const getThemedColor = useCallback((type: PieceType): string => {
+    if (colorTheme === 'monochrome') {
+      return MONOCHROME_COLORS[type];
+    } else if (colorTheme === 'stage') {
+      // Use piece type index to select from stage colors
+      const index = PIECE_TYPES.indexOf(type);
+      return STAGE_COLORS[index % STAGE_COLORS.length];
+    }
+    // default: standard
+    return COLORS[type];
+  }, [colorTheme]);
 
   // Opponent state
   const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
@@ -552,7 +587,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     gamePiecesPlacedRef.current++;
 
     // Lock to board
-    let newBoard = lockPiece(piece, boardRef.current);
+    const pieceColor = getThemedColor(piece.type);
+    let newBoard = lockPiece(piece, boardRef.current, pieceColor);
 
     // Apply pending garbage before clearing
     const garbage = pendingGarbageRef.current;
@@ -998,7 +1034,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
   if (piece) {
     const shape = getShape(piece.type, piece.rotation);
-    const color = COLORS[piece.type];
+    const color = getThemedColor(piece.type);
 
     // Ghost piece (conditional on feature setting)
     if (featureSettings.ghostPiece) {
@@ -1038,13 +1074,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
   // Next piece preview
   const renderPreview = (type: PieceType) => {
     const shape = getShape(type, 0);
+    const color = getThemedColor(type);
     return (
       <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, auto)` }}>
         {shape.flat().map((val, i) => (
           <div
             key={i}
             className={`${styles.previewCell} ${val ? styles.filled : ''}`}
-            style={val ? { backgroundColor: COLORS[type], boxShadow: `0 0 6px ${COLORS[type]}` } : {}}
+            style={val ? { backgroundColor: color, boxShadow: `0 0 6px ${color}` } : {}}
           />
         ))}
       </div>
@@ -1086,6 +1123,29 @@ export const MultiplayerBattle: React.FC<Props> = ({
           />
         </div>
       )}
+
+      {/* Theme Switcher */}
+      <div className={styles.themeNav}>
+        <span className={styles.themeLabel}>🎨 Theme:</span>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
+          onClick={() => setColorTheme('standard')}
+        >
+          Standard
+        </button>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
+          onClick={() => setColorTheme('stage')}
+        >
+          Stage
+        </button>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
+          onClick={() => setColorTheme('monochrome')}
+        >
+          Mono
+        </button>
+      </div>
 
       <div className={styles.battleArena}>
         {/* Player Side */}
