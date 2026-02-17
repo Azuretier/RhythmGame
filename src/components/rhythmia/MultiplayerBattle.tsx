@@ -1,13 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import styles from './MultiplayerBattle.module.css';
 import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/multiplayer';
 import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
 import { useRhythmVFX } from './tetris/hooks/useRhythmVFX';
 import { RhythmVFX } from './tetris/components/RhythmVFX';
-import { BUFFER_ZONE } from './tetris/constants';
+import { BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, WORLDS } from './tetris/constants';
+import type { TerrainParticle, FloatingItem } from './tetris/types';
+import { TerrainParticles } from './tetris/components/TerrainParticles';
+import { FloatingItems } from './tetris/components/FloatingItems';
+
+// Dynamically import VoxelWorldBackground (Three.js requires client-side only)
+const VoxelWorldBackground = dynamic(() => import('./VoxelWorldBackground'), {
+  ssr: false,
+});
 
 // ===== Types =====
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -333,6 +342,16 @@ export const MultiplayerBattle: React.FC<Props> = ({
   // Beat phase for UI indicator
   const [beatPhaseDisplay, setBeatPhaseDisplay] = useState(0);
 
+  // Voxel terrain state
+  const [worldIdx, setWorldIdx] = useState(0);
+  const [terrainSeed, setTerrainSeed] = useState(gameSeed);
+  const [terrainTotal, setTerrainTotal] = useState(0);
+  const [terrainDestroyedCount, setTerrainDestroyedCount] = useState(0);
+  const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
+  const [floatingItems, setFloatingItems] = useState<FloatingItem[]>([]);
+  let nextParticleId = 0;
+  let nextFloatingId = 0;
+
   // Opponent state
   const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
   const opponentScoreRef = useRef(0);
@@ -470,6 +489,49 @@ export const MultiplayerBattle: React.FC<Props> = ({
       osc2.stop(t + 0.12);
     } catch {}
   }, []);
+
+  // ===== Terrain Ready Handler =====
+  const handleTerrainReady = useCallback((totalBlocks: number) => {
+    setTerrainTotal(totalBlocks);
+  }, []);
+
+  // ===== Terrain Particles =====
+  const spawnTerrainParticles = useCallback((clearedRows: number[], boardCenterX: number, boardCenterY: number) => {
+    if (clearedRows.length === 0) return;
+    
+    const newParticles: TerrainParticle[] = [];
+    clearedRows.forEach(row => {
+      const count = TERRAIN_PARTICLES_PER_LINE;
+      for (let i = 0; i < count; i++) {
+        const x = boardCenterX + (Math.random() - 0.5) * 400;
+        const y = boardCenterY + (row - 10) * 30 + (Math.random() - 0.5) * 20;
+        const vx = (Math.random() - 0.5) * 4;
+        const vy = -2 - Math.random() * 3;
+        const color = WORLDS[worldIdx]?.colors[Math.floor(Math.random() * 7)] || '#888888';
+        const maxLife = 1.0;
+        newParticles.push({
+          id: nextParticleId++,
+          x,
+          y,
+          vx,
+          vy,
+          size: 3 + Math.random() * 4,
+          color,
+          opacity: 1.0,
+          life: maxLife,
+          maxLife,
+        });
+      }
+    });
+    
+    setTerrainParticles(prev => [...prev, ...newParticles]);
+  }, [worldIdx]);
+
+  // ===== Destroy Terrain =====
+  const destroyTerrain = useCallback((linesCleared: number) => {
+    const damage = linesCleared * TERRAIN_DAMAGE_PER_LINE;
+    setTerrainDestroyedCount(prev => Math.min(prev + damage, terrainTotal));
+  }, [terrainTotal]);
 
   // ===== Relay =====
   const sendRelay = useCallback((payload: RelayPayload) => {
@@ -685,6 +747,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
     boardRef.current = clearedBoard;
 
     if (cleared > 0) {
+      // Destroy terrain blocks
+      destroyTerrain(cleared);
+      
+      // Spawn terrain particles at board center
+      const boardCenterX = window.innerWidth / 2;
+      const boardCenterY = window.innerHeight / 2;
+      spawnTerrainParticles(clearedRows, boardCenterX, boardCenterY);
+      
       // Base scoring with T-Spin bonuses
       let base = [0, 100, 300, 500, 800][cleared];
       if (tSpin === 'full') {
@@ -731,7 +801,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     pushLiveAdvancementCheck();
     sendBoardUpdate();
     spawnPiece();
-  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playPerfectSound, playTSpinSound, spawnPiece, render, pushLiveAdvancementCheck, showJudgmentText, vfx]);
+  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playPerfectSound, playTSpinSound, spawnPiece, render, pushLiveAdvancementCheck, showJudgmentText, vfx, destroyTerrain, spawnTerrainParticles]);
 
   // Wire up startLockTimer -> performLock circular dependency
   const startLockTimerRef = useRef(startLockTimer);
@@ -1162,6 +1232,28 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
   }, []);
 
+  // Animate terrain particles
+  useEffect(() => {
+    if (terrainParticles.length === 0) return;
+    
+    const animationFrame = requestAnimationFrame(() => {
+      setTerrainParticles(prev => 
+        prev
+          .map(p => ({
+            ...p,
+            x: p.x + p.vx,
+            y: p.y + p.vy,
+            vy: p.vy + 0.2, // gravity
+            life: p.life - 0.02,
+            opacity: Math.max(0, p.life / p.maxLife),
+          }))
+          .filter(p => p.life > 0)
+      );
+    });
+    
+    return () => cancelAnimationFrame(animationFrame);
+  }, [terrainParticles]);
+
   // ===== Render =====
   const board = boardRef.current;
   const piece = pieceRef.current;
@@ -1248,6 +1340,21 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
   return (
     <div className={styles.container}>
+      {/* Voxel World Background */}
+      <VoxelWorldBackground
+        seed={terrainSeed}
+        gameMode="vanilla"
+        terrainDestroyedCount={terrainDestroyedCount}
+        onTerrainReady={handleTerrainReady}
+        worldIdx={worldIdx}
+      />
+
+      {/* Terrain destruction particle effects */}
+      <TerrainParticles particles={terrainParticles} />
+
+      {/* Floating item drops from terrain */}
+      <FloatingItems items={floatingItems} />
+
       <div className={styles.battleArena}>
         {/* Player Side */}
         <div className={styles.playerSide}>
