@@ -1,18 +1,26 @@
 /**
- * Version storage utilities for localStorage and cookies
+ * Version and appearance storage utilities for localStorage and cookies
  */
 
-import { UIVersion, UI_VERSIONS } from './types';
+import { UIVersion, UI_VERSIONS, AccentColor, ACCENT_COLORS, DEFAULT_ACCENT } from './types';
 
 const STORAGE_KEY = 'azuret_app_version';
 const COOKIE_NAME = 'azuret_app_version';
+const APPEARANCE_KEY = 'azuret_accent_color';
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year in seconds
 
 /**
  * Type guard to check if a string is a valid UIVersion
  */
-function isValidUIVersion(value: string): value is UIVersion {
+export function isValidUIVersion(value: string): value is UIVersion {
   return UI_VERSIONS.includes(value as UIVersion);
+}
+
+/**
+ * Type guard to check if a string is a valid AccentColor
+ */
+function isValidAccentColor(value: string): value is AccentColor {
+  return ACCENT_COLORS.includes(value as AccentColor);
 }
 
 /**
@@ -106,6 +114,41 @@ export function clearSelectedVersion(): void {
     document.cookie = `${COOKIE_NAME}=; path=/; max-age=0`;
   } catch (error) {
     console.warn('Failed to clear cookie:', error);
+  }
+}
+
+/**
+ * Get the selected accent color from storage
+ */
+export function getSelectedAccent(): AccentColor {
+  if (typeof window === 'undefined') {
+    return DEFAULT_ACCENT;
+  }
+
+  try {
+    const stored = localStorage.getItem(APPEARANCE_KEY);
+    if (stored && isValidAccentColor(stored)) {
+      return stored;
+    }
+  } catch (error) {
+    console.warn('Failed to read accent from localStorage:', error);
+  }
+
+  return DEFAULT_ACCENT;
+}
+
+/**
+ * Set the selected accent color in storage
+ */
+export function setSelectedAccent(color: AccentColor): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    localStorage.setItem(APPEARANCE_KEY, color);
+  } catch (error) {
+    console.warn('Failed to save accent to localStorage:', error);
   }
 }
 

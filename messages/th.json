@@ -11,6 +11,7 @@
         "loading": "กำลังโหลด",
         "selectServer": "เลือกโหมด",
         "chooseMode": "เลือกโหมดเกมของคุณ",
+        "tagline": "เกมพัซเซิลจังหวะดนตรี วางบล็อกตามจังหวะ ต่อสู้กับเพื่อน และปลดล็อกความสำเร็จ",
         "play": "เล่น",
         "battle": "แบทเทิล",
         "back": "← กลับ",
@@ -143,6 +144,58 @@
         "combo_20": {
             "name": "เทพคอมโบ",
             "desc": "ทำคอมโบ 20"
+        },
+        "combo_30": {
+            "name": "จ้าวคอมโบ",
+            "desc": "ทำคอมโบ 30"
+        },
+        "combo_50": {
+            "name": "คอมโบอมตะ",
+            "desc": "ทำคอมโบ 50"
+        },
+        "combo_75": {
+            "name": "คอมโบเหนือธรรมชาติ",
+            "desc": "ทำคอมโบ 75"
+        },
+        "combo_100": {
+            "name": "คอมโบเทพเจ้า",
+            "desc": "ทำคอมโบ 100"
+        },
+        "combo_150": {
+            "name": "คอมโบสวรรค์",
+            "desc": "ทำคอมโบ 150"
+        },
+        "combo_200": {
+            "name": "คอมโบนิรันดร์",
+            "desc": "ทำคอมโบ 200"
+        },
+        "total_combo_50": {
+            "name": "นักสะสมคอมโบ",
+            "desc": "สะสมคอมโบรวม 50"
+        },
+        "total_combo_100": {
+            "name": "ผู้เก็บคอมโบ",
+            "desc": "สะสมคอมโบรวม 100"
+        },
+        "total_combo_250": {
+            "name": "ทหารผ่านศึกคอมโบ",
+            "desc": "สะสมคอมโบรวม 250"
+        },
+        "total_combo_500": {
+            "name": "ปรมาจารย์คอมโบ",
+            "desc": "สะสมคอมโบรวม 500"
+        },
+        "total_combo_1000": {
+            "name": "ตำนานคอมโบ",
+            "desc": "สะสมคอมโบรวม 1,000"
+        },
+        "total_combo_2500": {
+            "name": "คอมโบในตำนาน",
+            "desc": "สะสมคอมโบรวม 2,500"
+        },
+        "total_combo_5000": {
+            "name": "คอมโบไม่สิ้นสุด",
+            "desc": "สะสมคอมโบรวม 5,000"
         },
         "games_1": {
             "name": "ก้าวแรก",
@@ -349,7 +402,10 @@
         "peakChaos": "โกลาหลสูงสุด",
         "tempoCollapses": "จังหวะพัง",
         "lowestBpm": "BPM ต่ำสุด",
-        "backToLobby": "กลับล็อบบี้"
+        "backToLobby": "กลับล็อบบี้",
+        "usePowerUp": "พาวเวอร์อัพ",
+        "cycleTarget": "เป้าหมาย",
+        "emote": "อิโมท"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"
@@ -792,6 +848,39 @@
         "title": "โปรไฟล์ & สกิน",
         "selectSkin": "เลือกสกินสี",
         "currentSkin": "สกินปัจจุบัน",
+        "selectLanguage": "ภาษา",
+        "privacy": "ความเป็นส่วนตัว",
         "profileButton": "โปรไฟล์"
+    },
+    "uiTheme": {
+        "selectTheme": "ธีม UI",
+        "neoFuturistic": "Neo-Futuristic",
+        "pixelNostalgia": "Pixel Nostalgia",
+        "neoDesc": "ดีไซน์ทันสมัยสะอาดตาพร้อมเอฟเฟกต์กระจกฝ้า",
+        "pixelDesc": "สไตล์พิกเซลอาร์ตแบบย้อนยุค 8-bit/16-bit พร้อมเอฟเฟกต์ CRT"
+    },
+    "googleSync": {
+        "sectionTitle": "ซิงค์บัญชี Google",
+        "description": "ลงชื่อเข้าใช้ด้วย Google เพื่อซิงค์โปรไฟล์ ความสำเร็จ ความก้าวหน้าความภักดี และการตั้งค่าสกินของคุณข้ามอุปกรณ์",
+        "signIn": "ลงชื่อเข้าใช้ด้วย Google",
+        "signOut": "ออกจากระบบ",
+        "linking": "กำลังเชื่อมต่อ...",
+        "syncing": "กำลังซิงค์...",
+        "syncNow": "ซิงค์เลย",
+        "synced": "ซิงค์แล้ว",
+        "error": "การซิงค์ล้มเหลว"
+    },
+    "stories": {
+        "title": "STORIES",
+        "chapter": "CHAPTER",
+        "backToLobby": "← กลับ",
+        "log": "LOG",
+        "auto": "AUTO",
+        "skip": "SKIP",
+        "menu": "MENU",
+        "logTitle": "บันทึกข้อความ",
+        "close": "ปิด",
+        "resume": "ดำเนินต่อ",
+        "chapterSelect": "เลือกบท"
     }
 }

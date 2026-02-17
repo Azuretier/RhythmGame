@@ -4,6 +4,7 @@ import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
+import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
   ServerMessage,
@@ -14,6 +15,8 @@ import type {
   ArenaClientMessage,
   ArenaAction,
   ArenaBoardPayload,
+  EmoteType,
+  TargetMode,
 } from './src/types/arena';
 import {
   ARENA_MAX_PLAYERS,
@@ -295,7 +298,7 @@ function clearArenaTimer(playerId: string): void {
 }
 
 function isArenaMessage(type: string): boolean {
-  return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue';
+  return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue' || type === 'arena_use_powerup' || type === 'arena_emote' || type === 'arena_set_target';
 }
 
 function isMCBoardMessage(type: string): boolean {
@@ -550,11 +553,16 @@ function handleMessage(playerId: string, raw: string): void {
     case 'set_profile': {
       const profileMsg = message as unknown as { name: string; icon: string; isPrivate?: boolean };
       if (conn) {
+        const isNewProfile = !conn.profileName;
         conn.profileName = (profileMsg.name || '').slice(0, 20);
         conn.profileIcon = (profileMsg.icon || '').slice(0, 30);
         conn.profilePrivate = !!profileMsg.isPrivate;
         // Broadcast updated online users so all clients see the new profile
         broadcastOnlineCount();
+        // Notify Discord channels when a player comes online
+        if (isNewProfile && conn.profileName) {
+          notifyPlayerOnline(conn.profileName, conn.profileIcon || '', playerConnections.size);
+        }
       }
       break;
     }
@@ -1044,6 +1052,24 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
+    case 'arena_use_powerup': {
+      const pupMsg = message as unknown as { targetId?: string };
+      arenaManager.handleUsePowerUp(playerId, pupMsg.targetId);
+      break;
+    }
+
+    case 'arena_emote': {
+      const emoteMsg = message as unknown as { emote: EmoteType };
+      arenaManager.handleEmote(playerId, emoteMsg.emote);
+      break;
+    }
+
+    case 'arena_set_target': {
+      const targetMsg = message as unknown as { targetMode: TargetMode; targetId?: string };
+      arenaManager.handleSetTarget(playerId, targetMsg.targetMode, targetMsg.targetId);
+      break;
+    }
+
     case 'arena_leave': {
       const result = arenaManager.removePlayer(playerId);
 
@@ -1407,7 +1433,7 @@ const heartbeatInterval = setInterval(() => {
   });
 }, HEARTBEAT_INTERVAL);
 
-// Token cleanup
+// Token cleanup + notification cooldown cleanup
 const tokenCleanupInterval = setInterval(() => {
   const now = Date.now();
   reconnectTokens.forEach((data, token) => {
@@ -1415,6 +1441,7 @@ const tokenCleanupInterval = setInterval(() => {
       reconnectTokens.delete(token);
     }
   });
+  cleanupNotificationCooldowns();
 }, 60000);
 
 // ===== Connection Handler =====
