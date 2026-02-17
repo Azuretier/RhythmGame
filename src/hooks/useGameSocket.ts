@@ -138,6 +138,8 @@ export function useGameSocket(): UseGameSocketReturn {
     socketRef.current = socketInstance;
 
     return () => {
+      // Remove all listeners before disconnecting to prevent memory leaks
+      socketInstance.removeAllListeners();
       socketInstance.disconnect();
     };
   }, []);
@@ -155,6 +157,7 @@ export function useGameSocket(): UseGameSocketReturn {
             setRoomCode(response.roomCode);
             setRoomId(response.roomId);
             setRoomState(RoomState.LOBBY);
+            setError(null);
             if (socket.id) {
               setPlayers([
                 {
@@ -193,6 +196,7 @@ export function useGameSocket(): UseGameSocketReturn {
             setRoomId(response.roomId!);
             setPlayers(response.players!);
             setRoomState(response.state!);
+            setError(null);
           } else {
             setError(response.error || 'Failed to join room');
           }
