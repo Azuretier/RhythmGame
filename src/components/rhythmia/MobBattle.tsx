@@ -1,13 +1,22 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import styles from './MultiplayerBattle.module.css';
-import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/multiplayer';
-import type { FeatureSettings } from './tetris/types';
-import { DEFAULT_FEATURE_SETTINGS } from './tetris/types';
-import { FeatureCustomizer } from './tetris/components/FeatureCustomizer';
-import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
-import AdvancementToast from './AdvancementToast';
+import styles from './MobBattle.module.css';
+import type { Player, ServerMessage, BoardCell } from '@/types/multiplayer';
+import type { ActiveMob, MobBattleRelayPayload } from '@/lib/mob-battle/types';
+import {
+  MOB_DEFINITIONS,
+  MOB_MAP,
+  INITIAL_GOLD,
+  MAX_BASE_HP,
+  PASSIVE_INCOME_AMOUNT,
+  PASSIVE_INCOME_INTERVAL,
+  GOLD_PER_LINE,
+  LINE_CLEAR_DAMAGE,
+  BEAT_DAMAGE_MULTIPLIER,
+  COMBO_DAMAGE_BONUS,
+  BOARD_RELAY_INTERVAL,
+} from '@/lib/mob-battle/constants';
 
 // ===== Types =====
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -36,55 +45,17 @@ const H = 20;
 const BPM = 120;
 const LOCK_DELAY = 500;
 const MAX_LOCK_MOVES = 15;
-const DAS = 167; // Delayed Auto Shift
-const ARR = 33;  // Auto Repeat Rate
+const DAS = 167;
+const ARR = 33;
 const SOFT_DROP_SPEED = 50;
-const GARBAGE_COLOR = '#555555';
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
-// ===== Color Themes =====
-type ColorTheme = 'standard' | 'stage' | 'monochrome';
-
-// Standard Tetris colors (default)
 const COLORS: Record<PieceType, string> = {
-  I: '#00F0F0',
-  O: '#F0F000',
-  T: '#A000F0',
-  S: '#00F000',
-  Z: '#F00000',
-  J: '#0000F0',
-  L: '#F0A000',
+  I: '#00F0F0', O: '#F0F000', T: '#A000F0', S: '#00F000',
+  Z: '#F00000', J: '#0000F0', L: '#F0A000',
 };
 
-// Monochrome colors (shades of white/gray)
-const MONOCHROME_COLORS: Record<PieceType, string> = {
-  I: '#FFFFFF',
-  O: '#E0E0E0',
-  T: '#C0C0C0',
-  S: '#D0D0D0',
-  Z: '#B0B0B0',
-  L: '#F0F0F0',
-  J: '#A0A0A0',
-};
-
-// Stage colors (BPM-based world colors - simplified for multiplayer)
-const STAGE_COLORS: string[] = [
-  '#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A29BFE', '#00F0F0', '#F0A000'
-];
-
-// Piece type to stage color mapping (for performance)
-const STAGE_COLOR_MAP: Record<PieceType, string> = {
-  I: STAGE_COLORS[0],
-  O: STAGE_COLORS[1],
-  T: STAGE_COLORS[2],
-  S: STAGE_COLORS[3],
-  Z: STAGE_COLORS[4],
-  J: STAGE_COLORS[5],
-  L: STAGE_COLORS[6],
-};
-
-// All 4 rotation states for each piece (SRS)
 const SHAPES: Record<PieceType, number[][][]> = {
   I: [
     [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
@@ -92,45 +63,29 @@ const SHAPES: Record<PieceType, number[][][]> = {
     [[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],
     [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]],
   ],
-  O: [
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-    [[1,1],[1,1]],
-  ],
+  O: [[[1,1],[1,1]],[[1,1],[1,1]],[[1,1],[1,1]],[[1,1],[1,1]]],
   T: [
-    [[0,1,0],[1,1,1],[0,0,0]],
-    [[0,1,0],[0,1,1],[0,1,0]],
-    [[0,0,0],[1,1,1],[0,1,0]],
-    [[0,1,0],[1,1,0],[0,1,0]],
+    [[0,1,0],[1,1,1],[0,0,0]], [[0,1,0],[0,1,1],[0,1,0]],
+    [[0,0,0],[1,1,1],[0,1,0]], [[0,1,0],[1,1,0],[0,1,0]],
   ],
   S: [
-    [[0,1,1],[1,1,0],[0,0,0]],
-    [[0,1,0],[0,1,1],[0,0,1]],
-    [[0,0,0],[0,1,1],[1,1,0]],
-    [[1,0,0],[1,1,0],[0,1,0]],
+    [[0,1,1],[1,1,0],[0,0,0]], [[0,1,0],[0,1,1],[0,0,1]],
+    [[0,0,0],[0,1,1],[1,1,0]], [[1,0,0],[1,1,0],[0,1,0]],
   ],
   Z: [
-    [[1,1,0],[0,1,1],[0,0,0]],
-    [[0,0,1],[0,1,1],[0,1,0]],
-    [[0,0,0],[1,1,0],[0,1,1]],
-    [[0,1,0],[1,1,0],[1,0,0]],
+    [[1,1,0],[0,1,1],[0,0,0]], [[0,0,1],[0,1,1],[0,1,0]],
+    [[0,0,0],[1,1,0],[0,1,1]], [[0,1,0],[1,1,0],[1,0,0]],
   ],
   J: [
-    [[1,0,0],[1,1,1],[0,0,0]],
-    [[0,1,1],[0,1,0],[0,1,0]],
-    [[0,0,0],[1,1,1],[0,0,1]],
-    [[0,1,0],[0,1,0],[1,1,0]],
+    [[1,0,0],[1,1,1],[0,0,0]], [[0,1,1],[0,1,0],[0,1,0]],
+    [[0,0,0],[1,1,1],[0,0,1]], [[0,1,0],[0,1,0],[1,1,0]],
   ],
   L: [
-    [[0,0,1],[1,1,1],[0,0,0]],
-    [[0,1,0],[0,1,0],[0,1,1]],
-    [[0,0,0],[1,1,1],[1,0,0]],
-    [[1,1,0],[0,1,0],[0,1,0]],
+    [[0,0,1],[1,1,1],[0,0,0]], [[0,1,0],[0,1,0],[0,1,1]],
+    [[0,0,0],[1,1,1],[1,0,0]], [[1,1,0],[0,1,0],[0,1,0]],
   ],
 };
 
-// SRS Wall Kick Data
 const ROTATION_NAMES = ['0', 'R', '2', 'L'] as const;
 
 const WALL_KICK_JLSTZ: Record<string, [number, number][]> = {
@@ -164,14 +119,11 @@ function createRNG(seed: number) {
   };
 }
 
-// ===== 7-Bag Randomizer =====
 function create7Bag(rng: () => number) {
   let bag: PieceType[] = [];
-
   return (): PieceType => {
     if (bag.length === 0) {
       bag = [...PIECE_TYPES];
-      // Fisher-Yates shuffle
       for (let i = bag.length - 1; i > 0; i--) {
         const j = Math.floor(rng() * (i + 1));
         [bag[i], bag[j]] = [bag[j], bag[i]];
@@ -215,7 +167,6 @@ function getWallKicks(type: PieceType, from: number, to: number): [number, numbe
 function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][]): Piece | null {
   const toRotation = ((piece.rotation + direction + 4) % 4) as 0 | 1 | 2 | 3;
   const kicks = getWallKicks(piece.type, piece.rotation, toRotation);
-
   for (const [dx, dy] of kicks) {
     const test: Piece = { ...piece, rotation: toRotation, x: piece.x + dx, y: piece.y - dy };
     if (isValid(test, board)) return test;
@@ -223,10 +174,10 @@ function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][
   return null;
 }
 
-function lockPiece(piece: Piece, board: (BoardCell | null)[][], color: string): (BoardCell | null)[][] {
+function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
   const newBoard = board.map(row => [...row]);
   const shape = getShape(piece.type, piece.rotation);
-
+  const color = COLORS[piece.type];
   for (let y = 0; y < shape.length; y++) {
     for (let x = 0; x < shape[y].length; x++) {
       if (shape[y][x]) {
@@ -256,20 +207,8 @@ function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
   return gy;
 }
 
-function addGarbageLines(board: (BoardCell | null)[][], count: number, rng: () => number): (BoardCell | null)[][] {
-  if (count <= 0) return board;
-  const newBoard = board.slice(count);
-  for (let i = 0; i < count; i++) {
-    const row: (BoardCell | null)[] = Array(W).fill({ color: GARBAGE_COLOR } as BoardCell);
-    const gap = Math.floor(rng() * W);
-    row[gap] = null;
-    newBoard.push(row);
-  }
-  return newBoard;
-}
-
 // ===== Component =====
-export const MultiplayerBattle: React.FC<Props> = ({
+export const MobBattle: React.FC<Props> = ({
   ws,
   roomCode,
   playerId,
@@ -281,7 +220,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 }) => {
   const opponent = opponents[0];
 
-  // Game state
+  // ===== Game State Refs =====
   const boardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
   const pieceRef = useRef<Piece | null>(null);
   const holdRef = useRef<PieceType | null>(null);
@@ -294,81 +233,56 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const lockTimerRef = useRef<number | null>(null);
   const lockMovesRef = useRef(0);
   const isOnGroundRef = useRef(false);
-  const pendingGarbageRef = useRef(0);
 
-  // Per-game stat tracking for advancements
-  const gameHardDropsRef = useRef(0);
-  const gamePiecesPlacedRef = useRef(0);
-  const advRecordedRef = useRef(false);
-  const liveNotifiedRef = useRef<Set<string>>(new Set());
-  const [toastIds, setToastIds] = useState<string[]>([]);
+  // ===== Mob Battle State Refs =====
+  const goldRef = useRef(INITIAL_GOLD);
+  const baseHpRef = useRef(MAX_BASE_HP);
+  const incomingMobsRef = useRef<ActiveMob[]>([]);
+  const mobIdCounterRef = useRef(0);
+  const mobsKilledRef = useRef(0);
+  const totalGoldEarnedRef = useRef(INITIAL_GOLD);
 
-  // Feature settings (persisted in localStorage)
-  const [featureSettings, setFeatureSettings] = useState<FeatureSettings>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('rhythmia_features');
-        if (stored) return { ...DEFAULT_FEATURE_SETTINGS, ...JSON.parse(stored) };
-      } catch { /* ignore */ }
-    }
-    return DEFAULT_FEATURE_SETTINGS;
-  });
-  const [showFeatures, setShowFeatures] = useState(false);
-
-  const handleFeatureSettingsUpdate = useCallback((newSettings: FeatureSettings) => {
-    setFeatureSettings(newSettings);
-    try { localStorage.setItem('rhythmia_features', JSON.stringify(newSettings)); } catch { /* ignore */ }
-  }, []);
-
-  // Color theme state
-  const [colorTheme, setColorTheme] = useState<ColorTheme>('standard');
-
-  // Helper function to get color based on theme
-  const getThemedColor = useCallback((type: PieceType): string => {
-    if (colorTheme === 'monochrome') {
-      return MONOCHROME_COLORS[type];
-    } else if (colorTheme === 'stage') {
-      return STAGE_COLOR_MAP[type];
-    }
-    // default: standard
-    return COLORS[type];
-  }, [colorTheme]);
-
-  // Opponent state
+  // ===== Opponent State Refs =====
   const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
   const opponentScoreRef = useRef(0);
   const opponentLinesRef = useRef(0);
+  const opponentBaseHpRef = useRef(MAX_BASE_HP);
+  const opponentGoldRef = useRef(INITIAL_GOLD);
 
-  // For re-rendering
+  // ===== Render State =====
   const [, forceRender] = useState(0);
   const render = useCallback(() => forceRender(c => c + 1), []);
 
-  // RNG
+  // ===== RNG =====
   const rngRef = useRef(createRNG(gameSeed));
   const bagRef = useRef(create7Bag(rngRef.current));
-  const garbageRngRef = useRef(createRNG(gameSeed + 1));
 
-  // Rhythm
+  // ===== Rhythm =====
   const lastBeatRef = useRef(Date.now());
   const beatPhaseRef = useRef(0);
 
-  // Audio
+  // ===== Audio =====
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Timers
+  // ===== Timers =====
   const dropTimerRef = useRef<number | null>(null);
   const beatTimerRef = useRef<number | null>(null);
   const beatAnimRef = useRef<number | null>(null);
   const syncTimerRef = useRef<number | null>(null);
+  const incomeTimerRef = useRef<number | null>(null);
+  const mobUpdateTimerRef = useRef<number | null>(null);
 
-  // Input state
+  // ===== Input =====
   const keysRef = useRef<Set<string>>(new Set());
   const dasTimerRef = useRef<number | null>(null);
   const arrTimerRef = useRef<number | null>(null);
   const softDropTimerRef = useRef<number | null>(null);
   const lastDirRef = useRef<string>('');
 
-  // ===== Audio =====
+  // ===== Shop State =====
+  const [shopOpen, setShopOpen] = useState(false);
+
+  // ===== Audio Functions =====
   const initAudio = useCallback(() => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
@@ -415,8 +329,23 @@ export const MultiplayerBattle: React.FC<Props> = ({
     freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
   }, [playTone]);
 
+  const playMobKill = useCallback(() => {
+    playTone(880, 0.1, 'square');
+    setTimeout(() => playTone(1175, 0.08, 'square'), 50);
+  }, [playTone]);
+
+  const playBaseDamage = useCallback(() => {
+    playTone(110, 0.2, 'sawtooth');
+  }, [playTone]);
+
+  const playSummon = useCallback(() => {
+    playTone(330, 0.08, 'triangle');
+    setTimeout(() => playTone(440, 0.08, 'triangle'), 80);
+    setTimeout(() => playTone(550, 0.1, 'triangle'), 160);
+  }, [playTone]);
+
   // ===== Relay =====
-  const sendRelay = useCallback((payload: RelayPayload) => {
+  const sendRelay = useCallback((payload: MobBattleRelayPayload) => {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'relay', payload }));
     }
@@ -431,18 +360,133 @@ export const MultiplayerBattle: React.FC<Props> = ({
       combo: comboRef.current,
       piece: pieceRef.current?.type,
       hold: holdRef.current,
+      baseHp: baseHpRef.current,
+      gold: goldRef.current,
     });
   }, [sendRelay]);
 
-  const sendGarbage = useCallback((lines: number) => {
-    if (lines > 0) {
-      sendRelay({ event: 'garbage', lines });
-    }
+  const sendMobSpawn = useCallback((mobType: string, mobId: number) => {
+    sendRelay({ event: 'mob_spawn', mobType, mobId });
   }, [sendRelay]);
 
   const sendGameOver = useCallback(() => {
     sendRelay({ event: 'game_over' });
   }, [sendRelay]);
+
+  // ===== Mob Management =====
+  const spawnIncomingMob = useCallback((defId: string, mobId: number) => {
+    const def = MOB_MAP[defId];
+    if (!def) return;
+    const mob: ActiveMob = {
+      id: mobId,
+      definitionId: defId,
+      hp: def.hp,
+      maxHp: def.hp,
+      position: 0,
+      speed: def.speed,
+      damage: def.damage,
+      bounty: def.bounty,
+      alive: true,
+      spawnTime: Date.now(),
+      hitFlash: 0,
+    };
+    incomingMobsRef.current = [...incomingMobsRef.current, mob];
+    render();
+  }, [render]);
+
+  const summonMob = useCallback((defId: string) => {
+    const def = MOB_MAP[defId];
+    if (!def || goldRef.current < def.cost || gameOverRef.current) return;
+
+    goldRef.current -= def.cost;
+    const mobId = ++mobIdCounterRef.current;
+    sendMobSpawn(defId, mobId);
+    playSummon();
+    render();
+  }, [sendMobSpawn, playSummon, render]);
+
+  const damageMobs = useCallback((linesCleared: number, onBeat: boolean, combo: number) => {
+    const dmgConfig = LINE_CLEAR_DAMAGE[linesCleared];
+    if (!dmgConfig) return;
+
+    let damage = dmgConfig.baseDamage;
+    if (onBeat) damage *= BEAT_DAMAGE_MULTIPLIER;
+    damage += combo * COMBO_DAMAGE_BONUS;
+    damage = Math.floor(damage);
+
+    const mobs = incomingMobsRef.current.filter(m => m.alive);
+    if (mobs.length === 0) return;
+
+    // Sort by position (closest to base first)
+    const sorted = [...mobs].sort((a, b) => b.position - a.position);
+
+    let targets: ActiveMob[];
+    switch (dmgConfig.target) {
+      case 'closest':
+        targets = sorted.slice(0, 1);
+        break;
+      case 'front_half':
+        targets = sorted.slice(0, Math.max(1, Math.ceil(sorted.length / 2)));
+        break;
+      case 'all':
+        targets = sorted;
+        break;
+    }
+
+    let goldEarned = 0;
+    for (const mob of targets) {
+      mob.hp -= damage;
+      mob.hitFlash = Date.now();
+      if (mob.hp <= 0) {
+        mob.alive = false;
+        goldEarned += mob.bounty;
+        mobsKilledRef.current++;
+        playMobKill();
+      }
+    }
+
+    if (goldEarned > 0) {
+      goldRef.current += goldEarned;
+      totalGoldEarnedRef.current += goldEarned;
+    }
+
+    // Remove dead mobs
+    incomingMobsRef.current = incomingMobsRef.current.filter(m => m.alive);
+    render();
+  }, [playMobKill, render]);
+
+  // ===== Mob Update Loop =====
+  const updateMobs = useCallback(() => {
+    if (gameOverRef.current) return;
+
+    const mobs = incomingMobsRef.current;
+    let baseDamageTotal = 0;
+
+    for (const mob of mobs) {
+      if (!mob.alive) continue;
+      mob.position += mob.speed / 60; // 60fps tick
+
+      if (mob.position >= 1.0) {
+        mob.alive = false;
+        baseDamageTotal += mob.damage;
+      }
+    }
+
+    if (baseDamageTotal > 0) {
+      baseHpRef.current = Math.max(0, baseHpRef.current - baseDamageTotal);
+      playBaseDamage();
+
+      if (baseHpRef.current <= 0) {
+        gameOverRef.current = true;
+        sendGameOver();
+        onGameEnd(opponent?.id || '');
+      }
+    }
+
+    // Remove dead mobs
+    incomingMobsRef.current = mobs.filter(m => m.alive);
+    render();
+  }, [playBaseDamage, sendGameOver, onGameEnd, opponent, render]);
 
   // ===== Piece Queue =====
   const fillQueue = useCallback(() => {
@@ -465,20 +509,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
 
     if (!isValid(piece, boardRef.current)) {
-      // Game over - can't spawn (we lost)
       gameOverRef.current = true;
       sendGameOver();
-      if (!advRecordedRef.current) {
-        advRecordedRef.current = true;
-        const result = recordMultiplayerGameEnd({
-          score: scoreRef.current,
-          lines: linesRef.current,
-          won: false,
-          hardDrops: gameHardDropsRef.current,
-          piecesPlaced: gamePiecesPlacedRef.current,
-        });
-        if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
-      }
       onGameEnd(opponent?.id || '');
       render();
       return false;
@@ -501,7 +533,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (lockTimerRef.current) return;
     lockTimerRef.current = window.setTimeout(() => {
       lockTimerRef.current = null;
-      performLock();
+      performLockRef.current();
     }, LOCK_DELAY);
   }, []);
 
@@ -512,32 +544,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
     }
-    // If still on ground, restart
     if (pieceRef.current && !isValid({ ...pieceRef.current, y: pieceRef.current.y + 1 }, boardRef.current)) {
       startLockTimer();
     }
   }, [startLockTimer]);
-
-  // Stable callback for toast dismiss — avoids resetting the toast timer on every render
-  const dismissToast = useCallback(() => setToastIds([]), []);
-
-  // Push-based live advancement check — runs every performLock(), instant toast
-  const pushLiveAdvancementCheck = useCallback(() => {
-    const qualifying = checkLiveMultiplayerAdvancements({
-      score: scoreRef.current,
-      lines: linesRef.current,
-      won: false,
-      hardDrops: gameHardDropsRef.current,
-      piecesPlaced: gamePiecesPlacedRef.current,
-    });
-    const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
-    if (fresh.length > 0) {
-      fresh.forEach(id => liveNotifiedRef.current.add(id));
-      setToastIds(prev => [...prev, ...fresh]);
-      // Instantly persist unlocks so progress survives mid-game exits
-      saveLiveUnlocks(fresh);
-    }
-  }, []);
 
   // ===== Core Game Logic =====
   const performLock = useCallback(() => {
@@ -563,17 +573,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (aboveBoard) {
       gameOverRef.current = true;
       sendGameOver();
-      if (!advRecordedRef.current) {
-        advRecordedRef.current = true;
-        const result = recordMultiplayerGameEnd({
-          score: scoreRef.current,
-          lines: linesRef.current,
-          won: false,
-          hardDrops: gameHardDropsRef.current,
-          piecesPlaced: gamePiecesPlacedRef.current,
-        });
-        if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
-      }
       onGameEnd(opponent?.id || '');
       render();
       return;
@@ -592,19 +591,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
       comboRef.current = 0;
     }
 
-    // Track pieces placed
-    gamePiecesPlacedRef.current++;
-
     // Lock to board
-    const pieceColor = getThemedColor(piece.type);
-    let newBoard = lockPiece(piece, boardRef.current, pieceColor);
-
-    // Apply pending garbage before clearing
-    const garbage = pendingGarbageRef.current;
-    if (garbage > 0) {
-      newBoard = addGarbageLines(newBoard, garbage, garbageRngRef.current);
-      pendingGarbageRef.current = 0;
-    }
+    const newBoard = lockPiece(piece, boardRef.current);
 
     // Clear lines
     const { board: clearedBoard, cleared } = clearLines(newBoard);
@@ -616,28 +604,21 @@ export const MultiplayerBattle: React.FC<Props> = ({
       scoreRef.current += pts;
       linesRef.current += cleared;
 
-      // Send garbage
-      const garbageToSend = [0, 0, 1, 2, 4][cleared] + Math.floor(comboRef.current / 3);
-      sendGarbage(garbageToSend);
+      // Earn gold from line clears
+      const lineGold = GOLD_PER_LINE * cleared * mult;
+      goldRef.current += lineGold;
+      totalGoldEarnedRef.current += lineGold;
+
+      // Damage incoming mobs
+      damageMobs(cleared, onBeat, comboRef.current);
+
       playLineClear(cleared);
     }
 
     pieceRef.current = null;
-
-    // Live advancement check after stats update
-    pushLiveAdvancementCheck();
-
-    // Send state update
     sendBoardUpdate();
-
-    // Spawn next piece
     spawnPiece();
-  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playTone, spawnPiece, render, pushLiveAdvancementCheck]);
-
-  // Wire up startLockTimer -> performLock circular dependency
-  // performLock is already defined, we just need to ensure startLockTimer calls it
-  const startLockTimerRef = useRef(startLockTimer);
-  startLockTimerRef.current = startLockTimer;
+  }, [sendGameOver, onGameEnd, opponent, damageMobs, sendBoardUpdate, playLineClear, playTone, spawnPiece, render]);
 
   const performLockRef = useRef(performLock);
   performLockRef.current = performLock;
@@ -652,16 +633,13 @@ export const MultiplayerBattle: React.FC<Props> = ({
       pieceRef.current = moved;
       playTone(392, 0.04, 'square');
 
-      // Check if piece is now on ground
       const onGround = !isValid({ ...moved, y: moved.y + 1 }, boardRef.current);
       if (onGround) {
         resetLockTimer();
       } else if (lockTimerRef.current) {
-        // Moved off ground
         clearTimeout(lockTimerRef.current);
         lockTimerRef.current = null;
       }
-
       render();
       return true;
     }
@@ -675,19 +653,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const moved = { ...piece, y: piece.y + 1 };
     if (isValid(moved, boardRef.current)) {
       pieceRef.current = moved;
-
-      // Check if landed
       if (!isValid({ ...moved, y: moved.y + 1 }, boardRef.current)) {
         if (!isOnGroundRef.current) {
           isOnGroundRef.current = true;
           startLockTimer();
         }
       }
-
       render();
       return true;
     } else {
-      // Can't move down - start lock if not already
       if (!isOnGroundRef.current) {
         isOnGroundRef.current = true;
         startLockTimer();
@@ -713,7 +687,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
         lockTimerRef.current = null;
         isOnGroundRef.current = false;
       }
-
       render();
     }
   }, [playTone, resetLockTimer, render]);
@@ -722,7 +695,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const piece = pieceRef.current;
     if (!piece || gameOverRef.current) return;
 
-    gameHardDropsRef.current++;
     const gy = getGhostY(piece, boardRef.current);
     const dropDist = gy - piece.y;
     pieceRef.current = { ...piece, y: gy };
@@ -731,7 +703,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     performLockRef.current();
   }, [playTone]);
 
-  const holdPiece = useCallback(() => {
+  const holdPieceFn = useCallback(() => {
     const piece = pieceRef.current;
     if (!piece || gameOverRef.current || holdUsedRef.current) return;
 
@@ -757,7 +729,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
       pieceRef.current = null;
       spawnPiece();
     }
-
     playTone(440, 0.08);
     render();
   }, [spawnPiece, playTone, render]);
@@ -768,29 +739,21 @@ export const MultiplayerBattle: React.FC<Props> = ({
       try {
         const msg: ServerMessage = JSON.parse(event.data);
         if (msg.type === 'relayed' && msg.fromPlayerId !== playerId) {
-          const payload = msg.payload;
-          if (payload.event === 'board_update') {
-            opponentBoardRef.current = payload.board;
-            opponentScoreRef.current = payload.score;
-            opponentLinesRef.current = payload.lines;
+          const payload = msg.payload as unknown as MobBattleRelayPayload;
+          if (payload.event === 'board_update' && 'board' in payload) {
+            const bp = payload as import('@/lib/mob-battle/types').MobBattleBoardPayload;
+            opponentBoardRef.current = bp.board;
+            opponentScoreRef.current = bp.score;
+            opponentLinesRef.current = bp.lines;
+            opponentBaseHpRef.current = bp.baseHp;
+            opponentGoldRef.current = bp.gold;
             render();
-          } else if (payload.event === 'garbage') {
-            pendingGarbageRef.current += payload.lines;
-            render();
+          } else if (payload.event === 'mob_spawn') {
+            const sp = payload as import('@/lib/mob-battle/types').MobSpawnRelayPayload;
+            spawnIncomingMob(sp.mobType, sp.mobId);
           } else if (payload.event === 'game_over') {
             if (!gameOverRef.current) {
               gameOverRef.current = true;
-              if (!advRecordedRef.current) {
-                advRecordedRef.current = true;
-                const result = recordMultiplayerGameEnd({
-                  score: scoreRef.current,
-                  lines: linesRef.current,
-                  won: true,
-                  hardDrops: gameHardDropsRef.current,
-                  piecesPlaced: gamePiecesPlacedRef.current,
-                });
-                if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
-              }
               onGameEnd(playerId);
               render();
             }
@@ -803,13 +766,13 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     ws.addEventListener('message', handler);
     return () => ws.removeEventListener('message', handler);
-  }, [ws, playerId, onGameEnd, render]);
+  }, [ws, playerId, onGameEnd, spawnIncomingMob, render]);
 
   // ===== Initialize Game =====
   useEffect(() => {
     initAudio();
 
-    // Reset state
+    // Reset all state
     boardRef.current = createEmptyBoard();
     pieceRef.current = null;
     holdRef.current = null;
@@ -819,28 +782,24 @@ export const MultiplayerBattle: React.FC<Props> = ({
     comboRef.current = 0;
     linesRef.current = 0;
     gameOverRef.current = false;
-    pendingGarbageRef.current = 0;
-    gameHardDropsRef.current = 0;
-    gamePiecesPlacedRef.current = 0;
-    advRecordedRef.current = false;
-    liveNotifiedRef.current = new Set();
-    setToastIds([]);
+    goldRef.current = INITIAL_GOLD;
+    baseHpRef.current = MAX_BASE_HP;
+    incomingMobsRef.current = [];
+    mobIdCounterRef.current = 0;
+    mobsKilledRef.current = 0;
+    totalGoldEarnedRef.current = INITIAL_GOLD;
     opponentBoardRef.current = createEmptyBoard();
     opponentScoreRef.current = 0;
     opponentLinesRef.current = 0;
+    opponentBaseHpRef.current = MAX_BASE_HP;
+    opponentGoldRef.current = INITIAL_GOLD;
 
-    // Reset RNG
     rngRef.current = createRNG(gameSeed);
     bagRef.current = create7Bag(rngRef.current);
-    garbageRngRef.current = createRNG(gameSeed + 1);
-
     lastBeatRef.current = Date.now();
 
-    // Fill queue and spawn first piece
     fillQueue();
     spawnPiece();
-
-    // Send initial state
     setTimeout(() => sendBoardUpdate(), 100);
 
     return () => {
@@ -852,25 +811,19 @@ export const MultiplayerBattle: React.FC<Props> = ({
   // ===== Drop Timer =====
   useEffect(() => {
     if (gameOverRef.current) return;
-
     const level = Math.floor(linesRef.current / 10) + 1;
     const speed = Math.max(100, 1000 - (level - 1) * 80);
 
     dropTimerRef.current = window.setInterval(() => {
-      if (!gameOverRef.current) {
-        moveDown();
-      }
+      if (!gameOverRef.current) moveDown();
     }, speed);
 
-    return () => {
-      if (dropTimerRef.current) clearInterval(dropTimerRef.current);
-    };
+    return () => { if (dropTimerRef.current) clearInterval(dropTimerRef.current); };
   }, [moveDown]);
 
   // ===== Beat Timer =====
   useEffect(() => {
     if (gameOverRef.current) return;
-
     const interval = 60000 / BPM;
     lastBeatRef.current = Date.now();
 
@@ -879,15 +832,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
       playDrum();
     }, interval);
 
-    return () => {
-      if (beatTimerRef.current) clearInterval(beatTimerRef.current);
-    };
+    return () => { if (beatTimerRef.current) clearInterval(beatTimerRef.current); };
   }, [playDrum]);
 
   // ===== Beat Phase Animation =====
   useEffect(() => {
     if (gameOverRef.current) return;
-
     const update = () => {
       if (!gameOverRef.current) {
         const interval = 60000 / BPM;
@@ -897,26 +847,41 @@ export const MultiplayerBattle: React.FC<Props> = ({
       }
     };
     beatAnimRef.current = requestAnimationFrame(update);
-
-    return () => {
-      if (beatAnimRef.current) cancelAnimationFrame(beatAnimRef.current);
-    };
+    return () => { if (beatAnimRef.current) cancelAnimationFrame(beatAnimRef.current); };
   }, []);
 
   // ===== Periodic Board Sync =====
   useEffect(() => {
     if (gameOverRef.current) return;
-
     syncTimerRef.current = window.setInterval(() => {
-      if (!gameOverRef.current) {
-        sendBoardUpdate();
-      }
-    }, 500);
-
-    return () => {
-      if (syncTimerRef.current) clearInterval(syncTimerRef.current);
-    };
+      if (!gameOverRef.current) sendBoardUpdate();
+    }, BOARD_RELAY_INTERVAL);
+    return () => { if (syncTimerRef.current) clearInterval(syncTimerRef.current); };
   }, [sendBoardUpdate]);
+
+  // ===== Passive Income Timer =====
+  useEffect(() => {
+    if (gameOverRef.current) return;
+    incomeTimerRef.current = window.setInterval(() => {
+      if (!gameOverRef.current) {
+        goldRef.current += PASSIVE_INCOME_AMOUNT;
+        totalGoldEarnedRef.current += PASSIVE_INCOME_AMOUNT;
+        render();
+      }
+    }, PASSIVE_INCOME_INTERVAL);
+    return () => { if (incomeTimerRef.current) clearInterval(incomeTimerRef.current); };
+  }, [render]);
+
+  // ===== Mob Update Timer (60fps) =====
+  useEffect(() => {
+    if (gameOverRef.current) return;
+    const tick = () => {
+      updateMobs();
+      mobUpdateTimerRef.current = requestAnimationFrame(tick);
+    };
+    mobUpdateTimerRef.current = requestAnimationFrame(tick);
+    return () => { if (mobUpdateTimerRef.current) cancelAnimationFrame(mobUpdateTimerRef.current); };
+  }, [updateMobs]);
 
   // ===== Keyboard Controls =====
   useEffect(() => {
@@ -939,6 +904,23 @@ export const MultiplayerBattle: React.FC<Props> = ({
       if (gameOverRef.current) return;
       if (keysRef.current.has(e.key)) return;
       keysRef.current.add(e.key);
+
+      // Number keys 1-6 for mob summoning
+      if (e.key >= '1' && e.key <= '6') {
+        e.preventDefault();
+        const idx = parseInt(e.key) - 1;
+        if (MOB_DEFINITIONS[idx]) {
+          summonMob(MOB_DEFINITIONS[idx].id);
+        }
+        return;
+      }
+
+      // Tab to toggle shop
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        setShopOpen(prev => !prev);
+        return;
+      }
 
       switch (e.key) {
         case 'ArrowLeft':
@@ -973,14 +955,13 @@ export const MultiplayerBattle: React.FC<Props> = ({
         case 'c':
         case 'C':
           e.preventDefault();
-          holdPiece();
+          holdPieceFn();
           break;
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current.delete(e.key);
-
       switch (e.key) {
         case 'ArrowLeft':
           if (lastDirRef.current === 'left') clearDAS();
@@ -1006,25 +987,9 @@ export const MultiplayerBattle: React.FC<Props> = ({
       clearDAS();
       if (softDropTimerRef.current) clearInterval(softDropTimerRef.current);
     };
-  }, [moveHorizontal, moveDown, rotatePiece, hardDrop, holdPiece]);
+  }, [moveHorizontal, moveDown, rotatePiece, hardDrop, holdPieceFn, summonMob]);
 
-  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
-  useEffect(() => {
-    return () => {
-      // Only record stats if game hasn't ended normally (player left via back button)
-      if (!gameOverRef.current) {
-        recordMultiplayerGameEnd({
-          score: scoreRef.current,
-          lines: linesRef.current,
-          won: false, // Player left mid-game, so they didn't win
-          hardDrops: gameHardDropsRef.current,
-          piecesPlaced: gamePiecesPlacedRef.current,
-        });
-      }
-    };
-  }, []);
-
-  // ===== Render =====
+  // ===== Render Computed Values =====
   const board = boardRef.current;
   const piece = pieceRef.current;
   const hold = holdRef.current;
@@ -1033,35 +998,32 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const combo = comboRef.current;
   const lines = linesRef.current;
   const gameOver = gameOverRef.current;
-  const pendingGarbage = pendingGarbageRef.current;
+  const gold = goldRef.current;
+  const baseHp = baseHpRef.current;
+  const incomingMobs = incomingMobsRef.current;
   const opponentBoard = opponentBoardRef.current;
   const opponentScore = opponentScoreRef.current;
   const opponentLines = opponentLinesRef.current;
+  const opponentBaseHp = opponentBaseHpRef.current;
 
-  // Build display board with ghost + active piece
+  // Build display board
   const displayBoard = board.map(row => row.map(cell => cell ? { ...cell, ghost: false } : null));
-
   if (piece) {
+    const gy = getGhostY(piece, board);
     const shape = getShape(piece.type, piece.rotation);
-    const color = getThemedColor(piece.type);
+    const color = COLORS[piece.type];
 
-    // Ghost piece (conditional on feature setting)
-    if (featureSettings.ghostPiece) {
-      const gy = getGhostY(piece, board);
-      for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-          if (shape[y][x]) {
-            const by = gy + y;
-            const bx = piece.x + x;
-            if (by >= 0 && by < H && bx >= 0 && bx < W && !displayBoard[by][bx]) {
-              displayBoard[by][bx] = { color, ghost: true };
-            }
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        if (shape[y][x]) {
+          const by = gy + y;
+          const bx = piece.x + x;
+          if (by >= 0 && by < H && bx >= 0 && bx < W && !displayBoard[by][bx]) {
+            displayBoard[by][bx] = { color, ghost: true };
           }
         }
       }
     }
-
-    // Active piece
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
         if (shape[y][x]) {
@@ -1075,22 +1037,19 @@ export const MultiplayerBattle: React.FC<Props> = ({
     }
   }
 
-  // Opponent display board
   const opponentDisplay = opponentBoard.map(row =>
     row.map(cell => cell ? { ...cell, ghost: false } : null)
   );
 
-  // Next piece preview
   const renderPreview = (type: PieceType) => {
     const shape = getShape(type, 0);
-    const color = getThemedColor(type);
     return (
       <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, auto)` }}>
         {shape.flat().map((val, i) => (
           <div
             key={i}
             className={`${styles.previewCell} ${val ? styles.filled : ''}`}
-            style={val ? { backgroundColor: color, boxShadow: `0 0 6px ${color}` } : {}}
+            style={val ? { backgroundColor: COLORS[type], boxShadow: `0 0 6px ${COLORS[type]}` } : {}}
           />
         ))}
       </div>
@@ -1106,58 +1065,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
       case 'rotateCW': rotatePiece(1); break;
       case 'rotateCCW': rotatePiece(-1); break;
       case 'drop': hardDrop(); break;
-      case 'hold': holdPiece(); break;
+      case 'hold': holdPieceFn(); break;
     }
   };
 
+  const hpPercent = Math.max(0, (baseHp / MAX_BASE_HP) * 100);
+  const opponentHpPercent = Math.max(0, (opponentBaseHp / MAX_BASE_HP) * 100);
+
   return (
     <div className={styles.container}>
-      {/* Settings gear button */}
-      <button
-        className={styles.settingsGearBtn}
-        onClick={() => setShowFeatures(prev => !prev)}
-        aria-label="Feature settings"
-      >
-        🎛
-      </button>
-
-      {/* Feature Customizer Overlay */}
-      {showFeatures && (
-        <div className={styles.featureOverlay}>
-          <FeatureCustomizer
-            settings={featureSettings}
-            onUpdate={handleFeatureSettingsUpdate}
-            onBack={() => setShowFeatures(false)}
-            mode="multiplayer"
-          />
-        </div>
-      )}
-
-      {/* Theme Switcher */}
-      <div className={styles.themeNav}>
-        <span className={styles.themeLabel}>🎨 Theme:</span>
-        <button
-          className={`${styles.themeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
-          onClick={() => setColorTheme('standard')}
-        >
-          Standard
-        </button>
-        <button
-          className={`${styles.themeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
-          onClick={() => setColorTheme('stage')}
-        >
-          Stage
-        </button>
-        <button
-          className={`${styles.themeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
-          onClick={() => setColorTheme('monochrome')}
-        >
-          Mono
-        </button>
-      </div>
-
       <div className={styles.battleArena}>
-        {/* Player Side */}
+        {/* === Player Side === */}
         <div className={styles.playerSide}>
           {/* Hold + Next */}
           <div className={styles.sidePanel}>
@@ -1168,9 +1086,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             <div className={styles.nextBox}>
               <div className={styles.panelLabel}>NEXT</div>
               {nextQueue.slice(0, 3).map((type, i) => (
-                <div key={i} className={styles.nextItem}>
-                  {renderPreview(type)}
-                </div>
+                <div key={i} className={styles.nextItem}>{renderPreview(type)}</div>
               ))}
             </div>
           </div>
@@ -1179,20 +1095,58 @@ export const MultiplayerBattle: React.FC<Props> = ({
           <div className={styles.boardSection}>
             <div className={styles.playerHeader}>
               <div className={styles.playerName}>{playerName}</div>
-              <div className={styles.playerScore}>{score.toLocaleString()}</div>
+              <div className={styles.goldDisplay}>
+                <span className={styles.goldIcon}>G</span>
+                <span className={styles.goldAmount}>{gold}</span>
+              </div>
+            </div>
+
+            {/* Base HP Bar */}
+            <div className={styles.hpBarContainer}>
+              <div className={styles.hpBarLabel}>BASE HP</div>
+              <div className={styles.hpBarTrack}>
+                <div
+                  className={`${styles.hpBarFill} ${hpPercent <= 25 ? styles.hpCritical : hpPercent <= 50 ? styles.hpWarning : ''}`}
+                  style={{ width: `${hpPercent}%` }}
+                />
+              </div>
+              <div className={styles.hpBarValue}>{baseHp}/{MAX_BASE_HP}</div>
+            </div>
+
+            {/* Mob Lane */}
+            <div className={styles.mobLane}>
+              <div className={styles.mobLaneTrack}>
+                {incomingMobs.filter(m => m.alive).map(mob => {
+                  const def = MOB_MAP[mob.definitionId];
+                  const isHit = mob.hitFlash > 0 && Date.now() - mob.hitFlash < 200;
+                  return (
+                    <div
+                      key={mob.id}
+                      className={`${styles.mobUnit} ${isHit ? styles.mobHit : ''}`}
+                      style={{
+                        left: `${mob.position * 100}%`,
+                        color: def?.color || '#fff',
+                      }}
+                      title={`${def?.name || 'Mob'} HP:${mob.hp}/${mob.maxHp}`}
+                    >
+                      <span className={styles.mobIcon}>{def?.icon || '?'}</span>
+                      <div className={styles.mobHpBar}>
+                        <div
+                          className={styles.mobHpFill}
+                          style={{
+                            width: `${(mob.hp / mob.maxHp) * 100}%`,
+                            backgroundColor: def?.color || '#4CAF50',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className={styles.mobLaneBase}>BASE</div>
+              </div>
             </div>
 
             <div className={styles.boardWrap}>
-              {/* Garbage meter */}
-              {featureSettings.garbageMeter && pendingGarbage > 0 && (
-                <div className={styles.garbageMeter}>
-                  <div
-                    className={styles.garbageFill}
-                    style={{ height: `${Math.round(Math.min(100, (pendingGarbage / H) * 100))}%` }}
-                  />
-                </div>
-              )}
-
               <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
                 {displayBoard.flat().map((cell, i) => (
                   <div
@@ -1206,20 +1160,36 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
             <div className={styles.statsRow}>
               <span>Lines: {lines}</span>
+              <span>Score: {score.toLocaleString()}</span>
               <span>Combo: {combo}</span>
             </div>
           </div>
         </div>
 
-        {/* VS Divider */}
-        <div className={styles.vsDivider}>VS</div>
+        {/* === VS Divider === */}
+        <div className={styles.vsDivider}>
+          <div className={styles.vsText}>VS</div>
+          <div className={styles.vsSubtext}>MOB BATTLE</div>
+        </div>
 
-        {/* Opponent Side */}
+        {/* === Opponent Side === */}
         <div className={styles.opponentSide}>
           <div className={styles.boardSection}>
             <div className={styles.opponentHeader}>
               <div className={styles.opponentName}>{opponent?.name || 'Opponent'}</div>
               <div className={styles.opponentScore}>{opponentScore.toLocaleString()}</div>
+            </div>
+
+            {/* Opponent Base HP Bar */}
+            <div className={styles.hpBarContainer}>
+              <div className={styles.hpBarLabel}>BASE HP</div>
+              <div className={styles.hpBarTrack}>
+                <div
+                  className={`${styles.hpBarFill} ${styles.hpEnemy} ${opponentHpPercent <= 25 ? styles.hpCritical : opponentHpPercent <= 50 ? styles.hpWarning : ''}`}
+                  style={{ width: `${opponentHpPercent}%` }}
+                />
+              </div>
+              <div className={styles.hpBarValue}>{opponentBaseHp}/{MAX_BASE_HP}</div>
             </div>
 
             <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
@@ -1241,7 +1211,40 @@ export const MultiplayerBattle: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Mobile Controls */}
+      {/* === Mob Shop === */}
+      <div className={`${styles.mobShop} ${shopOpen ? styles.shopOpen : ''}`}>
+        <button className={styles.shopToggle} onClick={() => setShopOpen(prev => !prev)}>
+          {shopOpen ? 'Close Shop' : 'Summon [Tab]'}
+        </button>
+        <div className={styles.shopGrid}>
+          {MOB_DEFINITIONS.map((def, idx) => {
+            const canAfford = gold >= def.cost;
+            return (
+              <button
+                key={def.id}
+                className={`${styles.mobCard} ${!canAfford ? styles.mobCardDisabled : ''}`}
+                onClick={() => { if (canAfford) summonMob(def.id); }}
+                disabled={!canAfford || gameOver}
+                title={`${def.name} - ${def.description}`}
+              >
+                <div className={styles.mobCardIcon}>{def.icon}</div>
+                <div className={styles.mobCardInfo}>
+                  <div className={styles.mobCardName}>{def.name}</div>
+                  <div className={styles.mobCardStats}>
+                    HP:{def.hp} DMG:{def.damage} SPD:{(def.speed * 60).toFixed(0)}
+                  </div>
+                </div>
+                <div className={styles.mobCardCost}>
+                  <span className={styles.mobCardKey}>{idx + 1}</span>
+                  <span className={styles.goldIcon}>G</span>{def.cost}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* === Mobile Controls === */}
       <div className={styles.controls}>
         <div className={styles.controlRow}>
           <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('hold'); }} onClick={() => handleControlClick('hold')}>H</button>
@@ -1254,33 +1257,48 @@ export const MultiplayerBattle: React.FC<Props> = ({
           <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('down'); }} onClick={() => handleControlClick('down')}>&#x2193;</button>
           <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('right'); }} onClick={() => handleControlClick('right')}>&#x2192;</button>
         </div>
+        {/* Mobile mob summon bar */}
+        <div className={styles.controlRow}>
+          {MOB_DEFINITIONS.slice(0, 4).map((def) => (
+            <button
+              key={def.id}
+              className={`${styles.ctrlBtn} ${gold < def.cost ? styles.ctrlBtnDisabled : ''}`}
+              onClick={() => summonMob(def.id)}
+              disabled={gold < def.cost || gameOver}
+            >
+              {def.icon}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Game Over Overlay */}
+      {/* === Game Over Overlay === */}
       {gameOver && (
         <div className={styles.gameOverOverlay}>
           <h2 className={styles.gameOverTitle}>
-            GAME OVER
+            {baseHp <= 0 ? 'DEFEAT' : 'VICTORY'}
           </h2>
-          <div className={styles.finalScores}>
-            <div>{playerName}: {score.toLocaleString()}</div>
-            <div>{opponent?.name || 'Opponent'}: {opponentScore.toLocaleString()}</div>
+          <div className={styles.finalStats}>
+            <div className={styles.statBlock}>
+              <div className={styles.statBlockLabel}>{playerName}</div>
+              <div>Score: {score.toLocaleString()}</div>
+              <div>Lines: {lines}</div>
+              <div>Mobs Killed: {mobsKilledRef.current}</div>
+              <div>Gold Earned: {totalGoldEarnedRef.current}</div>
+            </div>
+            <div className={styles.statBlock}>
+              <div className={styles.statBlockLabel}>{opponent?.name || 'Opponent'}</div>
+              <div>Score: {opponentScore.toLocaleString()}</div>
+              <div>Lines: {opponentLines}</div>
+            </div>
           </div>
           <button className={styles.backBtn} onClick={onBackToLobby}>
             Back to Lobby
           </button>
         </div>
       )}
-
-      {/* Advancement Toast */}
-      {toastIds.length > 0 && (
-        <AdvancementToast
-          unlockedIds={toastIds}
-          onDismiss={dismissToast}
-        />
-      )}
     </div>
   );
 };
 
-export default MultiplayerBattle;
+export default MobBattle;
