@@ -170,6 +170,24 @@ export interface ArenaLeaveMessage {
   type: 'arena_leave';
 }
 
+export interface ArenaUsePowerUpMessage {
+  type: 'arena_use_powerup';
+  targetId: string;
+}
+
+export interface ArenaEmoteMessage {
+  type: 'arena_emote';
+  emote: string;
+}
+
+export type TargetMode = 'random' | 'attacker' | 'weakest' | 'strongest' | 'manual';
+
+export interface ArenaSetTargetMessage {
+  type: 'arena_set_target';
+  targetMode: TargetMode;
+  targetId?: string;
+}
+
 export type ArenaClientMessage =
   | CreateArenaMessage
   | JoinArenaMessage
@@ -179,7 +197,10 @@ export type ArenaClientMessage =
   | ArenaStartMessage
   | ArenaActionMessage
   | ArenaRelayMessage
-  | ArenaLeaveMessage;
+  | ArenaLeaveMessage
+  | ArenaUsePowerUpMessage
+  | ArenaEmoteMessage
+  | ArenaSetTargetMessage;
 
 // ===== Server → Client Messages =====
 
@@ -293,6 +314,20 @@ export interface ArenaTempoCollapseMessage {
   bpmDeviation: number;
 }
 
+export interface ArenaEmoteBroadcast {
+  type: 'arena_emote_broadcast';
+  playerId: string;
+  playerName: string;
+  emote: string;
+}
+
+export interface ArenaTargetChanged {
+  type: 'arena_target_changed';
+  playerId: string;
+  targetMode: TargetMode;
+  targetId?: string;
+}
+
 export type ArenaServerMessage =
   | ArenaCreatedMessage
   | ArenaJoinedMessage
@@ -309,7 +344,9 @@ export type ArenaServerMessage =
   | ArenaRelayedMessage
   | ArenaSessionEndMessage
   | ArenaQueuedMessage
-  | ArenaTempoCollapseMessage;
+  | ArenaTempoCollapseMessage
+  | ArenaEmoteBroadcast
+  | ArenaTargetChanged;
 
 // ===== Relay Payload =====
 

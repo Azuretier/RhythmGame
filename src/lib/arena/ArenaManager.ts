@@ -6,6 +6,7 @@ import type {
   GimmickType,
   ArenaRanking,
   ArenaSessionStats,
+  TargetMode,
 } from '@/types/arena';
 import {
   ARENA_MAX_PLAYERS,
@@ -390,6 +391,83 @@ export class ArenaRoomManager {
       fromPlayerId: playerId,
       payload,
     }, playerId);
+  }
+
+  handleUsePowerUp(playerId: string, targetId: string): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room || room.status !== 'playing') return;
+
+    const player = room.players.find(p => p.id === playerId);
+    if (!player || !player.alive) return;
+
+    const target = room.players.find(p => p.id === targetId);
+    if (!target || !target.alive || !target.connected) return;
+
+    // Send targeted garbage to the target player
+    this.callbacks.onSendToPlayer(targetId, {
+      type: 'arena_relayed',
+      fromPlayerId: playerId,
+      payload: {
+        event: 'garbage',
+        lines: 2,
+      },
+    });
+
+    // Broadcast action to all players so they can see the power-up being used
+    this.callbacks.onBroadcast(roomCode, {
+      type: 'arena_player_action',
+      playerId,
+      playerName: player.name,
+      action: { action: 'piece_placed', beatPhase: 0, value: 0 },
+      onBeat: false,
+    });
+  }
+
+  handleEmote(playerId: string, emote: string): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room) return;
+
+    const player = room.players.find(p => p.id === playerId);
+    if (!player) return;
+
+    // Broadcast emote to all players in the room
+    this.callbacks.onBroadcast(roomCode, {
+      type: 'arena_emote_broadcast',
+      playerId,
+      playerName: player.name,
+      emote: emote.slice(0, 32), // Limit emote length
+    });
+  }
+
+  handleSetTarget(playerId: string, targetMode: TargetMode, targetId?: string): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room || room.status !== 'playing') return;
+
+    const player = room.players.find(p => p.id === playerId);
+    if (!player || !player.alive) return;
+
+    // If manual targeting, verify target exists and is alive
+    if (targetMode === 'manual' && targetId) {
+      const target = room.players.find(p => p.id === targetId && p.alive && p.id !== playerId);
+      if (!target) return;
+    }
+
+    // Broadcast target change to all players
+    this.callbacks.onBroadcast(roomCode, {
+      type: 'arena_target_changed',
+      playerId,
+      targetMode,
+      targetId: targetMode === 'manual' ? targetId : undefined,
+    });
   }
 
   // ===== Tick Loop (Server-authoritative tempo + gimmicks) =====
