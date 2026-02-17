@@ -1,9 +1,10 @@
 import React from 'react';
-import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, ColorTheme, getThemedColor } from '../constants';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, ColorTheme, getThemedColor, CORRUPTION_BLOCK_COLOR } from '../constants';
 import { getShape, getGhostY } from '../utils/boardUtils';
 import { PauseMenu } from './PauseMenu';
+import { BoardEnemies } from './BoardEnemies';
 import type { GameKeybinds } from '../hooks/useKeybinds';
-import type { Piece, Board as BoardType } from '../types';
+import type { Piece, Board as BoardType, BoardEnemy } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface BoardProps {
@@ -35,6 +36,8 @@ interface BoardProps {
     onKeybindChange?: (action: keyof GameKeybinds, key: string) => void;
     onKeybindsReset?: () => void;
     defaultKeybinds?: GameKeybinds;
+    // Board enemies that hop onto the board
+    boardEnemies?: BoardEnemy[];
 }
 
 /**
@@ -68,6 +71,7 @@ export function Board({
     onKeybindChange,
     onKeybindsReset,
     defaultKeybinds,
+    boardEnemies = [],
 }: BoardProps) {
     const isFever = combo >= 10;
 
@@ -133,17 +137,66 @@ export function Board({
     // Default keybinds fallback
     const fallbackKeybinds: GameKeybinds = { inventory: 'e', shop: 'l' };
 
+    // Track board element for cell size measurement
+    const boardInternalRef = React.useRef<HTMLDivElement>(null);
+    const [cellSize, setCellSize] = React.useState({ w: 28, h: 28 });
+
+    // Measure cell size from the board element
+    React.useEffect(() => {
+        const el = boardInternalRef.current;
+        if (!el) return;
+        const measure = () => {
+            const firstCell = el.querySelector(`.${styles.cell}`) as HTMLElement;
+            if (firstCell) {
+                const rect = firstCell.getBoundingClientRect();
+                setCellSize({ w: rect.width, h: rect.height });
+            }
+        };
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    // Set of cells that have corruption blocks (from settled enemies)
+    const corruptionSet = React.useMemo(() => {
+        const set = new Set<string>();
+        for (const e of boardEnemies) {
+            if (!e.alive && e.placedBlock) {
+                set.add(`${e.col},${e.row}`);
+            }
+        }
+        return set;
+    }, [boardEnemies]);
+
+    // Merge boardElRef and internal ref
+    const setRefs = React.useCallback((node: HTMLDivElement | null) => {
+        boardInternalRef.current = node;
+        if (boardElRef) {
+            if (typeof boardElRef === 'function') {
+                boardElRef(node);
+            } else {
+                (boardElRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+            }
+        }
+    }, [boardElRef]);
+
     return (
         <div className={boardWrapClasses}>
             <div
-                ref={boardElRef}
+                ref={setRefs}
                 className={styles.board}
                 style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}
             >
                 {displayBoard.flat().map((cell, i) => {
+                    const col = i % BOARD_WIDTH;
+                    const row = Math.floor(i / BOARD_WIDTH);
                     const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
+                    const isCorruption = cell === 'corruption' || corruptionSet.has(`${col},${row}`);
                     const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
-                    const color = pieceType ? getColor(pieceType as string) : '';
+                    const color = isCorruption
+                        ? CORRUPTION_BLOCK_COLOR
+                        : pieceType ? getColor(pieceType as string) : '';
 
                     const ghostStyle = isGhost ? {
                         borderColor: boardBeat ? `${color}CC` : `${color}60`,
@@ -151,7 +204,13 @@ export function Board({
                         transition: 'border-color 0.1s, box-shadow 0.1s',
                     } : {};
 
-                    const filledStyle = cell && !isGhost ? {
+                    const corruptionStyle = isCorruption ? {
+                        backgroundColor: CORRUPTION_BLOCK_COLOR,
+                        boxShadow: `0 0 8px rgba(124, 58, 237, 0.4), inset 0 0 4px rgba(168, 85, 247, 0.3)`,
+                        background: `linear-gradient(135deg, #7c3aed 0%, #6b21a8 50%, #581c87 100%)`,
+                    } : {};
+
+                    const filledStyle = cell && !isGhost && !isCorruption ? {
                         backgroundColor: color,
                         boxShadow: isFever
                             ? `0 0 12px ${color}, 0 0 4px ${color}`
@@ -161,12 +220,22 @@ export function Board({
                     return (
                         <div
                             key={i}
-                            className={`${styles.cell} ${cell && !isGhost ? styles.filled : ''} ${isGhost ? styles.ghost : ''} ${isGhost && boardBeat ? styles.ghostBeat : ''}`}
-                            style={{ ...filledStyle, ...ghostStyle }}
+                            className={`${styles.cell} ${(cell && !isGhost) || isCorruption ? styles.filled : ''} ${isGhost ? styles.ghost : ''} ${isGhost && boardBeat ? styles.ghostBeat : ''}`}
+                            style={{ ...filledStyle, ...ghostStyle, ...corruptionStyle }}
                         />
                     );
                 })}
             </div>
+
+            {/* Board Enemies overlay */}
+            {boardEnemies.length > 0 && (
+                <BoardEnemies
+                    enemies={boardEnemies}
+                    cellWidth={cellSize.w}
+                    cellHeight={cellSize.h}
+                    beatActive={boardBeat}
+                />
+            )}
 
             {/* Overlay for Game Over */}
             {gameOver && (

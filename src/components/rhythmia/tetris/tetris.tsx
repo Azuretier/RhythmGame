@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, BOARD_ENEMY_SPAWN_INTERVAL, BOARD_ENEMY_SPAWN_CHANCE } from './constants';
 import type { Piece, GameMode } from './types';
 
 // Advancements
@@ -20,6 +20,7 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
+import { useBoardEnemies } from './hooks/useBoardEnemies';
 
 // Utilities
 import {
@@ -269,6 +270,21 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   } = gameState;
 
   const { keybinds, setKeybind, resetKeybinds, defaults: defaultKeybinds } = useKeybinds();
+
+  // Board enemies — hop onto the Tetris board
+  const boardEnemyHook = useBoardEnemies();
+  const { boardEnemies, spawnBoardEnemy, updateBoardEnemies, clearBoardEnemies, handleLineClear: handleEnemyLineClear } = boardEnemyHook;
+
+  // Counter for board enemy spawn timing (beats since last spawn)
+  const boardEnemyBeatCounterRef = useRef(0);
+
+  // Stable refs for board enemy callbacks used in beat timer
+  const spawnBoardEnemyRef = useRef(spawnBoardEnemy);
+  spawnBoardEnemyRef.current = spawnBoardEnemy;
+  const updateBoardEnemiesRef = useRef(updateBoardEnemies);
+  updateBoardEnemiesRef.current = updateBoardEnemies;
+  const handleEnemyLineClearRef = useRef(handleEnemyLineClear);
+  handleEnemyLineClearRef.current = handleEnemyLineClear;
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
 
@@ -599,6 +615,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         gameTetrisClearsRef.current++;
       }
 
+      // Kill board enemies on cleared rows (vanilla mode)
+      if (mode === 'vanilla' && rowsToClear.length > 0) {
+        // Convert absolute row indices to visible row indices (subtract BUFFER_ZONE)
+        const visibleRows = rowsToClear.map(r => r - BUFFER_ZONE);
+        handleEnemyLineClearRef.current(visibleRows);
+      }
+
       const center = getBoardCenter();
 
       if (mode === 'td') {
@@ -781,8 +804,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     liveNotifiedRef.current = new Set();
     lockStartTimeRef.current = null;
     lockMovesRef.current = 0;
+    boardEnemyBeatCounterRef.current = 0;
+    clearBoardEnemies();
     setToastIds([]);
-  }, [initAudio, initGame]);
+  }, [initAudio, initGame, clearBoardEnemies]);
 
   // Start game — intercept for tutorial on first vanilla play
   const startGame = useCallback((mode: GameMode) => {
@@ -881,7 +906,18 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           });
         }
       }
-      // Vanilla mode: no enemy/bullet/tower logic — just rhythm VFX below
+      // Vanilla mode: spawn board enemies periodically
+      if (mode === 'vanilla') {
+        boardEnemyBeatCounterRef.current++;
+        if (boardEnemyBeatCounterRef.current >= BOARD_ENEMY_SPAWN_INTERVAL) {
+          boardEnemyBeatCounterRef.current = 0;
+          if (Math.random() < BOARD_ENEMY_SPAWN_CHANCE) {
+            spawnBoardEnemyRef.current();
+          }
+        }
+        // Update board enemies (advance hop animations)
+        updateBoardEnemiesRef.current(boardRef.current, 0);
+      }
 
       // VFX: beat pulse ring — intensity scales with BPM (both modes)
       const intensity = Math.min(1, (world.bpm - 80) / 100);
@@ -981,6 +1017,11 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         if (currentTime - lastGravityRef.current >= speed) {
           tick();
           lastGravityRef.current = currentTime;
+        }
+
+        // Update board enemies (smooth hop animation progression)
+        if (gameModeRef.current === 'vanilla') {
+          updateBoardEnemiesRef.current(boardRef.current, 16);
         }
 
         // Lock delay check — piece gets a grace period on ground before locking
@@ -1258,6 +1299,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 onKeybindChange={setKeybind}
                 onKeybindsReset={resetKeybinds}
                 defaultKeybinds={defaultKeybinds}
+                boardEnemies={gameMode === 'vanilla' ? boardEnemies : []}
               />
               <BeatBar containerRef={beatBarRef} />
               <StatsPanel lines={lines} level={level} />

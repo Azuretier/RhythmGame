@@ -192,6 +192,52 @@ export type Bullet = {
     alive: boolean;
 };
 
+// ===== Board Enemies (hop onto Tetris board) =====
+
+export type BoardEnemyKind = 'slime' | 'phantom' | 'golem' | 'wisp';
+
+export type BoardEnemyHopPhase =
+    | 'idle'       // Waiting at edge
+    | 'crouch'     // Squash before jump
+    | 'airborne'   // In the air
+    | 'land'       // Squash on landing
+    | 'settled';   // Sitting on the board cell
+
+export type BoardEnemy = {
+    id: number;
+    kind: BoardEnemyKind;
+    /** Current board column (0–9) */
+    col: number;
+    /** Current board row (0–19 visible) */
+    row: number;
+    /** Target column for next hop */
+    targetCol: number;
+    /** Target row for next hop */
+    targetRow: number;
+    /** Previous position for interpolation */
+    prevCol: number;
+    prevRow: number;
+    health: number;
+    maxHealth: number;
+    alive: boolean;
+    /** Current animation phase */
+    hopPhase: BoardEnemyHopPhase;
+    /** Normalized progress within current hop (0–1) */
+    hopProgress: number;
+    /** Time when current hop started */
+    hopStartTime: number;
+    /** Total hop duration in ms */
+    hopDuration: number;
+    /** Spawn timestamp */
+    spawnTime: number;
+    /** Number of hops completed (used for despawn) */
+    hopsCompleted: number;
+    /** Direction enemy is facing: -1 left, 1 right */
+    facing: -1 | 1;
+    /** Whether this enemy placed a corruption block on the board */
+    placedBlock: boolean;
+};
+
 // ===== Terrain Particle =====
 export type TerrainParticle = {
     id: number;

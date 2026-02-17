@@ -361,6 +361,93 @@ export const BULLET_DAMAGE = 1;         // Damage per bullet hit
 export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
 export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
 
+// ===== Board Enemy Settings =====
+import type { BoardEnemyKind } from './types';
+
+export interface BoardEnemyDef {
+    kind: BoardEnemyKind;
+    name: string;
+    hp: number;
+    hopSpeed: number;       // ms per hop
+    color: string;          // Primary body color
+    glowColor: string;      // Glow/shadow color
+    accentColor: string;    // Eye / inner detail color
+    bodyGradient: [string, string]; // Top-to-bottom gradient stops
+    shadowAlpha: number;    // Shadow opacity
+    maxHops: number;        // Max hops before placing a corruption block
+    spawnWeight: number;    // Relative spawn probability
+}
+
+export const BOARD_ENEMY_DEFS: Record<BoardEnemyKind, BoardEnemyDef> = {
+    slime: {
+        kind: 'slime',
+        name: 'Slime',
+        hp: 1,
+        hopSpeed: 600,
+        color: '#39d353',
+        glowColor: 'rgba(57, 211, 83, 0.4)',
+        accentColor: '#1a7a2e',
+        bodyGradient: ['#5eed7a', '#27a844'],
+        shadowAlpha: 0.35,
+        maxHops: 6,
+        spawnWeight: 40,
+    },
+    phantom: {
+        kind: 'phantom',
+        name: 'Phantom',
+        hp: 1,
+        hopSpeed: 450,
+        color: '#a78bfa',
+        glowColor: 'rgba(167, 139, 250, 0.45)',
+        accentColor: '#7c3aed',
+        bodyGradient: ['#c4b5fd', '#8b5cf6'],
+        shadowAlpha: 0.25,
+        maxHops: 4,
+        spawnWeight: 25,
+    },
+    golem: {
+        kind: 'golem',
+        name: 'Golem',
+        hp: 3,
+        hopSpeed: 900,
+        color: '#f59e0b',
+        glowColor: 'rgba(245, 158, 11, 0.35)',
+        accentColor: '#b45309',
+        bodyGradient: ['#fbbf24', '#d97706'],
+        shadowAlpha: 0.5,
+        maxHops: 8,
+        spawnWeight: 20,
+    },
+    wisp: {
+        kind: 'wisp',
+        name: 'Wisp',
+        hp: 1,
+        hopSpeed: 350,
+        color: '#22d3ee',
+        glowColor: 'rgba(34, 211, 238, 0.5)',
+        accentColor: '#0891b2',
+        bodyGradient: ['#67e8f9', '#06b6d4'],
+        shadowAlpha: 0.2,
+        maxHops: 3,
+        spawnWeight: 15,
+    },
+};
+
+/** Corruption block color placed by enemies on the board */
+export const CORRUPTION_BLOCK_COLOR = '#6b21a8';
+
+/** Max board enemies alive at once */
+export const MAX_BOARD_ENEMIES = 5;
+
+/** Beats between board enemy spawn attempts */
+export const BOARD_ENEMY_SPAWN_INTERVAL = 8;
+
+/** Probability (0–1) of spawning an enemy each interval */
+export const BOARD_ENEMY_SPAWN_CHANCE = 0.6;
+
+/** Damage to tower when enemy settles (places corruption block) */
+export const BOARD_ENEMY_SETTLE_DAMAGE = 5;
+
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
 
