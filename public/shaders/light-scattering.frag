@@ -5,6 +5,7 @@ precision highp float;
 varying vec2 vUv;
 uniform float u_time;
 uniform vec2 u_resolution;
+uniform vec2 u_mouse;
 
 // ============================================================================
 // NOISE FUNCTIONS
@@ -175,8 +176,10 @@ void main() {
     vec2 st = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
     
     // Animated light source position (sun/moon moving across sky)
+    // Mouse parallax shifts the light position for depth
     float lightAngle = u_time * 0.1;
     vec2 lightPos = vec2(cos(lightAngle) * 0.6, sin(lightAngle) * 0.3 + 0.2);
+    lightPos += u_mouse * 0.15;
     
     // ========================================================================
     // BASE ATMOSPHERE
@@ -196,9 +199,10 @@ void main() {
     // ========================================================================
     
     // Multiple noise layers for atmospheric depth
-    float noise1 = fbm(st * 2.0 + vec2(u_time * 0.01, 0.0));
-    float noise2 = fbm(st * 4.0 - vec2(u_time * 0.02, u_time * 0.01));
-    float noise3 = fbm(st * 8.0 + vec2(0.0, u_time * 0.03));
+    // Mouse parallax offsets each layer at different rates for depth
+    float noise1 = fbm(st * 2.0 + vec2(u_time * 0.01, 0.0) + u_mouse * 0.05);
+    float noise2 = fbm(st * 4.0 - vec2(u_time * 0.02, u_time * 0.01) + u_mouse * 0.1);
+    float noise3 = fbm(st * 8.0 + vec2(0.0, u_time * 0.03) + u_mouse * 0.15);
     
     // Combine noise layers
     vec3 noiseColor = vec3(0.2, 0.25, 0.35) * noise1 * 0.3;
@@ -256,8 +260,8 @@ void main() {
     // ========================================================================
     
     // Atmospheric particles/dust (using noise)
-    float particles = noise(st * 80.0 + u_time * 0.2);
-    particles *= noise(st * 50.0 - u_time * 0.1);
+    float particles = noise(st * 80.0 + u_time * 0.2 + u_mouse * 0.3);
+    particles *= noise(st * 50.0 - u_time * 0.1 + u_mouse * 0.2);
     particles = pow(particles, 6.0);
     finalColor += vec3(0.5, 0.4, 0.3) * particles * 0.15;
     
