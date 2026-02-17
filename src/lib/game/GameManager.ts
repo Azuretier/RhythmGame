@@ -144,6 +144,9 @@ export class GameManager {
       player.connected = false;
     }
 
+    // Clean up rate limit tracking to prevent memory leaks
+    this.scoreEventCounts.delete(playerId);
+
     // If host disconnects during lobby, remove them
     if (room.state === RoomState.LOBBY && room.hostId === playerId) {
       this.leaveRoom(playerId);

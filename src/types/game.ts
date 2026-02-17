@@ -100,7 +100,7 @@ export const GAME_CONFIG = {
   DEFAULT_DURATION: 60, // seconds
   COUNTDOWN_DURATION: 3, // seconds
   MAX_PLAYERS: 8,
-  MIN_PLAYERS: 1,
+  MIN_PLAYERS: 2,
   ROOM_CODE_LENGTH: 6,
   MAX_EVENT_VALUE: 1000, // Maximum points per single event
 };
