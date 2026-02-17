@@ -349,8 +349,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const [terrainDestroyedCount, setTerrainDestroyedCount] = useState(0);
   const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
   const [floatingItems, setFloatingItems] = useState<FloatingItem[]>([]);
-  let nextParticleId = 0;
-  let nextFloatingId = 0;
+  const nextParticleId = useRef(0);
+  const nextFloatingId = useRef(0);
 
   // Opponent state
   const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
@@ -510,7 +510,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         const color = WORLDS[worldIdx]?.colors[Math.floor(Math.random() * 7)] || '#888888';
         const maxLife = 1.0;
         newParticles.push({
-          id: nextParticleId++,
+          id: nextParticleId.current++,
           x,
           y,
           vx,
@@ -1232,13 +1232,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
   }, []);
 
-  // Animate terrain particles
+  // Animate terrain particles with fixed interval
   useEffect(() => {
     if (terrainParticles.length === 0) return;
     
-    const animationFrame = requestAnimationFrame(() => {
-      setTerrainParticles(prev => 
-        prev
+    const interval = setInterval(() => {
+      setTerrainParticles(prev => {
+        if (prev.length === 0) return prev;
+        
+        return prev
           .map(p => ({
             ...p,
             x: p.x + p.vx,
@@ -1247,12 +1249,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
             life: p.life - 0.02,
             opacity: Math.max(0, p.life / p.maxLife),
           }))
-          .filter(p => p.life > 0)
-      );
-    });
+          .filter(p => p.life > 0);
+      });
+    }, 16); // ~60 FPS
     
-    return () => cancelAnimationFrame(animationFrame);
-  }, [terrainParticles]);
+    return () => clearInterval(interval);
+  }, [terrainParticles.length > 0]);
 
   // ===== Render =====
   const board = boardRef.current;
