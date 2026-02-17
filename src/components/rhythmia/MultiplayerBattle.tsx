@@ -3,11 +3,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MultiplayerBattle.module.css';
 import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/multiplayer';
+import type { FeatureSettings } from './tetris/types';
+import { DEFAULT_FEATURE_SETTINGS } from './tetris/types';
+import { FeatureCustomizer } from './tetris/components/FeatureCustomizer';
 import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
-import { useRhythmVFX } from './tetris/hooks/useRhythmVFX';
-import { RhythmVFX } from './tetris/components/RhythmVFX';
-import { BUFFER_ZONE } from './tetris/constants';
 
 // ===== Types =====
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -43,6 +43,10 @@ const GARBAGE_COLOR = '#555555';
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
+// ===== Color Themes =====
+type ColorTheme = 'standard' | 'stage' | 'monochrome';
+
+// Standard Tetris colors (default)
 const COLORS: Record<PieceType, string> = {
   I: '#00F0F0',
   O: '#F0F000',
@@ -51,6 +55,33 @@ const COLORS: Record<PieceType, string> = {
   Z: '#F00000',
   J: '#0000F0',
   L: '#F0A000',
+};
+
+// Monochrome colors (shades of white/gray)
+const MONOCHROME_COLORS: Record<PieceType, string> = {
+  I: '#FFFFFF',
+  O: '#E0E0E0',
+  T: '#C0C0C0',
+  S: '#D0D0D0',
+  Z: '#B0B0B0',
+  L: '#F0F0F0',
+  J: '#A0A0A0',
+};
+
+// Stage colors (BPM-based world colors - simplified for multiplayer)
+const STAGE_COLORS: string[] = [
+  '#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A29BFE', '#00F0F0', '#F0A000'
+];
+
+// Piece type to stage color mapping (for performance)
+const STAGE_COLOR_MAP: Record<PieceType, string> = {
+  I: STAGE_COLORS[0],
+  O: STAGE_COLORS[1],
+  T: STAGE_COLORS[2],
+  S: STAGE_COLORS[3],
+  Z: STAGE_COLORS[4],
+  J: STAGE_COLORS[5],
+  L: STAGE_COLORS[6],
 };
 
 // All 4 rotation states for each piece (SRS)
@@ -192,10 +223,9 @@ function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][
   return null;
 }
 
-function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
+function lockPiece(piece: Piece, board: (BoardCell | null)[][], color: string): (BoardCell | null)[][] {
   const newBoard = board.map(row => [...row]);
   const shape = getShape(piece.type, piece.rotation);
-  const color = COLORS[piece.type];
 
   for (let y = 0; y < shape.length; y++) {
     for (let x = 0; x < shape[y].length; x++) {
@@ -211,21 +241,13 @@ function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | nu
   return newBoard;
 }
 
-function clearLines(board: (BoardCell | null)[][]): { board: (BoardCell | null)[][]; cleared: number; clearedRows: number[] } {
-  const clearedRows: number[] = [];
-  const remaining: (BoardCell | null)[][] = [];
-  for (let y = 0; y < board.length; y++) {
-    if (board[y].every(cell => cell !== null)) {
-      clearedRows.push(y);
-    } else {
-      remaining.push(board[y]);
-    }
-  }
+function clearLines(board: (BoardCell | null)[][]): { board: (BoardCell | null)[][]; cleared: number } {
+  const remaining = board.filter(row => row.some(cell => cell === null));
   const cleared = H - remaining.length;
   while (remaining.length < H) {
     remaining.unshift(Array(W).fill(null));
   }
-  return { board: remaining, cleared, clearedRows };
+  return { board: remaining, cleared };
 }
 
 function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
@@ -244,45 +266,6 @@ function addGarbageLines(board: (BoardCell | null)[][], count: number, rng: () =
     newBoard.push(row);
   }
   return newBoard;
-}
-
-// ===== T-Spin Detection =====
-function detectTSpin(piece: Piece, board: (BoardCell | null)[][], wasRotation: boolean): 'none' | 'mini' | 'full' {
-  if (piece.type !== 'T' || !wasRotation) return 'none';
-
-  // Check 4 corners around T-piece center
-  const cx = piece.x + 1;
-  const cy = piece.y + 1;
-  const corners = [
-    [cx - 1, cy - 1], [cx + 1, cy - 1],
-    [cx - 1, cy + 1], [cx + 1, cy + 1],
-  ];
-
-  let filledCorners = 0;
-  for (const [x, y] of corners) {
-    if (x < 0 || x >= W || y < 0 || y >= H || (y >= 0 && board[y]?.[x])) {
-      filledCorners++;
-    }
-  }
-
-  if (filledCorners >= 3) {
-    // Check front corners based on rotation to distinguish full vs mini
-    const frontCorners: [number, number][] = [];
-    switch (piece.rotation) {
-      case 0: frontCorners.push([cx - 1, cy - 1], [cx + 1, cy - 1]); break;
-      case 1: frontCorners.push([cx + 1, cy - 1], [cx + 1, cy + 1]); break;
-      case 2: frontCorners.push([cx - 1, cy + 1], [cx + 1, cy + 1]); break;
-      case 3: frontCorners.push([cx - 1, cy - 1], [cx - 1, cy + 1]); break;
-    }
-    let frontFilled = 0;
-    for (const [x, y] of frontCorners) {
-      if (x < 0 || x >= W || y < 0 || y >= H || (y >= 0 && board[y]?.[x])) {
-        frontFilled++;
-      }
-    }
-    return frontFilled >= 2 ? 'full' : 'mini';
-  }
-  return 'none';
 }
 
 // ===== Component =====
@@ -313,10 +296,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const isOnGroundRef = useRef(false);
   const pendingGarbageRef = useRef(0);
 
-  // T-Spin tracking
-  const lastMoveWasRotationRef = useRef(false);
-  const tSpinCountRef = useRef(0);
-
   // Per-game stat tracking for advancements
   const gameHardDropsRef = useRef(0);
   const gamePiecesPlacedRef = useRef(0);
@@ -324,20 +303,41 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
 
-  // Judgment display
-  const [judgmentText, setJudgmentText] = useState('');
-  const [judgmentColor, setJudgmentColor] = useState('#ffffff');
-  const [showJudgment, setShowJudgment] = useState(false);
-  const judgmentTimerRef = useRef<number | null>(null);
+  // Feature settings (persisted in localStorage)
+  const [featureSettings, setFeatureSettings] = useState<FeatureSettings>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('rhythmia_features');
+        if (stored) return { ...DEFAULT_FEATURE_SETTINGS, ...JSON.parse(stored) };
+      } catch { /* ignore */ }
+    }
+    return DEFAULT_FEATURE_SETTINGS;
+  });
+  const [showFeatures, setShowFeatures] = useState(false);
 
-  // Beat phase for UI indicator
-  const [beatPhaseDisplay, setBeatPhaseDisplay] = useState(0);
+  const handleFeatureSettingsUpdate = useCallback((newSettings: FeatureSettings) => {
+    setFeatureSettings(newSettings);
+    try { localStorage.setItem('rhythmia_features', JSON.stringify(newSettings)); } catch { /* ignore */ }
+  }, []);
+
+  // Color theme state
+  const [colorTheme, setColorTheme] = useState<ColorTheme>('standard');
+
+  // Helper function to get color based on theme
+  const getThemedColor = useCallback((type: PieceType): string => {
+    if (colorTheme === 'monochrome') {
+      return MONOCHROME_COLORS[type];
+    } else if (colorTheme === 'stage') {
+      return STAGE_COLOR_MAP[type];
+    }
+    // default: standard
+    return COLORS[type];
+  }, [colorTheme]);
 
   // Opponent state
   const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
   const opponentScoreRef = useRef(0);
   const opponentLinesRef = useRef(0);
-  const opponentComboRef = useRef(0);
 
   // For re-rendering
   const [, forceRender] = useState(0);
@@ -355,10 +355,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
   // Audio
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // VFX system
-  const vfx = useRhythmVFX();
-  const playerBoardDomRef = useRef<HTMLDivElement | null>(null);
-
   // Timers
   const dropTimerRef = useRef<number | null>(null);
   const beatTimerRef = useRef<number | null>(null);
@@ -372,25 +368,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const softDropTimerRef = useRef<number | null>(null);
   const lastDirRef = useRef<string>('');
 
-  // ===== Judgment Display Helper =====
-  const showJudgmentText = useCallback((text: string, color: string) => {
-    if (judgmentTimerRef.current) clearTimeout(judgmentTimerRef.current);
-    setJudgmentText(text);
-    setJudgmentColor(color);
-    setShowJudgment(true);
-    judgmentTimerRef.current = window.setTimeout(() => {
-      setShowJudgment(false);
-      judgmentTimerRef.current = null;
-    }, 600);
-  }, []);
-
   // ===== Audio =====
   const initAudio = useCallback(() => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    }
-    if (audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume();
     }
   }, []);
 
@@ -415,7 +396,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const ctx = audioCtxRef.current;
     if (!ctx) return;
     try {
-      if (ctx.state === 'suspended') ctx.resume();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'square';
@@ -434,42 +414,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const freqs = [523, 659, 784, 1047];
     freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
   }, [playTone]);
-
-  const playPerfectSound = useCallback(() => {
-    playTone(1047, 0.2, 'triangle');
-  }, [playTone]);
-
-  const playTSpinSound = useCallback(() => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    try {
-      const t = ctx.currentTime;
-      // Ascending confirmation chime for T-Spin
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'triangle';
-      osc1.frequency.setValueAtTime(523, t);
-      osc1.frequency.exponentialRampToValueAtTime(1047, t + 0.15);
-      gain1.gain.setValueAtTime(0.3, t);
-      gain1.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(t);
-      osc1.stop(t + 0.2);
-      // Lower crunch layer
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'square';
-      osc2.frequency.setValueAtTime(300, t);
-      osc2.frequency.exponentialRampToValueAtTime(100, t + 0.1);
-      gain2.gain.setValueAtTime(0.15, t);
-      gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(t);
-      osc2.stop(t + 0.12);
-    } catch {}
-  }, []);
 
   // ===== Relay =====
   const sendRelay = useCallback((payload: RelayPayload) => {
@@ -521,6 +465,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
 
     if (!isValid(piece, boardRef.current)) {
+      // Game over - can't spawn (we lost)
       gameOverRef.current = true;
       sendGameOver();
       if (!advRecordedRef.current) {
@@ -543,7 +488,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
     holdUsedRef.current = false;
     lockMovesRef.current = 0;
     isOnGroundRef.current = false;
-    lastMoveWasRotationRef.current = false;
     if (lockTimerRef.current) {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
@@ -568,13 +512,16 @@ export const MultiplayerBattle: React.FC<Props> = ({
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
     }
+    // If still on ground, restart
     if (pieceRef.current && !isValid({ ...pieceRef.current, y: pieceRef.current.y + 1 }, boardRef.current)) {
       startLockTimer();
     }
   }, [startLockTimer]);
 
+  // Stable callback for toast dismiss — avoids resetting the toast timer on every render
   const dismissToast = useCallback(() => setToastIds([]), []);
 
+  // Push-based live advancement check — runs every performLock(), instant toast
   const pushLiveAdvancementCheck = useCallback(() => {
     const qualifying = checkLiveMultiplayerAdvancements({
       score: scoreRef.current,
@@ -587,6 +534,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (fresh.length > 0) {
       fresh.forEach(id => liveNotifiedRef.current.add(id));
       setToastIds(prev => [...prev, ...fresh]);
+      // Instantly persist unlocks so progress survives mid-game exits
       saveLiveUnlocks(fresh);
     }
   }, []);
@@ -631,9 +579,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
       return;
     }
 
-    // T-Spin detection (before locking to board)
-    const tSpin = detectTSpin(piece, boardRef.current, lastMoveWasRotationRef.current);
-
     // Beat judgment
     const phase = beatPhaseRef.current;
     const onBeat = phase > 0.8 || phase < 0.12;
@@ -642,36 +587,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
     if (onBeat) {
       mult = 2;
       comboRef.current++;
-      playPerfectSound();
-      showJudgmentText('PERFECT', '#00FFFF');
-
-      // VFX: combo change
-      vfx.emit({ type: 'comboChange', combo: comboRef.current, onBeat: true });
-      if (comboRef.current === 10) {
-        vfx.emit({ type: 'feverStart', combo: comboRef.current });
-      }
+      playTone(1047, 0.15, 'triangle');
     } else {
-      if (comboRef.current >= 10) {
-        vfx.emit({ type: 'feverEnd' });
-      }
       comboRef.current = 0;
     }
 
-    // T-Spin judgment display
-    if (tSpin !== 'none') {
-      tSpinCountRef.current++;
-      playTSpinSound();
-      if (tSpin === 'full') {
-        showJudgmentText('T-SPIN!', '#A000F0');
-      } else {
-        showJudgmentText('T-SPIN MINI', '#C070FF');
-      }
-    }
-
+    // Track pieces placed
     gamePiecesPlacedRef.current++;
 
     // Lock to board
-    let newBoard = lockPiece(piece, boardRef.current);
+    const pieceColor = getThemedColor(piece.type);
+    let newBoard = lockPiece(piece, boardRef.current, pieceColor);
 
     // Apply pending garbage before clearing
     const garbage = pendingGarbageRef.current;
@@ -681,59 +607,35 @@ export const MultiplayerBattle: React.FC<Props> = ({
     }
 
     // Clear lines
-    const { board: clearedBoard, cleared, clearedRows } = clearLines(newBoard);
+    const { board: clearedBoard, cleared } = clearLines(newBoard);
     boardRef.current = clearedBoard;
 
     if (cleared > 0) {
-      // Base scoring with T-Spin bonuses
-      let base = [0, 100, 300, 500, 800][cleared];
-      if (tSpin === 'full') {
-        base += 400 + 400 * cleared;
-      } else if (tSpin === 'mini') {
-        base += 100 + 200 * cleared;
-      }
-
+      const base = [0, 100, 300, 500, 800][cleared];
       const pts = base * mult * Math.max(1, comboRef.current);
       scoreRef.current += pts;
       linesRef.current += cleared;
 
-      // Enhanced garbage calculation with T-Spin bonus
-      let garbageToSend = [0, 0, 1, 2, 4][cleared];
-      if (tSpin === 'full') {
-        garbageToSend += [0, 2, 4, 6, 6][cleared]; // T-Spin bonus garbage
-      } else if (tSpin === 'mini') {
-        garbageToSend += 1;
-      }
-      garbageToSend += Math.floor(comboRef.current / 3);
+      // Send garbage
+      const garbageToSend = [0, 0, 1, 2, 4][cleared] + Math.floor(comboRef.current / 3);
       sendGarbage(garbageToSend);
       playLineClear(cleared);
-
-      // VFX: line clear (offset rows by BUFFER_ZONE for VFX hook coordinate system)
-      vfx.emit({
-        type: 'lineClear',
-        rows: clearedRows.map(r => r + BUFFER_ZONE),
-        count: cleared,
-        onBeat,
-        combo: comboRef.current,
-      });
-
-      // Judgment text for line clears
-      if (cleared === 4 && tSpin === 'none') {
-        showJudgmentText('TETRIS!', '#00F0F0');
-      } else if (cleared === 4 && tSpin !== 'none') {
-        showJudgmentText('T-SPIN QUAD!', '#FF00FF');
-      }
     }
 
     pieceRef.current = null;
-    lastMoveWasRotationRef.current = false;
 
+    // Live advancement check after stats update
     pushLiveAdvancementCheck();
+
+    // Send state update
     sendBoardUpdate();
+
+    // Spawn next piece
     spawnPiece();
-  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playPerfectSound, playTSpinSound, spawnPiece, render, pushLiveAdvancementCheck, showJudgmentText, vfx]);
+  }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playTone, spawnPiece, render, pushLiveAdvancementCheck]);
 
   // Wire up startLockTimer -> performLock circular dependency
+  // performLock is already defined, we just need to ensure startLockTimer calls it
   const startLockTimerRef = useRef(startLockTimer);
   startLockTimerRef.current = startLockTimer;
 
@@ -748,13 +650,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const moved = { ...piece, x: piece.x + dx };
     if (isValid(moved, boardRef.current)) {
       pieceRef.current = moved;
-      lastMoveWasRotationRef.current = false;
-      playTone(196, 0.05, 'square');
+      playTone(392, 0.04, 'square');
 
+      // Check if piece is now on ground
       const onGround = !isValid({ ...moved, y: moved.y + 1 }, boardRef.current);
       if (onGround) {
         resetLockTimer();
       } else if (lockTimerRef.current) {
+        // Moved off ground
         clearTimeout(lockTimerRef.current);
         lockTimerRef.current = null;
       }
@@ -772,8 +675,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const moved = { ...piece, y: piece.y + 1 };
     if (isValid(moved, boardRef.current)) {
       pieceRef.current = moved;
-      lastMoveWasRotationRef.current = false;
 
+      // Check if landed
       if (!isValid({ ...moved, y: moved.y + 1 }, boardRef.current)) {
         if (!isOnGroundRef.current) {
           isOnGroundRef.current = true;
@@ -784,6 +687,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
       render();
       return true;
     } else {
+      // Can't move down - start lock if not already
       if (!isOnGroundRef.current) {
         isOnGroundRef.current = true;
         startLockTimer();
@@ -796,22 +700,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const piece = pieceRef.current;
     if (!piece || gameOverRef.current) return;
 
-    const fromRotation = piece.rotation;
     const rotated = tryRotate(piece, direction, boardRef.current);
     if (rotated) {
       pieceRef.current = rotated;
-      lastMoveWasRotationRef.current = true;
-      playTone(392, 0.1, 'square');
-
-      // VFX: rotation trail (offset Y by BUFFER_ZONE for VFX hook coordinate system)
-      vfx.emit({
-        type: 'rotation',
-        pieceType: piece.type,
-        boardX: rotated.x,
-        boardY: rotated.y + BUFFER_ZONE,
-        fromRotation,
-        toRotation: rotated.rotation,
-      });
+      playTone(523, 0.06);
 
       const onGround = !isValid({ ...rotated, y: rotated.y + 1 }, boardRef.current);
       if (onGround) {
@@ -824,7 +716,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
       render();
     }
-  }, [playTone, resetLockTimer, render, vfx]);
+  }, [playTone, resetLockTimer, render]);
 
   const hardDrop = useCallback(() => {
     const piece = pieceRef.current;
@@ -836,18 +728,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     pieceRef.current = { ...piece, y: gy };
     scoreRef.current += dropDist * 2;
     playTone(196, 0.08, 'sawtooth');
-
-    // VFX: hard drop particles (offset Y by BUFFER_ZONE for VFX hook coordinate system)
-    vfx.emit({
-      type: 'hardDrop',
-      pieceType: piece.type,
-      boardX: piece.x,
-      boardY: gy + BUFFER_ZONE,
-      dropDistance: dropDist,
-    });
-
     performLockRef.current();
-  }, [playTone, vfx]);
+  }, [playTone]);
 
   const holdPiece = useCallback(() => {
     const piece = pieceRef.current;
@@ -867,7 +749,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
       };
       lockMovesRef.current = 0;
       isOnGroundRef.current = false;
-      lastMoveWasRotationRef.current = false;
       if (lockTimerRef.current) {
         clearTimeout(lockTimerRef.current);
         lockTimerRef.current = null;
@@ -892,7 +773,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
             opponentBoardRef.current = payload.board;
             opponentScoreRef.current = payload.score;
             opponentLinesRef.current = payload.lines;
-            opponentComboRef.current = payload.combo ?? 0;
             render();
           } else if (payload.event === 'garbage') {
             pendingGarbageRef.current += payload.lines;
@@ -942,15 +822,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
     pendingGarbageRef.current = 0;
     gameHardDropsRef.current = 0;
     gamePiecesPlacedRef.current = 0;
-    tSpinCountRef.current = 0;
-    lastMoveWasRotationRef.current = false;
     advRecordedRef.current = false;
     liveNotifiedRef.current = new Set();
     setToastIds([]);
     opponentBoardRef.current = createEmptyBoard();
     opponentScoreRef.current = 0;
     opponentLinesRef.current = 0;
-    opponentComboRef.current = 0;
 
     // Reset RNG
     rngRef.current = createRNG(gameSeed);
@@ -959,9 +836,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     lastBeatRef.current = Date.now();
 
+    // Fill queue and spawn first piece
     fillQueue();
     spawnPiece();
 
+    // Send initial state
     setTimeout(() => sendBoardUpdate(), 100);
 
     return () => {
@@ -998,33 +877,22 @@ export const MultiplayerBattle: React.FC<Props> = ({
     beatTimerRef.current = window.setInterval(() => {
       lastBeatRef.current = Date.now();
       playDrum();
-
-      // VFX: beat pulse
-      vfx.emit({ type: 'beat', bpm: BPM, intensity: 0.6 + Math.min(0.4, comboRef.current * 0.04) });
     }, interval);
 
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
-  }, [playDrum, vfx]);
+  }, [playDrum]);
 
   // ===== Beat Phase Animation =====
   useEffect(() => {
     if (gameOverRef.current) return;
 
-    let frameCount = 0;
     const update = () => {
       if (!gameOverRef.current) {
         const interval = 60000 / BPM;
         const elapsed = Date.now() - lastBeatRef.current;
         beatPhaseRef.current = (elapsed % interval) / interval;
-
-        // Update display at reduced frequency to avoid excessive re-renders
-        frameCount++;
-        if (frameCount % 2 === 0) {
-          setBeatPhaseDisplay(beatPhaseRef.current);
-        }
-
         beatAnimRef.current = requestAnimationFrame(update);
       }
     };
@@ -1140,25 +1008,19 @@ export const MultiplayerBattle: React.FC<Props> = ({
     };
   }, [moveHorizontal, moveDown, rotatePiece, hardDrop, holdPiece]);
 
-  // Persist advancement stats on unmount
+  // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
   useEffect(() => {
     return () => {
+      // Only record stats if game hasn't ended normally (player left via back button)
       if (!gameOverRef.current) {
         recordMultiplayerGameEnd({
           score: scoreRef.current,
           lines: linesRef.current,
-          won: false,
+          won: false, // Player left mid-game, so they didn't win
           hardDrops: gameHardDropsRef.current,
           piecesPlaced: gamePiecesPlacedRef.current,
         });
       }
-    };
-  }, []);
-
-  // Cleanup judgment timer on unmount
-  useEffect(() => {
-    return () => {
-      if (judgmentTimerRef.current) clearTimeout(judgmentTimerRef.current);
     };
   }, []);
 
@@ -1175,32 +1037,31 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const opponentBoard = opponentBoardRef.current;
   const opponentScore = opponentScoreRef.current;
   const opponentLines = opponentLinesRef.current;
-  const opponentCombo = opponentComboRef.current;
-
-  // Beat phase indicator position (0 = start of beat, 1 = end)
-  const beatIndicatorPos = beatPhaseDisplay;
-  const isInPerfectWindow = beatIndicatorPos > 0.8 || beatIndicatorPos < 0.12;
 
   // Build display board with ghost + active piece
   const displayBoard = board.map(row => row.map(cell => cell ? { ...cell, ghost: false } : null));
 
   if (piece) {
-    const gy = getGhostY(piece, board);
     const shape = getShape(piece.type, piece.rotation);
-    const color = COLORS[piece.type];
+    const color = getThemedColor(piece.type);
 
-    for (let y = 0; y < shape.length; y++) {
-      for (let x = 0; x < shape[y].length; x++) {
-        if (shape[y][x]) {
-          const by = gy + y;
-          const bx = piece.x + x;
-          if (by >= 0 && by < H && bx >= 0 && bx < W && !displayBoard[by][bx]) {
-            displayBoard[by][bx] = { color, ghost: true };
+    // Ghost piece (conditional on feature setting)
+    if (featureSettings.ghostPiece) {
+      const gy = getGhostY(piece, board);
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (shape[y][x]) {
+            const by = gy + y;
+            const bx = piece.x + x;
+            if (by >= 0 && by < H && bx >= 0 && bx < W && !displayBoard[by][bx]) {
+              displayBoard[by][bx] = { color, ghost: true };
+            }
           }
         }
       }
     }
 
+    // Active piece
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
         if (shape[y][x]) {
@@ -1214,19 +1075,22 @@ export const MultiplayerBattle: React.FC<Props> = ({
     }
   }
 
+  // Opponent display board
   const opponentDisplay = opponentBoard.map(row =>
     row.map(cell => cell ? { ...cell, ghost: false } : null)
   );
 
+  // Next piece preview
   const renderPreview = (type: PieceType) => {
     const shape = getShape(type, 0);
+    const color = getThemedColor(type);
     return (
       <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, auto)` }}>
         {shape.flat().map((val, i) => (
           <div
             key={i}
             className={`${styles.previewCell} ${val ? styles.filled : ''}`}
-            style={val ? { backgroundColor: COLORS[type], boxShadow: `0 0 6px ${COLORS[type]}` } : {}}
+            style={val ? { backgroundColor: color, boxShadow: `0 0 6px ${color}` } : {}}
           />
         ))}
       </div>
@@ -1248,6 +1112,50 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
   return (
     <div className={styles.container}>
+      {/* Settings gear button */}
+      <button
+        className={styles.settingsGearBtn}
+        onClick={() => setShowFeatures(prev => !prev)}
+        aria-label="Feature settings"
+      >
+        🎛
+      </button>
+
+      {/* Feature Customizer Overlay */}
+      {showFeatures && (
+        <div className={styles.featureOverlay}>
+          <FeatureCustomizer
+            settings={featureSettings}
+            onUpdate={handleFeatureSettingsUpdate}
+            onBack={() => setShowFeatures(false)}
+            mode="multiplayer"
+          />
+        </div>
+      )}
+
+      {/* Theme Switcher */}
+      <div className={styles.themeNav}>
+        <span className={styles.themeLabel}>🎨 Theme:</span>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
+          onClick={() => setColorTheme('standard')}
+        >
+          Standard
+        </button>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
+          onClick={() => setColorTheme('stage')}
+        >
+          Stage
+        </button>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
+          onClick={() => setColorTheme('monochrome')}
+        >
+          Mono
+        </button>
+      </div>
+
       <div className={styles.battleArena}>
         {/* Player Side */}
         <div className={styles.playerSide}>
@@ -1276,7 +1184,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
             <div className={styles.boardWrap}>
               {/* Garbage meter */}
-              {pendingGarbage > 0 && (
+              {featureSettings.garbageMeter && pendingGarbage > 0 && (
                 <div className={styles.garbageMeter}>
                   <div
                     className={styles.garbageFill}
@@ -1285,35 +1193,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Judgment text overlay */}
-              {showJudgment && (
-                <div
-                  className={styles.judgmentOverlay}
-                  style={{ color: judgmentColor, textShadow: `0 0 20px ${judgmentColor}, 0 0 40px ${judgmentColor}` }}
-                >
-                  {judgmentText}
-                </div>
-              )}
-
-              {/* Combo counter overlay */}
-              {combo >= 3 && (
-                <div
-                  className={styles.comboOverlay}
-                  style={{
-                    fontSize: `${Math.min(1.4, 0.8 + combo * 0.06)}rem`,
-                    color: combo >= 10 ? '#FFD700' : combo >= 5 ? '#00FFFF' : 'rgba(255,255,255,0.7)',
-                    textShadow: combo >= 10
-                      ? '0 0 12px #FFD700, 0 0 24px #FFD700'
-                      : combo >= 5
-                        ? '0 0 8px #00FFFF'
-                        : 'none',
-                  }}
-                >
-                  {combo} COMBO
-                </div>
-              )}
-
-              <div ref={playerBoardDomRef} className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
                 {displayBoard.flat().map((cell, i) => (
                   <div
                     key={i}
@@ -1322,37 +1202,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
                   />
                 ))}
               </div>
-
-              {/* VFX Canvas Overlay */}
-              <RhythmVFX
-                canvasRef={vfx.canvasRef}
-                boardRef={playerBoardDomRef}
-                onBoardGeometry={vfx.updateBoardGeometry}
-                isPlaying={!gameOver}
-                onStart={vfx.start}
-                onStop={vfx.stop}
-              />
-            </div>
-
-            {/* Beat Timing Indicator */}
-            <div className={styles.beatIndicator}>
-              <div className={styles.beatTrack}>
-                <div className={styles.beatPerfectZoneLeft} />
-                <div className={styles.beatPerfectZoneRight} />
-                <div
-                  className={`${styles.beatCursor} ${isInPerfectWindow ? styles.beatCursorPerfect : ''}`}
-                  style={{ left: `${beatIndicatorPos * 100}%` }}
-                />
-              </div>
-              <div className={styles.beatLabel}>
-                {isInPerfectWindow ? 'PERFECT' : 'BEAT'}
-              </div>
             </div>
 
             <div className={styles.statsRow}>
               <span>Lines: {lines}</span>
               <span>Combo: {combo}</span>
-              {tSpinCountRef.current > 0 && <span>T-Spins: {tSpinCountRef.current}</span>}
             </div>
           </div>
         </div>
@@ -1369,13 +1223,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
             </div>
 
             <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
-              {/* Opponent combo indicator */}
-              {opponentCombo >= 5 && (
-                <div className={styles.opponentComboIndicator}>
-                  {opponentCombo} COMBO
-                </div>
-              )}
-
               <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
                 {opponentDisplay.flat().map((cell, i) => (
                   <div
@@ -1389,7 +1236,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
             <div className={styles.statsRow}>
               <span>Lines: {opponentLines}</span>
-              {opponentCombo >= 3 && <span>Combo: {opponentCombo}</span>}
             </div>
           </div>
         </div>

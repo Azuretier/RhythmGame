@@ -37,8 +37,16 @@ const config: Config = {
       },
     },
     fontFamily: {
-      pixel: ["var(--font-pixel)"], 
+      pixel: ["var(--font-pixel)"],
       sans: ["Inter", "Arial", "sans-serif"],
+      'theme-heading': ["var(--theme-font-heading)"],
+      'theme-body': ["var(--theme-font-body)"],
+      'theme-mono': ["var(--theme-font-mono)"],
+    },
+    borderRadius: {
+      'theme': "var(--theme-radius)",
+      'theme-sm': "var(--theme-radius-sm)",
+      'theme-lg': "var(--theme-radius-lg)",
     },
   },
   plugins: [],
