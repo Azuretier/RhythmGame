@@ -694,6 +694,93 @@
 /* ===== Footer ===== */
 .wikiFooter { padding: 28px 0; text-align: center; font-size: 0.65rem; color: rgba(255, 255, 255, 0.15); letter-spacing: 0.12em; }
 
+/* ===== Tutorial Cards ===== */
+.tutorialCard {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  transition: border-color 0.25s ease;
+}
+
+.tutorialCard:hover {
+  border-color: rgba(88, 101, 242, 0.25);
+}
+
+.tutorialTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 8px 0;
+}
+
+.tutorialDesc {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+/* ===== Step List ===== */
+.stepList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.step {
+  display: flex;
+  gap: 16px;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.step:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.stepNumber {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(88, 101, 242, 0.15);
+  border: 2px solid rgba(88, 101, 242, 0.3);
+  border-radius: 50%;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(88, 101, 242, 0.9);
+  font-family: 'Geist Mono', monospace;
+}
+
+.stepContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stepTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+}
+
+.stepDesc {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.5;
+  margin: 0;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 1100px) {
   .tocSidebar { display: none; }
@@ -715,6 +802,9 @@
   .updateSlide { flex: 0 0 300px; }
   .resourceWidget { gap: 10px; padding: 8px 12px; }
   .resourceThumb { width: 36px; height: 36px; }
+  .tutorialCard { padding: 18px; }
+  .step { flex-direction: column; gap: 10px; align-items: flex-start; }
+  .stepNumber { margin-bottom: 4px; }
 }
 
 @media (max-width: 480px) {
