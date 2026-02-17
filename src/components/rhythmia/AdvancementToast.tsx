@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
+import { PixelIcon } from './PixelIcon';
 import styles from './AdvancementToast.module.css';
 
 interface Props {
@@ -79,7 +80,7 @@ export const AdvancementToast: React.FC<Props> = ({ unlockedIds, onDismiss }) =>
         }}
       >
         <div className={styles.toastIconFrame}>
-          <div className={styles.toastIcon}>{adv.icon}</div>
+          <div className={styles.toastIcon}><PixelIcon name={adv.icon} size={28} /></div>
         </div>
         <div className={styles.toastContent}>
           <div className={styles.toastLabel}>{t('advancements.unlocked')}</div>

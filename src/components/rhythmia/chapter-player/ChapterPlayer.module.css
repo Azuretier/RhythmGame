@@ -1,0 +1,462 @@
+/* ============================================
+   Visual Novel Chapter Player — Retro Pixel VN
+   ============================================ */
+
+/* ---------- Container ---------- */
+.container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+  user-select: none;
+  cursor: pointer;
+}
+
+/* ---------- Splash Art Layer ---------- */
+.splashLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.splashImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform, opacity;
+}
+
+/* Ken Burns — slow zoom drift */
+.kenBurns {
+  animation: kenBurns 18s ease-in-out infinite alternate;
+}
+
+@keyframes kenBurns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.08) translate(-1%, -1%);
+  }
+}
+
+/* Transition: Fade */
+.transitionFade {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Transition: Slide Left */
+.transitionSlideLeft {
+  animation: slideLeft 0.6s ease-out forwards;
+}
+
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(60px) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Transition: Slide Right */
+.transitionSlideRight {
+  animation: slideRight 0.6s ease-out forwards;
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-60px) scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Transition: Enter Zoom */
+.transitionEnterZoom {
+  animation: enterZoom 0.7s ease-out forwards;
+}
+
+@keyframes enterZoom {
+  from {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Outgoing image fades out */
+.splashExit {
+  animation: fadeOut 0.6s ease-in forwards;
+  pointer-events: none;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ---------- Vignette overlay ---------- */
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+  pointer-events: none;
+}
+
+/* ---------- Dialog Layer ---------- */
+.dialogLayer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 0 24px 24px;
+  pointer-events: none;
+}
+
+.dialogBox {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 4px solid #000000;
+  border-radius: 12px;
+  padding: 20px 28px 24px;
+  pointer-events: auto;
+  box-shadow:
+    6px 6px 0 #000000,
+    0 0 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Name plate */
+.namePlate {
+  position: absolute;
+  top: -18px;
+  left: 20px;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 11px;
+  line-height: 1;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+
+/* Dialog text area */
+.dialogText {
+  font-family: 'Press Start 2P', 'VT323', 'Silkscreen', monospace;
+  font-size: 13px;
+  line-height: 2.2;
+  color: #1a1a1a;
+  min-height: 60px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  letter-spacing: 0.5px;
+}
+
+/* Blinking advance cursor */
+.advanceCursor {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #000000;
+  margin-left: 8px;
+  vertical-align: middle;
+  animation: cursorBlink 0.8s step-end infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Typewriter cursor while typing */
+.typingCursor::after {
+  content: '▌';
+  display: inline;
+  color: #000000;
+  animation: cursorBlink 0.6s step-end infinite;
+  margin-left: 2px;
+  font-size: 14px;
+}
+
+/* ---------- Control Overlay ---------- */
+.controlOverlay {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px;
+  pointer-events: auto;
+}
+
+.controlBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 8px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.controlBtn:hover {
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.controlBtnActive {
+  background: rgba(0, 127, 255, 0.5);
+  color: #ffffff;
+  border-color: rgba(0, 127, 255, 0.7);
+}
+
+.controlKey {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  padding: 1px 4px;
+  font-size: 7px;
+  line-height: 1.2;
+}
+
+/* ---------- Log Panel ---------- */
+.logOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.logHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px 12px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.logTitle {
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 12px;
+  color: #ffffff;
+  letter-spacing: 2px;
+}
+
+.logClose {
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.logClose:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.logScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 28px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.logEntry {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.logEntry:last-child {
+  border-bottom: none;
+}
+
+.logEntryName {
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 9px;
+  color: #007FFF;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+
+.logEntryText {
+  font-family: 'Press Start 2P', 'VT323', 'Silkscreen', monospace;
+  font-size: 11px;
+  line-height: 2;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ---------- Chapter Title Overlay ---------- */
+.chapterTitle {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  animation: fadeIn 0.6s ease-out;
+  pointer-events: none;
+}
+
+.chapterTitleText {
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 18px;
+  color: #ffffff;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px rgba(0, 127, 255, 0.5);
+  animation: titlePulse 2s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; text-shadow: 0 0 30px rgba(0, 127, 255, 0.8); }
+}
+
+.chapterTitleFadeOut {
+  animation: fadeOut 1s ease-in forwards;
+}
+
+/* ---------- Scanline effect (retro CRT) ---------- */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+}
+
+/* ---------- Node counter ---------- */
+.nodeCounter {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 10;
+  font-family: 'Press Start 2P', 'VT323', monospace;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 1px;
+  pointer-events: none;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .dialogLayer {
+    padding: 0 12px 12px;
+  }
+
+  .dialogBox {
+    padding: 16px 18px 18px;
+    border-width: 3px;
+    border-radius: 8px;
+    box-shadow:
+      4px 4px 0 #000000,
+      0 0 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .namePlate {
+    font-size: 9px;
+    padding: 4px 10px;
+    top: -14px;
+  }
+
+  .dialogText {
+    font-size: 11px;
+    line-height: 2;
+    min-height: 48px;
+  }
+
+  .controlOverlay {
+    gap: 4px;
+    padding: 4px 6px;
+  }
+
+  .controlBtn {
+    font-size: 7px;
+    padding: 3px 6px;
+  }
+
+  .controlKey {
+    font-size: 6px;
+  }
+
+  .chapterTitleText {
+    font-size: 14px;
+    letter-spacing: 2px;
+  }
+
+  .logEntryText {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  .dialogText {
+    font-size: 10px;
+    line-height: 1.9;
+  }
+
+  .controlBtn span:not(.controlKey) {
+    display: none;
+  }
+}

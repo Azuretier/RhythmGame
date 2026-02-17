@@ -4,6 +4,9 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import type { Skin, SkinColors } from './types';
 import { SKIN_PRESETS, DEFAULT_SKIN_ID, getSkinById } from './types';
 import { getStoredSkinId, setStoredSkinId } from './storage';
+import { syncUserDataToFirestore } from '@/lib/google-sync/firestore';
+import { auth } from '@/lib/rhythmia/firebase';
+import { isGoogleLinked } from '@/lib/google-sync/service';
 
 interface SkinContextType {
   currentSkin: Skin;
@@ -48,12 +51,33 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Listen for skin-restored events from GoogleSyncProvider
+  useEffect(() => {
+    const handleSkinRestored = (event: CustomEvent<string>) => {
+      const skin = getSkinById(event.detail);
+      if (skin) {
+        setCurrentSkin(skin);
+        applySkinToDocument(skin.colors);
+      }
+    };
+
+    window.addEventListener('skin-restored', handleSkinRestored as EventListener);
+    return () => {
+      window.removeEventListener('skin-restored', handleSkinRestored as EventListener);
+    };
+  }, []);
+
   const setSkin = useCallback((skinId: string) => {
     const skin = getSkinById(skinId);
     if (!skin) return;
     setCurrentSkin(skin);
     setStoredSkinId(skinId);
     applySkinToDocument(skin.colors);
+
+    // Sync to Firestore if Google account is linked
+    if (auth?.currentUser && isGoogleLinked(auth.currentUser)) {
+      syncUserDataToFirestore(auth.currentUser.uid, { skinId });
+    }
   }, []);
 
   return (

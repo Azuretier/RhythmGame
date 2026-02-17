@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MultiplayerBattle.module.css';
 import type { Player, ServerMessage, RelayPayload, BoardCell } from '@/types/multiplayer';
+import type { FeatureSettings } from './tetris/types';
+import { DEFAULT_FEATURE_SETTINGS } from './tetris/types';
+import { FeatureCustomizer } from './tetris/components/FeatureCustomizer';
 import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
 
@@ -40,6 +43,10 @@ const GARBAGE_COLOR = '#555555';
 
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
+// ===== Color Themes =====
+type ColorTheme = 'standard' | 'stage' | 'monochrome';
+
+// Standard Tetris colors (default)
 const COLORS: Record<PieceType, string> = {
   I: '#00F0F0',
   O: '#F0F000',
@@ -48,6 +55,33 @@ const COLORS: Record<PieceType, string> = {
   Z: '#F00000',
   J: '#0000F0',
   L: '#F0A000',
+};
+
+// Monochrome colors (shades of white/gray)
+const MONOCHROME_COLORS: Record<PieceType, string> = {
+  I: '#FFFFFF',
+  O: '#E0E0E0',
+  T: '#C0C0C0',
+  S: '#D0D0D0',
+  Z: '#B0B0B0',
+  L: '#F0F0F0',
+  J: '#A0A0A0',
+};
+
+// Stage colors (BPM-based world colors - simplified for multiplayer)
+const STAGE_COLORS: string[] = [
+  '#FF6B9D', '#4ECDC4', '#FFE66D', '#FF6B6B', '#A29BFE', '#00F0F0', '#F0A000'
+];
+
+// Piece type to stage color mapping (for performance)
+const STAGE_COLOR_MAP: Record<PieceType, string> = {
+  I: STAGE_COLORS[0],
+  O: STAGE_COLORS[1],
+  T: STAGE_COLORS[2],
+  S: STAGE_COLORS[3],
+  Z: STAGE_COLORS[4],
+  J: STAGE_COLORS[5],
+  L: STAGE_COLORS[6],
 };
 
 // All 4 rotation states for each piece (SRS)
@@ -189,10 +223,9 @@ function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][
   return null;
 }
 
-function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
+function lockPiece(piece: Piece, board: (BoardCell | null)[][], color: string): (BoardCell | null)[][] {
   const newBoard = board.map(row => [...row]);
   const shape = getShape(piece.type, piece.rotation);
-  const color = COLORS[piece.type];
 
   for (let y = 0; y < shape.length; y++) {
     for (let x = 0; x < shape[y].length; x++) {
@@ -269,6 +302,37 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const advRecordedRef = useRef(false);
   const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
+
+  // Feature settings (persisted in localStorage)
+  const [featureSettings, setFeatureSettings] = useState<FeatureSettings>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('rhythmia_features');
+        if (stored) return { ...DEFAULT_FEATURE_SETTINGS, ...JSON.parse(stored) };
+      } catch { /* ignore */ }
+    }
+    return DEFAULT_FEATURE_SETTINGS;
+  });
+  const [showFeatures, setShowFeatures] = useState(false);
+
+  const handleFeatureSettingsUpdate = useCallback((newSettings: FeatureSettings) => {
+    setFeatureSettings(newSettings);
+    try { localStorage.setItem('rhythmia_features', JSON.stringify(newSettings)); } catch { /* ignore */ }
+  }, []);
+
+  // Color theme state
+  const [colorTheme, setColorTheme] = useState<ColorTheme>('standard');
+
+  // Helper function to get color based on theme
+  const getThemedColor = useCallback((type: PieceType): string => {
+    if (colorTheme === 'monochrome') {
+      return MONOCHROME_COLORS[type];
+    } else if (colorTheme === 'stage') {
+      return STAGE_COLOR_MAP[type];
+    }
+    // default: standard
+    return COLORS[type];
+  }, [colorTheme]);
 
   // Opponent state
   const opponentBoardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
@@ -532,7 +596,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
     gamePiecesPlacedRef.current++;
 
     // Lock to board
-    let newBoard = lockPiece(piece, boardRef.current);
+    const pieceColor = getThemedColor(piece.type);
+    let newBoard = lockPiece(piece, boardRef.current, pieceColor);
 
     // Apply pending garbage before clearing
     const garbage = pendingGarbageRef.current;
@@ -977,18 +1042,20 @@ export const MultiplayerBattle: React.FC<Props> = ({
   const displayBoard = board.map(row => row.map(cell => cell ? { ...cell, ghost: false } : null));
 
   if (piece) {
-    // Ghost piece
-    const gy = getGhostY(piece, board);
     const shape = getShape(piece.type, piece.rotation);
-    const color = COLORS[piece.type];
+    const color = getThemedColor(piece.type);
 
-    for (let y = 0; y < shape.length; y++) {
-      for (let x = 0; x < shape[y].length; x++) {
-        if (shape[y][x]) {
-          const by = gy + y;
-          const bx = piece.x + x;
-          if (by >= 0 && by < H && bx >= 0 && bx < W && !displayBoard[by][bx]) {
-            displayBoard[by][bx] = { color, ghost: true };
+    // Ghost piece (conditional on feature setting)
+    if (featureSettings.ghostPiece) {
+      const gy = getGhostY(piece, board);
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (shape[y][x]) {
+            const by = gy + y;
+            const bx = piece.x + x;
+            if (by >= 0 && by < H && bx >= 0 && bx < W && !displayBoard[by][bx]) {
+              displayBoard[by][bx] = { color, ghost: true };
+            }
           }
         }
       }
@@ -1016,13 +1083,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
   // Next piece preview
   const renderPreview = (type: PieceType) => {
     const shape = getShape(type, 0);
+    const color = getThemedColor(type);
     return (
       <div className={styles.previewGrid} style={{ gridTemplateColumns: `repeat(${shape[0].length}, auto)` }}>
         {shape.flat().map((val, i) => (
           <div
             key={i}
             className={`${styles.previewCell} ${val ? styles.filled : ''}`}
-            style={val ? { backgroundColor: COLORS[type], boxShadow: `0 0 6px ${COLORS[type]}` } : {}}
+            style={val ? { backgroundColor: color, boxShadow: `0 0 6px ${color}` } : {}}
           />
         ))}
       </div>
@@ -1044,6 +1112,50 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
   return (
     <div className={styles.container}>
+      {/* Settings gear button */}
+      <button
+        className={styles.settingsGearBtn}
+        onClick={() => setShowFeatures(prev => !prev)}
+        aria-label="Feature settings"
+      >
+        🎛
+      </button>
+
+      {/* Feature Customizer Overlay */}
+      {showFeatures && (
+        <div className={styles.featureOverlay}>
+          <FeatureCustomizer
+            settings={featureSettings}
+            onUpdate={handleFeatureSettingsUpdate}
+            onBack={() => setShowFeatures(false)}
+            mode="multiplayer"
+          />
+        </div>
+      )}
+
+      {/* Theme Switcher */}
+      <div className={styles.themeNav}>
+        <span className={styles.themeLabel}>🎨 Theme:</span>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
+          onClick={() => setColorTheme('standard')}
+        >
+          Standard
+        </button>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
+          onClick={() => setColorTheme('stage')}
+        >
+          Stage
+        </button>
+        <button
+          className={`${styles.themeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
+          onClick={() => setColorTheme('monochrome')}
+        >
+          Mono
+        </button>
+      </div>
+
       <div className={styles.battleArena}>
         {/* Player Side */}
         <div className={styles.playerSide}>
@@ -1072,7 +1184,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
             <div className={styles.boardWrap}>
               {/* Garbage meter */}
-              {pendingGarbage > 0 && (
+              {featureSettings.garbageMeter && pendingGarbage > 0 && (
                 <div className={styles.garbageMeter}>
                   <div
                     className={styles.garbageFill}
