@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, COLORS, ColorTheme, getThemedColor } from '../constants';
-import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
-import { ADVANCEMENTS } from '@/lib/advancements/definitions';
-import { loadAdvancementState } from '@/lib/advancements/storage';
-import Advancements from '@/components/rhythmia/Advancements';
+import React from 'react';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, ColorTheme, getThemedColor } from '../constants';
+import { getShape, getGhostY } from '../utils/boardUtils';
+import { PauseMenu } from './PauseMenu';
+import type { GameKeybinds } from '../hooks/useKeybinds';
 import type { Piece, Board as BoardType } from '../types';
 import styles from '../VanillaGame.module.css';
 
@@ -24,6 +23,18 @@ interface BoardProps {
     combo?: number;
     beatPhase?: number;
     boardElRef?: React.Ref<HTMLDivElement>;
+    // Settings props for pause menu
+    das?: number;
+    arr?: number;
+    sdf?: number;
+    onDasChange?: (v: number) => void;
+    onArrChange?: (v: number) => void;
+    onSdfChange?: (v: number) => void;
+    // Keybind props for pause menu
+    keybinds?: GameKeybinds;
+    onKeybindChange?: (action: keyof GameKeybinds, key: string) => void;
+    onKeybindsReset?: () => void;
+    defaultKeybinds?: GameKeybinds;
 }
 
 /**
@@ -47,20 +58,18 @@ export function Board({
     combo = 0,
     beatPhase = 0,
     boardElRef,
+    das = 167,
+    arr = 33,
+    sdf = 50,
+    onDasChange,
+    onArrChange,
+    onSdfChange,
+    keybinds,
+    onKeybindChange,
+    onKeybindsReset,
+    defaultKeybinds,
 }: BoardProps) {
     const isFever = combo >= 10;
-    const [showAdvancements, setShowAdvancements] = useState(false);
-    const [unlockedCount, setUnlockedCount] = useState(0);
-
-    // Load advancement count when pause menu opens
-    useEffect(() => {
-        if (isPaused && !gameOver) {
-            const state = loadAdvancementState();
-            setUnlockedCount(state.unlockedIds.length);
-        } else {
-            setShowAdvancements(false);
-        }
-    }, [isPaused, gameOver]);
 
     // Helper to get color for a piece type, with fever chroma shift
     const getColor = (pieceType: string) => {
@@ -121,7 +130,8 @@ export function Board({
         isFever ? styles.fever : '',
     ].filter(Boolean).join(' ');
 
-    const totalCount = ADVANCEMENTS.length;
+    // Default keybinds fallback
+    const fallbackKeybinds: GameKeybinds = { inventory: 'e', shop: 'l' };
 
     return (
         <div className={boardWrapClasses}>
@@ -179,71 +189,25 @@ export function Board({
                 </div>
             )}
 
-            {/* Overlay for Paused — main menu, advancements, or key bindings sub-panel */}
+            {/* Pause Menu with side navigation tabs */}
             {isPaused && !gameOver && (
-                <div className={styles.gameover} style={{ display: 'flex' }}>
-                    {!showAdvancements ? (
-                        <>
-                            <h2>PAUSED</h2>
-                            <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
-
-                            {/* Pause menu buttons */}
-                            <div className={styles.pauseMenuButtons}>
-                                <button className={styles.pauseMenuBtn} onClick={onResume || onRestart}>
-                                    Resume
-                                </button>
-                                <button
-                                    className={styles.pauseMenuBtn}
-                                    onClick={() => setShowAdvancements(true)}
-                                >
-                                    <span className={styles.pauseMenuBtnIcon}>🏆</span>
-                                    Advancements
-                                    <span className={styles.pauseMenuBtnBadge}>
-                                        {unlockedCount}/{totalCount}
-                                    </span>
-                                </button>
-                                {onQuit && (
-                                    <button
-                                        className={`${styles.pauseMenuBtn} ${styles.pauseMenuQuitBtn}`}
-                                        onClick={onQuit}
-                                    >
-                                        <span className={styles.pauseMenuBtnIcon}>🚪</span>
-                                        Save and Quit to Title
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Theme selector */}
-                            {onThemeChange && (
-                                <div className={styles.pauseThemeNav}>
-                                    <span className={styles.pauseThemeLabel}>Theme</span>
-                                    <div className={styles.pauseThemeButtons}>
-                                        <button
-                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
-                                            onClick={() => onThemeChange('standard')}
-                                        >
-                                            Standard
-                                        </button>
-                                        <button
-                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
-                                            onClick={() => onThemeChange('stage')}
-                                        >
-                                            Stage
-                                        </button>
-                                        <button
-                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
-                                            onClick={() => onThemeChange('monochrome')}
-                                        >
-                                            Mono
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <Advancements onClose={() => setShowAdvancements(false)} />
-                    )}
-                </div>
+                <PauseMenu
+                    score={score}
+                    onResume={onResume || onRestart}
+                    onQuit={onQuit}
+                    das={das}
+                    arr={arr}
+                    sdf={sdf}
+                    onDasChange={onDasChange || (() => {})}
+                    onArrChange={onArrChange || (() => {})}
+                    onSdfChange={onSdfChange || (() => {})}
+                    colorTheme={colorTheme}
+                    onThemeChange={onThemeChange}
+                    keybinds={keybinds || fallbackKeybinds}
+                    onKeybindChange={onKeybindChange || (() => {})}
+                    onKeybindsReset={onKeybindsReset || (() => {})}
+                    defaultKeybinds={defaultKeybinds || fallbackKeybinds}
+                />
             )}
         </div>
     );
