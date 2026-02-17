@@ -319,6 +319,9 @@ export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" to
 export const ENEMIES_PER_BEAT = 1;       // Enemies spawned per beat
 export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
 
+// ===== TD Wave Settings (within vanilla mode alternation) =====
+export const TD_WAVE_BEATS = 12;       // Beats of enemy spawning per TD phase
+
 // ===== Block Grid System =====
 // Enemies move on a discrete grid, 1 tile per turn, orthogonal only (no diagonals).
 // The tower sits at grid origin (0, 0). Grid extends from -GRID_HALF to +GRID_HALF.

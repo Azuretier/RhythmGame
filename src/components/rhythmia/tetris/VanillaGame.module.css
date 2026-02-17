@@ -1815,6 +1815,18 @@
   background: rgba(0, 0, 0, 0.7);
 }
 
+.wt_checkpoint {
+  background: rgba(0, 0, 0, 0.7);
+  animation: wtCheckpoint 1.5s ease forwards;
+}
+
+@keyframes wtCheckpoint {
+  0% { background: rgba(80, 40, 0, 0.2); }
+  15% { background: rgba(120, 60, 0, 0.4); }
+  40% { background: rgba(0, 0, 0, 0.65); }
+  100% { background: rgba(0, 0, 0, 0); opacity: 0; }
+}
+
 /* Scan line effect */
 .wtScanLine {
   position: absolute;
