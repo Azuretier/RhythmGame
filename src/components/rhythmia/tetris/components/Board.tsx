@@ -138,7 +138,7 @@ export function Board({
     const fallbackKeybinds: GameKeybinds = { inventory: 'e', shop: 'l' };
 
     // Track board element for cell size measurement
-    const boardInternalRef = React.useRef<HTMLDivElement>(null);
+    const boardInternalRef = React.useRef<HTMLDivElement | null>(null);
     const [cellSize, setCellSize] = React.useState({ w: 28, h: 28 });
 
     // Measure cell size from the board element
