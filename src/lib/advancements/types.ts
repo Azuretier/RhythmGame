@@ -5,8 +5,7 @@ export type AdvancementCategory =
   | 'combo'
   | 'general'
   | 'multiplayer'
-  | 'loyalty'
-  | 'treasure';
+  | 'loyalty';
 
 export interface Advancement {
   id: string;
@@ -43,9 +42,6 @@ export interface PlayerStats {
   totalVisits: number;
   bestStreak: number;
   pollsVoted: number;
-  // Treasure stats
-  totalGoldEarned: number;
-  totalTreasuresCollected: number;
 }
 
 export interface AdvancementState {

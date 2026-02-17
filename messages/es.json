@@ -402,10 +402,7 @@
         "peakChaos": "CAOS MÁXIMO",
         "tempoCollapses": "COLAPSOS",
         "lowestBpm": "BPM MÍNIMO",
-        "backToLobby": "Volver al Lobby",
-        "usePowerUp": "Power-Up",
-        "cycleTarget": "Objetivo",
-        "emote": "Emote"
+        "backToLobby": "Volver al Lobby"
     },
     "footer": {
         "copyright": "azuretier.net © 2025"

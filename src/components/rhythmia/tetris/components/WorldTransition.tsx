@@ -100,18 +100,18 @@ export function WorldTransition({ phase, worldIdx, stageNumber, terrainPhase = '
 interface GamePhaseIndicatorProps {
     phase: GamePhase;
     stageNumber: number;
-    damageMultiplier: number;
+    equippedCardCount: number;
     terrainPhase?: TerrainPhase;
 }
 
 /**
  * Small HUD indicator showing current game phase
  */
-export function GamePhaseIndicator({ phase, stageNumber, damageMultiplier, terrainPhase = 'dig' }: GamePhaseIndicatorProps) {
+export function GamePhaseIndicator({ phase, stageNumber, equippedCardCount, terrainPhase = 'dig' }: GamePhaseIndicatorProps) {
     const phaseLabels: Record<GamePhase, string> = {
         WORLD_CREATION: 'CONSTRUCTING',
         PLAYING: terrainPhase === 'td' ? 'DEFEND' : 'DIG',
-        CRAFTING: 'FORGE',
+        CARD_SELECT: 'CARDS',
         COLLAPSE: 'COLLAPSE',
         TRANSITION: 'RELOAD',
         CHECKPOINT: 'CHECKPOINT',
@@ -121,8 +121,8 @@ export function GamePhaseIndicator({ phase, stageNumber, damageMultiplier, terra
         <div className={styles.phaseIndicator}>
             <span className={styles.phaseDot} data-phase={phase} />
             <span className={styles.phaseLabel}>{phaseLabels[phase]}</span>
-            {damageMultiplier > 1 && (
-                <span className={styles.phaseMult}>DMG x{damageMultiplier.toFixed(1)}</span>
+            {equippedCardCount > 0 && (
+                <span className={styles.phaseMult}>{equippedCardCount} CARDS</span>
             )}
         </div>
     );

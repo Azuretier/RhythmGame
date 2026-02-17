@@ -12,6 +12,11 @@ import type {
   RelayPayload,
   SetProfileMessage,
 } from './src/types/multiplayer';
+import type {
+  ArenaClientMessage,
+  ArenaAction,
+  ArenaBoardPayload,
+} from './src/types/arena';
 import {
   ARENA_MAX_PLAYERS,
   ARENA_QUEUE_TIMEOUT,
@@ -133,7 +138,7 @@ function broadcastOnlineCount(): void {
       try {
         conn.ws.send(countMsg);
         conn.ws.send(usersMsg);
-      } catch {}
+      } catch { }
     }
   });
 }
@@ -289,6 +294,14 @@ function clearArenaTimer(playerId: string): void {
     clearTimeout(timer);
     arenaQueueTimers.delete(playerId);
   }
+}
+
+function isArenaMessage(type: string): boolean {
+  return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue';
+}
+
+function isMCBoardMessage(type: string): boolean {
+  return type.startsWith('mc_');
 }
 
 // ===== Minecraft Board Game System =====
@@ -1533,7 +1546,7 @@ function shutdown(signal: string) {
       };
       conn.ws.send(JSON.stringify(msg));
       conn.ws.close(1001, 'Server shutdown');
-    } catch {}
+    } catch { }
   });
 
   wss.close(() => {

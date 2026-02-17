@@ -1,12 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, COLORS, ColorTheme, getThemedColor } from '../constants';
-import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
-import { ADVANCEMENTS } from '@/lib/advancements/definitions';
-import { loadAdvancementState } from '@/lib/advancements/storage';
-import Advancements from '@/components/rhythmia/Advancements';
-import { KeyBindSettings } from './KeyBindSettings';
-import { FeatureCustomizer } from './FeatureCustomizer';
-import type { Piece, Board as BoardType, Keybindings, KeybindAction, FeatureSettings } from '../types';
+import React from 'react';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, ColorTheme, getThemedColor } from '../constants';
+import { getShape, getGhostY } from '../utils/boardUtils';
+import { PauseMenu } from './PauseMenu';
+import type { GameKeybinds } from '../hooks/useKeybinds';
+import type { Piece, Board as BoardType, FeatureSettings } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface BoardProps {
@@ -26,11 +23,19 @@ interface BoardProps {
     combo?: number;
     beatPhase?: number;
     boardElRef?: React.Ref<HTMLDivElement>;
-    keybindings?: Keybindings;
-    onKeybindChange?: (action: KeybindAction, key: string) => void;
-    onKeybindingsUpdate?: (bindings: Keybindings) => void;
+    // Settings props for pause menu
+    das?: number;
+    arr?: number;
+    sdf?: number;
+    onDasChange?: (v: number) => void;
+    onArrChange?: (v: number) => void;
+    onSdfChange?: (v: number) => void;
+    // Keybind props for pause menu
+    keybinds?: GameKeybinds;
+    onKeybindChange?: (action: keyof GameKeybinds, key: string) => void;
+    onKeybindsReset?: () => void;
+    defaultKeybinds?: GameKeybinds;
     featureSettings?: FeatureSettings;
-    onFeatureSettingsUpdate?: (settings: FeatureSettings) => void;
 }
 
 /**
@@ -54,52 +59,19 @@ export function Board({
     combo = 0,
     beatPhase = 0,
     boardElRef,
-    keybindings,
+    das = 167,
+    arr = 33,
+    sdf = 50,
+    onDasChange,
+    onArrChange,
+    onSdfChange,
+    keybinds,
     onKeybindChange,
-    onKeybindingsUpdate,
+    onKeybindsReset,
+    defaultKeybinds,
     featureSettings,
-    onFeatureSettingsUpdate,
 }: BoardProps) {
     const isFever = combo >= 10;
-    const [showAdvancements, setShowAdvancements] = useState(false);
-    const [showSettings, setShowSettings] = useState(false);
-    const [showKeyBinds, setShowKeyBinds] = useState(false);
-    const [showFeatures, setShowFeatures] = useState(false);
-    const [unlockedCount, setUnlockedCount] = useState(0);
-    const [rebindingAction, setRebindingAction] = useState<KeybindAction | null>(null);
-
-    // Listen for keybind rebinding
-    useEffect(() => {
-        if (!rebindingAction) return;
-        const handler = (e: KeyboardEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (e.key === 'Escape') {
-                setRebindingAction(null);
-                return;
-            }
-            if (onKeybindChange) {
-                onKeybindChange(rebindingAction, e.key.toLowerCase());
-            }
-            setRebindingAction(null);
-        };
-        window.addEventListener('keydown', handler);
-        return () => window.removeEventListener('keydown', handler);
-    }, [rebindingAction, onKeybindChange]);
-
-    // Load advancement count when pause menu opens
-    useEffect(() => {
-        if (isPaused && !gameOver) {
-            const state = loadAdvancementState();
-            setUnlockedCount(state.unlockedIds.length);
-        } else {
-            setShowAdvancements(false);
-            setShowSettings(false);
-            setShowKeyBinds(false);
-            setShowFeatures(false);
-            setRebindingAction(null);
-        }
-    }, [isPaused, gameOver]);
 
     // Helper to get color for a piece type, with fever chroma shift
     const getColor = (pieceType: string) => {
@@ -161,7 +133,8 @@ export function Board({
         isFever ? styles.fever : '',
     ].filter(Boolean).join(' ');
 
-    const totalCount = ADVANCEMENTS.length;
+    // Default keybinds fallback
+    const fallbackKeybinds: GameKeybinds = { inventory: 'e', shop: 'l' };
 
     return (
         <div className={boardWrapClasses}>
@@ -219,138 +192,25 @@ export function Board({
                 </div>
             )}
 
-            {/* Overlay for Paused — main menu, advancements, key bindings, or features sub-panel */}
+            {/* Pause Menu with side navigation tabs */}
             {isPaused && !gameOver && (
-                <div className={styles.gameover} style={{ display: 'flex' }}>
-                    {showKeyBinds && keybindings && onKeybindingsUpdate ? (
-                        <KeyBindSettings
-                            bindings={keybindings}
-                            onUpdate={onKeybindingsUpdate}
-                            onBack={() => setShowKeyBinds(false)}
-                        />
-                    ) : showFeatures && featureSettings && onFeatureSettingsUpdate ? (
-                        <FeatureCustomizer
-                            settings={featureSettings}
-                            onUpdate={onFeatureSettingsUpdate}
-                            onBack={() => setShowFeatures(false)}
-                            mode="singleplayer"
-                        />
-                    ) : !showAdvancements ? (
-                        <>
-                            <h2>PAUSED</h2>
-                            <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
-
-                            {/* Pause menu buttons */}
-                            <div className={styles.pauseMenuButtons}>
-                                <button className={styles.pauseMenuBtn} onClick={onResume || onRestart}>
-                                    Resume
-                                </button>
-                                <button
-                                    className={styles.pauseMenuBtn}
-                                    onClick={() => setShowAdvancements(true)}
-                                >
-                                    <span className={styles.pauseMenuBtnIcon}>🏆</span>
-                                    Advancements
-                                    <span className={styles.pauseMenuBtnBadge}>
-                                        {unlockedCount}/{totalCount}
-                                    </span>
-                                </button>
-                                {featureSettings && onFeatureSettingsUpdate && (
-                                    <button
-                                        className={styles.pauseMenuBtn}
-                                        onClick={() => setShowFeatures(true)}
-                                    >
-                                        <span className={styles.pauseMenuBtnIcon}>🎛</span>
-                                        Features
-                                    </button>
-                                )}
-                                {keybindings && onKeybindingsUpdate && (
-                                    <button
-                                        className={styles.pauseMenuBtn}
-                                        onClick={() => setShowKeyBinds(true)}
-                                    >
-                                        <span className={styles.pauseMenuBtnIcon}>⌨</span>
-                                        Key Bindings
-                                    </button>
-                                )}
-                                {onQuit && (
-                                    <button
-                                        className={`${styles.pauseMenuBtn} ${styles.pauseMenuQuitBtn}`}
-                                        onClick={onQuit}
-                                    >
-                                        <span className={styles.pauseMenuBtnIcon}>🚪</span>
-                                        Save and Quit to Title
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Theme selector */}
-                            {onThemeChange && (
-                                <div className={styles.pauseThemeNav}>
-                                    <span className={styles.pauseThemeLabel}>Theme</span>
-                                    <div className={styles.pauseThemeButtons}>
-                                        <button
-                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'standard' ? styles.active : ''}`}
-                                            onClick={() => onThemeChange('standard')}
-                                        >
-                                            Standard
-                                        </button>
-                                        <button
-                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'stage' ? styles.active : ''}`}
-                                            onClick={() => onThemeChange('stage')}
-                                        >
-                                            Stage
-                                        </button>
-                                        <button
-                                            className={`${styles.pauseThemeBtn} ${colorTheme === 'monochrome' ? styles.active : ''}`}
-                                            onClick={() => onThemeChange('monochrome')}
-                                        >
-                                            Mono
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    ) : showSettings ? (
-                        <div className={styles.settingsPanel}>
-                            <div className={styles.settingsHeader}>
-                                <button className={styles.settingsBack} onClick={() => setShowSettings(false)}>
-                                    &#x2190; Back
-                                </button>
-                                <h3 className={styles.settingsTitle}>KEYBINDINGS</h3>
-                            </div>
-                            <div className={styles.settingsBody}>
-                                {keybindings && (
-                                    <>
-                                        <div className={styles.keybindRow}>
-                                            <span className={styles.keybindLabel}>Inventory</span>
-                                            <button
-                                                className={`${styles.keybindKey} ${rebindingAction === 'inventory' ? styles.keybindKeyActive : ''}`}
-                                                onClick={() => setRebindingAction('inventory')}
-                                            >
-                                                {rebindingAction === 'inventory' ? 'Press a key...' : keybindings.inventory.toUpperCase()}
-                                            </button>
-                                        </div>
-                                        <div className={styles.keybindRow}>
-                                            <span className={styles.keybindLabel}>Shop</span>
-                                            <button
-                                                className={`${styles.keybindKey} ${rebindingAction === 'shop' ? styles.keybindKeyActive : ''}`}
-                                                onClick={() => setRebindingAction('shop')}
-                                            >
-                                                {rebindingAction === 'shop' ? 'Press a key...' : keybindings.shop.toUpperCase()}
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                            <div className={styles.settingsHint}>
-                                Click a key binding, then press the new key. Press ESC to cancel.
-                            </div>
-                        </div>
-                    ) : (
-                        <Advancements onClose={() => setShowAdvancements(false)} />
-                    )}
-                </div>
+                <PauseMenu
+                    score={score}
+                    onResume={onResume || onRestart}
+                    onQuit={onQuit}
+                    das={das}
+                    arr={arr}
+                    sdf={sdf}
+                    onDasChange={onDasChange || (() => { })}
+                    onArrChange={onArrChange || (() => { })}
+                    onSdfChange={onSdfChange || (() => { })}
+                    colorTheme={colorTheme}
+                    onThemeChange={onThemeChange}
+                    keybinds={keybinds || fallbackKeybinds}
+                    onKeybindChange={onKeybindChange || (() => { })}
+                    onKeybindsReset={onKeybindsReset || (() => { })}
+                    defaultKeybinds={defaultKeybinds || fallbackKeybinds}
+                />
             )}
         </div>
     );

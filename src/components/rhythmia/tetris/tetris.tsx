@@ -6,8 +6,8 @@ import styles from './VanillaGame.module.css';
 
 // Constants and Types
 import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
-import type { Piece, GameMode, Keybindings, KeybindAction, FeatureSettings } from './types';
-import { DEFAULT_KEYBINDINGS, DEFAULT_FEATURE_SETTINGS } from './types';
+import type { Piece, GameMode, FeatureSettings } from './types';
+import { DEFAULT_FEATURE_SETTINGS } from './types';
 
 // Advancements
 import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
@@ -20,6 +20,7 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
+import { useKeybinds } from './hooks/useKeybinds';
 
 // Utilities
 import {
@@ -47,20 +48,15 @@ import {
   TouchControls,
   RhythmVFX,
   FloatingItems,
-  FloatingTreasures,
   ItemSlots,
-  CraftingUI,
-  InventoryUI,
-  ShopUI,
+  CardSelectUI,
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
   HealthManaHUD,
-  TreasureHUD,
   TutorialGuide,
   hasTutorialBeenSeen,
-  KeyBindSettings,
-  FeatureCustomizer,
+
 } from './components';
 import type { JudgmentDisplayMode } from './components';
 
@@ -117,17 +113,6 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   const boardElRef = useRef<HTMLDivElement>(null);
   const beatBarRef = useRef<HTMLDivElement>(null);
 
-  // Keybindings (persisted in localStorage)
-  const [keybindings, setKeybindings] = useState<Keybindings>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('rhythmia_keybindings');
-        if (stored) return { ...DEFAULT_KEYBINDINGS, ...JSON.parse(stored) };
-      } catch { /* ignore */ }
-    }
-    return DEFAULT_KEYBINDINGS;
-  });
-
   const [pauseStateBeforeOverlay, setPauseStateBeforeOverlay] = useState(false);
 
   // Judgment display mode: 'text' (PERFECT!, GREAT!, etc.) or 'score' (+1600, etc.)
@@ -147,19 +132,6 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       try { localStorage.setItem('rhythmia_judgment_mode', next); } catch { /* ignore */ }
       return next;
     });
-  }, []);
-
-  const handleKeybindChange = useCallback((action: KeybindAction, key: string) => {
-    setKeybindings(prev => {
-      const next = { ...prev, [action]: key };
-      try { localStorage.setItem('rhythmia_keybindings', JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  }, []);
-
-  const handleKeybindingsUpdate = useCallback((newBindings: Keybindings) => {
-    setKeybindings(newBindings);
-    try { localStorage.setItem('rhythmia_keybindings', JSON.stringify(newBindings)); } catch { /* ignore */ }
   }, []);
 
   // Feature settings (persisted in localStorage)
@@ -227,17 +199,11 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     inventory,
     floatingItems,
     terrainParticles,
-    craftedCards,
-    showCraftUI,
-    damageMultiplier,
-    // Inventory & Shop
-    showInventory,
-    showShop,
-    gold,
-    // Treasure system
-    treasureWallet,
-    floatingTreasures,
-    lastCollectedTreasureId,
+    // Rogue-like cards
+    equippedCards,
+    showCardSelect,
+    offeredCards,
+    activeEffects,
     // Game mode
     gameMode,
     // Terrain phase
@@ -266,7 +232,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     worldIdxRef,
     stageNumberRef,
     beatPhaseRef,
-    damageMultiplierRef,
+    activeEffectsRef,
     enemiesRef,
     gameModeRef,
     terrainPhaseRef,
@@ -292,8 +258,6 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setBoardBeat,
     setColorTheme,
     setGamePhase,
-    setShowInventory,
-    setShowShop,
     spawnPiece,
     showJudgment,
     updateScore,
@@ -307,18 +271,15 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     // Game loop actions
     spawnItemDrops,
     spawnTerrainParticles,
-    craftCard,
-    canCraftCard,
-    toggleCraftUI,
-    toggleInventory,
-    toggleShop,
-    purchaseItem,
+    enterCardSelect,
+    selectCard,
+    skipCardSelect,
+    consumeComboGuard,
+    consumeShield,
     // Terrain phase actions
     enterCheckpoint,
     completeWave,
     setTdBeatsRemaining,
-    // Treasure actions
-    spawnTreasureDrops,
     // Tower defense actions
     spawnEnemies,
     updateEnemies,
@@ -329,6 +290,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setTowerHealth,
     towerHealthRef,
   } = gameState;
+
+  const {
+    das, arr, sdf,
+    setDas, setArr, setSdf,
+  } = gameState;
+
+  const { keybinds, setKeybind, resetKeybinds, defaults: defaultKeybinds } = useKeybinds();
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
 
@@ -526,19 +494,23 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
     const phase = terrainPhaseRef.current;
 
-    // Beat judgment — four timing windows based on distance from beat
+    // Beat judgment — granular timing windows with beat_extend card effect
     const currentBeatPhase = beatPhaseRef.current;
     // Distance from beat center (0.0 = exactly on beat, 0.5 = furthest away)
     const distFromBeat = currentBeatPhase <= 0.5 ? currentBeatPhase : 1 - currentBeatPhase;
+
+    // Apply beat_extend bonus from cards (widens timing windows)
+    const beatExtend = activeEffectsRef.current.beatExtendBonus || 0;
+
     let mult = 1;
     let timing: 'perfect' | 'great' | 'good' | 'miss';
 
-    if (distFromBeat < 0.06) {
-      timing = 'perfect';  // ~12% of beat window (tightest)
-    } else if (distFromBeat < 0.12) {
-      timing = 'great';    // ~12% more
-    } else if (distFromBeat < 0.20) {
-      timing = 'good';     // ~16% more
+    if (distFromBeat < (0.06 + beatExtend)) {
+      timing = 'perfect';  // ~12% of beat window (tightest) + card bonus
+    } else if (distFromBeat < (0.12 + beatExtend)) {
+      timing = 'great';    // ~12% more + card bonus
+    } else if (distFromBeat < (0.20 + beatExtend)) {
+      timing = 'good';     // ~16% more + card bonus
     } else {
       timing = 'miss';     // everything else
     }
@@ -561,16 +533,34 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       newCombo = prevCombo + 1;
       setCombo(newCombo);
     } else {
-      // VFX: combo broken — end fever if active
-      if (prevCombo >= 10) {
-        vfxRef.current.emit({ type: 'feverEnd' });
+      // Combo guard / shield — try to preserve combo before breaking
+      let comboSaved = false;
+      if (comboRef.current > 0) {
+        if (consumeComboGuard()) {
+          comboSaved = true;
+          showJudgment('GUARD!', '#4FC3F7');
+        } else if (consumeShield()) {
+          comboSaved = true;
+          showJudgment('SHIELD!', '#CE93D8');
+        }
       }
-      if (prevCombo > 0) {
-        // Emit combo break particle effect — intensity scales with lost combo
-        vfxRef.current.emit({ type: 'comboBreak', lostCombo: prevCombo });
+
+      if (comboSaved) {
+        // Keep combo alive — don't break
+        vfxRef.current.emit({ type: 'comboChange', combo: comboRef.current, onBeat: false });
+      } else {
+        // VFX: combo broken — end fever if active
+        if (prevCombo >= 10) {
+          vfxRef.current.emit({ type: 'feverEnd' });
+        }
+        if (prevCombo > 0) {
+          showJudgment('MISS', '#FF4444');
+          // Emit combo break particle effect — intensity scales with lost combo
+          vfxRef.current.emit({ type: 'comboBreak', lostCombo: prevCombo });
+        }
+        setCombo(0);
+        vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
       }
-      setCombo(0);
-      vfxRef.current.emit({ type: 'comboChange', combo: 0, onBeat: false });
     }
 
     // Lock piece onto the board — blocks above the visible area (in the
@@ -592,10 +582,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setBoard(clearedBoard);
     boardRef.current = clearedBoard;
 
-    // Calculate score with rhythm multiplier
+    // Calculate score with rhythm multiplier and combo_amplify
+    const amplifiedCombo = Math.max(1, Math.floor(comboRef.current * activeEffectsRef.current.comboAmplifyFactor));
     const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * levelRef.current;
-    const comboMult = Math.max(1, timing !== 'miss' ? newCombo : 1);
-    const finalScore = baseScore * mult * comboMult;
+    const finalScore = baseScore * mult * amplifiedCombo;
     updateScore(scoreRef.current + finalScore);
 
     // Show judgment with earned score — called after score calc so score display mode works
@@ -641,27 +631,24 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         gameTetrisClearsRef.current++;
       }
 
-      const weaponMult = damageMultiplierRef.current;
       const center = getBoardCenter();
 
       if (phase === 'td') {
         // === TD PHASE: Kill enemies when lines are cleared ===
-        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * amplifiedCombo);
         killEnemies(killCount);
 
         // Item drops
         spawnItemDrops(killCount, center.x, center.y);
-        // Treasure drops
-        spawnTreasureDrops(killCount, center.x, center.y);
       } else {
         // === DIG PHASE: Destroy terrain blocks ===
-        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * Math.max(1, comboRef.current) * weaponMult);
+        // terrain_surge bonus only applies on beat
+        const surgeBonus = onBeat ? activeEffectsRef.current.terrainSurgeBonus : 0;
+        const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * amplifiedCombo * (1 + surgeBonus));
         const remaining = destroyTerrain(damage);
 
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
-        // Treasure drops from terrain
-        spawnTreasureDrops(damage, center.x, center.y);
 
         // Check if terrain is fully destroyed → enter checkpoint for TD phase
         if (remaining <= 0) {
@@ -699,11 +686,12 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
   }, [
-    terrainPhaseRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, damageMultiplierRef, stageNumberRef,
+    terrainPhaseRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, activeEffectsRef, stageNumberRef,
     setCombo, setBoard, setLines, setLevel, setCurrentPiece, setGameOver,
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, enterCheckpoint,
-    getBoardCenter, spawnTerrainParticles, spawnItemDrops, spawnTreasureDrops, pushLiveAdvancementCheck,
+    getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
+    consumeComboGuard, consumeShield,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -992,11 +980,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           beatBarRef.current.style.setProperty('--beat-phase', String(phase));
           // Distance from beat center for timing zone display
           const dist = phase <= 0.5 ? phase : 1 - phase;
-          if (dist < 0.06) {
+          const beatExtend = activeEffectsRef.current?.beatExtendBonus || 0;
+
+          if (dist < (0.06 + beatExtend)) {
             beatBarRef.current.setAttribute('data-onbeat', 'perfect');
-          } else if (dist < 0.12) {
+          } else if (dist < (0.12 + beatExtend)) {
             beatBarRef.current.setAttribute('data-onbeat', 'great');
-          } else if (dist < 0.20) {
+          } else if (dist < (0.20 + beatExtend)) {
             beatBarRef.current.setAttribute('data-onbeat', 'good');
           } else {
             beatBarRef.current.removeAttribute('data-onbeat');
@@ -1027,7 +1017,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         processHorizontalDasArr('right', currentTime);
         processSoftDrop(currentTime);
 
-        const speed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
+        const baseSpeed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
+        const speed = baseSpeed / (activeEffectsRef.current?.gravitySlowFactor || 1);
         if (currentTime - lastGravityRef.current >= speed) {
           tick();
           lastGravityRef.current = currentTime;
@@ -1068,79 +1059,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
-      // Handle inventory toggle (only from in-game, not while paused)
-      if (e.key.toLowerCase() === keybindings.inventory) {
-        e.preventDefault();
-        if (showShop) return;
-        // Block opening from pause menu; allow closing if already open
-        if (isPaused && !showInventory) return;
-        if (showCraftUI) { toggleCraftUI(); }
-        setShowInventory(prev => {
-          const next = !prev;
-          if (next) {
-            setPauseStateBeforeOverlay(isPaused);
-            setIsPaused(true);
-            setShowShop(false);
-          } else {
-            setIsPaused(pauseStateBeforeOverlay);
-          }
-          return next;
-        });
-        return;
-      }
-
-      // Handle shop toggle (only from in-game, not while paused)
-      if (e.key.toLowerCase() === keybindings.shop) {
-        e.preventDefault();
-        if (showInventory) return;
-        // Block opening from pause menu; allow closing if already open
-        if (isPaused && !showShop) return;
-        if (showCraftUI) { toggleCraftUI(); }
-        setShowShop(prev => {
-          const next = !prev;
-          if (next) {
-            setPauseStateBeforeOverlay(isPaused);
-            setIsPaused(true);
-            setShowInventory(false);
-          } else {
-            setIsPaused(pauseStateBeforeOverlay);
-          }
-          return next;
-        });
-        return;
-      }
-
-      // Handle craft UI toggle with 'f' key
-      if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        if (showInventory || showShop) return;
-        toggleCraftUI();
-        return;
-      }
-
-      // Close any overlay with Escape
-      if (e.key === 'Escape') {
-        if (showInventory) {
-          e.preventDefault();
-          setShowInventory(false);
-          setIsPaused(pauseStateBeforeOverlay);
-          return;
-        }
-        if (showShop) {
-          e.preventDefault();
-          setShowShop(false);
-          setIsPaused(pauseStateBeforeOverlay);
-          return;
-        }
-        if (showCraftUI) {
-          e.preventDefault();
-          toggleCraftUI();
-          return;
-        }
-      }
-
-      // Don't process game inputs while any overlay is open
-      if (showCraftUI || showInventory || showShop) return;
+      // Don't process game inputs while card select is showing
+      if (showCardSelect) return;
 
       const currentTime = performance.now();
 
@@ -1217,15 +1137,11 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         case 'p':
         case 'P':
           e.preventDefault();
-          setShowInventory(false);
-          setShowShop(false);
           setIsPaused(prev => !prev);
           break;
 
         case 'Escape':
           e.preventDefault();
-          setShowInventory(false);
-          setShowShop(false);
           setIsPaused(prev => !prev);
           break;
       }
@@ -1251,7 +1167,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCraftUI, showInventory, showShop, keybindings, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, toggleCraftUI]);
+  }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
   // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
   useEffect(() => {
@@ -1297,12 +1213,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       {featureSettings.particles && <TerrainParticles particles={terrainParticles} />}
 
       {/* Floating item drops from terrain */}
-      {featureSettings.items && (
-        <div>
-          <FloatingItems items={floatingItems} />
-          <FloatingTreasures treasures={floatingTreasures} />
-        </div>
-      )}
+      <FloatingItems items={floatingItems} />
 
       {/* World transition overlays (creation / collapse / reload) */}
       <WorldTransition
@@ -1322,7 +1233,6 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         <TitleScreen onStart={startGame} />
       )}
 
-
       {/* Game */}
       {(isPlaying || gameOver) && (
         <div className={styles.game}>
@@ -1330,7 +1240,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           <GamePhaseIndicator
             phase={gamePhase}
             stageNumber={stageNumber}
-            damageMultiplier={damageMultiplier}
+            equippedCardCount={equippedCards.length}
             terrainPhase={terrainPhase}
           />
 
@@ -1353,14 +1263,11 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 <div className={styles.nextLabel}>HOLD (C)</div>
                 <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
               </div>
-              {featureSettings.items && (
-                <ItemSlots
-                  inventory={inventory}
-                  craftedCards={craftedCards}
-                  damageMultiplier={damageMultiplier}
-                  onCraftOpen={toggleCraftUI}
-                />
-              )}
+              <ItemSlots
+                inventory={inventory}
+                equippedCards={equippedCards}
+                activeEffects={activeEffects}
+              />
             </div>
 
             {/* Center column: Board + Beat bar + Stats */}
@@ -1371,10 +1278,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 boardBeat={boardBeat}
                 boardShake={boardShake}
                 gameOver={gameOver}
-                isPaused={isPaused && !showInventory && !showShop}
+                isPaused={isPaused && !showCardSelect}
                 score={score}
                 onRestart={() => startGame()}
-                onResume={() => { setIsPaused(false); setShowInventory(false); setShowShop(false); }}
+                onResume={() => setIsPaused(false)}
                 onQuit={onQuit}
                 colorTheme={colorTheme}
                 onThemeChange={setColorTheme}
@@ -1382,11 +1289,17 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 combo={combo}
                 beatPhase={beatPhase}
                 boardElRef={boardElRef}
-                keybindings={keybindings}
-                onKeybindChange={handleKeybindChange}
-                onKeybindingsUpdate={handleKeybindingsUpdate}
+                das={das}
+                arr={arr}
+                sdf={sdf}
+                onDasChange={setDas}
+                onArrChange={setArr}
+                onSdfChange={setSdf}
+                keybinds={keybinds}
+                onKeybindChange={setKeybind}
+                onKeybindsReset={resetKeybinds}
+                defaultKeybinds={defaultKeybinds}
                 featureSettings={featureSettings}
-                onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
               />
               {featureSettings.beatBar && <BeatBar containerRef={beatBarRef} />}
               <StatsPanel lines={lines} level={level} />
@@ -1398,7 +1311,6 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 <div className={styles.nextLabel}>NEXT</div>
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
               </div>
-              <TreasureHUD wallet={treasureWallet} lastCollectedId={lastCollectedTreasureId} />
               {terrainPhase === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
           </div>
@@ -1427,37 +1339,17 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           onStop={vfx.stop}
         />
       )}
-      {/* Crafting UI overlay */}
-      {featureSettings.items && showCraftUI && (
-        <CraftingUI
-          inventory={inventory}
-          craftedCards={craftedCards}
-          onCraft={craftCard}
-          canCraft={canCraftCard}
-          onClose={toggleCraftUI}
-        />
-      )}
 
-      {/* Inventory UI overlay */}
-      {featureSettings.items && showInventory && (
-        <InventoryUI
+      {/* Card selection overlay */}
+      {showCardSelect && (
+        <CardSelectUI
+          offers={offeredCards}
           inventory={inventory}
-          craftedCards={craftedCards}
-          damageMultiplier={damageMultiplier}
-          onClose={() => { setShowInventory(false); setIsPaused(pauseStateBeforeOverlay); }}
-          closeKey={keybindings.inventory}
-        />
-      )}
-
-      {/* Shop UI overlay */}
-      {featureSettings.items && showShop && (
-        <ShopUI
-          inventory={inventory}
-          craftedCards={craftedCards}
-          onPurchase={craftCard}
-          canPurchase={canCraftCard}
-          onClose={() => { setShowShop(false); setIsPaused(pauseStateBeforeOverlay); }}
-          closeKey={keybindings.shop}
+          equippedCards={equippedCards}
+          onSelect={selectCard}
+          onSkip={skipCardSelect}
+          worldIdx={worldIdx}
+          stageNumber={stageNumber}
         />
       )}
 
@@ -1485,3 +1377,4 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     </div>
   );
 }
+

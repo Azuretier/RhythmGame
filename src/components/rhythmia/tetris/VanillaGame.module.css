@@ -168,16 +168,37 @@
 }
 
 @keyframes feverBorder {
-  0% { border-color: rgba(255, 100, 100, 0.4); }
-  33% { border-color: rgba(100, 255, 100, 0.4); }
-  66% { border-color: rgba(100, 100, 255, 0.4); }
-  100% { border-color: rgba(255, 100, 255, 0.4); }
+  0% {
+    border-color: rgba(255, 100, 100, 0.4);
+  }
+
+  33% {
+    border-color: rgba(100, 255, 100, 0.4);
+  }
+
+  66% {
+    border-color: rgba(100, 100, 255, 0.4);
+  }
+
+  100% {
+    border-color: rgba(255, 100, 255, 0.4);
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-3px);
+  }
+
+  75% {
+    transform: translateX(3px);
+  }
 }
 
 .board {
@@ -214,9 +235,20 @@
 }
 
 @keyframes ghostPulse {
-  0% { opacity: 0.25; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.08); }
-  100% { opacity: 0.55; transform: scale(1); }
+  0% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
 }
 
 .cell.clearing {
@@ -224,9 +256,19 @@
 }
 
 @keyframes clear {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); background: white; }
-  100% { transform: scale(0); opacity: 0; }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.2);
+    background: white;
+  }
+
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
 }
 
 /* Active piece (smooth movement) */
@@ -373,9 +415,20 @@
 }
 
 @keyframes judgePop {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-  100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -60%) scale(1);
+  }
 }
 
 /* Judgment display mode toggle */
@@ -1222,6 +1275,7 @@
 
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
+
   .boardWrap,
   .cell,
   .scoreDisplay,
@@ -1271,7 +1325,7 @@
 
 .floatingItemIcon {
   font-size: 16px;
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.5));
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
 }
 
 /* ===== Item Slots Panel — Modern Card Style ===== */
@@ -1368,8 +1422,15 @@
 }
 
 @keyframes oreBlockBob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-1.5px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1.5px);
+  }
 }
 
 /* Large count number — dominant visual */
@@ -1420,25 +1481,44 @@
 }
 
 /* ===== Rarity card accents ===== */
-.rarity_common .itemCardAccent { opacity: 0.3; }
-.rarity_common .itemCard { border-color: rgba(139, 139, 139, 0.1); }
+.rarity_common .itemCardAccent {
+  opacity: 0.3;
+}
 
-.rarity_uncommon .itemCardAccent { opacity: 0.6; }
-.rarity_uncommon .itemCard { border-color: rgba(79, 195, 247, 0.12); }
+.rarity_common .itemCard {
+  border-color: rgba(139, 139, 139, 0.1);
+}
 
-.rarity_rare .itemCardAccent { opacity: 0.8; }
+.rarity_uncommon .itemCardAccent {
+  opacity: 0.6;
+}
+
+.rarity_uncommon .itemCard {
+  border-color: rgba(79, 195, 247, 0.12);
+}
+
+.rarity_rare .itemCardAccent {
+  opacity: 0.8;
+}
+
 .rarity_rare .itemCard {
   border-color: rgba(255, 215, 0, 0.15);
   box-shadow: 0 0 8px rgba(255, 215, 0, 0.05);
 }
 
-.rarity_epic .itemCardAccent { opacity: 0.9; }
+.rarity_epic .itemCardAccent {
+  opacity: 0.9;
+}
+
 .rarity_epic .itemCard {
   border-color: rgba(156, 39, 176, 0.18);
   box-shadow: 0 0 10px rgba(156, 39, 176, 0.08);
 }
 
-.rarity_legendary .itemCardAccent { opacity: 1; }
+.rarity_legendary .itemCardAccent {
+  opacity: 1;
+}
+
 .rarity_legendary .itemCard {
   border-color: rgba(255, 255, 255, 0.2);
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
@@ -1446,327 +1526,19 @@
 }
 
 @keyframes legendaryCardPulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(255, 255, 255, 0.05); }
-  50% { box-shadow: 0 0 18px rgba(255, 255, 255, 0.15); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.05);
+  }
+
+  50% {
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.15);
+  }
 }
 
-/* ===== Weapon card slots ===== */
-.weaponCardSlots {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-}
 
-.weaponCardSlot {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(4px);
-}
 
-.weaponCardSlot:hover {
-  transform: scale(1.08);
-  border-color: rgba(255, 255, 255, 0.25);
-}
-
-/* ===== Craft / Forge button ===== */
-.craftButton {
-  width: 100%;
-  padding: 6px 8px;
-  font-size: 0.55rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.45);
-  cursor: pointer;
-  letter-spacing: 0.2em;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  text-transform: uppercase;
-}
-
-.craftButton:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.85);
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* ===== Crafting Overlay ===== */
-.craftingOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: craftFadeIn 0.3s ease;
-}
-
-@keyframes craftFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.craftingPanel {
-  max-width: 520px;
-  width: 90vw;
-  max-height: 85vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.craftingHeader {
-  text-align: center;
-  position: relative;
-}
-
-.craftingTitle {
-  font-size: 1.8rem;
-  font-weight: 200;
-  color: white;
-  letter-spacing: 0.25em;
-  margin: 0;
-}
-
-.craftingSubtitle {
-  display: block;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.35);
-  margin-top: 4px;
-  letter-spacing: 0.1em;
-}
-
-.craftingClose {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 6px 12px;
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  cursor: pointer;
-  letter-spacing: 0.1em;
-  transition: all 0.15s;
-}
-
-.craftingClose:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.craftingInventory {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.craftingInventoryTitle {
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.35);
-  letter-spacing: 0.15em;
-  margin-bottom: 8px;
-}
-
-.craftingInventoryGrid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.craftingMaterial {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.craftingMaterial:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.craftingMaterialIconWrap {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.craftingMaterialName {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.craftingMaterialCount {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 600;
-  margin-left: 2px;
-}
-
-.craftingEmpty {
-  color: rgba(255, 255, 255, 0.25);
-  font-size: 0.75rem;
-  padding: 8px;
-}
-
-.craftingRecipes {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.craftingRecipesTitle {
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.35);
-  letter-spacing: 0.15em;
-}
-
-.craftingRecipeList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.craftingRecipe {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  gap: 10px;
-}
-
-.craftingRecipe.craftable {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.craftingRecipe.crafted {
-  opacity: 0.5;
-}
-
-.recipeLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-}
-
-.recipeIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(4px);
-}
-
-.recipeInfo {
-  min-width: 0;
-}
-
-.recipeName {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
-  letter-spacing: 0.05em;
-}
-
-.recipeNameJa {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.recipeDesc {
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.25);
-  margin-top: 2px;
-}
-
-.recipeRight {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.recipeCost {
-  display: flex;
-  gap: 6px;
-}
-
-.recipeCostItem {
-  font-size: 0.6rem;
-  color: rgba(255, 100, 100, 0.7);
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.recipeCostItem.recipeCostEnough {
-  color: rgba(100, 255, 100, 0.7);
-}
-
-.craftedBadge {
-  font-size: 0.55rem;
-  color: rgba(100, 255, 100, 0.6);
-  letter-spacing: 0.1em;
-}
-
-.craftRecipeBtn {
-  padding: 5px 14px;
-  font-size: 0.6rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.25);
-  cursor: not-allowed;
-  letter-spacing: 0.1em;
-  transition: all 0.2s ease;
-}
-
-.craftRecipeBtn.craftRecipeBtnActive {
-  cursor: pointer;
-  color: #000;
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(255, 255, 255, 0.9);
-}
-
-.craftRecipeBtn.craftRecipeBtnActive:hover {
-  background: white;
-  transform: scale(1.02);
-}
 
 /* ===== Terrain Particles Canvas ===== */
 .terrainParticleCanvas {
@@ -1791,8 +1563,13 @@
 }
 
 @keyframes wtFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .wt_world_creation {
@@ -1805,10 +1582,22 @@
 }
 
 @keyframes wtCollapse {
-  0% { background: rgba(255, 255, 255, 0.15); }
-  10% { background: rgba(255, 255, 255, 0.3); }
-  30% { background: rgba(0, 0, 0, 0.5); }
-  100% { background: rgba(0, 0, 0, 0); opacity: 0; }
+  0% {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  10% {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  30% {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  100% {
+    background: rgba(0, 0, 0, 0);
+    opacity: 0;
+  }
 }
 
 .wt_transition {
@@ -1821,10 +1610,22 @@
 }
 
 @keyframes wtCheckpoint {
-  0% { background: rgba(80, 40, 0, 0.2); }
-  15% { background: rgba(120, 60, 0, 0.4); }
-  40% { background: rgba(0, 0, 0, 0.65); }
-  100% { background: rgba(0, 0, 0, 0); opacity: 0; }
+  0% {
+    background: rgba(80, 40, 0, 0.2);
+  }
+
+  15% {
+    background: rgba(120, 60, 0, 0.4);
+  }
+
+  40% {
+    background: rgba(0, 0, 0, 0.65);
+  }
+
+  100% {
+    background: rgba(0, 0, 0, 0);
+    opacity: 0;
+  }
 }
 
 /* Scan line effect */
@@ -1839,8 +1640,13 @@
 }
 
 @keyframes scanDown {
-  0% { top: -2px; }
-  100% { top: 100%; }
+  0% {
+    top: -2px;
+  }
+
+  100% {
+    top: 100%;
+  }
 }
 
 .wtContent {
@@ -1857,8 +1663,15 @@
 }
 
 @keyframes wtTextIn {
-  from { opacity: 0; transform: scale(0.8) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .wtSubText {
@@ -1886,8 +1699,13 @@
 }
 
 @keyframes wtLoadAnim {
-  0% { width: 0; }
-  100% { width: 100%; }
+  0% {
+    width: 0;
+  }
+
+  100% {
+    width: 100%;
+  }
 }
 
 /* Collapse flash */
@@ -1900,8 +1718,13 @@
 }
 
 @keyframes collapseFlash {
-  0% { opacity: 0.5; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 /* Corner decorations */
@@ -1914,10 +1737,33 @@
   border-width: 0;
 }
 
-.wtCornerTL { top: 20px; left: 20px; border-top-width: 1px; border-left-width: 1px; }
-.wtCornerTR { top: 20px; right: 20px; border-top-width: 1px; border-right-width: 1px; }
-.wtCornerBL { bottom: 20px; left: 20px; border-bottom-width: 1px; border-left-width: 1px; }
-.wtCornerBR { bottom: 20px; right: 20px; border-bottom-width: 1px; border-right-width: 1px; }
+.wtCornerTL {
+  top: 20px;
+  left: 20px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.wtCornerTR {
+  top: 20px;
+  right: 20px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.wtCornerBL {
+  bottom: 20px;
+  left: 20px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.wtCornerBR {
+  bottom: 20px;
+  right: 20px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
 
 /* ===== Phase Indicator ===== */
 .phaseIndicator {
@@ -1961,8 +1807,13 @@
 }
 
 @keyframes phasePulse {
-  from { opacity: 0.5; }
-  to { opacity: 1; }
+  from {
+    opacity: 0.5;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .phaseLabel {
@@ -2008,27 +1859,6 @@
     font-size: 0.3rem;
   }
 
-  .weaponCardSlot {
-    width: 26px;
-    height: 26px;
-  }
-
-  .craftingPanel {
-    width: 95vw;
-  }
-
-  .craftingRecipe {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .recipeRight {
-    width: 100%;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-
   .floatingItem {
     width: 26px;
     height: 26px;
@@ -2064,11 +1894,6 @@
     font-size: 1.3rem;
   }
 
-  .weaponCardSlot {
-    width: 36px;
-    height: 36px;
-  }
-
   .floatingItem {
     width: 36px;
     height: 36px;
@@ -2086,9 +1911,17 @@
 }
 
 @keyframes vignetteFlash {
-  0% { opacity: 0; }
-  15% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 .lowHealthVignette {
@@ -2101,8 +1934,13 @@
 }
 
 @keyframes lowHealthPulse {
-  0% { box-shadow: inset 0 0 40px 10px rgba(150, 0, 0, 0.15); }
-  100% { box-shadow: inset 0 0 70px 20px rgba(200, 0, 0, 0.3); }
+  0% {
+    box-shadow: inset 0 0 40px 10px rgba(150, 0, 0, 0.15);
+  }
+
+  100% {
+    box-shadow: inset 0 0 70px 20px rgba(200, 0, 0, 0.3);
+  }
 }
 
 /* ===== Vertical HP / MP Bars ===== */
@@ -2165,8 +2003,13 @@
 }
 
 @keyframes hpBarPulse {
-  0% { box-shadow: 0 0 4px rgba(229, 57, 53, 0.3); }
-  100% { box-shadow: 0 0 12px rgba(255, 50, 50, 0.6); }
+  0% {
+    box-shadow: 0 0 4px rgba(229, 57, 53, 0.3);
+  }
+
+  100% {
+    box-shadow: 0 0 12px rgba(255, 50, 50, 0.6);
+  }
 }
 
 .vBarMpFill {
@@ -2181,8 +2024,13 @@
 }
 
 @keyframes manaFeverPulse {
-  0% { box-shadow: 0 0 6px rgba(255, 180, 0, 0.3); }
-  100% { box-shadow: 0 0 14px rgba(255, 200, 0, 0.6); }
+  0% {
+    box-shadow: 0 0 6px rgba(255, 180, 0, 0.3);
+  }
+
+  100% {
+    box-shadow: 0 0 14px rgba(255, 200, 0, 0.6);
+  }
 }
 
 .vBarTicks {
@@ -2233,119 +2081,6 @@
   }
 }
 
-/* ===== Treasure HUD ===== */
-.treasureHUD {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px;
-  background: rgba(10, 10, 20, 0.65);
-  border: 1px solid rgba(255, 215, 0, 0.12);
-  border-radius: 10px;
-  backdrop-filter: blur(12px);
-  position: relative;
-  min-width: 80px;
-}
-
-.treasureRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.treasureGold {
-  border-bottom: 1px solid rgba(255, 215, 0, 0.08);
-  padding-bottom: 4px;
-}
-
-.treasureIcon {
-  font-size: 0.85rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.4));
-}
-
-.treasureValue {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #FFD700;
-  text-shadow: 0 0 6px rgba(255, 215, 0, 0.3);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-  transition: transform 0.15s ease, text-shadow 0.15s ease;
-}
-
-.treasureFlash {
-  transform: scale(1.25);
-  text-shadow: 0 0 14px rgba(255, 215, 0, 0.7);
-}
-
-.treasureValueSmall {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-}
-
-.treasurePickup {
-  position: absolute;
-  right: -4px;
-  top: -18px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  animation: treasureFloat 0.6s ease-out forwards;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-@keyframes treasureFloat {
-  0% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-}
-
-/* Floating treasure animation (reuses floatingItem pattern) */
-.floatingTreasure {
-  position: absolute;
-  pointer-events: none;
-  z-index: 50;
-  font-size: 1.2rem;
-  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.5));
-  animation: treasureBob 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes treasureBob {
-  from { transform: translateY(0); }
-  to { transform: translateY(-4px); }
-}
-
-/* Responsive: small screens */
-@media (max-width: 480px) {
-  .treasureHUD {
-    padding: 5px 7px;
-    gap: 4px;
-    min-width: 60px;
-    border-radius: 8px;
-  }
-
-  .treasureIcon {
-    font-size: 0.7rem;
-  }
-
-  .treasureValue {
-    font-size: 0.75rem;
-  }
-
-  .treasureValueSmall {
-    font-size: 0.6rem;
-  }
-}
-
 /* ===== Tutorial Guide (HSR-style) ===== */
 .tutorialOverlay {
   position: fixed;
@@ -2375,10 +2110,33 @@
   border-width: 0;
 }
 
-.tutCornerTL { top: 24px; left: 24px; border-top-width: 1px; border-left-width: 1px; }
-.tutCornerTR { top: 24px; right: 24px; border-top-width: 1px; border-right-width: 1px; }
-.tutCornerBL { bottom: 24px; left: 24px; border-bottom-width: 1px; border-left-width: 1px; }
-.tutCornerBR { bottom: 24px; right: 24px; border-bottom-width: 1px; border-right-width: 1px; }
+.tutCornerTL {
+  top: 24px;
+  left: 24px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.tutCornerTR {
+  top: 24px;
+  right: 24px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.tutCornerBL {
+  bottom: 24px;
+  left: 24px;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.tutCornerBR {
+  bottom: 24px;
+  right: 24px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
 
 /* Subtle horizontal scan line */
 .tutScanLine {
@@ -2392,8 +2150,13 @@
 }
 
 @keyframes tutScan {
-  0% { top: 0; }
-  100% { top: 100%; }
+  0% {
+    top: 0;
+  }
+
+  100% {
+    top: 100%;
+  }
 }
 
 /* Top label */
@@ -2707,10 +2470,13 @@
 }
 
 @keyframes keybindPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     border-color: rgba(0, 127, 255, 0.5);
     box-shadow: 0 2px 12px rgba(0, 127, 255, 0.2), 0 0 24px rgba(0, 127, 255, 0.08), inset 0 1px 0 rgba(0, 127, 255, 0.15);
   }
+
   50% {
     border-color: rgba(0, 127, 255, 0.8);
     box-shadow: 0 2px 16px rgba(0, 127, 255, 0.35), 0 0 32px rgba(0, 127, 255, 0.12), inset 0 1px 0 rgba(0, 127, 255, 0.2);
@@ -2753,6 +2519,8 @@
     min-width: 54px;
   }
 }
+
+
 
 /* ===== KeyBindSettings Component ===== */
 .keyBindPanel {
@@ -2877,10 +2645,13 @@
 }
 
 @keyframes keyBindPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     border-color: rgba(0, 127, 255, 0.5);
     box-shadow: 0 2px 12px rgba(0, 127, 255, 0.2), 0 0 24px rgba(0, 127, 255, 0.08);
   }
+
   50% {
     border-color: rgba(0, 127, 255, 0.8);
     box-shadow: 0 2px 16px rgba(0, 127, 255, 0.35), 0 0 32px rgba(0, 127, 255, 0.12);
@@ -2938,9 +2709,17 @@
     padding: 20px 16px 16px;
   }
 
-  .keyBindTitle { font-size: 0.85rem; }
-  .keyBindRow { padding: 10px 12px; }
-  .keyBindLabel { font-size: 0.7rem; }
+  .keyBindTitle {
+    font-size: 0.85rem;
+  }
+
+  .keyBindRow {
+    padding: 10px 12px;
+  }
+
+  .keyBindLabel {
+    font-size: 0.7rem;
+  }
 
   .keyBindKey {
     padding: 6px 14px;
@@ -3123,9 +2902,17 @@
     padding: 20px 16px 16px;
   }
 
-  .featureTitle { font-size: 0.85rem; }
-  .featureRow { padding: 8px 12px; }
-  .featureLabel { font-size: 0.7rem; }
+  .featureTitle {
+    font-size: 0.85rem;
+  }
+
+  .featureRow {
+    padding: 8px 12px;
+  }
+
+  .featureLabel {
+    font-size: 0.7rem;
+  }
 }
 
 /* ===================================================================
@@ -3145,8 +2932,13 @@
 }
 
 @keyframes invFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .invPanel {
@@ -4027,40 +3819,384 @@
 
 @media screen and (max-width: 480px) {
   .invPanel {
-    width: 95vw;
-  }
-
-  .invTitle {
-    font-size: 1rem;
-  }
-
-  .invTabs {
-    margin-left: 8px;
-  }
-
-  .invTab {
-    padding: 4px 8px;
-    font-size: 0.55rem;
+    width: 100vw;
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
   }
 
   .invGrid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
   }
 
   .shopPanel {
-    width: 95vw;
+    width: 100vw;
+    max-width: 100%;
+    max-height: 100vh;
+  }
+}
+
+/* ===== Card Select Overlay ===== */
+.cardSelectOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: cardFadeIn 0.4s ease;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
   }
 
-  .shopTitle {
-    font-size: 1rem;
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cardSelectPanel {
+  max-width: 900px;
+
+  width: 95vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+}
+
+.cardSelectHeader {
+  text-align: center;
+}
+
+.cardSelectTitle {
+  font-size: 2.2rem;
+  font-weight: 200;
+  color: white;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.cardSelectSubtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.15em;
+  margin-top: 4px;
+}
+
+.cardSelectStage {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.25);
+  margin-top: 8px;
+}
+
+.cardSelectMaterials {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cardSelectMaterialChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.cardSelectCards {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cardSelectCard {
+  width: 240px;
+  padding: 20px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cardSelectCard:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.cardSelectCardSelected {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+}
+
+.cardSelectCardDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Rarity-specific card border glow */
+.cardRarity_common {
+  border-color: rgba(139, 139, 139, 0.3);
+}
+
+.cardRarity_common:hover {
+  border-color: rgba(139, 139, 139, 0.6);
+  box-shadow: 0 0 20px rgba(139, 139, 139, 0.15);
+}
+
+.cardRarity_uncommon {
+  border-color: rgba(79, 195, 247, 0.3);
+}
+
+.cardRarity_uncommon:hover {
+  border-color: rgba(79, 195, 247, 0.6);
+  box-shadow: 0 0 20px rgba(79, 195, 247, 0.15);
+}
+
+.cardRarity_rare {
+  border-color: rgba(255, 215, 0, 0.3);
+}
+
+.cardRarity_rare:hover {
+  border-color: rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+.cardRarity_epic {
+  border-color: rgba(156, 39, 176, 0.4);
+}
+
+.cardRarity_epic:hover {
+  border-color: rgba(156, 39, 176, 0.7);
+  box-shadow: 0 0 20px rgba(156, 39, 176, 0.2);
+}
+
+.cardRarity_legendary {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.cardRarity_legendary:hover {
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
+}
+
+.cardNumber {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: 600;
+}
+
+.cardIcon {
+  font-size: 2.5rem;
+  margin: 8px 0;
+}
+
+.cardName {
+  font-size: 1rem;
+  font-weight: 400;
+  color: white;
+  letter-spacing: 0.08em;
+}
+
+.cardNameJa {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.cardRarity {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  font-weight: 500;
+}
+
+.cardDesc {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.cardDescJa {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  text-align: center;
+}
+
+.cardCost {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.cardCostChip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: rgba(255, 100, 100, 0.8);
+  padding: 2px 6px;
+  background: rgba(255, 100, 100, 0.08);
+  border-radius: 4px;
+}
+
+.cardCostEnough {
+  color: rgba(100, 255, 100, 0.8);
+  background: rgba(100, 255, 100, 0.08);
+}
+
+.cardStackBadge {
+  font-size: 0.6rem;
+  color: #4FC3F7;
+  background: rgba(79, 195, 247, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(79, 195, 247, 0.2);
+  margin-top: 4px;
+}
+
+.cardSelectEquipped {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cardSelectEquippedLabel {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+}
+
+.cardSelectEquippedList {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cardSelectEquippedChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.cardSelectEquippedStack {
+  color: #4FC3F7;
+  font-weight: 600;
+}
+
+.cardSelectSkip {
+  margin-top: 12px;
+  padding: 8px 24px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 0.15em;
+  transition: all 0.2s;
+}
+
+.cardSelectSkip:hover {
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Equipped cards in sidebar */
+.equippedCardSlots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.equippedCardSlot {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  position: relative;
+}
+
+.equippedCardStack {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 0.5rem;
+  color: #4FC3F7;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 0 2px;
+  border-radius: 2px;
+  line-height: 1;
+}
+
+.effectsSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.effectBadge {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+}
+
+/* Mobile responsive for card select */
+@media (max-width: 768px) {
+  .cardSelectCards {
+    flex-direction: column;
+    align-items: center;
   }
 
-  .shopItemRow {
-    padding: 8px 10px;
+  .cardSelectCard {
+    width: 90vw;
+    max-width: 300px;
   }
 
-  .shopItemRowName {
-    font-size: 0.65rem;
+  .cardSelectTitle {
+    font-size: 1.5rem;
   }
 }

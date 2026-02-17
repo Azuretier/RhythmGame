@@ -152,18 +152,6 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'loyalty_polls_10', category: 'loyalty', icon: 'ballot', threshold: 10, statKey: 'pollsVoted' },
   { id: 'loyalty_polls_25', category: 'loyalty', icon: 'ballot', threshold: 25, statKey: 'pollsVoted' },
   { id: 'loyalty_polls_50', category: 'loyalty', icon: 'ballot', threshold: 50, statKey: 'pollsVoted' },
-
-  // === Treasure (Gold & Treasures) ===
-  { id: 'gold_100', category: 'treasure', icon: 'coin', threshold: 100, statKey: 'totalGoldEarned' },
-  { id: 'gold_1000', category: 'treasure', icon: 'coin', threshold: 1000, statKey: 'totalGoldEarned' },
-  { id: 'gold_5000', category: 'treasure', icon: 'coin', threshold: 5000, statKey: 'totalGoldEarned' },
-  { id: 'gold_25000', category: 'treasure', icon: 'coin', threshold: 25000, statKey: 'totalGoldEarned' },
-  { id: 'gold_100000', category: 'treasure', icon: 'coin', threshold: 100000, statKey: 'totalGoldEarned' },
-  { id: 'treasure_10', category: 'treasure', icon: 'chest', threshold: 10, statKey: 'totalTreasuresCollected' },
-  { id: 'treasure_50', category: 'treasure', icon: 'chest', threshold: 50, statKey: 'totalTreasuresCollected' },
-  { id: 'treasure_200', category: 'treasure', icon: 'chest', threshold: 200, statKey: 'totalTreasuresCollected' },
-  { id: 'treasure_500', category: 'treasure', icon: 'chest', threshold: 500, statKey: 'totalTreasuresCollected' },
-  { id: 'treasure_1000', category: 'treasure', icon: 'chest', threshold: 1000, statKey: 'totalTreasuresCollected' },
 ];
 
 export const BATTLE_ARENA_REQUIRED_ADVANCEMENTS = 3;

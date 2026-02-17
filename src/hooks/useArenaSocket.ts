@@ -8,10 +8,6 @@ import type {
   ArenaRanking,
   ArenaSessionStats,
   ArenaBoardPayload,
-  ArenaFeedEvent,
-  PowerUpType,
-  EmoteType,
-  TargetMode,
 } from '@/types/arena';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -95,22 +91,6 @@ export function useArenaSocket() {
   // Opponent boards (relayed)
   const opponentBoardsRef = useRef<Map<string, ArenaBoardPayload>>(new Map());
   const [opponentBoards, setOpponentBoards] = useState<Map<string, ArenaBoardPayload>>(new Map());
-
-  // Power-up state
-  const [heldPowerUp, setHeldPowerUp] = useState<PowerUpType | null>(null);
-  const [activeEffects, setActiveEffects] = useState<{ type: PowerUpType; expiresAt: number }[]>([]);
-  const [lastPowerUpUsed, setLastPowerUpUsed] = useState<{ playerId: string; playerName: string; powerUp: PowerUpType; targetName?: string } | null>(null);
-
-  // Event feed
-  const [feedEvents, setFeedEvents] = useState<ArenaFeedEvent[]>([]);
-
-  // Emotes
-  const [lastEmote, setLastEmote] = useState<{ playerId: string; playerName: string; emote: EmoteType } | null>(null);
-  const [emoteMap, setEmoteMap] = useState<Map<string, { emote: EmoteType; expiresAt: number }>>(new Map());
-
-  // Target state
-  const [targetMode, setTargetModeState] = useState<TargetMode>('random');
-  const [manualTargetId, setManualTargetIdState] = useState<string | null>(null);
 
   // ===== WebSocket Connection =====
   const connectWebSocketRef = useRef<() => void>(() => {});
@@ -283,54 +263,6 @@ export function useArenaSocket() {
         setLastTempoCollapse(msg as TempoCollapseEvent);
         break;
       }
-
-      case 'arena_powerup_spawned': {
-        setHeldPowerUp(msg.powerUp as PowerUpType);
-        break;
-      }
-
-      case 'arena_powerup_used': {
-        setLastPowerUpUsed({
-          playerId: msg.playerId,
-          playerName: msg.playerName,
-          powerUp: msg.powerUp as PowerUpType,
-          targetName: msg.targetName,
-        });
-        // If it was us who used it, clear held power-up
-        if (msg.playerId === playerIdRef.current) {
-          setHeldPowerUp(null);
-          // Apply self-effects
-          if (msg.powerUp === 'shield' || msg.powerUp === 'score_boost') {
-            setActiveEffects(prev => [...prev, { type: msg.powerUp as PowerUpType, expiresAt: Date.now() + (msg.powerUp === 'shield' ? 5000 : 6000) }]);
-          }
-        }
-        // If we are the target of freeze
-        if (msg.powerUp === 'freeze_target' && msg.targetId === playerIdRef.current) {
-          setActiveEffects(prev => [...prev, { type: 'freeze_target' as PowerUpType, expiresAt: Date.now() + 3000 }]);
-        }
-        break;
-      }
-
-      case 'arena_emote_sent': {
-        const emoteData = { playerId: msg.playerId, playerName: msg.playerName, emote: msg.emote as EmoteType };
-        setLastEmote(emoteData);
-        setEmoteMap(prev => {
-          const next = new Map(prev);
-          next.set(msg.playerId, { emote: msg.emote as EmoteType, expiresAt: Date.now() + 3000 });
-          return next;
-        });
-        break;
-      }
-
-      case 'arena_event_feed': {
-        const feedEvent = msg.event as ArenaFeedEvent;
-        setFeedEvents(prev => {
-          const next = [...prev, feedEvent];
-          // Keep only last 8 events
-          return next.length > 8 ? next.slice(-8) : next;
-        });
-        break;
-      }
     }
   }, [send]);
 
@@ -414,22 +346,6 @@ export function useArenaSocket() {
     };
   }, []);
 
-  // Clean up expired active effects periodically
-  useEffect(() => {
-    const effectCleanupTimer = setInterval(() => {
-      setActiveEffects(prev => {
-        const now = Date.now();
-        const filtered = prev.filter(e => e.expiresAt > now);
-        // Only update state if something was actually removed
-        return filtered.length === prev.length ? prev : filtered;
-      });
-    }, 500);
-
-    return () => {
-      clearInterval(effectCleanupTimer);
-    };
-  }, []);
-
   // ===== Actions =====
 
   const queueForArena = useCallback((playerName: string) => {
@@ -466,26 +382,6 @@ export function useArenaSocket() {
     send({ type: 'arena_relay', payload });
   }, [send]);
 
-  const usePowerUp = useCallback((targetId?: string) => {
-    send({ type: 'arena_use_powerup', targetId });
-  }, [send]);
-
-  const sendEmote = useCallback((emote: EmoteType) => {
-    send({ type: 'arena_emote', emote });
-    // Also show our own emote locally
-    setEmoteMap(prev => {
-      const next = new Map(prev);
-      next.set(playerIdRef.current, { emote, expiresAt: Date.now() + 3000 });
-      return next;
-    });
-  }, [send]);
-
-  const setTargetMode = useCallback((mode: TargetMode, targetId?: string) => {
-    setTargetModeState(mode);
-    setManualTargetIdState(targetId || null);
-    send({ type: 'arena_set_target', targetMode: mode, targetId });
-  }, [send]);
-
   const leaveArena = useCallback(() => {
     send({ type: 'arena_leave' });
     reconnectTokenRef.current = '';
@@ -495,12 +391,6 @@ export function useArenaSocket() {
     setError(null);
     opponentBoardsRef.current.clear();
     setOpponentBoards(new Map());
-    setHeldPowerUp(null);
-    setActiveEffects([]);
-    setFeedEvents([]);
-    setEmoteMap(new Map());
-    setTargetModeState('random');
-    setManualTargetIdState(null);
   }, [send]);
 
   return {
@@ -548,24 +438,5 @@ export function useArenaSocket() {
     sendAction,
     sendBoardRelay,
     leaveArena,
-
-    // Power-ups
-    heldPowerUp,
-    activeEffects,
-    lastPowerUpUsed,
-    usePowerUp,
-
-    // Event feed
-    feedEvents,
-
-    // Emotes
-    lastEmote,
-    emoteMap,
-    sendEmote,
-
-    // Targeting
-    targetMode,
-    manualTargetId,
-    setTargetMode,
   };
 }
