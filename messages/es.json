@@ -1,883 +1,973 @@
 {
-    "meta": {
-        "title": "RHYTHMIA | Juego de Puzzles de Ritmo x Tetris - Azuretier",
-        "description": "¡Experimenta la fusión definitiva de música y puzzles! Juega RHYTHMIA, el juego gratuito de Tetris rítmico en el navegador. Sigue el ritmo, elimina bloques y sube en la clasificación.",
-        "ogTitle": "RHYTHMIA - La Experiencia de Puzzle Rítmico de Nueva Generación",
-        "ogDescription": "¿Puedes seguir el ritmo? Entra en RHYTHMIA, una mezcla de alta energía de acción rítmica y puzzles clásicos de bloques. Juega gratis en Azuretier.",
-        "ogType": "website",
-        "keywords": "RHYTHMIA, Tetris, Juego de Ritmo, Puzzle Musical, Juego Online Gratis, Juego de Navegador, Puzzle de Bloques, Arcade, Azuretier"
+  "meta": {
+    "title": "RHYTHMIA | Juego de Puzzles de Ritmo x Tetris - Azuretier",
+    "description": "¡Experimenta la fusión definitiva de música y puzzles! Juega RHYTHMIA, el juego gratuito de Tetris rítmico en el navegador. Sigue el ritmo, elimina bloques y sube en la clasificación.",
+    "ogTitle": "RHYTHMIA - La Experiencia de Puzzle Rítmico de Nueva Generación",
+    "ogDescription": "¿Puedes seguir el ritmo? Entra en RHYTHMIA, una mezcla de alta energía de acción rítmica y puzzles clásicos de bloques. Juega gratis en Azuretier.",
+    "ogType": "website",
+    "keywords": "RHYTHMIA, Tetris, Juego de Ritmo, Puzzle Musical, Juego Online Gratis, Juego de Navegador, Puzzle de Bloques, Arcade, Azuretier"
+  },
+  "lobby": {
+    "loading": "CARGANDO",
+    "selectServer": "SELECCIONAR MODO",
+    "chooseMode": "Elige tu modo de juego",
+    "tagline": "Un juego de puzzles con ritmo. Coloca bloques al compás, batalla con amigos y desbloquea logros.",
+    "play": "JUGAR",
+    "battle": "BATALLA",
+    "back": "← Volver",
+    "online": "En línea",
+    "onlineCount": "{count} en línea",
+    "loyalty": "Lealtad"
+  },
+  "vanilla": {
+    "badge": "SOLO",
+    "title": "RHYTHMIA",
+    "subtitle": "Puzzle Rítmico Clásico",
+    "description": "Coloca bloques al ritmo. Elimina líneas, crea combos y persigue puntuaciones altas en el modo solo original.",
+    "gameTitle": "RHYTHMIA"
+  },
+  "multiplayer": {
+    "badge": "1v1",
+    "title": "BATALLA 1v1",
+    "gameTitle": "BATALLA 1v1",
+    "subtitle": "Multijugador Clasificatorio",
+    "description": "Batallas 1v1 en tiempo real. Envía líneas basura a tu oponente. El último en pie gana.",
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Clasificatorio"
     },
-    "lobby": {
-        "loading": "CARGANDO",
-        "selectServer": "SELECCIONAR MODO",
-        "chooseMode": "Elige tu modo de juego",
-        "tagline": "Un juego de puzzles con ritmo. Coloca bloques al compás, batalla con amigos y desbloquea logros.",
-        "play": "JUGAR",
-        "battle": "BATALLA",
-        "back": "← Volver",
-        "online": "En línea",
-        "onlineCount": "{count} en línea",
-        "loyalty": "Lealtad"
-    },
-    "vanilla": {
-        "badge": "SOLO",
-        "title": "RHYTHMIA",
-        "subtitle": "Puzzle Rítmico Clásico",
-        "description": "Coloca bloques al ritmo. Elimina líneas, crea combos y persigue puntuaciones altas en el modo solo original.",
-        "gameTitle": "RHYTHMIA"
-    },
-    "multiplayer": {
-        "badge": "1v1",
-        "title": "BATALLA 1v1",
-        "gameTitle": "BATALLA 1v1",
-        "subtitle": "Multijugador Clasificatorio",
-        "description": "Batallas 1v1 en tiempo real. Envía líneas basura a tu oponente. El último en pie gana.",
-        "features": {
-            "vs": "1v1",
-            "websocket": "WebSocket",
-            "ranked": "Clasificatorio"
-        },
-        "stats": {
-            "mode": "Modo",
-            "battle": "Batalla",
-            "status": "Estado"
-        }
-    },
-    "advancements": {
-        "title": "LOGROS",
-        "button": "{count}/{total} Logros",
-        "unlocked": "LOGRO DESBLOQUEADO",
-        "locked": "BLOQUEADO",
-        "lockMessage": "{current}/{required} logros para desbloquear",
-        "lines_10": {
-            "name": "Principiante de Líneas",
-            "desc": "Elimina 10 líneas en total"
-        },
-        "lines_50": {
-            "name": "Aprendiz de Líneas",
-            "desc": "Elimina 50 líneas en total"
-        },
-        "lines_200": {
-            "name": "Experto en Líneas",
-            "desc": "Elimina 200 líneas en total"
-        },
-        "lines_500": {
-            "name": "Maestro de Líneas",
-            "desc": "Elimina 500 líneas en total"
-        },
-        "lines_1000": {
-            "name": "Leyenda de Líneas",
-            "desc": "Elimina 1.000 líneas en total"
-        },
-        "best_lines_10": {
-            "name": "Calentamiento",
-            "desc": "Elimina 10 líneas en una partida"
-        },
-        "best_lines_25": {
-            "name": "Empezando",
-            "desc": "Elimina 25 líneas en una partida"
-        },
-        "best_lines_50": {
-            "name": "Máquina de Líneas",
-            "desc": "Elimina 50 líneas en una partida"
-        },
-        "best_lines_100": {
-            "name": "Imparable",
-            "desc": "Elimina 100 líneas en una partida"
-        },
-        "tspin_1": {
-            "name": "Primer Giro",
-            "desc": "Realiza tu primer T-Spin"
-        },
-        "tspin_10": {
-            "name": "Doctor del Giro",
-            "desc": "Realiza 10 T-Spins"
-        },
-        "tspin_50": {
-            "name": "Experto en T-Spin",
-            "desc": "Realiza 50 T-Spins"
-        },
-        "tspin_200": {
-            "name": "Leyenda del T-Spin",
-            "desc": "Realiza 200 T-Spins"
-        },
-        "score_10k": {
-            "name": "Novato de Puntos",
-            "desc": "Acumula 10.000 puntos en total"
-        },
-        "score_100k": {
-            "name": "Cazador de Puntos",
-            "desc": "Acumula 100.000 puntos en total"
-        },
-        "score_1m": {
-            "name": "Maestro de Puntos",
-            "desc": "Acumula 1.000.000 puntos en total"
-        },
-        "score_10m": {
-            "name": "Leyenda de Puntos",
-            "desc": "Acumula 10.000.000 puntos en total"
-        },
-        "best_score_5k": {
-            "name": "Buena Partida",
-            "desc": "Consigue 5.000 puntos en una partida"
-        },
-        "best_score_25k": {
-            "name": "Gran Partida",
-            "desc": "Consigue 25.000 puntos en una partida"
-        },
-        "best_score_100k": {
-            "name": "Partida Increíble",
-            "desc": "Consigue 100.000 puntos en una partida"
-        },
-        "best_score_500k": {
-            "name": "Partida Legendaria",
-            "desc": "Consigue 500.000 puntos en una partida"
-        },
-        "combo_3": {
-            "name": "Inicio de Combo",
-            "desc": "Alcanza un combo de 3"
-        },
-        "combo_10": {
-            "name": "Rey del Combo",
-            "desc": "Alcanza un combo de 10"
-        },
-        "combo_20": {
-            "name": "Dios del Combo",
-            "desc": "Alcanza un combo de 20"
-        },
-        "combo_30": {
-            "name": "Señor del Combo",
-            "desc": "Alcanza un combo de 30"
-        },
-        "combo_50": {
-            "name": "Combo Inmortal",
-            "desc": "Alcanza un combo de 50"
-        },
-        "combo_75": {
-            "name": "Combo Trascendente",
-            "desc": "Alcanza un combo de 75"
-        },
-        "combo_100": {
-            "name": "Combo Deidad",
-            "desc": "Alcanza un combo de 100"
-        },
-        "combo_150": {
-            "name": "Combo Celestial",
-            "desc": "Alcanza un combo de 150"
-        },
-        "combo_200": {
-            "name": "Combo Eterno",
-            "desc": "Alcanza un combo de 200"
-        },
-        "total_combo_50": {
-            "name": "Colector de Combos",
-            "desc": "Acumula 50 combos en total"
-        },
-        "total_combo_100": {
-            "name": "Acumulador de Combos",
-            "desc": "Acumula 100 combos en total"
-        },
-        "total_combo_250": {
-            "name": "Veterano de Combos",
-            "desc": "Acumula 250 combos en total"
-        },
-        "total_combo_500": {
-            "name": "Maestro de Combos",
-            "desc": "Acumula 500 combos en total"
-        },
-        "total_combo_1000": {
-            "name": "Leyenda de Combos",
-            "desc": "Acumula 1.000 combos en total"
-        },
-        "total_combo_2500": {
-            "name": "Combo Mítico",
-            "desc": "Acumula 2.500 combos en total"
-        },
-        "total_combo_5000": {
-            "name": "Combo Infinito",
-            "desc": "Acumula 5.000 combos en total"
-        },
-        "games_1": {
-            "name": "Primeros Pasos",
-            "desc": "Juega tu primera partida"
-        },
-        "games_10": {
-            "name": "Poniéndose Serio",
-            "desc": "Juega 10 partidas"
-        },
-        "games_50": {
-            "name": "Jugador Dedicado",
-            "desc": "Juega 50 partidas"
-        },
-        "games_100": {
-            "name": "Veterano",
-            "desc": "Juega 100 partidas"
-        },
-        "worlds_5": {
-            "name": "Viajero del Mundo",
-            "desc": "Completa 5 mundos"
-        },
-        "tetris_1": {
-            "name": "¡Tetris!",
-            "desc": "Elimina 4 líneas a la vez"
-        },
-        "tetris_10": {
-            "name": "Adicto al Tetris",
-            "desc": "Elimina 4 líneas a la vez 10 veces"
-        },
-        "tetris_50": {
-            "name": "Maestro del Tetris",
-            "desc": "Elimina 4 líneas a la vez 50 veces"
-        },
-        "perfect_beats_10": {
-            "name": "Novato del Ritmo",
-            "desc": "Consigue 10 ritmos perfectos en una partida"
-        },
-        "perfect_beats_50": {
-            "name": "Maestro del Ritmo",
-            "desc": "Consigue 50 ritmos perfectos en una partida"
-        },
-        "hard_drops_100": {
-            "name": "Caída Rápida",
-            "desc": "Realiza 100 caídas duras"
-        },
-        "hard_drops_1000": {
-            "name": "Velocidad Terminal",
-            "desc": "Realiza 1.000 caídas duras"
-        },
-        "pieces_100": {
-            "name": "Constructor de Bloques",
-            "desc": "Coloca 100 piezas"
-        },
-        "pieces_1000": {
-            "name": "Arquitecto de Bloques",
-            "desc": "Coloca 1.000 piezas"
-        },
-        "pieces_10000": {
-            "name": "Leyenda de Bloques",
-            "desc": "Coloca 10.000 piezas"
-        },
-        "mp_win_1": {
-            "name": "Primera Victoria",
-            "desc": "Gana tu primera partida multijugador"
-        },
-        "mp_win_10": {
-            "name": "Luchador de Arena",
-            "desc": "Gana 10 partidas multijugador"
-        },
-        "mp_win_50": {
-            "name": "Campeón de Arena",
-            "desc": "Gana 50 partidas multijugador"
-        },
-        "mp_streak_3": {
-            "name": "Racha Caliente",
-            "desc": "Gana 3 partidas seguidas"
-        },
-        "mp_streak_5": {
-            "name": "Dominación",
-            "desc": "Gana 5 partidas seguidas"
-        },
-        "mp_streak_10": {
-            "name": "Irrompible",
-            "desc": "Gana 10 partidas seguidas"
-        },
-        "mp_games_10": {
-            "name": "Habitual de Arena",
-            "desc": "Juega 10 partidas multijugador"
-        },
-        "mp_games_50": {
-            "name": "Veterano de Arena",
-            "desc": "Juega 50 partidas multijugador"
-        },
-        "loyalty_streak_3": {
-            "name": "Racha de 3 Días",
-            "desc": "Visita 3 días seguidos"
-        },
-        "loyalty_streak_7": {
-            "name": "Ritmo Semanal",
-            "desc": "Visita 7 días seguidos"
-        },
-        "loyalty_streak_14": {
-            "name": "Ritmo Quincenal",
-            "desc": "Visita 14 días seguidos"
-        },
-        "loyalty_streak_30": {
-            "name": "Pulso Mensual",
-            "desc": "Visita 30 días seguidos"
-        },
-        "loyalty_visits_5": {
-            "name": "Habitual",
-            "desc": "Visita 5 veces"
-        },
-        "loyalty_visits_25": {
-            "name": "Cara Familiar",
-            "desc": "Visita 25 veces"
-        },
-        "loyalty_visits_100": {
-            "name": "Parte de la Familia",
-            "desc": "Visita 100 veces"
-        },
-        "loyalty_games_10": {
-            "name": "Jugador",
-            "desc": "Juega 10 partidas"
-        },
-        "loyalty_games_50": {
-            "name": "Entusiasta",
-            "desc": "Juega 50 partidas"
-        },
-        "loyalty_games_200": {
-            "name": "Devoto",
-            "desc": "Juega 200 partidas"
-        },
-        "loyalty_polls_1": {
-            "name": "Primer Voto",
-            "desc": "Vota en tu primera encuesta"
-        },
-        "loyalty_polls_5": {
-            "name": "Votante Activo",
-            "desc": "Vota en 5 encuestas"
-        },
-        "loyalty_polls_10": {
-            "name": "Voz de la Comunidad",
-            "desc": "Vota en 10 encuestas"
-        }
-    },
-    "arena": {
-        "badge": "9J",
-        "title": "ARENA RÍTMICA",
-        "subtitle": "Battle Royale de 9 Jugadores",
-        "description": "9 jugadores, 1 ritmo. Caos compartido, tempo sincronizado, trucos aleatorios. Mantén el ritmo o el tempo colapsa.",
-        "features": {
-            "players": "9 Jugadores",
-            "chaos": "Caos",
-            "sync": "Sincronización"
-        },
-        "stats": {
-            "players": "Jugadores",
-            "bpm": "BPM",
-            "status": "Estado"
-        },
-        "maxPlayers": "{count} Jugadores Máx",
-        "quickMatch": "PARTIDA RÁPIDA",
-        "createArena": "Crear Arena",
-        "joinByCode": "Unirse por Código",
-        "enterName": "Introduce Tu Nombre",
-        "namePlaceholder": "Nombre del Jugador",
-        "enterCode": "Código de Arena",
-        "join": "Unirse",
-        "next": "Siguiente",
-        "back": "Volver",
-        "online": "En línea",
-        "connecting": "Conectando...",
-        "connectionError": "Error de Conexión",
-        "offline": "Desconectado",
-        "searching": "Buscando Jugadores",
-        "queueInfo": "Esperando suficientes jugadores para formar una arena...",
-        "playersInQueue": "{count} en cola",
-        "cancel": "Cancelar",
-        "arenaCode": "Código de Arena",
-        "copy": "Copiar",
-        "reconnecting": "Reconectando...",
-        "ready": "LISTO",
-        "notReady": "No Listo",
-        "waiting": "Esperando...",
-        "cancelReady": "Cancelar Listo",
-        "readyUp": "¡Listo!",
-        "startArena": "Iniciar Arena",
-        "waitingForPlayers": "Esperando jugadores...",
-        "leave": "Salir",
-        "getReady": "PREPÁRATE",
-        "chaos": "CAOS",
-        "sync": "Sincronización",
-        "eliminated": "eliminado",
-        "resultLastStanding": "ÚLTIMO EN PIE",
-        "resultTempoCollapse": "TEMPO COLAPSADO",
-        "resultChaosOverload": "SOBRECARGA DE CAOS",
-        "victory": "VICTORIA",
-        "wins": "VICTORIAS",
-        "noWinner": "SIN GANADOR",
-        "duration": "DURACIÓN",
-        "peakBpm": "BPM MÁXIMO",
-        "gimmicks": "TRUCOS",
-        "peakChaos": "CAOS MÁXIMO",
-        "tempoCollapses": "COLAPSOS",
-        "lowestBpm": "BPM MÍNIMO",
-        "backToLobby": "Volver al Lobby"
-    },
-    "footer": {
-        "copyright": "azuretier.net © 2025"
-    },
-    "localeSwitcher": {
-        "label": "Idioma",
-        "en": "English",
-        "ja": "日本語",
-        "th": "ไทย",
-        "es": "Español",
-        "fr": "Français"
-    },
-    "loyalty": {
-        "meta": {
-            "title": "Programa de Lealtad | RHYTHMIA - Azuretier",
-            "description": "Rastrea tu nivel de lealtad, gana insignias, mantén rachas y participa en la comunidad RHYTHMIA."
-        },
-        "backToLobby": "← Volver",
-        "currentTier": "NIVEL DE LEALTAD ACTUAL",
-        "xpToNext": "{xp} XP para el siguiente nivel",
-        "maxTier": "NIVEL MÁXIMO ALCANZADO",
-        "streakDays": "DÍAS DE RACHA",
-        "viewAll": "VER TODOS LOS LOGROS Y DETALLES",
-        "tiers": {
-            "new_beat": "Nuevo Ritmo",
-            "syncopated": "Sincopado",
-            "in_rhythm": "En Ritmo",
-            "maestro": "Maestro"
-        },
-        "stats": {
-            "visits": "VISITAS",
-            "streak": "RACHA",
-            "games": "PARTIDAS",
-            "badges": "LOGROS"
-        },
-        "sections": {
-            "tierRoadmap": "HOJA DE RUTA DE NIVELES",
-            "streak": "RACHA DE INICIO DE SESIÓN",
-            "badges": "LOGROS RECIENTES",
-            "community": "VOZ DE LA COMUNIDAD",
-            "howItWorks": "CÓMO FUNCIONA"
-        },
-        "badges": {
-            "streak_3": {
-                "icon": "\uD83D\uDD25",
-                "name": "Racha de 3 Días",
-                "desc": "Visita 3 días seguidos"
-            },
-            "streak_7": {
-                "icon": "\uD83D\uDD25",
-                "name": "Ritmo Semanal",
-                "desc": "Visita 7 días seguidos"
-            },
-            "streak_14": {
-                "icon": "\uD83D\uDD25",
-                "name": "Ritmo Quincenal",
-                "desc": "Visita 14 días seguidos"
-            },
-            "streak_30": {
-                "icon": "\uD83D\uDD25",
-                "name": "Pulso Mensual",
-                "desc": "Visita 30 días seguidos"
-            },
-            "visits_5": {
-                "icon": "\uD83D\uDC63",
-                "name": "Habitual",
-                "desc": "Visita 5 veces"
-            },
-            "visits_25": {
-                "icon": "\uD83D\uDC63",
-                "name": "Cara Familiar",
-                "desc": "Visita 25 veces"
-            },
-            "visits_100": {
-                "icon": "\uD83D\uDC63",
-                "name": "De la Familia",
-                "desc": "Visita 100 veces"
-            },
-            "games_10": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Jugador",
-                "desc": "Juega 10 partidas"
-            },
-            "games_50": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Entusiasta",
-                "desc": "Juega 50 partidas"
-            },
-            "games_200": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Devoto",
-                "desc": "Juega 200 partidas"
-            },
-            "polls_1": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Primer Voto",
-                "desc": "Vota en tu primera encuesta"
-            },
-            "polls_5": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Votante Activo",
-                "desc": "Vota en 5 encuestas"
-            },
-            "polls_10": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Voz de la Comunidad",
-                "desc": "Vota en 10 encuestas"
-            }
-        },
-        "poll": {
-            "question": "¿Cuál debería ser el próximo modo de juego de RHYTHMIA?",
-            "options": {
-                "0": "Modo Cooperativo (batallas en equipo 2v2)",
-                "1": "Modo Supervivencia (oleadas infinitas)",
-                "2": "Modo Torneo (eliminación por llaves)",
-                "3": "Modo Zen (relajado, sin presión)"
-            },
-            "vote": "VOTAR",
-            "voted": "¡Gracias por votar!",
-            "loading": "Cargando encuesta...",
-            "submitting": "Enviando...",
-            "noPoll": "No hay encuestas activas en este momento.",
-            "totalVotes": "{count} votos"
-        },
-        "strategy": {
-            "0": {
-                "step": "PASO 01",
-                "title": "Juega y Gana XP",
-                "desc": "Cada partida que juegas, cada visita que haces y cada logro que desbloqueas te da XP hacia tu nivel de lealtad."
-            },
-            "1": {
-                "step": "PASO 02",
-                "title": "Construye Tu Racha",
-                "desc": "Visita diariamente para mantener tu racha. Las rachas más largas dan XP extra y desbloquean insignias exclusivas."
-            },
-            "2": {
-                "step": "PASO 03",
-                "title": "Sube de Nivel",
-                "desc": "Progresa de Nuevo Ritmo a Maestro. Cada nivel te acerca más al corazón de la comunidad RHYTHMIA."
-            },
-            "3": {
-                "step": "PASO 04",
-                "title": "Da Forma al Futuro",
-                "desc": "Vota en encuestas de la comunidad, gana insignias y ayuda a decidir qué viene después para RHYTHMIA."
-            }
-        }
-    },
-    "updates": {
-        "title": "Actualizaciones Recientes",
-        "pageTitle": "Actualizaciones de Desarrollo",
-        "pageSubtitle": "Sigue los últimos cambios y mejoras de RHYTHMIA",
-        "recentUpdates": "Actualizaciones recientes",
-        "prsMerged": "PRs fusionados",
-        "merged": "Fusionado",
-        "features": "Características",
-        "enhancements": "Mejoras",
-        "fixes": "Correcciones",
-        "all": "Todo",
-        "viewPR": "Ver PR",
-        "viewAllPRs": "Ver todos los PRs",
-        "viewAllPRsGithub": "Ver todos los PRs en GitHub",
-        "videoTitle": "Resumen de Actualización",
-        "changes": "cambios",
-        "change": "cambio",
-        "categories": {
-            "feature": "Características",
-            "enhancement": "Mejoras",
-            "fix": "Correcciones",
-            "refactor": "Refactorizaciones",
-            "docs": "Documentación",
-            "i18n": "Internacionalización"
-        }
-    },
-    "minecraft_board": {
-        "title": "Juego de Mesa Minecraft",
-        "subtitle": "¡Explora, Mina, Craftea, Sobrevive!",
-        "playerName": "Nombre del Jugador",
-        "worldName": "Nombre del Mundo",
-        "create": "Crear",
-        "join": "Unirse",
-        "browse": "Explorar",
-        "createWorld": "Crear Mundo",
-        "joinWorld": "Unirse al Mundo",
-        "roomCode": "Código de Sala",
-        "noRooms": "No hay mundos públicos disponibles",
-        "players": "Jugadores",
-        "ready": "Listo",
-        "notReady": "No Listo",
-        "startGame": "Iniciar Partida",
-        "leave": "Salir",
-        "connecting": "Conectando...",
-        "reconnecting": "Reconectando...",
-        "disconnected": "Desconectado del servidor",
-        "reconnect": "Reconectar",
-        "howToPlay": "Cómo Jugar",
-        "controls": {
-            "move": "WASD / Flechas para moverse",
-            "mine": "Clic en bloques adyacentes para minar",
-            "craft": "E para abrir crafteo, I para inventario",
-            "eat": "Clic derecho en comida de la barra para comer",
-            "hotbar": "1-9 para seleccionar ranura de barra",
-            "win": "¡Craftea el Marco del Portal del End para ganar!"
-        },
-        "hud": {
-            "equipped": "Equipado",
-            "fist": "Puño",
-            "armor": "Armadura",
-            "kills": "Asesinatos",
-            "mined": "Minado",
-            "craft": "Crafteo",
-            "inventory": "Inventario"
-        },
-        "crafting": {
-            "title": "Crafteo",
-            "craftingTable": "Mesa de Crafteo",
-            "furnace": "Horno",
-            "craft": "Craftear"
-        },
-        "game": {
-            "youDied": "¡Has Muerto!",
-            "respawning": "Reapareciendo...",
-            "gameOver": "¡Fin de la Partida!",
-            "youWin": "¡Has Ganado!",
-            "wins": "¡{name} Gana!",
-            "enderPortal": "¡Crafteaste el Marco del Portal del End!",
-            "backToMenu": "Volver al Menú",
-            "day": "Día",
-            "dusk": "Atardecer",
-            "night": "Noche",
-            "dawn": "Amanecer"
-        }
-    },
-    "wiki": {
-        "meta": {
-            "title": "Wiki | RHYTHMIA - Azuretier",
-            "description": "La wiki completa de RHYTHMIA. Modos de juego, mundos, sistema clasificatorio, objetos, crafteo, logros y más."
-        },
-        "backToLobby": "← Lobby",
-        "updatesLink": "Actualizaciones",
-        "contents": "Contenidos",
-        "sectionOverview": "Resumen",
-        "sectionModes": "Modos de Juego",
-        "sectionWorlds": "Mundos",
-        "sectionControls": "Controles",
-        "sectionRanked": "Clasificatorio",
-        "sectionAdvancements": "Logros",
-        "sectionCrafting": "Objetos y Crafteo",
-        "sectionTowerDefense": "Defensa de Torres",
-        "overviewTitle": "¿Qué es RHYTHMIA?",
-        "overviewDesc": "RHYTHMIA es un juego de puzzles en el navegador que fusiona la mecánica clásica de bloques con jugabilidad de acción rítmica. Coloca piezas al ritmo, elimina líneas y progresa a través de mundos con temas musicales.",
-        "boardSize": "Tamaño del Tablero",
-        "tetrominoes": "Tetrominós",
-        "worldsLabel": "Mundos",
-        "rotationSystem": "Sistema de Rotación",
-        "advancementsLabel": "Logros",
-        "rankTiersLabel": "Niveles de Rango",
-        "coreMechanics": "Mecánicas Principales",
-        "mechanic1": "Sistema de Rotación Super (SRS) para rotación de piezas con patadas de pared",
-        "mechanic2": "Función de reserva y vista previa de la siguiente pieza",
-        "mechanic3": "Efectos visuales sincronizados con el ritmo (VFX)",
-        "mechanic4": "Puntos de bonificación por acciones al ritmo",
-        "mechanic5": "Sistema de combo con modo Fever (10+ combos)",
-        "modesTitle": "Modos de Juego",
-        "vanillaTitle": "Un Jugador",
-        "vanillaDesc": "Juega en solitario a través de 5 mundos con temas musicales. Destruye terreno, recoge objetos y craftea armas para avanzar más. Cada mundo aumenta el BPM, exigiendo reflejos más rápidos y ritmo más preciso.",
-        "terrainDestruction": "Destrucción de Terreno",
-        "itemDrops": "Objetos",
-        "craftingFeat": "Crafteo",
-        "worldProgression": "Progresión de Mundos",
-        "battleTitle": "Arena de Batalla",
-        "battleDesc": "Batallas 1v1 en tiempo real por WebSocket. Envía líneas basura a tu oponente eliminando líneas. Compatible con clasificatorio con progresión de niveles. Si no se encuentra oponente en 8 segundos, un rival IA lo reemplaza.",
-        "rankedFeat": "Clasificatorio",
-        "aiFallback": "IA de Respaldo",
-        "battleNote": "Se desbloquea al obtener 3 logros",
-        "arenaTitle": "Arena de 9 Jugadores",
-        "arenaDesc": "Hasta 9 jugadores compiten en una batalla rítmica con tempo compartido. Trucos aleatorios, niveles de caos crecientes y colapsos de tempo crean partidas únicas. Múltiples condiciones de victoria: último en pie, colapso de tempo o sobrecarga de caos.",
-        "ninePlayers": "9 Jugadores",
-        "rhythmSync": "Sincronización Rítmica",
-        "gimmicks": "Trucos",
-        "chaosLabel": "Caos",
-        "worldsSectionTitle": "Mundos",
-        "worldsDesc": "RHYTHMIA tiene 5 mundos distintos, cada uno con un BPM y tema de color único. Los mundos progresan al completar etapas, avanzando al siguiente mundo cada 4 etapas. Mayor BPM exige juego más rápido.",
-        "melodia": "Melodia",
-        "harmonia": "Harmonia",
-        "crescenda": "Crescenda",
-        "fortissimo": "Fortissimo",
-        "silenceChamber": "Cámara del Silencio",
-        "worldProgressionTitle": "Progresión de Mundos",
-        "worldProg1": "4 etapas por mundo antes de avanzar",
-        "worldProg2": "Elimina terreno con líneas para completar una etapa",
-        "worldProg3": "4 bloques de terreno destruidos por línea eliminada",
-        "worldProg4": "El multiplicador de ritmo aumenta el daño al terreno",
-        "controlsTitle": "Controles",
-        "controlsDesc": "Los controles se pueden personalizar en el juego. Los valores predeterminados de DAS (Delayed Auto Shift), ARR (Auto Repeat Rate) y SDF (Soft Drop Factor) se muestran a continuación.",
-        "actionHeader": "Acción",
-        "defaultKey": "Tecla Predeterminada",
-        "moveLeft": "Mover Izquierda",
-        "moveRight": "Mover Derecha",
-        "softDrop": "Caída Suave",
-        "hardDrop": "Caída Dura",
-        "rotateCW": "Rotar Derecha",
-        "rotateCCW": "Rotar Izquierda",
-        "hold": "Reservar",
-        "inventoryKey": "Inventario",
-        "shopKey": "Tienda",
-        "forgeKey": "Forja",
-        "timingSettings": "Configuración de Tiempo",
-        "dasDesc": "Retraso inicial de repetición",
-        "arrDesc": "Intervalo de auto-repetición",
-        "sdfDesc": "Velocidad de caída suave",
-        "lockDelay": "Retraso de Bloqueo",
-        "lockDelayDesc": "Período de gracia antes del bloqueo",
-        "rankedTitle": "Sistema Clasificatorio",
-        "rankedDesc": "El sistema clasificatorio usa un sistema de puntos estilo Arena. Cada partida cuesta un Bus Fare (cuota de entrada) y ganar otorga puntos de bonificación. Las victorias consecutivas dan bonificaciones de racha. Los puntos no pueden bajar de 0.",
-        "tierHeader": "Nivel",
-        "pointsHeader": "Puntos",
-        "busFareHeader": "Cuota de Entrada",
-        "winRewardHeader": "Recompensa",
-        "openI": "Open I",
-        "openII": "Open II",
-        "openIII": "Open III",
-        "contenderI": "Contender I",
-        "contenderII": "Contender II",
-        "contenderIII": "Contender III",
-        "championI": "Champion I",
-        "championII": "Champion II",
-        "championIII": "Champion III",
-        "streakTitle": "Bonificación por Racha",
-        "streakDesc": "Las victorias consecutivas dan puntos de bonificación: 2 victorias = +5, 3 = +10, 4 = +15, 5 = +20, 6+ = +25",
-        "matchmakingTitle": "Emparejamiento",
-        "matchmaking1": "Empareja jugadores con diferencia de 500 puntos",
-        "matchmaking2": "Tiempo de espera: 8 segundos",
-        "matchmaking3": "Cambia a oponente IA si se agota el tiempo",
-        "advancementsTitle": "Logros",
-        "advancementsDesc": "RHYTHMIA tiene más de 45 logros que se desbloquean automáticamente al jugar. El progreso se guarda en almacenamiento local y Firestore. Aparecen notificaciones al desbloquear. La Arena de Batalla requiere 3 logros para desbloquearse.",
-        "catLines": "Líneas",
-        "catScore": "Puntuación",
-        "catTSpin": "T-Spin",
-        "catMultiplayer": "Multijugador",
-        "lineBeginner": "Principiante de Líneas",
-        "lineBeginnerDesc": "Elimina 10 líneas en total",
-        "lineApprentice": "Aprendiz de Líneas",
-        "lineApprenticeDesc": "Elimina 50 líneas en total",
-        "lineExpert": "Experto en Líneas",
-        "lineExpertDesc": "Elimina 200 líneas en total",
-        "lineMaster": "Maestro de Líneas",
-        "lineMasterDesc": "Elimina 500 líneas en total",
-        "lineLegend": "Leyenda de Líneas",
-        "lineLegendDesc": "Elimina 1.000 líneas en total",
-        "scoreRookie": "Novato de Puntos",
-        "scoreRookieDesc": "Acumula 10.000 puntos en total",
-        "scoreHunter": "Cazador de Puntos",
-        "scoreHunterDesc": "Acumula 100.000 puntos en total",
-        "scoreMaster": "Maestro de Puntos",
-        "scoreMasterDesc": "Acumula 1.000.000 puntos en total",
-        "scoreLegend": "Leyenda de Puntos",
-        "scoreLegendDesc": "Acumula 10.000.000 puntos en total",
-        "firstTwist": "Primer Giro",
-        "firstTwistDesc": "Realiza tu primer T-Spin",
-        "spinDoctor": "Doctor del Giro",
-        "spinDoctorDesc": "Realiza 10 T-Spins",
-        "tSpinExpert": "Experto en T-Spin",
-        "tSpinExpertDesc": "Realiza 50 T-Spins",
-        "tSpinLegend": "Leyenda del T-Spin",
-        "tSpinLegendDesc": "Realiza 200 T-Spins",
-        "firstVictory": "Primera Victoria",
-        "firstVictoryDesc": "Gana tu primera partida multijugador",
-        "arenaFighter": "Luchador de Arena",
-        "arenaFighterDesc": "Gana 10 partidas multijugador",
-        "arenaChampion": "Campeón de Arena",
-        "arenaChampionDesc": "Gana 50 partidas multijugador",
-        "hotStreak": "Racha Caliente",
-        "hotStreakDesc": "Gana 3 partidas seguidas",
-        "unbreakable": "Irrompible",
-        "unbreakableDesc": "Gana 10 partidas seguidas",
-        "additionalCatTitle": "Categorías Adicionales",
-        "additionalCat1": "Combo: Alcanza combos de 3, 10, 20",
-        "additionalCat2": "Tetris: Elimina 4 líneas a la vez (1, 10, 50 veces)",
-        "additionalCat3": "Ritmos Perfectos: 10, 50 por partida",
-        "additionalCat4": "Caídas Duras: 100, 1.000 en total",
-        "additionalCat5": "Piezas Colocadas: 100, 1.000, 10.000 en total",
-        "additionalCat6": "Partidas Jugadas: 1, 10, 50, 100",
-        "additionalCat7": "Viajero del Mundo: Completa 5 mundos",
-        "craftingTitle": "Objetos y Crafteo",
-        "craftingDesc": "Los objetos caen al destruir terreno. Recoge materiales y craftea armas para aumentar el daño al terreno. Los objetos más raros tienen menor tasa de caída.",
-        "materialsTitle": "Materiales",
-        "weaponsTitle": "Armas",
-        "materialHeader": "Material",
-        "rarityHeader": "Rareza",
-        "dropRateHeader": "Tasa de Caída",
-        "stoneFragment": "Fragmento de Piedra",
-        "ironOre": "Mineral de Hierro",
-        "crystalShard": "Fragmento de Cristal",
-        "goldNugget": "Pepita de Oro",
-        "obsidianCore": "Núcleo de Obsidiana",
-        "starFragment": "Fragmento de Estrella",
-        "common": "Común",
-        "uncommon": "Poco Común",
-        "rare": "Raro",
-        "epic": "Épico",
-        "legendary": "Legendario",
-        "weaponHeader": "Arma",
-        "damageHeader": "Daño",
-        "specialHeader": "Especial",
-        "recipeHeader": "Receta",
-        "stoneBlade": "Espada de Piedra",
-        "ironPickaxe": "Pico de Hierro",
-        "crystalWand": "Varita de Cristal",
-        "goldHammer": "Martillo de Oro",
-        "obsidianEdge": "Filo de Obsidiana",
-        "starCannon": "Cañón Estelar",
-        "wideBeat": "Ritmo Amplio",
-        "shatter": "Destrozo",
-        "burst": "Explosión",
-        "stoneBladeRecipe": "3x Piedra",
-        "ironPickaxeRecipe": "3x Hierro",
-        "crystalWandRecipe": "2x Cristal + 2x Piedra",
-        "goldHammerRecipe": "2x Oro + 2x Hierro",
-        "obsidianEdgeRecipe": "1x Obsidiana + 2x Hierro",
-        "starCannonRecipe": "1x Estrella + 2x Cristal",
-        "towerDefenseTitle": "Defensa de Torres",
-        "towerDefenseDesc": "El modo Vanilla incluye mecánicas de defensa de torres. Una torre se sitúa en el centro de una cuadrícula. Los enemigos aparecen desde el perímetro al ritmo y avanzan hacia la torre. Las líneas eliminadas destruyen enemigos y las torretas disparan automáticamente.",
-        "towerHP": "HP de Torre",
-        "enemyReachDMG": "Daño de Llegada",
-        "enemyHP": "HP Enemigo",
-        "killsPerLine": "Muertes por Línea",
-        "gridSystem": "Sistema de Cuadrícula",
-        "grid1": "Los enemigos se mueven 1 casilla por turno en la cuadrícula (solo ortogonal)",
-        "grid2": "La cuadrícula se extiende 18 casillas desde el centro en cada dirección",
-        "grid3": "Los enemigos aparecen en el perímetro de distancia Manhattan 18",
-        "grid4": "La torreta dispara cada 1.000ms, velocidad de bala: 18 unidades/seg",
-        "grid5": "Las balas siguen arcos parabólicos (gravedad: 40 unidades/seg²)"
-    },
-    "nav": {
-        "wiki": "Wiki",
-        "updates": "Actualizaciones",
-        "lobby": "Lobby"
-    },
-    "skin": {
-        "title": "Perfil y Skin",
-        "selectSkin": "Seleccionar Skin de Color",
-        "currentSkin": "Skin Actual",
-        "selectLanguage": "Idioma",
-        "privacy": "Privacidad",
-        "profileButton": "Perfil"
-    },
-    "uiTheme": {
-        "selectTheme": "Tema de UI",
-        "neoFuturistic": "Neo-Futuristic",
-        "pixelNostalgia": "Pixel Nostalgia",
-        "neoDesc": "Estética elegante y moderna con efectos de vidrio esmerilado",
-        "pixelDesc": "Estética retro de pixel art 8-bit/16-bit con efectos CRT"
-    },
-    "googleSync": {
-        "sectionTitle": "Sincronización con Cuenta de Google",
-        "description": "Inicia sesión con Google para sincronizar tu perfil, logros, progreso de lealtad y configuración de skin entre dispositivos.",
-        "signIn": "Iniciar sesión con Google",
-        "signOut": "Cerrar sesión",
-        "linking": "Conectando...",
-        "syncing": "Sincronizando...",
-        "syncNow": "Sincronizar ahora",
-        "synced": "Sincronizado",
-        "error": "Error de sincronización"
-    },
-    "stories": {
-        "title": "STORIES",
-        "chapter": "CHAPTER",
-        "backToLobby": "← Volver",
-        "log": "LOG",
-        "auto": "AUTO",
-        "skip": "SKIP",
-        "menu": "MENU",
-        "logTitle": "Registro de Texto",
-        "close": "Cerrar",
-        "resume": "Reanudar",
-        "chapterSelect": "Selección de Capítulo"
+    "stats": {
+      "mode": "Modo",
+      "battle": "Batalla",
+      "status": "Estado"
     }
+  },
+  "advancements": {
+    "title": "LOGROS",
+    "button": "{count}/{total} Logros",
+    "unlocked": "LOGRO DESBLOQUEADO",
+    "locked": "BLOQUEADO",
+    "lockMessage": "{current}/{required} logros para desbloquear",
+    "lines_10": {
+      "name": "Principiante de Líneas",
+      "desc": "Elimina 10 líneas en total"
+    },
+    "lines_50": {
+      "name": "Aprendiz de Líneas",
+      "desc": "Elimina 50 líneas en total"
+    },
+    "lines_200": {
+      "name": "Experto en Líneas",
+      "desc": "Elimina 200 líneas en total"
+    },
+    "lines_500": {
+      "name": "Maestro de Líneas",
+      "desc": "Elimina 500 líneas en total"
+    },
+    "lines_1000": {
+      "name": "Leyenda de Líneas",
+      "desc": "Elimina 1.000 líneas en total"
+    },
+    "best_lines_10": {
+      "name": "Calentamiento",
+      "desc": "Elimina 10 líneas en una partida"
+    },
+    "best_lines_25": {
+      "name": "Empezando",
+      "desc": "Elimina 25 líneas en una partida"
+    },
+    "best_lines_50": {
+      "name": "Máquina de Líneas",
+      "desc": "Elimina 50 líneas en una partida"
+    },
+    "best_lines_100": {
+      "name": "Imparable",
+      "desc": "Elimina 100 líneas en una partida"
+    },
+    "tspin_1": {
+      "name": "Primer Giro",
+      "desc": "Realiza tu primer T-Spin"
+    },
+    "tspin_10": {
+      "name": "Doctor del Giro",
+      "desc": "Realiza 10 T-Spins"
+    },
+    "tspin_50": {
+      "name": "Experto en T-Spin",
+      "desc": "Realiza 50 T-Spins"
+    },
+    "tspin_200": {
+      "name": "Leyenda del T-Spin",
+      "desc": "Realiza 200 T-Spins"
+    },
+    "score_10k": {
+      "name": "Novato de Puntos",
+      "desc": "Acumula 10.000 puntos en total"
+    },
+    "score_100k": {
+      "name": "Cazador de Puntos",
+      "desc": "Acumula 100.000 puntos en total"
+    },
+    "score_1m": {
+      "name": "Maestro de Puntos",
+      "desc": "Acumula 1.000.000 puntos en total"
+    },
+    "score_10m": {
+      "name": "Leyenda de Puntos",
+      "desc": "Acumula 10.000.000 puntos en total"
+    },
+    "best_score_5k": {
+      "name": "Buena Partida",
+      "desc": "Consigue 5.000 puntos en una partida"
+    },
+    "best_score_25k": {
+      "name": "Gran Partida",
+      "desc": "Consigue 25.000 puntos en una partida"
+    },
+    "best_score_100k": {
+      "name": "Partida Increíble",
+      "desc": "Consigue 100.000 puntos en una partida"
+    },
+    "best_score_500k": {
+      "name": "Partida Legendaria",
+      "desc": "Consigue 500.000 puntos en una partida"
+    },
+    "combo_3": {
+      "name": "Inicio de Combo",
+      "desc": "Alcanza un combo de 3"
+    },
+    "combo_10": {
+      "name": "Rey del Combo",
+      "desc": "Alcanza un combo de 10"
+    },
+    "combo_20": {
+      "name": "Dios del Combo",
+      "desc": "Alcanza un combo de 20"
+    },
+    "combo_30": {
+      "name": "Señor del Combo",
+      "desc": "Alcanza un combo de 30"
+    },
+    "combo_50": {
+      "name": "Combo Inmortal",
+      "desc": "Alcanza un combo de 50"
+    },
+    "combo_75": {
+      "name": "Combo Trascendente",
+      "desc": "Alcanza un combo de 75"
+    },
+    "combo_100": {
+      "name": "Combo Deidad",
+      "desc": "Alcanza un combo de 100"
+    },
+    "combo_150": {
+      "name": "Combo Celestial",
+      "desc": "Alcanza un combo de 150"
+    },
+    "combo_200": {
+      "name": "Combo Eterno",
+      "desc": "Alcanza un combo de 200"
+    },
+    "total_combo_50": {
+      "name": "Colector de Combos",
+      "desc": "Acumula 50 combos en total"
+    },
+    "total_combo_100": {
+      "name": "Acumulador de Combos",
+      "desc": "Acumula 100 combos en total"
+    },
+    "total_combo_250": {
+      "name": "Veterano de Combos",
+      "desc": "Acumula 250 combos en total"
+    },
+    "total_combo_500": {
+      "name": "Maestro de Combos",
+      "desc": "Acumula 500 combos en total"
+    },
+    "total_combo_1000": {
+      "name": "Leyenda de Combos",
+      "desc": "Acumula 1.000 combos en total"
+    },
+    "total_combo_2500": {
+      "name": "Combo Mítico",
+      "desc": "Acumula 2.500 combos en total"
+    },
+    "total_combo_5000": {
+      "name": "Combo Infinito",
+      "desc": "Acumula 5.000 combos en total"
+    },
+    "games_1": {
+      "name": "Primeros Pasos",
+      "desc": "Juega tu primera partida"
+    },
+    "games_10": {
+      "name": "Poniéndose Serio",
+      "desc": "Juega 10 partidas"
+    },
+    "games_50": {
+      "name": "Jugador Dedicado",
+      "desc": "Juega 50 partidas"
+    },
+    "games_100": {
+      "name": "Veterano",
+      "desc": "Juega 100 partidas"
+    },
+    "worlds_5": {
+      "name": "Viajero del Mundo",
+      "desc": "Completa 5 mundos"
+    },
+    "tetris_1": {
+      "name": "¡Tetris!",
+      "desc": "Elimina 4 líneas a la vez"
+    },
+    "tetris_10": {
+      "name": "Adicto al Tetris",
+      "desc": "Elimina 4 líneas a la vez 10 veces"
+    },
+    "tetris_50": {
+      "name": "Maestro del Tetris",
+      "desc": "Elimina 4 líneas a la vez 50 veces"
+    },
+    "perfect_beats_10": {
+      "name": "Novato del Ritmo",
+      "desc": "Consigue 10 ritmos perfectos en una partida"
+    },
+    "perfect_beats_50": {
+      "name": "Maestro del Ritmo",
+      "desc": "Consigue 50 ritmos perfectos en una partida"
+    },
+    "hard_drops_100": {
+      "name": "Caída Rápida",
+      "desc": "Realiza 100 caídas duras"
+    },
+    "hard_drops_1000": {
+      "name": "Velocidad Terminal",
+      "desc": "Realiza 1.000 caídas duras"
+    },
+    "pieces_100": {
+      "name": "Constructor de Bloques",
+      "desc": "Coloca 100 piezas"
+    },
+    "pieces_1000": {
+      "name": "Arquitecto de Bloques",
+      "desc": "Coloca 1.000 piezas"
+    },
+    "pieces_10000": {
+      "name": "Leyenda de Bloques",
+      "desc": "Coloca 10.000 piezas"
+    },
+    "mp_win_1": {
+      "name": "Primera Victoria",
+      "desc": "Gana tu primera partida multijugador"
+    },
+    "mp_win_10": {
+      "name": "Luchador de Arena",
+      "desc": "Gana 10 partidas multijugador"
+    },
+    "mp_win_50": {
+      "name": "Campeón de Arena",
+      "desc": "Gana 50 partidas multijugador"
+    },
+    "mp_streak_3": {
+      "name": "Racha Caliente",
+      "desc": "Gana 3 partidas seguidas"
+    },
+    "mp_streak_5": {
+      "name": "Dominación",
+      "desc": "Gana 5 partidas seguidas"
+    },
+    "mp_streak_10": {
+      "name": "Irrompible",
+      "desc": "Gana 10 partidas seguidas"
+    },
+    "mp_games_10": {
+      "name": "Habitual de Arena",
+      "desc": "Juega 10 partidas multijugador"
+    },
+    "mp_games_50": {
+      "name": "Veterano de Arena",
+      "desc": "Juega 50 partidas multijugador"
+    },
+    "loyalty_streak_3": {
+      "name": "Racha de 3 Días",
+      "desc": "Visita 3 días seguidos"
+    },
+    "loyalty_streak_7": {
+      "name": "Ritmo Semanal",
+      "desc": "Visita 7 días seguidos"
+    },
+    "loyalty_streak_14": {
+      "name": "Ritmo Quincenal",
+      "desc": "Visita 14 días seguidos"
+    },
+    "loyalty_streak_30": {
+      "name": "Pulso Mensual",
+      "desc": "Visita 30 días seguidos"
+    },
+    "loyalty_visits_5": {
+      "name": "Habitual",
+      "desc": "Visita 5 veces"
+    },
+    "loyalty_visits_25": {
+      "name": "Cara Familiar",
+      "desc": "Visita 25 veces"
+    },
+    "loyalty_visits_100": {
+      "name": "Parte de la Familia",
+      "desc": "Visita 100 veces"
+    },
+    "loyalty_games_10": {
+      "name": "Jugador",
+      "desc": "Juega 10 partidas"
+    },
+    "loyalty_games_50": {
+      "name": "Entusiasta",
+      "desc": "Juega 50 partidas"
+    },
+    "loyalty_games_200": {
+      "name": "Devoto",
+      "desc": "Juega 200 partidas"
+    },
+    "loyalty_polls_1": {
+      "name": "Primer Voto",
+      "desc": "Vota en tu primera encuesta"
+    },
+    "loyalty_polls_5": {
+      "name": "Votante Activo",
+      "desc": "Vota en 5 encuestas"
+    },
+    "loyalty_polls_10": {
+      "name": "Voz de la Comunidad",
+      "desc": "Vota en 10 encuestas"
+    }
+  },
+  "arena": {
+    "badge": "9J",
+    "title": "ARENA RÍTMICA",
+    "subtitle": "Battle Royale de 9 Jugadores",
+    "description": "9 jugadores, 1 ritmo. Caos compartido, tempo sincronizado, trucos aleatorios. Mantén el ritmo o el tempo colapsa.",
+    "features": {
+      "players": "9 Jugadores",
+      "chaos": "Caos",
+      "sync": "Sincronización"
+    },
+    "stats": {
+      "players": "Jugadores",
+      "bpm": "BPM",
+      "status": "Estado"
+    },
+    "maxPlayers": "{count} Jugadores Máx",
+    "quickMatch": "PARTIDA RÁPIDA",
+    "createArena": "Crear Arena",
+    "joinByCode": "Unirse por Código",
+    "enterName": "Introduce Tu Nombre",
+    "namePlaceholder": "Nombre del Jugador",
+    "enterCode": "Código de Arena",
+    "join": "Unirse",
+    "next": "Siguiente",
+    "back": "Volver",
+    "online": "En línea",
+    "connecting": "Conectando...",
+    "connectionError": "Error de Conexión",
+    "offline": "Desconectado",
+    "searching": "Buscando Jugadores",
+    "queueInfo": "Esperando suficientes jugadores para formar una arena...",
+    "playersInQueue": "{count} en cola",
+    "cancel": "Cancelar",
+    "arenaCode": "Código de Arena",
+    "copy": "Copiar",
+    "reconnecting": "Reconectando...",
+    "ready": "LISTO",
+    "notReady": "No Listo",
+    "waiting": "Esperando...",
+    "cancelReady": "Cancelar Listo",
+    "readyUp": "¡Listo!",
+    "startArena": "Iniciar Arena",
+    "waitingForPlayers": "Esperando jugadores...",
+    "leave": "Salir",
+    "getReady": "PREPÁRATE",
+    "chaos": "CAOS",
+    "sync": "Sincronización",
+    "eliminated": "eliminado",
+    "resultLastStanding": "ÚLTIMO EN PIE",
+    "resultTempoCollapse": "TEMPO COLAPSADO",
+    "resultChaosOverload": "SOBRECARGA DE CAOS",
+    "victory": "VICTORIA",
+    "wins": "VICTORIAS",
+    "noWinner": "SIN GANADOR",
+    "duration": "DURACIÓN",
+    "peakBpm": "BPM MÁXIMO",
+    "gimmicks": "TRUCOS",
+    "peakChaos": "CAOS MÁXIMO",
+    "tempoCollapses": "COLAPSOS",
+    "lowestBpm": "BPM MÍNIMO",
+    "backToLobby": "Volver al Lobby"
+  },
+  "footer": {
+    "copyright": "azuretier.net © 2025"
+  },
+  "localeSwitcher": {
+    "label": "Idioma",
+    "en": "English",
+    "ja": "日本語",
+    "th": "ไทย",
+    "es": "Español",
+    "fr": "Français"
+  },
+  "loyalty": {
+    "meta": {
+      "title": "Programa de Lealtad | RHYTHMIA - Azuretier",
+      "description": "Rastrea tu nivel de lealtad, gana insignias, mantén rachas y participa en la comunidad RHYTHMIA."
+    },
+    "backToLobby": "← Volver",
+    "currentTier": "NIVEL DE LEALTAD ACTUAL",
+    "xpToNext": "{xp} XP para el siguiente nivel",
+    "maxTier": "NIVEL MÁXIMO ALCANZADO",
+    "streakDays": "DÍAS DE RACHA",
+    "viewAll": "VER TODOS LOS LOGROS Y DETALLES",
+    "tiers": {
+      "new_beat": "Nuevo Ritmo",
+      "syncopated": "Sincopado",
+      "in_rhythm": "En Ritmo",
+      "maestro": "Maestro"
+    },
+    "stats": {
+      "visits": "VISITAS",
+      "streak": "RACHA",
+      "games": "PARTIDAS",
+      "badges": "LOGROS"
+    },
+    "sections": {
+      "tierRoadmap": "HOJA DE RUTA DE NIVELES",
+      "streak": "RACHA DE INICIO DE SESIÓN",
+      "badges": "LOGROS RECIENTES",
+      "community": "VOZ DE LA COMUNIDAD",
+      "howItWorks": "CÓMO FUNCIONA"
+    },
+    "badges": {
+      "streak_3": {
+        "icon": "🔥",
+        "name": "Racha de 3 Días",
+        "desc": "Visita 3 días seguidos"
+      },
+      "streak_7": {
+        "icon": "🔥",
+        "name": "Ritmo Semanal",
+        "desc": "Visita 7 días seguidos"
+      },
+      "streak_14": {
+        "icon": "🔥",
+        "name": "Ritmo Quincenal",
+        "desc": "Visita 14 días seguidos"
+      },
+      "streak_30": {
+        "icon": "🔥",
+        "name": "Pulso Mensual",
+        "desc": "Visita 30 días seguidos"
+      },
+      "visits_5": {
+        "icon": "👣",
+        "name": "Habitual",
+        "desc": "Visita 5 veces"
+      },
+      "visits_25": {
+        "icon": "👣",
+        "name": "Cara Familiar",
+        "desc": "Visita 25 veces"
+      },
+      "visits_100": {
+        "icon": "👣",
+        "name": "De la Familia",
+        "desc": "Visita 100 veces"
+      },
+      "games_10": {
+        "icon": "🎮",
+        "name": "Jugador",
+        "desc": "Juega 10 partidas"
+      },
+      "games_50": {
+        "icon": "🎮",
+        "name": "Entusiasta",
+        "desc": "Juega 50 partidas"
+      },
+      "games_200": {
+        "icon": "🎮",
+        "name": "Devoto",
+        "desc": "Juega 200 partidas"
+      },
+      "polls_1": {
+        "icon": "🗳️",
+        "name": "Primer Voto",
+        "desc": "Vota en tu primera encuesta"
+      },
+      "polls_5": {
+        "icon": "🗳️",
+        "name": "Votante Activo",
+        "desc": "Vota en 5 encuestas"
+      },
+      "polls_10": {
+        "icon": "🗳️",
+        "name": "Voz de la Comunidad",
+        "desc": "Vota en 10 encuestas"
+      }
+    },
+    "poll": {
+      "question": "¿Cuál debería ser el próximo modo de juego de RHYTHMIA?",
+      "options": {
+        "0": "Modo Cooperativo (batallas en equipo 2v2)",
+        "1": "Modo Supervivencia (oleadas infinitas)",
+        "2": "Modo Torneo (eliminación por llaves)",
+        "3": "Modo Zen (relajado, sin presión)"
+      },
+      "vote": "VOTAR",
+      "voted": "¡Gracias por votar!",
+      "loading": "Cargando encuesta...",
+      "submitting": "Enviando...",
+      "noPoll": "No hay encuestas activas en este momento.",
+      "totalVotes": "{count} votos"
+    },
+    "strategy": {
+      "0": {
+        "step": "PASO 01",
+        "title": "Juega y Gana XP",
+        "desc": "Cada partida que juegas, cada visita que haces y cada logro que desbloqueas te da XP hacia tu nivel de lealtad."
+      },
+      "1": {
+        "step": "PASO 02",
+        "title": "Construye Tu Racha",
+        "desc": "Visita diariamente para mantener tu racha. Las rachas más largas dan XP extra y desbloquean insignias exclusivas."
+      },
+      "2": {
+        "step": "PASO 03",
+        "title": "Sube de Nivel",
+        "desc": "Progresa de Nuevo Ritmo a Maestro. Cada nivel te acerca más al corazón de la comunidad RHYTHMIA."
+      },
+      "3": {
+        "step": "PASO 04",
+        "title": "Da Forma al Futuro",
+        "desc": "Vota en encuestas de la comunidad, gana insignias y ayuda a decidir qué viene después para RHYTHMIA."
+      }
+    }
+  },
+  "updates": {
+    "title": "Actualizaciones Recientes",
+    "pageTitle": "Actualizaciones de Desarrollo",
+    "pageSubtitle": "Sigue los últimos cambios y mejoras de RHYTHMIA",
+    "recentUpdates": "Actualizaciones recientes",
+    "prsMerged": "PRs fusionados",
+    "merged": "Fusionado",
+    "features": "Características",
+    "enhancements": "Mejoras",
+    "fixes": "Correcciones",
+    "all": "Todo",
+    "viewPR": "Ver PR",
+    "viewAllPRs": "Ver todos los PRs",
+    "viewAllPRsGithub": "Ver todos los PRs en GitHub",
+    "videoTitle": "Resumen de Actualización",
+    "changes": "cambios",
+    "change": "cambio",
+    "categories": {
+      "feature": "Características",
+      "enhancement": "Mejoras",
+      "fix": "Correcciones",
+      "refactor": "Refactorizaciones",
+      "docs": "Documentación",
+      "i18n": "Internacionalización"
+    }
+  },
+  "minecraft_board": {
+    "title": "Juego de Mesa Minecraft",
+    "subtitle": "¡Explora, Mina, Craftea, Sobrevive!",
+    "playerName": "Nombre del Jugador",
+    "worldName": "Nombre del Mundo",
+    "create": "Crear",
+    "join": "Unirse",
+    "browse": "Explorar",
+    "createWorld": "Crear Mundo",
+    "joinWorld": "Unirse al Mundo",
+    "roomCode": "Código de Sala",
+    "noRooms": "No hay mundos públicos disponibles",
+    "players": "Jugadores",
+    "ready": "Listo",
+    "notReady": "No Listo",
+    "startGame": "Iniciar Partida",
+    "leave": "Salir",
+    "connecting": "Conectando...",
+    "reconnecting": "Reconectando...",
+    "disconnected": "Desconectado del servidor",
+    "reconnect": "Reconectar",
+    "howToPlay": "Cómo Jugar",
+    "controls": {
+      "move": "WASD / Flechas para moverse",
+      "mine": "Clic en bloques adyacentes para minar",
+      "craft": "E para abrir crafteo, I para inventario",
+      "eat": "Clic derecho en comida de la barra para comer",
+      "hotbar": "1-9 para seleccionar ranura de barra",
+      "win": "¡Craftea el Marco del Portal del End para ganar!"
+    },
+    "hud": {
+      "equipped": "Equipado",
+      "fist": "Puño",
+      "armor": "Armadura",
+      "kills": "Asesinatos",
+      "mined": "Minado",
+      "craft": "Crafteo",
+      "inventory": "Inventario"
+    },
+    "crafting": {
+      "title": "Crafteo",
+      "craftingTable": "Mesa de Crafteo",
+      "furnace": "Horno",
+      "craft": "Craftear"
+    },
+    "game": {
+      "youDied": "¡Has Muerto!",
+      "respawning": "Reapareciendo...",
+      "gameOver": "¡Fin de la Partida!",
+      "youWin": "¡Has Ganado!",
+      "wins": "¡{name} Gana!",
+      "enderPortal": "¡Crafteaste el Marco del Portal del End!",
+      "backToMenu": "Volver al Menú",
+      "day": "Día",
+      "dusk": "Atardecer",
+      "night": "Noche",
+      "dawn": "Amanecer"
+    }
+  },
+  "wiki": {
+    "meta": {
+      "title": "Wiki | RHYTHMIA - Azuretier",
+      "description": "La wiki completa de RHYTHMIA. Modos de juego, mundos, sistema clasificatorio, objetos, crafteo, logros y más."
+    },
+    "backToLobby": "← Lobby",
+    "updatesLink": "Actualizaciones",
+    "contents": "Contenidos",
+    "sectionOverview": "Resumen",
+    "sectionModes": "Modos de Juego",
+    "sectionWorlds": "Mundos",
+    "sectionControls": "Controles",
+    "sectionRanked": "Clasificatorio",
+    "sectionAdvancements": "Logros",
+    "sectionCrafting": "Objetos y Crafteo",
+    "sectionTowerDefense": "Defensa de Torres",
+    "overviewTitle": "¿Qué es RHYTHMIA?",
+    "overviewDesc": "RHYTHMIA es un juego de puzzles en el navegador que fusiona la mecánica clásica de bloques con jugabilidad de acción rítmica. Coloca piezas al ritmo, elimina líneas y progresa a través de mundos con temas musicales.",
+    "boardSize": "Tamaño del Tablero",
+    "tetrominoes": "Tetrominós",
+    "worldsLabel": "Mundos",
+    "rotationSystem": "Sistema de Rotación",
+    "advancementsLabel": "Logros",
+    "rankTiersLabel": "Niveles de Rango",
+    "coreMechanics": "Mecánicas Principales",
+    "mechanic1": "Sistema de Rotación Super (SRS) para rotación de piezas con patadas de pared",
+    "mechanic2": "Función de reserva y vista previa de la siguiente pieza",
+    "mechanic3": "Efectos visuales sincronizados con el ritmo (VFX)",
+    "mechanic4": "Puntos de bonificación por acciones al ritmo",
+    "mechanic5": "Sistema de combo con modo Fever (10+ combos)",
+    "modesTitle": "Modos de Juego",
+    "vanillaTitle": "Un Jugador",
+    "vanillaDesc": "Juega en solitario a través de 5 mundos con temas musicales. Destruye terreno, recoge objetos y craftea armas para avanzar más. Cada mundo aumenta el BPM, exigiendo reflejos más rápidos y ritmo más preciso.",
+    "terrainDestruction": "Destrucción de Terreno",
+    "itemDrops": "Objetos",
+    "craftingFeat": "Crafteo",
+    "worldProgression": "Progresión de Mundos",
+    "battleTitle": "Arena de Batalla",
+    "battleDesc": "Batallas 1v1 en tiempo real por WebSocket. Envía líneas basura a tu oponente eliminando líneas. Compatible con clasificatorio con progresión de niveles. Si no se encuentra oponente en 8 segundos, un rival IA lo reemplaza.",
+    "rankedFeat": "Clasificatorio",
+    "aiFallback": "IA de Respaldo",
+    "battleNote": "Se desbloquea al obtener 3 logros",
+    "arenaTitle": "Arena de 9 Jugadores",
+    "arenaDesc": "Hasta 9 jugadores compiten en una batalla rítmica con tempo compartido. Trucos aleatorios, niveles de caos crecientes y colapsos de tempo crean partidas únicas. Múltiples condiciones de victoria: último en pie, colapso de tempo o sobrecarga de caos.",
+    "ninePlayers": "9 Jugadores",
+    "rhythmSync": "Sincronización Rítmica",
+    "gimmicks": "Trucos",
+    "chaosLabel": "Caos",
+    "worldsSectionTitle": "Mundos",
+    "worldsDesc": "RHYTHMIA tiene 5 mundos distintos, cada uno con un BPM y tema de color único. Los mundos progresan al completar etapas, avanzando al siguiente mundo cada 4 etapas. Mayor BPM exige juego más rápido.",
+    "melodia": "Melodia",
+    "harmonia": "Harmonia",
+    "crescenda": "Crescenda",
+    "fortissimo": "Fortissimo",
+    "silenceChamber": "Cámara del Silencio",
+    "worldProgressionTitle": "Progresión de Mundos",
+    "worldProg1": "4 etapas por mundo antes de avanzar",
+    "worldProg2": "Elimina terreno con líneas para completar una etapa",
+    "worldProg3": "4 bloques de terreno destruidos por línea eliminada",
+    "worldProg4": "El multiplicador de ritmo aumenta el daño al terreno",
+    "controlsTitle": "Controles",
+    "controlsDesc": "Los controles se pueden personalizar en el juego. Los valores predeterminados de DAS (Delayed Auto Shift), ARR (Auto Repeat Rate) y SDF (Soft Drop Factor) se muestran a continuación.",
+    "actionHeader": "Acción",
+    "defaultKey": "Tecla Predeterminada",
+    "moveLeft": "Mover Izquierda",
+    "moveRight": "Mover Derecha",
+    "softDrop": "Caída Suave",
+    "hardDrop": "Caída Dura",
+    "rotateCW": "Rotar Derecha",
+    "rotateCCW": "Rotar Izquierda",
+    "hold": "Reservar",
+    "inventoryKey": "Inventario",
+    "shopKey": "Tienda",
+    "forgeKey": "Forja",
+    "timingSettings": "Configuración de Tiempo",
+    "dasDesc": "Retraso inicial de repetición",
+    "arrDesc": "Intervalo de auto-repetición",
+    "sdfDesc": "Velocidad de caída suave",
+    "lockDelay": "Retraso de Bloqueo",
+    "lockDelayDesc": "Período de gracia antes del bloqueo",
+    "rankedTitle": "Sistema Clasificatorio",
+    "rankedDesc": "El sistema clasificatorio usa un sistema de puntos estilo Arena. Cada partida cuesta un Bus Fare (cuota de entrada) y ganar otorga puntos de bonificación. Las victorias consecutivas dan bonificaciones de racha. Los puntos no pueden bajar de 0.",
+    "tierHeader": "Nivel",
+    "pointsHeader": "Puntos",
+    "busFareHeader": "Cuota de Entrada",
+    "winRewardHeader": "Recompensa",
+    "openI": "Open I",
+    "openII": "Open II",
+    "openIII": "Open III",
+    "contenderI": "Contender I",
+    "contenderII": "Contender II",
+    "contenderIII": "Contender III",
+    "championI": "Champion I",
+    "championII": "Champion II",
+    "championIII": "Champion III",
+    "streakTitle": "Bonificación por Racha",
+    "streakDesc": "Las victorias consecutivas dan puntos de bonificación: 2 victorias = +5, 3 = +10, 4 = +15, 5 = +20, 6+ = +25",
+    "matchmakingTitle": "Emparejamiento",
+    "matchmaking1": "Empareja jugadores con diferencia de 500 puntos",
+    "matchmaking2": "Tiempo de espera: 8 segundos",
+    "matchmaking3": "Cambia a oponente IA si se agota el tiempo",
+    "advancementsTitle": "Logros",
+    "advancementsDesc": "RHYTHMIA tiene más de 45 logros que se desbloquean automáticamente al jugar. El progreso se guarda en almacenamiento local y Firestore. Aparecen notificaciones al desbloquear. La Arena de Batalla requiere 3 logros para desbloquearse.",
+    "catLines": "Líneas",
+    "catScore": "Puntuación",
+    "catTSpin": "T-Spin",
+    "catMultiplayer": "Multijugador",
+    "lineBeginner": "Principiante de Líneas",
+    "lineBeginnerDesc": "Elimina 10 líneas en total",
+    "lineApprentice": "Aprendiz de Líneas",
+    "lineApprenticeDesc": "Elimina 50 líneas en total",
+    "lineExpert": "Experto en Líneas",
+    "lineExpertDesc": "Elimina 200 líneas en total",
+    "lineMaster": "Maestro de Líneas",
+    "lineMasterDesc": "Elimina 500 líneas en total",
+    "lineLegend": "Leyenda de Líneas",
+    "lineLegendDesc": "Elimina 1.000 líneas en total",
+    "scoreRookie": "Novato de Puntos",
+    "scoreRookieDesc": "Acumula 10.000 puntos en total",
+    "scoreHunter": "Cazador de Puntos",
+    "scoreHunterDesc": "Acumula 100.000 puntos en total",
+    "scoreMaster": "Maestro de Puntos",
+    "scoreMasterDesc": "Acumula 1.000.000 puntos en total",
+    "scoreLegend": "Leyenda de Puntos",
+    "scoreLegendDesc": "Acumula 10.000.000 puntos en total",
+    "firstTwist": "Primer Giro",
+    "firstTwistDesc": "Realiza tu primer T-Spin",
+    "spinDoctor": "Doctor del Giro",
+    "spinDoctorDesc": "Realiza 10 T-Spins",
+    "tSpinExpert": "Experto en T-Spin",
+    "tSpinExpertDesc": "Realiza 50 T-Spins",
+    "tSpinLegend": "Leyenda del T-Spin",
+    "tSpinLegendDesc": "Realiza 200 T-Spins",
+    "firstVictory": "Primera Victoria",
+    "firstVictoryDesc": "Gana tu primera partida multijugador",
+    "arenaFighter": "Luchador de Arena",
+    "arenaFighterDesc": "Gana 10 partidas multijugador",
+    "arenaChampion": "Campeón de Arena",
+    "arenaChampionDesc": "Gana 50 partidas multijugador",
+    "hotStreak": "Racha Caliente",
+    "hotStreakDesc": "Gana 3 partidas seguidas",
+    "unbreakable": "Irrompible",
+    "unbreakableDesc": "Gana 10 partidas seguidas",
+    "additionalCatTitle": "Categorías Adicionales",
+    "additionalCat1": "Combo: Alcanza combos de 3, 10, 20",
+    "additionalCat2": "Tetris: Elimina 4 líneas a la vez (1, 10, 50 veces)",
+    "additionalCat3": "Ritmos Perfectos: 10, 50 por partida",
+    "additionalCat4": "Caídas Duras: 100, 1.000 en total",
+    "additionalCat5": "Piezas Colocadas: 100, 1.000, 10.000 en total",
+    "additionalCat6": "Partidas Jugadas: 1, 10, 50, 100",
+    "additionalCat7": "Viajero del Mundo: Completa 5 mundos",
+    "craftingTitle": "Objetos y Crafteo",
+    "craftingDesc": "Los objetos caen al destruir terreno. Recoge materiales y craftea armas para aumentar el daño al terreno. Los objetos más raros tienen menor tasa de caída.",
+    "materialsTitle": "Materiales",
+    "weaponsTitle": "Armas",
+    "materialHeader": "Material",
+    "rarityHeader": "Rareza",
+    "dropRateHeader": "Tasa de Caída",
+    "stoneFragment": "Fragmento de Piedra",
+    "ironOre": "Mineral de Hierro",
+    "crystalShard": "Fragmento de Cristal",
+    "goldNugget": "Pepita de Oro",
+    "obsidianCore": "Núcleo de Obsidiana",
+    "starFragment": "Fragmento de Estrella",
+    "common": "Común",
+    "uncommon": "Poco Común",
+    "rare": "Raro",
+    "epic": "Épico",
+    "legendary": "Legendario",
+    "weaponHeader": "Arma",
+    "damageHeader": "Daño",
+    "specialHeader": "Especial",
+    "recipeHeader": "Receta",
+    "stoneBlade": "Espada de Piedra",
+    "ironPickaxe": "Pico de Hierro",
+    "crystalWand": "Varita de Cristal",
+    "goldHammer": "Martillo de Oro",
+    "obsidianEdge": "Filo de Obsidiana",
+    "starCannon": "Cañón Estelar",
+    "wideBeat": "Ritmo Amplio",
+    "shatter": "Destrozo",
+    "burst": "Explosión",
+    "stoneBladeRecipe": "3x Piedra",
+    "ironPickaxeRecipe": "3x Hierro",
+    "crystalWandRecipe": "2x Cristal + 2x Piedra",
+    "goldHammerRecipe": "2x Oro + 2x Hierro",
+    "obsidianEdgeRecipe": "1x Obsidiana + 2x Hierro",
+    "starCannonRecipe": "1x Estrella + 2x Cristal",
+    "towerDefenseTitle": "Defensa de Torres",
+    "towerDefenseDesc": "El modo Vanilla incluye mecánicas de defensa de torres. Una torre se sitúa en el centro de una cuadrícula. Los enemigos aparecen desde el perímetro al ritmo y avanzan hacia la torre. Las líneas eliminadas destruyen enemigos y las torretas disparan automáticamente.",
+    "towerHP": "HP de Torre",
+    "enemyReachDMG": "Daño de Llegada",
+    "enemyHP": "HP Enemigo",
+    "killsPerLine": "Muertes por Línea",
+    "gridSystem": "Sistema de Cuadrícula",
+    "grid1": "Los enemigos se mueven 1 casilla por turno en la cuadrícula (solo ortogonal)",
+    "grid2": "La cuadrícula se extiende 18 casillas desde el centro en cada dirección",
+    "grid3": "Los enemigos aparecen en el perímetro de distancia Manhattan 18",
+    "grid4": "La torreta dispara cada 1.000ms, velocidad de bala: 18 unidades/seg",
+    "grid5": "Las balas siguen arcos parabólicos (gravedad: 40 unidades/seg²)",
+    "sectionTutorials": "Tutorials",
+    "sectionTutBeginner": "Beginner",
+    "sectionTutIntermediate": "Intermediate",
+    "sectionTutAdvanced": "Advanced",
+    "tutBeginnerTitle": "Beginner Tutorials",
+    "tutBeginnerIntro": "Start your RHYTHMIA journey with these fundamental tutorials. Learn the basic controls, stacking techniques, and rhythm timing to build a solid foundation.",
+    "tut1Title": "1. Basic Controls & Movement",
+    "tut1Desc": "Master the fundamental controls to move, rotate, and drop pieces effectively.",
+    "tut1Step1Title": "Movement Keys",
+    "tut1Step1Desc": "Use Arrow Left/A to move pieces left and Arrow Right/D to move right. Practice moving pieces smoothly across the board.",
+    "tut1Step2Title": "Rotation",
+    "tut1Step2Desc": "Press Arrow Up/W/X to rotate clockwise, or Z to rotate counter-clockwise. Experiment with different rotation options to find the best placement.",
+    "tut1Step3Title": "Soft Drop & Hard Drop",
+    "tut1Step3Desc": "Hold Arrow Down/S for soft drop (slower descent with points). Press Space for hard drop (instant placement). Use hard drop to place pieces quickly.",
+    "tut1Step4Title": "Hold Piece",
+    "tut1Step4Desc": "Press C or Shift to hold the current piece for later use. This is crucial for saving pieces you need for specific situations.",
+    "tut2Title": "2. Clean Stacking",
+    "tut2Desc": "Learn how to build a clean, flat stack that's easy to manage and clear lines from.",
+    "tut2Step1Title": "Avoid Gaps",
+    "tut2Step1Desc": "Always try to place pieces without leaving empty holes. Gaps make it harder to clear lines and can lead to a messy board.",
+    "tut2Step2Title": "Keep It Flat",
+    "tut2Step2Desc": "Maintain an even height across your board. Avoid creating tall towers or deep valleys unless you have a specific strategy.",
+    "tut2Step3Title": "Plan Ahead",
+    "tut2Step3Desc": "Look at the next piece preview and think about where each piece will go. Planning 2-3 pieces ahead will help you avoid mistakes.",
+    "tut3Title": "3. Rhythm Timing Basics",
+    "tut3Desc": "Understand the rhythm system and how timing your drops to the beat earns bonus points.",
+    "tut3Step1Title": "Listen to the Beat",
+    "tut3Step1Desc": "Each world has a unique BPM (beats per minute). Pay attention to the music and visual cues that mark the beat.",
+    "tut3Step2Title": "Drop on the Beat",
+    "tut3Step2Desc": "Try to hard drop your pieces exactly on the beat. You'll see visual effects and earn bonus points when you time it correctly.",
+    "tut3Step3Title": "Practice Timing",
+    "tut3Step3Desc": "Start with slower worlds (100-110 BPM) to practice timing. As you improve, move to faster worlds for greater challenges and rewards.",
+    "tutIntermediateTitle": "Intermediate Tutorials",
+    "tutIntermediateIntro": "Take your skills to the next level with these intermediate techniques. Learn combo chains, recovery strategies, and advanced scoring methods.",
+    "tut4Title": "4. Building Combo Chains",
+    "tut4Desc": "Learn how to create consecutive line clears (combos) to maximize your score and attack power in battles.",
+    "tut4Step1Title": "Understanding Combos",
+    "tut4Step1Desc": "A combo occurs when you clear lines on consecutive piece placements without breaks. Each combo adds bonus points and increases your multiplier.",
+    "tut4Step2Title": "Setup Your Stack",
+    "tut4Step2Desc": "Build your board with multiple clearable lines ready. Leave strategic gaps that can be filled to trigger continuous clears.",
+    "tut4Step3Title": "Chain Clearing",
+    "tut4Step3Desc": "Clear one line, then immediately clear another with your next piece. Continue this pattern to build long combo chains.",
+    "tut4Step4Title": "Fever Mode",
+    "tut4Step4Desc": "Reach 10+ combos to activate Fever mode, which grants massive point bonuses and special visual effects.",
+    "tut5Title": "5. Downstacking Techniques",
+    "tut5Desc": "Master the art of quickly reducing your stack height, especially when under pressure from garbage lines.",
+    "tut5Step1Title": "Identify Problem Areas",
+    "tut5Step1Desc": "Look for high spots and trapped gaps in your stack. These are your priority targets for clearing.",
+    "tut5Step2Title": "Fast Placement",
+    "tut5Step2Desc": "Use hard drops and quick rotations to place pieces rapidly. Speed is essential when downstacking under pressure.",
+    "tut5Step3Title": "Clear Efficiently",
+    "tut5Step3Desc": "Focus on clearing multiple lines at once when possible. Double, triple, and quad line clears reduce your stack faster than singles.",
+    "tut6Title": "6. Back-to-Back (B2B) Chains",
+    "tut6Desc": "Learn how to maintain Back-to-Back chains for increased attack power and scoring.",
+    "tut6Step1Title": "What is B2B?",
+    "tut6Step1Desc": "B2B occurs when you clear difficult lines (Tetris, T-Spin) consecutively. Each B2B clear adds bonus points and extra garbage lines in multiplayer.",
+    "tut6Step2Title": "Setting Up Tetris",
+    "tut6Step2Desc": "Keep a vertical column open for I-pieces. Clear 4 lines at once (Tetris) to start or continue your B2B chain.",
+    "tut6Step3Title": "Maintaining the Chain",
+    "tut6Step3Desc": "After a Tetris, immediately setup another Tetris or T-Spin. If you clear 1-3 lines normally, your B2B chain breaks and you must start over.",
+    "tutAdvancedTitle": "Advanced Tutorials",
+    "tutAdvancedIntro": "Master the most challenging techniques in RHYTHMIA. These advanced strategies will help you dominate ranked matches and achieve top scores.",
+    "tut7Title": "7. T-Spin Mastery",
+    "tut7Desc": "Learn T-Spin techniques to maximize your scoring potential and send devastating attacks in multiplayer.",
+    "tut7Step1Title": "T-Spin Basics",
+    "tut7Step1Desc": "A T-Spin occurs when you rotate a T-piece into a position it couldn't slide into. This requires a specific setup with three corners blocked.",
+    "tut7Step2Title": "T-Spin Single & Double",
+    "tut7Step2Desc": "T-Spin Single clears 1 line, T-Spin Double clears 2. Doubles are more powerful and preferred in competitive play.",
+    "tut7Step3Title": "Common Setups",
+    "tut7Step3Desc": "Learn standard T-Spin patterns like overhang setups, fin setups, and kaidan stairs. Practice these in single player before using them in battles.",
+    "tut7Step4Title": "Integrating with Combos",
+    "tut7Step4Desc": "Combine T-Spins with combo chains for maximum effect. A T-Spin Double in a combo chain can send massive garbage to opponents.",
+    "tut8Title": "8. Finesse & Efficiency",
+    "tut8Desc": "Optimize your key presses and movement efficiency to achieve maximum speed and precision.",
+    "tut8Step1Title": "Minimize Inputs",
+    "tut8Step1Desc": "Finesse means placing each piece with the minimum number of key presses. Study optimal paths for each piece to each position.",
+    "tut8Step2Title": "Rotation Efficiency",
+    "tut8Step2Desc": "Choose the shorter rotation direction. If a piece needs to rotate 270° clockwise, rotate 90° counter-clockwise instead.",
+    "tut8Step3Title": "Movement Patterns",
+    "tut8Step3Desc": "Practice efficient movement patterns: move while the piece spawns, use DAS (Delayed Auto Shift) effectively, and minimize wasted movements.",
+    "tut9Title": "9. Advanced Opening Strategies",
+    "tut9Desc": "Master opening patterns (openers) to start each game with a strong foundation and early attack potential.",
+    "tut9Step1Title": "Common Openers",
+    "tut9Step1Desc": "Learn standard openers like TKI, DT Cannon, or Perfect Clear openers. These provide early B2B chains and strong attack power.",
+    "tut9Step2Title": "Perfect Clear (PC)",
+    "tut9Step2Desc": "A Perfect Clear happens when you clear your entire board. PC openers send massive garbage (10+ lines) in multiplayer matches.",
+    "tut9Step3Title": "Adapting to Pieces",
+    "tut9Step3Desc": "Your opener choice depends on your piece sequence. Learn to recognize which opener works best with your starting pieces.",
+    "tut9Step4Title": "Transition to Mid-Game",
+    "tut9Step4Desc": "After your opener, smoothly transition to your mid-game strategy. Maintain your B2B chain and continue applying pressure."
+  },
+  "nav": {
+    "wiki": "Wiki",
+    "updates": "Actualizaciones",
+    "lobby": "Lobby"
+  },
+  "skin": {
+    "title": "Perfil y Skin",
+    "selectSkin": "Seleccionar Skin de Color",
+    "currentSkin": "Skin Actual",
+    "selectLanguage": "Idioma",
+    "privacy": "Privacidad",
+    "profileButton": "Perfil"
+  },
+  "uiTheme": {
+    "selectTheme": "Tema de UI",
+    "neoFuturistic": "Neo-Futuristic",
+    "pixelNostalgia": "Pixel Nostalgia",
+    "neoDesc": "Estética elegante y moderna con efectos de vidrio esmerilado",
+    "pixelDesc": "Estética retro de pixel art 8-bit/16-bit con efectos CRT"
+  },
+  "googleSync": {
+    "sectionTitle": "Sincronización con Cuenta de Google",
+    "description": "Inicia sesión con Google para sincronizar tu perfil, logros, progreso de lealtad y configuración de skin entre dispositivos.",
+    "signIn": "Iniciar sesión con Google",
+    "signOut": "Cerrar sesión",
+    "linking": "Conectando...",
+    "syncing": "Sincronizando...",
+    "syncNow": "Sincronizar ahora",
+    "synced": "Sincronizado",
+    "error": "Error de sincronización"
+  },
+  "stories": {
+    "title": "STORIES",
+    "chapter": "CHAPTER",
+    "backToLobby": "← Volver",
+    "log": "LOG",
+    "auto": "AUTO",
+    "skip": "SKIP",
+    "menu": "MENU",
+    "logTitle": "Registro de Texto",
+    "close": "Cerrar",
+    "resume": "Reanudar",
+    "chapterSelect": "Selección de Capítulo"
+  }
 }
