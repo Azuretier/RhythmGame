@@ -162,8 +162,8 @@ function TargetSelector({
 }) {
   const modes: { mode: TargetMode; label: string }[] = [
     { mode: 'random', label: 'RNG' },
-    { mode: 'ko_leader', label: 'KOs' },
-    { mode: 'nearest', label: 'NEAR' },
+    { mode: 'strongest', label: 'TOP' },
+    { mode: 'weakest', label: 'BOT' },
   ];
 
   return (
@@ -739,7 +739,7 @@ export default function ArenaGame() {
           e.preventDefault();
           // Cycle target mode
           {
-            const modes: TargetMode[] = ['random', 'ko_leader', 'nearest'];
+            const modes: TargetMode[] = ['random', 'strongest', 'weakest'];
             const currentIdx = modes.indexOf(targetMode);
             const nextMode = modes[(currentIdx + 1) % modes.length];
             setTargetMode(nextMode);
@@ -1265,7 +1265,7 @@ export default function ArenaGame() {
                 <div className={styles.rankingName}>{r.playerName}</div>
                 <div className={styles.rankingStat}>{r.score} pts</div>
                 <div className={styles.rankingStat}>{r.kills} KO</div>
-                <div className={styles.rankingStat}>{r.powerUpsUsed} PWR</div>
+                <div className={styles.rankingStat}>{r.lines} lines</div>
                 <div className={styles.rankingStat}>{Math.round(r.avgSync * 100)}%</div>
               </div>
             ))}

@@ -49,7 +49,7 @@ import {
   RhythmVFX,
   FloatingItems,
   ItemSlots,
-  CardSelectUI,
+  CraftingUI,
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
@@ -1340,16 +1340,17 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         />
       )}
 
-      {/* Card selection overlay */}
+      {/* Card selection overlay - now using CraftingUI */}
       {showCardSelect && (
-        <CardSelectUI
-          offers={offeredCards}
+        <CraftingUI
           inventory={inventory}
-          equippedCards={equippedCards}
-          onSelect={selectCard}
-          onSkip={skipCardSelect}
-          worldIdx={worldIdx}
-          stageNumber={stageNumber}
+          craftedCards={equippedCards}
+          onCraft={(cardId) => {
+            // Stub: old card select system, need to adapt to crafting
+            return false;
+          }}
+          canCraft={(cardId) => false}
+          onClose={skipCardSelect}
         />
       )}
 

@@ -352,6 +352,18 @@ export interface ArenaSessionEndMessage {
   stats: ArenaSessionStats;
 }
 
+export interface ArenaFeedEvent {
+  id: string;
+  text: string;
+  color: string;
+  timestamp: number;
+}
+
+export interface ArenaEventFeedMessage {
+  type: 'arena_event_feed';
+  event: ArenaFeedEvent;
+}
+
 export interface ArenaQueuedMessage {
   type: 'arena_queued';
   position: number;
@@ -395,6 +407,7 @@ export type ArenaServerMessage =
   | ArenaPlayerEliminatedMessage
   | ArenaRelayedMessage
   | ArenaSessionEndMessage
+  | ArenaEventFeedMessage
   | ArenaQueuedMessage
   | ArenaTempoCollapseMessage
   | ArenaEmoteBroadcast

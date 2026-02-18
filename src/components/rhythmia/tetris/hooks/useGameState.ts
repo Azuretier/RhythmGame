@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, CraftedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
@@ -123,7 +123,7 @@ export function useGameState() {
     const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
 
     // ===== Rogue-Like Card System =====
-    const [equippedCards, setEquippedCards] = useState<EquippedCard[]>([]);
+    const [equippedCards, setCraftedCards] = useState<CraftedCard[]>([]);
     const [showCardSelect, setShowCardSelect] = useState(false);
     const [offeredCards, setOfferedCards] = useState<CardOffer[]>([]);
     const [activeEffects, setActiveEffects] = useState<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
@@ -169,7 +169,7 @@ export function useGameState() {
     const tdBeatsRemainingRef = useRef(tdBeatsRemaining);
     const gamePhaseRef = useRef<GamePhase>(gamePhase);
     const inventoryRef = useRef<InventoryItem[]>(inventory);
-    const equippedCardsRef = useRef<EquippedCard[]>(equippedCards);
+    const equippedCardsRef = useRef<CraftedCard[]>(equippedCards);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -294,7 +294,7 @@ export function useGameState() {
     // ===== Rogue-Like Card System =====
 
     // Compute active effects from all equipped cards
-    const computeActiveEffects = useCallback((cards: EquippedCard[]): ActiveEffects => {
+    const computeActiveEffects = useCallback((cards: CraftedCard[]): ActiveEffects => {
         // Note: The old card attribute system was removed in the weapon card refactor
         // This function now just returns the default effects as a stub
         // TODO: Implement effects based on WeaponCard.specialEffect if needed
@@ -402,9 +402,9 @@ export function useGameState() {
         setInventory(invCopy.filter(i => i.count > 0));
 
         // Add or stack equipped card
-        setEquippedCards(prev => {
+        setCraftedCards(prev => {
             const existing = prev.find(ec => ec.cardId === cardId);
-            let updated: EquippedCard[];
+            let updated: CraftedCard[];
             if (existing) {
                 updated = prev.map(ec =>
                     ec.cardId === cardId
@@ -947,7 +947,7 @@ export function useGameState() {
         setTerrainParticles([]);
 
         // Reset rogue-like card state
-        setEquippedCards([]);
+        setCraftedCards([]);
         equippedCardsRef.current = [];
         setShowCardSelect(false);
         setOfferedCards([]);

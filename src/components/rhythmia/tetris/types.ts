@@ -128,6 +128,23 @@ export type CraftedCard = {
     craftedAt: number;
 };
 
+export type ActiveEffects = {
+    comboGuardUsesRemaining: number;
+    shieldActive: boolean;
+    terrainSurgeBonus: number;
+    beatExtendBonus: number;
+    scoreBoostMultiplier: number;
+    gravitySlowFactor: number;
+    luckyDropsBonus: number;
+    comboAmplifyFactor: number;
+};
+
+export type CardOffer = {
+    card: WeaponCard;
+    scaledCost: { itemId: string; count: number }[];
+    affordable: boolean;
+};
+
 // ===== Tower Defense =====
 
 // Grid position for block-based movement (orthogonal only, 1 tile per turn)
