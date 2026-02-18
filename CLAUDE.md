@@ -2,33 +2,31 @@
 
 ## Project Overview
 
-**azuretier.net** (package name: `azuret.net`) is a full-stack interactive portfolio and gaming platform built with Next.js 16 and TypeScript. It features multiplayer rhythm/battle games (Rhythmia) with ranked matchmaking, an advancements (achievements) system, Discord community integration, rank card systems, a blog, and WebGL/Three.js visual effects. The site is internationalized with next-intl, supporting Japanese (default) and English locales.
+**azuretier.net** (package name: `azuret.net`) is a full-stack gaming platform built with Next.js 16 and TypeScript. It features multiplayer rhythm/battle games (Rhythmia) with ranked matchmaking, a 9-player arena mode, a Minecraft-style board game, an advancements (achievements) system, loyalty rewards, profile customization with skin theming, interactive stories, a wiki, and WebGL/Three.js visual effects. The site is internationalized with next-intl, supporting Japanese (default), English, Thai, Spanish, and French locales.
 
 ## Tech Stack
 
 - **Framework**: Next.js 16.1.5 (App Router) with React 18
 - **Language**: TypeScript (strict mode)
 - **Styling**: Tailwind CSS 3.4 + CSS Modules + Framer Motion 11
-- **UI Components**: Radix UI primitives (shadcn/ui pattern)
-- **3D/Graphics**: Three.js 0.179, WebGL shaders (GLSL), WebGPU (experimental)
+- **UI Components**: Radix UI primitives (shadcn/ui pattern), Phosphor Icons, Lucide React
+- **3D/Graphics**: Three.js 0.179 (`@react-three/fiber` + `@react-three/drei`), WebGL shaders (GLSL), WebGPU (experimental)
 - **Real-time**: Socket.IO 4.8 + raw WebSocket (`ws`)
 - **Database**: Firebase 12 (Firestore) + Firebase Admin 13 — multiple projects for different features
-- **Discord**: discord.js 14 + OAuth2
-- **Internationalization**: next-intl 4.8 (ja/en locales, `as-needed` prefix strategy)
-- **Analytics**: Google Analytics via `@next/third-parties`
+- **AI**: Google Generative AI (`@google/generative-ai`) — powers the For You tab recommendations
+- **Internationalization**: next-intl 4.8 (ja/en/th/es/fr locales, `as-needed` prefix strategy)
+- **Analytics**: Google Analytics via `@next/third-parties` + Vercel Analytics (`@vercel/analytics`)
 - **Deployment**: Vercel (main app) + Railway (multiplayer WebSocket server)
 
 ## Commands
 
 ```bash
 npm run dev          # Start dev server with Socket.IO (localhost:3000)
-npm run build        # Next.js production build + next-sitemap
+npm run build        # Next.js production build + next-sitemap (postbuild)
 npm run start        # Production server with Socket.IO
 npm run lint         # ESLint (next/core-web-vitals + next/typescript)
 npm run multiplayer  # Start standalone WebSocket multiplayer server (port 3001)
 ```
-
-> **Note**: Discord bot scripts (`bot:*`) are defined in package.json but the `apps/discord-bot/` directory does not exist in the repository. These scripts are non-functional.
 
 ## Architecture
 
@@ -39,62 +37,120 @@ src/
 ├── app/                    # Next.js App Router pages and layouts
 │   ├── layout.tsx          # Minimal root layout (delegates to [locale])
 │   ├── provider.tsx        # Client providers (AnimatePresence → ThemeProvider → NotificationProvider)
+│   ├── data.ts             # App-level data configuration
+│   ├── globals.css         # Global styles
 │   ├── [locale]/           # Locale-based routing (next-intl)
-│   │   ├── layout.tsx      # Main layout (NextIntlClientProvider → VersionProvider → Provider)
-│   │   └── page.tsx        # Home page (Rhythmia game)
+│   │   ├── layout.tsx      # Main layout (providers, SEO metadata, JSON-LD, Google Analytics)
+│   │   ├── page.tsx        # Home page (version-switched: v1.0.0/v1.0.1/v1.0.2/RhythmiaLobby)
+│   │   ├── arena/          # Arena game mode route
+│   │   ├── chapter/        # Story chapter route
+│   │   ├── loyalty/        # Loyalty dashboard route
+│   │   ├── minecraft-board/# Minecraft board game route
+│   │   ├── stories/        # Stories viewer route
+│   │   ├── updates/        # Updates/changelog route
+│   │   └── wiki/           # Wiki route
+│   ├── api/                # API routes
+│   │   ├── for-you/        # Gemini AI-powered content recommendations
+│   │   └── site-entry/     # Discord webhook for new player profile notifications
 │   ├── blog/               # Blog route
 │   ├── shader-demo/        # WebGL shader demo route
 │   ├── sns-widgets/        # Social media widgets route
 │   ├── sunphase/           # WebGPU heartbeat demo route
 │   └── fonts/              # Local font files (Geist Sans + Mono)
 ├── components/             # React components organized by feature
-│   ├── home/               # Homepage components (v1.0.0 and v1.0.1 variants)
+│   ├── home/               # Homepage components
+│   │   ├── v1.0.0/         # Discord UI variant
+│   │   ├── v1.0.1/         # Patreon UI variant
+│   │   ├── v1.0.2/         # Minecraft panorama variant
+│   │   ├── InteractiveHomepage.tsx
+│   │   ├── LoadingScreen.tsx
+│   │   ├── MessengerUI.tsx
+│   │   ├── ResponseCard.tsx
+│   │   └── WebGLBackground.tsx
 │   ├── rhythmia/           # Rhythm game — main game, tetris engine, multiplayer, ranked
+│   │   ├── tetris/         # Core tetris engine (Board, pieces, hooks, transitions)
+│   │   ├── chapter-player/ # Story chapter playback in rhythm game
+│   │   ├── VanillaGame.tsx, MultiplayerBattle.tsx, RankedMatch.tsx, MobBattle.tsx
+│   │   ├── MultiplayerGame.tsx, RhythmiaLobby.tsx, Rhythmia.tsx
+│   │   ├── ForYouTab.tsx, Advancements.tsx, LifeJourney.tsx
+│   │   ├── ForestCampfireScene.tsx, VoxelWorldBackground.tsx, WebGPUStage.tsx
+│   │   └── Heartbeat.tsx, ParticleSystem.tsx, PixelIcon.tsx
+│   ├── arena/              # 9-player arena game (ArenaGame.tsx)
+│   ├── minecraft-board/    # Minecraft board game (MinecraftBoardGame, BoardRenderer, CraftingPanel, PlayerHUD)
 │   ├── game/               # Multiplayer game UI (lobby, leaderboard, room creation)
 │   ├── effects/            # Visual effects (floating particles)
-│   ├── portfolio/          # Portfolio display (WindowFrame)
+│   ├── portfolio/          # Portfolio display (WindowFrame, ModelViewer)
 │   ├── rank-card/          # Discord rank card components
 │   ├── blog/               # Blog components (navbar, profile, post-card)
 │   ├── MNSW/               # Voxel engine UI (panorama background)
 │   ├── sns-widgets/        # Social widgets (Discord, GitHub, YouTube, Twitter, Instagram)
 │   ├── version/            # Version selector UI (VersionSelector, FloatingVersionSwitcher)
-│   └── main/               # Shared UI components (Button, animations, utilities)
+│   ├── loyalty/            # Loyalty system (LoyaltyDashboard, LoyaltyWidget)
+│   ├── profile/            # Player profile (ProfileSetup, SkinCustomizer, ThemeSwitcher, OnlineUsers)
+│   ├── stories/            # Story viewer (StoryViewer)
+│   ├── wiki/               # Wiki page (WikiPage)
+│   ├── main/               # Shared UI (NotificationCenter, UpdatesPage, UpdatesPanel, WhatsNewBanner, animations)
+│   ├── LocaleSwitcher.tsx  # Language switcher component
+│   └── ModelViewer.tsx     # 3D model viewer
+├── data/                   # Static data files
+│   ├── chapters/           # Story chapter data
+│   └── stories/            # Story content data
 ├── lib/                    # Business logic and utilities
 │   ├── game/               # GameManager (Socket.IO room/player management)
 │   ├── multiplayer/        # RoomManager + FirestoreRoomService (WebSocket rooms)
 │   ├── ranked/             # Ranked matchmaking (TetrisAI, tiers, queue management)
+│   ├── arena/              # ArenaManager (9-player arena room logic)
+│   ├── minecraft-board/    # MinecraftBoardManager, recipes, world generation
+│   ├── mob-battle/         # Mob battle constants and types
 │   ├── advancements/       # Achievements system (definitions, Firestore sync, local storage)
+│   ├── loyalty/            # Loyalty rewards (constants, Firestore, storage, types)
+│   ├── profile/            # Player profile context, storage, and types
+│   ├── skin/               # Skin customization context, storage, and types
+│   ├── theme/              # UI theme context, storage, and types
+│   ├── google-sync/        # Google account sync (context, Firestore, service)
 │   ├── notifications/      # Notification context provider and types
 │   ├── discord-community/  # Discord OAuth2, role management, rank-card-service
+│   ├── discord-bot/        # Discord bot client and notifications
 │   ├── rank-card/          # Rank card generation (firebase, firebase-admin, utils)
 │   ├── rhythmia/           # Game-specific logic (firebase)
 │   ├── portfolio/          # Portfolio data (firebase)
 │   ├── MNSW/               # Voxel engine (TextureUtils, VoxelEngine, firebase)
-│   ├── version/            # Version selection context + local storage persistence
+│   ├── firebase/           # Shared Firebase utilities (initAppCheck)
+│   ├── updates/            # Changelog data and update entries
+│   ├── version/            # Version selection context, types, storage persistence
 │   ├── intent/             # Intent parser for command interpretation
 │   └── utils.ts            # cn() utility (clsx + tailwind-merge)
 ├── hooks/                  # Custom React hooks
 │   ├── useGameSocket.ts    # Socket.IO connection hook
+│   ├── useArenaSocket.ts   # Arena WebSocket connection hook
+│   ├── useMinecraftBoardSocket.ts  # Minecraft board WebSocket hook
+│   ├── useSlideScroll.ts   # Slide-based scroll navigation
 │   ├── use-mobile.ts       # Mobile detection
 │   ├── use-kv.ts           # Key-value storage
 │   └── useLocalStorage.ts  # Local storage persistence
 ├── i18n/                   # Internationalization configuration
-│   ├── routing.ts          # Locale routing (ja default, en secondary, as-needed prefix)
+│   ├── routing.ts          # Locale routing (ja default, en/th/es/fr secondary, as-needed prefix)
 │   ├── request.ts          # next-intl server request config
 │   └── navigation.ts       # Locale-aware navigation helpers
 ├── types/                  # TypeScript type definitions
 │   ├── game.ts             # Socket.IO event types (Player, Room, GAME_CONFIG)
 │   ├── multiplayer.ts      # WebSocket protocol types (ClientMessage, ServerMessage)
+│   ├── arena.ts            # Arena types (ArenaPlayer, ArenaRoomState, gimmicks, chaos system)
+│   ├── minecraft-board.ts  # Minecraft board types (blocks, items, mobs, world, crafting)
 │   └── community.ts        # Discord community types (RuleProgress)
 ├── styles/                 # Global and module CSS
-└── middleware.ts            # next-intl middleware for locale detection/routing
+│   ├── Home.module.css
+│   ├── MNSW/               # MNSW-specific styles
+│   └── blog/               # Blog-specific styles
+└── middleware.ts           # next-intl middleware for locale detection/routing
 
 # Root-level files
 server.ts                   # Custom Next.js + Socket.IO server
-multiplayer-server.ts       # Standalone WebSocket multiplayer server
-messages/                   # i18n translation files (ja.json, en.json)
+multiplayer-server.ts       # Standalone WebSocket server (1v1, ranked, arena, minecraft-board)
+messages/                   # i18n translation files (ja.json, en.json, th.json, es.json, fr.json)
 declarations.d.ts           # Type declarations (GLSL, WGSL, WebGPU, Spark SDK)
 rhythmia.config.json        # Game version configuration
+for-you.config.json         # For You tab content configuration
 ```
 
 ### Server Architecture
@@ -102,42 +158,66 @@ rhythmia.config.json        # Game version configuration
 The project runs two separate servers:
 
 1. **Main server** (`server.ts`): Custom Node HTTP server wrapping Next.js with Socket.IO for game room management (create/join/leave rooms, score events, reconnection). Port 3000.
-2. **Multiplayer server** (`multiplayer-server.ts`): Standalone WebSocket server for lower-latency room-based multiplayer with tick-based game state (10 ticks/second). Includes ranked matchmaking queue (8s timeout with AI fallback), reconnect tokens, and heartbeat keepalive (15s interval). Port 3001.
+2. **Multiplayer server** (`multiplayer-server.ts`): Standalone WebSocket server for lower-latency room-based multiplayer with tick-based game state (10 ticks/second). Handles multiple game modes: 1v1 battles, ranked matchmaking (8s timeout with AI fallback), 9-player arena (with chaos/gimmick system), and Minecraft board game. Includes reconnect tokens and heartbeat keepalive (15s interval). Port 3001.
 
 ### Provider Hierarchy
 
 ```
 <html lang={locale}>                          ← Dynamic locale from next-intl
   <NextIntlClientProvider messages={messages}> ← i18n translations
-    <VersionProvider>                          ← UI version selection context
-      <AnimatePresence>                        ← Framer Motion page transitions
-        <ThemeProvider>                        ← next-themes (dark mode default, class strategy)
-          <NotificationProvider>               ← In-app notification context
-            {children}
-          </NotificationProvider>
-        </ThemeProvider>
-      </AnimatePresence>
-    </VersionProvider>
+    <UiThemeProvider>                          ← UI theme context (visual theme customization)
+      <GoogleSyncProvider>                     ← Google account sync context
+        <ProfileProvider>                      ← Player profile context
+          <SkinProvider>                       ← Skin customization context
+            <VersionProvider>                  ← UI version selection context
+              <AnimatePresence>                ← Framer Motion page transitions
+                <ThemeProvider>                ← next-themes (dark mode default, class strategy)
+                  <NotificationProvider>       ← In-app notification context
+                    {children}
+                  </NotificationProvider>
+                </ThemeProvider>
+              </AnimatePresence>
+            </VersionProvider>
+          </SkinProvider>
+        </ProfileProvider>
+      </GoogleSyncProvider>
+    </UiThemeProvider>
   </NextIntlClientProvider>
 </html>
 ```
 
 ### Internationalization (next-intl)
 
-- **Locales**: `ja` (default, no URL prefix) and `en` (prefix `/en`)
-- **Strategy**: `as-needed` — Japanese pages have no locale prefix, English pages are prefixed
-- **Messages**: JSON files in `messages/` directory (`ja.json`, `en.json`)
+- **Locales**: `ja` (default, no URL prefix), `en`, `th`, `es`, `fr` (prefixed)
+- **Strategy**: `as-needed` — Japanese pages have no locale prefix, other locales are prefixed
+- **Messages**: JSON files in `messages/` directory (`ja.json`, `en.json`, `th.json`, `es.json`, `fr.json`)
 - **Middleware**: `src/middleware.ts` handles locale detection and routing
 - **Routing config**: `src/i18n/routing.ts` defines supported locales and prefix strategy
-- **SEO**: `[locale]/layout.tsx` generates localized metadata with `hreflang` alternates
+- **SEO**: `[locale]/layout.tsx` generates localized metadata with `hreflang` alternates and JSON-LD structured data
 
 ### Key Feature Systems
 
 **Rhythmia Game Engine** (`components/rhythmia/`):
 - Standalone tetris engine with hooks (useGameState, useAudio, useRhythmVFX)
-- Multiple game modes: Vanilla, Multiplayer Battle, Ranked Match
+- Multiple game modes: Vanilla, Multiplayer Battle, Ranked Match, Mob Battle
 - Visual variants: WebGPU stage, forest campfire scene, voxel world background
-- Crafting UI, health/mana HUD, item system
+- Chapter player for story-driven rhythm gameplay
+- For You tab with Gemini AI-powered recommendations
+- Advancements, life journey tracking, pixel icons
+
+**Arena Mode** (`components/arena/` + `lib/arena/` + `types/arena.ts`):
+- 9-player simultaneous multiplayer arena
+- Shared tempo with synchronized music and beat phases
+- Chaos system with gimmicks (tempo shift, gravity surge, mirror mode, garbage rain, blackout, speed frenzy, freeze frame, shuffle preview)
+- Targeting system (random, leader, nearest, manual) and power-ups
+- Emote system for player communication
+
+**Minecraft Board Game** (`components/minecraft-board/` + `lib/minecraft-board/` + `types/minecraft-board.ts`):
+- Multiplayer board game with Minecraft-inspired mechanics
+- World generation with biomes, blocks, mobs, and day/night cycle
+- Crafting system with recipes, inventory management
+- Mining, combat, tool tiers (hand → wood → stone → iron → diamond)
+- Board renderer with fog-of-war and viewport system
 
 **Ranked Matchmaking** (`lib/ranked/`):
 - Tier-based ranking system with points, divisions, bus fares, and win rewards
@@ -145,15 +225,36 @@ The project runs two separate servers:
 - Queue management with 500-point range matching
 
 **Advancements** (`lib/advancements/`):
-- Achievement system with 13+ advancement types
+- Achievement system with advancement types
 - Local storage with Firestore sync
 - Toast notifications on unlock
 - Battle arena gating (certain advancements required)
 
+**Loyalty System** (`lib/loyalty/` + `components/loyalty/`):
+- Loyalty points and rewards tracking
+- Dashboard and widget components
+- Firestore persistence with local storage fallback
+
+**Profile & Customization** (`lib/profile/` + `lib/skin/` + `lib/theme/`):
+- Player profile setup with persistent storage
+- Skin customization system with context-based state
+- UI theme switching (visual theme customization)
+- Google account sync for cross-device persistence
+
+**Stories & Wiki** (`components/stories/` + `components/wiki/` + `data/`):
+- Interactive story viewer with chapter-based content
+- Wiki page system for game documentation
+- Static story/chapter data in `src/data/`
+
 **Version Selection** (`lib/version/`):
-- Two UI versions: v1.0.0 (Discord UI) and v1.0.1 (Patreon UI)
-- Version selector always shown on visit (no auto-restore from localStorage)
-- Separate component trees per version in `components/home/v1.0.0/` and `v1.0.1/`
+- Three UI versions: v1.0.0 (Discord UI), v1.0.1 (Patreon UI), v1.0.2 (Minecraft panorama)
+- Plus "current" version (RhythmiaLobby — the main game experience)
+- Version selector with FloatingVersionSwitcher component
+
+**Updates System** (`lib/updates/` + `components/main/`):
+- Changelog data with update entries
+- UpdatesPage, UpdatesPanel, and WhatsNewBanner components
+- Notification center for in-app updates
 
 ## Code Conventions
 
@@ -174,6 +275,7 @@ The project runs two separate servers:
 
 - **Tailwind CSS** is the primary styling approach
 - **Custom colors**: `azure-500` (#007FFF), `azure-600` (#0066CC) — use CSS variables for theme colors (`--background`, `--foreground`, `--border`, `--subtext`)
+- **Theme system**: Theme-aware font families (`font-theme-heading`, `font-theme-body`, `font-theme-mono`) and border radii (`rounded-theme`, `rounded-theme-sm`, `rounded-theme-lg`) via CSS variables
 - **Dark mode**: Class-based strategy via `next-themes`, dark is the default theme
 - **Custom fonts**: `font-pixel` (pixel font), `font-sans` (Inter), plus Geist (Sans and Mono) loaded as local fonts, Orbitron and Zen Kaku Gothic New via Google Fonts
 
@@ -185,6 +287,8 @@ The project runs two separate servers:
 - GLSL/WGSL shader files and WebGPU types are declared in `declarations.d.ts`
 - Socket.IO events are fully typed in `src/types/game.ts`
 - WebSocket multiplayer protocol typed in `src/types/multiplayer.ts`
+- Arena protocol typed in `src/types/arena.ts`
+- Minecraft board game types in `src/types/minecraft-board.ts`
 
 ### ESLint
 
@@ -195,21 +299,26 @@ The project runs two separate servers:
 
 The project uses multiple Firebase configurations for isolated feature backends. See `.env.example` for the full list. Key groups:
 
-| Prefix | Purpose |
-|--------|---------|
+| Prefix / Key | Purpose |
+|--------------|---------|
 | `NEXT_PUBLIC_AZURE_SUPPORTER_*` | Discord community Firebase |
 | `NEXT_PUBLIC_MNSW_*` | Voxel engine Firebase |
 | `NEXT_PUBLIC_PORTFOLIO_*` | Portfolio Firebase |
 | `NEXT_PUBLIC_RANKCARD_*` | Rank card Firebase |
 | `NEXT_PUBLIC_RHYTHMIA_*` | Rhythmia game Firebase |
-| `DISCORD_*` | Discord bot token, guild, roles, OAuth2 |
+| `DISCORD_*` | Discord bot token, guild, roles, OAuth2, webhooks |
+| `DISCORD_ONLINE_WEBHOOK_URLS` | Discord webhooks for player online notifications |
+| `DISCORD_SITE_ENTRY_WEBHOOK_URL` | Discord webhook for new player profile events |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Server-side Firebase Admin SDK |
+| `NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY` | Firebase App Check (ReCaptcha v3) |
 | `NEXT_PUBLIC_MULTIPLAYER_URL` | WebSocket server URL |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics measurement ID |
+| `GEMINI_API_KEY` | Google Generative AI key (For You tab) |
+| `NEXT_PUBLIC_THIRD_WIDGET_TITLE` | Homepage widget title configuration |
 
 ## Deployment
 
-- **Vercel**: Main Next.js app deploys via git integration
+- **Vercel**: Main Next.js app deploys via git integration, includes Vercel Analytics
 - **Railway**: Multiplayer WebSocket server (`multiplayer-server.ts`) with Nixpacks builder (Node.js 20, Python 3, gcc, gnumake), health checks at `/health`, auto-restart on failure
 - Configuration files: `railway.json`, `railway.multiplayer.json`, `nixpacks.toml`
 
@@ -223,7 +332,7 @@ Defined in `next.config.mjs` (wrapped with `next-intl` plugin):
 
 ## Testing
 
-No automated test framework is configured. Testing is done manually. See `TESTING.md` for manual test procedures (primarily for Discord role selection features).
+No automated test framework is configured. Testing is done manually.
 
 ## Key Patterns to Follow
 
@@ -233,4 +342,5 @@ No automated test framework is configured. Testing is done manually. See `TESTIN
 4. **Server vs client**: discord.js and Firebase Admin SDK are server-only — ensure they are not imported in client components
 5. **Real-time state**: Game state flows through Socket.IO events (main server) or WebSocket messages (multiplayer server), not through React state directly
 6. **Locale-aware routing**: All page routes go through `[locale]/` — use next-intl's `useTranslations` hook for strings, and the navigation helpers from `@/i18n/navigation` for links
-7. **No automated tests**: When making changes, manually verify behavior. Consider adding tests if introducing complex logic
+7. **Context-based state**: Feature state (profile, skin, theme, version, google-sync) uses React Context with local storage persistence
+8. **No automated tests**: When making changes, manually verify behavior. Consider adding tests if introducing complex logic
