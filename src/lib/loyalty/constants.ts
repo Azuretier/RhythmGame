@@ -55,9 +55,9 @@ export const SCORE_RANK_TIERS: ScoreRankTier[] = [
     icon: '\u266C', // ♬
   },
   {
-    id: 'virtuoso',
-    name: 'Virtuoso',
-    nameJa: 'ヴィルトゥオーソ',
+    id: 'antigravity',
+    name: 'Antigravity',
+    nameJa: 'アンチグラビティ',
     level: 5,
     minScore: 10000000,
     maxScore: Infinity,

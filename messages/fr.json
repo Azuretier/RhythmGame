@@ -672,7 +672,7 @@
             "beat_2": "Beat II",
             "rhythm": "Rhythm",
             "maestro": "Maestro",
-            "virtuoso": "Virtuoso"
+            "virtuoso": "Antigravity"
         },
         "stats": {
             "bestScore": "MEILLEUR SCORE",
@@ -715,7 +715,7 @@
             "1": {
                 "step": "ÉTAPE 02",
                 "title": "Monte en Rang",
-                "desc": "Ton score cumulé détermine ton rang. Progresse de Non classé à Beat, Rhythm, Maestro, jusqu'à Virtuoso."
+                "desc": "Ton score cumulé détermine ton rang. Progresse de Non classé à Beat, Rhythm, Maestro, jusqu'à Antigravity."
             },
             "2": {
                 "step": "ÉTAPE 03",
