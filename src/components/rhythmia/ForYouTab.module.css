@@ -285,11 +285,29 @@
     background: rgba(255, 255, 255, 0.03);
 }
 
-/* Tutorials Section */
-.tutorialsSection {
-    margin-top: 40px;
-    padding-top: 32px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+/* Two-Column Layout */
+.twoColumnLayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.columnHeader {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* Tag Badge */
@@ -372,6 +390,13 @@
 }
 
 /* Responsive */
+@media (max-width: 760px) {
+    .twoColumnLayout {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+}
+
 @media (max-width: 600px) {
     .widget {
         gap: 12px;

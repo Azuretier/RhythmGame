@@ -555,6 +555,93 @@ export default function WikiPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Tutorial 10: Hard Drop Speed */}
+                  <div className={styles.tutorialCard}>
+                    <h3 className={styles.tutorialTitle}>{t('tut10Title')}</h3>
+                    <p className={styles.tutorialDesc}>{t('tut10Desc')}</p>
+                    <div className={styles.stepList}>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>1</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut10Step1Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut10Step1Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>2</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut10Step2Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut10Step2Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>3</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut10Step3Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut10Step3Desc')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tutorial 11: Crafting System Guide */}
+                  <div className={styles.tutorialCard}>
+                    <h3 className={styles.tutorialTitle}>{t('tut11Title')}</h3>
+                    <p className={styles.tutorialDesc}>{t('tut11Desc')}</p>
+                    <div className={styles.stepList}>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>1</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut11Step1Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut11Step1Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>2</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut11Step2Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut11Step2Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>3</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut11Step3Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut11Step3Desc')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tutorial 12: World Progression */}
+                  <div className={styles.tutorialCard}>
+                    <h3 className={styles.tutorialTitle}>{t('tut12Title')}</h3>
+                    <p className={styles.tutorialDesc}>{t('tut12Desc')}</p>
+                    <div className={styles.stepList}>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>1</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut12Step1Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut12Step1Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>2</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut12Step2Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut12Step2Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>3</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut12Step3Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut12Step3Desc')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </section>
 
                 <section id="wiki-tut-intermediate" className={styles.section}>
@@ -650,6 +737,93 @@ export default function WikiPage() {
                         <div className={styles.stepContent}>
                           <h4 className={styles.stepTitle}>{t('tut6Step3Title')}</h4>
                           <p className={styles.stepDesc}>{t('tut6Step3Desc')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tutorial 13: Garbage Management */}
+                  <div className={styles.tutorialCard}>
+                    <h3 className={styles.tutorialTitle}>{t('tut13Title')}</h3>
+                    <p className={styles.tutorialDesc}>{t('tut13Desc')}</p>
+                    <div className={styles.stepList}>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>1</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut13Step1Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut13Step1Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>2</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut13Step2Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut13Step2Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>3</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut13Step3Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut13Step3Desc')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tutorial 14: Item Strategy */}
+                  <div className={styles.tutorialCard}>
+                    <h3 className={styles.tutorialTitle}>{t('tut14Title')}</h3>
+                    <p className={styles.tutorialDesc}>{t('tut14Desc')}</p>
+                    <div className={styles.stepList}>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>1</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut14Step1Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut14Step1Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>2</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut14Step2Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut14Step2Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>3</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut14Step3Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut14Step3Desc')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tutorial 15: Ranked Climbing Tips */}
+                  <div className={styles.tutorialCard}>
+                    <h3 className={styles.tutorialTitle}>{t('tut15Title')}</h3>
+                    <p className={styles.tutorialDesc}>{t('tut15Desc')}</p>
+                    <div className={styles.stepList}>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>1</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut15Step1Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut15Step1Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>2</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut15Step2Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut15Step2Desc')}</p>
+                        </div>
+                      </div>
+                      <div className={styles.step}>
+                        <div className={styles.stepNumber}>3</div>
+                        <div className={styles.stepContent}>
+                          <h4 className={styles.stepTitle}>{t('tut15Step3Title')}</h4>
+                          <p className={styles.stepDesc}>{t('tut15Step3Desc')}</p>
                         </div>
                       </div>
                     </div>
