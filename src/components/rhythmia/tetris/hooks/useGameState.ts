@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, CraftedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet } from '../types';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
-    ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
+    ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
     TERRAINS_PER_WORLD, TD_WAVE_BEATS,
@@ -11,9 +11,31 @@ import {
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
-    DEFAULT_ACTIVE_EFFECTS, RARITY_OFFER_WEIGHTS, CARDS_OFFERED,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
+
+// Card offer constants (moved inline since they were removed from constants.ts)
+const CARDS_OFFERED = 3;
+const getWeaponWeight = (weapon: typeof WEAPON_CARDS[0]) => {
+    // Weight based on damage multiplier (lower multiplier = more common)
+    if (weapon.damageMultiplier <= 1.2) return 10; // common
+    if (weapon.damageMultiplier <= 1.4) return 6;  // uncommon
+    if (weapon.damageMultiplier <= 1.6) return 3;  // rare
+    if (weapon.damageMultiplier <= 1.8) return 2;  // epic
+    return 1; // legendary
+};
+
+// Default active effects (stub - the old card attribute system was removed)
+const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
+    comboGuardUsesRemaining: 0,
+    shieldActive: false,
+    terrainSurgeBonus: 0,
+    beatExtendBonus: 0,
+    scoreBoostMultiplier: 1,
+    gravitySlowFactor: 1,
+    luckyDropsBonus: 0,
+    comboAmplifyFactor: 1,
+};
 
 let nextFloatingId = 0;
 let nextParticleId = 0;
@@ -101,7 +123,7 @@ export function useGameState() {
     const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
 
     // ===== Rogue-Like Card System =====
-    const [equippedCards, setEquippedCards] = useState<EquippedCard[]>([]);
+    const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
     const [showCardSelect, setShowCardSelect] = useState(false);
     const [offeredCards, setOfferedCards] = useState<CardOffer[]>([]);
     const [activeEffects, setActiveEffects] = useState<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
@@ -147,7 +169,7 @@ export function useGameState() {
     const tdBeatsRemainingRef = useRef(tdBeatsRemaining);
     const gamePhaseRef = useRef<GamePhase>(gamePhase);
     const inventoryRef = useRef<InventoryItem[]>(inventory);
-    const equippedCardsRef = useRef<EquippedCard[]>(equippedCards);
+    const craftedCardsRef = useRef<CraftedCard[]>(craftedCards);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -186,7 +208,7 @@ export function useGameState() {
     useEffect(() => { tdBeatsRemainingRef.current = tdBeatsRemaining; }, [tdBeatsRemaining]);
     useEffect(() => { gamePhaseRef.current = gamePhase; }, [gamePhase]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
-    useEffect(() => { equippedCardsRef.current = equippedCards; }, [equippedCards]);
+    useEffect(() => { craftedCardsRef.current = craftedCards; }, [craftedCards]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -272,40 +294,11 @@ export function useGameState() {
     // ===== Rogue-Like Card System =====
 
     // Compute active effects from all equipped cards
-    const computeActiveEffects = useCallback((cards: EquippedCard[]): ActiveEffects => {
-        const effects: ActiveEffects = { ...DEFAULT_ACTIVE_EFFECTS };
-        for (const ec of cards) {
-            const card = ROGUE_CARD_MAP[ec.cardId];
-            if (!card) continue;
-            const stacks = ec.stackCount;
-            switch (card.attribute) {
-                case 'combo_guard':
-                    effects.comboGuardUsesRemaining += card.attributeValue * stacks;
-                    break;
-                case 'shield':
-                    effects.shieldActive = true;
-                    break;
-                case 'terrain_surge':
-                    effects.terrainSurgeBonus += card.attributeValue * stacks;
-                    break;
-                case 'beat_extend':
-                    effects.beatExtendBonus += card.attributeValue * stacks;
-                    break;
-                case 'score_boost':
-                    effects.scoreBoostMultiplier += card.attributeValue * stacks;
-                    break;
-                case 'gravity_slow':
-                    effects.gravitySlowFactor *= Math.pow(1 - card.attributeValue, stacks);
-                    break;
-                case 'lucky_drops':
-                    effects.luckyDropsBonus += card.attributeValue * stacks;
-                    break;
-                case 'combo_amplify':
-                    effects.comboAmplifyFactor *= Math.pow(card.attributeValue, stacks);
-                    break;
-            }
-        }
-        return effects;
+    const computeActiveEffects = useCallback((cards: CraftedCard[]): ActiveEffects => {
+        // Note: The old card attribute system was removed in the weapon card refactor
+        // This function now just returns the default effects as a stub
+        // TODO: Implement effects based on WeaponCard.specialEffect if needed
+        return { ...DEFAULT_ACTIVE_EFFECTS };
     }, []);
 
     // Generate card offers for CARD_SELECT phase
@@ -314,15 +307,15 @@ export function useGameState() {
         const currentInventory = inventoryRef.current;
 
         // Weighted random selection of CARDS_OFFERED cards (no duplicates)
-        const available = [...ROGUE_CARDS];
-        const selected: typeof ROGUE_CARDS = [];
+        const available = [...WEAPON_CARDS];
+        const selected: typeof WEAPON_CARDS = [];
 
         for (let i = 0; i < CARDS_OFFERED && available.length > 0; i++) {
-            const totalWeight = available.reduce((sum, c) => sum + (RARITY_OFFER_WEIGHTS[c.rarity] || 1), 0);
+            const totalWeight = available.reduce((sum, c) => sum + getWeaponWeight(c), 0);
             let roll = Math.random() * totalWeight;
             let chosenIdx = 0;
             for (let j = 0; j < available.length; j++) {
-                roll -= RARITY_OFFER_WEIGHTS[available[j].rarity] || 1;
+                roll -= getWeaponWeight(available[j]);
                 if (roll <= 0) { chosenIdx = j; break; }
             }
             selected.push(available[chosenIdx]);
@@ -330,7 +323,7 @@ export function useGameState() {
         }
 
         return selected.map(card => {
-            const scaledCost = card.baseCost.map(c => ({
+            const scaledCost = card.recipe.map(c => ({
                 itemId: c.itemId,
                 count: Math.ceil(c.count * costMultiplier),
             }));
@@ -344,7 +337,7 @@ export function useGameState() {
 
     // Reset per-stage effects (combo_guard uses, shield) at stage start
     const resetStageEffects = useCallback(() => {
-        const freshEffects = computeActiveEffects(equippedCardsRef.current);
+        const freshEffects = computeActiveEffects(craftedCardsRef.current);
         setActiveEffects(freshEffects);
     }, [computeActiveEffects]);
 
@@ -383,7 +376,7 @@ export function useGameState() {
         const offers = generateCardOffers(worldIdxRef.current);
         setOfferedCards(offers);
         setShowCardSelect(true);
-        setGamePhase('CARD_SELECT');
+        setGamePhase('CRAFTING');
         setIsPaused(true);
     }, [generateCardOffers]);
 
@@ -409,22 +402,19 @@ export function useGameState() {
         setInventory(invCopy.filter(i => i.count > 0));
 
         // Add or stack equipped card
-        setEquippedCards(prev => {
+        setCraftedCards(prev => {
             const existing = prev.find(ec => ec.cardId === cardId);
-            let updated: EquippedCard[];
+            let updated: CraftedCard[];
             if (existing) {
-                updated = prev.map(ec =>
-                    ec.cardId === cardId
-                        ? { ...ec, stackCount: Math.min(ec.stackCount + 1, 3) }
-                        : ec
-                );
+                // Card already crafted, keep as is (no stacking in new system)
+                updated = prev;
             } else {
-                updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+                updated = [...prev, { cardId, craftedAt: Date.now() }];
             }
             // Recompute active effects
             const effects = computeActiveEffects(updated);
             setActiveEffects(effects);
-            equippedCardsRef.current = updated;
+            craftedCardsRef.current = updated;
             return updated;
         });
 
@@ -954,8 +944,8 @@ export function useGameState() {
         setTerrainParticles([]);
 
         // Reset rogue-like card state
-        setEquippedCards([]);
-        equippedCardsRef.current = [];
+        setCraftedCards([]);
+        craftedCardsRef.current = [];
         setShowCardSelect(false);
         setOfferedCards([]);
         setActiveEffects(DEFAULT_ACTIVE_EFFECTS);
@@ -1040,7 +1030,7 @@ export function useGameState() {
         floatingItems,
         terrainParticles,
         // Rogue-like cards
-        equippedCards,
+        craftedCards,
         showCardSelect,
         offeredCards,
         activeEffects,

@@ -49,7 +49,7 @@ import {
   RhythmVFX,
   FloatingItems,
   ItemSlots,
-  CardSelectUI,
+  CraftingUI,
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
@@ -200,7 +200,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     floatingItems,
     terrainParticles,
     // Rogue-like cards
-    equippedCards,
+    craftedCards,
     showCardSelect,
     offeredCards,
     activeEffects,
@@ -1240,7 +1240,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           <GamePhaseIndicator
             phase={gamePhase}
             stageNumber={stageNumber}
-            equippedCardCount={equippedCards.length}
+            equippedCardCount={craftedCards.length}
             terrainPhase={terrainPhase}
           />
 
@@ -1265,8 +1265,9 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
               </div>
               <ItemSlots
                 inventory={inventory}
-                equippedCards={equippedCards}
-                activeEffects={activeEffects}
+                craftedCards={craftedCards}
+                damageMultiplier={1.0}
+                onCraftOpen={() => {/* TODO: implement crafting UI toggle */}}
               />
             </div>
 
@@ -1340,16 +1341,17 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         />
       )}
 
-      {/* Card selection overlay */}
+      {/* Card selection overlay - now using CraftingUI */}
       {showCardSelect && (
-        <CardSelectUI
-          offers={offeredCards}
+        <CraftingUI
           inventory={inventory}
-          equippedCards={equippedCards}
-          onSelect={selectCard}
-          onSkip={skipCardSelect}
-          worldIdx={worldIdx}
-          stageNumber={stageNumber}
+          craftedCards={craftedCards}
+          onCraft={(cardId) => {
+            // Stub: old card select system, need to adapt to crafting
+            return false;
+          }}
+          canCraft={(cardId) => false}
+          onClose={skipCardSelect}
         />
       )}
 
