@@ -19,8 +19,12 @@ import VanillaGame from '@/components/rhythmia/tetris';
 import MultiplayerGame from '@/components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import RetroPlayerCard from '@/components/rhythmia/RetroPlayerCard';
+import LoyaltyWidget from '@/components/loyalty/LoyaltyWidget';
 import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
+
+const UI_MODE_KEY = 'rhythmia_stats_ui_mode';
+type StatsUIMode = 'retro' | 'normal';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -33,6 +37,7 @@ export default function RhythmiaLobby() {
     const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
     const [unlockedCount, setUnlockedCount] = useState(0);
     const [showSkinCustomizer, setShowSkinCustomizer] = useState(false);
+    const [statsUI, setStatsUI] = useState<StatsUIMode>('retro');
     const wsRef = useRef<WebSocket | null>(null);
     const profileSentRef = useRef(false);
 
@@ -51,6 +56,10 @@ export default function RhythmiaLobby() {
 
     useEffect(() => {
         setUnlockedCount(getUnlockedCount());
+        try {
+            const saved = localStorage.getItem(UI_MODE_KEY);
+            if (saved === 'normal' || saved === 'retro') setStatsUI(saved);
+        } catch { /* empty */ }
         const timer = setTimeout(() => {
             setIsLoading(false);
         }, 800);
@@ -153,6 +162,12 @@ export default function RhythmiaLobby() {
             wsRef.current.send(JSON.stringify({ type: 'get_online_users' }));
         }
         setShowOnlineUsers(true);
+    };
+
+    const toggleStatsUI = () => {
+        const next: StatsUIMode = statsUI === 'retro' ? 'normal' : 'retro';
+        setStatsUI(next);
+        try { localStorage.setItem(UI_MODE_KEY, next); } catch { /* empty */ }
     };
 
     const launchGame = (mode: GameMode) => {
@@ -470,7 +485,45 @@ export default function RhythmiaLobby() {
 
                 {/* Slide 2: Loyalty + Footer */}
                 <section className={`${styles.slideSection} ${styles.slideSectionBottom}`}>
-                    <RetroPlayerCard />
+                    <div className={styles.statsUiToggle}>
+                        <button
+                            className={`${styles.statsUiBtn} ${statsUI === 'retro' ? styles.statsUiBtnActive : ''}`}
+                            onClick={() => { if (statsUI !== 'retro') toggleStatsUI(); }}
+                        >
+                            PIXEL
+                        </button>
+                        <button
+                            className={`${styles.statsUiBtn} ${statsUI === 'normal' ? styles.statsUiBtnActive : ''}`}
+                            onClick={() => { if (statsUI !== 'normal') toggleStatsUI(); }}
+                        >
+                            CLEAN
+                        </button>
+                    </div>
+                    <AnimatePresence mode="wait">
+                        {statsUI === 'retro' ? (
+                            <motion.div
+                                key="retro"
+                                initial={{ opacity: 0, scale: 0.97 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.97 }}
+                                transition={{ duration: 0.25 }}
+                                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+                            >
+                                <RetroPlayerCard />
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="normal"
+                                initial={{ opacity: 0, scale: 0.97 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.97 }}
+                                transition={{ duration: 0.25 }}
+                                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+                            >
+                                <LoyaltyWidget />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                     <motion.footer
                         className={styles.footer}
                         initial={{ opacity: 0 }}

@@ -665,3 +665,43 @@
     bottom: 20px;
   }
 }
+
+/* ===== Stats UI Toggle (Pixel / Clean) ===== */
+.statsUiToggle {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.statsUiBtn {
+  padding: 6px 18px;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset -1px -1px 0px rgba(0, 0, 0, 0.2),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.04);
+}
+
+.statsUiBtn:hover {
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.statsUiBtnActive {
+  color: #ffffff;
+  background: rgba(140, 100, 255, 0.12);
+  border-color: rgba(140, 100, 255, 0.5);
+  box-shadow:
+    0 0 8px rgba(140, 80, 255, 0.15),
+    inset -1px -1px 0px rgba(0, 0, 0, 0.2),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.06);
+}
