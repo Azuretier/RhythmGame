@@ -843,6 +843,8 @@
     "retry": "RETRY",
     "refresh": "REFRESH",
     "watchOnYouTube": "Watch on YouTube",
+    "tutorialsTitle": "TUTORIALS",
+    "tutorialsSubtitle": "Learn techniques and strategies",
     "types": {
       "tutorial": "TUTORIAL",
       "video": "VIDEO",

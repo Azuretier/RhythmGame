@@ -843,6 +843,8 @@
     "retry": "再試行",
     "refresh": "更新",
     "watchOnYouTube": "YouTubeで見る",
+    "tutorialsTitle": "チュートリアル",
+    "tutorialsSubtitle": "テクニックと戦略を学ぼう",
     "types": {
       "tutorial": "チュートリアル",
       "video": "動画",
