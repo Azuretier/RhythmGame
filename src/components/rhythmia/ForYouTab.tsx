@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
@@ -104,6 +104,8 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
     const [cards, setCards] = useState<ContentCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [viewportHeight, setViewportHeight] = useState<number | undefined>(undefined);
+    const leftColumnRef = useRef<HTMLDivElement>(null);
     const t = useTranslations('forYou');
     const tw = useTranslations('wiki');
 
@@ -133,6 +135,18 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
     useEffect(() => {
         fetchContent();
     }, [fetchContent]);
+
+    // Measure left column height to sync the tutorials viewport
+    useEffect(() => {
+        if (!leftColumnRef.current || cards.length === 0) return;
+        const measure = () => {
+            const h = leftColumnRef.current?.offsetHeight;
+            if (h) setViewportHeight(h);
+        };
+        // Allow animations to settle before measuring
+        const timer = setTimeout(measure, 400);
+        return () => clearTimeout(timer);
+    }, [cards]);
 
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
 
@@ -165,7 +179,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
 
             <div className={styles.twoColumnLayout}>
                 {/* Left column: AI-recommended content */}
-                <div className={styles.column}>
+                <div className={styles.column} ref={leftColumnRef}>
                     <div className={styles.columnHeader}>{t('columnForYou')}</div>
                     <div className={styles.widgetList}>
                         <AnimatePresence mode="wait">
@@ -227,43 +241,48 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                 {/* Right column: Tutorial resources */}
                 <div className={styles.column}>
                     <div className={styles.columnHeader}>{t('columnTutorials')}</div>
-                    <div className={styles.widgetList}>
-                        {SORTED_TUTORIALS.map((tut, index) => {
-                            const wikiPrefix = locale === 'ja' ? '' : '/en';
-                            const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
-                            return (
-                                <motion.a
-                                    key={tut.id}
-                                    href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
-                                    className={`${styles.widget} ${styles.tutorial}`}
-                                    initial={{ opacity: 0, x: -16 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.3, delay: index * 0.04 }}
-                                >
-                                    <div className={styles.thumbnailFrame}>
-                                        <Image
-                                            src={tut.thumb}
-                                            alt=""
-                                            width={36}
-                                            height={36}
-                                            className={styles.thumbnailImg}
-                                            unoptimized
-                                        />
-                                    </div>
-                                    <div className={styles.widgetContent}>
-                                        <div className={styles.widgetTopRow}>
-                                            <span className={styles.typeLabel}>{t('types.tutorial')}</span>
-                                            <span className={`${styles.diffBadge} ${styles[`diff_${tut.difficulty}`]}`}>
-                                                {diffLabels[tut.difficulty]}
-                                            </span>
-                                            <span className={styles.tagBadge}>{tut.tags[0]}</span>
+                    <div
+                        className={styles.tutorialViewport}
+                        style={viewportHeight ? { maxHeight: viewportHeight - 28 } : undefined}
+                    >
+                        <div className={styles.widgetList}>
+                            {SORTED_TUTORIALS.map((tut, index) => {
+                                const wikiPrefix = locale === 'ja' ? '' : '/en';
+                                const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
+                                return (
+                                    <motion.a
+                                        key={tut.id}
+                                        href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
+                                        className={`${styles.widget} ${styles.tutorial}`}
+                                        initial={{ opacity: 0, x: -16 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.3, delay: index * 0.04 }}
+                                    >
+                                        <div className={styles.thumbnailFrame}>
+                                            <Image
+                                                src={tut.thumb}
+                                                alt=""
+                                                width={36}
+                                                height={36}
+                                                className={styles.thumbnailImg}
+                                                unoptimized
+                                            />
                                         </div>
-                                        <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
-                                    </div>
-                                    <span className={styles.widgetArrow}>→</span>
-                                </motion.a>
-                            );
-                        })}
+                                        <div className={styles.widgetContent}>
+                                            <div className={styles.widgetTopRow}>
+                                                <span className={styles.typeLabel}>{t('types.tutorial')}</span>
+                                                <span className={`${styles.diffBadge} ${styles[`diff_${tut.difficulty}`]}`}>
+                                                    {diffLabels[tut.difficulty]}
+                                                </span>
+                                                <span className={styles.tagBadge}>{tut.tags[0]}</span>
+                                            </div>
+                                            <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
+                                        </div>
+                                        <span className={styles.widgetArrow}>→</span>
+                                    </motion.a>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </div>
