@@ -5,15 +5,17 @@ import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import {
-  LOYALTY_TIERS,
-  getTierByXP,
-  tierProgress,
-  xpToNextTier,
+  SCORE_RANK_TIERS,
+  getTierByScore,
+  scoreProgress,
+  scoreToNextTier,
+  formatScore,
+  formatScoreCompact,
   recordDailyVisit,
-  syncFromGameplay,
+  syncGameplayStats,
 } from '@/lib/loyalty';
-import type { LoyaltyState } from '@/lib/loyalty';
-import { ADVANCEMENTS, loadAdvancementState, syncLoyaltyStats } from '@/lib/advancements';
+import type { ScoreRankingState } from '@/lib/loyalty';
+import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
 import styles from './LoyaltyWidget.module.css';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -21,36 +23,33 @@ const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
   const router = useRouter();
-  const [state, setState] = useState<LoyaltyState | null>(null);
-  const [advUnlocked, setAdvUnlocked] = useState(0);
+  const [state, setState] = useState<ScoreRankingState | null>(null);
 
   useEffect(() => {
-    let loyaltyState = recordDailyVisit();
+    // Record daily visit first (awards XP for visits/streaks)
+    let dailyState = recordDailyVisit();
 
+    // Sync with gameplay stats
     const advState = loadAdvancementState();
-    loyaltyState = syncFromGameplay(
-      advState.stats.totalGamesPlayed,
+    dailyState = syncGameplayStats(
       advState.stats.totalScore,
+      advState.stats.bestScorePerGame,
+      advState.stats.totalGamesPlayed,
       advState.unlockedIds.length,
+      advState.stats.totalLines,
     );
 
-    setState(loyaltyState);
-
-    // Sync loyalty stats into advancements system
-    const updatedAdv = syncLoyaltyStats({
-      totalVisits: loyaltyState.stats.totalVisits,
-      bestStreak: loyaltyState.stats.bestStreak,
-      pollsVoted: loyaltyState.stats.pollsVoted,
-    });
-    setAdvUnlocked(updatedAdv.unlockedIds.length);
+    setState(dailyState);
   }, []);
 
   if (!state) return null;
 
-  const currentTier = getTierByXP(state.xp);
-  const progress = tierProgress(state.xp);
-  const nextTierXP = xpToNextTier(state.xp);
-  const currentIndex = LOYALTY_TIERS.indexOf(currentTier);
+  const { totalScore, bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
+  const combinedScore = state.combinedScore;
+  const currentTier = getTierByScore(combinedScore);
+  const progress = scoreProgress(combinedScore);
+  const nextTierScore = scoreToNextTier(combinedScore);
+  const currentIndex = SCORE_RANK_TIERS.indexOf(currentTier);
 
   return (
     <motion.div
@@ -59,38 +58,43 @@ export default function LoyaltyWidget() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.7 }}
     >
-      {/* Top row: tier + streak */}
-      <div className={styles.topRow}>
-        {/* Tier */}
-        <div className={styles.tierSection}>
-          <span className={styles.tierIcon}>{currentTier.icon}</span>
-          <div className={styles.tierInfo}>
-            <div className={styles.tierName} style={{ color: currentTier.color }}>
-              {t(`tiers.${currentTier.id}`)}
-            </div>
-            <div className={styles.tierLabel}>{t('currentTier')}</div>
+      {/* Score Hero */}
+      <div className={styles.scoreHero}>
+        <div className={styles.tierBadge} style={{ borderColor: currentTier.color }}>
+          <span className={styles.tierIconLarge}>{currentTier.icon}</span>
+        </div>
+        <div className={styles.scoreInfo}>
+          <div className={styles.scoreValue}>{formatScore(combinedScore)}</div>
+          <div className={styles.scoreLabel}>{t('totalScore')}</div>
+          <div className={styles.tierName} style={{ color: currentTier.color }}>
+            {t(`tiers.${currentTier.id}`)}
           </div>
         </div>
+      </div>
 
-        {/* Streak */}
-        <div className={styles.streakSection}>
-          <div className={styles.streakDays}>
-            {DAY_LABELS.map((label, i) => {
-              const isFilled = i < state.stats.currentStreak % 7 || state.stats.currentStreak >= 7;
-              const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
-              return (
-                <div
-                  key={i}
-                  className={`${styles.streakDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
-                >
-                  {label}
-                </div>
-              );
-            })}
-          </div>
-          <div className={styles.streakLabel}>
-            {state.stats.currentStreak} {t('streakDays')}
-          </div>
+      {/* Daily Streak Section */}
+      <div className={styles.streakSection}>
+        <div className={styles.streakDays}>
+          {DAY_LABELS.map((label, i) => {
+            const isFilled = i < currentStreak % 7 || currentStreak >= 7;
+            const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
+            return (
+              <div
+                key={i}
+                className={`${styles.streakDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
+              >
+                {label}
+              </div>
+            );
+          })}
+        </div>
+        <div className={styles.streakInfo}>
+          <span className={styles.streakLabel}>
+            {currentStreak} {t('streakDays')}
+          </span>
+          <span className={styles.bonusXP}>
+            +{dailyBonusXP} {t('bonusXP')}
+          </span>
         </div>
       </div>
 
@@ -99,22 +103,22 @@ export default function LoyaltyWidget() {
         <div className={styles.progressBar}>
           <div
             className={styles.progressFill}
-            style={{ width: `${progress}%`, background: currentTier.color }}
+            style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})` }}
           />
         </div>
         <div className={styles.progressLabels}>
-          <span>{state.xp} XP</span>
+          <span>{formatScoreCompact(combinedScore)}</span>
           <span>
-            {nextTierXP !== null
-              ? t('xpToNext', { xp: nextTierXP })
+            {nextTierScore !== null
+              ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
               : t('maxTier')}
           </span>
         </div>
       </div>
 
-      {/* Tier steps (mini roadmap) */}
+      {/* Tier roadmap */}
       <div className={styles.miniRoadmap}>
-        {LOYALTY_TIERS.map((tier, i) => {
+        {SCORE_RANK_TIERS.map((tier, i) => {
           const isActive = tier.id === currentTier.id;
           const isCompleted = i < currentIndex;
           return (
@@ -122,7 +126,7 @@ export default function LoyaltyWidget() {
               key={tier.id}
               className={`${styles.miniStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
             >
-              <span className={styles.miniStepIcon} style={isActive ? { color: tier.color } : undefined}>
+              <span className={styles.miniStepIcon} style={isActive || isCompleted ? { color: tier.color } : undefined}>
                 {tier.icon}
               </span>
               <span className={styles.miniStepName}>
@@ -133,18 +137,22 @@ export default function LoyaltyWidget() {
         })}
       </div>
 
-      {/* Stats row */}
-      <div className={styles.statsRow}>
-        <div className={styles.statItem}>
-          <span className={styles.statValue}>{state.stats.totalVisits}</span>
-          <span className={styles.statLabel}>{t('stats.visits')}</span>
+      {/* Stats grid */}
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{formatScoreCompact(bestScorePerGame)}</span>
+          <span className={styles.statLabel}>{t('stats.bestScore')}</span>
         </div>
-        <div className={styles.statItem}>
-          <span className={styles.statValue}>{state.stats.totalGamesPlayed}</span>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{totalGamesPlayed}</span>
           <span className={styles.statLabel}>{t('stats.games')}</span>
         </div>
-        <div className={styles.statItem}>
-          <span className={styles.statValue}>{advUnlocked}/{ADVANCEMENTS.length}</span>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{totalLines.toLocaleString()}</span>
+          <span className={styles.statLabel}>{t('stats.lines')}</span>
+        </div>
+        <div className={styles.statCard}>
+          <span className={styles.statValue}>{advancementsUnlocked}/{ADVANCEMENTS.length}</span>
           <span className={styles.statLabel}>{t('stats.badges')}</span>
         </div>
       </div>

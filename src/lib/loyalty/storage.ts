@@ -1,66 +1,21 @@
-import type { LoyaltyState, LoyaltyStats } from './types';
-import { LOYALTY_BADGES, XP_REWARDS } from './constants';
+import type { ScoreRankingState, ScoreRankingStats } from './types';
+import { XP_REWARDS } from './constants';
 
 const STORAGE_KEY = 'rhythmia_loyalty';
 
-function getDefaultStats(): LoyaltyStats {
+function getDefaultStats(): ScoreRankingStats {
   const today = new Date().toISOString().split('T')[0];
   return {
+    totalScore: 0,
+    bestScorePerGame: 0,
+    totalGamesPlayed: 0,
+    advancementsUnlocked: 0,
+    totalLines: 0,
     totalVisits: 0,
     currentStreak: 0,
     bestStreak: 0,
     lastVisitDate: '',
-    totalGamesPlayed: 0,
-    totalScore: 0,
-    advancementsUnlocked: 0,
-    pollsVoted: 0,
-    joinDate: today,
-  };
-}
-
-export function loadLoyaltyState(): LoyaltyState {
-  if (typeof window === 'undefined') {
-    return { stats: getDefaultStats(), xp: 0, unlockedBadgeIds: [] };
-  }
-
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return {
-        stats: { ...getDefaultStats(), ...parsed.stats },
-        xp: parsed.xp || 0,
-        unlockedBadgeIds: parsed.unlockedBadgeIds || [],
-      };
-    }
-  } catch {}
-
-  return { stats: getDefaultStats(), xp: 0, unlockedBadgeIds: [] };
-}
-
-export function saveLoyaltyState(state: LoyaltyState): void {
-  if (typeof window === 'undefined') return;
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {}
-}
-
-function checkNewBadges(state: LoyaltyState): LoyaltyState {
-  const newlyUnlocked: string[] = [];
-
-  for (const badge of LOYALTY_BADGES) {
-    if (state.unlockedBadgeIds.includes(badge.id)) continue;
-    if (state.stats[badge.statKey] >= badge.requiredValue) {
-      newlyUnlocked.push(badge.id);
-    }
-  }
-
-  if (newlyUnlocked.length === 0) return state;
-
-  return {
-    ...state,
-    unlockedBadgeIds: [...state.unlockedBadgeIds, ...newlyUnlocked],
+    dailyBonusXP: 0,
   };
 }
 
@@ -77,11 +32,81 @@ function isYesterday(dateStr: string): boolean {
 }
 
 /**
- * Record a daily visit. Updates streak, visit count, and awards XP.
- * Should be called once when the loyalty page is visited.
+ * Build a ScoreRankingState from advancement/gameplay stats + daily bonus data.
+ * The score ranking system combines gameplay score with daily bonus XP.
  */
-export function recordDailyVisit(): LoyaltyState {
-  const state = loadLoyaltyState();
+export function buildScoreRankingState(
+  totalScore: number,
+  bestScorePerGame: number,
+  totalGamesPlayed: number,
+  advancementsUnlocked: number,
+  totalLines: number,
+  totalVisits?: number,
+  currentStreak?: number,
+  bestStreak?: number,
+  lastVisitDate?: string,
+  dailyBonusXP?: number,
+): ScoreRankingState {
+  const stats: ScoreRankingStats = {
+    totalScore,
+    bestScorePerGame,
+    totalGamesPlayed,
+    advancementsUnlocked,
+    totalLines,
+    totalVisits: totalVisits ?? 0,
+    currentStreak: currentStreak ?? 0,
+    bestStreak: bestStreak ?? 0,
+    lastVisitDate: lastVisitDate ?? '',
+    dailyBonusXP: dailyBonusXP ?? 0,
+  };
+  return {
+    stats,
+    combinedScore: totalScore + (dailyBonusXP ?? 0),
+  };
+}
+
+// ===== Persistence and Daily Visit Tracking =====
+
+/**
+ * Load daily bonus state from localStorage.
+ */
+export function loadDailyBonusState(): ScoreRankingState {
+  if (typeof window === 'undefined') {
+    return { stats: getDefaultStats(), combinedScore: 0 };
+  }
+
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const stats = { ...getDefaultStats(), ...parsed.stats };
+      return {
+        stats,
+        combinedScore: stats.totalScore + stats.dailyBonusXP,
+      };
+    }
+  } catch {}
+
+  return { stats: getDefaultStats(), combinedScore: 0 };
+}
+
+/**
+ * Save daily bonus state to localStorage.
+ */
+export function saveDailyBonusState(state: ScoreRankingState): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {}
+}
+
+/**
+ * Record a daily visit. Updates streak, visit count, and awards XP.
+ * Returns the updated state with new daily bonus XP.
+ */
+export function recordDailyVisit(): ScoreRankingState {
+  const state = loadDailyBonusState();
   const today = getToday();
 
   // Already visited today
@@ -105,51 +130,60 @@ export function recordDailyVisit(): LoyaltyState {
   state.stats.lastVisitDate = today;
 
   // Award XP
-  state.xp += XP_REWARDS.dailyVisit;
-  state.xp += XP_REWARDS.streakDay * Math.min(state.stats.currentStreak, 30);
+  state.stats.dailyBonusXP += XP_REWARDS.dailyVisit;
+  state.stats.dailyBonusXP += XP_REWARDS.streakDay * Math.min(state.stats.currentStreak, 30);
 
-  const updated = checkNewBadges(state);
-  saveLoyaltyState(updated);
-  return updated;
+  // Update combined score
+  state.combinedScore = state.stats.totalScore + state.stats.dailyBonusXP;
+
+  saveDailyBonusState(state);
+  return state;
 }
 
 /**
- * Sync stats from advancements system. Called to keep loyalty stats
- * in sync with actual gameplay data.
+ * Sync gameplay stats into the daily bonus state.
+ * This merges advancement/gameplay data with daily visit tracking.
  */
-export function syncFromGameplay(gamesPlayed: number, totalScore: number, advancementsUnlocked: number): LoyaltyState {
-  const state = loadLoyaltyState();
+export function syncGameplayStats(
+  totalScore: number,
+  bestScorePerGame: number,
+  totalGamesPlayed: number,
+  advancementsUnlocked: number,
+  totalLines: number,
+): ScoreRankingState {
+  const state = loadDailyBonusState();
 
-  // Calculate XP delta from new games
-  const newGames = gamesPlayed - state.stats.totalGamesPlayed;
-  if (newGames > 0) {
-    state.xp += newGames * XP_REWARDS.gameCompleted;
-  }
-
-  const newAdvancements = advancementsUnlocked - state.stats.advancementsUnlocked;
-  if (newAdvancements > 0) {
-    state.xp += newAdvancements * XP_REWARDS.advancementUnlocked;
-  }
-
-  state.stats.totalGamesPlayed = gamesPlayed;
   state.stats.totalScore = totalScore;
+  state.stats.bestScorePerGame = bestScorePerGame;
+  state.stats.totalGamesPlayed = totalGamesPlayed;
   state.stats.advancementsUnlocked = advancementsUnlocked;
+  state.stats.totalLines = totalLines;
 
-  const updated = checkNewBadges(state);
-  saveLoyaltyState(updated);
-  return updated;
+  // Update combined score
+  state.combinedScore = state.stats.totalScore + state.stats.dailyBonusXP;
+
+  saveDailyBonusState(state);
+  return state;
 }
 
-/**
- * Record a poll vote. Awards XP and updates stats.
- */
-export function recordPollVote(): LoyaltyState {
-  const state = loadLoyaltyState();
+// ===== Legacy API stubs for backward compat =====
 
-  state.stats.pollsVoted += 1;
-  state.xp += XP_REWARDS.pollVote;
+export function loadLoyaltyState(): ScoreRankingState {
+  return loadDailyBonusState();
+}
 
-  const updated = checkNewBadges(state);
-  saveLoyaltyState(updated);
-  return updated;
+export function saveLoyaltyState(state: ScoreRankingState): void {
+  saveDailyBonusState(state);
+}
+
+export function syncFromGameplay(
+  gamesPlayed: number,
+  totalScore: number,
+  advancementsUnlocked: number,
+): ScoreRankingState {
+  return syncGameplayStats(totalScore, 0, gamesPlayed, advancementsUnlocked, 0);
+}
+
+export function recordPollVote(): ScoreRankingState {
+  return loadDailyBonusState();
 }

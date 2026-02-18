@@ -17,7 +17,7 @@
         "back": "← Retour",
         "online": "En ligne",
         "onlineCount": "{count} en ligne",
-        "loyalty": "Fidélité"
+        "loyalty": "Classement"
     },
     "vanilla": {
         "badge": "SOLO",
@@ -657,100 +657,39 @@
     },
     "loyalty": {
         "meta": {
-            "title": "Programme de Fidélité | RHYTHMIA - Azuretier",
-            "description": "Suivez votre niveau de fidélité, gagnez des badges, maintenez vos séries et participez à la communauté RHYTHMIA."
+            "title": "Classement des Scores | RHYTHMIA - Azuretier",
+            "description": "Suivez votre classement de score, montez en rang et rivalisez dans RHYTHMIA."
         },
         "backToLobby": "← Retour",
-        "currentTier": "NIVEAU DE FIDÉLITÉ ACTUEL",
-        "xpToNext": "{xp} XP pour le niveau suivant",
-        "maxTier": "NIVEAU MAXIMUM ATTEINT",
-        "streakDays": "JOURS DE SÉRIE",
-        "viewAll": "VOIR TOUS LES SUCCÈS ET DÉTAILS",
+        "currentTier": "RANG ACTUEL",
+        "totalScore": "SCORE TOTAL",
+        "scoreToNext": "{score} pour le prochain rang",
+        "maxTier": "RANG MAXIMUM ATTEINT",
+        "viewAll": "VOIR CLASSEMENT & DÉTAILS",
         "tiers": {
-            "new_beat": "Nouveau Rythme",
-            "syncopated": "Syncopé",
-            "in_rhythm": "En Rythme",
-            "maestro": "Maestro"
+            "unranked": "Non classé",
+            "beat_1": "Beat I",
+            "beat_2": "Beat II",
+            "rhythm": "Rhythm",
+            "maestro": "Maestro",
+            "virtuoso": "Virtuoso"
         },
         "stats": {
-            "visits": "VISITES",
-            "streak": "SÉRIE",
+            "bestScore": "MEILLEUR SCORE",
             "games": "PARTIES",
-            "badges": "SUCCÈS"
+            "lines": "LIGNES",
+            "badges": "SUCCÈS",
+            "totalVisits": "VISITES",
+            "currentStreak": "SÉRIE ACTUELLE",
+            "bestStreak": "MEILLEURE SÉRIE",
+            "bonusXP": "XP BONUS"
         },
         "sections": {
-            "tierRoadmap": "FEUILLE DE ROUTE DES NIVEAUX",
-            "streak": "SÉRIE DE CONNEXION",
+            "tierRoadmap": "FEUILLE DE ROUTE DES RANGS",
             "badges": "SUCCÈS RÉCENTS",
-            "community": "VOIX DE LA COMMUNAUTÉ",
-            "howItWorks": "COMMENT ÇA MARCHE"
-        },
-        "badges": {
-            "streak_3": {
-                "icon": "\uD83D\uDD25",
-                "name": "Série de 3 Jours",
-                "desc": "Visitez 3 jours d'affilée"
-            },
-            "streak_7": {
-                "icon": "\uD83D\uDD25",
-                "name": "Rythme Hebdomadaire",
-                "desc": "Visitez 7 jours d'affilée"
-            },
-            "streak_14": {
-                "icon": "\uD83D\uDD25",
-                "name": "Rythme Bimensuel",
-                "desc": "Visitez 14 jours d'affilée"
-            },
-            "streak_30": {
-                "icon": "\uD83D\uDD25",
-                "name": "Pouls Mensuel",
-                "desc": "Visitez 30 jours d'affilée"
-            },
-            "visits_5": {
-                "icon": "\uD83D\uDC63",
-                "name": "Habitué",
-                "desc": "Visitez 5 fois"
-            },
-            "visits_25": {
-                "icon": "\uD83D\uDC63",
-                "name": "Visage Familier",
-                "desc": "Visitez 25 fois"
-            },
-            "visits_100": {
-                "icon": "\uD83D\uDC63",
-                "name": "De la Famille",
-                "desc": "Visitez 100 fois"
-            },
-            "games_10": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Joueur",
-                "desc": "Jouez 10 parties"
-            },
-            "games_50": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Passionné",
-                "desc": "Jouez 50 parties"
-            },
-            "games_200": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Dévoué",
-                "desc": "Jouez 200 parties"
-            },
-            "polls_1": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Premier Vote",
-                "desc": "Votez dans votre premier sondage"
-            },
-            "polls_5": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Votant Actif",
-                "desc": "Votez dans 5 sondages"
-            },
-            "polls_10": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Voix de la Communauté",
-                "desc": "Votez dans 10 sondages"
-            }
+            "community": "VOIX COMMUNAUTAIRE",
+            "howItWorks": "COMMENT ÇA MARCHE",
+            "dailyBonus": "BONUS QUOTIDIEN"
         },
         "poll": {
             "question": "Quel devrait être le prochain mode de jeu RHYTHMIA ?",
@@ -770,25 +709,27 @@
         "strategy": {
             "0": {
                 "step": "ÉTAPE 01",
-                "title": "Jouez et Gagnez de l'XP",
-                "desc": "Chaque partie jouée, chaque visite et chaque succès débloqué vous rapporte de l'XP vers votre niveau de fidélité."
+                "title": "Joue & Marque",
+                "desc": "Chaque partie jouée accumule des points. Élimine des lignes, enchaîne des combos et vise les meilleurs scores pour monter en rang."
             },
             "1": {
                 "step": "ÉTAPE 02",
-                "title": "Construisez Votre Série",
-                "desc": "Visitez quotidiennement pour maintenir votre série. Les séries plus longues rapportent des XP bonus et débloquent des badges exclusifs."
+                "title": "Monte en Rang",
+                "desc": "Ton score cumulé détermine ton rang. Progresse de Non classé à Beat, Rhythm, Maestro, jusqu'à Virtuoso."
             },
             "2": {
                 "step": "ÉTAPE 03",
-                "title": "Grimpez les Niveaux",
-                "desc": "Progressez de Nouveau Rythme à Maestro. Chaque niveau vous rapproche du cœur de la communauté RHYTHMIA."
+                "title": "Débloque des Succès",
+                "desc": "Atteins des jalons pour débloquer des succès. Chaque réalisation marque ton parcours dans RHYTHMIA."
             },
             "3": {
                 "step": "ÉTAPE 04",
-                "title": "Façonnez l'Avenir",
-                "desc": "Votez dans les sondages communautaires, gagnez des badges et aidez à décider de la suite pour RHYTHMIA."
+                "title": "Façonne l'Avenir",
+                "desc": "Vote dans les sondages communautaires et aide à décider de la suite pour RHYTHMIA."
             }
-        }
+        },
+        "streakDays": "jours consécutifs",
+        "bonusXP": "XP BONUS"
     },
     "updates": {
         "title": "Mises à Jour Récentes",

@@ -4,33 +4,30 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import {
-  LOYALTY_TIERS,
-  getTierByXP,
-  tierProgress,
-  xpToNextTier,
-  recordDailyVisit,
-  syncFromGameplay,
-  recordPollVote,
+  SCORE_RANK_TIERS,
+  getTierByScore,
+  scoreProgress,
+  scoreToNextTier,
+  formatScore,
+  formatScoreCompact,
+  buildScoreRankingState,
   initAuth,
   fetchActivePoll,
   getUserVote,
   submitVote,
   ensureActivePoll,
-  syncLoyaltyToFirestore,
 } from '@/lib/loyalty';
-import type { LoyaltyState, Poll } from '@/lib/loyalty';
-import { ADVANCEMENTS, loadAdvancementState, syncLoyaltyStats } from '@/lib/advancements';
+import type { ScoreRankingState, Poll } from '@/lib/loyalty';
+import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
 import type { AdvancementState } from '@/lib/advancements';
 import { PixelIcon } from '@/components/rhythmia/PixelIcon';
 import styles from './loyalty.module.css';
-
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function LoyaltyDashboard() {
   const t = useTranslations('loyalty');
   const tAdv = useTranslations('advancements');
   const locale = useLocale();
-  const [state, setState] = useState<LoyaltyState | null>(null);
+  const [state, setState] = useState<ScoreRankingState | null>(null);
   const [advState, setAdvState] = useState<AdvancementState | null>(null);
 
   // Poll state — driven by Firestore
@@ -40,32 +37,27 @@ export default function LoyaltyDashboard() {
   const [isVoting, setIsVoting] = useState(false);
   const [pollLoading, setPollLoading] = useState(true);
 
-  // Initialize loyalty + auth + poll
+  // Initialize score ranking + auth + poll
   useEffect(() => {
-    // Loyalty state (local)
-    let loyaltyState = recordDailyVisit();
     const advancementState = loadAdvancementState();
-    loyaltyState = syncFromGameplay(
-      advancementState.stats.totalGamesPlayed,
+    // Use syncGameplayStats and recordDailyVisit to include daily bonus
+    const { recordDailyVisit, syncGameplayStats } = require('@/lib/loyalty');
+    
+    let dailyState = recordDailyVisit();
+    dailyState = syncGameplayStats(
       advancementState.stats.totalScore,
+      advancementState.stats.bestScorePerGame,
+      advancementState.stats.totalGamesPlayed,
       advancementState.unlockedIds.length,
+      advancementState.stats.totalLines,
     );
-    setState(loyaltyState);
-
-    // Sync loyalty stats into advancements system
-    const updatedAdv = syncLoyaltyStats({
-      totalVisits: loyaltyState.stats.totalVisits,
-      bestStreak: loyaltyState.stats.bestStreak,
-      pollsVoted: loyaltyState.stats.pollsVoted,
-    });
-    setAdvState(updatedAdv);
+    
+    setState(dailyState);
+    setAdvState(advancementState);
 
     // Auth + poll (async)
     (async () => {
       await initAuth();
-
-      // Sync loyalty state to Firestore
-      syncLoyaltyToFirestore(loyaltyState);
 
       // Ensure a default poll exists, then load it
       await ensureActivePoll();
@@ -104,19 +96,6 @@ export default function LoyaltyDashboard() {
         totalVotes: poll.totalVotes + 1,
       });
       setHasVoted(true);
-
-      // Award XP for voting
-      const updated = recordPollVote();
-      setState(updated);
-      syncLoyaltyToFirestore(updated);
-
-      // Sync updated poll count into advancements
-      const updatedAdv = syncLoyaltyStats({
-        totalVisits: updated.stats.totalVisits,
-        bestStreak: updated.stats.bestStreak,
-        pollsVoted: updated.stats.pollsVoted,
-      });
-      setAdvState(updatedAdv);
     }
 
     setIsVoting(false);
@@ -124,9 +103,11 @@ export default function LoyaltyDashboard() {
 
   if (!state) return null;
 
-  const currentTier = getTierByXP(state.xp);
-  const progress = tierProgress(state.xp);
-  const nextTierXP = xpToNextTier(state.xp);
+  const { totalScore, bestScorePerGame, totalGamesPlayed, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
+  const combinedScore = state.combinedScore;
+  const currentTier = getTierByScore(combinedScore);
+  const progress = scoreProgress(combinedScore);
+  const nextTierScore = scoreToNextTier(combinedScore);
 
   const pollText = (obj: { ja: string; en: string }) => (locale === 'ja' ? obj.ja : obj.en);
 
@@ -154,7 +135,7 @@ export default function LoyaltyDashboard() {
       </motion.header>
 
       <div className={styles.container}>
-        {/* Tier Display */}
+        {/* Score Display */}
         <motion.div
           className={styles.tierDisplay}
           initial={{ opacity: 0, y: 20 }}
@@ -165,7 +146,8 @@ export default function LoyaltyDashboard() {
           <h1 className={styles.tierName} style={{ color: currentTier.color }}>
             {t(`tiers.${currentTier.id}`)}
           </h1>
-          <p className={styles.tierLabel}>{t('currentTier')}</p>
+          <div className={styles.heroScore}>{formatScore(combinedScore)}</div>
+          <p className={styles.tierLabel}>{t('totalScore')}</p>
 
           <div className={styles.progressContainer}>
             <div className={styles.progressBar}>
@@ -173,17 +155,45 @@ export default function LoyaltyDashboard() {
                 className={styles.progressFill}
                 style={{
                   width: `${progress}%`,
-                  background: currentTier.color,
+                  background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})`,
                 }}
               />
             </div>
             <div className={styles.progressLabels}>
-              <span>{state.xp} XP</span>
+              <span>{formatScoreCompact(combinedScore)}</span>
               <span>
-                {nextTierXP !== null
-                  ? t('xpToNext', { xp: nextTierXP })
+                {nextTierScore !== null
+                  ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
                   : t('maxTier')}
               </span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Daily Bonus Stats */}
+        <motion.div
+          className={styles.dailyBonusCard}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+        >
+          <h3 className={styles.dailyBonusTitle}>{t('sections.dailyBonus')}</h3>
+          <div className={styles.dailyBonusGrid}>
+            <div className={styles.dailyBonusStat}>
+              <div className={styles.dailyBonusValue}>{totalVisits}</div>
+              <div className={styles.dailyBonusLabel}>{t('stats.totalVisits')}</div>
+            </div>
+            <div className={styles.dailyBonusStat}>
+              <div className={styles.dailyBonusValue}>{currentStreak}</div>
+              <div className={styles.dailyBonusLabel}>{t('stats.currentStreak')}</div>
+            </div>
+            <div className={styles.dailyBonusStat}>
+              <div className={styles.dailyBonusValue}>{bestStreak}</div>
+              <div className={styles.dailyBonusLabel}>{t('stats.bestStreak')}</div>
+            </div>
+            <div className={styles.dailyBonusStat}>
+              <div className={styles.dailyBonusValue} style={{ color: '#4CAF50' }}>+{dailyBonusXP}</div>
+              <div className={styles.dailyBonusLabel}>{t('stats.bonusXP')}</div>
             </div>
           </div>
         </motion.div>
@@ -196,16 +206,16 @@ export default function LoyaltyDashboard() {
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           <div className={styles.statCard}>
-            <div className={styles.statValue}>{state.stats.totalVisits}</div>
-            <div className={styles.statLabel}>{t('stats.visits')}</div>
+            <div className={styles.statValue}>{formatScoreCompact(bestScorePerGame)}</div>
+            <div className={styles.statLabel}>{t('stats.bestScore')}</div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statValue}>{state.stats.currentStreak}</div>
-            <div className={styles.statLabel}>{t('stats.streak')}</div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>{state.stats.totalGamesPlayed}</div>
+            <div className={styles.statValue}>{totalGamesPlayed}</div>
             <div className={styles.statLabel}>{t('stats.games')}</div>
+          </div>
+          <div className={styles.statCard}>
+            <div className={styles.statValue}>{totalLines.toLocaleString()}</div>
+            <div className={styles.statLabel}>{t('stats.lines')}</div>
           </div>
           <div className={styles.statCard}>
             <div className={styles.statValue}>
@@ -223,9 +233,9 @@ export default function LoyaltyDashboard() {
         >
           <h2 className={styles.sectionTitle}>{t('sections.tierRoadmap')}</h2>
           <div className={styles.tierRoadmap}>
-            {LOYALTY_TIERS.map((tier) => {
+            {SCORE_RANK_TIERS.map((tier) => {
               const isActive = tier.id === currentTier.id;
-              const isCompleted = state.xp >= tier.maxXP && tier.maxXP !== Infinity;
+              const isCompleted = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
 
               return (
                 <div
@@ -238,7 +248,7 @@ export default function LoyaltyDashboard() {
                     {t(`tiers.${tier.id}`)}
                   </div>
                   <div className={styles.tierStepXP}>
-                    {tier.maxXP === Infinity ? `${tier.minXP}+ XP` : `${tier.minXP} - ${tier.maxXP} XP`}
+                    {tier.maxScore === Infinity ? `${formatScoreCompact(tier.minScore)}+` : `${formatScoreCompact(tier.minScore)} - ${formatScoreCompact(tier.maxScore)}`}
                   </div>
                 </div>
               );
@@ -246,45 +256,11 @@ export default function LoyaltyDashboard() {
           </div>
         </motion.div>
 
-        {/* Streak */}
-        <motion.div
-          className={styles.streakSection}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <h2 className={styles.sectionTitle}>{t('sections.streak')}</h2>
-          <div className={styles.streakDisplay}>
-            <span className={styles.streakFlame}>
-              {state.stats.currentStreak > 0 ? '&#x1F525;' : '&#x26AA;'}
-            </span>
-            <div className={styles.streakInfo}>
-              <div className={styles.streakCount}>{state.stats.currentStreak}</div>
-              <div className={styles.streakCountLabel}>{t('streakDays')}</div>
-            </div>
-            <div className={styles.streakDays}>
-              {DAY_LABELS.map((label, i) => {
-                const isFilled = i < state.stats.currentStreak % 7 || state.stats.currentStreak >= 7;
-                const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
-
-                return (
-                  <div
-                    key={i}
-                    className={`${styles.streakDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
-                  >
-                    {label}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </motion.div>
-
         {/* Recent Advancements */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
         >
           <h2 className={styles.sectionTitle}>{t('sections.badges')}</h2>
           {recentAdvancements.length > 0 ? (
@@ -316,7 +292,7 @@ export default function LoyaltyDashboard() {
           className={styles.pollSection}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
         >
           <h2 className={styles.sectionTitle}>{t('sections.community')}</h2>
           <div className={styles.pollCard}>
@@ -383,11 +359,11 @@ export default function LoyaltyDashboard() {
           </div>
         </motion.div>
 
-        {/* Strategy / How It Works */}
+        {/* How Score Ranking Works */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
         >
           <h2 className={styles.sectionTitle}>{t('sections.howItWorks')}</h2>
           <div className={styles.strategyGrid}>
