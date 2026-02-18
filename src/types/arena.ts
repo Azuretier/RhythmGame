@@ -16,8 +16,52 @@ export const ARENA_CHAOS_GIMMICK_THRESHOLD = 40;
 export const ARENA_CHAOS_FRENZY_THRESHOLD = 75;
 export const ARENA_TEMPO_COLLAPSE_THRESHOLD = 0.3; // If avg sync < 30%, tempo collapses
 
-// ===== Arena Player =====
+// ===== Power-Up System =====
 
+export type PowerUpType =
+  | 'shield'        // Block incoming garbage for 5s
+  | 'garbage_bomb'  // Send 4 garbage to targeted player
+  | 'score_boost'   // 2x score multiplier for 6s
+  | 'freeze_target' // Slow target's gravity for 3s
+  | 'heal'          // Remove up to 3 garbage rows
+  | 'chaos_surge';  // Instantly add 15 chaos
+
+export interface PowerUp {
+  type: PowerUpType;
+  /** Display name */
+  label: string;
+}
+
+export const POWERUP_DEFS: Record<PowerUpType, { label: string; weight: number; color: string }> = {
+  shield:       { label: 'SHIELD',      weight: 20, color: '#00aaff' },
+  garbage_bomb: { label: 'BOMB',        weight: 25, color: '#ff3366' },
+  score_boost:  { label: 'BOOST',       weight: 15, color: '#ffaa00' },
+  freeze_target:{ label: 'FREEZE',      weight: 15, color: '#aa88ff' },
+  heal:         { label: 'HEAL',        weight: 15, color: '#00ff88' },
+  chaos_surge:  { label: 'CHAOS SURGE', weight: 10, color: '#ff6600' },
+};
+
+// ===== Emote System =====
+
+export type EmoteType = 'gg' | 'nice' | 'rip' | 'hype';
+
+export const EMOTE_DEFS: Record<EmoteType, { label: string; emoji: string }> = {
+  gg:   { label: 'GG',    emoji: 'GG' },
+  nice: { label: 'Nice!', emoji: 'Nice!' },
+  rip:  { label: 'RIP',   emoji: 'RIP' },
+  hype: { label: '!!!',   emoji: '!!!' },
+};
+
+// ===== Target Mode =====
+
+export type TargetMode = 'random' | 'attacker' | 'weakest' | 'strongest' | 'manual';
+
+export interface ActiveEffect {
+  type: PowerUpType;
+  expiresAt: number;
+}
+
+// ===== Arena Player =====
 export interface ArenaPlayer {
   id: string;
   name: string;
@@ -34,6 +78,16 @@ export interface ArenaPlayer {
   /** Number of eliminations this player caused */
   kills: number;
   placement: number | null;
+  /** Held power-up */
+  heldPowerUp: PowerUpType | null;
+  /** Number of power-ups used this session */
+  powerUpsUsed: number;
+  /** Active status effects */
+  activeEffects: ActiveEffect[];
+  /** Garbage target preference */
+  targetMode: TargetMode;
+  /** Manual target player ID */
+  targetId: string | null;
 }
 
 // ===== Arena Room State =====
@@ -180,8 +234,6 @@ export interface ArenaEmoteMessage {
   emote: string;
 }
 
-export type TargetMode = 'random' | 'attacker' | 'weakest' | 'strongest' | 'manual';
-
 export interface ArenaSetTargetMessage {
   type: 'arena_set_target';
   targetMode: TargetMode;
@@ -300,6 +352,18 @@ export interface ArenaSessionEndMessage {
   stats: ArenaSessionStats;
 }
 
+export interface ArenaFeedEvent {
+  id: string;
+  text: string;
+  color: string;
+  timestamp: number;
+}
+
+export interface ArenaEventFeedMessage {
+  type: 'arena_event_feed';
+  event: ArenaFeedEvent;
+}
+
 export interface ArenaQueuedMessage {
   type: 'arena_queued';
   position: number;
@@ -343,6 +407,7 @@ export type ArenaServerMessage =
   | ArenaPlayerEliminatedMessage
   | ArenaRelayedMessage
   | ArenaSessionEndMessage
+  | ArenaEventFeedMessage
   | ArenaQueuedMessage
   | ArenaTempoCollapseMessage
   | ArenaEmoteBroadcast
