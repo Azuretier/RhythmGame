@@ -438,13 +438,18 @@
             "bestScore": "MEJOR PUNT.",
             "games": "JUEGOS",
             "lines": "LÍNEAS",
-            "badges": "LOGROS"
+            "badges": "LOGROS",
+            "totalVisits": "VISITAS",
+            "currentStreak": "RACHA ACTUAL",
+            "bestStreak": "MEJOR RACHA",
+            "bonusXP": "XP BONUS"
         },
         "sections": {
             "tierRoadmap": "MAPA DE RANGOS",
             "badges": "LOGROS RECIENTES",
             "community": "VOZ COMUNITARIA",
-            "howItWorks": "CÓMO FUNCIONA"
+            "howItWorks": "CÓMO FUNCIONA",
+            "dailyBonus": "BONO DIARIO"
         },
         "poll": {
             "question": "¿Cuál debería ser el próximo modo de juego de RHYTHMIA?",
@@ -482,7 +487,9 @@
                 "title": "Moldea el Futuro",
                 "desc": "Vota en encuestas comunitarias y ayuda a decidir qué será lo próximo para RHYTHMIA."
             }
-        }
+        },
+        "streakDays": "días seguidos",
+        "bonusXP": "XP BONUS"
     },
     "updates": {
         "title": "Actualizaciones Recientes",

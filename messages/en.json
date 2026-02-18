@@ -620,7 +620,7 @@
             "title": "Score Ranking | RHYTHMIA - Azuretier",
             "description": "Track your score ranking, climb tiers, unlock advancements, and compete in the RHYTHMIA community."
         },
-        "backToLobby": "\u2190 Back",
+        "backToLobby": "← Back",
         "currentTier": "CURRENT RANK",
         "totalScore": "TOTAL SCORE",
         "scoreToNext": "{score} to next rank",
@@ -638,13 +638,18 @@
             "bestScore": "BEST SCORE",
             "games": "GAMES",
             "lines": "LINES",
-            "badges": "ADVANCEMENTS"
+            "badges": "ADVANCEMENTS",
+            "totalVisits": "VISITS",
+            "currentStreak": "CURRENT STREAK",
+            "bestStreak": "BEST STREAK",
+            "bonusXP": "BONUS XP"
         },
         "sections": {
             "tierRoadmap": "RANK ROADMAP",
             "badges": "RECENT ADVANCEMENTS",
             "community": "COMMUNITY VOICE",
-            "howItWorks": "HOW IT WORKS"
+            "howItWorks": "HOW IT WORKS",
+            "dailyBonus": "DAILY BONUS"
         },
         "poll": {
             "question": "What should the next RHYTHMIA game mode be?",
@@ -682,7 +687,9 @@
                 "title": "Shape the Future",
                 "desc": "Vote in community polls and help decide what comes next for RHYTHMIA."
             }
-        }
+        },
+        "streakDays": "day streak",
+        "bonusXP": "BONUS XP"
     },
     "updates": {
         "title": "Recent Updates",

@@ -40,14 +40,19 @@ export default function LoyaltyDashboard() {
   // Initialize score ranking + auth + poll
   useEffect(() => {
     const advancementState = loadAdvancementState();
-    const ranking = buildScoreRankingState(
+    // Use syncGameplayStats and recordDailyVisit to include daily bonus
+    const { recordDailyVisit, syncGameplayStats } = require('@/lib/loyalty');
+    
+    let dailyState = recordDailyVisit();
+    dailyState = syncGameplayStats(
       advancementState.stats.totalScore,
       advancementState.stats.bestScorePerGame,
       advancementState.stats.totalGamesPlayed,
       advancementState.unlockedIds.length,
       advancementState.stats.totalLines,
     );
-    setState(ranking);
+    
+    setState(dailyState);
     setAdvState(advancementState);
 
     // Auth + poll (async)
@@ -98,10 +103,11 @@ export default function LoyaltyDashboard() {
 
   if (!state) return null;
 
-  const { totalScore, bestScorePerGame, totalGamesPlayed, totalLines } = state.stats;
-  const currentTier = getTierByScore(totalScore);
-  const progress = scoreProgress(totalScore);
-  const nextTierScore = scoreToNextTier(totalScore);
+  const { totalScore, bestScorePerGame, totalGamesPlayed, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
+  const combinedScore = state.combinedScore;
+  const currentTier = getTierByScore(combinedScore);
+  const progress = scoreProgress(combinedScore);
+  const nextTierScore = scoreToNextTier(combinedScore);
 
   const pollText = (obj: { ja: string; en: string }) => (locale === 'ja' ? obj.ja : obj.en);
 
@@ -140,7 +146,7 @@ export default function LoyaltyDashboard() {
           <h1 className={styles.tierName} style={{ color: currentTier.color }}>
             {t(`tiers.${currentTier.id}`)}
           </h1>
-          <div className={styles.heroScore}>{formatScore(totalScore)}</div>
+          <div className={styles.heroScore}>{formatScore(combinedScore)}</div>
           <p className={styles.tierLabel}>{t('totalScore')}</p>
 
           <div className={styles.progressContainer}>
@@ -154,12 +160,40 @@ export default function LoyaltyDashboard() {
               />
             </div>
             <div className={styles.progressLabels}>
-              <span>{formatScoreCompact(totalScore)}</span>
+              <span>{formatScoreCompact(combinedScore)}</span>
               <span>
                 {nextTierScore !== null
                   ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
                   : t('maxTier')}
               </span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Daily Bonus Stats */}
+        <motion.div
+          className={styles.dailyBonusCard}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+        >
+          <h3 className={styles.dailyBonusTitle}>{t('sections.dailyBonus')}</h3>
+          <div className={styles.dailyBonusGrid}>
+            <div className={styles.dailyBonusStat}>
+              <div className={styles.dailyBonusValue}>{totalVisits}</div>
+              <div className={styles.dailyBonusLabel}>{t('stats.totalVisits')}</div>
+            </div>
+            <div className={styles.dailyBonusStat}>
+              <div className={styles.dailyBonusValue}>{currentStreak}</div>
+              <div className={styles.dailyBonusLabel}>{t('stats.currentStreak')}</div>
+            </div>
+            <div className={styles.dailyBonusStat}>
+              <div className={styles.dailyBonusValue}>{bestStreak}</div>
+              <div className={styles.dailyBonusLabel}>{t('stats.bestStreak')}</div>
+            </div>
+            <div className={styles.dailyBonusStat}>
+              <div className={styles.dailyBonusValue} style={{ color: '#4CAF50' }}>+{dailyBonusXP}</div>
+              <div className={styles.dailyBonusLabel}>{t('stats.bonusXP')}</div>
             </div>
           </div>
         </motion.div>
@@ -201,7 +235,7 @@ export default function LoyaltyDashboard() {
           <div className={styles.tierRoadmap}>
             {SCORE_RANK_TIERS.map((tier) => {
               const isActive = tier.id === currentTier.id;
-              const isCompleted = totalScore >= tier.maxScore && tier.maxScore !== Infinity;
+              const isCompleted = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
 
               return (
                 <div

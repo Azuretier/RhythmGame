@@ -438,13 +438,18 @@
             "bestScore": "คะแนนดีสุด",
             "games": "เกม",
             "lines": "ไลน์",
-            "badges": "ความก้าวหน้า"
+            "badges": "ความก้าวหน้า",
+            "totalVisits": "การเข้าชม",
+            "currentStreak": "ต่อเนื่อง",
+            "bestStreak": "สูงสุด",
+            "bonusXP": "โบนัส XP"
         },
         "sections": {
             "tierRoadmap": "แผนที่อันดับ",
             "badges": "ความก้าวหน้าล่าสุด",
             "community": "เสียงชุมชน",
-            "howItWorks": "วิธีการทำงาน"
+            "howItWorks": "วิธีการทำงาน",
+            "dailyBonus": "โบนัสรายวัน"
         },
         "poll": {
             "question": "โหมดเกม RHYTHMIA ถัดไปควรเป็นอะไร?",
@@ -482,7 +487,9 @@
                 "title": "สร้างอนาคต",
                 "desc": "โหวตในโพลชุมชนและช่วยตัดสินว่า RHYTHMIA จะไปทางไหนต่อไป"
             }
-        }
+        },
+        "streakDays": "วันติดต่อกัน",
+        "bonusXP": "โบนัส XP"
     },
     "updates": {
         "title": "อัปเดตล่าสุด",

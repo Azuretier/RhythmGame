@@ -69,6 +69,12 @@ export const SCORE_RANK_TIERS: ScoreRankTier[] = [
 // Legacy alias
 export const LOYALTY_TIERS = SCORE_RANK_TIERS;
 
+// XP rewards for daily engagement
+export const XP_REWARDS = {
+  dailyVisit: 10,
+  streakDay: 5, // bonus per consecutive day (capped at 30 days)
+} as const;
+
 export function getTierByScore(score: number): ScoreRankTier {
   for (let i = SCORE_RANK_TIERS.length - 1; i >= 0; i--) {
     if (score >= SCORE_RANK_TIERS[i].minScore) {
