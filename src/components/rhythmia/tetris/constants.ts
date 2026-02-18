@@ -126,7 +126,9 @@ export const WORLDS: World[] = [
 
 // ===== Board Dimensions =====
 export const BOARD_WIDTH = 10;
-export const BOARD_HEIGHT = 20;
+export const VISIBLE_HEIGHT = 20;
+export const BUFFER_ZONE = 4;    // Hidden rows above the visible area (standard Tetris buffer)
+export const BOARD_HEIGHT = VISIBLE_HEIGHT + BUFFER_ZONE; // Total board height (24)
 export const CELL_SIZE = 28;
 
 // ===== DAS/ARR/SDF Settings (in milliseconds) =====
@@ -271,6 +273,32 @@ export const SHOP_ITEMS: ShopItem[] = WEAPON_CARDS.map(card => ({
             card.damageMultiplier >= 1.2 ? 'uncommon' : 'common',
 }));
 
+// ===== Treasure Definitions =====
+import type { TreasureType } from './types';
+
+export const TREASURES: TreasureType[] = [
+    { id: 'copper_coin',   name: 'Copper Coin',      nameJa: '銅貨',       icon: '🪙', color: '#B87333', glowColor: '#D4956B', rarity: 'common',    value: 1,    dropWeight: 40 },
+    { id: 'silver_coin',   name: 'Silver Coin',      nameJa: '銀貨',       icon: '🥈', color: '#C0C0C0', glowColor: '#E0E0E0', rarity: 'uncommon',  value: 5,    dropWeight: 25 },
+    { id: 'gold_coin',     name: 'Gold Coin',        nameJa: '金貨',       icon: '🥇', color: '#FFD700', glowColor: '#FFECB3', rarity: 'rare',      value: 25,   dropWeight: 15 },
+    { id: 'ruby',          name: 'Ruby',             nameJa: 'ルビー',     icon: '🔴', color: '#E53935', glowColor: '#EF9A9A', rarity: 'rare',      value: 50,   dropWeight: 8 },
+    { id: 'sapphire',      name: 'Sapphire',         nameJa: 'サファイア', icon: '🔵', color: '#1E88E5', glowColor: '#90CAF9', rarity: 'epic',      value: 100,  dropWeight: 5 },
+    { id: 'emerald',       name: 'Emerald',          nameJa: 'エメラルド', icon: '🟢', color: '#43A047', glowColor: '#A5D6A7', rarity: 'epic',      value: 150,  dropWeight: 4 },
+    { id: 'diamond',       name: 'Diamond',          nameJa: 'ダイヤモンド', icon: '💎', color: '#B3E5FC', glowColor: '#E1F5FE', rarity: 'legendary', value: 500,  dropWeight: 2 },
+    { id: 'treasure_chest', name: 'Treasure Chest',  nameJa: '宝箱',       icon: '🏆', color: '#FFB300', glowColor: '#FFE082', rarity: 'legendary', value: 1000, dropWeight: 1 },
+];
+
+export const TREASURE_MAP: Record<string, TreasureType> = Object.fromEntries(TREASURES.map(t => [t.id, t]));
+export const TOTAL_TREASURE_DROP_WEIGHT = TREASURES.reduce((sum, t) => sum + t.dropWeight, 0);
+
+// Treasure drop chance per terrain damage (separate from item drops)
+export const TREASURE_DROP_CHANCE = 0.25;
+// Max floating treasures on screen
+export const MAX_FLOATING_TREASURES = 8;
+// Floating treasure animation duration (ms)
+export const TREASURE_FLOAT_DURATION = 1000;
+// Gold-to-silver conversion rate (100 silver = 1 gold display unit)
+export const SILVER_PER_GOLD = 100;
+
 // Items dropped per terrain damage unit
 export const ITEMS_PER_TERRAIN_DAMAGE = 0.3;
 
@@ -290,6 +318,9 @@ export const ENEMY_BASE_SPEED = 0.5;     // Legacy — grid system uses 1 tile/t
 export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower (world units)
 export const ENEMIES_PER_BEAT = 1;       // Enemies spawned per beat
 export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
+
+// ===== TD Wave Settings (within vanilla mode alternation) =====
+export const TD_WAVE_BEATS = 12;       // Beats of enemy spawning per TD phase
 
 // ===== Block Grid System =====
 // Enemies move on a discrete grid, 1 tile per turn, orthogonal only (no diagonals).

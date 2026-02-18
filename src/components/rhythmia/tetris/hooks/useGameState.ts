@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, CraftedCard, TerrainParticle, Enemy, Bullet, TreasureWallet, FloatingTreasure } from '../types';
+import { syncTreasureStats } from '@/lib/advancements/storage';
 import {
-    BOARD_WIDTH, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
+    BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
-    TERRAINS_PER_WORLD,
+    TERRAINS_PER_WORLD, TD_WAVE_BEATS,
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
+    TREASURES, TOTAL_TREASURE_DROP_WEIGHT, TREASURE_DROP_CHANCE, MAX_FLOATING_TREASURES, TREASURE_FLOAT_DURATION,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -18,6 +20,7 @@ let nextFloatingId = 0;
 let nextParticleId = 0;
 let nextEnemyId = 0;
 let nextBulletId = 0;
+let nextFloatingTreasureId = 0;
 
 /**
  * Roll a random item based on drop weights
@@ -29,6 +32,54 @@ function rollItem(): string {
         if (roll <= 0) return item.id;
     }
     return ITEMS[0].id;
+}
+
+/**
+ * Roll a random treasure based on drop weights
+ */
+function rollTreasure(): string {
+    let roll = Math.random() * TOTAL_TREASURE_DROP_WEIGHT;
+    for (const treasure of TREASURES) {
+        roll -= treasure.dropWeight;
+        if (roll <= 0) return treasure.id;
+    }
+    return TREASURES[0].id;
+}
+
+const DEFAULT_WALLET: TreasureWallet = {
+    gold: 0,
+    silver: 0,
+    totalGoldEarned: 0,
+    totalTreasuresCollected: 0,
+};
+
+/**
+ * Load treasure wallet from localStorage
+ */
+function loadTreasureWallet(): TreasureWallet {
+    if (typeof window === 'undefined') return { ...DEFAULT_WALLET };
+    try {
+        const data = localStorage.getItem('rhythmia_treasure_wallet');
+        if (data) {
+            const parsed = JSON.parse(data);
+            return { ...DEFAULT_WALLET, ...parsed };
+        }
+    } catch {
+        // ignore
+    }
+    return { ...DEFAULT_WALLET };
+}
+
+/**
+ * Save treasure wallet to localStorage
+ */
+function saveTreasureWallet(wallet: TreasureWallet): void {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem('rhythmia_treasure_wallet', JSON.stringify(wallet));
+    } catch {
+        // ignore
+    }
 }
 
 /**
@@ -53,6 +104,10 @@ export function useGameState() {
     // Game mode
     const [gameMode, setGameMode] = useState<GameMode>('vanilla');
 
+    // Terrain phase — vanilla mode alternates between dig and td phases
+    const [terrainPhase, setTerrainPhase] = useState<TerrainPhase>('dig');
+    const [tdBeatsRemaining, setTdBeatsRemaining] = useState(0);
+
     // Rhythm game state
     const [worldIdx, setWorldIdx] = useState(0);
     const [stageNumber, setStageNumber] = useState(1);
@@ -62,6 +117,7 @@ export function useGameState() {
     const [beatPhase, setBeatPhase] = useState(0);
     const [judgmentText, setJudgmentText] = useState('');
     const [judgmentColor, setJudgmentColor] = useState('');
+    const [judgmentScore, setJudgmentScore] = useState(0);
     const [showJudgmentAnim, setShowJudgmentAnim] = useState(false);
     const [boardBeat, setBoardBeat] = useState(false);
     const [boardShake, setBoardShake] = useState(false);
@@ -91,6 +147,21 @@ export function useGameState() {
     const [showInventory, setShowInventory] = useState(false);
     const [showShop, setShowShop] = useState(false);
     const [gold, setGold] = useState(0);
+
+    // ===== Treasure System =====
+    const [treasureWallet, setTreasureWallet] = useState<TreasureWallet>(loadTreasureWallet);
+    const [floatingTreasures, setFloatingTreasures] = useState<FloatingTreasure[]>([]);
+    const [lastCollectedTreasureId, setLastCollectedTreasureId] = useState<string | null>(null);
+
+    // Sync treasure stats to advancement system when wallet changes
+    useEffect(() => {
+        if (treasureWallet.totalGoldEarned > 0 || treasureWallet.totalTreasuresCollected > 0) {
+            syncTreasureStats({
+                totalGoldEarned: treasureWallet.totalGoldEarned,
+                totalTreasuresCollected: treasureWallet.totalTreasuresCollected,
+            });
+        }
+    }, [treasureWallet.totalGoldEarned, treasureWallet.totalTreasuresCollected]);
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -135,6 +206,9 @@ export function useGameState() {
     const bulletsRef = useRef<Bullet[]>(bullets);
     const towerHealthRef = useRef(towerHealth);
     const gameModeRef = useRef<GameMode>(gameMode);
+    const terrainPhaseRef = useRef<TerrainPhase>(terrainPhase);
+    const tdBeatsRemainingRef = useRef(tdBeatsRemaining);
+    const gamePhaseRef = useRef<GamePhase>(gamePhase);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -169,6 +243,9 @@ export function useGameState() {
     useEffect(() => { bulletsRef.current = bullets; }, [bullets]);
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
+    useEffect(() => { terrainPhaseRef.current = terrainPhase; }, [terrainPhase]);
+    useEffect(() => { tdBeatsRemainingRef.current = tdBeatsRemaining; }, [tdBeatsRemaining]);
+    useEffect(() => { gamePhaseRef.current = gamePhase; }, [gamePhase]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -181,7 +258,9 @@ export function useGameState() {
         return piece;
     }, []);
 
-    // Spawn a new piece
+    // Spawn a new piece.
+    // Uses standard Tetris death: game over only when piece cannot spawn at all
+    // (Block Out — buffer zone is full). Lock Out is checked separately when pieces lock.
     const spawnPiece = useCallback((): Piece | null => {
         const type = nextPieceRef.current;
         const newPiece = createSpawnPiece(type);
@@ -190,6 +269,8 @@ export function useGameState() {
         setCanHold(true);
 
         if (!isValidPosition(newPiece, boardRef.current)) {
+            // Block Out: piece cannot spawn even in the buffer zone.
+            // The board is completely full up to the buffer.
             setGameOver(true);
             setIsPlaying(false);
             return null;
@@ -198,10 +279,11 @@ export function useGameState() {
         return newPiece;
     }, [getNextFromBag]);
 
-    // Show judgment text with animation
-    const showJudgment = useCallback((text: string, color: string) => {
+    // Show judgment text with animation — optionally includes score earned
+    const showJudgment = useCallback((text: string, color: string, earnedScore?: number) => {
         setJudgmentText(text);
         setJudgmentColor(color);
+        setJudgmentScore(earnedScore ?? 0);
         setShowJudgmentAnim(false);
         requestAnimationFrame(() => {
             setShowJudgmentAnim(true);
@@ -322,6 +404,77 @@ export function useGameState() {
         setTimeout(() => {
             setFloatingItems(prev => prev.filter(fi => !newItems.some(ni => ni.id === fi.id)));
         }, FLOAT_DURATION + itemCount * 80 + 600);
+    }, []);
+
+    // Spawn floating treasures from terrain destruction
+    const spawnTreasureDrops = useCallback((damage: number, originX: number, originY: number) => {
+        // Each point of damage has a chance to drop treasure
+        let treasureCount = 0;
+        for (let i = 0; i < damage; i++) {
+            if (Math.random() < TREASURE_DROP_CHANCE) treasureCount++;
+        }
+        if (treasureCount === 0) return;
+
+        const now = Date.now();
+        const newTreasures: FloatingTreasure[] = [];
+
+        for (let i = 0; i < Math.min(treasureCount, MAX_FLOATING_TREASURES); i++) {
+            const treasureId = rollTreasure();
+            newTreasures.push({
+                id: nextFloatingTreasureId++,
+                treasureId,
+                x: originX + (Math.random() - 0.5) * 180,
+                y: originY + (Math.random() - 0.5) * 80,
+                targetX: originX + 100,
+                targetY: originY - 50,
+                startTime: now + i * 100,
+                duration: TREASURE_FLOAT_DURATION + Math.random() * 300,
+                collected: false,
+            });
+        }
+
+        setFloatingTreasures(prev => [...prev, ...newTreasures].slice(-MAX_FLOATING_TREASURES * 2));
+
+        // Schedule treasure collection
+        setTimeout(() => {
+            setFloatingTreasures(prev => prev.map(ft =>
+                newTreasures.some(nt => nt.id === ft.id) ? { ...ft, collected: true } : ft
+            ));
+
+            // Add treasure values to wallet
+            let goldEarned = 0;
+            let treasuresCollected = 0;
+            let lastId: string | null = null;
+            for (const ft of newTreasures) {
+                const def = TREASURES.find(t => t.id === ft.treasureId);
+                if (def) {
+                    goldEarned += def.value;
+                    treasuresCollected++;
+                    lastId = ft.treasureId;
+                }
+            }
+
+            if (goldEarned > 0) {
+                setLastCollectedTreasureId(lastId);
+                setTreasureWallet(prev => {
+                    const updated = {
+                        ...prev,
+                        gold: prev.gold + goldEarned,
+                        totalGoldEarned: prev.totalGoldEarned + goldEarned,
+                        totalTreasuresCollected: prev.totalTreasuresCollected + treasuresCollected,
+                    };
+                    saveTreasureWallet(updated);
+                    return updated;
+                });
+                // Clear flash after delay
+                setTimeout(() => setLastCollectedTreasureId(null), 800);
+            }
+        }, TREASURE_FLOAT_DURATION + treasureCount * 100 + 200);
+
+        // Clean up collected floating treasures
+        setTimeout(() => {
+            setFloatingTreasures(prev => prev.filter(ft => !newTreasures.some(nt => nt.id === ft.id)));
+        }, TREASURE_FLOAT_DURATION + treasureCount * 100 + 800);
     }, []);
 
     // Spawn terrain destruction particles
@@ -789,10 +942,91 @@ export function useGameState() {
         setGamePhase('WORLD_CREATION');
     }, []);
 
+    // Enter checkpoint — transition from dig phase to TD phase
+    const enterCheckpoint = useCallback(() => {
+        // Guard against multiple calls during phase transitions
+        if (gamePhaseRef.current !== 'PLAYING') return;
+        
+        setGamePhase('COLLAPSE');
+        gamePhaseRef.current = 'COLLAPSE';
+
+        setTimeout(() => {
+            setGamePhase('CHECKPOINT');
+            gamePhaseRef.current = 'CHECKPOINT';
+
+            // Switch to TD terrain
+            setTerrainPhase('td');
+            terrainPhaseRef.current = 'td';
+
+            // Reset TD state
+            setEnemies([]);
+            enemiesRef.current = [];
+            setBullets([]);
+            bulletsRef.current = [];
+            setTowerHealth(MAX_HEALTH);
+            towerHealthRef.current = MAX_HEALTH;
+            setTdBeatsRemaining(TD_WAVE_BEATS);
+            tdBeatsRemainingRef.current = TD_WAVE_BEATS;
+
+            setTimeout(() => {
+                setGamePhase('PLAYING');
+                gamePhaseRef.current = 'PLAYING';
+            }, 1500);
+        }, 1200);
+    }, []);
+
+    // Complete TD wave — transition back to dig phase with next stage
+    const completeWave = useCallback(() => {
+        // Guard against multiple calls during phase transitions
+        if (gamePhaseRef.current !== 'PLAYING') return;
+        
+        setGamePhase('COLLAPSE');
+        gamePhaseRef.current = 'COLLAPSE';
+
+        // Clear TD entities
+        setEnemies([]);
+        enemiesRef.current = [];
+        setBullets([]);
+        bulletsRef.current = [];
+
+        setTimeout(() => {
+            setGamePhase('TRANSITION');
+            gamePhaseRef.current = 'TRANSITION';
+
+            setTimeout(() => {
+                // Advance to next stage
+                const nextStage = stageNumberRef.current + 1;
+                startNewStage(nextStage);
+
+                // Switch to dig phase
+                setTerrainPhase('dig');
+                terrainPhaseRef.current = 'dig';
+
+                // Reset tower health for next TD phase
+                setTowerHealth(MAX_HEALTH);
+                towerHealthRef.current = MAX_HEALTH;
+
+                setGamePhase('WORLD_CREATION');
+                gamePhaseRef.current = 'WORLD_CREATION';
+
+                setTimeout(() => {
+                    setGamePhase('PLAYING');
+                    gamePhaseRef.current = 'PLAYING';
+                }, 1500);
+            }, 1200);
+        }, 1200);
+    }, [startNewStage]);
+
     // Initialize/reset game
     const initGame = useCallback((mode: GameMode = 'vanilla') => {
         setGameMode(mode);
         gameModeRef.current = mode;
+
+        // Always start with dig phase
+        setTerrainPhase('dig');
+        terrainPhaseRef.current = 'dig';
+        setTdBeatsRemaining(0);
+        tdBeatsRemainingRef.current = 0;
 
         setBoard(createEmptyBoard());
         boardRef.current = createEmptyBoard();
@@ -824,6 +1058,12 @@ export function useGameState() {
         setShowShop(false);
         setGold(0);
 
+        // Reload treasure wallet (persisted across games)
+        setTreasureWallet(loadTreasureWallet());
+        setFloatingTreasures([]);
+        setLastCollectedTreasureId(null);
+        nextFloatingTreasureId = 0;
+
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
         enemiesRef.current = [];
@@ -853,7 +1093,7 @@ export function useGameState() {
             type,
             rotation: 0,
             x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
-            y: type === 'I' ? -2 : -1,
+            y: BUFFER_ZONE - 1,
         };
 
         setCurrentPiece(initialPiece);
@@ -889,6 +1129,7 @@ export function useGameState() {
         beatPhase,
         judgmentText,
         judgmentColor,
+        judgmentScore,
         showJudgmentAnim,
         boardBeat,
         boardShake,
@@ -909,8 +1150,15 @@ export function useGameState() {
         showInventory,
         showShop,
         gold,
+        // Treasure system
+        treasureWallet,
+        floatingTreasures,
+        lastCollectedTreasureId,
         // Game mode
         gameMode,
+        // Terrain phase
+        terrainPhase,
+        tdBeatsRemaining,
 
         // Tower defense
         enemies,
@@ -967,6 +1215,9 @@ export function useGameState() {
         enemiesRef,
         bulletsRef,
         gameModeRef,
+        terrainPhaseRef,
+        tdBeatsRemainingRef,
+        gamePhaseRef,
         keyStatesRef,
         gameLoopRef,
         beatTimerRef,
@@ -996,6 +1247,12 @@ export function useGameState() {
         triggerCollapse,
         triggerTransition,
         triggerWorldCreation,
+        // Terrain phase actions
+        enterCheckpoint,
+        completeWave,
+        setTdBeatsRemaining,
+        // Treasure actions
+        spawnTreasureDrops,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,

@@ -1,6 +1,6 @@
 import { useRef, useCallback, useEffect, useMemo } from 'react';
 import type { VFXEvent } from '../types';
-import { BOARD_WIDTH, BOARD_HEIGHT, WORLDS } from '../constants';
+import { BOARD_WIDTH, VISIBLE_HEIGHT, BUFFER_ZONE, WORLDS } from '../constants';
 
 // ===== Particle/Effect Base Types =====
 
@@ -81,6 +81,34 @@ interface AscendingParticle extends BaseParticle {
     pulseSpeed: number;
 }
 
+interface ComboBreakShard {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    rotation: number;
+    rotationSpeed: number;
+    width: number;
+    height: number;
+    life: number;
+    maxLife: number;
+    color: string;
+    alpha: number;
+    trail: { x: number; y: number; alpha: number }[];
+}
+
+interface ComboBreakRing {
+    x: number;
+    y: number;
+    radius: number;
+    maxRadius: number;
+    life: number;
+    maxLife: number;
+    color: string;
+    lineWidth: number;
+    dashed: boolean;
+}
+
 // All active effects managed by the VFX system
 interface VFXState {
     beatRings: BeatRing[];
@@ -91,6 +119,8 @@ interface VFXState {
     speedLines: SpeedLine[];
     ascendingParticles: AscendingParticle[];
     genericParticles: BaseParticle[];
+    comboBreakShards: ComboBreakShard[];
+    comboBreakRings: ComboBreakRing[];
     isFever: boolean;
     feverHue: number;
     combo: number;
@@ -119,6 +149,8 @@ export function useRhythmVFX() {
         speedLines: [],
         ascendingParticles: [],
         genericParticles: [],
+        comboBreakShards: [],
+        comboBreakRings: [],
         isFever: false,
         feverHue: 0,
         combo: 0,
@@ -237,7 +269,7 @@ export function useRhythmVFX() {
             for (let dx = 0; dx < 4; dx++) {
                 const cx = boardX + dx;
                 const cy = boardY + dy;
-                if (cx >= 0 && cx < BOARD_WIDTH && cy >= 0 && cy < BOARD_HEIGHT) {
+                if (cx >= 0 && cx < BOARD_WIDTH && cy >= 0 && cy < VISIBLE_HEIGHT) {
                     cells.push({
                         x: geo.left + cx * geo.cellSize,
                         y: geo.top + cy * geo.cellSize,
@@ -344,6 +376,80 @@ export function useRhythmVFX() {
         }
     }, []);
 
+    const spawnComboBreakEffect = useCallback((lostCombo: number) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const geo = boardGeoRef.current;
+        const state = stateRef.current;
+        const cx = geo.left + geo.width / 2;
+        const cy = geo.top + geo.height / 2;
+
+        // Scale intensity based on combo lost — bigger combo = more dramatic
+        const intensity = Math.min(1, lostCombo / 20);
+        const shardCount = Math.min(40, 10 + lostCombo * 2);
+
+        // Glass-shard particles exploding outward from center
+        for (let i = 0; i < shardCount; i++) {
+            const angle = (Math.PI * 2 * i) / shardCount + (Math.random() - 0.5) * 0.4;
+            const speed = 3 + Math.random() * 8 + intensity * 5;
+            const hue = Math.random() > 0.5
+                ? 0 + Math.random() * 30      // Red-orange
+                : 280 + Math.random() * 40;    // Purple-magenta
+
+            state.comboBreakShards.push({
+                x: cx + (Math.random() - 0.5) * 40,
+                y: cy + (Math.random() - 0.5) * 40,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 2,
+                rotation: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() - 0.5) * 15,
+                width: 3 + Math.random() * 8 + intensity * 4,
+                height: 1 + Math.random() * 3,
+                life: 1,
+                maxLife: 1,
+                color: `hsl(${hue}, 100%, ${50 + Math.random() * 30}%)`,
+                alpha: 0.8 + Math.random() * 0.2,
+                trail: [],
+            });
+        }
+
+        // Expanding shockwave rings
+        const ringCount = 1 + Math.floor(intensity * 2);
+        for (let i = 0; i < ringCount; i++) {
+            state.comboBreakRings.push({
+                x: cx,
+                y: cy,
+                radius: 0,
+                maxRadius: Math.max(geo.width, geo.height) * (0.5 + intensity * 0.4) + i * 30,
+                life: 1,
+                maxLife: 1,
+                color: i === 0 ? '#FF4444' : `hsl(${320 + i * 20}, 80%, 60%)`,
+                lineWidth: 3 - i * 0.5,
+                dashed: i > 0,
+            });
+        }
+
+        // Additional scattered ember particles for high combos
+        if (lostCombo >= 5) {
+            const emberCount = Math.min(25, lostCombo);
+            for (let i = 0; i < emberCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 20 + Math.random() * 60;
+                state.genericParticles.push({
+                    x: cx + Math.cos(angle) * dist,
+                    y: cy + Math.sin(angle) * dist,
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: -1 - Math.random() * 3,
+                    life: 1,
+                    maxLife: 1,
+                    color: `hsl(${Math.random() * 40}, 100%, ${60 + Math.random() * 30}%)`,
+                    alpha: 0.7,
+                    size: 1.5 + Math.random() * 2.5,
+                });
+            }
+        }
+    }, []);
+
     // ===== Main VFX Event Handler =====
 
     const emit = useCallback((event: VFXEvent) => {
@@ -354,19 +460,22 @@ export function useRhythmVFX() {
                 spawnBeatRing(event.bpm, event.intensity);
                 break;
 
-            case 'lineClear':
-                spawnEqualizerBars(event.rows, event.count, event.onBeat);
+            case 'lineClear': {
+                // Offset rows from full board coords to visible-area coords
+                const visibleRows = event.rows.map((r: number) => r - BUFFER_ZONE);
+                spawnEqualizerBars(visibleRows, event.count, event.onBeat);
                 if (event.onBeat) {
-                    spawnGlitchParticles(event.rows, event.combo);
+                    spawnGlitchParticles(visibleRows, event.combo);
                 }
                 break;
+            }
 
             case 'rotation':
-                spawnRotationTrail(event.pieceType, event.boardX, event.boardY, '#00FFFF');
+                spawnRotationTrail(event.pieceType, event.boardX, event.boardY - BUFFER_ZONE, '#00FFFF');
                 break;
 
             case 'hardDrop':
-                spawnHardDropParticles(event.boardX, event.boardY, event.dropDistance, '#FFFFFF');
+                spawnHardDropParticles(event.boardX, event.boardY - BUFFER_ZONE, event.dropDistance, '#FFFFFF');
                 break;
 
             case 'comboChange':
@@ -383,6 +492,10 @@ export function useRhythmVFX() {
                 }
                 break;
 
+            case 'comboBreak':
+                spawnComboBreakEffect(event.lostCombo);
+                break;
+
             case 'feverStart':
                 state.isFever = true;
                 spawnSpeedLines(event.combo);
@@ -392,7 +505,7 @@ export function useRhythmVFX() {
                 state.isFever = false;
                 break;
         }
-    }, [spawnBeatRing, spawnEqualizerBars, spawnGlitchParticles, spawnRotationTrail, spawnHardDropParticles, spawnSpeedLines, spawnAscendingParticles]);
+    }, [spawnBeatRing, spawnEqualizerBars, spawnGlitchParticles, spawnRotationTrail, spawnHardDropParticles, spawnSpeedLines, spawnAscendingParticles, spawnComboBreakEffect]);
 
     // ===== Canvas Render Loop =====
 
@@ -648,6 +761,88 @@ export function useRhythmVFX() {
             ctx.beginPath();
             ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
+        }
+
+        // --- Combo Break Shards ---
+        for (let i = state.comboBreakShards.length - 1; i >= 0; i--) {
+            const shard = state.comboBreakShards[i];
+            shard.life -= dt * 1.8;
+            shard.x += shard.vx;
+            shard.y += shard.vy;
+            shard.vy += 8 * dt; // gravity
+            shard.vx *= 0.98; // air resistance
+            shard.rotation += shard.rotationSpeed * dt;
+
+            // Update trail
+            shard.trail.push({ x: shard.x, y: shard.y, alpha: shard.life * 0.3 });
+            if (shard.trail.length > 6) shard.trail.shift();
+
+            if (shard.life <= 0) {
+                state.comboBreakShards.splice(i, 1);
+                continue;
+            }
+
+            // Draw trail
+            for (let t = 0; t < shard.trail.length; t++) {
+                const tp = shard.trail[t];
+                ctx.save();
+                ctx.globalAlpha = tp.alpha * (t / shard.trail.length) * 0.5;
+                ctx.fillStyle = shard.color;
+                ctx.beginPath();
+                ctx.arc(tp.x, tp.y, shard.width * 0.3 * shard.life, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Draw shard
+            ctx.save();
+            ctx.translate(shard.x, shard.y);
+            ctx.rotate(shard.rotation);
+            ctx.globalAlpha = shard.life * shard.alpha;
+            ctx.fillStyle = shard.color;
+            ctx.shadowColor = shard.color;
+            ctx.shadowBlur = 8 * shard.life;
+
+            // Diamond/shard shape
+            ctx.beginPath();
+            const w = shard.width * shard.life;
+            const h = shard.height * shard.life;
+            ctx.moveTo(0, -h);
+            ctx.lineTo(w * 0.5, 0);
+            ctx.lineTo(0, h);
+            ctx.lineTo(-w * 0.5, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // --- Combo Break Rings ---
+        for (let i = state.comboBreakRings.length - 1; i >= 0; i--) {
+            const ring = state.comboBreakRings[i];
+            ring.life -= dt * 2.0;
+            ring.radius += (ring.maxRadius - ring.radius) * dt * 5;
+
+            if (ring.life <= 0) {
+                state.comboBreakRings.splice(i, 1);
+                continue;
+            }
+
+            ctx.save();
+            ctx.globalAlpha = ring.life * 0.6;
+            ctx.strokeStyle = ring.color;
+            ctx.lineWidth = ring.lineWidth * ring.life;
+            ctx.shadowColor = ring.color;
+            ctx.shadowBlur = 12 * ring.life;
+
+            if (ring.dashed) {
+                ctx.setLineDash([8, 6]);
+            }
+
+            ctx.beginPath();
+            ctx.arc(ring.x, ring.y, ring.radius, 0, Math.PI * 2);
+            ctx.stroke();
             ctx.restore();
         }
 

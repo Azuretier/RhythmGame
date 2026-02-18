@@ -10,17 +10,12 @@ import type {
   ServerMessage,
   ErrorMessage,
   RelayPayload,
+  SetProfileMessage,
 } from './src/types/multiplayer';
-import type {
-  ArenaClientMessage,
-  ArenaAction,
-  ArenaBoardPayload,
-} from './src/types/arena';
 import {
   ARENA_MAX_PLAYERS,
   ARENA_QUEUE_TIMEOUT,
 } from './src/types/arena';
-import type { MCServerMessage, Direction } from './src/types/minecraft-board';
 
 // Environment configuration
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -63,6 +58,7 @@ interface QueuedPlayer {
 
 const rankedQueue: Map<string, QueuedPlayer> = new Map();
 const rankedTimers: Map<string, NodeJS.Timeout> = new Map();
+const rankedRetryIntervals: Map<string, ReturnType<typeof setInterval>> = new Map();
 
 const playerConnections = new Map<string, PlayerConnection>();
 const reconnectTokens = new Map<string, { playerId: string; expires: number }>();
@@ -72,10 +68,10 @@ const disconnectTimers = new Map<string, NodeJS.Timeout>();
 
 const arenaManager = new ArenaRoomManager({
   onBroadcast: (roomCode, message, excludePlayerId) => {
-    broadcastToArena(roomCode, message as ServerMessage, excludePlayerId);
+    broadcastToArena(roomCode, message as ServerMessage, excludePlayerId); // ArenaManager uses `object` type
   },
   onSendToPlayer: (playerId, message) => {
-    sendToPlayer(playerId, message as ServerMessage);
+    sendToPlayer(playerId, message as ServerMessage); // ArenaManager uses `object` type
   },
   onSessionEnd: (roomCode) => {
     console.log(`[ARENA] Session ended in room ${roomCode}`);
@@ -191,7 +187,7 @@ function broadcastToArena(roomCode: string, message: ServerMessage, excludePlaye
 function sendArenaState(roomCode: string): void {
   const arenaState = arenaManager.getRoomState(roomCode);
   if (arenaState) {
-    broadcastToArena(roomCode, { type: 'arena_state', arenaState } as unknown as ServerMessage);
+    broadcastToArena(roomCode, { type: 'arena_state', arenaState } as ServerMessage);
   }
 }
 
@@ -201,7 +197,7 @@ function startArenaCountdown(roomCode: string, gameSeed: number): void {
 
   const tick = () => {
     if (count > 0) {
-      broadcastToArena(roomCode, { type: 'arena_countdown', count } as unknown as ServerMessage);
+      broadcastToArena(roomCode, { type: 'arena_countdown', count } as ServerMessage);
       count--;
       setTimeout(tick, 1000);
     } else {
@@ -213,7 +209,7 @@ function startArenaCountdown(roomCode: string, gameSeed: number): void {
         bpm: arenaState?.bpm || 120,
         serverTime: Date.now(),
         players: playerIds,
-      } as unknown as ServerMessage);
+      } as ServerMessage);
       sendArenaState(roomCode);
       console.log(`[ARENA] Game started in room ${roomCode} with ${playerIds.length} players`);
     }
@@ -249,7 +245,7 @@ function tryFormArenaMatch(): boolean {
     arenaCode: roomCode,
     playerId: host.playerId,
     reconnectToken: hostToken,
-  } as unknown as ServerMessage);
+  } as ServerMessage);
 
   // Join remaining players
   for (let i = 1; i < players.length; i++) {
@@ -267,7 +263,7 @@ function tryFormArenaMatch(): boolean {
         playerId: p.playerId,
         arenaState,
         reconnectToken: token,
-      } as unknown as ServerMessage);
+      } as ServerMessage);
     }
   }
 
@@ -295,22 +291,14 @@ function clearArenaTimer(playerId: string): void {
   }
 }
 
-function isArenaMessage(type: string): boolean {
-  return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue';
-}
-
-function isMCBoardMessage(type: string): boolean {
-  return type.startsWith('mc_');
-}
-
 // ===== Minecraft Board Game System =====
 
 const mcBoardManager = new MinecraftBoardManager({
-  onSendToPlayer: (playerId: string, message: MCServerMessage) => {
-    sendToPlayer(playerId, message as unknown as ServerMessage);
+  onSendToPlayer: (playerId, message) => {
+    sendToPlayer(playerId, message);
   },
-  onBroadcastToRoom: (roomCode: string, message: MCServerMessage, excludePlayerId?: string) => {
-    broadcastToMCBoard(roomCode, message as unknown as ServerMessage, excludePlayerId);
+  onBroadcastToRoom: (roomCode, message, excludePlayerId) => {
+    broadcastToMCBoard(roomCode, message, excludePlayerId);
   },
 });
 
@@ -326,7 +314,7 @@ function broadcastToMCBoard(roomCode: string, message: ServerMessage, excludePla
 function sendMCBoardRoomState(roomCode: string): void {
   const roomState = mcBoardManager.getRoomState(roomCode);
   if (roomState) {
-    broadcastToMCBoard(roomCode, { type: 'mc_room_state', roomState } as unknown as ServerMessage);
+    broadcastToMCBoard(roomCode, { type: 'mc_room_state', roomState } as ServerMessage);
   }
 }
 
@@ -334,17 +322,20 @@ function startMCBoardCountdown(roomCode: string, gameSeed: number): void {
   let count = COUNTDOWN_SECONDS;
   const tick = () => {
     if (count > 0) {
-      broadcastToMCBoard(roomCode, { type: 'mc_countdown', count } as unknown as ServerMessage);
+      broadcastToMCBoard(roomCode, { type: 'mc_countdown', count } as ServerMessage);
       count--;
       setTimeout(tick, 1000);
     } else {
       mcBoardManager.beginPlaying(roomCode);
-      broadcastToMCBoard(roomCode, { type: 'mc_game_started', seed: gameSeed } as unknown as ServerMessage);
+      broadcastToMCBoard(roomCode, { type: 'mc_game_started', seed: gameSeed } as ServerMessage);
       console.log(`[MC_BOARD] Game started in room ${roomCode}`);
     }
   };
   tick();
 }
+
+// Countdown timers: track active countdowns so they can be cancelled
+const activeCountdowns = new Map<string, ReturnType<typeof setTimeout>>();
 
 // ===== Message Validation =====
 
@@ -356,16 +347,34 @@ function isValidMessage(data: unknown): data is ClientMessage {
 
 // ===== Countdown Logic =====
 
+function cancelCountdown(roomCode: string): void {
+  const timer = activeCountdowns.get(roomCode);
+  if (timer) {
+    clearTimeout(timer);
+    activeCountdowns.delete(roomCode);
+  }
+}
+
 function startCountdown(roomCode: string, gameSeed: number): void {
+  cancelCountdown(roomCode);
   const playerIds = roomManager.getPlayerIdsInRoom(roomCode);
   let count = COUNTDOWN_SECONDS;
 
   const tick = () => {
+    // Verify room still exists and is in countdown state
+    const room = roomManager.getRoomByPlayerId(playerIds[0]);
+    if (!room || room.code !== roomCode) {
+      activeCountdowns.delete(roomCode);
+      return;
+    }
+
     if (count > 0) {
       broadcastToRoom(roomCode, { type: 'countdown', count });
       count--;
-      setTimeout(tick, 1000);
+      const timer = setTimeout(tick, 1000);
+      activeCountdowns.set(roomCode, timer);
     } else {
+      activeCountdowns.delete(roomCode);
       // Countdown finished - start game
       roomManager.setRoomPlaying(roomCode);
       broadcastToRoom(roomCode, {
@@ -388,15 +397,19 @@ function tryRankedMatch(playerId: string): boolean {
   const queued = rankedQueue.get(playerId);
   if (!queued) return false;
 
-  // Find a suitable opponent in the queue
+  const now = Date.now();
+
+  // Find a suitable opponent in the queue (symmetric: both players must be within each other's range)
   for (const [otherId, other] of rankedQueue) {
     if (otherId === playerId) continue;
     const pointDiff = Math.abs(queued.rankPoints - other.rankPoints);
-    // Expand range over time: after 4s, accept wider range
-    const elapsed = Date.now() - queued.queuedAt;
-    const expandedRange = RANKED_POINT_RANGE + Math.floor(elapsed / 1000) * 200;
-    if (pointDiff <= expandedRange) {
-      // Match found! Create a room for them
+    // Expand range over time for both players
+    const elapsedSelf = now - queued.queuedAt;
+    const elapsedOther = now - other.queuedAt;
+    const selfRange = RANKED_POINT_RANGE + Math.floor(elapsedSelf / 1000) * 200;
+    const otherRange = RANKED_POINT_RANGE + Math.floor(elapsedOther / 1000) * 200;
+    // Both players must accept the match range (symmetric matching)
+    if (pointDiff <= selfRange && pointDiff <= otherRange) {
       createRankedRoom(playerId, queued, otherId, other);
       return true;
     }
@@ -517,6 +530,15 @@ function clearRankedTimer(playerId: string): void {
     clearTimeout(timer);
     rankedTimers.delete(playerId);
   }
+  clearRankedRetryInterval(playerId);
+}
+
+function clearRankedRetryInterval(playerId: string): void {
+  const interval = rankedRetryIntervals.get(playerId);
+  if (interval) {
+    clearInterval(interval);
+    rankedRetryIntervals.delete(playerId);
+  }
 }
 
 // ===== Message Handler =====
@@ -549,11 +571,13 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'set_profile': {
-      const profileMsg = message as unknown as { name: string; icon: string; isPrivate?: boolean };
+      const profileMsg = message as SetProfileMessage;
       if (conn) {
+        const name = typeof profileMsg.name === 'string' ? profileMsg.name : '';
+        const icon = typeof profileMsg.icon === 'string' ? profileMsg.icon : '';
         const isNewProfile = !conn.profileName;
-        conn.profileName = (profileMsg.name || '').slice(0, 20);
-        conn.profileIcon = (profileMsg.icon || '').slice(0, 30);
+        conn.profileName = name.slice(0, 20);
+        conn.profileIcon = icon.slice(0, 30);
         conn.profilePrivate = !!profileMsg.isPrivate;
         // Broadcast updated online users so all clients see the new profile
         broadcastOnlineCount();
@@ -837,6 +861,7 @@ function handleMessage(playerId: string, raw: string): void {
         // Set timeout for AI fallback
         const timer = setTimeout(() => {
           rankedTimers.delete(playerId);
+          clearRankedRetryInterval(playerId);
           // Try one more time to find a human match
           if (rankedQueue.has(playerId) && !tryRankedMatch(playerId)) {
             spawnAIMatch(playerId);
@@ -845,18 +870,17 @@ function handleMessage(playerId: string, raw: string): void {
         rankedTimers.set(playerId, timer);
 
         // Also periodically retry matching during the wait
+        clearRankedRetryInterval(playerId);
         const retryInterval = setInterval(() => {
           if (!rankedQueue.has(playerId)) {
-            clearInterval(retryInterval);
+            clearRankedRetryInterval(playerId);
             return;
           }
           if (tryRankedMatch(playerId)) {
-            clearInterval(retryInterval);
+            clearRankedRetryInterval(playerId);
           }
         }, 1000);
-
-        // Clean up retry interval after timeout
-        setTimeout(() => clearInterval(retryInterval), RANKED_MATCH_TIMEOUT + 500);
+        rankedRetryIntervals.set(playerId, retryInterval);
       }
       break;
     }
@@ -878,14 +902,14 @@ function handleMessage(playerId: string, raw: string): void {
         broadcastToArena(oldArenaCode, {
           type: 'arena_player_left',
           playerId,
-        } as unknown as ServerMessage);
+        });
         sendArenaState(oldArenaCode);
       }
 
       const { roomCode, player } = arenaManager.createRoom(
         playerId,
-        (message as unknown as { playerName: string }).playerName,
-        (message as unknown as { roomName?: string }).roomName,
+        message.playerName,
+        message.roomName,
       );
 
       const reconnectToken = issueReconnectToken(playerId);
@@ -894,7 +918,7 @@ function handleMessage(playerId: string, raw: string): void {
         arenaCode: roomCode,
         playerId: player.id,
         reconnectToken,
-      } as unknown as ServerMessage);
+      } as ServerMessage);
 
       sendArenaState(roomCode);
       console.log(`[ARENA] ${roomCode} created by ${player.name}`);
@@ -906,21 +930,17 @@ function handleMessage(playerId: string, raw: string): void {
       if (existing) {
         const oldArenaCode = existing.code;
         arenaManager.removePlayer(playerId);
-        broadcastToArena(oldArenaCode, {
-          type: 'arena_player_left',
-          playerId,
-        } as unknown as ServerMessage);
+        broadcastToArena(oldArenaCode, { type: 'arena_player_left', playerId });
         sendArenaState(oldArenaCode);
       }
 
-      const arenaMsg = message as unknown as { arenaCode: string; playerName: string };
-      const result = arenaManager.joinRoom(arenaMsg.arenaCode, playerId, arenaMsg.playerName);
+      const result = arenaManager.joinRoom(message.arenaCode, playerId, message.playerName);
       if (!result.success || !result.player) {
         sendError(playerId, result.error || 'Failed to join arena', 'ARENA_JOIN_FAILED');
         break;
       }
 
-      const arenaState = arenaManager.getRoomState(arenaMsg.arenaCode);
+      const arenaState = arenaManager.getRoomState(message.arenaCode);
       if (!arenaState) {
         sendError(playerId, 'Arena not found', 'ARENA_NOT_FOUND');
         break;
@@ -929,19 +949,19 @@ function handleMessage(playerId: string, raw: string): void {
       const reconnectToken = issueReconnectToken(playerId);
       sendToPlayer(playerId, {
         type: 'arena_joined',
-        arenaCode: arenaMsg.arenaCode.toUpperCase().trim(),
+        arenaCode: message.arenaCode.toUpperCase().trim(),
         playerId: result.player.id,
         arenaState,
         reconnectToken,
-      } as unknown as ServerMessage);
+      });
 
-      broadcastToArena(arenaMsg.arenaCode, {
+      broadcastToArena(message.arenaCode, {
         type: 'arena_player_joined',
         player: result.player,
-      } as unknown as ServerMessage, playerId);
+      }, playerId);
 
-      sendArenaState(arenaMsg.arenaCode);
-      console.log(`[ARENA] ${result.player.name} joined arena ${arenaMsg.arenaCode}`);
+      sendArenaState(message.arenaCode);
+      console.log(`[ARENA] ${result.player.name} joined arena ${message.arenaCode}`);
       break;
     }
 
@@ -950,20 +970,16 @@ function handleMessage(playerId: string, raw: string): void {
       if (existing) {
         const oldArenaCode = existing.code;
         arenaManager.removePlayer(playerId);
-        broadcastToArena(oldArenaCode, {
-          type: 'arena_player_left',
-          playerId,
-        } as unknown as ServerMessage);
+        broadcastToArena(oldArenaCode, { type: 'arena_player_left', playerId });
         sendArenaState(oldArenaCode);
       }
 
       arenaQueue.delete(playerId);
       clearArenaTimer(playerId);
 
-      const queueMsg = message as unknown as { playerName: string };
       const entry: ArenaQueuedPlayer = {
         playerId,
-        playerName: (queueMsg.playerName || 'Player').slice(0, 20),
+        playerName: (message.playerName || 'Player').slice(0, 20),
         queuedAt: Date.now(),
       };
       arenaQueue.set(playerId, entry);
@@ -972,7 +988,7 @@ function handleMessage(playerId: string, raw: string): void {
         type: 'arena_queued',
         position: arenaQueue.size,
         queueSize: arenaQueue.size,
-      } as unknown as ServerMessage);
+      });
 
       console.log(`[ARENA] ${entry.playerName} queued (${arenaQueue.size} in queue)`);
 
@@ -1011,8 +1027,7 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'arena_ready': {
-      const readyMsg = message as unknown as { ready: boolean };
-      const result = arenaManager.setPlayerReady(playerId, readyMsg.ready);
+      const result = arenaManager.setPlayerReady(playerId, message.ready);
       if (!result.success) {
         sendError(playerId, result.error || 'Failed to set ready');
         break;
@@ -1039,14 +1054,27 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'arena_action': {
-      const actionMsg = message as unknown as { action: ArenaAction };
-      arenaManager.handleAction(playerId, actionMsg.action);
+      arenaManager.handleAction(playerId, message.action);
       break;
     }
 
     case 'arena_relay': {
-      const relayMsg = message as unknown as { payload: ArenaBoardPayload };
-      arenaManager.handleRelay(playerId, relayMsg.payload);
+      arenaManager.handleRelay(playerId, message.payload);
+      break;
+    }
+
+    case 'arena_use_powerup': {
+      arenaManager.handleUsePowerUp(playerId, message.targetId);
+      break;
+    }
+
+    case 'arena_emote': {
+      arenaManager.handleEmote(playerId, message.emote);
+      break;
+    }
+
+    case 'arena_set_target': {
+      arenaManager.handleSetTarget(playerId, message.targetMode, message.targetId);
       break;
     }
 
@@ -1058,10 +1086,7 @@ function handleMessage(playerId: string, raw: string): void {
       }
 
       if (result.roomCode) {
-        broadcastToArena(result.roomCode, {
-          type: 'arena_player_left',
-          playerId,
-        } as unknown as ServerMessage);
+        broadcastToArena(result.roomCode, { type: 'arena_player_left', playerId });
 
         if (result.room) {
           sendArenaState(result.roomCode);
@@ -1075,22 +1100,18 @@ function handleMessage(playerId: string, raw: string): void {
     // ===== Minecraft Board Game Messages =====
 
     case 'mc_create_room': {
-      const mcMsg = message as unknown as { playerName: string; roomName?: string };
       const existing = mcBoardManager.getRoomByPlayerId(playerId);
       if (existing) {
         const oldMcCode = existing.code;
         mcBoardManager.removePlayer(playerId);
-        broadcastToMCBoard(oldMcCode, {
-          type: 'mc_player_left',
-          playerId,
-        } as unknown as ServerMessage);
+        broadcastToMCBoard(oldMcCode, { type: 'mc_player_left', playerId });
         sendMCBoardRoomState(oldMcCode);
       }
 
       const { roomCode, player } = mcBoardManager.createRoom(
         playerId,
-        (mcMsg.playerName || 'Player').slice(0, 16),
-        mcMsg.roomName,
+        (message.playerName || 'Player').slice(0, 16),
+        message.roomName,
       );
 
       const reconnectToken = issueReconnectToken(playerId);
@@ -1099,7 +1120,7 @@ function handleMessage(playerId: string, raw: string): void {
         roomCode,
         playerId: player.id,
         reconnectToken,
-      } as unknown as ServerMessage);
+      });
 
       sendMCBoardRoomState(roomCode);
       console.log(`[MC_BOARD] Room ${roomCode} created by ${player.name}`);
@@ -1107,25 +1128,21 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'mc_join_room': {
-      const mcMsg = message as unknown as { roomCode: string; playerName: string };
       const existing = mcBoardManager.getRoomByPlayerId(playerId);
       if (existing) {
         const oldMcCode = existing.code;
         mcBoardManager.removePlayer(playerId);
-        broadcastToMCBoard(oldMcCode, {
-          type: 'mc_player_left',
-          playerId,
-        } as unknown as ServerMessage);
+        broadcastToMCBoard(oldMcCode, { type: 'mc_player_left', playerId });
         sendMCBoardRoomState(oldMcCode);
       }
 
-      const result = mcBoardManager.joinRoom(mcMsg.roomCode, playerId, (mcMsg.playerName || 'Player').slice(0, 16));
+      const result = mcBoardManager.joinRoom(message.roomCode, playerId, (message.playerName || 'Player').slice(0, 16));
       if (!result.success || !result.player) {
         sendError(playerId, result.error || 'Failed to join', 'MC_JOIN_FAILED');
         break;
       }
 
-      const roomState = mcBoardManager.getRoomState(mcMsg.roomCode.toUpperCase());
+      const roomState = mcBoardManager.getRoomState(message.roomCode.toUpperCase());
       if (!roomState) {
         sendError(playerId, 'Room not found', 'MC_ROOM_NOT_FOUND');
         break;
@@ -1134,25 +1151,25 @@ function handleMessage(playerId: string, raw: string): void {
       const reconnectToken = issueReconnectToken(playerId);
       sendToPlayer(playerId, {
         type: 'mc_joined_room',
-        roomCode: mcMsg.roomCode.toUpperCase().trim(),
+        roomCode: message.roomCode.toUpperCase().trim(),
         playerId: result.player.id,
         roomState,
         reconnectToken,
-      } as unknown as ServerMessage);
+      });
 
-      broadcastToMCBoard(mcMsg.roomCode.toUpperCase(), {
+      broadcastToMCBoard(message.roomCode.toUpperCase(), {
         type: 'mc_player_joined',
         player: result.player,
-      } as unknown as ServerMessage, playerId);
+      }, playerId);
 
-      sendMCBoardRoomState(mcMsg.roomCode.toUpperCase());
-      console.log(`[MC_BOARD] ${result.player.name} joined room ${mcMsg.roomCode}`);
+      sendMCBoardRoomState(message.roomCode.toUpperCase());
+      console.log(`[MC_BOARD] ${result.player.name} joined room ${message.roomCode}`);
       break;
     }
 
     case 'mc_get_rooms': {
       const rooms = mcBoardManager.getPublicRooms();
-      sendToPlayer(playerId, { type: 'mc_room_list', rooms } as unknown as ServerMessage);
+      sendToPlayer(playerId, { type: 'mc_room_list', rooms });
       break;
     }
 
@@ -1162,10 +1179,7 @@ function handleMessage(playerId: string, raw: string): void {
         reconnectTokens.delete(conn.reconnectToken);
       }
       if (result.roomCode) {
-        broadcastToMCBoard(result.roomCode, {
-          type: 'mc_player_left',
-          playerId,
-        } as unknown as ServerMessage);
+        broadcastToMCBoard(result.roomCode, { type: 'mc_player_left', playerId });
         if (result.room) {
           sendMCBoardRoomState(result.roomCode);
         }
@@ -1175,8 +1189,7 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'mc_ready': {
-      const mcMsg = message as unknown as { ready: boolean };
-      const result = mcBoardManager.setPlayerReady(playerId, mcMsg.ready);
+      const result = mcBoardManager.setPlayerReady(playerId, message.ready);
       if (!result.success) {
         sendError(playerId, result.error || 'Failed to set ready');
         break;
@@ -1186,8 +1199,8 @@ function handleMessage(playerId: string, raw: string): void {
         broadcastToMCBoard(room.code, {
           type: 'mc_player_ready',
           playerId,
-          ready: mcMsg.ready,
-        } as unknown as ServerMessage);
+          ready: message.ready,
+        });
         sendMCBoardRoomState(room.code);
       }
       break;
@@ -1208,14 +1221,12 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'mc_move': {
-      const mcMsg = message as unknown as { direction: Direction };
-      mcBoardManager.handleMove(playerId, mcMsg.direction);
+      mcBoardManager.handleMove(playerId, message.direction);
       break;
     }
 
     case 'mc_mine': {
-      const mcMsg = message as unknown as { x: number; y: number };
-      mcBoardManager.handleMine(playerId, mcMsg.x, mcMsg.y);
+      mcBoardManager.handleMine(playerId, message.x, message.y);
       break;
     }
 
@@ -1225,38 +1236,32 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     case 'mc_craft': {
-      const mcMsg = message as unknown as { recipeId: string };
-      mcBoardManager.handleCraft(playerId, mcMsg.recipeId);
+      mcBoardManager.handleCraft(playerId, message.recipeId);
       break;
     }
 
     case 'mc_attack': {
-      const mcMsg = message as unknown as { targetId: string };
-      mcBoardManager.handleAttack(playerId, mcMsg.targetId);
+      mcBoardManager.handleAttack(playerId, message.targetId);
       break;
     }
 
     case 'mc_place_block': {
-      const mcMsg = message as unknown as { x: number; y: number; itemIndex: number };
-      mcBoardManager.handlePlaceBlock(playerId, mcMsg.x, mcMsg.y, mcMsg.itemIndex);
+      mcBoardManager.handlePlaceBlock(playerId, message.x, message.y, message.itemIndex);
       break;
     }
 
     case 'mc_eat': {
-      const mcMsg = message as unknown as { itemIndex: number };
-      mcBoardManager.handleEat(playerId, mcMsg.itemIndex);
+      mcBoardManager.handleEat(playerId, message.itemIndex);
       break;
     }
 
     case 'mc_select_slot': {
-      const mcMsg = message as unknown as { slot: number };
-      mcBoardManager.handleSelectSlot(playerId, mcMsg.slot);
+      mcBoardManager.handleSelectSlot(playerId, message.slot);
       break;
     }
 
     case 'mc_chat': {
-      const mcMsg = message as unknown as { message: string };
-      mcBoardManager.handleChat(playerId, mcMsg.message);
+      mcBoardManager.handleChat(playerId, message.message);
       break;
     }
 
@@ -1298,6 +1303,15 @@ function handleDisconnect(playerId: string, reason: string): void {
   broadcastOnlineCount();
 
   if (result.roomCode) {
+    // Cancel any active countdown if the room no longer has enough players
+    const roomAfterDisconnect = roomManager.getRoomByPlayerId(playerId);
+    if (roomAfterDisconnect && roomAfterDisconnect.status === 'countdown') {
+      const connectedCount = roomAfterDisconnect.players.filter(p => p.connected).length;
+      if (connectedCount < 2) {
+        cancelCountdown(result.roomCode);
+      }
+    }
+
     // Broadcast updated room state showing the player as disconnected
     sendRoomState(result.roomCode);
 
@@ -1502,6 +1516,14 @@ function shutdown(signal: string) {
   // Clear all grace period timers
   disconnectTimers.forEach((timer) => clearTimeout(timer));
   disconnectTimers.clear();
+
+  // Clear all active countdown timers
+  activeCountdowns.forEach((timer) => clearTimeout(timer));
+  activeCountdowns.clear();
+
+  // Clear all ranked retry intervals
+  rankedRetryIntervals.forEach((interval) => clearInterval(interval));
+  rankedRetryIntervals.clear();
 
   playerConnections.forEach((conn) => {
     try {

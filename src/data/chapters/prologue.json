@@ -1,0 +1,70 @@
+{
+  "id": "prologue",
+  "title": "序章 ─ 始まりの旋律",
+  "nodes": [
+    {
+      "image_url": "/chapters/prologue/bg-sky.jpg",
+      "text": "──── 遠い記憶の中、旋律が響いている。",
+      "transition": "fade"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-sky.jpg",
+      "text": "誰かが奏でるその音は、\nまるで世界の始まりを告げるかのように……",
+      "transition": "none"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-town.jpg",
+      "character_name": "リア",
+      "text": "……ここは？",
+      "transition": "fade"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-town.jpg",
+      "character_name": "リア",
+      "text": "知らない街……でも、どこか懐かしい気がする。",
+      "transition": "none"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-town.jpg",
+      "character_name": "???",
+      "text": "やっと来たね。ずっと待ってたよ。",
+      "audio": "/chapters/prologue/voice-mystery.mp3",
+      "transition": "none"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-plaza.jpg",
+      "character_name": "リア",
+      "text": "あなたは……誰？",
+      "transition": "slide-left"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-plaza.jpg",
+      "character_name": "ソラ",
+      "text": "僕の名前はソラ。この世界──リズミアの案内人さ。",
+      "transition": "none"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-plaza.jpg",
+      "character_name": "ソラ",
+      "text": "君には「リズムの力」がある。\nこの世界を救えるのは、君だけなんだ。",
+      "transition": "none"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-crystal.jpg",
+      "character_name": "リア",
+      "text": "リズムの力……？\n私に、そんな力が……",
+      "transition": "enter-zoom"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-crystal.jpg",
+      "character_name": "ソラ",
+      "text": "さあ、旅を始めよう。\nリズミアの調和を取り戻すために。",
+      "transition": "none"
+    },
+    {
+      "image_url": "/chapters/prologue/bg-crystal.jpg",
+      "text": "こうして、リアの冒険が始まった──",
+      "transition": "fade"
+    }
+  ]
+}

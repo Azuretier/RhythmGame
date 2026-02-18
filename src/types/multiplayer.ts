@@ -93,41 +93,11 @@ export interface CancelRankedMessage {
   type: 'cancel_ranked';
 }
 
-// Arena client messages (sent on the same WebSocket)
-export interface ArenaGenericMessage {
-  type:
-    | 'create_arena'
-    | 'join_arena'
-    | 'queue_arena'
-    | 'cancel_arena_queue'
-    | 'arena_ready'
-    | 'arena_start'
-    | 'arena_action'
-    | 'arena_relay'
-    | 'arena_leave';
-  [key: string]: unknown;
-}
+// Arena client messages (re-exported from arena types for the unified union)
+import type { ArenaClientMessage, ArenaServerMessage } from './arena';
+import type { MCClientMessage, MCServerMessage as MCBoardServerMessage } from './minecraft-board';
 
-// Minecraft Board Game client messages
-export interface MCBoardGenericMessage {
-  type:
-    | 'mc_create_room'
-    | 'mc_join_room'
-    | 'mc_get_rooms'
-    | 'mc_leave'
-    | 'mc_ready'
-    | 'mc_start'
-    | 'mc_move'
-    | 'mc_mine'
-    | 'mc_cancel_mine'
-    | 'mc_craft'
-    | 'mc_attack'
-    | 'mc_place_block'
-    | 'mc_eat'
-    | 'mc_select_slot'
-    | 'mc_chat';
-  [key: string]: unknown;
-}
+export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage };
 
 export type ClientMessage =
   | CreateRoomMessage
@@ -142,8 +112,8 @@ export type ClientMessage =
   | RematchMessage
   | QueueRankedMessage
   | CancelRankedMessage
-  | ArenaGenericMessage
-  | MCBoardGenericMessage
+  | ArenaClientMessage
+  | MCClientMessage
   | SetProfileMessage
   | GetOnlineUsersMessage;
 
@@ -304,7 +274,9 @@ export type ServerMessage =
   | OnlineUsersMessage
   | ServerShutdownMessage
   | RankedMatchFoundMessage
-  | RankedQueuedMessage;
+  | RankedQueuedMessage
+  | ArenaServerMessage
+  | MCBoardServerMessage;
 
 // ===== Relay Payload Types =====
 // These are game-specific messages relayed between players

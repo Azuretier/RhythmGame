@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BOARD_WIDTH, BOARD_HEIGHT, COLORS, ColorTheme, getThemedColor } from '../constants';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, COLORS, ColorTheme, getThemedColor } from '../constants';
 import { getShape, isValidPosition, getGhostY } from '../utils/boardUtils';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import Advancements from '@/components/rhythmia/Advancements';
 import { KeyBindSettings } from './KeyBindSettings';
-import type { Piece, Board as BoardType, Keybindings, KeybindAction } from '../types';
+import { FeatureCustomizer } from './FeatureCustomizer';
+import type { Piece, Board as BoardType, Keybindings, KeybindAction, FeatureSettings } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface BoardProps {
@@ -28,6 +29,8 @@ interface BoardProps {
     keybindings?: Keybindings;
     onKeybindChange?: (action: KeybindAction, key: string) => void;
     onKeybindingsUpdate?: (bindings: Keybindings) => void;
+    featureSettings?: FeatureSettings;
+    onFeatureSettingsUpdate?: (settings: FeatureSettings) => void;
 }
 
 /**
@@ -54,11 +57,14 @@ export function Board({
     keybindings,
     onKeybindChange,
     onKeybindingsUpdate,
+    featureSettings,
+    onFeatureSettingsUpdate,
 }: BoardProps) {
     const isFever = combo >= 10;
     const [showAdvancements, setShowAdvancements] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [showKeyBinds, setShowKeyBinds] = useState(false);
+    const [showFeatures, setShowFeatures] = useState(false);
     const [unlockedCount, setUnlockedCount] = useState(0);
     const [rebindingAction, setRebindingAction] = useState<KeybindAction | null>(null);
 
@@ -90,6 +96,7 @@ export function Board({
             setShowAdvancements(false);
             setShowSettings(false);
             setShowKeyBinds(false);
+            setShowFeatures(false);
             setRebindingAction(null);
         }
     }, [isPaused, gameOver]);
@@ -104,15 +111,17 @@ export function Board({
         return getThemedColor(pieceType, colorTheme, worldIdx);
     };
 
-    // Create display board with current piece and ghost
+    // Create display board with current piece and ghost.
+    // Only the visible rows (below BUFFER_ZONE) are rendered.
     const displayBoard = React.useMemo(() => {
         const display = board.map(row => [...row]);
 
         if (currentPiece) {
             const shape = getShape(currentPiece.type, currentPiece.rotation);
 
+            const showGhost = featureSettings?.ghostPiece !== false;
             const ghostY = getGhostY(currentPiece, board);
-            if (ghostY !== currentPiece.y) {
+            if (showGhost && ghostY !== currentPiece.y) {
                 for (let y = 0; y < shape.length; y++) {
                     for (let x = 0; x < shape[y].length; x++) {
                         if (shape[y][x]) {
@@ -141,7 +150,8 @@ export function Board({
             }
         }
 
-        return display;
+        // Only return visible rows (skip buffer zone)
+        return display.slice(BUFFER_ZONE);
     }, [board, currentPiece]);
 
     const boardWrapClasses = [
@@ -209,7 +219,7 @@ export function Board({
                 </div>
             )}
 
-            {/* Overlay for Paused — main menu, advancements, or key bindings sub-panel */}
+            {/* Overlay for Paused — main menu, advancements, key bindings, or features sub-panel */}
             {isPaused && !gameOver && (
                 <div className={styles.gameover} style={{ display: 'flex' }}>
                     {showKeyBinds && keybindings && onKeybindingsUpdate ? (
@@ -217,6 +227,13 @@ export function Board({
                             bindings={keybindings}
                             onUpdate={onKeybindingsUpdate}
                             onBack={() => setShowKeyBinds(false)}
+                        />
+                    ) : showFeatures && featureSettings && onFeatureSettingsUpdate ? (
+                        <FeatureCustomizer
+                            settings={featureSettings}
+                            onUpdate={onFeatureSettingsUpdate}
+                            onBack={() => setShowFeatures(false)}
+                            mode="singleplayer"
                         />
                     ) : !showAdvancements ? (
                         <>
@@ -238,6 +255,15 @@ export function Board({
                                         {unlockedCount}/{totalCount}
                                     </span>
                                 </button>
+                                {featureSettings && onFeatureSettingsUpdate && (
+                                    <button
+                                        className={styles.pauseMenuBtn}
+                                        onClick={() => setShowFeatures(true)}
+                                    >
+                                        <span className={styles.pauseMenuBtnIcon}>🎛</span>
+                                        Features
+                                    </button>
+                                )}
                                 {keybindings && onKeybindingsUpdate && (
                                     <button
                                         className={styles.pauseMenuBtn}
