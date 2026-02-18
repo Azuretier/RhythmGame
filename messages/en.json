@@ -1127,5 +1127,28 @@
         "close": "Close",
         "resume": "Resume",
         "chapterSelect": "Chapter Select"
+    },
+    "score": {
+        "money": "BEATS",
+        "totalScore": "TOTAL SCORE",
+        "currentRank": "CURRENT RANK",
+        "scoreToNext": "{score} to next rank",
+        "maxRank": "MAX RANK",
+        "winStreak": "WIN STREAK",
+        "viewDetails": "VIEW DETAILS",
+        "tiers": {
+            "rookie": "Rookie",
+            "bronze": "Bronze",
+            "silver": "Silver",
+            "gold": "Gold",
+            "diamond": "Diamond",
+            "master": "Master"
+        },
+        "stats": {
+            "games": "GAMES",
+            "bestScore": "BEST",
+            "lines": "LINES",
+            "winRate": "WIN RATE"
+        }
     }
 }

@@ -1165,5 +1165,28 @@
         "close": "Fermer",
         "resume": "Reprendre",
         "chapterSelect": "Sélection de Chapitre"
+    },
+    "score": {
+        "money": "BEATS",
+        "totalScore": "SCORE TOTAL",
+        "currentRank": "RANG ACTUEL",
+        "scoreToNext": "{score} pour le rang suivant",
+        "maxRank": "RANG MAXIMUM",
+        "winStreak": "SÉRIE DE VICTOIRES",
+        "viewDetails": "VOIR LES DÉTAILS",
+        "tiers": {
+            "rookie": "Débutant",
+            "bronze": "Bronze",
+            "silver": "Argent",
+            "gold": "Or",
+            "diamond": "Diamant",
+            "master": "Maître"
+        },
+        "stats": {
+            "games": "PARTIES",
+            "bestScore": "MEILLEUR",
+            "lines": "LIGNES",
+            "winRate": "% VICTOIRE"
+        }
     }
 }
