@@ -64,6 +64,72 @@
   margin-top: 8px;
 }
 
+/* Daily Streak Section */
+.streakSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.streakDays {
+  display: flex;
+  gap: 8px;
+}
+
+.streakDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s;
+}
+
+.streakDot.filled {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.4);
+  color: rgba(76, 175, 80, 0.9);
+}
+
+.streakDot.today {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.streakInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.streakLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.6;
+  letter-spacing: 0.05em;
+}
+
+.bonusXP {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4CAF50;
+  opacity: 0.9;
+  letter-spacing: 0.03em;
+}
+
 /* Progress bar */
 .progressRow {
   margin-bottom: 24px;
@@ -226,6 +292,21 @@
 
   .tierIconLarge {
     font-size: 1.8rem;
+  }
+
+  .streakSection {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .streakInfo {
+    align-items: center;
+  }
+
+  .streakDot {
+    width: 28px;
+    height: 28px;
+    font-size: 0.55rem;
   }
 
   .miniRoadmap {

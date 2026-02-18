@@ -17,10 +17,18 @@ export interface ScoreRankingStats {
   totalGamesPlayed: number;
   advancementsUnlocked: number;
   totalLines: number;
+  // Daily bonus system fields
+  totalVisits: number;
+  currentStreak: number;
+  bestStreak: number;
+  lastVisitDate: string; // ISO date string (YYYY-MM-DD)
+  dailyBonusXP: number; // XP earned from daily visits and streaks
 }
 
 export interface ScoreRankingState {
   stats: ScoreRankingStats;
+  // Combined score includes gameplay score + daily bonus XP
+  combinedScore: number;
 }
 
 // ===== Legacy type aliases for backward compatibility =====

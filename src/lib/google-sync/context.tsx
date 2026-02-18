@@ -70,6 +70,10 @@ function mergeLoyaltyStates(
     'totalGamesPlayed',
     'advancementsUnlocked',
     'totalLines',
+    'totalVisits',
+    'currentStreak',
+    'bestStreak',
+    'dailyBonusXP',
   ];
   for (const key of numericKeys) {
     const localVal = mergedStats[key];
@@ -79,8 +83,18 @@ function mergeLoyaltyStates(
     }
   }
 
+  // For lastVisitDate, take the most recent one
+  if (remote.stats?.lastVisitDate) {
+    const localDate = new Date(mergedStats.lastVisitDate || '1970-01-01');
+    const remoteDate = new Date(remote.stats.lastVisitDate);
+    if (remoteDate > localDate) {
+      mergedStats.lastVisitDate = remote.stats.lastVisitDate;
+    }
+  }
+
   return {
     stats: mergedStats,
+    combinedScore: mergedStats.totalScore + mergedStats.dailyBonusXP,
   };
 }
 

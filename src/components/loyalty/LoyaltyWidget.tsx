@@ -11,11 +11,14 @@ import {
   scoreToNextTier,
   formatScore,
   formatScoreCompact,
-  buildScoreRankingState,
+  recordDailyVisit,
+  syncGameplayStats,
 } from '@/lib/loyalty';
 import type { ScoreRankingState } from '@/lib/loyalty';
 import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
 import styles from './LoyaltyWidget.module.css';
+
+const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
@@ -23,23 +26,29 @@ export default function LoyaltyWidget() {
   const [state, setState] = useState<ScoreRankingState | null>(null);
 
   useEffect(() => {
+    // Record daily visit first (awards XP for visits/streaks)
+    let dailyState = recordDailyVisit();
+
+    // Sync with gameplay stats
     const advState = loadAdvancementState();
-    const ranking = buildScoreRankingState(
+    dailyState = syncGameplayStats(
       advState.stats.totalScore,
       advState.stats.bestScorePerGame,
       advState.stats.totalGamesPlayed,
       advState.unlockedIds.length,
       advState.stats.totalLines,
     );
-    setState(ranking);
+
+    setState(dailyState);
   }, []);
 
   if (!state) return null;
 
-  const { totalScore, bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines } = state.stats;
-  const currentTier = getTierByScore(totalScore);
-  const progress = scoreProgress(totalScore);
-  const nextTierScore = scoreToNextTier(totalScore);
+  const { totalScore, bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
+  const combinedScore = state.combinedScore;
+  const currentTier = getTierByScore(combinedScore);
+  const progress = scoreProgress(combinedScore);
+  const nextTierScore = scoreToNextTier(combinedScore);
   const currentIndex = SCORE_RANK_TIERS.indexOf(currentTier);
 
   return (
@@ -55,11 +64,37 @@ export default function LoyaltyWidget() {
           <span className={styles.tierIconLarge}>{currentTier.icon}</span>
         </div>
         <div className={styles.scoreInfo}>
-          <div className={styles.scoreValue}>{formatScore(totalScore)}</div>
+          <div className={styles.scoreValue}>{formatScore(combinedScore)}</div>
           <div className={styles.scoreLabel}>{t('totalScore')}</div>
           <div className={styles.tierName} style={{ color: currentTier.color }}>
             {t(`tiers.${currentTier.id}`)}
           </div>
+        </div>
+      </div>
+
+      {/* Daily Streak Section */}
+      <div className={styles.streakSection}>
+        <div className={styles.streakDays}>
+          {DAY_LABELS.map((label, i) => {
+            const isFilled = i < currentStreak % 7 || currentStreak >= 7;
+            const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
+            return (
+              <div
+                key={i}
+                className={`${styles.streakDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
+              >
+                {label}
+              </div>
+            );
+          })}
+        </div>
+        <div className={styles.streakInfo}>
+          <span className={styles.streakLabel}>
+            {currentStreak} {t('streakDays')}
+          </span>
+          <span className={styles.bonusXP}>
+            +{dailyBonusXP} {t('bonusXP')}
+          </span>
         </div>
       </div>
 
@@ -72,7 +107,7 @@ export default function LoyaltyWidget() {
           />
         </div>
         <div className={styles.progressLabels}>
-          <span>{formatScoreCompact(totalScore)}</span>
+          <span>{formatScoreCompact(combinedScore)}</span>
           <span>
             {nextTierScore !== null
               ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })

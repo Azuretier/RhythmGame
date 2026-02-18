@@ -16,6 +16,7 @@ export type {
 export {
   SCORE_RANK_TIERS,
   LOYALTY_TIERS,
+  XP_REWARDS,
   getTierByScore,
   getTierByXP,
   scoreProgress,
@@ -27,6 +28,9 @@ export {
 } from './constants';
 export {
   buildScoreRankingState,
+  loadDailyBonusState,
+  saveDailyBonusState,
+  syncGameplayStats,
   loadLoyaltyState,
   saveLoyaltyState,
   recordDailyVisit,

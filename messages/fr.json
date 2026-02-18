@@ -438,13 +438,18 @@
             "bestScore": "MEILLEUR SCORE",
             "games": "PARTIES",
             "lines": "LIGNES",
-            "badges": "SUCCÈS"
+            "badges": "SUCCÈS",
+            "totalVisits": "VISITES",
+            "currentStreak": "SÉRIE ACTUELLE",
+            "bestStreak": "MEILLEURE SÉRIE",
+            "bonusXP": "XP BONUS"
         },
         "sections": {
             "tierRoadmap": "FEUILLE DE ROUTE DES RANGS",
             "badges": "SUCCÈS RÉCENTS",
             "community": "VOIX COMMUNAUTAIRE",
-            "howItWorks": "COMMENT ÇA MARCHE"
+            "howItWorks": "COMMENT ÇA MARCHE",
+            "dailyBonus": "BONUS QUOTIDIEN"
         },
         "poll": {
             "question": "Quel devrait être le prochain mode de jeu RHYTHMIA ?",
@@ -482,7 +487,9 @@
                 "title": "Façonne l'Avenir",
                 "desc": "Vote dans les sondages communautaires et aide à décider de la suite pour RHYTHMIA."
             }
-        }
+        },
+        "streakDays": "jours consécutifs",
+        "bonusXP": "XP BONUS"
     },
     "updates": {
         "title": "Mises à Jour Récentes",
