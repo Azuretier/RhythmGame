@@ -69,6 +69,14 @@
             "name": "Légende des Lignes",
             "desc": "Éliminez 1 000 lignes au total"
         },
+        "lines_2500": {
+            "name": "Conquérant des Lignes",
+            "desc": "Éliminez 2 500 lignes au total"
+        },
+        "lines_5000": {
+            "name": "Lignes Immortelles",
+            "desc": "Éliminez 5 000 lignes au total"
+        },
         "best_lines_10": {
             "name": "Échauffement",
             "desc": "Éliminez 10 lignes en une partie"
@@ -84,6 +92,10 @@
         "best_lines_100": {
             "name": "Inarrêtable",
             "desc": "Éliminez 100 lignes en une partie"
+        },
+        "best_lines_200": {
+            "name": "Demi-Dieu des Lignes",
+            "desc": "Éliminez 200 lignes en une partie"
         },
         "tspin_1": {
             "name": "Premier Pivot",
@@ -101,6 +113,30 @@
             "name": "Légende du T-Spin",
             "desc": "Réalisez 200 T-Spins"
         },
+        "tspin_500": {
+            "name": "Grand Maître du T-Spin",
+            "desc": "Réalisez 500 T-Spins"
+        },
+        "tspin_1000": {
+            "name": "T-Spin Immortel",
+            "desc": "Réalisez 1 000 T-Spins"
+        },
+        "best_tspin_1": {
+            "name": "Initié du Pivot",
+            "desc": "Réalisez 1 T-Spin en une partie"
+        },
+        "best_tspin_5": {
+            "name": "Spécialiste du Pivot",
+            "desc": "Réalisez 5 T-Spins en une partie"
+        },
+        "best_tspin_10": {
+            "name": "Virtuose du Pivot",
+            "desc": "Réalisez 10 T-Spins en une partie"
+        },
+        "best_tspin_25": {
+            "name": "Prodige du Pivot",
+            "desc": "Réalisez 25 T-Spins en une partie"
+        },
         "score_10k": {
             "name": "Novice du Score",
             "desc": "Accumulez 10 000 points au total"
@@ -117,6 +153,14 @@
             "name": "Légende du Score",
             "desc": "Accumulez 10 000 000 points au total"
         },
+        "score_50m": {
+            "name": "Seigneur du Score",
+            "desc": "Accumulez 50 000 000 points au total"
+        },
+        "score_100m": {
+            "name": "Score Immortel",
+            "desc": "Accumulez 100 000 000 points au total"
+        },
         "best_score_5k": {
             "name": "Belle Partie",
             "desc": "Marquez 5 000 points en une partie"
@@ -132,6 +176,10 @@
         "best_score_500k": {
             "name": "Partie Légendaire",
             "desc": "Marquez 500 000 points en une partie"
+        },
+        "best_score_1m": {
+            "name": "Partie Mythique",
+            "desc": "Marquez 1 000 000 points en une partie"
         },
         "combo_3": {
             "name": "Début de Combo",
@@ -213,6 +261,14 @@
             "name": "Vétéran",
             "desc": "Jouez 100 parties"
         },
+        "games_250": {
+            "name": "Joueur Acharné",
+            "desc": "Jouez 250 parties"
+        },
+        "games_500": {
+            "name": "Joueur à Vie",
+            "desc": "Jouez 500 parties"
+        },
         "worlds_5": {
             "name": "Globe-Trotter",
             "desc": "Terminez 5 mondes"
@@ -229,6 +285,30 @@
             "name": "Maître du Tetris",
             "desc": "Éliminez 4 lignes d'un coup 50 fois"
         },
+        "tetris_100": {
+            "name": "Grand Maître Tetris",
+            "desc": "Éliminez 4 lignes d'un coup 100 fois"
+        },
+        "tetris_200": {
+            "name": "Dieu du Tetris",
+            "desc": "Éliminez 4 lignes d'un coup 200 fois"
+        },
+        "best_tetris_1": {
+            "name": "Quatre Lignes",
+            "desc": "Éliminez 4 lignes d'un coup en une partie"
+        },
+        "best_tetris_3": {
+            "name": "Série Tetris",
+            "desc": "Éliminez 4 lignes d'un coup 3 fois en une partie"
+        },
+        "best_tetris_5": {
+            "name": "Spécialiste Tetris",
+            "desc": "Éliminez 4 lignes d'un coup 5 fois en une partie"
+        },
+        "best_tetris_10": {
+            "name": "Prodige Tetris",
+            "desc": "Éliminez 4 lignes d'un coup 10 fois en une partie"
+        },
         "perfect_beats_10": {
             "name": "Novice du Rythme",
             "desc": "Réussissez 10 rythmes parfaits en une partie"
@@ -237,6 +317,26 @@
             "name": "Maître du Rythme",
             "desc": "Réussissez 50 rythmes parfaits en une partie"
         },
+        "perfect_beats_100": {
+            "name": "Légende du Rythme",
+            "desc": "Réussissez 100 rythmes parfaits en une partie"
+        },
+        "total_perfect_beats_50": {
+            "name": "Collecteur de Rythmes",
+            "desc": "Réussissez 50 rythmes parfaits au total"
+        },
+        "total_perfect_beats_200": {
+            "name": "Passionné du Rythme",
+            "desc": "Réussissez 200 rythmes parfaits au total"
+        },
+        "total_perfect_beats_500": {
+            "name": "Virtuose du Rythme",
+            "desc": "Réussissez 500 rythmes parfaits au total"
+        },
+        "total_perfect_beats_1000": {
+            "name": "Rythme Immortel",
+            "desc": "Réussissez 1 000 rythmes parfaits au total"
+        },
         "hard_drops_100": {
             "name": "Chute Rapide",
             "desc": "Effectuez 100 chutes dures"
@@ -244,6 +344,26 @@
         "hard_drops_1000": {
             "name": "Vitesse Terminale",
             "desc": "Effectuez 1 000 chutes dures"
+        },
+        "hard_drops_5000": {
+            "name": "Impact de Météore",
+            "desc": "Effectuez 5 000 chutes dures"
+        },
+        "best_hard_drops_50": {
+            "name": "Chute Express",
+            "desc": "Effectuez 50 chutes dures en une partie"
+        },
+        "best_hard_drops_100": {
+            "name": "Démon de Vitesse",
+            "desc": "Effectuez 100 chutes dures en une partie"
+        },
+        "best_hard_drops_200": {
+            "name": "Machine à Chutes",
+            "desc": "Effectuez 200 chutes dures en une partie"
+        },
+        "best_hard_drops_500": {
+            "name": "Maître de la Gravité",
+            "desc": "Effectuez 500 chutes dures en une partie"
         },
         "pieces_100": {
             "name": "Constructeur de Blocs",
@@ -257,6 +377,30 @@
             "name": "Légende des Blocs",
             "desc": "Placez 10 000 pièces"
         },
+        "pieces_50000": {
+            "name": "Titan des Blocs",
+            "desc": "Placez 50 000 pièces"
+        },
+        "pieces_100000": {
+            "name": "Blocs Immortels",
+            "desc": "Placez 100 000 pièces"
+        },
+        "best_pieces_50": {
+            "name": "Poseur de Pièces",
+            "desc": "Placez 50 pièces en une partie"
+        },
+        "best_pieces_100": {
+            "name": "Empileur de Pièces",
+            "desc": "Placez 100 pièces en une partie"
+        },
+        "best_pieces_250": {
+            "name": "Maître des Pièces",
+            "desc": "Placez 250 pièces en une partie"
+        },
+        "best_pieces_500": {
+            "name": "Titan des Pièces",
+            "desc": "Placez 500 pièces en une partie"
+        },
         "mp_win_1": {
             "name": "Première Victoire",
             "desc": "Gagnez votre premier match multijoueur"
@@ -268,6 +412,14 @@
         "mp_win_50": {
             "name": "Champion d'Arène",
             "desc": "Gagnez 50 matchs multijoueur"
+        },
+        "mp_win_100": {
+            "name": "Légende de l'Arène",
+            "desc": "Gagnez 100 matchs multijoueur"
+        },
+        "mp_win_200": {
+            "name": "Dieu de l'Arène",
+            "desc": "Gagnez 200 matchs multijoueur"
         },
         "mp_streak_3": {
             "name": "Série en Feu",
@@ -281,6 +433,14 @@
             "name": "Incassable",
             "desc": "Gagnez 10 matchs d'affilée"
         },
+        "mp_streak_15": {
+            "name": "Intouchable",
+            "desc": "Gagnez 15 matchs d'affilée"
+        },
+        "mp_streak_20": {
+            "name": "Invincible",
+            "desc": "Gagnez 20 matchs d'affilée"
+        },
         "mp_games_10": {
             "name": "Habitué de l'Arène",
             "desc": "Jouez 10 matchs multijoueur"
@@ -288,6 +448,14 @@
         "mp_games_50": {
             "name": "Vétéran de l'Arène",
             "desc": "Jouez 50 matchs multijoueur"
+        },
+        "mp_games_100": {
+            "name": "Gladiateur de l'Arène",
+            "desc": "Jouez 100 matchs multijoueur"
+        },
+        "mp_games_200": {
+            "name": "Seigneur de Guerre de l'Arène",
+            "desc": "Jouez 200 matchs multijoueur"
         },
         "loyalty_streak_3": {
             "name": "Série de 3 Jours",
@@ -305,6 +473,14 @@
             "name": "Pouls Mensuel",
             "desc": "Visitez 30 jours d'affilée"
         },
+        "loyalty_streak_60": {
+            "name": "Rythme Saisonnier",
+            "desc": "Visitez 60 jours d'affilée"
+        },
+        "loyalty_streak_100": {
+            "name": "Rythme Éternel",
+            "desc": "Visitez 100 jours d'affilée"
+        },
         "loyalty_visits_5": {
             "name": "Habitué",
             "desc": "Visitez 5 fois"
@@ -316,6 +492,14 @@
         "loyalty_visits_100": {
             "name": "Membre de la Famille",
             "desc": "Visitez 100 fois"
+        },
+        "loyalty_visits_250": {
+            "name": "Légende Vivante",
+            "desc": "Visitez 250 fois"
+        },
+        "loyalty_visits_500": {
+            "name": "Visiteur Éternel",
+            "desc": "Visitez 500 fois"
         },
         "loyalty_games_10": {
             "name": "Joueur",
@@ -329,6 +513,14 @@
             "name": "Dévoué",
             "desc": "Jouez 200 parties"
         },
+        "loyalty_games_500": {
+            "name": "Obsédé",
+            "desc": "Jouez 500 parties"
+        },
+        "loyalty_games_1000": {
+            "name": "Transcendé",
+            "desc": "Jouez 1 000 parties"
+        },
         "loyalty_polls_1": {
             "name": "Premier Vote",
             "desc": "Votez dans votre premier sondage"
@@ -340,6 +532,54 @@
         "loyalty_polls_10": {
             "name": "Voix de la Communauté",
             "desc": "Votez dans 10 sondages"
+        },
+        "loyalty_polls_25": {
+            "name": "Champion de la Démocratie",
+            "desc": "Votez dans 25 sondages"
+        },
+        "loyalty_polls_50": {
+            "name": "Voix du Peuple",
+            "desc": "Votez dans 50 sondages"
+        },
+        "gold_100": {
+            "name": "Ramasseur de Pièces",
+            "desc": "Gagnez 100 d'or au total"
+        },
+        "gold_1000": {
+            "name": "Collecteur de Pièces",
+            "desc": "Gagnez 1 000 d'or au total"
+        },
+        "gold_5000": {
+            "name": "Chasseur de Trésors",
+            "desc": "Gagnez 5 000 d'or au total"
+        },
+        "gold_25000": {
+            "name": "Roi d'Or",
+            "desc": "Gagnez 25 000 d'or au total"
+        },
+        "gold_100000": {
+            "name": "Magnat Légendaire",
+            "desc": "Gagnez 100 000 d'or au total"
+        },
+        "treasure_10": {
+            "name": "Trésor Trouvé",
+            "desc": "Collectez 10 trésors"
+        },
+        "treasure_50": {
+            "name": "Chercheur de Trésors",
+            "desc": "Collectez 50 trésors"
+        },
+        "treasure_200": {
+            "name": "Maître des Trésors",
+            "desc": "Collectez 200 trésors"
+        },
+        "treasure_500": {
+            "name": "Gardien des Trésors",
+            "desc": "Collectez 500 trésors"
+        },
+        "treasure_1000": {
+            "name": "Seigneur des Richesses",
+            "desc": "Collectez 1 000 trésors"
         }
     },
     "arena": {
@@ -638,6 +878,20 @@
             "dawn": "Aube"
         }
     },
+    "forYou": {
+        "title": "POUR VOUS",
+        "subtitle": "Sélectionné selon votre progression",
+        "loading": "GÉNÉRATION",
+        "error": "Impossible de charger les recommandations",
+        "retry": "RÉESSAYER",
+        "refresh": "ACTUALISER",
+        "watchOnYouTube": "Regarder sur YouTube",
+        "types": {
+            "tutorial": "TUTORIEL",
+            "video": "VIDÉO",
+            "tip": "ASTUCE"
+        }
+    },
     "wiki": {
         "meta": {
             "title": "Wiki | RHYTHMIA - Azuretier",
@@ -837,12 +1091,44 @@
         "grid2": "La grille s'étend sur 18 cases depuis le centre dans chaque direction",
         "grid3": "Les ennemis apparaissent sur le périmètre de distance Manhattan 18",
         "grid4": "La tourelle tire toutes les 1 000ms, vitesse de balle : 18 unités/sec",
-        "grid5": "Les balles suivent des arcs paraboliques (gravité : 40 unités/sec²)"
+        "grid5": "Les balles suivent des arcs paraboliques (gravité : 40 unités/sec²)",
+        "sectionGameOverview": "Aperçu du Jeu",
+        "sectionCommunityResources": "Ressources Communautaires",
+        "sectionUpdates": "Mises à jour",
+        "gameOverviewTitle": "Aperçu du Jeu",
+        "communityResourcesTitle": "Ressources Communautaires",
+        "communityResourcesDesc": "Tutoriels, guides et vidéos sélectionnés par la communauté RHYTHMIA pour vous aider à progresser.",
+        "updatesTitle": "Mises à jour de Version",
+        "updatesDesc": "Regardez les derniers aperçus de version et découvrez les nouveautés de RHYTHMIA.",
+        "videoComingSoon": "Bientôt",
+        "watchVideo": "Regarder"
     },
     "nav": {
         "wiki": "Wiki",
         "updates": "Mises à jour",
         "lobby": "Lobby"
+    },
+    "profile": {
+        "iconTitle": "Choisissez Votre Icône",
+        "iconSubtitle": "Choisissez une icône qui vous représente",
+        "nameTitle": "Entrez Votre Nom",
+        "nameSubtitle": "Ce nom sera visible par les autres joueurs",
+        "nameLabel": "Pseudo",
+        "namePlaceholder": "Nom",
+        "friendCodeLabel": "Code Ami",
+        "langTitle": "Langue",
+        "langSubtitle": "Sélectionnez votre langue d'affichage",
+        "confirmTitle": "Confirmer le Profil",
+        "confirmSubtitle": "Tout vous semble correct ?",
+        "next": "Suivant",
+        "back": "Retour",
+        "onlineTitle": "Joueurs En Ligne",
+        "onlineCount": "{count} en ligne",
+        "noOnlineUsers": "Aucun joueur en ligne pour le moment",
+        "privateProfile": "Profil Privé",
+        "privateProfileDesc": "Votre nom et icône sont masqués de la liste des joueurs en ligne",
+        "publicProfile": "Profil Public",
+        "publicProfileDesc": "Votre nom et icône sont visibles par les autres joueurs en ligne"
     },
     "skin": {
         "title": "Profil & Skin",
