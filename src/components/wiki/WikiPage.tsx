@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { useGoogleSync } from '@/lib/google-sync/context';
+import { isWikiAdmin } from '@/lib/wiki/constants';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
+import WikiCommunityBrowser from './WikiCommunityBrowser';
+import WikiAdminPanel from './WikiAdminPanel';
 import styles from './WikiPage.module.css';
 
 // --- Primary pages (left sidebar) ---
-type Page = 'game-overview' | 'community-resources' | 'updates';
+type Page = 'game-overview' | 'community-resources' | 'updates' | 'community' | 'admin';
 
 // --- Sub-sections for "On This Page" (right sidebar) ---
 type SubSection =
@@ -21,7 +25,7 @@ interface NavItem {
   subsections?: { id: SubSection; labelKey: string }[];
 }
 
-const NAV_ITEMS: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
   {
     id: 'game-overview',
     labelKey: 'sectionGameOverview',
@@ -37,10 +41,11 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   { id: 'community-resources', labelKey: 'sectionCommunityResources' },
+  { id: 'community', labelKey: 'sectionCommunity' },
   { id: 'updates', labelKey: 'sectionUpdates' },
 ];
 
-const SUB_IDS: SubSection[] = NAV_ITEMS[0].subsections!.map((s) => s.id);
+const SUB_IDS: SubSection[] = BASE_NAV_ITEMS[0].subsections!.map((s) => s.id);
 
 // --- Static data ---
 const WORLDS_DATA = [
@@ -131,17 +136,35 @@ const UPDATE_VIDEOS = [
 
 export default function WikiPage() {
   const t = useTranslations('wiki');
+  const locale = useLocale();
   const router = useRouter();
+  const { googleEmail } = useGoogleSync();
+  const showAdmin = isWikiAdmin(googleEmail);
+
   const [activePage, setActivePage] = useState<Page>('game-overview');
   const [activeSub, setActiveSub] = useState<SubSection>('overview');
+  const [editTarget, setEditTarget] = useState<{ pageId?: string; staticPage?: string; title?: string; content?: string } | null>(null);
   const contentRef = useRef<HTMLElement>(null);
   const isClickScrolling = useRef(false);
   const clickScrollTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const NAV_ITEMS = useMemo(() => {
+    const items = [...BASE_NAV_ITEMS];
+    if (showAdmin) {
+      items.push({ id: 'admin', labelKey: 'sectionAdmin' });
+    }
+    return items;
+  }, [showAdmin]);
 
   const switchPage = (page: Page) => {
     setActivePage(page);
     if (page === 'game-overview') setActiveSub('overview');
     contentRef.current?.scrollTo({ top: 0 });
+  };
+
+  const openSuggestEdit = (staticPage: string) => {
+    setEditTarget({ staticPage, title: t('sectionGameOverview'), content: '' });
+    setActivePage('community');
   };
 
   const scrollToSub = (id: SubSection) => {
@@ -357,6 +380,11 @@ export default function WikiPage() {
                   <div className={styles.infoBox}><div className={styles.infoBoxTitle}>{t('gridSystem')}</div><ul className={styles.infoList}><li>{t('grid1')}</li><li>{t('grid2')}</li><li>{t('grid3')}</li><li>{t('grid4')}</li><li>{t('grid5')}</li></ul></div>
                 </section>
 
+                <div className={styles.suggestEditRow}>
+                  <button className={styles.communitySuggestEditBtn} onClick={() => openSuggestEdit('game-overview')}>
+                    {t('suggestEdit')}
+                  </button>
+                </div>
                 <footer className={styles.wikiFooter}>RHYTHMIA Wiki &mdash; v0.0.2 beta</footer>
               </motion.div>
             )}
@@ -402,6 +430,20 @@ export default function WikiPage() {
                   </div></div>
                 </section>
               </motion.div>
+            )}
+
+            {/* ====== COMMUNITY PAGES ====== */}
+            {activePage === 'community' && (
+              <WikiCommunityBrowser
+                locale={locale}
+                initialEditTarget={editTarget}
+                onClearEditTarget={() => setEditTarget(null)}
+              />
+            )}
+
+            {/* ====== ADMIN PANEL ====== */}
+            {activePage === 'admin' && showAdmin && (
+              <WikiAdminPanel />
             )}
           </AnimatePresence>
         </main>

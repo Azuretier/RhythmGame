@@ -14,6 +14,7 @@ interface ContentCard {
     tags?: string[];
     url?: string;
     difficulty?: 'beginner' | 'intermediate' | 'advanced';
+    source?: 'ai' | 'community';
 }
 
 interface ForYouTabProps {
@@ -140,6 +141,9 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                                 <div className={styles.widgetContent}>
                                     <div className={styles.widgetTopRow}>
                                         <span className={styles.typeLabel}>{t(`types.${card.type}`)}</span>
+                                        {card.source === 'community' && (
+                                            <span className={styles.communityBadge}>Community</span>
+                                        )}
                                         {card.difficulty && (
                                             <span className={`${styles.diffBadge} ${styles[`diff_${card.difficulty}`]}`}>
                                                 {diffLabels[card.difficulty]}

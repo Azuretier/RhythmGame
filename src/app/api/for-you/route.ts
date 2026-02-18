@@ -20,6 +20,40 @@ interface ContentCard {
     url?: string;
     thumbnail?: string;
     difficulty?: 'beginner' | 'intermediate' | 'advanced';
+    source?: 'ai' | 'community';
+}
+
+async function fetchCommunityResources(locale: string): Promise<ContentCard[]> {
+    try {
+        const { getAdminApp } = await import('@/lib/rank-card/firebase-admin');
+        const { getFirestore } = await import('firebase-admin/firestore');
+        const app = getAdminApp();
+        const db = getFirestore(app);
+
+        const snapshot = await db
+            .collection('wiki_pages')
+            .where('forYouEligible', '==', true)
+            .where('locale', '==', locale)
+            .orderBy('createdAt', 'desc')
+            .limit(3)
+            .get();
+
+        return snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+                type: (data.category === 'tutorial' ? 'tutorial' : data.category === 'tip' ? 'tip' : 'tutorial') as ContentCard['type'],
+                id: `community-${doc.id}`,
+                title: String(data.title || '').slice(0, 60),
+                description: String(data.content || '').slice(0, 150).replace(/[#*`\n]/g, ' ').trim(),
+                tags: Array.isArray(data.tags) ? data.tags.slice(0, 3) : [],
+                difficulty: data.difficulty || 'beginner',
+                source: 'community' as const,
+            };
+        });
+    } catch (error) {
+        console.error('Failed to fetch community resources:', error);
+        return [];
+    }
 }
 
 function resolveVideoUrl(url?: string): string {
@@ -82,7 +116,12 @@ For tips, generate unique gameplay advice relevant to the player's progress leve
 
 Return ONLY the JSON array, no markdown fencing, no explanation.`;
 
-        const result = await model.generateContent(prompt);
+        // Run Gemini and community resource fetch in parallel
+        const [result, communityCards] = await Promise.all([
+            model.generateContent(prompt),
+            fetchCommunityResources(locale),
+        ]);
+
         const responseText = result.response.text().trim();
 
         let cards: ContentCard[];
@@ -98,9 +137,18 @@ Return ONLY the JSON array, no markdown fencing, no explanation.`;
                 tags: Array.isArray(card.tags) ? card.tags.slice(0, 3) : [],
                 difficulty: ['beginner', 'intermediate', 'advanced'].includes(card.difficulty ?? '') ? card.difficulty : 'beginner',
                 url: card.url || undefined,
+                source: 'ai' as const,
             }));
         } catch {
             cards = getFallbackContent(locale, unlockedAdvancements, totalAdvancements);
+        }
+
+        // Splice community resources into positions 2 and 5
+        if (communityCards.length > 0 && cards.length >= 4) {
+            cards.splice(2, 1, communityCards[0]);
+            if (communityCards.length > 1 && cards.length >= 6) {
+                cards.splice(5, 1, communityCards[1]);
+            }
         }
 
         return NextResponse.json({ cards });
