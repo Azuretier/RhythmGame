@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -116,6 +116,18 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
   const pathname = usePathname();
 
   const [editName, setEditName] = useState(profile?.name ?? '');
+  const lastSyncedNameRef = useRef(profile?.name ?? '');
+
+  // Sync editName when profile.name changes externally (e.g., cloud restore)
+  // but only if user hasn't started editing (editName still matches last synced value)
+  useEffect(() => {
+    if (profile?.name && profile.name !== lastSyncedNameRef.current) {
+      if (editName === lastSyncedNameRef.current) {
+        setEditName(profile.name);
+      }
+      lastSyncedNameRef.current = profile.name;
+    }
+  }, [profile?.name, editName]);
 
   const nameChanged = editName.trim().length > 0 && editName.trim() !== profile?.name;
 
