@@ -85,108 +85,74 @@
   letter-spacing: 0.05em;
 }
 
-/* Profile name edit button */
-.profileNameButton {
+/* Name change section */
+.nameSection {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: none;
-  border: none;
+  gap: 10px;
+  padding: 0 28px 24px;
+}
+
+.nameInputBox {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  transition: border-color 0.2s ease;
+}
+
+.nameInputBox:focus-within {
+  border-color: var(--skin-accent, #007FFF);
+}
+
+.nameBoxInput {
+  flex: 1;
+  min-width: 0;
   padding: 0;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.profileNameButton:hover {
-  opacity: 0.8;
-}
-
-.profileNameButton:hover .editIcon {
-  opacity: 1;
-}
-
-.editIcon {
-  color: var(--skin-subtext, rgba(255, 255, 255, 0.3));
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  flex-shrink: 0;
-}
-
-/* Name edit row */
-.nameEditRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.nameEditInput {
-  width: 100px;
-  padding: 2px 6px;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   color: var(--skin-foreground, #ffffff);
-  background: var(--skin-surface, rgba(255, 255, 255, 0.06));
-  border: 1px solid var(--skin-accent, #007FFF);
-  border-radius: 4px;
+  background: transparent;
+  border: none;
   outline: none;
 }
 
-.nameEditInput::placeholder {
+.nameBoxInput::placeholder {
   color: var(--skin-subtext, rgba(255, 255, 255, 0.25));
 }
 
-.nameEditCount {
-  font-size: 0.55rem;
+.nameBoxCount {
+  font-size: 0.6rem;
   color: var(--skin-subtext, rgba(255, 255, 255, 0.3));
   letter-spacing: 0.03em;
   flex-shrink: 0;
 }
 
-.nameEditSave {
+.nameBoxSave {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   background: var(--skin-accent, #007FFF);
   border: none;
-  border-radius: 4px;
+  border-radius: 10px;
   color: #ffffff;
   cursor: pointer;
   flex-shrink: 0;
   transition: opacity 0.2s ease;
+  white-space: nowrap;
 }
 
-.nameEditSave:hover:not(:disabled) {
+.nameBoxSave:hover {
   opacity: 0.85;
-}
-
-.nameEditSave:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.nameEditCancel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: transparent;
-  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.1));
-  border-radius: 4px;
-  color: var(--skin-subtext, rgba(255, 255, 255, 0.5));
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.nameEditCancel:hover {
-  color: var(--skin-foreground, #ffffff);
-  border-color: var(--skin-border-hover, rgba(255, 255, 255, 0.2));
 }
 
 .closeButton {
@@ -682,6 +648,10 @@
 
   .syncActions {
     flex-direction: column;
+  }
+
+  .nameSection {
+    padding: 0 20px 20px;
   }
 
   .langGrid {

@@ -1094,7 +1094,8 @@
         "selectLanguage": "言語設定",
         "privacy": "プライバシー",
         "profileButton": "プロフィール",
-        "changeName": "名前を変更"
+        "changeName": "ニックネーム",
+        "saveNameButton": "保存"
     },
     "uiTheme": {
         "selectTheme": "UIテーマ",

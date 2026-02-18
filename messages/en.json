@@ -1094,7 +1094,8 @@
         "selectLanguage": "Language",
         "privacy": "Privacy",
         "profileButton": "Profile",
-        "changeName": "Change name"
+        "changeName": "Nickname",
+        "saveNameButton": "Save"
     },
     "uiTheme": {
         "selectTheme": "UI Theme",
