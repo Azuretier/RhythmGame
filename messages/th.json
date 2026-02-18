@@ -879,5 +879,28 @@
         "close": "ปิด",
         "resume": "ดำเนินต่อ",
         "chapterSelect": "เลือกบท"
+    },
+    "score": {
+        "money": "บีทส์",
+        "totalScore": "คะแนนรวม",
+        "currentRank": "อันดับปัจจุบัน",
+        "scoreToNext": "อีก {score} ถึงอันดับถัดไป",
+        "maxRank": "อันดับสูงสุดแล้ว",
+        "winStreak": "ชนะติดต่อ",
+        "viewDetails": "ดูรายละเอียด",
+        "tiers": {
+            "rookie": "Rookie",
+            "bronze": "Bronze",
+            "silver": "Silver",
+            "gold": "Gold",
+            "diamond": "Diamond",
+            "master": "Master"
+        },
+        "stats": {
+            "games": "เกม",
+            "bestScore": "สูงสุด",
+            "lines": "ไลน์",
+            "winRate": "อัตราชนะ"
+        }
     }
 }

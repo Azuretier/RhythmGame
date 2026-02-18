@@ -1127,5 +1127,28 @@
         "close": "閉じる",
         "resume": "再開",
         "chapterSelect": "チャプター選択"
+    },
+    "score": {
+        "money": "ビーツ",
+        "totalScore": "累計スコア",
+        "currentRank": "現在のランク",
+        "scoreToNext": "次のランクまで {score}",
+        "maxRank": "最高ランク到達",
+        "winStreak": "連勝中",
+        "viewDetails": "詳細を見る",
+        "tiers": {
+            "rookie": "ルーキー",
+            "bronze": "ブロンズ",
+            "silver": "シルバー",
+            "gold": "ゴールド",
+            "diamond": "ダイヤモンド",
+            "master": "マスター"
+        },
+        "stats": {
+            "games": "プレイ数",
+            "bestScore": "ベスト",
+            "lines": "ライン",
+            "winRate": "勝率"
+        }
     }
 }
