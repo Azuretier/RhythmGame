@@ -155,11 +155,11 @@ const TAG_ACCENT: Record<string, string> = {
 };
 
 const TUTORIAL_WIKI_MAP: Record<string, SubSection> = {
-  'tut-tspin': 'controls', 'tut-stacking': 'overview', 'tut-combos': 'overview',
-  'tut-opener': 'modes', 'tut-rhythm': 'overview', 'tut-downstack': 'controls',
-  'tut-harddrop': 'controls', 'tut-garbage': 'ranked', 'tut-finesse': 'controls',
-  'tut-back2back': 'overview', 'tut-crafting': 'crafting', 'tut-items': 'crafting',
-  'tut-ranked': 'ranked', 'tut-worlds': 'worlds',
+  'tut-stacking': 'tut-beginner', 'tut-harddrop': 'tut-beginner', 'tut-rhythm': 'tut-beginner',
+  'tut-combos': 'tut-intermediate', 'tut-back2back': 'tut-intermediate', 'tut-downstack': 'tut-intermediate',
+  'tut-tspin': 'tut-advanced', 'tut-opener': 'tut-advanced', 'tut-finesse': 'tut-advanced',
+  'tut-garbage': 'tut-intermediate', 'tut-ranked': 'tut-intermediate',
+  'tut-crafting': 'tut-beginner', 'tut-items': 'tut-intermediate', 'tut-worlds': 'tut-beginner',
 };
 
 const TUTORIAL_THUMB_MAP: Record<string, string> = {
@@ -801,7 +801,7 @@ export default function WikiPage() {
                         className={styles.resourceWidget}
                         onClick={() => {
                           if (tut.wikiTarget) {
-                            switchPage('game-overview');
+                            switchPage('tutorials');
                             setTimeout(() => scrollToSub(tut.wikiTarget!), 150);
                           }
                         }}
