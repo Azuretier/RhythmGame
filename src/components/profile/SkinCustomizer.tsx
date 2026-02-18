@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -11,6 +12,8 @@ import { getIconById } from '@/lib/profile/types';
 import type { Skin } from '@/lib/skin/types';
 import ThemeSwitcher from './ThemeSwitcher';
 import styles from './SkinCustomizer.module.css';
+
+const MAX_NAME_LENGTH = 10;
 
 const LOCALE_FLAGS: Record<string, string> = {
   ja: '\u{1F1EF}\u{1F1F5}',
@@ -92,11 +95,12 @@ function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolea
 
 export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
   const t = useTranslations('skin');
+  const tProfile = useTranslations('profile');
   const tTheme = useTranslations('uiTheme');
   const tSync = useTranslations('googleSync');
   const tLocale = useTranslations('localeSwitcher');
   const { currentSkin, setSkin, skins } = useSkin();
-  const { profile } = useProfile();
+  const { profile, updateProfile } = useProfile();
   const {
     isLinked,
     googleDisplayName,
@@ -110,6 +114,29 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+
+  const [editName, setEditName] = useState(profile?.name ?? '');
+  const lastSyncedNameRef = useRef(profile?.name ?? '');
+
+  // Sync editName when profile.name changes externally (e.g., cloud restore)
+  // but only if user hasn't started editing (editName still matches last synced value)
+  useEffect(() => {
+    if (profile?.name && profile.name !== lastSyncedNameRef.current) {
+      if (editName === lastSyncedNameRef.current) {
+        setEditName(profile.name);
+      }
+      lastSyncedNameRef.current = profile.name;
+    }
+  }, [profile?.name, editName]);
+
+  const nameChanged = editName.trim().length > 0 && editName.trim() !== profile?.name;
+
+  const handleNameSave = () => {
+    const trimmed = editName.trim();
+    if (trimmed.length > 0 && trimmed !== profile?.name) {
+      updateProfile({ name: trimmed });
+    }
+  };
 
   const handleLocaleChange = (newLocale: Locale) => {
     if (newLocale !== locale) {
@@ -159,6 +186,53 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
             </svg>
           </button>
         </div>
+
+        {/* Name change section */}
+        {profile && (
+          <>
+            <div className={styles.sectionLabel}>{t('changeName')}</div>
+            <div className={styles.nameSection}>
+              <div className={styles.nameInputBox}>
+                <input
+                  className={styles.nameBoxInput}
+                  type="text"
+                  value={editName}
+                  onChange={(e) => {
+                    if (e.target.value.length <= MAX_NAME_LENGTH) {
+                      setEditName(e.target.value);
+                    }
+                  }}
+                  maxLength={MAX_NAME_LENGTH}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && nameChanged) handleNameSave();
+                  }}
+                  placeholder={tProfile('namePlaceholder')}
+                />
+                <span className={styles.nameBoxCount}>
+                  {editName.length}/{MAX_NAME_LENGTH}
+                </span>
+              </div>
+              <AnimatePresence>
+                {nameChanged && (
+                  <motion.button
+                    className={styles.nameBoxSave}
+                    onClick={handleNameSave}
+                    type="button"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    {t('saveNameButton')}
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
+          </>
+        )}
 
         {/* Section label */}
         <div className={styles.sectionLabel}>{t('selectSkin')}</div>

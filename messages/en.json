@@ -1093,7 +1093,9 @@
         "currentSkin": "Current Skin",
         "selectLanguage": "Language",
         "privacy": "Privacy",
-        "profileButton": "Profile"
+        "profileButton": "Profile",
+        "changeName": "Nickname",
+        "saveNameButton": "Save"
     },
     "uiTheme": {
         "selectTheme": "UI Theme",

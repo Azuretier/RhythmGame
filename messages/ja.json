@@ -1093,7 +1093,9 @@
         "currentSkin": "現在のスキン",
         "selectLanguage": "言語設定",
         "privacy": "プライバシー",
-        "profileButton": "プロフィール"
+        "profileButton": "プロフィール",
+        "changeName": "ニックネーム",
+        "saveNameButton": "保存"
     },
     "uiTheme": {
         "selectTheme": "UIテーマ",

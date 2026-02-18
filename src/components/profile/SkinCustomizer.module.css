@@ -85,6 +85,76 @@
   letter-spacing: 0.05em;
 }
 
+/* Name change section */
+.nameSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 28px 24px;
+}
+
+.nameInputBox {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  transition: border-color 0.2s ease;
+}
+
+.nameInputBox:focus-within {
+  border-color: var(--skin-accent, #007FFF);
+}
+
+.nameBoxInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--skin-foreground, #ffffff);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.nameBoxInput::placeholder {
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.25));
+}
+
+.nameBoxCount {
+  font-size: 0.6rem;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.3));
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.nameBoxSave {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background: var(--skin-accent, #007FFF);
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.nameBoxSave:hover {
+  opacity: 0.85;
+}
+
 .closeButton {
   padding: 8px;
   background: transparent;
@@ -578,6 +648,10 @@
 
   .syncActions {
     flex-direction: column;
+  }
+
+  .nameSection {
+    padding: 0 20px 20px;
   }
 
   .langGrid {
