@@ -18,7 +18,7 @@ import onlineStyles from '@/components/profile/OnlineUsers.module.css';
 import VanillaGame from '@/components/rhythmia/tetris';
 import MultiplayerGame from '@/components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
-import RetroPlayerCard from '@/components/rhythmia/RetroPlayerCard';
+import LoyaltyWidget from '@/components/loyalty/LoyaltyWidget';
 import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
 
@@ -470,7 +470,7 @@ export default function RhythmiaLobby() {
 
                 {/* Slide 2: Loyalty + Footer */}
                 <section className={`${styles.slideSection} ${styles.slideSectionBottom}`}>
-                    <RetroPlayerCard />
+                    <LoyaltyWidget />
                     <motion.footer
                         className={styles.footer}
                         initial={{ opacity: 0 }}
