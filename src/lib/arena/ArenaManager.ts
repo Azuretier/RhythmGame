@@ -108,6 +108,11 @@ export class ArenaRoomManager {
       chaosContribution: 0,
       kills: 0,
       placement: null,
+      heldPowerUp: null,
+      powerUpsUsed: 0,
+      activeEffects: [],
+      targetMode: 'random',
+      targetId: null,
     };
 
     const room: ArenaRoom = {
@@ -173,6 +178,11 @@ export class ArenaRoomManager {
       chaosContribution: 0,
       kills: 0,
       placement: null,
+      heldPowerUp: null,
+      powerUpsUsed: 0,
+      activeEffects: [],
+      targetMode: 'random',
+      targetId: null,
     };
 
     room.players.push(player);
