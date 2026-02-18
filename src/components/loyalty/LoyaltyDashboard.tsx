@@ -11,6 +11,8 @@ import {
   formatScore,
   formatScoreCompact,
   buildScoreRankingState,
+  recordDailyVisit,
+  syncGameplayStats,
   initAuth,
   fetchActivePoll,
   getUserVote,
@@ -40,8 +42,6 @@ export default function LoyaltyDashboard() {
   // Initialize score ranking + auth + poll
   useEffect(() => {
     const advancementState = loadAdvancementState();
-    // Use syncGameplayStats and recordDailyVisit to include daily bonus
-    const { recordDailyVisit, syncGameplayStats } = require('@/lib/loyalty');
     
     let dailyState = recordDailyVisit();
     dailyState = syncGameplayStats(
