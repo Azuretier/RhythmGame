@@ -1168,5 +1168,41 @@
         "close": "Close",
         "resume": "Resume",
         "chapterSelect": "Chapter Select"
+    },
+    "camp": {
+        "title": "CAMP",
+        "subtitle": "azuretier.net",
+        "loading": "SETTING UP CAMP",
+        "stations": {
+            "solo": {
+                "name": "Solo",
+                "badge": "ADVENTURE",
+                "description": "Classic rhythm puzzle"
+            },
+            "battle": {
+                "name": "Battle",
+                "badge": "1v1",
+                "description": "Real-time 1v1 arena"
+            },
+            "arena": {
+                "name": "Arena",
+                "badge": "9P",
+                "description": "9-player battle royale"
+            },
+            "advancements": {
+                "name": "Advancements",
+                "description": "View achievements"
+            },
+            "profile": {
+                "name": "Profile",
+                "description": "Customize your look"
+            },
+            "community": {
+                "name": "Community",
+                "description": "Discord & socials"
+            }
+        },
+        "online": "{count} around the campfire",
+        "backToCamp": "Back to Camp"
     }
 }

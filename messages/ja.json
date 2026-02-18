@@ -1168,5 +1168,41 @@
         "close": "閉じる",
         "resume": "再開",
         "chapterSelect": "チャプター選択"
+    },
+    "camp": {
+        "title": "キャンプ",
+        "subtitle": "azuretier.net",
+        "loading": "キャンプ設営中",
+        "stations": {
+            "solo": {
+                "name": "ソロ",
+                "badge": "アドベンチャー",
+                "description": "クラシックリズムパズル"
+            },
+            "battle": {
+                "name": "バトル",
+                "badge": "1v1",
+                "description": "リアルタイム1v1対戦"
+            },
+            "arena": {
+                "name": "アリーナ",
+                "badge": "9P",
+                "description": "9人バトルロイヤル"
+            },
+            "advancements": {
+                "name": "実績",
+                "description": "実績を確認"
+            },
+            "profile": {
+                "name": "プロフィール",
+                "description": "見た目をカスタマイズ"
+            },
+            "community": {
+                "name": "コミュニティ",
+                "description": "Discord & SNS"
+            }
+        },
+        "online": "{count}人がキャンプファイヤーの周りに",
+        "backToCamp": "キャンプに戻る"
     }
 }
