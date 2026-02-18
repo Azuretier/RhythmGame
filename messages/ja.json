@@ -17,7 +17,7 @@
         "back": "← 戻る",
         "online": "オンライン",
         "onlineCount": "{count} オンライン",
-        "loyalty": "ロイヤルティ"
+        "loyalty": "ランキング"
     },
     "vanilla": {
         "badge": "ソロ",
@@ -617,100 +617,39 @@
     },
     "loyalty": {
         "meta": {
-            "title": "ロイヤルティプログラム | RHYTHMIA - Azuretier",
-            "description": "ロイヤルティティア、バッジ、ストリーク、コミュニティ参加を追跡しよう。"
+            "title": "スコアランキング | RHYTHMIA - Azuretier",
+            "description": "スコアランキングを追跡し、ランクを上げ、進捗を解除し、RHYTHMIAコミュニティで競おう。"
         },
         "backToLobby": "← 戻る",
-        "currentTier": "現在のロイヤルティティア",
-        "xpToNext": "次のティアまで {xp} XP",
-        "maxTier": "最高ティア到達",
-        "streakDays": "日連続",
-        "viewAll": "進捗＆詳細を見る",
+        "currentTier": "現在のランク",
+        "totalScore": "総合スコア",
+        "scoreToNext": "次のランクまで {score}",
+        "maxTier": "最高ランク到達",
+        "viewAll": "ランキング＆詳細を見る",
         "tiers": {
-            "new_beat": "ニュービート",
-            "syncopated": "シンコペーション",
-            "in_rhythm": "インリズム",
-            "maestro": "マエストロ"
+            "unranked": "ランクなし",
+            "beat_1": "ビート I",
+            "beat_2": "ビート II",
+            "rhythm": "リズム",
+            "maestro": "マエストロ",
+            "virtuoso": "ヴィルトゥオーソ"
         },
         "stats": {
-            "visits": "訪問",
-            "streak": "ストリーク",
+            "bestScore": "ベストスコア",
             "games": "ゲーム",
-            "badges": "進捗"
+            "lines": "ライン",
+            "badges": "進捗",
+            "totalVisits": "訪問回数",
+            "currentStreak": "現在の連続日数",
+            "bestStreak": "最高連続日数",
+            "bonusXP": "ボーナスXP"
         },
         "sections": {
-            "tierRoadmap": "ティアロードマップ",
-            "streak": "ログインストリーク",
+            "tierRoadmap": "ランクロードマップ",
             "badges": "最近の進捗",
             "community": "コミュニティの声",
-            "howItWorks": "仕組み"
-        },
-        "badges": {
-            "streak_3": {
-                "icon": "🔥",
-                "name": "3日連続",
-                "desc": "3日連続で訪問"
-            },
-            "streak_7": {
-                "icon": "🔥",
-                "name": "週間リズム",
-                "desc": "7日連続で訪問"
-            },
-            "streak_14": {
-                "icon": "🔥",
-                "name": "2週間ビート",
-                "desc": "14日連続で訪問"
-            },
-            "streak_30": {
-                "icon": "🔥",
-                "name": "月間パルス",
-                "desc": "30日連続で訪問"
-            },
-            "visits_5": {
-                "icon": "👣",
-                "name": "レギュラー",
-                "desc": "5回訪問"
-            },
-            "visits_25": {
-                "icon": "👣",
-                "name": "お馴染み",
-                "desc": "25回訪問"
-            },
-            "visits_100": {
-                "icon": "👣",
-                "name": "ファミリー",
-                "desc": "100回訪問"
-            },
-            "games_10": {
-                "icon": "🎮",
-                "name": "プレイヤー",
-                "desc": "10ゲームプレイ"
-            },
-            "games_50": {
-                "icon": "🎮",
-                "name": "愛好家",
-                "desc": "50ゲームプレイ"
-            },
-            "games_200": {
-                "icon": "🎮",
-                "name": "献身者",
-                "desc": "200ゲームプレイ"
-            },
-            "polls_1": {
-                "icon": "🗳️",
-                "name": "初投票",
-                "desc": "初めての投票"
-            },
-            "polls_5": {
-                "icon": "🗳️",
-                "name": "アクティブ投票者",
-                "desc": "5回投票"
-            },
-            "polls_10": {
-                "icon": "🗳️",
-                "name": "コミュニティの声",
-                "desc": "10回投票"
-            }
+            "howItWorks": "仕組み",
+            "dailyBonus": "デイリーボーナス"
         },
         "poll": {
             "question": "次のRHYTHMIAゲームモードは何がいい？",
@@ -730,25 +669,27 @@
         "strategy": {
             "0": {
                 "step": "ステップ 01",
-                "title": "プレイ＆XP獲得",
-                "desc": "ゲームをプレイ、訪問、実績解除のたびにXPを獲得し、ロイヤルティティアが上がります。"
+                "title": "プレイ＆スコア獲得",
+                "desc": "ゲームをプレイしてスコアを稼ごう。ライン消去、コンボ、ハイスコアでランクを上げよう。"
             },
             "1": {
                 "step": "ステップ 02",
-                "title": "ストリークを築く",
-                "desc": "毎日訪問してストリークを維持。長いストリークはボーナスXPと限定バッジを獲得できます。"
+                "title": "ランクを上げる",
+                "desc": "累計スコアがランクを決める。ランクなしからビート、リズム、マエストロ、ヴィルトゥオーソへ。"
             },
             "2": {
                 "step": "ステップ 03",
-                "title": "ティアを上げる",
-                "desc": "ニュービートからマエストロへ。各ティアがRHYTHMIAコミュニティの中心へと近づけます。"
+                "title": "進捗を解除",
+                "desc": "マイルストーンを達成して進捗を解除しよう。各実績がRHYTHMIAでの旅の証。"
             },
             "3": {
                 "step": "ステップ 04",
                 "title": "未来を形づくる",
-                "desc": "コミュニティ投票に参加し、バッジを獲得し、RHYTHMIAの次の展開を一緒に決めよう。"
+                "desc": "コミュニティ投票に参加し、RHYTHMIAの次の展開を一緒に決めよう。"
             }
-        }
+        },
+        "streakDays": "日連続",
+        "bonusXP": "ボーナスXP"
     },
     "updates": {
         "title": "最新アップデート",

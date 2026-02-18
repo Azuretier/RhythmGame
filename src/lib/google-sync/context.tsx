@@ -57,7 +57,7 @@ const GoogleSyncContext = createContext<GoogleSyncContextType | undefined>(
 );
 
 /**
- * Merge local loyalty state with remote, taking the max of each numeric field.
+ * Merge local score ranking state with remote, taking the max of each numeric field.
  */
 function mergeLoyaltyStates(
   local: ReturnType<typeof loadLoyaltyState>,
@@ -65,37 +65,36 @@ function mergeLoyaltyStates(
 ) {
   const mergedStats = { ...local.stats };
   const numericKeys: (keyof typeof mergedStats)[] = [
+    'totalScore',
+    'bestScorePerGame',
+    'totalGamesPlayed',
+    'advancementsUnlocked',
+    'totalLines',
     'totalVisits',
     'currentStreak',
     'bestStreak',
-    'totalGamesPlayed',
-    'totalScore',
-    'advancementsUnlocked',
-    'pollsVoted',
+    'dailyBonusXP',
   ];
   for (const key of numericKeys) {
     const localVal = mergedStats[key];
-    const remoteVal = remote.stats[key];
+    const remoteVal = remote.stats?.[key];
     if (typeof localVal === 'number' && typeof remoteVal === 'number') {
       (mergedStats as Record<string, unknown>)[key] = Math.max(localVal, remoteVal);
     }
   }
 
-  // Keep whichever date is earlier for joinDate
-  if (remote.stats.joinDate && (!mergedStats.joinDate || remote.stats.joinDate < mergedStats.joinDate)) {
-    mergedStats.joinDate = remote.stats.joinDate;
-  }
-  // Keep whichever lastVisitDate is more recent
-  if (remote.stats.lastVisitDate && remote.stats.lastVisitDate > (mergedStats.lastVisitDate || '')) {
-    mergedStats.lastVisitDate = remote.stats.lastVisitDate;
+  // For lastVisitDate, take the most recent one
+  if (remote.stats?.lastVisitDate) {
+    const localDate = new Date(mergedStats.lastVisitDate || '1970-01-01');
+    const remoteDate = new Date(remote.stats.lastVisitDate);
+    if (remoteDate > localDate) {
+      mergedStats.lastVisitDate = remote.stats.lastVisitDate;
+    }
   }
 
   return {
     stats: mergedStats,
-    xp: Math.max(local.xp, remote.xp),
-    unlockedBadgeIds: Array.from(
-      new Set([...local.unlockedBadgeIds, ...remote.unlockedBadgeIds])
-    ),
+    combinedScore: mergedStats.totalScore + mergedStats.dailyBonusXP,
   };
 }
 

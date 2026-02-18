@@ -1,122 +1,160 @@
-/* Loyalty Widget — Compact inline widget for lobby */
+/* Score Ranking Widget — Bigger, score-focused widget for lobby */
 .widget {
   width: 100%;
-  max-width: 900px;
-  margin-top: 32px;
+  max-width: 1080px;
+  margin-top: 24px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 24px 28px;
+  border-radius: 16px;
+  padding: 36px 40px;
 }
 
-/* Top row: tier info + streak */
-.topRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.tierSection {
+/* Score Hero — prominent score display */
+.scoreHero {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 24px;
+  margin-bottom: 28px;
 }
 
-.tierIcon {
-  font-size: 1.6rem;
+.tierBadge {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.tierIconLarge {
+  font-size: 2.2rem;
   line-height: 1;
 }
 
-.tierInfo {
+.scoreInfo {
   display: flex;
   flex-direction: column;
 }
 
-.tierName {
-  font-size: 0.9rem;
-  font-weight: 500;
-  letter-spacing: 0.12em;
+.scoreValue {
+  font-size: 2.4rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  opacity: 0.9;
 }
 
-.tierLabel {
-  font-size: 0.55rem;
+.scoreLabel {
+  font-size: 0.65rem;
   opacity: 0.3;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  margin-top: 1px;
+  margin-top: 4px;
 }
 
-/* Streak section */
+.tierName {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  margin-top: 8px;
+}
+
+/* Daily Streak Section */
 .streakSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.streakDays {
+  display: flex;
+  gap: 8px;
+}
+
+.streakDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s;
+}
+
+.streakDot.filled {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: rgba(76, 175, 80, 0.4);
+  color: rgba(76, 175, 80, 0.9);
+}
+
+.streakDot.today {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.streakInfo {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
 }
 
-.streakDays {
-  display: flex;
-  gap: 4px;
-}
-
-.streakDot {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.5rem;
-  opacity: 0.35;
-  letter-spacing: 0;
-}
-
-.streakDot.filled {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
-  opacity: 1;
-}
-
-.streakDot.today {
-  border-color: rgba(255, 255, 255, 0.45);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.08);
-}
-
 .streakLabel {
-  font-size: 0.55rem;
-  opacity: 0.3;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.6;
+  letter-spacing: 0.05em;
+}
+
+.bonusXP {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4CAF50;
+  opacity: 0.9;
+  letter-spacing: 0.03em;
 }
 
 /* Progress bar */
 .progressRow {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .progressBar {
   width: 100%;
-  height: 3px;
+  height: 6px;
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .progressFill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 3px;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .progressLabels {
   display: flex;
   justify-content: space-between;
-  font-size: 0.6rem;
-  opacity: 0.25;
+  font-size: 0.7rem;
+  opacity: 0.3;
   letter-spacing: 0.04em;
 }
 
@@ -124,8 +162,8 @@
 .miniRoadmap {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -134,9 +172,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px 0;
-  border-radius: 6px;
+  gap: 8px;
+  padding: 12px 0;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s;
@@ -152,11 +190,11 @@
 }
 
 .miniStepIcon {
-  font-size: 0.85rem;
+  font-size: 1rem;
 }
 
 .miniStepName {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 500;
   letter-spacing: 0.06em;
   opacity: 0.6;
@@ -166,45 +204,56 @@
   opacity: 1;
 }
 
-/* Stats row */
-.statsRow {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 16px;
+/* Stats grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
-.statItem {
+.statCard {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  transition: border-color 0.3s;
+}
+
+.statCard:hover {
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .statValue {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 500;
-  opacity: 0.8;
+  opacity: 0.85;
   font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
   font-size: 0.55rem;
-  opacity: 0.25;
+  opacity: 0.3;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 /* View all button */
 .viewAll {
   width: 100%;
-  padding: 10px;
-  font-size: 0.65rem;
+  padding: 14px;
+  font-size: 0.7rem;
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.5);
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.25s;
 }
@@ -218,17 +267,46 @@
 /* Responsive */
 @media (max-width: 768px) {
   .widget {
-    margin-top: 24px;
+    margin-top: 20px;
+    padding: 24px 20px;
   }
 
-  .topRow {
+  .scoreHero {
     flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .scoreInfo {
+    align-items: center;
+  }
+
+  .scoreValue {
+    font-size: 1.8rem;
+  }
+
+  .tierBadge {
+    width: 64px;
+    height: 64px;
+  }
+
+  .tierIconLarge {
+    font-size: 1.8rem;
   }
 
   .streakSection {
-    align-items: flex-start;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .streakInfo {
+    align-items: center;
+  }
+
+  .streakDot {
+    width: 28px;
+    height: 28px;
+    font-size: 0.55rem;
   }
 
   .miniRoadmap {
@@ -236,11 +314,10 @@
   }
 
   .miniStep {
-    min-width: calc(50% - 4px);
+    min-width: calc(33.33% - 6px);
   }
 
-  .statsRow {
-    flex-wrap: wrap;
-    gap: 16px;
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

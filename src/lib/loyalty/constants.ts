@@ -1,103 +1,123 @@
-// ===== Loyalty System Constants =====
-// Rhythm-themed tier names inspired by musical progression
+// ===== Score Ranking System Constants =====
+// Tiers based on cumulative game score from rhythm gameplay
 
-import type { LoyaltyTier, LoyaltyBadge } from './types';
+import type { ScoreRankTier } from './types';
 
-export const LOYALTY_TIERS: LoyaltyTier[] = [
+export const SCORE_RANK_TIERS: ScoreRankTier[] = [
   {
-    id: 'new_beat',
-    name: 'New Beat',
-    nameJa: 'ニュービート',
+    id: 'unranked',
+    name: 'Unranked',
+    nameJa: 'ランクなし',
+    level: 0,
+    minScore: 0,
+    maxScore: 9999,
+    color: '#6B7280',
+    icon: '—',
+  },
+  {
+    id: 'beat_1',
+    name: 'Beat I',
+    nameJa: 'ビート I',
     level: 1,
-    minXP: 0,
-    maxXP: 499,
+    minScore: 10000,
+    maxScore: 99999,
     color: '#8B8B8B',
-    icon: '♩',
+    icon: '\u2669', // ♩
   },
   {
-    id: 'syncopated',
-    name: 'Syncopated',
-    nameJa: 'シンコペーション',
+    id: 'beat_2',
+    name: 'Beat II',
+    nameJa: 'ビート II',
     level: 2,
-    minXP: 500,
-    maxXP: 1999,
+    minScore: 100000,
+    maxScore: 499999,
     color: '#4ECDC4',
-    icon: '♪',
+    icon: '\u266A', // ♪
   },
   {
-    id: 'in_rhythm',
-    name: 'In Rhythm',
-    nameJa: 'インリズム',
+    id: 'rhythm',
+    name: 'Rhythm',
+    nameJa: 'リズム',
     level: 3,
-    minXP: 2000,
-    maxXP: 4999,
+    minScore: 500000,
+    maxScore: 999999,
     color: '#FFD700',
-    icon: '♫',
+    icon: '\u266B', // ♫
   },
   {
     id: 'maestro',
     name: 'Maestro',
     nameJa: 'マエストロ',
     level: 4,
-    minXP: 5000,
-    maxXP: Infinity,
+    minScore: 1000000,
+    maxScore: 9999999,
+    color: '#FF8C00',
+    icon: '\u266C', // ♬
+  },
+  {
+    id: 'virtuoso',
+    name: 'Virtuoso',
+    nameJa: 'ヴィルトゥオーソ',
+    level: 5,
+    minScore: 10000000,
+    maxScore: Infinity,
     color: '#FF4500',
-    icon: '♬',
+    icon: '\u2605', // ★
   },
 ];
 
-// XP rewards for various actions
+// Legacy alias
+export const LOYALTY_TIERS = SCORE_RANK_TIERS;
+
+// XP rewards for daily engagement
 export const XP_REWARDS = {
   dailyVisit: 10,
-  gameCompleted: 25,
-  advancementUnlocked: 50,
-  streakDay: 5, // bonus per consecutive day
-  pollVote: 15,
+  streakDay: 5, // bonus per consecutive day (capped at 30 days)
 } as const;
 
-export const LOYALTY_BADGES: LoyaltyBadge[] = [
-  // Streak badges
-  { id: 'streak_3', category: 'streak', requiredValue: 3, statKey: 'bestStreak' },
-  { id: 'streak_7', category: 'streak', requiredValue: 7, statKey: 'bestStreak' },
-  { id: 'streak_14', category: 'streak', requiredValue: 14, statKey: 'bestStreak' },
-  { id: 'streak_30', category: 'streak', requiredValue: 30, statKey: 'bestStreak' },
-
-  // Engagement badges (visits)
-  { id: 'visits_5', category: 'engagement', requiredValue: 5, statKey: 'totalVisits' },
-  { id: 'visits_25', category: 'engagement', requiredValue: 25, statKey: 'totalVisits' },
-  { id: 'visits_100', category: 'engagement', requiredValue: 100, statKey: 'totalVisits' },
-
-  // Milestone badges (games played)
-  { id: 'games_10', category: 'milestone', requiredValue: 10, statKey: 'totalGamesPlayed' },
-  { id: 'games_50', category: 'milestone', requiredValue: 50, statKey: 'totalGamesPlayed' },
-  { id: 'games_200', category: 'milestone', requiredValue: 200, statKey: 'totalGamesPlayed' },
-
-  // Community badges (polls voted)
-  { id: 'polls_1', category: 'community', requiredValue: 1, statKey: 'pollsVoted' },
-  { id: 'polls_5', category: 'community', requiredValue: 5, statKey: 'pollsVoted' },
-  { id: 'polls_10', category: 'community', requiredValue: 10, statKey: 'pollsVoted' },
-];
-
-export function getTierByXP(xp: number): LoyaltyTier {
-  for (let i = LOYALTY_TIERS.length - 1; i >= 0; i--) {
-    if (xp >= LOYALTY_TIERS[i].minXP) {
-      return LOYALTY_TIERS[i];
+export function getTierByScore(score: number): ScoreRankTier {
+  for (let i = SCORE_RANK_TIERS.length - 1; i >= 0; i--) {
+    if (score >= SCORE_RANK_TIERS[i].minScore) {
+      return SCORE_RANK_TIERS[i];
     }
   }
-  return LOYALTY_TIERS[0];
+  return SCORE_RANK_TIERS[0];
 }
 
-export function tierProgress(xp: number): number {
-  const tier = getTierByXP(xp);
-  if (tier.maxXP === Infinity) return 100;
-  const range = tier.maxXP - tier.minXP + 1;
-  const progress = xp - tier.minXP;
+// Legacy alias
+export const getTierByXP = getTierByScore;
+
+export function scoreProgress(score: number): number {
+  const tier = getTierByScore(score);
+  if (tier.maxScore === Infinity) return 100;
+  const range = tier.maxScore - tier.minScore + 1;
+  const progress = score - tier.minScore;
   return Math.min(100, (progress / range) * 100);
 }
 
-export function xpToNextTier(xp: number): number | null {
-  const currentTier = getTierByXP(xp);
-  const currentIndex = LOYALTY_TIERS.indexOf(currentTier);
-  if (currentIndex >= LOYALTY_TIERS.length - 1) return null;
-  return LOYALTY_TIERS[currentIndex + 1].minXP - xp;
+// Legacy alias
+export const tierProgress = scoreProgress;
+
+export function scoreToNextTier(score: number): number | null {
+  const currentTier = getTierByScore(score);
+  const currentIndex = SCORE_RANK_TIERS.indexOf(currentTier);
+  if (currentIndex >= SCORE_RANK_TIERS.length - 1) return null;
+  return SCORE_RANK_TIERS[currentIndex + 1].minScore - score;
+}
+
+// Legacy alias
+export const xpToNextTier = scoreToNextTier;
+
+/** Format a large score number with commas */
+export function formatScore(score: number): string {
+  return score.toLocaleString();
+}
+
+/** Format score in compact form (10K, 1.2M, etc.) */
+export function formatScoreCompact(score: number): string {
+  if (score >= 10000000) return `${(score / 1000000).toFixed(1)}M`;
+  if (score >= 1000000) return `${(score / 1000000).toFixed(2)}M`;
+  if (score >= 100000) return `${(score / 1000).toFixed(0)}K`;
+  if (score >= 10000) return `${(score / 1000).toFixed(1)}K`;
+  return score.toLocaleString();
 }
