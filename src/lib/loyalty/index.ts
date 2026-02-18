@@ -1,13 +1,32 @@
-export type { LoyaltyTier, LoyaltyBadge, LoyaltyStats, LoyaltyState, NumericLoyaltyStatKey, Poll, PollOption, PollVote } from './types';
+export type {
+  ScoreRankTier,
+  ScoreRankingStats,
+  ScoreRankingState,
+  NumericScoreStatKey,
+  // Legacy aliases
+  LoyaltyTier,
+  LoyaltyBadge,
+  LoyaltyStats,
+  LoyaltyState,
+  NumericLoyaltyStatKey,
+  Poll,
+  PollOption,
+  PollVote,
+} from './types';
 export {
+  SCORE_RANK_TIERS,
   LOYALTY_TIERS,
-  LOYALTY_BADGES,
-  XP_REWARDS,
+  getTierByScore,
   getTierByXP,
+  scoreProgress,
   tierProgress,
+  scoreToNextTier,
   xpToNextTier,
+  formatScore,
+  formatScoreCompact,
 } from './constants';
 export {
+  buildScoreRankingState,
   loadLoyaltyState,
   saveLoyaltyState,
   recordDailyVisit,

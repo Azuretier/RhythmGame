@@ -117,9 +117,7 @@ export async function loadLoyaltyForUid(
 
     const data = snap.data();
     return {
-      stats: data.stats,
-      xp: data.xp ?? 0,
-      unlockedBadgeIds: data.unlockedBadgeIds ?? [],
+      stats: data.stats ?? {},
     };
   } catch (error) {
     console.error('[GoogleSync] Failed to load loyalty:', error);

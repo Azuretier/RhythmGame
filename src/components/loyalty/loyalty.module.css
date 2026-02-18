@@ -70,6 +70,16 @@
   margin-bottom: 6px;
 }
 
+.heroScore {
+  font-size: 2.8rem;
+  font-weight: 200;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  opacity: 0.9;
+  margin-bottom: 8px;
+}
+
 .tierLabel {
   font-size: 0.7rem;
   opacity: 0.3;

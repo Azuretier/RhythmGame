@@ -17,7 +17,7 @@
         "back": "← Volver",
         "online": "En línea",
         "onlineCount": "{count} en línea",
-        "loyalty": "Lealtad"
+        "loyalty": "Ranking"
     },
     "vanilla": {
         "badge": "SOLO",
@@ -417,100 +417,34 @@
     },
     "loyalty": {
         "meta": {
-            "title": "Programa de Lealtad | RHYTHMIA - Azuretier",
-            "description": "Rastrea tu nivel de lealtad, gana insignias, mantén rachas y participa en la comunidad RHYTHMIA."
+            "title": "Ranking de Puntuación | RHYTHMIA - Azuretier",
+            "description": "Rastrea tu ranking de puntuación, sube de rango y compite en RHYTHMIA."
         },
         "backToLobby": "← Volver",
-        "currentTier": "NIVEL DE LEALTAD ACTUAL",
-        "xpToNext": "{xp} XP para el siguiente nivel",
-        "maxTier": "NIVEL MÁXIMO ALCANZADO",
-        "streakDays": "DÍAS DE RACHA",
-        "viewAll": "VER TODOS LOS LOGROS Y DETALLES",
+        "currentTier": "RANGO ACTUAL",
+        "totalScore": "PUNTUACIÓN TOTAL",
+        "scoreToNext": "{score} para el siguiente rango",
+        "maxTier": "RANGO MÁXIMO ALCANZADO",
+        "viewAll": "VER RANKING Y DETALLES",
         "tiers": {
-            "new_beat": "Nuevo Ritmo",
-            "syncopated": "Sincopado",
-            "in_rhythm": "En Ritmo",
-            "maestro": "Maestro"
+            "unranked": "Sin Rango",
+            "beat_1": "Beat I",
+            "beat_2": "Beat II",
+            "rhythm": "Rhythm",
+            "maestro": "Maestro",
+            "virtuoso": "Virtuoso"
         },
         "stats": {
-            "visits": "VISITAS",
-            "streak": "RACHA",
-            "games": "PARTIDAS",
+            "bestScore": "MEJOR PUNT.",
+            "games": "JUEGOS",
+            "lines": "LÍNEAS",
             "badges": "LOGROS"
         },
         "sections": {
-            "tierRoadmap": "HOJA DE RUTA DE NIVELES",
-            "streak": "RACHA DE INICIO DE SESIÓN",
+            "tierRoadmap": "MAPA DE RANGOS",
             "badges": "LOGROS RECIENTES",
-            "community": "VOZ DE LA COMUNIDAD",
+            "community": "VOZ COMUNITARIA",
             "howItWorks": "CÓMO FUNCIONA"
-        },
-        "badges": {
-            "streak_3": {
-                "icon": "\uD83D\uDD25",
-                "name": "Racha de 3 Días",
-                "desc": "Visita 3 días seguidos"
-            },
-            "streak_7": {
-                "icon": "\uD83D\uDD25",
-                "name": "Ritmo Semanal",
-                "desc": "Visita 7 días seguidos"
-            },
-            "streak_14": {
-                "icon": "\uD83D\uDD25",
-                "name": "Ritmo Quincenal",
-                "desc": "Visita 14 días seguidos"
-            },
-            "streak_30": {
-                "icon": "\uD83D\uDD25",
-                "name": "Pulso Mensual",
-                "desc": "Visita 30 días seguidos"
-            },
-            "visits_5": {
-                "icon": "\uD83D\uDC63",
-                "name": "Habitual",
-                "desc": "Visita 5 veces"
-            },
-            "visits_25": {
-                "icon": "\uD83D\uDC63",
-                "name": "Cara Familiar",
-                "desc": "Visita 25 veces"
-            },
-            "visits_100": {
-                "icon": "\uD83D\uDC63",
-                "name": "De la Familia",
-                "desc": "Visita 100 veces"
-            },
-            "games_10": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Jugador",
-                "desc": "Juega 10 partidas"
-            },
-            "games_50": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Entusiasta",
-                "desc": "Juega 50 partidas"
-            },
-            "games_200": {
-                "icon": "\uD83C\uDFAE",
-                "name": "Devoto",
-                "desc": "Juega 200 partidas"
-            },
-            "polls_1": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Primer Voto",
-                "desc": "Vota en tu primera encuesta"
-            },
-            "polls_5": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Votante Activo",
-                "desc": "Vota en 5 encuestas"
-            },
-            "polls_10": {
-                "icon": "\uD83D\uDDF3\uFE0F",
-                "name": "Voz de la Comunidad",
-                "desc": "Vota en 10 encuestas"
-            }
         },
         "poll": {
             "question": "¿Cuál debería ser el próximo modo de juego de RHYTHMIA?",
@@ -530,23 +464,23 @@
         "strategy": {
             "0": {
                 "step": "PASO 01",
-                "title": "Juega y Gana XP",
-                "desc": "Cada partida que juegas, cada visita que haces y cada logro que desbloqueas te da XP hacia tu nivel de lealtad."
+                "title": "Juega & Puntúa",
+                "desc": "Cada juego que juegas acumula puntos. Limpia líneas, construye combos y busca puntuaciones altas para subir de rango."
             },
             "1": {
                 "step": "PASO 02",
-                "title": "Construye Tu Racha",
-                "desc": "Visita diariamente para mantener tu racha. Las rachas más largas dan XP extra y desbloquean insignias exclusivas."
+                "title": "Sube de Rango",
+                "desc": "Tu puntuación acumulada determina tu rango. Progresa desde Sin Rango a través de Beat, Rhythm, Maestro, hasta Virtuoso."
             },
             "2": {
                 "step": "PASO 03",
-                "title": "Sube de Nivel",
-                "desc": "Progresa de Nuevo Ritmo a Maestro. Cada nivel te acerca más al corazón de la comunidad RHYTHMIA."
+                "title": "Desbloquea Logros",
+                "desc": "Alcanza hitos para desbloquear logros. Cada logro marca tu camino en RHYTHMIA."
             },
             "3": {
                 "step": "PASO 04",
-                "title": "Da Forma al Futuro",
-                "desc": "Vota en encuestas de la comunidad, gana insignias y ayuda a decidir qué viene después para RHYTHMIA."
+                "title": "Moldea el Futuro",
+                "desc": "Vota en encuestas comunitarias y ayuda a decidir qué será lo próximo para RHYTHMIA."
             }
         }
     },

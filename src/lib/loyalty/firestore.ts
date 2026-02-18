@@ -211,8 +211,6 @@ export async function syncLoyaltyToFirestore(state: LoyaltyState): Promise<void>
     const docRef = doc(db, STATES_COLLECTION, playerId);
     await setDoc(docRef, {
       stats: state.stats,
-      xp: state.xp,
-      unlockedBadgeIds: state.unlockedBadgeIds,
       lastUpdated: Timestamp.now(),
     }, { merge: true });
   } catch (error) {

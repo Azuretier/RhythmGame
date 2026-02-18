@@ -1,46 +1,45 @@
-// ===== Loyalty System Types =====
+// ===== Score Ranking System Types =====
 
-export interface LoyaltyTier {
+export interface ScoreRankTier {
   id: string;
   name: string;
   nameJa: string;
   level: number;
-  minXP: number;
-  maxXP: number; // Infinity for top tier
+  minScore: number;
+  maxScore: number; // Infinity for top tier
   color: string;
   icon: string;
 }
 
-export type NumericLoyaltyStatKey = {
-  [K in keyof LoyaltyStats]: LoyaltyStats[K] extends number ? K : never;
-}[keyof LoyaltyStats];
+export interface ScoreRankingStats {
+  totalScore: number;
+  bestScorePerGame: number;
+  totalGamesPlayed: number;
+  advancementsUnlocked: number;
+  totalLines: number;
+}
+
+export interface ScoreRankingState {
+  stats: ScoreRankingStats;
+}
+
+// ===== Legacy type aliases for backward compatibility =====
+export type LoyaltyTier = ScoreRankTier;
+export type LoyaltyState = ScoreRankingState;
+export type LoyaltyStats = ScoreRankingStats;
+
+// Numeric stat keys for badge checking
+export type NumericScoreStatKey = keyof ScoreRankingStats;
+export type NumericLoyaltyStatKey = NumericScoreStatKey;
 
 export interface LoyaltyBadge {
   id: string;
   category: 'streak' | 'engagement' | 'milestone' | 'community';
   requiredValue: number;
-  statKey: NumericLoyaltyStatKey;
+  statKey: NumericScoreStatKey;
 }
 
-export interface LoyaltyStats {
-  totalVisits: number;
-  currentStreak: number;
-  bestStreak: number;
-  lastVisitDate: string; // ISO date string (YYYY-MM-DD)
-  totalGamesPlayed: number;
-  totalScore: number;
-  advancementsUnlocked: number;
-  pollsVoted: number;
-  joinDate: string; // ISO date string
-}
-
-export interface LoyaltyState {
-  stats: LoyaltyStats;
-  xp: number;
-  unlockedBadgeIds: string[];
-}
-
-// ===== Poll Types =====
+// ===== Poll Types (kept for community features) =====
 
 export interface PollOption {
   ja: string;
