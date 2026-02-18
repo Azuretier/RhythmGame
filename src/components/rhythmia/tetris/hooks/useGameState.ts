@@ -123,7 +123,7 @@ export function useGameState() {
     const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
 
     // ===== Rogue-Like Card System =====
-    const [equippedCards, setCraftedCards] = useState<CraftedCard[]>([]);
+    const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
     const [showCardSelect, setShowCardSelect] = useState(false);
     const [offeredCards, setOfferedCards] = useState<CardOffer[]>([]);
     const [activeEffects, setActiveEffects] = useState<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
@@ -169,7 +169,7 @@ export function useGameState() {
     const tdBeatsRemainingRef = useRef(tdBeatsRemaining);
     const gamePhaseRef = useRef<GamePhase>(gamePhase);
     const inventoryRef = useRef<InventoryItem[]>(inventory);
-    const equippedCardsRef = useRef<CraftedCard[]>(equippedCards);
+    const craftedCardsRef = useRef<CraftedCard[]>(craftedCards);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -208,7 +208,7 @@ export function useGameState() {
     useEffect(() => { tdBeatsRemainingRef.current = tdBeatsRemaining; }, [tdBeatsRemaining]);
     useEffect(() => { gamePhaseRef.current = gamePhase; }, [gamePhase]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
-    useEffect(() => { equippedCardsRef.current = equippedCards; }, [equippedCards]);
+    useEffect(() => { craftedCardsRef.current = craftedCards; }, [craftedCards]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -337,7 +337,7 @@ export function useGameState() {
 
     // Reset per-stage effects (combo_guard uses, shield) at stage start
     const resetStageEffects = useCallback(() => {
-        const freshEffects = computeActiveEffects(equippedCardsRef.current);
+        const freshEffects = computeActiveEffects(craftedCardsRef.current);
         setActiveEffects(freshEffects);
     }, [computeActiveEffects]);
 
@@ -376,7 +376,7 @@ export function useGameState() {
         const offers = generateCardOffers(worldIdxRef.current);
         setOfferedCards(offers);
         setShowCardSelect(true);
-        setGamePhase('CARD_SELECT');
+        setGamePhase('CRAFTING');
         setIsPaused(true);
     }, [generateCardOffers]);
 
@@ -406,18 +406,15 @@ export function useGameState() {
             const existing = prev.find(ec => ec.cardId === cardId);
             let updated: CraftedCard[];
             if (existing) {
-                updated = prev.map(ec =>
-                    ec.cardId === cardId
-                        ? { ...ec, stackCount: Math.min(ec.stackCount + 1, 3) }
-                        : ec
-                );
+                // Card already crafted, keep as is (no stacking in new system)
+                updated = prev;
             } else {
-                updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+                updated = [...prev, { cardId, craftedAt: Date.now() }];
             }
             // Recompute active effects
             const effects = computeActiveEffects(updated);
             setActiveEffects(effects);
-            equippedCardsRef.current = updated;
+            craftedCardsRef.current = updated;
             return updated;
         });
 
@@ -948,7 +945,7 @@ export function useGameState() {
 
         // Reset rogue-like card state
         setCraftedCards([]);
-        equippedCardsRef.current = [];
+        craftedCardsRef.current = [];
         setShowCardSelect(false);
         setOfferedCards([]);
         setActiveEffects(DEFAULT_ACTIVE_EFFECTS);
@@ -1033,7 +1030,7 @@ export function useGameState() {
         floatingItems,
         terrainParticles,
         // Rogue-like cards
-        equippedCards,
+        craftedCards,
         showCardSelect,
         offeredCards,
         activeEffects,
