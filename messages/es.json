@@ -55,7 +55,7 @@
       "beat_2": "Beat II",
       "rhythm": "Rhythm",
       "maestro": "Maestro",
-      "virtuoso": "Virtuoso"
+      "virtuoso": "Antigravity"
     },
     "stats": {
       "bestScore": "MEJOR PUNT.",
@@ -98,7 +98,7 @@
       "1": {
         "step": "PASO 02",
         "title": "Sube de Rango",
-        "desc": "Tu puntuación acumulada determina tu rango. Progresa desde Sin Rango a través de Beat, Rhythm, Maestro, hasta Virtuoso."
+        "desc": "Tu puntuación acumulada determina tu rango. Progresa desde Sin Rango a través de Beat, Rhythm, Maestro, hasta Antigravity."
       },
       "2": {
         "step": "PASO 03",

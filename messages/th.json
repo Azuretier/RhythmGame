@@ -1036,7 +1036,7 @@
       "beat_2": "Beat II",
       "rhythm": "Rhythm",
       "maestro": "Maestro",
-      "virtuoso": "Virtuoso"
+      "virtuoso": "Antigravity"
     },
     "stats": {
       "bestScore": "คะแนนดีสุด",
@@ -1079,7 +1079,7 @@
       "1": {
         "step": "ขั้นตอน 02",
         "title": "ไต่อันดับ",
-        "desc": "คะแนนสะสมกำหนดอันดับของคุณ ก้าวจากไม่มีอันดับผ่าน Beat, Rhythm, Maestro สู่ Virtuoso"
+        "desc": "คะแนนสะสมกำหนดอันดับของคุณ ก้าวจากไม่มีอันดับผ่าน Beat, Rhythm, Maestro สู่ Antigravity"
       },
       "2": {
         "step": "ขั้นตอน 03",

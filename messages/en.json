@@ -535,7 +535,7 @@
       "beat_2": "Beat II",
       "rhythm": "Rhythm",
       "maestro": "Maestro",
-      "virtuoso": "Virtuoso"
+      "virtuoso": "Antigravity"
     },
     "stats": {
       "bestScore": "BEST SCORE",
@@ -578,7 +578,7 @@
       "1": {
         "step": "STEP 02",
         "title": "Climb the Ranks",
-        "desc": "Your cumulative score determines your rank. Progress from Unranked through Beat, Rhythm, Maestro, to Virtuoso."
+        "desc": "Your cumulative score determines your rank. Progress from Unranked through Beat, Rhythm, Maestro, to Antigravity."
       },
       "2": {
         "step": "STEP 03",
