@@ -1,0 +1,580 @@
+/* ===== Retro Player Card — Merged Pixel Game UI ===== */
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  margin: 24px auto 0;
+  background: #0a0a12;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  image-rendering: pixelated;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 32px rgba(100, 60, 200, 0.15),
+    0 0 80px rgba(100, 60, 200, 0.06);
+}
+
+/* CRT scanline overlay */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.035;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.5) 2px,
+    rgba(0, 0, 0, 0.5) 4px
+  );
+}
+
+/* ===== HEADER ===== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.profileRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    inset -2px -2px 0px rgba(0, 0, 0, 0.35),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.playerName {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.12em;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+  text-transform: uppercase;
+}
+
+.friendCode {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.beatsCounter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  box-shadow:
+    inset -2px -2px 0px rgba(0, 0, 0, 0.25),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.04);
+}
+
+.beatsValue {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+}
+
+.beatsLabel {
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.15em;
+}
+
+/* ===== SCORE HERO ===== */
+.scoreSection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 20px 16px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+}
+
+.tierBadge {
+  width: 64px;
+  height: 64px;
+  border-radius: 0;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+  box-shadow:
+    inset -2px -2px 0px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.06);
+}
+
+.tierIcon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.scoreBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scoreLabel {
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.scoreValue {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+  line-height: 1.1;
+}
+
+.rankName {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+}
+
+/* ===== WEEKLY STREAK ===== */
+.streakSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.015);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.06);
+}
+
+.streakDays {
+  display: flex;
+  gap: 4px;
+}
+
+.dayDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.45rem;
+  font-weight: 500;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.25);
+  transition: all 0.2s;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+.dayFilled {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: rgba(76, 175, 80, 0.5);
+  color: rgba(76, 175, 80, 0.95);
+  box-shadow: 0 0 6px rgba(76, 175, 80, 0.15);
+}
+
+.dayToday {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.streakMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.streakCount {
+  font-size: 0.55rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+.bonusXP {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #4CAF50;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+/* ===== PROGRESS BAR ===== */
+.progressSection {
+  padding: 16px 20px 12px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 0;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.progressGlow {
+  position: absolute;
+  top: -2px;
+  width: 4px;
+  height: calc(100% + 4px);
+  opacity: 0.6;
+  filter: blur(4px);
+  pointer-events: none;
+  transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== TIER ROADMAP ===== */
+.tierRoadmap {
+  display: flex;
+  gap: 3px;
+  padding: 0 20px 16px;
+}
+
+.tierStep {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 2px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0;
+  transition: all 0.2s;
+}
+
+.tierActive {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tierCompleted {
+  opacity: 0.35;
+}
+
+.tierStepIcon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.tierStepName {
+  font-size: 0.35rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+.tierActive .tierStepName {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ===== STATS GRID ===== */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 0 20px 12px;
+}
+
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0;
+  transition: all 0.2s;
+  box-shadow:
+    inset -2px -2px 0px rgba(0, 0, 0, 0.2),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.02);
+}
+
+.statBox:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.statValue {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.04em;
+}
+
+.statLabel {
+  font-size: 0.35rem;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ===== RANKED + ADVANCEMENTS ROW ===== */
+.bottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 20px 14px;
+}
+
+.rankedBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0;
+  box-shadow:
+    inset -2px -2px 0px rgba(0, 0, 0, 0.2),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.02);
+}
+
+.rankedLabel {
+  font-size: 0.4rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+.rankedTier {
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+}
+
+.rankedRecord {
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+.advBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(140, 100, 255, 0.06);
+  border: 2px solid rgba(140, 100, 255, 0.2);
+  border-radius: 0;
+  box-shadow:
+    0 0 8px rgba(140, 80, 255, 0.1),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.2),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.02);
+}
+
+.advCount {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: rgba(200, 170, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 6px rgba(140, 80, 255, 0.3);
+}
+
+/* ===== ACTION BUTTON ===== */
+.actionBtn {
+  display: block;
+  width: calc(100% - 40px);
+  margin: 0 20px 20px;
+  padding: 14px;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    inset -2px -2px 0px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.06);
+  image-rendering: pixelated;
+}
+
+.actionBtn:hover {
+  color: #ffffff;
+  border-color: rgba(140, 100, 255, 0.5);
+  background: rgba(140, 100, 255, 0.1);
+  box-shadow:
+    0 0 12px rgba(140, 80, 255, 0.2),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.06);
+}
+
+.actionBtn:active {
+  box-shadow:
+    inset 2px 2px 0px rgba(0, 0, 0, 0.3),
+    inset -2px -2px 0px rgba(255, 255, 255, 0.06);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 560px) {
+  .card {
+    margin-top: 20px;
+    max-width: 100%;
+  }
+
+  .header {
+    padding: 12px 14px;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+
+  .playerName {
+    font-size: 0.6rem;
+  }
+
+  .friendCode {
+    font-size: 0.4rem;
+  }
+
+  .scoreSection {
+    padding: 16px 14px 12px;
+    gap: 14px;
+  }
+
+  .tierBadge {
+    width: 52px;
+    height: 52px;
+  }
+
+  .tierIcon {
+    font-size: 1.4rem;
+  }
+
+  .scoreValue {
+    font-size: 1.2rem;
+  }
+
+  .streakSection {
+    padding: 12px 14px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .streakMeta {
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .dayDot {
+    width: 24px;
+    height: 24px;
+    font-size: 0.4rem;
+  }
+
+  .progressSection {
+    padding: 12px 14px 10px;
+  }
+
+  .tierRoadmap {
+    padding: 0 14px 12px;
+    flex-wrap: wrap;
+  }
+
+  .tierStep {
+    min-width: calc(33.33% - 3px);
+  }
+
+  .statsGrid {
+    padding: 0 14px 10px;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bottomRow {
+    padding: 0 14px 12px;
+    flex-wrap: wrap;
+  }
+
+  .actionBtn {
+    width: calc(100% - 28px);
+    margin: 0 14px 14px;
+  }
+}
