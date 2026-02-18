@@ -1,21 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import styles from './ForYouTab.module.css';
 import forYouConfig from '../../../for-you.config.json';
-
-interface ContentCard {
-    type: 'tutorial' | 'video' | 'tip';
-    id: string;
-    title: string;
-    description: string;
-    tags?: string[];
-    url?: string;
-    difficulty?: 'beginner' | 'intermediate' | 'advanced';
-}
 
 interface ForYouTabProps {
     locale: string;
@@ -23,19 +12,7 @@ interface ForYouTabProps {
     totalAdvancements: number;
 }
 
-/** Map content types to pixel-art block textures from the public/textures directory */
-const TYPE_THUMBNAILS: Record<string, string> = {
-    tutorial: '/textures/blocks/obsidian.png',
-    video: '/textures/blocks/brick.png',
-    tip: '/textures/blocks/grass_top.png',
-};
-
-const DIFFICULTY_LABELS: Record<string, Record<string, string>> = {
-    en: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
-    ja: { beginner: '初級', intermediate: '中級', advanced: '上級' },
-};
-
-/** Tag-specific thumbnails for tutorial resources (matching wiki page) */
+/** Tag-specific thumbnails for tutorial resources */
 const TUTORIAL_THUMB_MAP: Record<string, string> = {
     technique: '/textures/blocks/obsidian.png',
     fundamentals: '/textures/blocks/stone.png',
@@ -50,6 +27,11 @@ const TUTORIAL_THUMB_MAP: Record<string, string> = {
     core: '/textures/blocks/grass_top.png',
     competitive: '/textures/blocks/obsidian.png',
     exploration: '/textures/blocks/water.png',
+};
+
+const DIFFICULTY_LABELS: Record<string, Record<string, string>> = {
+    en: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+    ja: { beginner: '初級', intermediate: '中級', advanced: '上級' },
 };
 
 /** Map tags to difficulty levels */
@@ -68,16 +50,16 @@ const TUTORIAL_WIKI_SECTION: Record<string, string> = {
     'tut-crafting': 'tut-beginner', 'tut-items': 'tut-intermediate', 'tut-worlds': 'tut-beginner',
 };
 
-/** Sorted tutorial order (learning progression) */
-const TUTORIAL_ORDER = [
-    'tut-stacking', 'tut-harddrop', 'tut-rhythm',
-    'tut-combos', 'tut-back2back', 'tut-downstack',
-    'tut-tspin', 'tut-opener', 'tut-finesse',
-    'tut-garbage', 'tut-ranked',
-    'tut-crafting', 'tut-items', 'tut-worlds',
+/** A small curated set of tutorials covering beginner to advanced */
+const FEATURED_TUTORIAL_IDS = [
+    'tut-stacking',
+    'tut-rhythm',
+    'tut-combos',
+    'tut-tspin',
+    'tut-ranked',
 ];
 
-const SORTED_TUTORIALS = TUTORIAL_ORDER
+const FEATURED_TUTORIALS = FEATURED_TUTORIAL_IDS
     .map((id) => {
         const tut = forYouConfig.tutorials.find((x) => x.id === id);
         if (!tut) return null;
@@ -94,197 +76,53 @@ const SORTED_TUTORIALS = TUTORIAL_ORDER
     })
     .filter(Boolean) as { id: string; titleKey: string; tags: string[]; difficulty: 'beginner' | 'intermediate' | 'advanced'; thumb: string }[];
 
-function getWikiUrl(card: ContentCard, locale: string): string {
-    if (card.url) return card.url;
-    const prefix = locale === 'ja' ? '' : '/en';
-    return `${prefix}/wiki`;
-}
-
-export default function ForYouTab({ locale, unlockedAdvancements, totalAdvancements }: ForYouTabProps) {
-    const [cards, setCards] = useState<ContentCard[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
-    const [viewportHeight, setViewportHeight] = useState<number | undefined>(undefined);
-    const leftColumnRef = useRef<HTMLDivElement>(null);
+export default function ForYouTab({ locale }: ForYouTabProps) {
     const t = useTranslations('forYou');
     const tw = useTranslations('wiki');
-
-    const fetchContent = useCallback(async () => {
-        setLoading(true);
-        setError(false);
-        try {
-            const res = await fetch('/api/for-you', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    locale,
-                    unlockedAdvancements,
-                    totalAdvancements,
-                }),
-            });
-            if (!res.ok) throw new Error('Failed to fetch');
-            const data = await res.json();
-            setCards(data.cards || []);
-        } catch {
-            setError(true);
-        } finally {
-            setLoading(false);
-        }
-    }, [locale, unlockedAdvancements, totalAdvancements]);
-
-    useEffect(() => {
-        fetchContent();
-    }, [fetchContent]);
-
-    // Measure left column height to sync the tutorials viewport
-    useEffect(() => {
-        if (!leftColumnRef.current || cards.length === 0) return;
-        const measure = () => {
-            const h = leftColumnRef.current?.offsetHeight;
-            if (h) setViewportHeight(h);
-        };
-        // Allow animations to settle before measuring
-        const timer = setTimeout(measure, 400);
-        return () => clearTimeout(timer);
-    }, [cards]);
-
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
-
-    if (loading) {
-        return (
-            <div className={styles.loadingContainer}>
-                <div className={styles.loadingSpinner} />
-                <span className={styles.loadingText}>{t('loading')}</span>
-            </div>
-        );
-    }
-
-    if (error || cards.length === 0) {
-        return (
-            <div className={styles.errorContainer}>
-                <span className={styles.errorText}>{t('error')}</span>
-                <button className={styles.retryButton} onClick={fetchContent}>
-                    {t('retry')}
-                </button>
-            </div>
-        );
-    }
 
     return (
         <div className={styles.forYouContainer}>
             <div className={styles.sectionHeader}>
-                <h2 className={styles.sectionTitle}>{t('title')}</h2>
-                <p className={styles.sectionSubtitle}>{t('subtitle')}</p>
+                <h2 className={styles.sectionTitle}>{t('columnTutorials')}</h2>
             </div>
 
-            <div className={styles.twoColumnLayout}>
-                {/* Left column: AI-recommended content */}
-                <div className={styles.column} ref={leftColumnRef}>
-                    <div className={styles.columnHeader}>{t('columnForYou')}</div>
-                    <div className={styles.widgetList}>
-                        <AnimatePresence mode="wait">
-                            {cards.slice(0, 3).map((card, index) => {
-                                const href = getWikiUrl(card, locale);
-                                const thumbnail = TYPE_THUMBNAILS[card.type];
-
-                                return (
-                                    <motion.a
-                                        key={card.id}
-                                        href={href}
-                                        target={card.url ? '_blank' : undefined}
-                                        rel={card.url ? 'noopener noreferrer' : undefined}
-                                        className={`${styles.widget} ${styles[card.type]}`}
-                                        initial={{ opacity: 0, x: -16 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 16 }}
-                                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                                    >
-                                        <div className={styles.thumbnailFrame}>
-                                            {thumbnail ? (
-                                                <Image
-                                                    src={thumbnail}
-                                                    alt=""
-                                                    width={36}
-                                                    height={36}
-                                                    className={styles.thumbnailImg}
-                                                    unoptimized
-                                                />
-                                            ) : (
-                                                <span className={styles.thumbnailIcon}>📌</span>
-                                            )}
-                                        </div>
-                                        <div className={styles.widgetContent}>
-                                            <div className={styles.widgetTopRow}>
-                                                <span className={styles.typeLabel}>{t(`types.${card.type}`)}</span>
-                                                {card.difficulty && (
-                                                    <span className={`${styles.diffBadge} ${styles[`diff_${card.difficulty}`]}`}>
-                                                        {diffLabels[card.difficulty]}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h3 className={styles.widgetTitle}>{card.title}</h3>
-                                            <p className={styles.widgetDescription}>{card.description}</p>
-                                        </div>
-                                        <span className={styles.widgetArrow}>→</span>
-                                    </motion.a>
-                                );
-                            })}
-                        </AnimatePresence>
-                    </div>
-                    <div className={styles.refreshRow}>
-                        <button className={styles.refreshButton} onClick={fetchContent}>
-                            {t('refresh')}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Right column: Tutorial resources */}
-                <div className={styles.column}>
-                    <div className={styles.columnHeader}>{t('columnTutorials')}</div>
-                    <div
-                        className={styles.tutorialViewport}
-                        style={viewportHeight ? { maxHeight: viewportHeight - 28 } : undefined}
-                    >
-                        <div className={styles.widgetList}>
-                            {SORTED_TUTORIALS.map((tut, index) => {
-                                const wikiPrefix = locale === 'ja' ? '' : '/en';
-                                const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
-                                return (
-                                    <motion.a
-                                        key={tut.id}
-                                        href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
-                                        className={`${styles.widget} ${styles.tutorial}`}
-                                        initial={{ opacity: 0, x: -16 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.3, delay: index * 0.04 }}
-                                    >
-                                        <div className={styles.thumbnailFrame}>
-                                            <Image
-                                                src={tut.thumb}
-                                                alt=""
-                                                width={36}
-                                                height={36}
-                                                className={styles.thumbnailImg}
-                                                unoptimized
-                                            />
-                                        </div>
-                                        <div className={styles.widgetContent}>
-                                            <div className={styles.widgetTopRow}>
-                                                <span className={styles.typeLabel}>{t('types.tutorial')}</span>
-                                                <span className={`${styles.diffBadge} ${styles[`diff_${tut.difficulty}`]}`}>
-                                                    {diffLabels[tut.difficulty]}
-                                                </span>
-                                                <span className={styles.tagBadge}>{tut.tags[0]}</span>
-                                            </div>
-                                            <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
-                                        </div>
-                                        <span className={styles.widgetArrow}>→</span>
-                                    </motion.a>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
+            <div className={styles.widgetList}>
+                {FEATURED_TUTORIALS.map((tut, index) => {
+                    const wikiPrefix = locale === 'ja' ? '' : '/en';
+                    const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
+                    return (
+                        <motion.a
+                            key={tut.id}
+                            href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
+                            className={`${styles.widget} ${styles.tutorial}`}
+                            initial={{ opacity: 0, x: -16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.05 }}
+                        >
+                            <div className={styles.thumbnailFrame}>
+                                <Image
+                                    src={tut.thumb}
+                                    alt=""
+                                    width={36}
+                                    height={36}
+                                    className={styles.thumbnailImg}
+                                    unoptimized
+                                />
+                            </div>
+                            <div className={styles.widgetContent}>
+                                <div className={styles.widgetTopRow}>
+                                    <span className={styles.typeLabel}>{t('types.tutorial')}</span>
+                                    <span className={`${styles.diffBadge} ${styles[`diff_${tut.difficulty}`]}`}>
+                                        {diffLabels[tut.difficulty]}
+                                    </span>
+                                </div>
+                                <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
+                            </div>
+                            <span className={styles.widgetArrow}>&rarr;</span>
+                        </motion.a>
+                    );
+                })}
             </div>
         </div>
     );
