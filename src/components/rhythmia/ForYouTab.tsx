@@ -59,6 +59,15 @@ const TAG_DIFFICULTY: Record<string, 'beginner' | 'intermediate' | 'advanced'> =
     advanced: 'advanced', competitive: 'advanced',
 };
 
+/** Map tutorial IDs to wiki subsections for deep linking */
+const TUTORIAL_WIKI_SECTION: Record<string, string> = {
+    'tut-stacking': 'tut-beginner', 'tut-harddrop': 'tut-beginner', 'tut-rhythm': 'tut-beginner',
+    'tut-combos': 'tut-intermediate', 'tut-back2back': 'tut-intermediate', 'tut-downstack': 'tut-intermediate',
+    'tut-tspin': 'tut-advanced', 'tut-opener': 'tut-advanced', 'tut-finesse': 'tut-advanced',
+    'tut-garbage': 'tut-intermediate', 'tut-ranked': 'tut-intermediate',
+    'tut-crafting': 'tut-beginner', 'tut-items': 'tut-intermediate', 'tut-worlds': 'tut-beginner',
+};
+
 /** Sorted tutorial order (learning progression) */
 const TUTORIAL_ORDER = [
     'tut-stacking', 'tut-harddrop', 'tut-rhythm',
@@ -160,7 +169,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                     <div className={styles.columnHeader}>{t('columnForYou')}</div>
                     <div className={styles.widgetList}>
                         <AnimatePresence mode="wait">
-                            {cards.map((card, index) => {
+                            {cards.slice(0, 3).map((card, index) => {
                                 const href = getWikiUrl(card, locale);
                                 const thumbnail = TYPE_THUMBNAILS[card.type];
 
@@ -221,10 +230,11 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                     <div className={styles.widgetList}>
                         {SORTED_TUTORIALS.map((tut, index) => {
                             const wikiPrefix = locale === 'ja' ? '' : '/en';
+                            const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
                             return (
                                 <motion.a
                                     key={tut.id}
-                                    href={`${wikiPrefix}/wiki`}
+                                    href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
                                     className={`${styles.widget} ${styles.tutorial}`}
                                     initial={{ opacity: 0, x: -16 }}
                                     animate={{ opacity: 1, x: 0 }}

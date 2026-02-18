@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
@@ -250,6 +250,36 @@ export default function WikiPage() {
 
     clickScrollTimer.current = setTimeout(() => { isClickScrolling.current = false; }, 800);
   };
+
+  // Deep-link: read hash on mount (e.g. #tutorials/tut-beginner)
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (!hash) return;
+    const parts = hash.split('/');
+    const page = parts[0] as Page;
+    const sub = parts[1] as SubSection | undefined;
+    const validPages: Page[] = ['game-overview', 'tutorials', 'community-resources', 'updates'];
+    if (validPages.includes(page)) {
+      setActivePage(page);
+      if (sub) {
+        setActiveSub(sub);
+        setTimeout(() => {
+          const el = document.getElementById(`wiki-${sub}`);
+          const container = contentRef.current;
+          if (el && container) {
+            const containerRect = container.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
+            container.scrollTo({ top: elRect.top - containerRect.top + container.scrollTop, behavior: 'smooth' });
+          }
+        }, 200);
+      } else if (page === 'game-overview') {
+        setActiveSub('overview');
+      } else if (page === 'tutorials') {
+        setActiveSub('tut-beginner');
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleScroll = useCallback(() => {
     if (isClickScrolling.current || (activePage !== 'game-overview' && activePage !== 'tutorials')) return;
