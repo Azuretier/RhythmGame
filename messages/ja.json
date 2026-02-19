@@ -150,12 +150,12 @@
         "maxTier": "最高ランク到達",
         "viewAll": "ランキング＆詳細を見る",
         "tiers": {
-            "unranked": "ランクなし",
-            "beat_1": "ビート I",
-            "beat_2": "ビート II",
-            "rhythm": "リズム",
-            "maestro": "マエストロ",
-            "virtuoso": "Antigravity"
+            "rank1": "ランクなし",
+            "rank2": "ビート I",
+            "rank3": "ビート II",
+            "rank4": "リズム",
+            "rank5": "マエストロ",
+            "rank6": "ノーグラヴィティ"
         },
         "stats": {
             "bestScore": "ベストスコア",

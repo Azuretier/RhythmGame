@@ -530,12 +530,12 @@
     "maxTier": "MAX RANK REACHED",
     "viewAll": "VIEW RANKING & DETAILS",
     "tiers": {
-      "unranked": "Unranked",
-      "beat_1": "Beat I",
-      "beat_2": "Beat II",
-      "rhythm": "Rhythm",
-      "maestro": "Maestro",
-      "virtuoso": "Antigravity"
+      "rank1": "Unranked",
+      "rank2": "Beat I",
+      "rank3": "Beat II",
+      "rank4": "Rhythm",
+      "rank5": "Maestro",
+      "rank6": "Antigravity"
     },
     "stats": {
       "bestScore": "BEST SCORE",
