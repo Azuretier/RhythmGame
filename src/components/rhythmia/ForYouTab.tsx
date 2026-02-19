@@ -87,8 +87,9 @@ export default function ForYouTab({ locale }: ForYouTabProps) {
                 <h2 className={styles.sectionTitle}>{t('columnTutorials')}</h2>
             </div>
 
+            {/* First 2 tutorials - always visible */}
             <div className={styles.widgetList}>
-                {FEATURED_TUTORIALS.map((tut, index) => {
+                {FEATURED_TUTORIALS.slice(0, 2).map((tut, index) => {
                     const wikiPrefix = locale === 'ja' ? '' : '/en';
                     const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
                     return (
@@ -124,6 +125,49 @@ export default function ForYouTab({ locale }: ForYouTabProps) {
                     );
                 })}
             </div>
+
+            {/* Remaining tutorials - scrollable container */}
+            {FEATURED_TUTORIALS.length > 2 && (
+                <div className={styles.scrollableContainer}>
+                    <div className={styles.widgetList}>
+                        {FEATURED_TUTORIALS.slice(2).map((tut, index) => {
+                            const wikiPrefix = locale === 'ja' ? '' : '/en';
+                            const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
+                            return (
+                                <motion.a
+                                    key={tut.id}
+                                    href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
+                                    className={`${styles.widget} ${styles.tutorial}`}
+                                    initial={{ opacity: 0, x: -16 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.3, delay: (index + 2) * 0.05 }}
+                                >
+                                    <div className={styles.thumbnailFrame}>
+                                        <Image
+                                            src={tut.thumb}
+                                            alt=""
+                                            width={36}
+                                            height={36}
+                                            className={styles.thumbnailImg}
+                                            unoptimized
+                                        />
+                                    </div>
+                                    <div className={styles.widgetContent}>
+                                        <div className={styles.widgetTopRow}>
+                                            <span className={styles.typeLabel}>{t('types.tutorial')}</span>
+                                            <span className={`${styles.diffBadge} ${styles[`diff_${tut.difficulty}`]}`}>
+                                                {diffLabels[tut.difficulty]}
+                                            </span>
+                                        </div>
+                                        <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
+                                    </div>
+                                    <span className={styles.widgetArrow}>&rarr;</span>
+                                </motion.a>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
