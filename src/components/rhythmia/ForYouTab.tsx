@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
@@ -105,6 +105,8 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [tutorialSearch, setTutorialSearch] = useState('');
+    const [scrollIndex, setScrollIndex] = useState(0);
+    const viewportRef = useRef<HTMLDivElement>(null);
     const t = useTranslations('forYou');
     const tw = useTranslations('wiki');
 
@@ -145,6 +147,38 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                 tut.tags.some((tag) => tag.toLowerCase().includes(query))
             );
         });
+
+    const CARD_HEIGHT = 90; // ~80px card + 10px gap
+    const VISIBLE_COUNT = 2;
+
+    // Track scroll position to compute which card is at the top
+    useEffect(() => {
+        const el = viewportRef.current;
+        if (!el) return;
+        const onScroll = () => {
+            const idx = Math.round(el.scrollTop / CARD_HEIGHT);
+            setScrollIndex(idx);
+        };
+        el.addEventListener('scroll', onScroll, { passive: true });
+        return () => el.removeEventListener('scroll', onScroll);
+    }, []);
+
+    // Reset scroll when search changes
+    useEffect(() => {
+        setScrollIndex(0);
+        if (viewportRef.current) viewportRef.current.scrollTop = 0;
+    }, [tutorialSearch]);
+
+    const remaining = Math.max(0, filteredTutorials.length - VISIBLE_COUNT - scrollIndex);
+
+    const scrollTo = useCallback((direction: 'up' | 'down') => {
+        const el = viewportRef.current;
+        if (!el) return;
+        const nextIndex = direction === 'down'
+            ? Math.min(scrollIndex + 1, filteredTutorials.length - VISIBLE_COUNT)
+            : Math.max(scrollIndex - 1, 0);
+        el.scrollTo({ top: nextIndex * CARD_HEIGHT, behavior: 'smooth' });
+    }, [scrollIndex, filteredTutorials.length]);
 
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
 
@@ -257,7 +291,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                             </button>
                         )}
                     </div>
-                    <div className={styles.tutorialViewport}>
+                    <div className={styles.tutorialViewport} ref={viewportRef}>
                         <div className={styles.widgetList}>
                             {filteredTutorials.length === 0 ? (
                                 <div className={styles.noResults}>
@@ -303,6 +337,33 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                             )}
                         </div>
                     </div>
+                    {filteredTutorials.length > VISIBLE_COUNT && (
+                        <div className={styles.scrollIndicator}>
+                            <span className={styles.scrollCount}>
+                                {remaining > 0
+                                    ? t('moreBelow', { count: remaining })
+                                    : t('endOfList')}
+                            </span>
+                            <div className={styles.scrollNav}>
+                                <button
+                                    className={styles.scrollBtn}
+                                    disabled={scrollIndex <= 0}
+                                    onClick={() => scrollTo('up')}
+                                    aria-label="Scroll up"
+                                >
+                                    &#9650;
+                                </button>
+                                <button
+                                    className={styles.scrollBtn}
+                                    disabled={remaining <= 0}
+                                    onClick={() => scrollTo('down')}
+                                    aria-label="Scroll down"
+                                >
+                                    &#9660;
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

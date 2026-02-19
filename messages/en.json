@@ -1155,6 +1155,8 @@
     "columnTutorials": "TUTORIALS",
     "searchTutorials": "Search tutorials...",
     "noTutorialResults": "No tutorials found",
+    "moreBelow": "+{count} more below",
+    "endOfList": "End of list",
     "types": {
       "tutorial": "TUTORIAL",
       "video": "VIDEO",

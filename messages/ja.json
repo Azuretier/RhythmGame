@@ -134,6 +134,8 @@
         "columnTutorials": "チュートリアル",
         "searchTutorials": "チュートリアルを検索...",
         "noTutorialResults": "チュートリアルが見つかりません",
+        "moreBelow": "あと{count}件",
+        "endOfList": "リストの末尾",
         "types": {
             "tutorial": "チュートリアル",
             "video": "動画",

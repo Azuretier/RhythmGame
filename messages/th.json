@@ -1015,6 +1015,8 @@
     "watchOnYouTube": "ดูบน YouTube",
     "searchTutorials": "ค้นหาบทเรียน...",
     "noTutorialResults": "ไม่พบบทเรียน",
+    "moreBelow": "อีก {count} รายการด้านล่าง",
+    "endOfList": "สิ้นสุดรายการ",
     "types": {
       "tutorial": "บทเรียน",
       "video": "วิดีโอ",
