@@ -5,7 +5,7 @@ import type { ScoreRankTier } from './types';
 
 export const SCORE_RANK_TIERS: ScoreRankTier[] = [
   {
-    id: 'unranked',
+    id: 'rank1',
     name: 'Unranked',
     nameJa: 'ランクなし',
     level: 0,
@@ -15,7 +15,7 @@ export const SCORE_RANK_TIERS: ScoreRankTier[] = [
     icon: '—',
   },
   {
-    id: 'beat_1',
+    id: 'rank2',
     name: 'Beat I',
     nameJa: 'ビート I',
     level: 1,
@@ -25,7 +25,7 @@ export const SCORE_RANK_TIERS: ScoreRankTier[] = [
     icon: '\u2669', // ♩
   },
   {
-    id: 'beat_2',
+    id: 'rank3',
     name: 'Beat II',
     nameJa: 'ビート II',
     level: 2,
@@ -35,7 +35,7 @@ export const SCORE_RANK_TIERS: ScoreRankTier[] = [
     icon: '\u266A', // ♪
   },
   {
-    id: 'rhythm',
+    id: 'rank4',
     name: 'Rhythm',
     nameJa: 'リズム',
     level: 3,
@@ -45,7 +45,7 @@ export const SCORE_RANK_TIERS: ScoreRankTier[] = [
     icon: '\u266B', // ♫
   },
   {
-    id: 'maestro',
+    id: 'rank5',
     name: 'Maestro',
     nameJa: 'マエストロ',
     level: 4,
@@ -55,7 +55,7 @@ export const SCORE_RANK_TIERS: ScoreRankTier[] = [
     icon: '\u266C', // ♬
   },
   {
-    id: 'antigravity',
+    id: 'rank6',
     name: 'Antigravity',
     nameJa: 'アンチグラビティ',
     level: 5,

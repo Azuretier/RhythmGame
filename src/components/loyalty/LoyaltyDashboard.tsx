@@ -8,7 +8,6 @@ import {
   getTierByScore,
   scoreProgress,
   scoreToNextTier,
-  formatScore,
   formatScoreCompact,
   buildScoreRankingState,
   recordDailyVisit,
@@ -23,12 +22,15 @@ import type { ScoreRankingState, Poll } from '@/lib/loyalty';
 import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
 import type { AdvancementState } from '@/lib/advancements';
 import { PixelIcon } from '@/components/rhythmia/PixelIcon';
+import { useProfile } from '@/lib/profile/context';
+import { getIconById } from '@/lib/profile/types';
 import styles from './loyalty.module.css';
 
 export default function LoyaltyDashboard() {
   const t = useTranslations('loyalty');
   const tAdv = useTranslations('advancements');
   const locale = useLocale();
+  const { profile } = useProfile();
   const [state, setState] = useState<ScoreRankingState | null>(null);
   const [advState, setAdvState] = useState<AdvancementState | null>(null);
 
@@ -103,6 +105,7 @@ export default function LoyaltyDashboard() {
 
   if (!state) return null;
 
+  const profileIcon = profile ? getIconById(profile.icon) : undefined;
   const { totalScore, bestScorePerGame, totalGamesPlayed, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
@@ -135,19 +138,21 @@ export default function LoyaltyDashboard() {
       </motion.header>
 
       <div className={styles.container}>
-        {/* Score Display */}
+        {/* Profile Display */}
         <motion.div
           className={styles.tierDisplay}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
         >
-          <span className={styles.tierIcon}>{currentTier.icon}</span>
-          <h1 className={styles.tierName} style={{ color: currentTier.color }}>
-            {t(`tiers.${currentTier.id}`)}
-          </h1>
-          <div className={styles.heroScore}>{formatScore(combinedScore)}</div>
-          <p className={styles.tierLabel}>{t('totalScore')}</p>
+          <span
+            className={styles.tierIcon}
+            style={profileIcon ? { background: profileIcon.bgColor, color: profileIcon.color, borderRadius: '50%', width: '56px', height: '56px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } : undefined}
+          >
+            {profileIcon?.emoji ?? currentTier.icon}
+          </span>
+          <div className={styles.heroScore}>{profile?.name ?? '—'}</div>
+          <p className={styles.tierLabel}>{profile?.friendCode ?? ''}</p>
 
           <div className={styles.progressContainer}>
             <div className={styles.progressBar}>
