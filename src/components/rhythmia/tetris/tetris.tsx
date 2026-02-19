@@ -1425,9 +1425,6 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 onKeybindsReset={resetKeybinds}
                 defaultKeybinds={defaultKeybinds}
                 featureSettings={featureSettings}
-                actionLines={actionLines}
-                showAction={showAction}
-                actionColor={actionColor}
               />
               {featureSettings.beatBar && <BeatBar containerRef={beatBarRef} />}
               <StatsPanel lines={lines} level={level} />
@@ -1494,6 +1491,17 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       {/* Judgment mode toggle (text vs score) — only shown during gameplay */}
       {isPlaying && !gameOver && (
         <JudgmentModeToggle mode={judgmentDisplayMode} onToggle={toggleJudgmentMode} />
+      )}
+
+      {/* Action display toast (T-spin, Tetris, Back-to-Back) */}
+      {showAction && actionLines.length > 0 && (
+        <div className={styles.actionToast} style={{ '--action-color': actionColor } as React.CSSProperties}>
+          {actionLines.map((line, i) => (
+            <div key={`${line}-${i}`} className={styles.actionLine}>
+              {line}
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Advancement Toast */}

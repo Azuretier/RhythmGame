@@ -1487,17 +1487,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 </div>
                             )}
 
-                            {/* Action display overlay (T-spin, Tetris, Back-to-Back) */}
-                            {showActionDisplay && actionLines.length > 0 && (
-                                <div className={styles.actionDisplay} style={{ '--action-color': actionColor } as React.CSSProperties}>
-                                    {actionLines.map((line, i) => (
-                                        <div key={`${line}-${i}`} className={styles.actionLine}>
-                                            {line}
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
                             {/* Combo counter overlay */}
                             {combo >= 3 && (
                                 <div
@@ -1630,6 +1619,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     </div>
                 )
             }
+
+            {/* Action display toast (T-spin, Tetris, Back-to-Back) */}
+            {showActionDisplay && actionLines.length > 0 && (
+                <div className={styles.actionToast} style={{ '--action-color': actionColor } as React.CSSProperties}>
+                    {actionLines.map((line, i) => (
+                        <div key={`${line}-${i}`} className={styles.actionLine}>
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Advancement Toast */}
             {
