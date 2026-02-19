@@ -23,7 +23,7 @@ import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
 import type { AdvancementState } from '@/lib/advancements';
 import { PixelIcon } from '@/components/rhythmia/PixelIcon';
 import { useProfile } from '@/lib/profile/context';
-import { getIconById } from '@/lib/profile/types';
+import ProfileIconImage from '@/components/profile/ProfileIconImage';
 import styles from './loyalty.module.css';
 
 export default function LoyaltyDashboard() {
@@ -105,7 +105,6 @@ export default function LoyaltyDashboard() {
 
   if (!state) return null;
 
-  const profileIcon = profile ? getIconById(profile.icon) : undefined;
   const { totalScore, bestScorePerGame, totalGamesPlayed, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
@@ -145,12 +144,11 @@ export default function LoyaltyDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
         >
-          <span
-            className={styles.tierIcon}
-            style={profileIcon ? { background: profileIcon.bgColor, color: profileIcon.color, borderRadius: '50%', width: '56px', height: '56px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } : undefined}
-          >
-            {profileIcon?.emoji ?? currentTier.icon}
-          </span>
+          {profile?.icon ? (
+            <ProfileIconImage iconId={profile.icon} size={56} />
+          ) : (
+            <span>{currentTier.icon}</span>
+          )}
           <div className={styles.heroScore}>{profile?.name ?? '—'}</div>
           <p className={styles.tierLabel}>{profile?.friendCode ?? ''}</p>
           <h1 className={styles.tierName} style={{ color: currentTier.color }}>

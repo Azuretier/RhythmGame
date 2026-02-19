@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useProfile } from '@/lib/profile/context';
-import { getIconById } from '@/lib/profile/types';
+import ProfileIconImage from '@/components/profile/ProfileIconImage';
 import {
   SCORE_RANK_TIERS,
   getTierByScore,
@@ -46,7 +46,6 @@ export default function LoyaltyWidget() {
 
   if (!state) return null;
 
-  const profileIcon = profile ? getIconById(profile.icon) : undefined;
   const { totalScore, bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
@@ -66,11 +65,15 @@ export default function LoyaltyWidget() {
         <div
           className={styles.tierBadge}
           style={{
-            borderColor: profileIcon?.bgColor ?? currentTier.color,
-            background: profileIcon?.bgColor ?? 'rgba(255, 255, 255, 0.04)',
+            borderColor: currentTier.color,
+            background: 'rgba(255, 255, 255, 0.04)',
           }}
         >
-          <span className={styles.tierIconLarge}>{profileIcon?.emoji ?? '?'}</span>
+          {profile?.icon ? (
+            <ProfileIconImage iconId={profile.icon} size={48} />
+          ) : (
+            <span className={styles.tierIconLarge}>?</span>
+          )}
         </div>
         <div className={styles.scoreInfo}>
           <div className={styles.scoreValue}>{profile?.name ?? '—'}</div>
