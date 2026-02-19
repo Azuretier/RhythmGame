@@ -50,6 +50,15 @@ const TUTORIAL_WIKI_SECTION: Record<string, string> = {
     'tut-crafting': 'tut-beginner', 'tut-items': 'tut-intermediate', 'tut-worlds': 'tut-beginner',
 };
 
+/** Map tutorial IDs to their description keys in translation files */
+const TUTORIAL_DESC_KEY: Record<string, string> = {
+    'tut-stacking': 'tut2Desc',
+    'tut-rhythm': 'tut3Desc',
+    'tut-combos': 'tut4Desc',
+    'tut-tspin': 'tut7Desc',
+    'tut-ranked': 'tut15Desc',
+};
+
 /** A small curated set of tutorials covering beginner to advanced */
 const FEATURED_TUTORIAL_IDS = [
     'tut-stacking',
@@ -87,10 +96,12 @@ export default function ForYouTab({ locale }: ForYouTabProps) {
                 <h2 className={styles.sectionTitle}>{t('columnTutorials')}</h2>
             </div>
 
+            {/* First 2 tutorials - always visible */}
             <div className={styles.widgetList}>
-                {FEATURED_TUTORIALS.map((tut, index) => {
+                {FEATURED_TUTORIALS.slice(0, 2).map((tut, index) => {
                     const wikiPrefix = locale === 'ja' ? '' : '/en';
                     const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
+                    const descKey = TUTORIAL_DESC_KEY[tut.id];
                     return (
                         <motion.a
                             key={tut.id}
@@ -118,12 +129,58 @@ export default function ForYouTab({ locale }: ForYouTabProps) {
                                     </span>
                                 </div>
                                 <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
+                                {descKey && <p className={styles.widgetDesc}>{tw(descKey)}</p>}
                             </div>
                             <span className={styles.widgetArrow}>&rarr;</span>
                         </motion.a>
                     );
                 })}
             </div>
+
+            {/* Remaining tutorials - scrollable container */}
+            {FEATURED_TUTORIALS.length > 2 && (
+                <div className={styles.scrollableContainer}>
+                    <div className={styles.widgetList}>
+                        {FEATURED_TUTORIALS.slice(2).map((tut, index) => {
+                            const wikiPrefix = locale === 'ja' ? '' : '/en';
+                            const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
+                            const descKey = TUTORIAL_DESC_KEY[tut.id];
+                            return (
+                                <motion.a
+                                    key={tut.id}
+                                    href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
+                                    className={`${styles.widget} ${styles.tutorial}`}
+                                    initial={{ opacity: 0, x: -16 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.3, delay: (index + 2) * 0.05 }}
+                                >
+                                    <div className={styles.thumbnailFrame}>
+                                        <Image
+                                            src={tut.thumb}
+                                            alt=""
+                                            width={36}
+                                            height={36}
+                                            className={styles.thumbnailImg}
+                                            unoptimized
+                                        />
+                                    </div>
+                                    <div className={styles.widgetContent}>
+                                        <div className={styles.widgetTopRow}>
+                                            <span className={styles.typeLabel}>{t('types.tutorial')}</span>
+                                            <span className={`${styles.diffBadge} ${styles[`diff_${tut.difficulty}`]}`}>
+                                                {diffLabels[tut.difficulty]}
+                                            </span>
+                                        </div>
+                                        <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
+                                        {descKey && <p className={styles.widgetDesc}>{tw(descKey)}</p>}
+                                    </div>
+                                    <span className={styles.widgetArrow}>&rarr;</span>
+                                </motion.a>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
