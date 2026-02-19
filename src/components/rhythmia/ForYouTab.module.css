@@ -310,10 +310,10 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Scrollable viewport for tutorials — show ~2 cards, snap one-by-one */
+/* Scrollable viewport for tutorials — show ~3 cards, snap one-by-one */
 .tutorialViewport {
     overflow-y: auto;
-    max-height: 200px;
+    max-height: 290px;
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
     scrollbar-width: thin;
