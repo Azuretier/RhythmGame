@@ -1139,7 +1139,8 @@
     "privateProfile": "Private Profile",
     "privateProfileDesc": "Your name and icon are hidden from the online players list",
     "publicProfile": "Public Profile",
-    "publicProfileDesc": "Your name and icon are visible to other players online"
+    "publicProfileDesc": "Your name and icon are visible to other players online",
+    "changeIcon": "Change Icon"
   },
   "forYou": {
     "title": "FOR YOU",

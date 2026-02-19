@@ -495,7 +495,8 @@
     "privateProfile": "Profil Privé",
     "privateProfileDesc": "Votre nom et icône sont masqués de la liste des joueurs en ligne",
     "publicProfile": "Profil Public",
-    "publicProfileDesc": "Votre nom et icône sont visibles par les autres joueurs en ligne"
+    "publicProfileDesc": "Votre nom et icône sont visibles par les autres joueurs en ligne",
+    "changeIcon": "Changer l'icône"
   },
   "vanilla": {
     "badge": "SOLO",
