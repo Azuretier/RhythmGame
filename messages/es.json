@@ -141,7 +141,8 @@
     "privateProfile": "Perfil Privado",
     "privateProfileDesc": "Tu nombre e icono están ocultos de la lista de jugadores en línea",
     "publicProfile": "Perfil Público",
-    "publicProfileDesc": "Tu nombre e icono son visibles para otros jugadores en línea"
+    "publicProfileDesc": "Tu nombre e icono son visibles para otros jugadores en línea",
+    "changeIcon": "Cambiar icono"
   },
   "meta": {
     "title": "RHYTHMIA | Juego de Puzzles de Ritmo x Tetris - Azuretier",

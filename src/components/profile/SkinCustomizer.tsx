@@ -10,6 +10,7 @@ import { useProfile } from '@/lib/profile/context';
 import { useGoogleSync } from '@/lib/google-sync/context';
 import ProfileIconImage from './ProfileIconImage';
 import type { Skin } from '@/lib/skin/types';
+import type { ProfileIcon } from '@/lib/profile/types';
 import ThemeSwitcher from './ThemeSwitcher';
 import styles from './SkinCustomizer.module.css';
 
@@ -117,6 +118,19 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
 
   const [editName, setEditName] = useState(profile?.name ?? '');
   const lastSyncedNameRef = useRef(profile?.name ?? '');
+  const [availableIcons, setAvailableIcons] = useState<ProfileIcon[]>([]);
+
+  // Fetch available icons from API
+  useEffect(() => {
+    fetch('/api/profile-icons')
+      .then((res) => res.json())
+      .then((data: { icons: ProfileIcon[] }) => {
+        setAvailableIcons(data.icons);
+      })
+      .catch(() => {
+        // Silently fail — the grid will be empty
+      });
+  }, []);
 
   // Sync editName when profile.name changes externally (e.g., cloud restore)
   // but only if user hasn't started editing (editName still matches last synced value)
@@ -225,6 +239,29 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
                   </motion.button>
                 )}
               </AnimatePresence>
+            </div>
+          </>
+        )}
+
+        {/* Icon selection section */}
+        {profile && availableIcons.length > 0 && (
+          <>
+            <div className={styles.sectionLabel}>{tProfile('changeIcon')}</div>
+            <div className={styles.iconGrid}>
+              {availableIcons.map((icon) => (
+                <button
+                  key={icon.id}
+                  className={`${styles.iconOption} ${profile.icon === icon.filename ? styles.iconOptionSelected : ''}`}
+                  onClick={() => updateProfile({ icon: icon.filename })}
+                  aria-label={icon.id}
+                >
+                  <ProfileIconImage
+                    iconId={icon.filename}
+                    size={48}
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                </button>
+              ))}
             </div>
           </>
         )}
