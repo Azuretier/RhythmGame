@@ -127,6 +127,91 @@
   transform: scale(1.1);
 }
 
+/* Loading state */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px;
+  min-height: 200px;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(10, 185, 230, 0.2);
+  border-top-color: #0ab9e6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Error state */
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  min-height: 200px;
+  text-align: center;
+}
+
+.errorIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.9;
+}
+
+.errorTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 8px;
+}
+
+.errorMessage {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+  margin-bottom: 24px;
+  max-width: 320px;
+}
+
+.retryButton {
+  padding: 10px 24px;
+  background: rgba(10, 185, 230, 0.15);
+  border: 2px solid #0ab9e6;
+  border-radius: 20px;
+  color: #0ab9e6;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retryButton:hover {
+  background: rgba(10, 185, 230, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(10, 185, 230, 0.2);
+}
+
+.retryButton:active {
+  transform: translateY(0);
+}
+
 /* Name Input */
 .inputGroup {
   width: 100%;

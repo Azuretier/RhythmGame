@@ -25,6 +25,8 @@ export default function ProfileSetup() {
   const [step, setStep] = useState<Step>('icon');
   const [selectedIcon, setSelectedIcon] = useState<string>('');
   const [availableIcons, setAvailableIcons] = useState<ProfileIcon[]>([]);
+  const [iconLoadError, setIconLoadError] = useState(false);
+  const [isLoadingIcons, setIsLoadingIcons] = useState(true);
   const [name, setName] = useState('');
   const [selectedLocale, setSelectedLocale] = useState<'ja' | 'en'>(locale === 'en' ? 'en' : 'ja');
   const [isPrivate, setIsPrivate] = useState(false);
@@ -32,19 +34,36 @@ export default function ProfileSetup() {
   const friendCode = useMemo(() => generateFriendCode(), []);
 
   // Fetch available icons from API
-  useEffect(() => {
+  const loadIcons = useCallback(() => {
+    setIsLoadingIcons(true);
+    setIconLoadError(false);
+    
     fetch('/api/profile-icons')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data: { icons: ProfileIcon[] }) => {
         setAvailableIcons(data.icons);
+        setIconLoadError(false);
+        setIsLoadingIcons(false);
+        
         // Auto-select the first icon if none selected
         if (!selectedIcon && data.icons.length > 0) {
           setSelectedIcon(data.icons[0].filename);
         }
       })
-      .catch(() => {
-        // Silently fail — the grid will be empty
+      .catch((error) => {
+        console.error('[ProfileSetup] Failed to load icons:', error);
+        setIconLoadError(true);
+        setIsLoadingIcons(false);
       });
+  }, [selectedIcon]);
+
+  useEffect(() => {
+    loadIcons();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stepIndex = STEPS.indexOf(step);
@@ -144,22 +163,45 @@ export default function ProfileSetup() {
               <div className={styles.title}>{t('iconTitle')}</div>
               <div className={styles.subtitle}>{t('iconSubtitle')}</div>
 
-              <div className={styles.iconGrid}>
-                {availableIcons.map((icon) => (
-                  <button
-                    key={icon.id}
-                    className={`${styles.iconOption} ${selectedIcon === icon.filename ? styles.iconOptionSelected : ''}`}
-                    onClick={() => setSelectedIcon(icon.filename)}
-                    aria-label={icon.id}
-                  >
-                    <ProfileIconImage
-                      iconId={icon.filename}
-                      size={56}
-                      style={{ width: '100%', height: '100%' }}
-                    />
+              {/* Loading state */}
+              {isLoadingIcons && !iconLoadError && (
+                <div className={styles.loadingState}>
+                  <div className={styles.loadingSpinner}></div>
+                  <div className={styles.loadingText}>{t('iconLoading')}</div>
+                </div>
+              )}
+
+              {/* Error state */}
+              {iconLoadError && (
+                <div className={styles.errorState}>
+                  <div className={styles.errorIcon}>⚠️</div>
+                  <div className={styles.errorTitle}>{t('iconLoadError')}</div>
+                  <div className={styles.errorMessage}>{t('iconLoadErrorMessage')}</div>
+                  <button className={styles.retryButton} onClick={loadIcons}>
+                    {t('retry')}
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Icon grid - only show when loaded successfully */}
+              {!isLoadingIcons && !iconLoadError && (
+                <div className={styles.iconGrid}>
+                  {availableIcons.map((icon) => (
+                    <button
+                      key={icon.id}
+                      className={`${styles.iconOption} ${selectedIcon === icon.filename ? styles.iconOptionSelected : ''}`}
+                      onClick={() => setSelectedIcon(icon.filename)}
+                      aria-label={icon.id}
+                    >
+                      <ProfileIconImage
+                        iconId={icon.filename}
+                        size={56}
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <div className={styles.buttons}>
                 <button

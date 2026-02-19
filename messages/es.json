@@ -141,7 +141,11 @@
     "privateProfile": "Perfil Privado",
     "privateProfileDesc": "Tu nombre e icono están ocultos de la lista de jugadores en línea",
     "publicProfile": "Perfil Público",
-    "publicProfileDesc": "Tu nombre e icono son visibles para otros jugadores en línea"
+    "publicProfileDesc": "Tu nombre e icono son visibles para otros jugadores en línea",
+    "iconLoading": "Cargando iconos...",
+    "iconLoadError": "Error al Cargar Iconos",
+    "iconLoadErrorMessage": "No se pudieron cargar los iconos de perfil. Por favor, verifica tu conexión e inténtalo de nuevo.",
+    "retry": "Reintentar"
   },
   "meta": {
     "title": "RHYTHMIA | Juego de Puzzles de Ritmo x Tetris - Azuretier",
