@@ -410,6 +410,63 @@
     }
 }
 
+/* ===== Action Display (T-spin, Tetris, Back-to-Back) ===== */
+.actionDisplay {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    transform: translate(-50%, -50%);
+    z-index: 65;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    animation: actionPop 1.5s ease-out forwards;
+}
+
+.actionLine {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--action-color, #ffffff);
+    text-shadow: 0 0 20px var(--action-color, #ffffff), 0 0 40px var(--action-color, #ffffff);
+    white-space: nowrap;
+}
+
+.actionLine:first-child:not(:last-child) {
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    opacity: 0.85;
+}
+
+@keyframes actionPop {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+
+    12% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.15);
+    }
+
+    25% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    75% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -55%) scale(0.95);
+    }
+}
+
 /* ===== Combo Counter Overlay ===== */
 .comboOverlay {
     position: absolute;

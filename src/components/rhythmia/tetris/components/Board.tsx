@@ -36,6 +36,10 @@ interface BoardProps {
     onKeybindsReset?: () => void;
     defaultKeybinds?: GameKeybinds;
     featureSettings?: FeatureSettings;
+    // Action display (T-spin, Tetris, Back-to-Back)
+    actionLines?: string[];
+    showAction?: boolean;
+    actionColor?: string;
 }
 
 /**
@@ -70,6 +74,9 @@ export function Board({
     onKeybindsReset,
     defaultKeybinds,
     featureSettings,
+    actionLines,
+    showAction,
+    actionColor,
 }: BoardProps) {
     const isFever = combo >= 10;
 
@@ -170,6 +177,17 @@ export function Board({
                     );
                 })}
             </div>
+
+            {/* Action display overlay (T-spin, Tetris, Back-to-Back) */}
+            {showAction && actionLines && actionLines.length > 0 && (
+                <div className={styles.actionDisplay} style={actionColor ? { '--action-color': actionColor } as React.CSSProperties : undefined}>
+                    {actionLines.map((line, i) => (
+                        <div key={`${line}-${i}`} className={styles.actionLine}>
+                            {line}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Overlay for Game Over */}
             {gameOver && (

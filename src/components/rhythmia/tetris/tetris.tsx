@@ -60,6 +60,47 @@ import {
 } from './components';
 import type { JudgmentDisplayMode } from './components';
 
+// ===== T-Spin Detection =====
+function detectTSpin(
+  piece: Piece,
+  board: ReturnType<typeof import('./utils/boardUtils').createEmptyBoard>,
+  wasRotation: boolean
+): 'none' | 'mini' | 'full' {
+  if (piece.type !== 'T' || !wasRotation) return 'none';
+
+  const cx = piece.x + 1;
+  const cy = piece.y + 1;
+  const corners = [
+    [cx - 1, cy - 1], [cx + 1, cy - 1],
+    [cx - 1, cy + 1], [cx + 1, cy + 1],
+  ];
+
+  let filledCorners = 0;
+  for (const [x, y] of corners) {
+    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT || (y >= 0 && board[y]?.[x])) {
+      filledCorners++;
+    }
+  }
+
+  if (filledCorners >= 3) {
+    const frontCorners: [number, number][] = [];
+    switch (piece.rotation) {
+      case 0: frontCorners.push([cx - 1, cy - 1], [cx + 1, cy - 1]); break;
+      case 1: frontCorners.push([cx + 1, cy - 1], [cx + 1, cy + 1]); break;
+      case 2: frontCorners.push([cx - 1, cy + 1], [cx + 1, cy + 1]); break;
+      case 3: frontCorners.push([cx - 1, cy - 1], [cx - 1, cy + 1]); break;
+    }
+    let frontFilled = 0;
+    for (const [x, y] of frontCorners) {
+      if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT || (y >= 0 && board[y]?.[x])) {
+        frontFilled++;
+      }
+    }
+    return frontFilled >= 2 ? 'full' : 'mini';
+  }
+  return 'none';
+}
+
 interface RhythmiaProps {
   onQuit?: () => void;
 }
@@ -134,6 +175,19 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     });
   }, []);
 
+  // Show action message (T-spin, Tetris, Back-to-Back) on the board
+  const showActionMessage = useCallback((lines: string[], color: string) => {
+    if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
+    setActionLines(lines);
+    setActionColor(color);
+    setShowAction(false);
+    requestAnimationFrame(() => setShowAction(true));
+    actionTimerRef.current = window.setTimeout(() => {
+      setShowAction(false);
+      actionTimerRef.current = null;
+    }, 1500);
+  }, []);
+
   // Feature settings (persisted in localStorage)
   const [featureSettings, setFeatureSettings] = useState<FeatureSettings>(() => {
     if (typeof window !== 'undefined') {
@@ -160,6 +214,18 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   const advRecordedRef = useRef(false);
   const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
+
+  // T-Spin tracking
+  const lastMoveWasRotationRef = useRef(false);
+
+  // Back-to-Back tracking — consecutive difficult clears (Tetris or T-spin clear)
+  const lastClearWasDifficultRef = useRef(false);
+
+  // Action display (T-spin, Tetris, Back-to-Back)
+  const [actionLines, setActionLines] = useState<string[]>([]);
+  const [showAction, setShowAction] = useState(false);
+  const [actionColor, setActionColor] = useState('#ffffff');
+  const actionTimerRef = useRef<number | null>(null);
 
   // Lock delay — grace period after piece lands before locking
   const lockStartTimeRef = useRef<number | null>(null);
@@ -352,6 +418,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     if (isValidPosition(newPiece, boardState)) {
       setCurrentPiece(newPiece);
       currentPieceRef.current = newPiece;
+      lastMoveWasRotationRef.current = false;
       return true;
     }
     return false;
@@ -396,6 +463,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
       setCurrentPiece(rotatedPiece);
       currentPieceRef.current = rotatedPiece;
+      lastMoveWasRotationRef.current = true;
       playRotateSound();
 
       // Reset lock delay on successful rotation
@@ -563,6 +631,9 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       }
     }
 
+    // T-Spin detection (before locking to board)
+    const tSpin = detectTSpin(piece, boardRef.current, lastMoveWasRotationRef.current);
+
     // Lock piece onto the board — blocks above the visible area (in the
     // buffer zone) are saved in memory, matching standard Tetris behaviour.
     // Only Block Out (piece can't spawn) ends the game; locking above
@@ -624,6 +695,44 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     } else if (prevCombo > 0) {
       showJudgment('MISS', '#FF4444', 0);
     }
+
+    // Compose and show action messages (T-spin, Tetris, Back-to-Back)
+    {
+      const isDifficultClear = clearedLines > 0 && (clearedLines === 4 || tSpin !== 'none');
+      const msgLines: string[] = [];
+      let msgColor = '#ffffff';
+
+      // Back-to-Back detection
+      if (isDifficultClear && lastClearWasDifficultRef.current) {
+        msgLines.push('BACK-TO-BACK');
+      }
+
+      // T-spin message
+      if (tSpin !== 'none') {
+        const mini = tSpin === 'mini' ? 'MINI ' : '';
+        const clearName = clearedLines === 0 ? '' :
+                          clearedLines === 1 ? ' SINGLE' :
+                          clearedLines === 2 ? ' DOUBLE' :
+                          clearedLines === 3 ? ' TRIPLE' : '';
+        msgLines.push(`T-SPIN ${mini}${clearName}`.trim() + '!');
+        msgColor = tSpin === 'full' ? '#A000F0' : '#C070FF';
+      } else if (clearedLines === 4) {
+        msgLines.push('TETRIS!');
+        msgColor = '#00F0F0';
+      }
+
+      // Update B2B state (only affected by line clears)
+      if (clearedLines > 0) {
+        lastClearWasDifficultRef.current = isDifficultClear;
+      }
+
+      if (msgLines.length > 0) {
+        showActionMessage(msgLines, msgColor);
+      }
+    }
+
+    // Reset rotation tracking for next piece
+    lastMoveWasRotationRef.current = false;
 
     if (clearedLines > 0) {
       // Track tetris clears (4 lines at once) for advancements
@@ -691,7 +800,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, enterCheckpoint,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
-    consumeComboGuard, consumeShield,
+    consumeComboGuard, consumeShield, showActionMessage,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -812,7 +921,15 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     liveNotifiedRef.current = new Set();
     lockStartTimeRef.current = null;
     lockMovesRef.current = 0;
+    lastMoveWasRotationRef.current = false;
+    lastClearWasDifficultRef.current = false;
     setToastIds([]);
+    setActionLines([]);
+    setShowAction(false);
+    if (actionTimerRef.current) {
+      clearTimeout(actionTimerRef.current);
+      actionTimerRef.current = null;
+    }
   }, [initAudio, initGame]);
 
   // Start game — intercept for tutorial on first play
@@ -1169,6 +1286,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     };
   }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
+  // Clean up action timer on unmount
+  useEffect(() => {
+    return () => {
+      if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
+    };
+  }, []);
+
   // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
   useEffect(() => {
     return () => {
@@ -1301,6 +1425,9 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 onKeybindsReset={resetKeybinds}
                 defaultKeybinds={defaultKeybinds}
                 featureSettings={featureSettings}
+                actionLines={actionLines}
+                showAction={showAction}
+                actionColor={actionColor}
               />
               {featureSettings.beatBar && <BeatBar containerRef={beatBarRef} />}
               <StatsPanel lines={lines} level={level} />

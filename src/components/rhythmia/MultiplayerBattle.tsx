@@ -318,6 +318,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const lastMoveWasRotationRef = useRef(false);
     const tSpinCountRef = useRef(0);
 
+    // Back-to-Back tracking — consecutive difficult clears (Tetris or T-spin clear)
+    const lastClearWasDifficultRef = useRef(false);
+
+    // Action display (T-spin, Tetris, Back-to-Back)
+    const [actionLines, setActionLines] = useState<string[]>([]);
+    const [showActionDisplay, setShowActionDisplay] = useState(false);
+    const [actionColor, setActionColor] = useState('#ffffff');
+    const actionTimerRef = useRef<number | null>(null);
+
     // Per-game stat tracking for advancements
     const gameHardDropsRef = useRef(0);
     const gamePiecesPlacedRef = useRef(0);
@@ -410,6 +419,19 @@ export const MultiplayerBattle: React.FC<Props> = ({
             setShowJudgment(false);
             judgmentTimerRef.current = null;
         }, 600);
+    }, []);
+
+    // ===== Action Display Helper =====
+    const showActionMessage = useCallback((lines: string[], color: string) => {
+        if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
+        setActionLines(lines);
+        setActionColor(color);
+        setShowActionDisplay(false);
+        requestAnimationFrame(() => setShowActionDisplay(true));
+        actionTimerRef.current = window.setTimeout(() => {
+            setShowActionDisplay(false);
+            actionTimerRef.current = null;
+        }, 1500);
     }, []);
 
     // ===== Audio =====
@@ -728,15 +750,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
             comboRef.current = 0;
         }
 
-        // T-Spin judgment display
+        // T-Spin tracking
         if (tSpin !== 'none') {
             tSpinCountRef.current++;
             playTSpinSound();
-            if (tSpin === 'full') {
-                showJudgmentText('T-SPIN!', '#A000F0');
-            } else {
-                showJudgmentText('T-SPIN MINI', '#C070FF');
-            }
         }
 
         gamePiecesPlacedRef.current++;
@@ -754,6 +771,42 @@ export const MultiplayerBattle: React.FC<Props> = ({
         // Clear lines
         const { board: clearedBoard, cleared, clearedRows } = clearLines(newBoard);
         boardRef.current = clearedBoard;
+
+        // Compose and show action messages (T-spin, Tetris, Back-to-Back)
+        {
+            const isDifficultClear = cleared > 0 && (cleared === 4 || tSpin !== 'none');
+            const msgLines: string[] = [];
+            let msgColor = '#ffffff';
+
+            // Back-to-Back detection
+            if (isDifficultClear && lastClearWasDifficultRef.current) {
+                msgLines.push('BACK-TO-BACK');
+            }
+
+            // T-spin message
+            if (tSpin !== 'none') {
+                const mini = tSpin === 'mini' ? 'MINI ' : '';
+                const clearName = cleared === 0 ? '' :
+                                  cleared === 1 ? ' SINGLE' :
+                                  cleared === 2 ? ' DOUBLE' :
+                                  cleared === 3 ? ' TRIPLE' :
+                                  cleared === 4 ? ' QUAD' : '';
+                msgLines.push(`T-SPIN ${mini}${clearName}`.trim() + '!');
+                msgColor = tSpin === 'full' ? '#A000F0' : '#C070FF';
+            } else if (cleared === 4) {
+                msgLines.push('TETRIS!');
+                msgColor = '#00F0F0';
+            }
+
+            // Update B2B state (only affected by line clears)
+            if (cleared > 0) {
+                lastClearWasDifficultRef.current = isDifficultClear;
+            }
+
+            if (msgLines.length > 0) {
+                showActionMessage(msgLines, msgColor);
+            }
+        }
 
         if (cleared > 0) {
             // Destroy terrain blocks
@@ -795,13 +848,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 onBeat,
                 combo: comboRef.current,
             });
-
-            // Judgment text for line clears
-            if (cleared === 4 && tSpin === 'none') {
-                showJudgmentText('TETRIS!', '#00F0F0');
-            } else if (cleared === 4 && tSpin !== 'none') {
-                showJudgmentText('T-SPIN QUAD!', '#FF00FF');
-            }
         }
 
         pieceRef.current = null;
@@ -810,7 +856,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         pushLiveAdvancementCheck();
         sendBoardUpdate();
         spawnPiece();
-    }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playPerfectSound, playTSpinSound, spawnPiece, render, pushLiveAdvancementCheck, showJudgmentText, vfx, destroyTerrain, spawnTerrainParticles]);
+    }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playPerfectSound, playTSpinSound, spawnPiece, render, pushLiveAdvancementCheck, showJudgmentText, vfx, destroyTerrain, spawnTerrainParticles, showActionMessage]);
 
     // Wire up startLockTimer -> performLock circular dependency
     const startLockTimerRef = useRef(startLockTimer);
@@ -1023,6 +1069,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         gamePiecesPlacedRef.current = 0;
         tSpinCountRef.current = 0;
         lastMoveWasRotationRef.current = false;
+        lastClearWasDifficultRef.current = false;
         advRecordedRef.current = false;
         liveNotifiedRef.current = new Set();
         setToastIds([]);
@@ -1234,10 +1281,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
         };
     }, []);
 
-    // Cleanup judgment timer on unmount
+    // Cleanup judgment and action timers on unmount
     useEffect(() => {
         return () => {
             if (judgmentTimerRef.current) clearTimeout(judgmentTimerRef.current);
+            if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
         };
     }, []);
 
@@ -1436,6 +1484,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                     style={{ color: judgmentColor, textShadow: `0 0 20px ${judgmentColor}, 0 0 40px ${judgmentColor}` }}
                                 >
                                     {judgmentText}
+                                </div>
+                            )}
+
+                            {/* Action display overlay (T-spin, Tetris, Back-to-Back) */}
+                            {showActionDisplay && actionLines.length > 0 && (
+                                <div className={styles.actionDisplay} style={{ '--action-color': actionColor } as React.CSSProperties}>
+                                    {actionLines.map((line, i) => (
+                                        <div key={`${line}-${i}`} className={styles.actionLine}>
+                                            {line}
+                                        </div>
+                                    ))}
                                 </div>
                             )}
 
