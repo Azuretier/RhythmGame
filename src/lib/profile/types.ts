@@ -21,10 +21,19 @@ export const DEFAULT_ICON: ProfileIcon = {
 };
 
 /**
- * Build the public path for a profile icon by its ID.
- * Returns the `/profile_image/<id>.png` path.
+ * Build the public path for a profile icon.
+ * Accepts either a filename with extension (e.g., "image.jpg") or an ID.
+ * If the input contains an extension, returns `/profile_image/<filename>`.
+ * Otherwise, returns `/profile_image/<id>.png` for backward compatibility.
  */
-export function getIconSrc(id: string): string {
-  if (!id || id === '_default') return '';
-  return `/profile_image/${id}.png`;
+export function getIconSrc(idOrFilename: string): string {
+  if (!idOrFilename || idOrFilename === '_default') return '';
+  
+  // If the input has an image extension, use it as-is
+  if (/\.(png|jpe?g|gif|jfif)$/i.test(idOrFilename)) {
+    return `/profile_image/${idOrFilename}`;
+  }
+  
+  // Otherwise, assume it's an ID and append .png for backward compatibility
+  return `/profile_image/${idOrFilename}.png`;
 }

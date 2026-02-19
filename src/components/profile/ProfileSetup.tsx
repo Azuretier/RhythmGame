@@ -39,7 +39,7 @@ export default function ProfileSetup() {
         setAvailableIcons(data.icons);
         // Auto-select the first icon if none selected
         if (!selectedIcon && data.icons.length > 0) {
-          setSelectedIcon(data.icons[0].id);
+          setSelectedIcon(data.icons[0].filename);
         }
       })
       .catch(() => {
@@ -148,12 +148,12 @@ export default function ProfileSetup() {
                 {availableIcons.map((icon) => (
                   <button
                     key={icon.id}
-                    className={`${styles.iconOption} ${selectedIcon === icon.id ? styles.iconOptionSelected : ''}`}
-                    onClick={() => setSelectedIcon(icon.id)}
+                    className={`${styles.iconOption} ${selectedIcon === icon.filename ? styles.iconOptionSelected : ''}`}
+                    onClick={() => setSelectedIcon(icon.filename)}
                     aria-label={icon.id}
                   >
                     <ProfileIconImage
-                      iconId={icon.id}
+                      iconId={icon.filename}
                       size={56}
                       style={{ width: '100%', height: '100%' }}
                     />

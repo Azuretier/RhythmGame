@@ -13,12 +13,12 @@ export async function GET() {
     }
 
     const files = fs.readdirSync(dir);
-    const pngFiles = files
-      .filter((f) => /\.png$/i.test(f))
+    const imageFiles = files
+      .filter((f) => /\.(png|jpe?g|gif|jfif)$/i.test(f))
       .sort((a, b) => a.localeCompare(b));
 
-    const icons = pngFiles.map((filename) => ({
-      id: filename.replace(/\.png$/i, ''),
+    const icons = imageFiles.map((filename) => ({
+      id: filename.replace(/\.(png|jpe?g|gif|jfif)$/i, ''),
       filename,
       src: `/profile_image/${filename}`,
     }));
