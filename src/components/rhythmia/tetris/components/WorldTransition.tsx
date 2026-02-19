@@ -8,6 +8,7 @@ interface WorldTransitionProps {
     worldIdx: number;
     stageNumber: number;
     terrainPhase?: TerrainPhase;
+    gameOver?: boolean;
 }
 
 /**
@@ -17,7 +18,7 @@ interface WorldTransitionProps {
  * - CHECKPOINT: Ground generating for TD phase
  * - TRANSITION: Reload/rebuild visual between stages
  */
-export function WorldTransition({ phase, worldIdx, stageNumber, terrainPhase = 'dig' }: WorldTransitionProps) {
+export function WorldTransition({ phase, worldIdx, stageNumber, terrainPhase = 'dig', gameOver = false }: WorldTransitionProps) {
     const [visible, setVisible] = useState(false);
     const [text, setText] = useState('');
     const [subText, setSubText] = useState('');
@@ -63,7 +64,14 @@ export function WorldTransition({ phase, worldIdx, stageNumber, terrainPhase = '
         }
     }, [phase, worldIdx, stageNumber, terrainPhase, isLastInWorld]);
 
-    if (!visible) return null;
+    // Immediately hide transition overlay when player dies
+    useEffect(() => {
+        if (gameOver) {
+            setVisible(false);
+        }
+    }, [gameOver]);
+
+    if (!visible || gameOver) return null;
 
     return (
         <div className={`${styles.worldTransition} ${styles[`wt_${phase.toLowerCase()}`]}`}>
