@@ -50,6 +50,15 @@ const TUTORIAL_WIKI_SECTION: Record<string, string> = {
     'tut-crafting': 'tut-beginner', 'tut-items': 'tut-intermediate', 'tut-worlds': 'tut-beginner',
 };
 
+/** Map tutorial IDs to their description keys in translation files */
+const TUTORIAL_DESC_KEY: Record<string, string> = {
+    'tut-stacking': 'tut2Desc',
+    'tut-rhythm': 'tut3Desc',
+    'tut-combos': 'tut4Desc',
+    'tut-tspin': 'tut7Desc',
+    'tut-ranked': 'tut15Desc',
+};
+
 /** A small curated set of tutorials covering beginner to advanced */
 const FEATURED_TUTORIAL_IDS = [
     'tut-stacking',
@@ -92,6 +101,7 @@ export default function ForYouTab({ locale }: ForYouTabProps) {
                 {FEATURED_TUTORIALS.slice(0, 2).map((tut, index) => {
                     const wikiPrefix = locale === 'ja' ? '' : '/en';
                     const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
+                    const descKey = TUTORIAL_DESC_KEY[tut.id];
                     return (
                         <motion.a
                             key={tut.id}
@@ -119,6 +129,7 @@ export default function ForYouTab({ locale }: ForYouTabProps) {
                                     </span>
                                 </div>
                                 <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
+                                {descKey && <p className={styles.widgetDesc}>{tw(descKey)}</p>}
                             </div>
                             <span className={styles.widgetArrow}>&rarr;</span>
                         </motion.a>
@@ -133,6 +144,7 @@ export default function ForYouTab({ locale }: ForYouTabProps) {
                         {FEATURED_TUTORIALS.slice(2).map((tut, index) => {
                             const wikiPrefix = locale === 'ja' ? '' : '/en';
                             const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
+                            const descKey = TUTORIAL_DESC_KEY[tut.id];
                             return (
                                 <motion.a
                                     key={tut.id}
@@ -160,6 +172,7 @@ export default function ForYouTab({ locale }: ForYouTabProps) {
                                             </span>
                                         </div>
                                         <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
+                                        {descKey && <p className={styles.widgetDesc}>{tw(descKey)}</p>}
                                     </div>
                                     <span className={styles.widgetArrow}>&rarr;</span>
                                 </motion.a>
