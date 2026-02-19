@@ -1466,6 +1466,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                             <div className={styles.playerScore}>{score.toLocaleString()}</div>
                         </div>
 
+                        <div className={styles.boardActionArea}>
                         <div className={styles.boardWrap}>
                             {/* Garbage meter */}
                             {featureSettings.garbageMeter && pendingGarbage > 0 && (
@@ -1524,6 +1525,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 onStart={vfx.start}
                                 onStop={vfx.stop}
                             />
+                        </div>
+                        {/* Action display toast (T-spin, Tetris, Back-to-Back) */}
+                        {showActionDisplay && actionLines.length > 0 && (
+                            <div className={styles.actionToast} style={{ '--action-color': actionColor } as React.CSSProperties}>
+                                {actionLines.map((line, i) => (
+                                    <div key={`${line}-${i}`} className={styles.actionLine}>
+                                        {line}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         </div>
 
                         {/* Beat Timing Indicator */}
@@ -1619,17 +1631,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     </div>
                 )
             }
-
-            {/* Action display toast (T-spin, Tetris, Back-to-Back) */}
-            {showActionDisplay && actionLines.length > 0 && (
-                <div className={styles.actionToast} style={{ '--action-color': actionColor } as React.CSSProperties}>
-                    {actionLines.map((line, i) => (
-                        <div key={`${line}-${i}`} className={styles.actionLine}>
-                            {line}
-                        </div>
-                    ))}
-                </div>
-            )}
 
             {/* Advancement Toast */}
             {

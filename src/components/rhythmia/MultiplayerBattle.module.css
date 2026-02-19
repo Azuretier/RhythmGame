@@ -410,58 +410,83 @@
     }
 }
 
-/* ===== Action Toast (T-spin, Tetris, Back-to-Back) — fixed bottom like advancement toast ===== */
+/* ===== Wrapper for board + action toast positioning ===== */
+.boardActionArea {
+    position: relative;
+}
+
+/* ===== Action Toast (T-spin, Tetris, Back-to-Back) — pixel art style, left of board ===== */
 .actionToast {
-    position: fixed;
+    position: absolute;
+    right: calc(100% + 12px);
     bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
     z-index: 500;
     pointer-events: none;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 2px;
-    padding: 10px 24px;
-    background: rgba(0, 0, 0, 0.85);
-    border: 1px solid var(--action-color, rgba(255, 255, 255, 0.3));
-    border-radius: 8px;
-    box-shadow: 0 0 20px color-mix(in srgb, var(--action-color, #fff) 30%, transparent),
-                0 4px 16px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
-    animation: actionSlideUp 1.5s ease-out forwards;
+    padding: 8px 14px;
+    background: #0c0618;
+    border: 3px solid color-mix(in srgb, var(--action-color, rgba(180, 130, 255, 1)) 50%, transparent);
+    border-radius: 0;
+    box-shadow:
+        0 0 20px color-mix(in srgb, var(--action-color, #8c50ff) 30%, transparent),
+        inset -2px -2px 0px rgba(0, 0, 0, 0.4),
+        inset 2px 2px 0px rgba(255, 255, 255, 0.05);
+    font-family: var(--font-pixel), "Press Start 2P", monospace;
+    image-rendering: pixelated;
+    animation: actionSlideIn 1.5s ease-out forwards;
+}
+
+/* Scanline effect on action toast */
+.actionToast::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.4) 2px,
+        rgba(0, 0, 0, 0.4) 4px
+    );
 }
 
 .actionLine {
-    font-size: 1.2rem;
+    font-family: var(--font-pixel), "Press Start 2P", monospace;
+    font-size: 0.65rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--action-color, #ffffff);
-    text-shadow: 0 0 12px var(--action-color, #ffffff);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8), 0 0 8px color-mix(in srgb, var(--action-color, #c8a0ff) 30%, transparent);
     white-space: nowrap;
 }
 
 .actionLine:first-child:not(:last-child) {
-    font-size: 0.85rem;
+    font-size: 0.5rem;
     font-weight: 500;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.15em;
     opacity: 0.7;
+    color: rgba(200, 160, 255, 0.7);
 }
 
-@keyframes actionSlideUp {
+@keyframes actionSlideIn {
     0% {
         opacity: 0;
-        transform: translateX(-50%) translateY(20px) scale(0.9);
+        transform: translateX(-20px);
     }
 
     15% {
         opacity: 1;
-        transform: translateX(-50%) translateY(-4px) scale(1.03);
+        transform: translateX(4px);
     }
 
     25% {
-        transform: translateX(-50%) translateY(0) scale(1);
+        transform: translateX(0);
     }
 
     75% {
@@ -470,7 +495,7 @@
 
     100% {
         opacity: 0;
-        transform: translateX(-50%) translateY(-8px) scale(0.97);
+        transform: translateX(-10px);
     }
 }
 
