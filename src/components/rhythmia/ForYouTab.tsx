@@ -149,7 +149,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
         });
 
     const CARD_HEIGHT = 90; // ~80px card + 10px gap
-    const VISIBLE_COUNT = 2;
+    const VISIBLE_COUNT = 3;
 
     // Track scroll position to compute which card is at the top
     useEffect(() => {
