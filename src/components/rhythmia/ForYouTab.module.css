@@ -1,13 +1,13 @@
-/* For You Tab — Minecraft Dungeons Widget Style */
+/* For You Tab — Simplified Tutorials List */
 .forYouContainer {
     width: 100%;
-    max-width: 1100px;
+    max-width: 560px;
     margin: 0 auto;
 }
 
 .sectionHeader {
     text-align: center;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
 }
 
 .sectionTitle {
@@ -16,14 +16,6 @@
     letter-spacing: 0.35em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 6px;
-}
-
-.sectionSubtitle {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.25);
-    letter-spacing: 0.15em;
-    font-weight: 300;
 }
 
 /* Vertical Widget List */
@@ -63,6 +55,7 @@
     opacity: 0;
     transition: opacity 0.25s ease;
     pointer-events: none;
+    background: linear-gradient(90deg, rgba(100, 180, 255, 0.06) 0%, transparent 60%);
 }
 
 .widget:hover {
@@ -80,19 +73,6 @@
 
 .widget:active {
     transform: scale(0.995);
-}
-
-/* Type-specific accent glow on hover */
-.widget.tutorial::before {
-    background: linear-gradient(90deg, rgba(100, 180, 255, 0.06) 0%, transparent 60%);
-}
-
-.widget.video::before {
-    background: linear-gradient(90deg, rgba(255, 80, 80, 0.06) 0%, transparent 60%);
-}
-
-.widget.tip::before {
-    background: linear-gradient(90deg, rgba(255, 200, 60, 0.06) 0%, transparent 60%);
 }
 
 /* Pixel-art Thumbnail */
@@ -116,24 +96,9 @@
 
 .widget:hover .thumbnailFrame {
     border-color: rgba(255, 255, 255, 0.3);
-}
-
-.widget.tutorial:hover .thumbnailFrame {
     box-shadow:
         0 0 10px rgba(100, 180, 255, 0.25),
         inset 0 0 6px rgba(100, 180, 255, 0.1);
-}
-
-.widget.video:hover .thumbnailFrame {
-    box-shadow:
-        0 0 10px rgba(255, 80, 80, 0.25),
-        inset 0 0 6px rgba(255, 80, 80, 0.1);
-}
-
-.widget.tip:hover .thumbnailFrame {
-    box-shadow:
-        0 0 10px rgba(255, 200, 60, 0.25),
-        inset 0 0 6px rgba(255, 200, 60, 0.1);
 }
 
 .thumbnailImg {
@@ -146,18 +111,6 @@
 }
 
 .widget:hover .thumbnailImg {
-    opacity: 1;
-}
-
-/* Fallback icon (when no image) */
-.thumbnailIcon {
-    font-size: 1.4rem;
-    line-height: 1;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
-}
-
-.widget:hover .thumbnailIcon {
     opacity: 1;
 }
 
@@ -181,20 +134,8 @@
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.35);
-    flex-shrink: 0;
-}
-
-.widget.tutorial .typeLabel {
     color: rgba(100, 180, 255, 0.6);
-}
-
-.widget.video .typeLabel {
-    color: rgba(255, 80, 80, 0.6);
-}
-
-.widget.tip .typeLabel {
-    color: rgba(255, 200, 60, 0.6);
+    flex-shrink: 0;
 }
 
 .diffBadge {
@@ -234,16 +175,6 @@
     text-overflow: ellipsis;
 }
 
-.widgetDescription {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.32);
-    line-height: 1.4;
-    font-weight: 300;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
 /* Arrow indicator on right side */
 .widgetArrow {
     flex-shrink: 0;
@@ -258,169 +189,7 @@
     transform: translateX(3px);
 }
 
-/* Refresh */
-.refreshRow {
-    display: flex;
-    justify-content: center;
-    margin-top: 24px;
-}
-
-.refreshButton {
-    padding: 8px 20px;
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.4);
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.25s;
-}
-
-.refreshButton:hover {
-    color: rgba(255, 255, 255, 0.8);
-    border-color: rgba(255, 255, 255, 0.25);
-    background: rgba(255, 255, 255, 0.03);
-}
-
-/* Two-Column Layout */
-.twoColumnLayout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    width: 100%;
-}
-
-.column {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.columnHeader {
-    font-size: 0.6rem;
-    font-weight: 600;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.3);
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* Scrollable viewport for tutorials to match recommended height */
-.tutorialViewport {
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
-}
-
-.tutorialViewport::-webkit-scrollbar {
-    width: 4px;
-}
-
-.tutorialViewport::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.tutorialViewport::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 2px;
-}
-
-.tutorialViewport::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-/* Tag Badge */
-.tagBadge {
-    padding: 1px 6px;
-    font-size: 0.5rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    border-radius: 2px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.35);
-    flex-shrink: 0;
-}
-
-/* Loading */
-.loadingContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    gap: 16px;
-}
-
-.loadingSpinner {
-    width: 24px;
-    height: 24px;
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
-    border-top-color: rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.loadingText {
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.3);
-    letter-spacing: 0.2em;
-}
-
-/* Error */
-.errorContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    gap: 16px;
-}
-
-.errorText {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.35);
-    letter-spacing: 0.1em;
-}
-
-.retryButton {
-    padding: 8px 20px;
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.25s;
-}
-
-.retryButton:hover {
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.05);
-}
-
 /* Responsive */
-@media (max-width: 760px) {
-    .twoColumnLayout {
-        grid-template-columns: 1fr;
-        gap: 28px;
-    }
-}
-
 @media (max-width: 600px) {
     .widget {
         gap: 12px;
@@ -439,9 +208,5 @@
 
     .widgetTitle {
         font-size: 0.78rem;
-    }
-
-    .widgetDescription {
-        font-size: 0.66rem;
     }
 }
