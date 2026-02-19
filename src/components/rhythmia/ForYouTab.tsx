@@ -177,6 +177,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
         const nextIndex = direction === 'down'
             ? Math.min(scrollIndex + 1, filteredTutorials.length - VISIBLE_COUNT)
             : Math.max(scrollIndex - 1, 0);
+        setScrollIndex(nextIndex);
         el.scrollTo({ top: nextIndex * CARD_HEIGHT, behavior: 'smooth' });
     }, [scrollIndex, filteredTutorials.length]);
 
