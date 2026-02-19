@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { useProfile } from '@/lib/profile/context';
+import { getIconById } from '@/lib/profile/types';
 import {
   SCORE_RANK_TIERS,
   getTierByScore,
   scoreProgress,
   scoreToNextTier,
-  formatScore,
   formatScoreCompact,
   recordDailyVisit,
   syncGameplayStats,
@@ -23,6 +24,7 @@ const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
   const router = useRouter();
+  const { profile } = useProfile();
   const [state, setState] = useState<ScoreRankingState | null>(null);
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function LoyaltyWidget() {
 
   if (!state) return null;
 
+  const profileIcon = profile ? getIconById(profile.icon) : undefined;
   const { totalScore, bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
@@ -58,16 +61,22 @@ export default function LoyaltyWidget() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.7 }}
     >
-      {/* Score Hero */}
+      {/* Profile Hero */}
       <div className={styles.scoreHero}>
-        <div className={styles.tierBadge} style={{ borderColor: currentTier.color }}>
-          <span className={styles.tierIconLarge}>{currentTier.icon}</span>
+        <div
+          className={styles.tierBadge}
+          style={{
+            borderColor: profileIcon?.bgColor ?? currentTier.color,
+            background: profileIcon?.bgColor ?? 'rgba(255, 255, 255, 0.04)',
+          }}
+        >
+          <span className={styles.tierIconLarge}>{profileIcon?.emoji ?? '?'}</span>
         </div>
         <div className={styles.scoreInfo}>
-          <div className={styles.scoreValue}>{formatScore(combinedScore)}</div>
-          <div className={styles.scoreLabel}>{t('totalScore')}</div>
+          <div className={styles.scoreValue}>{profile?.name ?? '—'}</div>
+          <div className={styles.scoreLabel}>{profile?.friendCode ?? ''}</div>
           <div className={styles.tierName} style={{ color: currentTier.color }}>
-            {t(`tiers.${currentTier.id}`)}
+            <span>{currentTier.icon}</span> {t(`tiers.${currentTier.id}`)}
           </div>
         </div>
       </div>
@@ -100,6 +109,7 @@ export default function LoyaltyWidget() {
 
       {/* Progress bar */}
       <div className={styles.progressRow}>
+        <div className={styles.scoreLabel} style={{ marginBottom: 8 }}>{t('totalScore')}</div>
         <div className={styles.progressBar}>
           <div
             className={styles.progressFill}

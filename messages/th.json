@@ -1031,12 +1031,12 @@
     "maxTier": "อันดับสูงสุดแล้ว",
     "viewAll": "ดูอันดับ & รายละเอียด",
     "tiers": {
-      "unranked": "ไม่มีอันดับ",
-      "beat_1": "Beat I",
-      "beat_2": "Beat II",
-      "rhythm": "Rhythm",
-      "maestro": "Maestro",
-      "virtuoso": "Antigravity"
+      "rank1": "ไม่มีอันดับ",
+      "rank2": "Beat I",
+      "rank3": "Beat II",
+      "rank4": "Rhythm",
+      "rank5": "Maestro",
+      "rank6": "Antigravity"
     },
     "stats": {
       "bestScore": "คะแนนดีสุด",
