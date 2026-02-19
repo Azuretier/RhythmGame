@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { PROFILE_ICONS, getIconById } from '@/lib/profile/types';
 import { generateFriendCode } from '@/lib/profile/storage';
 import { useProfile } from '@/lib/profile/context';
-import type { UserProfile } from '@/lib/profile/types';
+import ProfileIconImage from './ProfileIconImage';
+import type { UserProfile, ProfileIcon } from '@/lib/profile/types';
 import type { Locale } from '@/i18n/routing';
 import styles from './ProfileSetup.module.css';
 
@@ -23,12 +23,29 @@ export default function ProfileSetup() {
   const { setProfile } = useProfile();
 
   const [step, setStep] = useState<Step>('icon');
-  const [selectedIcon, setSelectedIcon] = useState<string>('icon_rhythm');
+  const [selectedIcon, setSelectedIcon] = useState<string>('');
+  const [availableIcons, setAvailableIcons] = useState<ProfileIcon[]>([]);
   const [name, setName] = useState('');
   const [selectedLocale, setSelectedLocale] = useState<'ja' | 'en'>(locale === 'en' ? 'en' : 'ja');
   const [isPrivate, setIsPrivate] = useState(false);
 
   const friendCode = useMemo(() => generateFriendCode(), []);
+
+  // Fetch available icons from API
+  useEffect(() => {
+    fetch('/api/profile-icons')
+      .then((res) => res.json())
+      .then((data: { icons: ProfileIcon[] }) => {
+        setAvailableIcons(data.icons);
+        // Auto-select the first icon if none selected
+        if (!selectedIcon && data.icons.length > 0) {
+          setSelectedIcon(data.icons[0].id);
+        }
+      })
+      .catch(() => {
+        // Silently fail — the grid will be empty
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -92,8 +109,6 @@ export default function ProfileSetup() {
     }
   };
 
-  const selectedIconData = getIconById(selectedIcon);
-
   return (
     <motion.div
       className={styles.overlay}
@@ -130,15 +145,18 @@ export default function ProfileSetup() {
               <div className={styles.subtitle}>{t('iconSubtitle')}</div>
 
               <div className={styles.iconGrid}>
-                {PROFILE_ICONS.map((icon) => (
+                {availableIcons.map((icon) => (
                   <button
                     key={icon.id}
                     className={`${styles.iconOption} ${selectedIcon === icon.id ? styles.iconOptionSelected : ''}`}
-                    style={{ backgroundColor: icon.bgColor, color: icon.color }}
                     onClick={() => setSelectedIcon(icon.id)}
                     aria-label={icon.id}
                   >
-                    {icon.emoji}
+                    <ProfileIconImage
+                      iconId={icon.id}
+                      size={56}
+                      style={{ width: '100%', height: '100%' }}
+                    />
                   </button>
                 ))}
               </div>
@@ -268,17 +286,7 @@ export default function ProfileSetup() {
               <div className={styles.subtitle}>{t('confirmSubtitle')}</div>
 
               <div className={styles.previewCard}>
-                {selectedIconData && (
-                  <div
-                    className={styles.previewIcon}
-                    style={{
-                      backgroundColor: selectedIconData.bgColor,
-                      color: selectedIconData.color,
-                    }}
-                  >
-                    {selectedIconData.emoji}
-                  </div>
-                )}
+                <ProfileIconImage iconId={selectedIcon} size={64} className={styles.previewIcon} />
                 <div className={styles.previewInfo}>
                   <div className={styles.previewName}>{name}</div>
                   <div className={styles.previewCode}>{friendCode}</div>

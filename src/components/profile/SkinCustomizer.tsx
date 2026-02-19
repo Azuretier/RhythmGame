@@ -8,7 +8,7 @@ import { routing, type Locale } from '@/i18n/routing';
 import { useSkin } from '@/lib/skin/context';
 import { useProfile } from '@/lib/profile/context';
 import { useGoogleSync } from '@/lib/google-sync/context';
-import { getIconById } from '@/lib/profile/types';
+import ProfileIconImage from './ProfileIconImage';
 import type { Skin } from '@/lib/skin/types';
 import ThemeSwitcher from './ThemeSwitcher';
 import styles from './SkinCustomizer.module.css';
@@ -144,7 +144,7 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
     }
   };
 
-  const iconData = profile ? getIconById(profile.icon) : null;
+  const iconId = profile?.icon ?? '';
 
   return (
     <motion.div
@@ -164,13 +164,8 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
         {/* Header with profile info */}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
-            {profile && iconData && (
-              <div
-                className={styles.profileIcon}
-                style={{ backgroundColor: iconData.bgColor, color: iconData.color }}
-              >
-                {iconData.emoji}
-              </div>
+            {profile && (
+              <ProfileIconImage iconId={iconId} size={44} className={styles.profileIcon} />
             )}
             <div className={styles.headerText}>
               <h2 className={styles.title}>{t('title')}</h2>

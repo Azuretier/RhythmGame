@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { getIconById } from '@/lib/profile/types';
+import ProfileIconImage from './ProfileIconImage';
 import type { OnlineUser } from '@/types/multiplayer';
 import styles from './OnlineUsers.module.css';
 
@@ -47,24 +47,13 @@ export default function OnlineUsers({ users, onClose }: OnlineUsersProps) {
           {users.length === 0 ? (
             <div className={styles.emptyState}>{t('noOnlineUsers')}</div>
           ) : (
-            users.map((user, i) => {
-              const iconData = getIconById(user.icon);
-              return (
-                <div key={`${user.name}-${i}`} className={styles.userRow}>
-                  <div
-                    className={styles.userIcon}
-                    style={{
-                      backgroundColor: iconData?.bgColor || '#444',
-                      color: iconData?.color || '#fff',
-                    }}
-                  >
-                    {iconData?.emoji || '?'}
-                  </div>
-                  <span className={styles.userName}>{user.name}</span>
-                  <div className={styles.onlineDot} />
-                </div>
-              );
-            })
+            users.map((user, i) => (
+              <div key={`${user.name}-${i}`} className={styles.userRow}>
+                <ProfileIconImage iconId={user.icon} size={36} />
+                <span className={styles.userName}>{user.name}</span>
+                <div className={styles.onlineDot} />
+              </div>
+            ))
           )}
         </div>
       </motion.div>

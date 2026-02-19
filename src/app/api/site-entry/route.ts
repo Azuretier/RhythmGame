@@ -1,21 +1,5 @@
 import { NextResponse } from 'next/server';
 
-// Icon ID to display label mapping
-const ICON_LABELS: Record<string, string> = {
-  icon_mario: '🔴 Mario',
-  icon_link: '🟢 Link',
-  icon_kirby: '🩷 Kirby',
-  icon_pikachu: '🟡 Pikachu',
-  icon_splatoon: '🟠 Splatoon',
-  icon_animal: '🔵 Animal',
-  icon_star: '🟣 Star',
-  icon_heart: '💗 Heart',
-  icon_rhythm: '🎵 Rhythm',
-  icon_fire: '🔥 Fire',
-  icon_moon: '🌙 Moon',
-  icon_bolt: '⚡ Bolt',
-};
-
 export async function POST(request: Request) {
   try {
     const webhookUrl = process.env.DISCORD_SITE_ENTRY_WEBHOOK_URL;
@@ -31,7 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing name' }, { status: 400 });
     }
 
-    const iconLabel = ICON_LABELS[icon] || icon || 'Unknown';
+    const iconLabel = icon || 'Unknown';
     const langLabel = locale === 'ja' ? '🇯🇵 日本語' : '🇺🇸 English';
     const timestamp = new Date().toISOString();
 
