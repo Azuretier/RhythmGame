@@ -84,6 +84,10 @@
     "retry": "RÉESSAYER",
     "refresh": "ACTUALISER",
     "watchOnYouTube": "Regarder sur YouTube",
+    "searchTutorials": "Rechercher des tutoriels...",
+    "noTutorialResults": "Aucun tutoriel trouvé",
+    "moreBelow": "+{count} ci-dessous",
+    "endOfList": "Fin de la liste",
     "types": {
       "tutorial": "TUTORIEL",
       "video": "VIDÉO",

@@ -104,8 +104,9 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
     const [cards, setCards] = useState<ContentCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-    const [viewportHeight, setViewportHeight] = useState<number | undefined>(undefined);
-    const leftColumnRef = useRef<HTMLDivElement>(null);
+    const [tutorialSearch, setTutorialSearch] = useState('');
+    const [scrollIndex, setScrollIndex] = useState(0);
+    const viewportRef = useRef<HTMLDivElement>(null);
     const t = useTranslations('forYou');
     const tw = useTranslations('wiki');
 
@@ -136,17 +137,49 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
         fetchContent();
     }, [fetchContent]);
 
-    // Measure left column height to sync the tutorials viewport
+    const filteredTutorials = tutorialSearch.trim() === ''
+        ? SORTED_TUTORIALS
+        : SORTED_TUTORIALS.filter((tut) => {
+            const query = tutorialSearch.toLowerCase();
+            const title = tw(tut.titleKey).toLowerCase();
+            return (
+                title.includes(query) ||
+                tut.tags.some((tag) => tag.toLowerCase().includes(query))
+            );
+        });
+
+    const CARD_HEIGHT = 90; // ~80px card + 10px gap
+    const VISIBLE_COUNT = 3;
+
+    // Track scroll position to compute which card is at the top
     useEffect(() => {
-        if (!leftColumnRef.current || cards.length === 0) return;
-        const measure = () => {
-            const h = leftColumnRef.current?.offsetHeight;
-            if (h) setViewportHeight(h);
+        const el = viewportRef.current;
+        if (!el) return;
+        const onScroll = () => {
+            const idx = Math.round(el.scrollTop / CARD_HEIGHT);
+            setScrollIndex(idx);
         };
-        // Allow animations to settle before measuring
-        const timer = setTimeout(measure, 400);
-        return () => clearTimeout(timer);
-    }, [cards]);
+        el.addEventListener('scroll', onScroll, { passive: true });
+        return () => el.removeEventListener('scroll', onScroll);
+    }, []);
+
+    // Reset scroll when search changes
+    useEffect(() => {
+        setScrollIndex(0);
+        if (viewportRef.current) viewportRef.current.scrollTop = 0;
+    }, [tutorialSearch]);
+
+    const remaining = Math.max(0, filteredTutorials.length - VISIBLE_COUNT - scrollIndex);
+
+    const scrollTo = useCallback((direction: 'up' | 'down') => {
+        const el = viewportRef.current;
+        if (!el) return;
+        const nextIndex = direction === 'down'
+            ? Math.min(scrollIndex + 1, filteredTutorials.length - VISIBLE_COUNT)
+            : Math.max(scrollIndex - 1, 0);
+        setScrollIndex(nextIndex);
+        el.scrollTo({ top: nextIndex * CARD_HEIGHT, behavior: 'smooth' });
+    }, [scrollIndex, filteredTutorials.length]);
 
     const diffLabels = DIFFICULTY_LABELS[locale] || DIFFICULTY_LABELS.en;
 
@@ -179,7 +212,7 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
 
             <div className={styles.twoColumnLayout}>
                 {/* Left column: AI-recommended content */}
-                <div className={styles.column} ref={leftColumnRef}>
+                <div className={styles.column}>
                     <div className={styles.columnHeader}>{t('columnForYou')}</div>
                     <div className={styles.widgetList}>
                         <AnimatePresence mode="wait">
@@ -241,49 +274,97 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
                 {/* Right column: Tutorial resources */}
                 <div className={styles.column}>
                     <div className={styles.columnHeader}>{t('columnTutorials')}</div>
-                    <div
-                        className={styles.tutorialViewport}
-                        style={viewportHeight ? { maxHeight: viewportHeight - 28 } : undefined}
-                    >
+                    <div className={styles.searchContainer}>
+                        <input
+                            type="text"
+                            className={styles.searchInput}
+                            placeholder={t('searchTutorials')}
+                            value={tutorialSearch}
+                            onChange={(e) => setTutorialSearch(e.target.value)}
+                        />
+                        {tutorialSearch && (
+                            <button
+                                className={styles.searchClear}
+                                onClick={() => setTutorialSearch('')}
+                                aria-label="Clear search"
+                            >
+                                &times;
+                            </button>
+                        )}
+                    </div>
+                    <div className={styles.tutorialViewport} ref={viewportRef}>
                         <div className={styles.widgetList}>
-                            {SORTED_TUTORIALS.map((tut, index) => {
-                                const wikiPrefix = locale === 'ja' ? '' : '/en';
-                                const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
-                                return (
-                                    <motion.a
-                                        key={tut.id}
-                                        href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
-                                        className={`${styles.widget} ${styles.tutorial}`}
-                                        initial={{ opacity: 0, x: -16 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.3, delay: index * 0.04 }}
-                                    >
-                                        <div className={styles.thumbnailFrame}>
-                                            <Image
-                                                src={tut.thumb}
-                                                alt=""
-                                                width={36}
-                                                height={36}
-                                                className={styles.thumbnailImg}
-                                                unoptimized
-                                            />
-                                        </div>
-                                        <div className={styles.widgetContent}>
-                                            <div className={styles.widgetTopRow}>
-                                                <span className={styles.typeLabel}>{t('types.tutorial')}</span>
-                                                <span className={`${styles.diffBadge} ${styles[`diff_${tut.difficulty}`]}`}>
-                                                    {diffLabels[tut.difficulty]}
-                                                </span>
-                                                <span className={styles.tagBadge}>{tut.tags[0]}</span>
+                            {filteredTutorials.length === 0 ? (
+                                <div className={styles.noResults}>
+                                    {t('noTutorialResults')}
+                                </div>
+                            ) : (
+                                filteredTutorials.map((tut, index) => {
+                                    const wikiPrefix = locale === 'ja' ? '' : '/en';
+                                    const wikiSection = TUTORIAL_WIKI_SECTION[tut.id] || 'tut-beginner';
+                                    return (
+                                        <motion.a
+                                            key={tut.id}
+                                            href={`${wikiPrefix}/wiki#tutorials/${wikiSection}`}
+                                            className={`${styles.widget} ${styles.tutorial}`}
+                                            initial={{ opacity: 0, x: -16 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ duration: 0.3, delay: index * 0.04 }}
+                                        >
+                                            <div className={styles.thumbnailFrame}>
+                                                <Image
+                                                    src={tut.thumb}
+                                                    alt=""
+                                                    width={36}
+                                                    height={36}
+                                                    className={styles.thumbnailImg}
+                                                    unoptimized
+                                                />
                                             </div>
-                                            <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
-                                        </div>
-                                        <span className={styles.widgetArrow}>→</span>
-                                    </motion.a>
-                                );
-                            })}
+                                            <div className={styles.widgetContent}>
+                                                <div className={styles.widgetTopRow}>
+                                                    <span className={styles.typeLabel}>{t('types.tutorial')}</span>
+                                                    <span className={`${styles.diffBadge} ${styles[`diff_${tut.difficulty}`]}`}>
+                                                        {diffLabels[tut.difficulty]}
+                                                    </span>
+                                                    <span className={styles.tagBadge}>{tut.tags[0]}</span>
+                                                </div>
+                                                <h3 className={styles.widgetTitle}>{tw(tut.titleKey)}</h3>
+                                            </div>
+                                            <span className={styles.widgetArrow}>&rarr;</span>
+                                        </motion.a>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
+                    {filteredTutorials.length > VISIBLE_COUNT && (
+                        <div className={styles.scrollIndicator}>
+                            <span className={styles.scrollCount}>
+                                {remaining > 0
+                                    ? t('moreBelow', { count: remaining })
+                                    : t('endOfList')}
+                            </span>
+                            <div className={styles.scrollNav}>
+                                <button
+                                    className={styles.scrollBtn}
+                                    disabled={scrollIndex <= 0}
+                                    onClick={() => scrollTo('up')}
+                                    aria-label="Scroll up"
+                                >
+                                    &#9650;
+                                </button>
+                                <button
+                                    className={styles.scrollBtn}
+                                    disabled={remaining <= 0}
+                                    onClick={() => scrollTo('down')}
+                                    aria-label="Scroll down"
+                                >
+                                    &#9660;
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

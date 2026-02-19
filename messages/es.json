@@ -32,6 +32,10 @@
     "retry": "REINTENTAR",
     "refresh": "ACTUALIZAR",
     "watchOnYouTube": "Ver en YouTube",
+    "searchTutorials": "Buscar tutoriales...",
+    "noTutorialResults": "No se encontraron tutoriales",
+    "moreBelow": "+{count} más abajo",
+    "endOfList": "Fin de la lista",
     "types": {
       "tutorial": "TUTORIAL",
       "video": "VIDEO",
