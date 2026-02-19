@@ -75,6 +75,9 @@ export default function LoyaltyWidget() {
         <div className={styles.scoreInfo}>
           <div className={styles.scoreValue}>{profile?.name ?? '—'}</div>
           <div className={styles.scoreLabel}>{profile?.friendCode ?? ''}</div>
+          <div className={styles.tierName} style={{ color: currentTier.color }}>
+            <span>{currentTier.icon}</span> {t(`tiers.${currentTier.id}`)}
+          </div>
         </div>
       </div>
 
@@ -106,6 +109,7 @@ export default function LoyaltyWidget() {
 
       {/* Progress bar */}
       <div className={styles.progressRow}>
+        <div className={styles.scoreLabel} style={{ marginBottom: 8 }}>{t('totalScore')}</div>
         <div className={styles.progressBar}>
           <div
             className={styles.progressFill}

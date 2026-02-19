@@ -153,8 +153,12 @@ export default function LoyaltyDashboard() {
           </span>
           <div className={styles.heroScore}>{profile?.name ?? '—'}</div>
           <p className={styles.tierLabel}>{profile?.friendCode ?? ''}</p>
+          <h1 className={styles.tierName} style={{ color: currentTier.color }}>
+            {currentTier.icon} {t(`tiers.${currentTier.id}`)}
+          </h1>
 
           <div className={styles.progressContainer}>
+            <p className={styles.tierLabel} style={{ marginBottom: 8 }}>{t('totalScore')}</p>
             <div className={styles.progressBar}>
               <div
                 className={styles.progressFill}
