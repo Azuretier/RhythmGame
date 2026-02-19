@@ -1013,6 +1013,8 @@
     "retry": "ลองใหม่",
     "refresh": "รีเฟรช",
     "watchOnYouTube": "ดูบน YouTube",
+    "searchTutorials": "ค้นหาบทเรียน...",
+    "noTutorialResults": "ไม่พบบทเรียน",
     "types": {
       "tutorial": "บทเรียน",
       "video": "วิดีโอ",

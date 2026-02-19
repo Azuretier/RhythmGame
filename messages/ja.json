@@ -132,6 +132,8 @@
         "tutorialsSubtitle": "テクニックと戦略を学ぼう",
         "columnForYou": "おすすめ",
         "columnTutorials": "チュートリアル",
+        "searchTutorials": "チュートリアルを検索...",
+        "noTutorialResults": "チュートリアルが見つかりません",
         "types": {
             "tutorial": "チュートリアル",
             "video": "動画",
