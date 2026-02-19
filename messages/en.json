@@ -1140,6 +1140,10 @@
     "privateProfileDesc": "Your name and icon are hidden from the online players list",
     "publicProfile": "Public Profile",
     "publicProfileDesc": "Your name and icon are visible to other players online",
+    "iconLoading": "Loading icons...",
+    "iconLoadError": "Failed to Load Icons",
+    "iconLoadErrorMessage": "Unable to load profile icons. Please check your connection and try again.",
+    "retry": "Retry",
     "changeIcon": "Change Icon"
   },
   "forYou": {
