@@ -145,7 +145,8 @@
     "iconLoading": "Cargando iconos...",
     "iconLoadError": "Error al Cargar Iconos",
     "iconLoadErrorMessage": "No se pudieron cargar los iconos de perfil. Por favor, verifica tu conexión e inténtalo de nuevo.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "changeIcon": "Cambiar icono"
   },
   "meta": {
     "title": "RHYTHMIA | Juego de Puzzles de Ritmo x Tetris - Azuretier",

@@ -499,7 +499,8 @@
     "iconLoading": "Chargement des icônes...",
     "iconLoadError": "Échec du Chargement des Icônes",
     "iconLoadErrorMessage": "Impossible de charger les icônes de profil. Veuillez vérifier votre connexion et réessayer.",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "changeIcon": "Changer l'icône"
   },
   "vanilla": {
     "badge": "SOLO",
