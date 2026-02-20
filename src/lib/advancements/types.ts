@@ -39,6 +39,9 @@ export interface PlayerStats {
   bestHardDropsPerGame: number;
   totalPiecesPlaced: number;
   bestPiecesPerGame: number;
+  // Speed stats (time-windowed bests)
+  bestTSpinsIn30s: number;
+  bestTetrisIn60s: number;
   // Loyalty stats
   totalVisits: number;
   bestStreak: number;

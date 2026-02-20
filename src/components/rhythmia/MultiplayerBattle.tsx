@@ -318,6 +318,19 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const lastMoveWasRotationRef = useRef(false);
     const tSpinCountRef = useRef(0);
 
+    // Back-to-Back tracking — consecutive difficult clears (Tetris or T-spin clear)
+    const lastClearWasDifficultRef = useRef(false);
+
+    // Action display (T-spin, Tetris, Back-to-Back) — stacking toasts
+    const [actionToasts, setActionToasts] = useState<{ id: number; lines: string[]; color: string }[]>([]);
+    const actionIdRef = useRef(0);
+
+    // Speed tracking — sliding window timestamps for T-spin (30s) and Tetris (60s)
+    const tSpinTimestampsRef = useRef<number[]>([]);
+    const tetrisTimestampsRef = useRef<number[]>([]);
+    const bestTSpinsIn30sRef = useRef(0);
+    const bestTetrisIn60sRef = useRef(0);
+
     // Per-game stat tracking for advancements
     const gameHardDropsRef = useRef(0);
     const gamePiecesPlacedRef = useRef(0);
@@ -410,6 +423,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
             setShowJudgment(false);
             judgmentTimerRef.current = null;
         }, 600);
+    }, []);
+
+    // ===== Action Display Helper =====
+    const showActionMessage = useCallback((lines: string[], color: string) => {
+        const id = ++actionIdRef.current;
+        setActionToasts(prev => [...prev, { id, lines, color }]);
+        window.setTimeout(() => {
+            setActionToasts(prev => prev.filter(t => t.id !== id));
+        }, 2500);
     }, []);
 
     // ===== Audio =====
@@ -602,6 +624,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     won: false,
                     hardDrops: gameHardDropsRef.current,
                     piecesPlaced: gamePiecesPlacedRef.current,
+                    bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+                    bestTetrisIn60s: bestTetrisIn60sRef.current,
                 });
                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
             }
@@ -653,6 +677,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
             won: false,
             hardDrops: gameHardDropsRef.current,
             piecesPlaced: gamePiecesPlacedRef.current,
+            bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+            bestTetrisIn60s: bestTetrisIn60sRef.current,
         });
         const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
         if (fresh.length > 0) {
@@ -694,6 +720,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     won: false,
                     hardDrops: gameHardDropsRef.current,
                     piecesPlaced: gamePiecesPlacedRef.current,
+                    bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+                    bestTetrisIn60s: bestTetrisIn60sRef.current,
                 });
                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
             }
@@ -728,15 +756,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
             comboRef.current = 0;
         }
 
-        // T-Spin judgment display
+        // T-Spin tracking
         if (tSpin !== 'none') {
             tSpinCountRef.current++;
             playTSpinSound();
-            if (tSpin === 'full') {
-                showJudgmentText('T-SPIN!', '#A000F0');
-            } else {
-                showJudgmentText('T-SPIN MINI', '#C070FF');
-            }
         }
 
         gamePiecesPlacedRef.current++;
@@ -754,6 +777,56 @@ export const MultiplayerBattle: React.FC<Props> = ({
         // Clear lines
         const { board: clearedBoard, cleared, clearedRows } = clearLines(newBoard);
         boardRef.current = clearedBoard;
+
+        // Compose and show action messages (T-spin, Tetris, Back-to-Back)
+        {
+            const isDifficultClear = cleared > 0 && (cleared === 4 || tSpin !== 'none');
+            const msgLines: string[] = [];
+            let msgColor = '#ffffff';
+
+            // Back-to-Back detection
+            if (isDifficultClear && lastClearWasDifficultRef.current) {
+                msgLines.push('BACK-TO-BACK');
+            }
+
+            // T-spin message + speed tracking
+            if (tSpin !== 'none') {
+                const mini = tSpin === 'mini' ? 'MINI ' : '';
+                const clearName = cleared === 0 ? '' :
+                                  cleared === 1 ? ' SINGLE' :
+                                  cleared === 2 ? ' DOUBLE' :
+                                  cleared === 3 ? ' TRIPLE' :
+                                  cleared === 4 ? ' QUAD' : '';
+                msgLines.push(`T-SPIN ${mini}${clearName}`.trim() + '!');
+                msgColor = tSpin === 'full' ? '#A000F0' : '#C070FF';
+                // Speed tracking: T-spins in 30s window
+                const now = Date.now();
+                tSpinTimestampsRef.current.push(now);
+                tSpinTimestampsRef.current = tSpinTimestampsRef.current.filter(t => now - t <= 30000);
+                if (tSpinTimestampsRef.current.length > bestTSpinsIn30sRef.current) {
+                    bestTSpinsIn30sRef.current = tSpinTimestampsRef.current.length;
+                }
+            } else if (cleared === 4) {
+                msgLines.push('TETRIS!');
+                msgColor = '#00F0F0';
+                // Speed tracking: Tetris clears in 60s window
+                const now = Date.now();
+                tetrisTimestampsRef.current.push(now);
+                tetrisTimestampsRef.current = tetrisTimestampsRef.current.filter(t => now - t <= 60000);
+                if (tetrisTimestampsRef.current.length > bestTetrisIn60sRef.current) {
+                    bestTetrisIn60sRef.current = tetrisTimestampsRef.current.length;
+                }
+            }
+
+            // Update B2B state (only affected by line clears)
+            if (cleared > 0) {
+                lastClearWasDifficultRef.current = isDifficultClear;
+            }
+
+            if (msgLines.length > 0) {
+                showActionMessage(msgLines, msgColor);
+            }
+        }
 
         if (cleared > 0) {
             // Destroy terrain blocks
@@ -795,13 +868,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 onBeat,
                 combo: comboRef.current,
             });
-
-            // Judgment text for line clears
-            if (cleared === 4 && tSpin === 'none') {
-                showJudgmentText('TETRIS!', '#00F0F0');
-            } else if (cleared === 4 && tSpin !== 'none') {
-                showJudgmentText('T-SPIN QUAD!', '#FF00FF');
-            }
         }
 
         pieceRef.current = null;
@@ -810,7 +876,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         pushLiveAdvancementCheck();
         sendBoardUpdate();
         spawnPiece();
-    }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playPerfectSound, playTSpinSound, spawnPiece, render, pushLiveAdvancementCheck, showJudgmentText, vfx, destroyTerrain, spawnTerrainParticles]);
+    }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playPerfectSound, playTSpinSound, spawnPiece, render, pushLiveAdvancementCheck, showJudgmentText, vfx, destroyTerrain, spawnTerrainParticles, showActionMessage]);
 
     // Wire up startLockTimer -> performLock circular dependency
     const startLockTimerRef = useRef(startLockTimer);
@@ -987,6 +1053,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                     won: true,
                                     hardDrops: gameHardDropsRef.current,
                                     piecesPlaced: gamePiecesPlacedRef.current,
+                                    bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+                                    bestTetrisIn60s: bestTetrisIn60sRef.current,
                                 });
                                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
                             }
@@ -1023,6 +1091,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
         gamePiecesPlacedRef.current = 0;
         tSpinCountRef.current = 0;
         lastMoveWasRotationRef.current = false;
+        lastClearWasDifficultRef.current = false;
+        tSpinTimestampsRef.current = [];
+        tetrisTimestampsRef.current = [];
+        bestTSpinsIn30sRef.current = 0;
+        bestTetrisIn60sRef.current = 0;
         advRecordedRef.current = false;
         liveNotifiedRef.current = new Set();
         setToastIds([]);
@@ -1229,6 +1302,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     won: false,
                     hardDrops: gameHardDropsRef.current,
                     piecesPlaced: gamePiecesPlacedRef.current,
+                    bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+                    bestTetrisIn60s: bestTetrisIn60sRef.current,
                 });
             }
         };
@@ -1418,6 +1493,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                             <div className={styles.playerScore}>{score.toLocaleString()}</div>
                         </div>
 
+                        <div className={styles.boardActionArea}>
                         <div className={styles.boardWrap}>
                             {/* Garbage meter */}
                             {featureSettings.garbageMeter && pendingGarbage > 0 && (
@@ -1476,6 +1552,21 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 onStart={vfx.start}
                                 onStop={vfx.stop}
                             />
+                        </div>
+                        {/* Action display toasts (T-spin, Tetris, Back-to-Back) — stacking */}
+                        {actionToasts.length > 0 && (
+                            <div className={styles.actionToastContainer}>
+                                {actionToasts.map(toast => (
+                                    <div key={toast.id} className={styles.actionToast} style={{ '--action-color': toast.color } as React.CSSProperties}>
+                                        {toast.lines.map((line, i) => (
+                                            <div key={`${line}-${i}`} className={styles.actionLine}>
+                                                {line}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                         </div>
 
                         {/* Beat Timing Indicator */}

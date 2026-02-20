@@ -79,6 +79,14 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'tetris_50', category: 'general', icon: 'burst', threshold: 50, statKey: 'totalTetrisClears' },
   { id: 'tetris_100', category: 'general', icon: 'burst', threshold: 100, statKey: 'totalTetrisClears' },
   { id: 'tetris_200', category: 'general', icon: 'burst', threshold: 200, statKey: 'totalTetrisClears' },
+  // === T-Spin Speed (best count in 30s window) ===
+  { id: 'tspin_speed_2', category: 'tspin', icon: 'spark', threshold: 2, statKey: 'bestTSpinsIn30s' },
+  { id: 'tspin_speed_3', category: 'tspin', icon: 'spark', threshold: 3, statKey: 'bestTSpinsIn30s' },
+  { id: 'tspin_speed_5', category: 'tspin', icon: 'spark', threshold: 5, statKey: 'bestTSpinsIn30s' },
+  // === Tetris Speed (best count in 60s window) ===
+  { id: 'tetris_speed_2', category: 'general', icon: 'firework', threshold: 2, statKey: 'bestTetrisIn60s' },
+  { id: 'tetris_speed_3', category: 'general', icon: 'firework', threshold: 3, statKey: 'bestTetrisIn60s' },
+  { id: 'tetris_speed_5', category: 'general', icon: 'firework', threshold: 5, statKey: 'bestTetrisIn60s' },
   // === Best Tetris Clears Per Game ===
   { id: 'best_tetris_1', category: 'general', icon: 'firework', threshold: 1, statKey: 'bestTetrisClearsPerGame' },
   { id: 'best_tetris_3', category: 'general', icon: 'firework', threshold: 3, statKey: 'bestTetrisClearsPerGame' },

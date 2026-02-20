@@ -757,6 +757,104 @@
   letter-spacing: 0.1em;
 }
 
+/* Wrapper for board + action toast positioning */
+.boardActionArea {
+  position: relative;
+}
+
+/* Stacking container for action toasts — anchored bottom-right of board, grows upward */
+.actionToastContainer {
+  position: absolute;
+  left: calc(100% + 12px);
+  bottom: 0;
+  z-index: 500;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* Individual action toast — pixel art style */
+.actionToast {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 14px;
+  background: #0c0618;
+  border: 3px solid color-mix(in srgb, var(--action-color, rgba(180, 130, 255, 1)) 50%, transparent);
+  border-radius: 0;
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--action-color, #8c50ff) 30%, transparent),
+    inset -2px -2px 0px rgba(0, 0, 0, 0.4),
+    inset 2px 2px 0px rgba(255, 255, 255, 0.05);
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  image-rendering: pixelated;
+  animation: actionSlideIn 2.5s ease-out forwards;
+  position: relative;
+}
+
+/* Scanline effect on action toast */
+.actionToast::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.4) 2px,
+    rgba(0, 0, 0, 0.4) 4px
+  );
+}
+
+.actionLine {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--action-color, #ffffff);
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8), 0 0 8px color-mix(in srgb, var(--action-color, #c8a0ff) 30%, transparent);
+  white-space: nowrap;
+}
+
+.actionLine:first-child:not(:last-child) {
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+  color: rgba(200, 160, 255, 0.7);
+}
+
+@keyframes actionSlideIn {
+  0% {
+    opacity: 0;
+    transform: translate(20px, -10px);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translate(-4px, 2px);
+  }
+
+  18% {
+    transform: translate(0, 0);
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(10px, -6px);
+  }
+}
+
 /* Game over */
 .gameover {
   position: fixed;

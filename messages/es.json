@@ -311,6 +311,18 @@
       "name": "Prodigio del Giro",
       "desc": "Realiza 25 T-Spins en una partida"
     },
+    "tspin_speed_2": {
+      "name": "Giro Rápido",
+      "desc": "Realizar 2 T-Spins en 30 segundos"
+    },
+    "tspin_speed_3": {
+      "name": "Avalancha T-Spin",
+      "desc": "Realizar 3 T-Spins en 30 segundos"
+    },
+    "tspin_speed_5": {
+      "name": "Frenesí T-Spin",
+      "desc": "Realizar 5 T-Spins en 30 segundos"
+    },
     "score_10k": {
       "name": "Novato de Puntos",
       "desc": "Acumula 10.000 puntos en total"
@@ -482,6 +494,18 @@
     "best_tetris_10": {
       "name": "Prodigio del Tetris",
       "desc": "Elimina 4 líneas a la vez 10 veces en una partida"
+    },
+    "tetris_speed_2": {
+      "name": "Despeje Rápido",
+      "desc": "Realizar 2 Tetris en 60 segundos"
+    },
+    "tetris_speed_3": {
+      "name": "Avalancha Tetris",
+      "desc": "Realizar 3 Tetris en 60 segundos"
+    },
+    "tetris_speed_5": {
+      "name": "Frenesí Tetris",
+      "desc": "Realizar 5 Tetris en 60 segundos"
     },
     "perfect_beats_10": {
       "name": "Novato del Ritmo",

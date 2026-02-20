@@ -28,6 +28,8 @@ function getDefaultStats(): PlayerStats {
     bestHardDropsPerGame: 0,
     totalPiecesPlaced: 0,
     bestPiecesPerGame: 0,
+    bestTSpinsIn30s: 0,
+    bestTetrisIn60s: 0,
     totalVisits: 0,
     bestStreak: 0,
     pollsVoted: 0,
@@ -99,6 +101,8 @@ export interface GameEndStats {
   tetrisClears: number;
   hardDrops: number;
   piecesPlaced: number;
+  bestTSpinsIn30s: number;
+  bestTetrisIn60s: number;
 }
 
 export function recordGameEnd(stats: GameEndStats): AdvancementState {
@@ -139,6 +143,12 @@ export function recordGameEnd(stats: GameEndStats): AdvancementState {
   if (stats.piecesPlaced > state.stats.bestPiecesPerGame) {
     state.stats.bestPiecesPerGame = stats.piecesPlaced;
   }
+  if (stats.bestTSpinsIn30s > state.stats.bestTSpinsIn30s) {
+    state.stats.bestTSpinsIn30s = stats.bestTSpinsIn30s;
+  }
+  if (stats.bestTetrisIn60s > state.stats.bestTetrisIn60s) {
+    state.stats.bestTetrisIn60s = stats.bestTetrisIn60s;
+  }
 
   const updated = checkNewAdvancements(state);
   saveAdvancementState(updated);
@@ -158,6 +168,8 @@ export interface MultiplayerGameEndStats {
   won: boolean;
   hardDrops: number;
   piecesPlaced: number;
+  bestTSpinsIn30s: number;
+  bestTetrisIn60s: number;
 }
 
 export function recordMultiplayerGameEnd(stats: MultiplayerGameEndStats): AdvancementState {
@@ -181,6 +193,12 @@ export function recordMultiplayerGameEnd(stats: MultiplayerGameEndStats): Advanc
   }
   if (stats.piecesPlaced > state.stats.bestPiecesPerGame) {
     state.stats.bestPiecesPerGame = stats.piecesPlaced;
+  }
+  if (stats.bestTSpinsIn30s > state.stats.bestTSpinsIn30s) {
+    state.stats.bestTSpinsIn30s = stats.bestTSpinsIn30s;
+  }
+  if (stats.bestTetrisIn60s > state.stats.bestTetrisIn60s) {
+    state.stats.bestTetrisIn60s = stats.bestTetrisIn60s;
   }
 
   if (stats.won) {
@@ -251,6 +269,12 @@ export function checkLiveGameAdvancements(sessionStats: GameEndStats): string[] 
   if (sessionStats.piecesPlaced > projected.bestPiecesPerGame) {
     projected.bestPiecesPerGame = sessionStats.piecesPlaced;
   }
+  if (sessionStats.bestTSpinsIn30s > projected.bestTSpinsIn30s) {
+    projected.bestTSpinsIn30s = sessionStats.bestTSpinsIn30s;
+  }
+  if (sessionStats.bestTetrisIn60s > projected.bestTetrisIn60s) {
+    projected.bestTetrisIn60s = sessionStats.bestTetrisIn60s;
+  }
 
   const qualifying: string[] = [];
   for (const adv of ADVANCEMENTS) {
@@ -287,6 +311,12 @@ export function checkLiveMultiplayerAdvancements(sessionStats: MultiplayerGameEn
   }
   if (sessionStats.piecesPlaced > projected.bestPiecesPerGame) {
     projected.bestPiecesPerGame = sessionStats.piecesPlaced;
+  }
+  if (sessionStats.bestTSpinsIn30s > projected.bestTSpinsIn30s) {
+    projected.bestTSpinsIn30s = sessionStats.bestTSpinsIn30s;
+  }
+  if (sessionStats.bestTetrisIn60s > projected.bestTetrisIn60s) {
+    projected.bestTetrisIn60s = sessionStats.bestTetrisIn60s;
   }
 
   const qualifying: string[] = [];
