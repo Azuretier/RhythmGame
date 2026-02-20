@@ -977,6 +977,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         tetrisClears: gameTetrisClearsRef.current,
         hardDrops: gameHardDropsRef.current,
         piecesPlaced: gamePiecesPlacedRef.current,
+        bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+        bestTetrisIn60s: bestTetrisIn60sRef.current,
       });
       if (result.newlyUnlockedIds.length > 0) {
         setToastIds(prev => [...prev, ...result.newlyUnlockedIds]);
@@ -1322,6 +1324,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
           tetrisClears: gameTetrisClearsRef.current,
           hardDrops: gameHardDropsRef.current,
           piecesPlaced: gamePiecesPlacedRef.current,
+          bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+          bestTetrisIn60s: bestTetrisIn60sRef.current,
         });
       }
     };
