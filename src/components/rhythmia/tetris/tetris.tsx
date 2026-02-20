@@ -866,6 +866,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     // Clear lock state — swapping to a new piece
     lockStartTimeRef.current = null;
     lockMovesRef.current = 0;
+    lastMoveWasRotationRef.current = false;
 
     const currentType = currentPiece.type;
 
