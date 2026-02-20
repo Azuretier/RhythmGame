@@ -53,6 +53,35 @@ interface SkinCustomizerProps {
   onClose: () => void;
 }
 
+function SakuraDecoration() {
+  return (
+    <div className={styles.decorationOverlay}>
+      <svg className={styles.sakuraPetal1} width="10" height="10" viewBox="0 0 10 10" fill="none">
+        <ellipse cx="5" cy="5" rx="4" ry="2.5" transform="rotate(-30 5 5)" fill="rgba(255,182,210,0.6)" />
+      </svg>
+      <svg className={styles.sakuraPetal2} width="8" height="8" viewBox="0 0 8 8" fill="none">
+        <ellipse cx="4" cy="4" rx="3" ry="2" transform="rotate(20 4 4)" fill="rgba(255,150,190,0.5)" />
+      </svg>
+      <svg className={styles.sakuraPetal3} width="6" height="6" viewBox="0 0 6 6" fill="none">
+        <ellipse cx="3" cy="3" rx="2.5" ry="1.5" transform="rotate(-50 3 3)" fill="rgba(255,200,220,0.45)" />
+      </svg>
+      <div className={styles.sakuraGlow} />
+    </div>
+  );
+}
+
+function SunsetDecoration() {
+  return (
+    <div className={styles.decorationOverlay}>
+      <div className={styles.sunsetOrb} />
+      <div className={styles.sunsetRay1} />
+      <div className={styles.sunsetRay2} />
+      <div className={styles.sunsetRay3} />
+      <div className={styles.sunsetHorizon} />
+    </div>
+  );
+}
+
 function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolean; onSelect: () => void }) {
   return (
     <motion.button
@@ -70,6 +99,8 @@ function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolea
     >
       <div className={styles.swatchPreview}>
         <div className={styles.swatchBg}>
+          {skin.id === 'sakura' && <SakuraDecoration />}
+          {skin.id === 'sunset' && <SunsetDecoration />}
           <div className={styles.swatchHeader} />
           <div className={styles.swatchCards}>
             <div className={styles.swatchCard} />
