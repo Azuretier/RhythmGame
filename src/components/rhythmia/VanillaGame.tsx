@@ -923,7 +923,7 @@ export const Rhythmia: React.FC = () => {
     };
   }, [move, rotatePiece, hardDrop]);
 
-  // Update cell size on resize
+  // Update cell size on resize (debounced to prevent layout thrashing)
   useEffect(() => {
     const updateCellSize = () => {
       if (boardRef.current) {
@@ -935,8 +935,18 @@ export const Rhythmia: React.FC = () => {
     };
 
     updateCellSize();
-    window.addEventListener('resize', updateCellSize);
-    return () => window.removeEventListener('resize', updateCellSize);
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedUpdate = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(updateCellSize, 150);
+    };
+
+    window.addEventListener('resize', debouncedUpdate);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('resize', debouncedUpdate);
+    };
   }, [gameStarted]);
 
   // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)

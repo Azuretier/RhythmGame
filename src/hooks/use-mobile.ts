@@ -21,8 +21,18 @@ export function useIsMobile() {
     checkMobile();
 
     /* Re-check on resize in case of orientation change or window resize */
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    /* Debounced to prevent layout flickering during continuous resize */
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedCheck = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(checkMobile, 150);
+    };
+
+    window.addEventListener('resize', debouncedCheck);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('resize', debouncedCheck);
+    };
   }, []);
 
   return isMobile;
