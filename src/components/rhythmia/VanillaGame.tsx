@@ -958,6 +958,8 @@ export const Rhythmia: React.FC = () => {
           tetrisClears: gameTetrisClearsRef.current,
           hardDrops: gameHardDropsRef.current,
           piecesPlaced: gamePiecesPlacedRef.current,
+          bestTSpinsIn30s: 0,
+          bestTetrisIn60s: 0,
         });
       }
     };
