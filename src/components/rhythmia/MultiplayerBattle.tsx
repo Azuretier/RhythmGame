@@ -1053,6 +1053,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                     won: true,
                                     hardDrops: gameHardDropsRef.current,
                                     piecesPlaced: gamePiecesPlacedRef.current,
+                                    bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+                                    bestTetrisIn60s: bestTetrisIn60sRef.current,
                                 });
                                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
                             }
