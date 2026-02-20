@@ -685,6 +685,18 @@
       "name": "Prodige du Pivot",
       "desc": "Réalisez 25 T-Spins en une partie"
     },
+    "tspin_speed_2": {
+      "name": "Rotation Rapide",
+      "desc": "Effectuer 2 T-Spins en 30 secondes"
+    },
+    "tspin_speed_3": {
+      "name": "Ruée T-Spin",
+      "desc": "Effectuer 3 T-Spins en 30 secondes"
+    },
+    "tspin_speed_5": {
+      "name": "Frénésie T-Spin",
+      "desc": "Effectuer 5 T-Spins en 30 secondes"
+    },
     "score_10k": {
       "name": "Novice du Score",
       "desc": "Accumulez 10 000 points au total"
@@ -856,6 +868,18 @@
     "best_tetris_10": {
       "name": "Prodige Tetris",
       "desc": "Éliminez 4 lignes d'un coup 10 fois en une partie"
+    },
+    "tetris_speed_2": {
+      "name": "Nettoyage Rapide",
+      "desc": "Effectuer 2 Tetris en 60 secondes"
+    },
+    "tetris_speed_3": {
+      "name": "Ruée Tetris",
+      "desc": "Effectuer 3 Tetris en 60 secondes"
+    },
+    "tetris_speed_5": {
+      "name": "Frénésie Tetris",
+      "desc": "Effectuer 5 Tetris en 60 secondes"
     },
     "perfect_beats_10": {
       "name": "Novice du Rythme",

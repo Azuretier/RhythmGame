@@ -762,13 +762,21 @@
   position: relative;
 }
 
-/* Action toast (T-spin, Tetris, Back-to-Back) — pixel art style, right of board */
-.actionToast {
+/* Stacking container for action toasts — anchored bottom-right of board, grows upward */
+.actionToastContainer {
   position: absolute;
   left: calc(100% + 12px);
-  top: 0;
+  bottom: 0;
   z-index: 500;
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* Individual action toast — pixel art style */
+.actionToast {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -783,7 +791,8 @@
     inset 2px 2px 0px rgba(255, 255, 255, 0.05);
   font-family: var(--font-pixel), "Press Start 2P", monospace;
   image-rendering: pixelated;
-  animation: actionSlideIn 1.5s ease-out forwards;
+  animation: actionSlideIn 2.5s ease-out forwards;
+  position: relative;
 }
 
 /* Scanline effect on action toast */
@@ -827,16 +836,16 @@
     transform: translate(20px, -10px);
   }
 
-  15% {
+  10% {
     opacity: 1;
     transform: translate(-4px, 2px);
   }
 
-  25% {
+  18% {
     transform: translate(0, 0);
   }
 
-  75% {
+  80% {
     opacity: 1;
   }
 

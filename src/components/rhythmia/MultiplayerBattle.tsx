@@ -321,11 +321,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
     // Back-to-Back tracking — consecutive difficult clears (Tetris or T-spin clear)
     const lastClearWasDifficultRef = useRef(false);
 
-    // Action display (T-spin, Tetris, Back-to-Back)
-    const [actionLines, setActionLines] = useState<string[]>([]);
-    const [showActionDisplay, setShowActionDisplay] = useState(false);
-    const [actionColor, setActionColor] = useState('#ffffff');
-    const actionTimerRef = useRef<number | null>(null);
+    // Action display (T-spin, Tetris, Back-to-Back) — stacking toasts
+    const [actionToasts, setActionToasts] = useState<{ id: number; lines: string[]; color: string }[]>([]);
+    const actionIdRef = useRef(0);
+
+    // Speed tracking — sliding window timestamps for T-spin (30s) and Tetris (60s)
+    const tSpinTimestampsRef = useRef<number[]>([]);
+    const tetrisTimestampsRef = useRef<number[]>([]);
+    const bestTSpinsIn30sRef = useRef(0);
+    const bestTetrisIn60sRef = useRef(0);
 
     // Per-game stat tracking for advancements
     const gameHardDropsRef = useRef(0);
@@ -423,15 +427,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     // ===== Action Display Helper =====
     const showActionMessage = useCallback((lines: string[], color: string) => {
-        if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
-        setActionLines(lines);
-        setActionColor(color);
-        setShowActionDisplay(false);
-        requestAnimationFrame(() => setShowActionDisplay(true));
-        actionTimerRef.current = window.setTimeout(() => {
-            setShowActionDisplay(false);
-            actionTimerRef.current = null;
-        }, 1500);
+        const id = ++actionIdRef.current;
+        setActionToasts(prev => [...prev, { id, lines, color }]);
+        window.setTimeout(() => {
+            setActionToasts(prev => prev.filter(t => t.id !== id));
+        }, 2500);
     }, []);
 
     // ===== Audio =====
@@ -624,6 +624,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     won: false,
                     hardDrops: gameHardDropsRef.current,
                     piecesPlaced: gamePiecesPlacedRef.current,
+                    bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+                    bestTetrisIn60s: bestTetrisIn60sRef.current,
                 });
                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
             }
@@ -675,6 +677,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
             won: false,
             hardDrops: gameHardDropsRef.current,
             piecesPlaced: gamePiecesPlacedRef.current,
+            bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+            bestTetrisIn60s: bestTetrisIn60sRef.current,
         });
         const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
         if (fresh.length > 0) {
@@ -716,6 +720,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     won: false,
                     hardDrops: gameHardDropsRef.current,
                     piecesPlaced: gamePiecesPlacedRef.current,
+                    bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+                    bestTetrisIn60s: bestTetrisIn60sRef.current,
                 });
                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
             }
@@ -783,7 +789,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 msgLines.push('BACK-TO-BACK');
             }
 
-            // T-spin message
+            // T-spin message + speed tracking
             if (tSpin !== 'none') {
                 const mini = tSpin === 'mini' ? 'MINI ' : '';
                 const clearName = cleared === 0 ? '' :
@@ -793,9 +799,23 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                   cleared === 4 ? ' QUAD' : '';
                 msgLines.push(`T-SPIN ${mini}${clearName}`.trim() + '!');
                 msgColor = tSpin === 'full' ? '#A000F0' : '#C070FF';
+                // Speed tracking: T-spins in 30s window
+                const now = Date.now();
+                tSpinTimestampsRef.current.push(now);
+                tSpinTimestampsRef.current = tSpinTimestampsRef.current.filter(t => now - t <= 30000);
+                if (tSpinTimestampsRef.current.length > bestTSpinsIn30sRef.current) {
+                    bestTSpinsIn30sRef.current = tSpinTimestampsRef.current.length;
+                }
             } else if (cleared === 4) {
                 msgLines.push('TETRIS!');
                 msgColor = '#00F0F0';
+                // Speed tracking: Tetris clears in 60s window
+                const now = Date.now();
+                tetrisTimestampsRef.current.push(now);
+                tetrisTimestampsRef.current = tetrisTimestampsRef.current.filter(t => now - t <= 60000);
+                if (tetrisTimestampsRef.current.length > bestTetrisIn60sRef.current) {
+                    bestTetrisIn60sRef.current = tetrisTimestampsRef.current.length;
+                }
             }
 
             // Update B2B state (only affected by line clears)
@@ -1070,6 +1090,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
         tSpinCountRef.current = 0;
         lastMoveWasRotationRef.current = false;
         lastClearWasDifficultRef.current = false;
+        tSpinTimestampsRef.current = [];
+        tetrisTimestampsRef.current = [];
+        bestTSpinsIn30sRef.current = 0;
+        bestTetrisIn60sRef.current = 0;
         advRecordedRef.current = false;
         liveNotifiedRef.current = new Set();
         setToastIds([]);
@@ -1276,16 +1300,17 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     won: false,
                     hardDrops: gameHardDropsRef.current,
                     piecesPlaced: gamePiecesPlacedRef.current,
+                    bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+                    bestTetrisIn60s: bestTetrisIn60sRef.current,
                 });
             }
         };
     }, []);
 
-    // Cleanup judgment and action timers on unmount
+    // Cleanup judgment timer on unmount
     useEffect(() => {
         return () => {
             if (judgmentTimerRef.current) clearTimeout(judgmentTimerRef.current);
-            if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
         };
     }, []);
 
@@ -1526,12 +1551,16 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 onStop={vfx.stop}
                             />
                         </div>
-                        {/* Action display toast (T-spin, Tetris, Back-to-Back) */}
-                        {showActionDisplay && actionLines.length > 0 && (
-                            <div className={styles.actionToast} style={{ '--action-color': actionColor } as React.CSSProperties}>
-                                {actionLines.map((line, i) => (
-                                    <div key={`${line}-${i}`} className={styles.actionLine}>
-                                        {line}
+                        {/* Action display toasts (T-spin, Tetris, Back-to-Back) — stacking */}
+                        {actionToasts.length > 0 && (
+                            <div className={styles.actionToastContainer}>
+                                {actionToasts.map(toast => (
+                                    <div key={toast.id} className={styles.actionToast} style={{ '--action-color': toast.color } as React.CSSProperties}>
+                                        {toast.lines.map((line, i) => (
+                                            <div key={`${line}-${i}`} className={styles.actionLine}>
+                                                {line}
+                                            </div>
+                                        ))}
                                     </div>
                                 ))}
                             </div>

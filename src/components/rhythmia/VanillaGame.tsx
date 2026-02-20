@@ -326,6 +326,8 @@ export const Rhythmia: React.FC = () => {
       tetrisClears: gameTetrisClearsRef.current,
       hardDrops: gameHardDropsRef.current,
       piecesPlaced: gamePiecesPlacedRef.current,
+      bestTSpinsIn30s: 0,
+      bestTetrisIn60s: 0,
     });
     const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
     if (fresh.length > 0) {
@@ -370,6 +372,8 @@ export const Rhythmia: React.FC = () => {
       tetrisClears: gameTetrisClearsRef.current,
       hardDrops: gameHardDropsRef.current,
       piecesPlaced: gamePiecesPlacedRef.current,
+      bestTSpinsIn30s: 0,
+      bestTetrisIn60s: 0,
     });
     if (result.newlyUnlockedIds.length > 0) {
       setToastIds(result.newlyUnlockedIds);

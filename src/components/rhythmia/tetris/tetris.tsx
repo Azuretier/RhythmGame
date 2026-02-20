@@ -177,15 +177,11 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
   // Show action message (T-spin, Tetris, Back-to-Back) on the board
   const showActionMessage = useCallback((lines: string[], color: string) => {
-    if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
-    setActionLines(lines);
-    setActionColor(color);
-    setShowAction(false);
-    requestAnimationFrame(() => setShowAction(true));
-    actionTimerRef.current = window.setTimeout(() => {
-      setShowAction(false);
-      actionTimerRef.current = null;
-    }, 1500);
+    const id = ++actionIdRef.current;
+    setActionToasts(prev => [...prev, { id, lines, color }]);
+    window.setTimeout(() => {
+      setActionToasts(prev => prev.filter(t => t.id !== id));
+    }, 2500);
   }, []);
 
   // Feature settings (persisted in localStorage)
@@ -215,17 +211,21 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
 
+  // Speed tracking — sliding window timestamps for T-spin (30s) and Tetris (60s)
+  const tSpinTimestampsRef = useRef<number[]>([]);
+  const tetrisTimestampsRef = useRef<number[]>([]);
+  const bestTSpinsIn30sRef = useRef(0);
+  const bestTetrisIn60sRef = useRef(0);
+
   // T-Spin tracking
   const lastMoveWasRotationRef = useRef(false);
 
   // Back-to-Back tracking — consecutive difficult clears (Tetris or T-spin clear)
   const lastClearWasDifficultRef = useRef(false);
 
-  // Action display (T-spin, Tetris, Back-to-Back)
-  const [actionLines, setActionLines] = useState<string[]>([]);
-  const [showAction, setShowAction] = useState(false);
-  const [actionColor, setActionColor] = useState('#ffffff');
-  const actionTimerRef = useRef<number | null>(null);
+  // Action display (T-spin, Tetris, Back-to-Back) — stacking toasts
+  const [actionToasts, setActionToasts] = useState<{ id: number; lines: string[]; color: string }[]>([]);
+  const actionIdRef = useRef(0);
 
   // Lock delay — grace period after piece lands before locking
   const lockStartTimeRef = useRef<number | null>(null);
@@ -546,6 +546,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       tetrisClears: gameTetrisClearsRef.current,
       hardDrops: gameHardDropsRef.current,
       piecesPlaced: gamePiecesPlacedRef.current,
+      bestTSpinsIn30s: bestTSpinsIn30sRef.current,
+      bestTetrisIn60s: bestTetrisIn60sRef.current,
     });
     const fresh = qualifying.filter(id => !liveNotifiedRef.current.has(id));
     if (fresh.length > 0) {
@@ -707,7 +709,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         msgLines.push('BACK-TO-BACK');
       }
 
-      // T-spin message
+      // T-spin message + speed tracking
       if (tSpin !== 'none') {
         const mini = tSpin === 'mini' ? 'MINI ' : '';
         const clearName = clearedLines === 0 ? '' :
@@ -716,9 +718,23 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                           clearedLines === 3 ? ' TRIPLE' : '';
         msgLines.push(`T-SPIN ${mini}${clearName}`.trim() + '!');
         msgColor = tSpin === 'full' ? '#A000F0' : '#C070FF';
+        // Speed tracking: T-spins in 30s window
+        const now = Date.now();
+        tSpinTimestampsRef.current.push(now);
+        tSpinTimestampsRef.current = tSpinTimestampsRef.current.filter(t => now - t <= 30000);
+        if (tSpinTimestampsRef.current.length > bestTSpinsIn30sRef.current) {
+          bestTSpinsIn30sRef.current = tSpinTimestampsRef.current.length;
+        }
       } else if (clearedLines === 4) {
         msgLines.push('TETRIS!');
         msgColor = '#00F0F0';
+        // Speed tracking: Tetris clears in 60s window
+        const now = Date.now();
+        tetrisTimestampsRef.current.push(now);
+        tetrisTimestampsRef.current = tetrisTimestampsRef.current.filter(t => now - t <= 60000);
+        if (tetrisTimestampsRef.current.length > bestTetrisIn60sRef.current) {
+          bestTetrisIn60sRef.current = tetrisTimestampsRef.current.length;
+        }
       }
 
       // Update B2B state (only affected by line clears)
@@ -923,13 +939,12 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     lockMovesRef.current = 0;
     lastMoveWasRotationRef.current = false;
     lastClearWasDifficultRef.current = false;
+    tSpinTimestampsRef.current = [];
+    tetrisTimestampsRef.current = [];
+    bestTSpinsIn30sRef.current = 0;
+    bestTetrisIn60sRef.current = 0;
     setToastIds([]);
-    setActionLines([]);
-    setShowAction(false);
-    if (actionTimerRef.current) {
-      clearTimeout(actionTimerRef.current);
-      actionTimerRef.current = null;
-    }
+    setActionToasts([]);
   }, [initAudio, initGame]);
 
   // Start game — intercept for tutorial on first play
@@ -1286,11 +1301,9 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     };
   }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
-  // Clean up action timer on unmount
+  // Clean up action toasts on unmount
   useEffect(() => {
-    return () => {
-      if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
-    };
+    return () => { setActionToasts([]); };
   }, []);
 
   // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
@@ -1427,12 +1440,16 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 defaultKeybinds={defaultKeybinds}
                 featureSettings={featureSettings}
               />
-              {/* Action display toast (T-spin, Tetris, Back-to-Back) */}
-              {showAction && actionLines.length > 0 && (
-                <div className={styles.actionToast} style={{ '--action-color': actionColor } as React.CSSProperties}>
-                  {actionLines.map((line, i) => (
-                    <div key={`${line}-${i}`} className={styles.actionLine}>
-                      {line}
+              {/* Action display toasts (T-spin, Tetris, Back-to-Back) — stacking */}
+              {actionToasts.length > 0 && (
+                <div className={styles.actionToastContainer}>
+                  {actionToasts.map(toast => (
+                    <div key={toast.id} className={styles.actionToast} style={{ '--action-color': toast.color } as React.CSSProperties}>
+                      {toast.lines.map((line, i) => (
+                        <div key={`${line}-${i}`} className={styles.actionLine}>
+                          {line}
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
