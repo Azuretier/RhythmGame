@@ -51,16 +51,25 @@ export function useDeviceType(): DeviceInfo {
     );
 
     useEffect(() => {
+        let timer: ReturnType<typeof setTimeout> | null = null;
+
         const handleResize = () => {
-            setViewportWidth(window.innerWidth);
-            setViewportHeight(window.innerHeight);
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+                setViewportWidth(window.innerWidth);
+                setViewportHeight(window.innerHeight);
+            }, 150);
         };
 
-        handleResize();
+        // Set initial values synchronously (no debounce on mount)
+        setViewportWidth(window.innerWidth);
+        setViewportHeight(window.innerHeight);
+
         window.addEventListener('resize', handleResize);
         window.addEventListener('orientationchange', handleResize);
 
         return () => {
+            if (timer) clearTimeout(timer);
             window.removeEventListener('resize', handleResize);
             window.removeEventListener('orientationchange', handleResize);
         };
