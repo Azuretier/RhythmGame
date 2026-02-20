@@ -415,11 +415,11 @@
     position: relative;
 }
 
-/* ===== Action Toast (T-spin, Tetris, Back-to-Back) — pixel art style, left of board ===== */
+/* ===== Action Toast (T-spin, Tetris, Back-to-Back) — pixel art style, right of board ===== */
 .actionToast {
     position: absolute;
-    right: calc(100% + 12px);
-    bottom: 24px;
+    left: calc(100% + 12px);
+    top: 0;
     z-index: 500;
     pointer-events: none;
     display: flex;
@@ -477,16 +477,16 @@
 @keyframes actionSlideIn {
     0% {
         opacity: 0;
-        transform: translateX(-20px);
+        transform: translate(20px, -10px);
     }
 
     15% {
         opacity: 1;
-        transform: translateX(4px);
+        transform: translate(-4px, 2px);
     }
 
     25% {
-        transform: translateX(0);
+        transform: translate(0, 0);
     }
 
     75% {
@@ -495,7 +495,7 @@
 
     100% {
         opacity: 0;
-        transform: translateX(-10px);
+        transform: translate(10px, -6px);
     }
 }
 
