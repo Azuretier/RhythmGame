@@ -904,17 +904,18 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         // Apply damage when enemies reach the tower
         if (reached > 0) {
           const damage = reached * ENEMY_REACH_DAMAGE;
-          setTowerHealthRef.current(prev => {
-            const newHealth = Math.max(0, prev - damage);
-            if (newHealth <= 0) {
-              setGameOverRef.current(true);
-            }
-            return newHealth;
-          });
+          const newHealth = Math.max(0, towerHealthRef.current - damage);
+          towerHealthRef.current = newHealth;
+          setTowerHealthRef.current(newHealth);
+          if (newHealth <= 0) {
+            setGameOverRef.current(true);
+            gameOverRef.current = true;
+          }
         }
 
         // Check wave complete: no more spawning and all enemies dead
-        if (tdBeatsRemainingRef.current <= 0 && gamePhaseRef.current === 'PLAYING') {
+        // Skip if player just died (tower destroyed) to prevent stage transition on death
+        if (!gameOverRef.current && tdBeatsRemainingRef.current <= 0 && gamePhaseRef.current === 'PLAYING') {
           const aliveCount = enemiesRef.current.filter(e => e.alive).length;
           if (aliveCount === 0) {
             completeWaveRef.current();
@@ -1221,6 +1222,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         worldIdx={worldIdx}
         stageNumber={stageNumber}
         terrainPhase={terrainPhase}
+        gameOver={gameOver}
       />
 
       {/* Tutorial Guide — shown on first vanilla play */}

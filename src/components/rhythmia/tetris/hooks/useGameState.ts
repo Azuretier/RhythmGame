@@ -841,6 +841,9 @@ export function useGameState() {
         gamePhaseRef.current = 'COLLAPSE';
 
         setTimeout(() => {
+            // Abort transition if player died during collapse
+            if (gameOverRef.current) return;
+
             setGamePhase('CHECKPOINT');
             gamePhaseRef.current = 'CHECKPOINT';
 
@@ -859,6 +862,9 @@ export function useGameState() {
             tdBeatsRemainingRef.current = TD_WAVE_BEATS;
 
             setTimeout(() => {
+                // Abort transition if player died during checkpoint
+                if (gameOverRef.current) return;
+
                 setGamePhase('PLAYING');
                 gamePhaseRef.current = 'PLAYING';
             }, 1500);
@@ -880,10 +886,16 @@ export function useGameState() {
         bulletsRef.current = [];
 
         setTimeout(() => {
+            // Abort transition if player died during collapse
+            if (gameOverRef.current) return;
+
             setGamePhase('TRANSITION');
             gamePhaseRef.current = 'TRANSITION';
 
             setTimeout(() => {
+                // Abort transition if player died during transition
+                if (gameOverRef.current) return;
+
                 // Advance to next stage
                 const nextStage = stageNumberRef.current + 1;
                 startNewStage(nextStage);
@@ -900,6 +912,9 @@ export function useGameState() {
                 gamePhaseRef.current = 'WORLD_CREATION';
 
                 setTimeout(() => {
+                    // Abort transition if player died during world creation
+                    if (gameOverRef.current) return;
+
                     setGamePhase('PLAYING');
                     gamePhaseRef.current = 'PLAYING';
                 }, 1500);
