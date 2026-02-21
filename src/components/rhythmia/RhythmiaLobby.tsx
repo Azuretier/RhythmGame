@@ -21,6 +21,7 @@ import LocaleSwitcher from '@/components/LocaleSwitcher';
 import LoyaltyWidget from '@/components/loyalty/LoyaltyWidget';
 import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
+import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -203,6 +204,9 @@ export default function RhythmiaLobby() {
 
     return (
         <div className={styles.page}>
+            {/* Skin-specific ambient effects (sakura petals, sunset embers) */}
+            <SkinAmbientEffects intensity="idle" />
+
             {/* Profile setup overlay */}
             <AnimatePresence>
                 {showProfileSetup && <ProfileSetup />}

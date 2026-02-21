@@ -8,6 +8,7 @@ import styles from './VanillaGame.module.css';
 import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
 import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
+import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 
 // Advancements
 import { recordGameEnd, checkLiveGameAdvancements } from '@/lib/advancements/storage';
@@ -1334,11 +1335,22 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
   const world = WORLDS[worldIdx];
 
+  // Map game phase to skin ambient effect intensity
+  const skinEffectIntensity = useMemo((): 'idle' | 'playing' | 'intense' => {
+    if (!isPlaying) return 'idle';
+    if (gamePhase === 'COLLAPSE' || gamePhase === 'TRANSITION' || gamePhase === 'WORLD_CREATION') return 'intense';
+    if (gamePhase === 'PLAYING') return 'playing';
+    return 'idle';
+  }, [isPlaying, gamePhase]);
+
   return (
     <div
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
       style={{ ...responsiveCSSVars, position: 'relative' }}
     >
+      {/* Skin ambient effects (sakura petals, sunset embers) — intensity follows game phase */}
+      <SkinAmbientEffects intensity={skinEffectIntensity} />
+
       {/* Voxel World Background — only render during gameplay */}
       {isPlaying && featureSettings.voxelBackground && (
         <VoxelWorldBackground

@@ -1,0 +1,497 @@
+/* ═══════════════════════════════════════════════════
+   Skin Ambient Effects — full-screen overlay layer
+   ═══════════════════════════════════════════════════ */
+
+.ambientContainer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────
+   SAKURA — Cherry Blossom Effects
+   ───────────────────────────────────────────────── */
+
+/* Ambient pink glow — top-right */
+.sakuraAmbientGlow {
+  position: absolute;
+  top: -15%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(ellipse, rgba(255, 107, 157, 0.12) 0%, transparent 70%);
+  animation: sakuraGlowDrift 8s ease-in-out infinite;
+}
+
+.sakuraAmbientGlowActive {
+  background: radial-gradient(ellipse, rgba(255, 107, 157, 0.22) 0%, transparent 70%);
+}
+
+/* Secondary glow — bottom-left, only during gameplay */
+.sakuraAmbientGlow2 {
+  position: absolute;
+  bottom: -10%;
+  left: -10%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(ellipse, rgba(255, 140, 190, 0.1) 0%, transparent 65%);
+  animation: sakuraGlowDrift2 10s ease-in-out infinite;
+}
+
+@keyframes sakuraGlowDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.7; }
+  50% { transform: translate(-20px, 15px) scale(1.1); opacity: 1; }
+}
+
+@keyframes sakuraGlowDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate(15px, -10px) scale(1.15); opacity: 0.85; }
+}
+
+/* ── Falling petals ── */
+.petal {
+  position: absolute;
+  pointer-events: none;
+}
+
+.petal svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Petal 1: large, slow, left side */
+.petal1 {
+  width: 28px;
+  height: 28px;
+  left: 12%;
+  animation: petalFall1 12s linear infinite, petalSway1 4s ease-in-out infinite;
+}
+
+/* Petal 2: medium, mid-speed, center-left */
+.petal2 {
+  width: 22px;
+  height: 22px;
+  left: 35%;
+  animation: petalFall2 10s linear infinite 2s, petalSway2 3.5s ease-in-out infinite 0.5s;
+}
+
+/* Petal 3: small, fast, right side */
+.petal3 {
+  width: 18px;
+  height: 18px;
+  left: 72%;
+  animation: petalFall3 8s linear infinite 4s, petalSway3 3s ease-in-out infinite 1s;
+}
+
+/* Petal 4: medium, slow, far right */
+.petal4 {
+  width: 24px;
+  height: 24px;
+  left: 88%;
+  animation: petalFall4 14s linear infinite 1s, petalSway1 4.5s ease-in-out infinite 2s;
+}
+
+/* Petal 5: small, medium-speed, center */
+.petal5 {
+  width: 16px;
+  height: 16px;
+  left: 52%;
+  animation: petalFall5 9s linear infinite 6s, petalSway2 3s ease-in-out infinite 1.5s;
+}
+
+/* Extra petals for playing mode */
+.petal6 {
+  width: 20px;
+  height: 20px;
+  left: 25%;
+  animation: petalFall2 7s linear infinite 0.5s, petalSway3 2.5s ease-in-out infinite;
+}
+
+.petal7 {
+  width: 15px;
+  height: 15px;
+  left: 65%;
+  animation: petalFall3 6s linear infinite 3s, petalSway1 2.8s ease-in-out infinite 0.8s;
+}
+
+/* Burst petals for intense mode — larger, faster */
+.petalBurst1 {
+  width: 34px;
+  height: 34px;
+  left: 40%;
+  animation: petalFall1 5s linear infinite, petalSway2 2s ease-in-out infinite;
+}
+
+.petalBurst2 {
+  width: 30px;
+  height: 30px;
+  left: 78%;
+  animation: petalFall3 4.5s linear infinite 1s, petalSway3 1.8s ease-in-out infinite;
+}
+
+/* Petal fall keyframes — each has different start/end Y and slight X drift */
+@keyframes petalFall1 {
+  0% { top: -5%; opacity: 0; }
+  5% { opacity: 0.8; }
+  90% { opacity: 0.6; }
+  100% { top: 105%; opacity: 0; }
+}
+
+@keyframes petalFall2 {
+  0% { top: -8%; opacity: 0; }
+  8% { opacity: 0.7; }
+  85% { opacity: 0.5; }
+  100% { top: 108%; opacity: 0; }
+}
+
+@keyframes petalFall3 {
+  0% { top: -3%; opacity: 0; }
+  6% { opacity: 0.75; }
+  88% { opacity: 0.55; }
+  100% { top: 103%; opacity: 0; }
+}
+
+@keyframes petalFall4 {
+  0% { top: -10%; opacity: 0; }
+  4% { opacity: 0.65; }
+  92% { opacity: 0.45; }
+  100% { top: 110%; opacity: 0; }
+}
+
+@keyframes petalFall5 {
+  0% { top: -4%; opacity: 0; }
+  7% { opacity: 0.7; }
+  90% { opacity: 0.5; }
+  100% { top: 104%; opacity: 0; }
+}
+
+/* Petal horizontal sway — sinusoidal drift */
+@keyframes petalSway1 {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(20px) rotate(15deg); }
+  75% { transform: translateX(-15px) rotate(-10deg); }
+}
+
+@keyframes petalSway2 {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  30% { transform: translateX(-25px) rotate(-20deg); }
+  70% { transform: translateX(18px) rotate(12deg); }
+}
+
+@keyframes petalSway3 {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  35% { transform: translateX(15px) rotate(25deg); }
+  65% { transform: translateX(-20px) rotate(-15deg); }
+}
+
+/* ─────────────────────────────────────────────────
+   SUNSET — Ember & Ray Effects
+   ───────────────────────────────────────────────── */
+
+/* Warm horizon gradient at the bottom */
+.sunsetHorizonGlow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
+  background: linear-gradient(to top,
+    rgba(255, 140, 0, 0.08) 0%,
+    rgba(255, 180, 80, 0.04) 40%,
+    transparent 100%
+  );
+  animation: horizonPulse 6s ease-in-out infinite;
+}
+
+.sunsetHorizonGlowActive {
+  height: 40%;
+  background: linear-gradient(to top,
+    rgba(255, 140, 0, 0.15) 0%,
+    rgba(255, 180, 80, 0.08) 40%,
+    transparent 100%
+  );
+}
+
+@keyframes horizonPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Sun orb glow — top right area */
+.sunsetOrbGlow {
+  position: absolute;
+  top: 5%;
+  right: 10%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle,
+    rgba(255, 200, 80, 0.2) 0%,
+    rgba(255, 160, 40, 0.08) 40%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  animation: orbFloat 7s ease-in-out infinite;
+}
+
+.sunsetOrbGlowIntense {
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle,
+    rgba(255, 200, 80, 0.35) 0%,
+    rgba(255, 160, 40, 0.15) 40%,
+    transparent 70%
+  );
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.8; }
+  50% { transform: translate(-10px, 8px) scale(1.1); opacity: 1; }
+}
+
+/* ── Sweeping light rays ── */
+.ray {
+  position: absolute;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 200, 100, 0.06) 30%,
+    rgba(255, 180, 80, 0.1) 50%,
+    rgba(255, 200, 100, 0.06) 70%,
+    transparent 100%
+  );
+  transform-origin: top right;
+}
+
+.ray1 {
+  top: 0;
+  right: 15%;
+  width: 200%;
+  height: 3px;
+  transform: rotate(25deg);
+  animation: raySweep1 10s ease-in-out infinite;
+}
+
+.ray2 {
+  top: 0;
+  right: 25%;
+  width: 180%;
+  height: 2px;
+  transform: rotate(35deg);
+  animation: raySweep2 13s ease-in-out infinite 3s;
+}
+
+.ray3 {
+  top: 0;
+  right: 8%;
+  width: 220%;
+  height: 2px;
+  transform: rotate(18deg);
+  animation: raySweep3 8s ease-in-out infinite 1s;
+}
+
+@keyframes raySweep1 {
+  0%, 100% { opacity: 0; transform: rotate(25deg) translateX(0); }
+  20% { opacity: 0.8; }
+  80% { opacity: 0.6; }
+  100% { opacity: 0; transform: rotate(25deg) translateX(-120px); }
+}
+
+@keyframes raySweep2 {
+  0%, 100% { opacity: 0; transform: rotate(35deg) translateX(0); }
+  25% { opacity: 0.7; }
+  75% { opacity: 0.5; }
+  100% { opacity: 0; transform: rotate(35deg) translateX(-80px); }
+}
+
+@keyframes raySweep3 {
+  0%, 100% { opacity: 0; transform: rotate(18deg) translateX(0); }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.7; }
+  100% { opacity: 0; transform: rotate(18deg) translateX(-150px); }
+}
+
+/* ── Rising ember particles ── */
+.ember {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ember1 {
+  width: 4px;
+  height: 4px;
+  left: 15%;
+  background: radial-gradient(circle, rgba(255, 180, 60, 0.9) 0%, rgba(255, 140, 0, 0.4) 70%, transparent 100%);
+  box-shadow: 0 0 6px rgba(255, 160, 40, 0.5);
+  animation: emberRise1 8s ease-out infinite;
+}
+
+.ember2 {
+  width: 3px;
+  height: 3px;
+  left: 40%;
+  background: radial-gradient(circle, rgba(255, 200, 100, 0.85) 0%, rgba(255, 160, 40, 0.3) 70%, transparent 100%);
+  box-shadow: 0 0 4px rgba(255, 180, 60, 0.4);
+  animation: emberRise2 10s ease-out infinite 2s;
+}
+
+.ember3 {
+  width: 5px;
+  height: 5px;
+  left: 65%;
+  background: radial-gradient(circle, rgba(255, 160, 40, 0.95) 0%, rgba(255, 120, 0, 0.4) 70%, transparent 100%);
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.5);
+  animation: emberRise3 7s ease-out infinite 4s;
+}
+
+.ember4 {
+  width: 3px;
+  height: 3px;
+  left: 82%;
+  background: radial-gradient(circle, rgba(255, 220, 120, 0.8) 0%, rgba(255, 180, 60, 0.3) 70%, transparent 100%);
+  box-shadow: 0 0 5px rgba(255, 200, 80, 0.4);
+  animation: emberRise4 12s ease-out infinite 1s;
+}
+
+.ember5 {
+  width: 4px;
+  height: 4px;
+  left: 30%;
+  background: radial-gradient(circle, rgba(255, 170, 50, 0.9) 0%, rgba(255, 130, 0, 0.35) 70%, transparent 100%);
+  box-shadow: 0 0 6px rgba(255, 150, 30, 0.45);
+  animation: emberRise5 9s ease-out infinite 5s;
+}
+
+/* Extra embers for playing mode */
+.ember6 {
+  width: 3px;
+  height: 3px;
+  left: 55%;
+  background: radial-gradient(circle, rgba(255, 190, 70, 0.85) 0%, rgba(255, 150, 20, 0.3) 70%, transparent 100%);
+  box-shadow: 0 0 5px rgba(255, 170, 50, 0.4);
+  animation: emberRise2 6s ease-out infinite 0.5s;
+}
+
+.ember7 {
+  width: 4px;
+  height: 4px;
+  left: 75%;
+  background: radial-gradient(circle, rgba(255, 210, 90, 0.9) 0%, rgba(255, 170, 40, 0.35) 70%, transparent 100%);
+  box-shadow: 0 0 7px rgba(255, 190, 60, 0.5);
+  animation: emberRise3 5s ease-out infinite 2s;
+}
+
+.ember8 {
+  width: 2px;
+  height: 2px;
+  left: 20%;
+  background: radial-gradient(circle, rgba(255, 230, 140, 0.8) 0%, rgba(255, 200, 80, 0.3) 70%, transparent 100%);
+  box-shadow: 0 0 4px rgba(255, 210, 100, 0.35);
+  animation: emberRise1 5.5s ease-out infinite 3s;
+}
+
+/* Ember rise keyframes — each drifts slightly sideways while rising */
+@keyframes emberRise1 {
+  0% { bottom: -2%; opacity: 0; transform: translateX(0) scale(1); }
+  10% { opacity: 0.9; }
+  50% { transform: translateX(12px) scale(0.8); }
+  90% { opacity: 0.3; }
+  100% { bottom: 100%; opacity: 0; transform: translateX(-8px) scale(0.4); }
+}
+
+@keyframes emberRise2 {
+  0% { bottom: -3%; opacity: 0; transform: translateX(0) scale(1); }
+  8% { opacity: 0.85; }
+  45% { transform: translateX(-15px) scale(0.85); }
+  88% { opacity: 0.25; }
+  100% { bottom: 98%; opacity: 0; transform: translateX(10px) scale(0.3); }
+}
+
+@keyframes emberRise3 {
+  0% { bottom: -1%; opacity: 0; transform: translateX(0) scale(1); }
+  12% { opacity: 0.95; }
+  55% { transform: translateX(18px) scale(0.75); }
+  92% { opacity: 0.2; }
+  100% { bottom: 102%; opacity: 0; transform: translateX(-5px) scale(0.35); }
+}
+
+@keyframes emberRise4 {
+  0% { bottom: -4%; opacity: 0; transform: translateX(0) scale(1); }
+  6% { opacity: 0.8; }
+  40% { transform: translateX(-10px) scale(0.9); }
+  85% { opacity: 0.2; }
+  100% { bottom: 105%; opacity: 0; transform: translateX(14px) scale(0.3); }
+}
+
+@keyframes emberRise5 {
+  0% { bottom: -2%; opacity: 0; transform: translateX(0) scale(1); }
+  10% { opacity: 0.85; }
+  48% { transform: translateX(8px) scale(0.82); }
+  90% { opacity: 0.15; }
+  100% { bottom: 100%; opacity: 0; transform: translateX(-12px) scale(0.35); }
+}
+
+/* Heat haze for intense mode */
+.heatHaze {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20%;
+  background: linear-gradient(to top,
+    rgba(255, 160, 40, 0.06) 0%,
+    transparent 100%
+  );
+  animation: heatShimmer 2s ease-in-out infinite;
+}
+
+@keyframes heatShimmer {
+  0%, 100% { transform: scaleY(1); opacity: 0.6; }
+  50% { transform: scaleY(1.05); opacity: 1; }
+}
+
+/* ─────────────────────────────────────────────────
+   Reduced motion — disable all animations
+   ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .petal,
+  .ember,
+  .ray,
+  .sakuraAmbientGlow,
+  .sakuraAmbientGlow2,
+  .sunsetHorizonGlow,
+  .sunsetOrbGlow,
+  .heatHaze {
+    animation: none !important;
+  }
+
+  .petal {
+    display: none;
+  }
+
+  .ember {
+    display: none;
+  }
+}
+
+/* Mobile — reduce particle count by hiding some via CSS */
+@media (max-width: 640px) {
+  .petal4,
+  .petal5,
+  .petal7,
+  .petalBurst2 {
+    display: none;
+  }
+
+  .ember4,
+  .ember5,
+  .ember8 {
+    display: none;
+  }
+
+  .ray3 {
+    display: none;
+  }
+}
