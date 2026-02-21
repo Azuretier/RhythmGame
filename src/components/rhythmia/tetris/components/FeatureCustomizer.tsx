@@ -23,6 +23,7 @@ const FEATURES: FeatureDef[] = [
     { key: 'beatBar', name: 'Beat Bar', nameJa: 'ビートバー', description: 'Rhythm timing indicator', singlePlayer: true, multiplayer: false },
     { key: 'sound', name: 'Sound', nameJa: 'サウンド', description: 'Sound effects', singlePlayer: true, multiplayer: true },
     { key: 'garbageMeter', name: 'Garbage Meter', nameJa: 'ガベージメーター', description: 'Incoming garbage indicator', singlePlayer: false, multiplayer: true },
+    { key: 'mouseControls', name: 'Mouse Controls', nameJa: 'マウス操作', description: 'Move piece with mouse, click to soft drop', singlePlayer: true, multiplayer: true },
 ];
 
 interface FeatureCustomizerProps {

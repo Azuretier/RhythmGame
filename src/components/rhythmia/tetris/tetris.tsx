@@ -1310,10 +1310,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
   // Mouse input handlers — move piece by hovering over board columns,
-  // click to hard drop, right-click to rotate, scroll to soft drop / rotate
+  // left/right click to soft drop, scroll to rotate
   useEffect(() => {
     const boardEl = boardElRef.current;
-    if (!boardEl || !isPlaying || gameOver) return;
+    if (!boardEl || !isPlaying || gameOver || !featureSettings.mouseControls) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
@@ -1342,26 +1342,30 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       }
     };
 
+    // Left click = soft drop one row
     const handleClick = (e: MouseEvent) => {
       if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
       e.preventDefault();
-      hardDrop();
+      if (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
     };
 
+    // Right click = soft drop one row
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
       if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
-      rotatePiece(1);
+      if (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
     };
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
       if (e.deltaY > 0) {
-        // Scroll down = soft drop one row
-        if (movePiece(0, 1)) {
-          setScore(prev => prev + 1);
-        }
+        // Scroll down = rotate clockwise
+        rotatePiece(1);
       } else if (e.deltaY < 0) {
         // Scroll up = rotate counter-clockwise
         rotatePiece(-1);
@@ -1379,7 +1383,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       boardEl.removeEventListener('contextmenu', handleContextMenu);
       boardEl.removeEventListener('wheel', handleWheel);
     };
-  }, [isPlaying, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, setScore, isPausedRef, gameOverRef, currentPieceRef]);
+  }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, movePiece, rotatePiece, setScore, isPausedRef, gameOverRef, currentPieceRef]);
 
   // Clean up action toasts on unmount
   useEffect(() => {
@@ -1522,6 +1526,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 onKeybindsReset={resetKeybinds}
                 defaultKeybinds={defaultKeybinds}
                 featureSettings={featureSettings}
+                onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
               />
               {/* Action display toasts (T-spin, Tetris, Back-to-Back) — stacking */}
               {actionToasts.length > 0 && (

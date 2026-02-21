@@ -36,6 +36,7 @@ interface BoardProps {
     onKeybindsReset?: () => void;
     defaultKeybinds?: GameKeybinds;
     featureSettings?: FeatureSettings;
+    onFeatureSettingsUpdate?: (settings: FeatureSettings) => void;
 }
 
 /**
@@ -70,6 +71,7 @@ export function Board({
     onKeybindsReset,
     defaultKeybinds,
     featureSettings,
+    onFeatureSettingsUpdate,
 }: BoardProps) {
     const isFever = combo >= 10;
 
@@ -210,6 +212,8 @@ export function Board({
                     onKeybindChange={onKeybindChange || (() => { })}
                     onKeybindsReset={onKeybindsReset || (() => { })}
                     defaultKeybinds={defaultKeybinds || fallbackKeybinds}
+                    featureSettings={featureSettings}
+                    onFeatureSettingsUpdate={onFeatureSettingsUpdate}
                 />
             )}
         </div>

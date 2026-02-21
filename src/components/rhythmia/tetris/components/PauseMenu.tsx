@@ -6,6 +6,7 @@ import { loadAdvancementState } from '@/lib/advancements/storage';
 import Advancements from '@/components/rhythmia/Advancements';
 import { getKeyLabel, type GameKeybinds } from '../hooks/useKeybinds';
 import type { ColorTheme } from '../constants';
+import type { FeatureSettings } from '../types';
 import styles from './PauseMenu.module.css';
 
 type PauseTab = 'overview' | 'settings' | 'theme' | 'advancements' | 'keybinds';
@@ -29,6 +30,9 @@ interface PauseMenuProps {
     onKeybindChange: (action: keyof GameKeybinds, key: string) => void;
     onKeybindsReset: () => void;
     defaultKeybinds: GameKeybinds;
+    // Feature settings
+    featureSettings?: FeatureSettings;
+    onFeatureSettingsUpdate?: (settings: FeatureSettings) => void;
 }
 
 const TAB_CONFIG: { id: PauseTab; label: string; icon: string }[] = [
@@ -55,6 +59,8 @@ export function PauseMenu({
     onKeybindChange,
     onKeybindsReset,
     defaultKeybinds,
+    featureSettings,
+    onFeatureSettingsUpdate,
 }: PauseMenuProps) {
     const [activeTab, setActiveTab] = useState<PauseTab>('overview');
     const [unlockedCount, setUnlockedCount] = useState(0);
@@ -141,6 +147,56 @@ export function PauseMenu({
                                 onChange={onSdfChange}
                             />
                         </div>
+                        {featureSettings && onFeatureSettingsUpdate && (
+                            <div className={styles.settingsGroup}>
+                                <div className={styles.settingItem}>
+                                    <div className={styles.settingHeader}>
+                                        <span className={styles.settingLabel}>Mouse Controls</span>
+                                        <span className={styles.settingValue}>
+                                            {featureSettings.mouseControls ? 'ON' : 'OFF'}
+                                        </span>
+                                    </div>
+                                    <span className={styles.settingDesc}>
+                                        Move piece with mouse, click to soft drop, scroll to rotate
+                                    </span>
+                                    <button
+                                        className={styles.toggleBtn}
+                                        style={{
+                                            background: featureSettings.mouseControls
+                                                ? 'rgba(0, 127, 255, 0.5)'
+                                                : 'rgba(255, 255, 255, 0.1)',
+                                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                                            borderRadius: '12px',
+                                            width: '44px',
+                                            height: '24px',
+                                            cursor: 'pointer',
+                                            position: 'relative',
+                                            transition: 'background 0.2s',
+                                            marginTop: '6px',
+                                        }}
+                                        onClick={() =>
+                                            onFeatureSettingsUpdate({
+                                                ...featureSettings,
+                                                mouseControls: !featureSettings.mouseControls,
+                                            })
+                                        }
+                                    >
+                                        <span
+                                            style={{
+                                                position: 'absolute',
+                                                top: '2px',
+                                                left: featureSettings.mouseControls ? '22px' : '2px',
+                                                width: '18px',
+                                                height: '18px',
+                                                borderRadius: '50%',
+                                                background: '#fff',
+                                                transition: 'left 0.2s',
+                                            }}
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
 
