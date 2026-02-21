@@ -234,9 +234,11 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   const lockMovesRef = useRef(0);
 
   // Mouse controls state — tracks last column to avoid redundant moves,
-  // and last soft drop time to rate-limit clicks to match keyboard SDF
+  // last soft drop time to rate-limit to match keyboard SDF,
+  // and soft drop interval for hold-to-drop
   const mouseLastColRef = useRef<number | null>(null);
   const mouseLastSoftDropRef = useRef(0);
+  const mouseSoftDropTimerRef = useRef<number | null>(null);
 
   // Stable refs for callbacks used inside setInterval (avoids stale closures + dep churn)
   const vfxEmitRef = useRef(vfx.emit);
@@ -1317,7 +1319,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
   // Mouse input handlers — move piece by hovering over board columns,
-  // left/right click to soft drop (SDF rate-limited), scroll to rotate.
+  // hold left/right button to soft drop (SDF rate-limited), scroll to rotate.
   // Movement only fires when the target column actually changes to keep
   // lock delay and DAS state stable.
   useEffect(() => {
@@ -1327,10 +1329,42 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     // Reset tracked column when effect re-mounts so the first move is never skipped
     mouseLastColRef.current = null;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+    // Helper: compute piece center from actual filled columns (not shape matrix width).
+    // This fixes pieces like I-rotation-L where filled cells sit at column 1
+    // inside a 4-wide matrix — using matrix width would place the center at
+    // column 2 and prevent the piece from reaching the right wall.
+    const getPieceCenter = (piece: Piece): number => {
+      const shape = getShape(piece.type, piece.rotation);
+      let minCol = shape[0].length;
+      let maxCol = 0;
+      for (const row of shape) {
+        for (let c = 0; c < row.length; c++) {
+          if (row[c]) {
+            if (c < minCol) minCol = c;
+            if (c > maxCol) maxCol = c;
+          }
+        }
+      }
+      return piece.x + Math.floor((minCol + maxCol) / 2);
+    };
+
+    // Helper: move piece center toward a target column
+    const movePieceToCol = (targetCol: number) => {
       const piece = currentPieceRef.current;
       if (!piece) return;
+      const pieceCenter = getPieceCenter(piece);
+      const dx = targetCol - pieceCenter;
+      if (dx !== 0) {
+        const dir = dx > 0 ? 1 : -1;
+        for (let i = 0; i < Math.abs(dx); i++) {
+          if (!moveHorizontal(dir)) break;
+        }
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      if (!currentPieceRef.current) return;
 
       const rect = boardEl.getBoundingClientRect();
       const relativeX = e.clientX - rect.left;
@@ -1342,66 +1376,98 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       if (targetCol === mouseLastColRef.current) return;
       mouseLastColRef.current = targetCol;
 
-      // Calculate piece's center column based on its shape width
-      const shape = getShape(piece.type, piece.rotation);
-      const pieceCenter = piece.x + Math.floor(shape[0].length / 2);
-
-      const dx = targetCol - pieceCenter;
-      if (dx !== 0) {
-        const dir = dx > 0 ? 1 : -1;
-        for (let i = 0; i < Math.abs(dx); i++) {
-          if (!moveHorizontal(dir)) break;
-        }
-      }
+      movePieceToCol(targetCol);
     };
 
-    // Soft drop via click — rate-limited by SDF to match keyboard speed
+    // When cursor leaves the board, push piece to the nearest wall
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      if (!currentPieceRef.current) return;
+
+      const rect = boardEl.getBoundingClientRect();
+      if (e.clientX <= rect.left) {
+        // Left of board — push to left wall
+        while (moveHorizontal(-1)) { /* push */ }
+      } else if (e.clientX >= rect.right) {
+        // Right of board — push to right wall
+        while (moveHorizontal(1)) { /* push */ }
+      }
+      mouseLastColRef.current = null;
+    };
+
+    // Soft drop one row — rate-limited by SDF to match keyboard speed.
+    // When SDF=0 (instant), drops all the way like keyboard does.
     const trySoftDrop = () => {
       if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
-      const now = performance.now();
       const currentSdf = sdfRef.current;
-      // Enforce same minimum interval as keyboard soft drop (SDF)
-      if (currentSdf > 0 && now - mouseLastSoftDropRef.current < currentSdf) return;
+      if (currentSdf === 0) {
+        // SDF=0: instant drop to bottom (matches keyboard behaviour)
+        while (movePiece(0, 1)) {
+          setScore(prev => prev + 1);
+        }
+        return;
+      }
+      const now = performance.now();
+      if (now - mouseLastSoftDropRef.current < currentSdf) return;
       if (movePiece(0, 1)) {
         setScore(prev => prev + 1);
         mouseLastSoftDropRef.current = now;
       }
     };
 
-    // Left click = soft drop one row
-    const handleClick = (e: MouseEvent) => {
-      e.preventDefault();
-      trySoftDrop();
+    const stopMouseSoftDrop = () => {
+      if (mouseSoftDropTimerRef.current !== null) {
+        window.clearInterval(mouseSoftDropTimerRef.current);
+        mouseSoftDropTimerRef.current = null;
+      }
     };
 
-    // Right click = soft drop one row
+    // Hold button = continuous soft drop at SDF rate
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 2) e.preventDefault(); // suppress context menu on right-click press
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      trySoftDrop();
+      stopMouseSoftDrop();
+      // Poll at ~60fps; trySoftDrop internally enforces SDF rate
+      mouseSoftDropTimerRef.current = window.setInterval(trySoftDrop, 16);
+    };
+
+    // Release button anywhere on the page stops soft drop
+    const handleMouseUp = () => {
+      stopMouseSoftDrop();
+    };
+
+    // Prevent browser context menu over the board
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
-      trySoftDrop();
     };
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
       if (e.deltaY > 0) {
-        // Scroll down = rotate clockwise
         rotatePiece(1);
       } else if (e.deltaY < 0) {
-        // Scroll up = rotate counter-clockwise
         rotatePiece(-1);
       }
     };
 
     boardEl.addEventListener('mousemove', handleMouseMove);
-    boardEl.addEventListener('click', handleClick);
+    boardEl.addEventListener('mouseleave', handleMouseLeave);
+    boardEl.addEventListener('mousedown', handleMouseDown);
     boardEl.addEventListener('contextmenu', handleContextMenu);
     boardEl.addEventListener('wheel', handleWheel, { passive: false });
+    // Listen for mouseup on window so releasing outside the board still stops soft drop
+    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       boardEl.removeEventListener('mousemove', handleMouseMove);
-      boardEl.removeEventListener('click', handleClick);
+      boardEl.removeEventListener('mouseleave', handleMouseLeave);
+      boardEl.removeEventListener('mousedown', handleMouseDown);
       boardEl.removeEventListener('contextmenu', handleContextMenu);
       boardEl.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('mouseup', handleMouseUp);
+      stopMouseSoftDrop();
     };
   }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, movePiece, rotatePiece, setScore, sdfRef, isPausedRef, gameOverRef, currentPieceRef]);
 
