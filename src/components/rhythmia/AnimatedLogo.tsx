@@ -38,6 +38,7 @@ export default function AnimatedLogo({ onComplete }: AnimatedLogoProps) {
 
   // Allow skipping with click/key
   const skipToEnd = useCallback(() => {
+    cancelAnimationFrame(animFrameRef.current);
     setPhase(6);
     setTimeout(() => onCompleteRef.current(), 400);
   }, []);
