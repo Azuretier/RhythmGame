@@ -270,6 +270,7 @@ export type FeatureSettings = {
     beatBar: boolean;
     sound: boolean;
     garbageMeter: boolean;
+    mouseControls: boolean;
 };
 
 export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
@@ -281,4 +282,5 @@ export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
     beatBar: true,
     sound: true,
     garbageMeter: true,
+    mouseControls: false,
 };

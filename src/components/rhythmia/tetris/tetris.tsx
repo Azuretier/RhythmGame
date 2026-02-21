@@ -30,6 +30,7 @@ import {
   lockPiece,
   clearLines,
   createSpawnPiece,
+  getShape,
 } from './utils';
 
 // Components
@@ -232,6 +233,13 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   // Lock delay — grace period after piece lands before locking
   const lockStartTimeRef = useRef<number | null>(null);
   const lockMovesRef = useRef(0);
+
+  // Mouse controls state — tracks last column to avoid redundant moves,
+  // last soft drop time to rate-limit to match keyboard SDF,
+  // and held-button flag for game-loop-driven soft drop
+  const mouseLastColRef = useRef<number | null>(null);
+  const mouseLastSoftDropRef = useRef(0);
+  const mouseHeldRef = useRef(false);
 
   // Stable refs for callbacks used inside setInterval (avoids stale closures + dep churn)
   const vfxEmitRef = useRef(vfx.emit);
@@ -536,6 +544,29 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     }
   }, [movePiece, setScore, keyStatesRef, isPausedRef, gameOverRef, sdfRef]);
 
+  // Process mouse-button soft drop (driven by game loop, same SDF rate as keyboard)
+  const processMouseSoftDrop = useCallback((currentTime: number) => {
+    if (!mouseHeldRef.current || isPausedRef.current || gameOverRef.current) return;
+
+    const currentSdf = sdfRef.current;
+    if (currentSdf === 0) {
+      // SDF=0: instant drop to bottom (matches keyboard behaviour)
+      while (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
+      mouseHeldRef.current = false; // one-shot instant drop
+      return;
+    }
+
+    const timeSinceLastDrop = currentTime - mouseLastSoftDropRef.current;
+    if (timeSinceLastDrop >= currentSdf) {
+      if (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
+      mouseLastSoftDropRef.current = currentTime;
+    }
+  }, [movePiece, setScore, sdfRef, isPausedRef, gameOverRef]);
+
   // Push-based live advancement check — runs every handlePieceLock(), instant toast on threshold
   const pushLiveAdvancementCheck = useCallback(() => {
     const qualifying = checkLiveGameAdvancements({
@@ -563,6 +594,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     // Clear lock state for new piece
     lockStartTimeRef.current = null;
     lockMovesRef.current = 0;
+    // Reset mouse column so the new piece picks up cursor position immediately
+    mouseLastColRef.current = null;
 
     const phase = terrainPhaseRef.current;
 
@@ -1156,6 +1189,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         processHorizontalDasArr('left', currentTime);
         processHorizontalDasArr('right', currentTime);
         processSoftDrop(currentTime);
+        processMouseSoftDrop(currentTime);
 
         const baseSpeed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
         const speed = baseSpeed / (activeEffectsRef.current?.gravitySlowFactor || 1);
@@ -1191,7 +1225,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [isPlaying, gameOver, tick, processHorizontalDasArr, processSoftDrop, isPausedRef, gameOverRef, levelRef, lastGravityRef, gameLoopRef]);
+  }, [isPlaying, gameOver, tick, processHorizontalDasArr, processSoftDrop, processMouseSoftDrop, isPausedRef, gameOverRef, levelRef, lastGravityRef, gameLoopRef]);
 
   // Keyboard input handlers
   useEffect(() => {
@@ -1308,6 +1342,131 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
+
+  // Mouse input handlers — move piece by hovering over board columns,
+  // hold left/right button to soft drop (driven by game loop via mouseHeldRef),
+  // scroll to rotate.
+  // Movement only fires when the target column actually changes to keep
+  // lock delay and DAS state stable.
+  useEffect(() => {
+    const boardEl = boardElRef.current;
+    if (!boardEl || !isPlaying || gameOver || !featureSettings.mouseControls) return;
+
+    // Reset column tracking when effect re-mounts
+    mouseLastColRef.current = null;
+
+    // Helper: compute piece center from actual filled columns (not shape matrix width).
+    // This fixes pieces like I-rotation-L where filled cells sit at column 1
+    // inside a 4-wide matrix — using matrix width would place the center at
+    // column 2 and prevent the piece from reaching the right wall.
+    const getPieceCenter = (piece: Piece): number => {
+      const shape = getShape(piece.type, piece.rotation);
+      let minCol = shape[0].length;
+      let maxCol = 0;
+      for (const row of shape) {
+        for (let c = 0; c < row.length; c++) {
+          if (row[c]) {
+            if (c < minCol) minCol = c;
+            if (c > maxCol) maxCol = c;
+          }
+        }
+      }
+      return piece.x + Math.floor((minCol + maxCol) / 2);
+    };
+
+    // Helper: move piece center toward a target column
+    const movePieceToCol = (targetCol: number) => {
+      const piece = currentPieceRef.current;
+      if (!piece) return;
+      const pieceCenter = getPieceCenter(piece);
+      const dx = targetCol - pieceCenter;
+      if (dx !== 0) {
+        const dir = dx > 0 ? 1 : -1;
+        for (let i = 0; i < Math.abs(dx); i++) {
+          if (!moveHorizontal(dir)) break;
+        }
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      if (!currentPieceRef.current) return;
+
+      const rect = boardEl.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left;
+      const cellWidth = rect.width / BOARD_WIDTH;
+      const targetCol = Math.max(0, Math.min(BOARD_WIDTH - 1, Math.floor(relativeX / cellWidth)));
+
+      // Skip if the target column hasn't changed — avoids redundant
+      // moveHorizontal calls that would churn lock delay resets
+      if (targetCol === mouseLastColRef.current) return;
+      mouseLastColRef.current = targetCol;
+
+      movePieceToCol(targetCol);
+    };
+
+    // When cursor leaves the board, push piece to the nearest wall.
+    // Compare against board center to determine direction — this handles
+    // exits from any edge (left, right, top, bottom corners).
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      if (!currentPieceRef.current) return;
+
+      const rect = boardEl.getBoundingClientRect();
+      const boardCenterX = rect.left + rect.width / 2;
+      if (e.clientX < boardCenterX) {
+        while (moveHorizontal(-1)) { /* push left */ }
+      } else {
+        while (moveHorizontal(1)) { /* push right */ }
+      }
+      mouseLastColRef.current = null;
+    };
+
+    // Hold button = continuous soft drop (processed by game loop via mouseHeldRef)
+    const handleMouseDown = (e: MouseEvent) => {
+      e.preventDefault();
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      mouseHeldRef.current = true;
+      mouseLastSoftDropRef.current = 0; // allow immediate first drop
+    };
+
+    // Release button anywhere on the page stops soft drop
+    const handleMouseUp = () => {
+      mouseHeldRef.current = false;
+    };
+
+    // Prevent browser context menu over the board
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      if (e.deltaY > 0) {
+        rotatePiece(1);
+      } else if (e.deltaY < 0) {
+        rotatePiece(-1);
+      }
+    };
+
+    boardEl.addEventListener('mousemove', handleMouseMove);
+    boardEl.addEventListener('mouseleave', handleMouseLeave);
+    boardEl.addEventListener('mousedown', handleMouseDown);
+    boardEl.addEventListener('contextmenu', handleContextMenu);
+    boardEl.addEventListener('wheel', handleWheel, { passive: false });
+    // Listen for mouseup on window so releasing outside the board still stops soft drop
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      boardEl.removeEventListener('mousemove', handleMouseMove);
+      boardEl.removeEventListener('mouseleave', handleMouseLeave);
+      boardEl.removeEventListener('mousedown', handleMouseDown);
+      boardEl.removeEventListener('contextmenu', handleContextMenu);
+      boardEl.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
 
   // Clean up action toasts on unmount
   useEffect(() => {
@@ -1463,6 +1622,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                 onKeybindsReset={resetKeybinds}
                 defaultKeybinds={defaultKeybinds}
                 featureSettings={featureSettings}
+                onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
               />
               {/* Action display toasts (T-spin, Tetris, Back-to-Back) — stacking */}
               {actionToasts.length > 0 && (
