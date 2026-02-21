@@ -1361,14 +1361,16 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       {/* Floating item drops from terrain */}
       <FloatingItems items={floatingItems} />
 
-      {/* World transition overlays (creation / collapse / reload) */}
-      <WorldTransition
-        phase={gamePhase}
-        worldIdx={worldIdx}
-        stageNumber={stageNumber}
-        terrainPhase={terrainPhase}
-        gameOver={gameOver}
-      />
+      {/* World transition overlays (creation / collapse / reload) — only during gameplay */}
+      {isPlaying && (
+        <WorldTransition
+          phase={gamePhase}
+          worldIdx={worldIdx}
+          stageNumber={stageNumber}
+          terrainPhase={terrainPhase}
+          gameOver={gameOver}
+        />
+      )}
 
       {/* Tutorial Guide — shown on first vanilla play */}
       {showTutorial && (
