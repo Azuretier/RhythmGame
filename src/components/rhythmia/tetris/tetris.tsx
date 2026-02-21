@@ -1351,9 +1351,8 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     const boardEl = boardElRef.current;
     if (!boardEl || !isPlaying || gameOver || !featureSettings.mouseControls) return;
 
-    // Reset state when effect re-mounts
+    // Reset column tracking when effect re-mounts
     mouseLastColRef.current = null;
-    mouseHeldRef.current = false;
 
     // Helper: compute piece center from actual filled columns (not shape matrix width).
     // This fixes pieces like I-rotation-L where filled cells sit at column 1
@@ -1465,7 +1464,6 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       boardEl.removeEventListener('contextmenu', handleContextMenu);
       boardEl.removeEventListener('wheel', handleWheel);
       window.removeEventListener('mouseup', handleMouseUp);
-      mouseHeldRef.current = false;
     };
   }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
 
