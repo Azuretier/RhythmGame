@@ -204,6 +204,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   const gamePerfectBeatsRef = useRef(0);
   const gameBestComboRef = useRef(0);
   const gameTetrisClearsRef = useRef(0);
+  const gameTSpinsRef = useRef(0);
   const gameHardDropsRef = useRef(0);
   const gamePiecesPlacedRef = useRef(0);
   const gameWorldsClearedRef = useRef(0);
@@ -539,7 +540,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     const qualifying = checkLiveGameAdvancements({
       score: scoreRef.current,
       lines: linesRef.current,
-      tSpins: 0, // T-spin detection not implemented in this game mode
+      tSpins: gameTSpinsRef.current,
       bestCombo: gameBestComboRef.current,
       perfectBeats: gamePerfectBeatsRef.current,
       worldsCleared: gameWorldsClearedRef.current,
@@ -709,7 +710,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         msgLines.push('BACK-TO-BACK');
       }
 
-      // T-spin message + speed tracking
+      // T-spin message + speed tracking + per-game count
       if (tSpin !== 'none') {
         const mini = tSpin === 'mini' ? 'MINI ' : '';
         const clearName = clearedLines === 0 ? '' :
@@ -718,6 +719,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
                           clearedLines === 3 ? ' TRIPLE' : '';
         msgLines.push(`T-SPIN ${mini}${clearName}`.trim() + '!');
         msgColor = tSpin === 'full' ? '#A000F0' : '#C070FF';
+        gameTSpinsRef.current++;
         // Speed tracking: T-spins in 30s window
         const now = Date.now();
         tSpinTimestampsRef.current.push(now);
@@ -931,6 +933,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
     gamePerfectBeatsRef.current = 0;
     gameBestComboRef.current = 0;
     gameTetrisClearsRef.current = 0;
+    gameTSpinsRef.current = 0;
     gameHardDropsRef.current = 0;
     gamePiecesPlacedRef.current = 0;
     gameWorldsClearedRef.current = 0;
@@ -970,7 +973,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       const result = recordGameEnd({
         score: scoreRef.current,
         lines: linesRef.current,
-        tSpins: 0,
+        tSpins: gameTSpinsRef.current,
         bestCombo: gameBestComboRef.current,
         perfectBeats: gamePerfectBeatsRef.current,
         worldsCleared: gameWorldsClearedRef.current,
@@ -1318,7 +1321,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         recordGameEnd({
           score: scoreRef.current,
           lines: linesRef.current,
-          tSpins: 0,
+          tSpins: gameTSpinsRef.current,
           bestCombo: gameBestComboRef.current,
           perfectBeats: gamePerfectBeatsRef.current,
           worldsCleared: gameWorldsClearedRef.current,
