@@ -235,10 +235,10 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
 
   // Mouse controls state — tracks last column to avoid redundant moves,
   // last soft drop time to rate-limit to match keyboard SDF,
-  // and soft drop interval for hold-to-drop
+  // and held-button flag for game-loop-driven soft drop
   const mouseLastColRef = useRef<number | null>(null);
   const mouseLastSoftDropRef = useRef(0);
-  const mouseSoftDropTimerRef = useRef<number | null>(null);
+  const mouseHeldRef = useRef(false);
 
   // Stable refs for callbacks used inside setInterval (avoids stale closures + dep churn)
   const vfxEmitRef = useRef(vfx.emit);
@@ -542,6 +542,29 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       state.lastMoveTime = currentTime;
     }
   }, [movePiece, setScore, keyStatesRef, isPausedRef, gameOverRef, sdfRef]);
+
+  // Process mouse-button soft drop (driven by game loop, same SDF rate as keyboard)
+  const processMouseSoftDrop = useCallback((currentTime: number) => {
+    if (!mouseHeldRef.current || isPausedRef.current || gameOverRef.current) return;
+
+    const currentSdf = sdfRef.current;
+    if (currentSdf === 0) {
+      // SDF=0: instant drop to bottom (matches keyboard behaviour)
+      while (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
+      mouseHeldRef.current = false; // one-shot instant drop
+      return;
+    }
+
+    const timeSinceLastDrop = currentTime - mouseLastSoftDropRef.current;
+    if (timeSinceLastDrop >= currentSdf) {
+      if (movePiece(0, 1)) {
+        setScore(prev => prev + 1);
+      }
+      mouseLastSoftDropRef.current = currentTime;
+    }
+  }, [movePiece, setScore, sdfRef, isPausedRef, gameOverRef]);
 
   // Push-based live advancement check — runs every handlePieceLock(), instant toast on threshold
   const pushLiveAdvancementCheck = useCallback(() => {
@@ -1165,6 +1188,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         processHorizontalDasArr('left', currentTime);
         processHorizontalDasArr('right', currentTime);
         processSoftDrop(currentTime);
+        processMouseSoftDrop(currentTime);
 
         const baseSpeed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
         const speed = baseSpeed / (activeEffectsRef.current?.gravitySlowFactor || 1);
@@ -1200,7 +1224,7 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [isPlaying, gameOver, tick, processHorizontalDasArr, processSoftDrop, isPausedRef, gameOverRef, levelRef, lastGravityRef, gameLoopRef]);
+  }, [isPlaying, gameOver, tick, processHorizontalDasArr, processSoftDrop, processMouseSoftDrop, isPausedRef, gameOverRef, levelRef, lastGravityRef, gameLoopRef]);
 
   // Keyboard input handlers
   useEffect(() => {
@@ -1319,15 +1343,17 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
   }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
   // Mouse input handlers — move piece by hovering over board columns,
-  // hold left/right button to soft drop (SDF rate-limited), scroll to rotate.
+  // hold left/right button to soft drop (driven by game loop via mouseHeldRef),
+  // scroll to rotate.
   // Movement only fires when the target column actually changes to keep
   // lock delay and DAS state stable.
   useEffect(() => {
     const boardEl = boardElRef.current;
     if (!boardEl || !isPlaying || gameOver || !featureSettings.mouseControls) return;
 
-    // Reset tracked column when effect re-mounts so the first move is never skipped
+    // Reset state when effect re-mounts
     mouseLastColRef.current = null;
+    mouseHeldRef.current = false;
 
     // Helper: compute piece center from actual filled columns (not shape matrix width).
     // This fixes pieces like I-rotation-L where filled cells sit at column 1
@@ -1379,62 +1405,34 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       movePieceToCol(targetCol);
     };
 
-    // When cursor leaves the board, push piece to the nearest wall
+    // When cursor leaves the board, push piece to the nearest wall.
+    // Compare against board center to determine direction — this handles
+    // exits from any edge (left, right, top, bottom corners).
     const handleMouseLeave = (e: MouseEvent) => {
       if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
       if (!currentPieceRef.current) return;
 
       const rect = boardEl.getBoundingClientRect();
-      if (e.clientX <= rect.left) {
-        // Left of board — push to left wall
-        while (moveHorizontal(-1)) { /* push */ }
-      } else if (e.clientX >= rect.right) {
-        // Right of board — push to right wall
-        while (moveHorizontal(1)) { /* push */ }
+      const boardCenterX = rect.left + rect.width / 2;
+      if (e.clientX < boardCenterX) {
+        while (moveHorizontal(-1)) { /* push left */ }
+      } else {
+        while (moveHorizontal(1)) { /* push right */ }
       }
       mouseLastColRef.current = null;
     };
 
-    // Soft drop one row — rate-limited by SDF to match keyboard speed.
-    // When SDF=0 (instant), drops all the way like keyboard does.
-    const trySoftDrop = () => {
-      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
-      const currentSdf = sdfRef.current;
-      if (currentSdf === 0) {
-        // SDF=0: instant drop to bottom (matches keyboard behaviour)
-        while (movePiece(0, 1)) {
-          setScore(prev => prev + 1);
-        }
-        return;
-      }
-      const now = performance.now();
-      if (now - mouseLastSoftDropRef.current < currentSdf) return;
-      if (movePiece(0, 1)) {
-        setScore(prev => prev + 1);
-        mouseLastSoftDropRef.current = now;
-      }
-    };
-
-    const stopMouseSoftDrop = () => {
-      if (mouseSoftDropTimerRef.current !== null) {
-        window.clearInterval(mouseSoftDropTimerRef.current);
-        mouseSoftDropTimerRef.current = null;
-      }
-    };
-
-    // Hold button = continuous soft drop at SDF rate
+    // Hold button = continuous soft drop (processed by game loop via mouseHeldRef)
     const handleMouseDown = (e: MouseEvent) => {
-      if (e.button === 2) e.preventDefault(); // suppress context menu on right-click press
+      e.preventDefault();
       if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
-      trySoftDrop();
-      stopMouseSoftDrop();
-      // Poll at ~60fps; trySoftDrop internally enforces SDF rate
-      mouseSoftDropTimerRef.current = window.setInterval(trySoftDrop, 16);
+      mouseHeldRef.current = true;
+      mouseLastSoftDropRef.current = 0; // allow immediate first drop
     };
 
     // Release button anywhere on the page stops soft drop
     const handleMouseUp = () => {
-      stopMouseSoftDrop();
+      mouseHeldRef.current = false;
     };
 
     // Prevent browser context menu over the board
@@ -1467,9 +1465,9 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       boardEl.removeEventListener('contextmenu', handleContextMenu);
       boardEl.removeEventListener('wheel', handleWheel);
       window.removeEventListener('mouseup', handleMouseUp);
-      stopMouseSoftDrop();
+      mouseHeldRef.current = false;
     };
-  }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, movePiece, rotatePiece, setScore, sdfRef, isPausedRef, gameOverRef, currentPieceRef]);
+  }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
 
   // Clean up action toasts on unmount
   useEffect(() => {
