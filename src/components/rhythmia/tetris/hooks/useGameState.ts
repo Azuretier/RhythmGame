@@ -115,7 +115,8 @@ export function useGameState() {
     const [colorTheme, setColorTheme] = useState<ColorTheme>('stage');
 
     // ===== Game Loop Phase =====
-    const [gamePhase, setGamePhase] = useState<GamePhase>('WORLD_CREATION');
+    // Start as PLAYING (inert) — WORLD_CREATION is set by initGame() when the player starts
+    const [gamePhase, setGamePhase] = useState<GamePhase>('PLAYING');
 
     // ===== Item System =====
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
