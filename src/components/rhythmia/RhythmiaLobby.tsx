@@ -19,6 +19,7 @@ import VanillaGame from '@/components/rhythmia/tetris';
 import MultiplayerGame from '@/components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import LoyaltyWidget from '@/components/loyalty/LoyaltyWidget';
+import AnimatedLogo from '@/components/rhythmia/AnimatedLogo';
 import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
 
@@ -33,6 +34,7 @@ export default function RhythmiaLobby() {
     const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
     const [unlockedCount, setUnlockedCount] = useState(0);
     const [showSkinCustomizer, setShowSkinCustomizer] = useState(false);
+    const [showLogoAnimation, setShowLogoAnimation] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
     const profileSentRef = useRef(false);
 
@@ -46,7 +48,7 @@ export default function RhythmiaLobby() {
     const TOTAL_SLIDES = 3;
     const { currentSlide, goToSlide, containerRef, slideStyle } = useSlideScroll({
         totalSlides: TOTAL_SLIDES,
-        enabled: gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showOnlineUsers,
+        enabled: gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showOnlineUsers && !showLogoAnimation,
     });
 
     useEffect(() => {
@@ -162,7 +164,17 @@ export default function RhythmiaLobby() {
             wsRef.current.close();
             wsRef.current = null;
         }
+        // Show cinematic logo animation before entering singleplayer
+        if (mode === 'vanilla') {
+            setShowLogoAnimation(true);
+            return;
+        }
         setGameMode(mode);
+    };
+
+    const handleLogoComplete = () => {
+        setShowLogoAnimation(false);
+        setGameMode('vanilla');
     };
 
     const closeGame = () => {
@@ -199,7 +211,7 @@ export default function RhythmiaLobby() {
         );
     }
 
-    const slidesEnabled = gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showOnlineUsers;
+    const slidesEnabled = gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showOnlineUsers && !showLogoAnimation;
 
     return (
         <div className={styles.page}>
@@ -220,6 +232,13 @@ export default function RhythmiaLobby() {
                         <div className={styles.loader}></div>
                         <div className={styles.loadingText}>{t('lobby.loading')}</div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Cinematic logo animation before singleplayer */}
+            <AnimatePresence>
+                {showLogoAnimation && (
+                    <AnimatedLogo onComplete={handleLogoComplete} />
                 )}
             </AnimatePresence>
 

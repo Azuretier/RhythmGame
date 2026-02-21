@@ -1,0 +1,180 @@
+/* ===== Animated Logo — Cinematic Reveal ===== */
+
+.container {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  outline: none;
+}
+
+/* Particle canvas (behind everything) */
+.canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Vignette overlay — darkens edges for cinematic feel */
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 70% 70% at 50% 50%,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 60%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+}
+
+/* Central content area */
+.content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* Horizontal energy bar that expands from center */
+.energyBar {
+  position: absolute;
+  width: min(600px, 80vw);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.1) 80%,
+    transparent 100%
+  );
+  transform-origin: center;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  box-shadow: 0 0 30px 4px rgba(236, 40, 40, 0.15), 0 0 60px 8px rgba(255, 255, 255, 0.08);
+}
+
+/* Title wrapper — holds text + sweep */
+.titleWrapper {
+  position: relative;
+  overflow: hidden;
+  padding: 8px 24px;
+}
+
+/* Main title */
+.title {
+  font-family: 'Inter', var(--font-geist-sans), -apple-system, sans-serif;
+  font-size: clamp(3rem, 10vw, 7rem);
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  color: #ffffff;
+  text-shadow:
+    0 0 40px rgba(255, 255, 255, 0.5),
+    0 0 80px rgba(236, 40, 40, 0.3),
+    0 0 120px rgba(236, 40, 40, 0.15);
+  display: flex;
+  align-items: center;
+  user-select: none;
+  margin: 0;
+  line-height: 1;
+}
+
+/* Individual character for staggered animation */
+.titleChar {
+  display: inline-block;
+}
+
+/* Light sweep — a bright bar that slides across the text */
+.lightSweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+/* Subtitle */
+.subtitle {
+  font-family: 'Inter', var(--font-geist-sans), -apple-system, sans-serif;
+  font-size: clamp(0.8rem, 2vw, 1.1rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
+  user-select: none;
+}
+
+.subtitleAccent {
+  color: #ec2828;
+}
+
+/* White flash overlay */
+.flash {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.4) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Skip hint at bottom */
+.skipHint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 5;
+  font-family: 'Inter', var(--font-geist-sans), sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.3);
+  user-select: none;
+}
+
+/* Reduced motion — skip most animation */
+@media (prefers-reduced-motion: reduce) {
+  .container {
+    animation: none;
+  }
+  .title {
+    text-shadow: none;
+  }
+  .energyBar {
+    box-shadow: none;
+  }
+}
+
+/* Small screens */
+@media (max-width: 480px) {
+  .title {
+    letter-spacing: 0.12em;
+  }
+  .skipHint {
+    bottom: 24px;
+  }
+}
