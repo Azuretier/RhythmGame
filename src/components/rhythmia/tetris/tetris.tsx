@@ -29,6 +29,7 @@ import {
   lockPiece,
   clearLines,
   createSpawnPiece,
+  getShape,
 } from './utils';
 
 // Components
@@ -1307,6 +1308,78 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       window.removeEventListener('keyup', handleKeyUp);
     };
   }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
+
+  // Mouse input handlers — move piece by hovering over board columns,
+  // click to hard drop, right-click to rotate, scroll to soft drop / rotate
+  useEffect(() => {
+    const boardEl = boardElRef.current;
+    if (!boardEl || !isPlaying || gameOver) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      const piece = currentPieceRef.current;
+      if (!piece) return;
+
+      const rect = boardEl.getBoundingClientRect();
+      const relativeX = e.clientX - rect.left;
+      const cellWidth = rect.width / BOARD_WIDTH;
+      const targetCol = Math.floor(relativeX / cellWidth);
+
+      // Clamp target column to board bounds
+      const clampedCol = Math.max(0, Math.min(BOARD_WIDTH - 1, targetCol));
+
+      // Calculate piece's center column based on its shape width
+      const shape = getShape(piece.type, piece.rotation);
+      const shapeWidth = shape[0].length;
+      const pieceCenter = piece.x + Math.floor(shapeWidth / 2);
+
+      const dx = clampedCol - pieceCenter;
+      if (dx !== 0) {
+        const dir = dx > 0 ? 1 : -1;
+        for (let i = 0; i < Math.abs(dx); i++) {
+          if (!moveHorizontal(dir)) break;
+        }
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      e.preventDefault();
+      hardDrop();
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      rotatePiece(1);
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (isPausedRef.current || gameOverRef.current || showCardSelect) return;
+      if (e.deltaY > 0) {
+        // Scroll down = soft drop one row
+        if (movePiece(0, 1)) {
+          setScore(prev => prev + 1);
+        }
+      } else if (e.deltaY < 0) {
+        // Scroll up = rotate counter-clockwise
+        rotatePiece(-1);
+      }
+    };
+
+    boardEl.addEventListener('mousemove', handleMouseMove);
+    boardEl.addEventListener('click', handleClick);
+    boardEl.addEventListener('contextmenu', handleContextMenu);
+    boardEl.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      boardEl.removeEventListener('mousemove', handleMouseMove);
+      boardEl.removeEventListener('click', handleClick);
+      boardEl.removeEventListener('contextmenu', handleContextMenu);
+      boardEl.removeEventListener('wheel', handleWheel);
+    };
+  }, [isPlaying, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, setScore, isPausedRef, gameOverRef, currentPieceRef]);
 
   // Clean up action toasts on unmount
   useEffect(() => {
