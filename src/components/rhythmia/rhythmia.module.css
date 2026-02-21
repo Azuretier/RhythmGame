@@ -49,6 +49,28 @@
   opacity: 0.4;
 }
 
+/* Lobby content wrapper (used by AnimatePresence for game mode transitions) */
+.lobbyContent {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Content visibility transitions — replaces per-element motion.div y-translations
+   that caused staggered layout shifts. A single CSS transition on opacity keeps
+   elements in-place while fading in together. */
+.hiddenContent {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.visibleContent {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Slide system */
 .slideContainer {
   transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);

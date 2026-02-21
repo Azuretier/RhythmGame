@@ -56,7 +56,9 @@ export function useDeviceType(): DeviceInfo {
             setViewportHeight(window.innerHeight);
         };
 
-        handleResize();
+        // Skip the initial call — state already initialized from window dimensions
+        // above. Calling handleResize() here would trigger a redundant re-render
+        // and layout recalculation on mount.
         window.addEventListener('resize', handleResize);
         window.addEventListener('orientationchange', handleResize);
 
