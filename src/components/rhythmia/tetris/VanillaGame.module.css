@@ -100,15 +100,22 @@
   color: #ffffff;
 }
 
-/* Game area — three-column grid: sidebar | board+beatbar | sidebar
-   1fr auto 1fr ensures the board stays perfectly centered regardless
-   of how wide the sidebars are. */
+/* Game area — five-column grid: sideBoard | sidebar | board+beatbar | sidebar | sideBoard
+   auto 1fr auto 1fr auto ensures the board stays perfectly centered with
+   side boards flanking the sidebars. */
 .gameArea {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto 1fr auto 1fr auto;
   gap: 12px;
   align-items: start;
+}
+
+/* Mobile: hide side boards and revert to 3-column */
+@media (max-width: 768px) {
+  .gameArea {
+    grid-template-columns: 1fr auto 1fr;
+  }
 }
 
 /* Side panels — flex column, content-sized */

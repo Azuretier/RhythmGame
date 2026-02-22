@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
-import type { Piece, GameMode, FeatureSettings } from './types';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, RAID_GARBAGE_ROWS, RAID_TOWER_DAMAGE } from './constants';
+import type { Piece, GameMode, FeatureSettings, SideBoardSide } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 
@@ -22,6 +22,11 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
+import { useCorruptionSystem } from './hooks/useCorruptionSystem';
+
+// Side board components
+import { TetrisSideBoard } from './components/TetrisSideBoard';
+import { AnomalyBanner } from './components/AnomalyBanner';
 
 // Utilities
 import {
@@ -376,6 +381,51 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   const { keybinds, setKeybind, resetKeybinds, defaults: defaultKeybinds } = useKeybinds();
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
+
+  // ===== Corruption & Anomaly System =====
+  const handleRaidReached = useCallback((side: SideBoardSide) => {
+    // Add garbage rows to the bottom of the board
+    setBoard(prev => {
+      const garbageRows = [];
+      for (let g = 0; g < RAID_GARBAGE_ROWS; g++) {
+        const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+        const row = Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage');
+        garbageRows.push(row);
+      }
+      // Remove top rows to make room, add garbage at bottom
+      const newBoard = [...prev.slice(RAID_GARBAGE_ROWS), ...garbageRows];
+      return newBoard;
+    });
+    boardRef.current = (() => {
+      const prev = boardRef.current;
+      const garbageRows = [];
+      for (let g = 0; g < RAID_GARBAGE_ROWS; g++) {
+        const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+        const row = Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage');
+        garbageRows.push(row);
+      }
+      return [...prev.slice(RAID_GARBAGE_ROWS), ...garbageRows];
+    })();
+
+    // Deal tower damage in TD phase, board shake always
+    if (terrainPhaseRef.current === 'td') {
+      const newHealth = Math.max(0, towerHealthRef.current - RAID_TOWER_DAMAGE);
+      towerHealthRef.current = newHealth;
+      setTowerHealth(newHealth);
+      if (newHealth <= 0) {
+        setGameOver(true);
+        gameOverRef.current = true;
+      }
+    }
+    triggerBoardShake();
+  }, [setBoard, boardRef, terrainPhaseRef, towerHealthRef, setTowerHealth, setGameOver, gameOverRef, triggerBoardShake]);
+
+  const corruption = useCorruptionSystem({
+    isPlaying,
+    isPaused,
+    gameOver,
+    onRaidReached: handleRaidReached,
+  });
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -795,6 +845,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
       const center = getBoardCenter();
 
+      // Kill raid mobs from corruption system (both phases)
+      corruption.killRaidMobs(clearedLines);
+
       if (phase === 'td') {
         // === TD PHASE: Kill enemies when lines are cleared ===
         const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * amplifiedCombo);
@@ -853,7 +906,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, enterCheckpoint,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
-    consumeComboGuard, consumeShield, showActionMessage,
+    consumeComboGuard, consumeShield, showActionMessage, corruption,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -984,7 +1037,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     bestTetrisIn60sRef.current = 0;
     setToastIds([]);
     setActionToasts([]);
-  }, [initAudio, initGame]);
+    corruption.reset();
+  }, [initAudio, initGame, corruption]);
 
   // Start game — intercept for tutorial on first play
   const startGame = useCallback(() => {
@@ -1583,7 +1637,13 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           />
           <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
 
+          {/* Anomaly alert banner */}
+          <AnomalyBanner active={corruption.activeAnomaly} side={corruption.anomalySide} />
+
           <div className={styles.gameArea} ref={gameAreaRef}>
+            {/* Left side board (corruption/anomaly) */}
+            <TetrisSideBoard board={corruption.leftBoard} side="left" />
+
             {/* Left sidebar: Hold + Inventory (separate containers) */}
             <div className={styles.sidePanelLeft}>
               <div className={styles.nextWrap}>
@@ -1658,6 +1718,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
               </div>
               {terrainPhase === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
+
+            {/* Right side board (corruption/anomaly) */}
+            <TetrisSideBoard board={corruption.rightBoard} side="right" />
           </div>
 
           <TouchControls

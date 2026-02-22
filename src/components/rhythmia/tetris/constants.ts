@@ -85,6 +85,7 @@ export const COLORS: Record<string, string> = {
     Z: '#f00000',
     J: '#0000f0',
     L: '#f0a000',
+    garbage: '#666666',
 };
 
 // Standard Tetris colors for each piece type
@@ -340,6 +341,25 @@ export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
 export const BULLET_DAMAGE = 1;         // Damage per bullet hit
 export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
 export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
+
+// ===== Corruption & Anomaly Settings =====
+export const SIDE_BOARD_WIDTH = 4;
+export const SIDE_BOARD_HEIGHT = 20;     // Match VISIBLE_HEIGHT
+export const SIDE_BOARD_CELL_SIZE = 16;  // Smaller than main board's 28px
+
+export const CORRUPTION_SEED_INTERVAL = 30000;    // 30s between new seeds (ms)
+export const CORRUPTION_GROWTH_INTERVAL = 10000;   // 10s per growth tick (ms)
+export const CORRUPTION_MAX_LEVEL = 5;
+export const MAX_CORRUPTION_NODES = 8;             // Per side board
+export const CORRUPTION_SPREAD_CHANCE = 0.25;
+
+export const RAID_MOB_MOVE_INTERVAL = 800;         // ms between mob movements
+export const RAID_WAVE_INTERVAL = 8000;            // 8s between waves
+export const RAID_WAVE_SIZE = 3;
+export const RAID_MAX_WAVES = 3;
+export const RAID_MOB_HP = 2;
+export const RAID_GARBAGE_ROWS = 1;                // Garbage rows added when mob reaches board
+export const RAID_TOWER_DAMAGE = 10;               // Tower health damage per mob reaching board
 
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];

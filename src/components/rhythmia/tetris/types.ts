@@ -284,3 +284,47 @@ export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
     garbageMeter: true,
     mouseControls: false,
 };
+
+// ===== Corruption & Anomaly System =====
+
+export type SideBoardSide = 'left' | 'right';
+
+export interface CorruptionNode {
+    id: number;
+    x: number;
+    y: number;
+    level: number;       // 0=seed → 5=mature (triggers anomaly)
+    maxLevel: number;
+    spawnTime: number;
+    lastGrowTime: number;
+}
+
+export interface SideBoardRaidMob {
+    id: number;
+    side: SideBoardSide;
+    x: number;           // Column on side board (0-3)
+    y: number;           // Row on side board (0-19)
+    health: number;
+    maxHealth: number;
+    alive: boolean;
+    onMainBoard: boolean; // true when reached the Tetris board edge
+    spawnTime: number;
+}
+
+export interface AnomalyEvent {
+    id: number;
+    side: SideBoardSide;
+    triggerTime: number;
+    waveCount: number;
+    maxWaves: number;
+    nextWaveTime: number;
+    active: boolean;
+}
+
+export interface SideBoardState {
+    side: SideBoardSide;
+    width: number;
+    height: number;
+    corruption: CorruptionNode[];
+    raidMobs: SideBoardRaidMob[];
+}
