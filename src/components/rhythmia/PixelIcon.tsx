@@ -7,7 +7,28 @@ interface PixelIconData {
   color: string;
 }
 
+function lightenColor(hex: string, amount: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return '#' +
+    Math.min(255, Math.round(r + (255 - r) * amount)).toString(16).padStart(2, '0') +
+    Math.min(255, Math.round(g + (255 - g) * amount)).toString(16).padStart(2, '0') +
+    Math.min(255, Math.round(b + (255 - b) * amount)).toString(16).padStart(2, '0');
+}
+
+function darkenColor(hex: string, amount: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return '#' +
+    Math.max(0, Math.round(r * (1 - amount))).toString(16).padStart(2, '0') +
+    Math.max(0, Math.round(g * (1 - amount))).toString(16).padStart(2, '0') +
+    Math.max(0, Math.round(b * (1 - amount))).toString(16).padStart(2, '0');
+}
+
 // Each icon is an 8x8 pixel grid. '#' = filled pixel, '.' = empty.
+// Shading is applied automatically via edge detection (top-left highlight, bottom-right shadow).
 const ICONS: Record<string, PixelIconData> = {
   lines: {
     grid: [
@@ -77,12 +98,12 @@ const ICONS: Record<string, PixelIconData> = {
   star: {
     grid: [
       '...#....',
-      '...#....',
-      '.#####..',
       '..###...',
-      '.#.#.#..',
-      '#..#..#.',
-      '........',
+      '.#####..',
+      '########',
+      '..####..',
+      '.##..##.',
+      '.#....#.',
       '........',
     ],
     color: '#ffd54f',
@@ -260,12 +281,12 @@ const ICONS: Record<string, PixelIconData> = {
     grid: [
       '.....##.',
       '.....##.',
+      '...##...',
+      '...##...',
+      '.##.....',
+      '.##.....',
       '........',
-      '..##....',
-      '..##....',
       '........',
-      '.....##.',
-      '.....##.',
     ],
     color: '#a1887f',
   },
@@ -295,6 +316,32 @@ const ICONS: Record<string, PixelIconData> = {
     ],
     color: '#757575',
   },
+  coin: {
+    grid: [
+      '..####..',
+      '.######.',
+      '########',
+      '########',
+      '########',
+      '.######.',
+      '..####..',
+      '........',
+    ],
+    color: '#ffc107',
+  },
+  chest: {
+    grid: [
+      '.######.',
+      '########',
+      '########',
+      '.######.',
+      '.######.',
+      '.#.##.#.',
+      '.######.',
+      '........',
+    ],
+    color: '#8d6e63',
+  },
 };
 
 interface Props {
@@ -307,14 +354,33 @@ export const PixelIcon: React.FC<Props> = ({ name, size = 24 }) => {
   if (!icon) return <span>{name}</span>;
 
   const { grid, color } = icon;
+  const highlight = lightenColor(color, 0.35);
+  const shadow = darkenColor(color, 0.35);
   const rects: React.ReactElement[] = [];
+
+  const isEmpty = (x: number, y: number) => {
+    if (y < 0 || y >= grid.length) return true;
+    if (x < 0 || x >= grid[y].length) return true;
+    return grid[y][x] !== '#';
+  };
 
   for (let y = 0; y < grid.length; y++) {
     const row = grid[y];
     for (let x = 0; x < row.length; x++) {
       if (row[x] === '#') {
+        // Directional lighting: top-left is light source
+        let score = 0;
+        if (isEmpty(x, y - 1)) score += 1; // top edge exposed to light
+        if (isEmpty(x - 1, y)) score += 1; // left edge exposed to light
+        if (isEmpty(x, y + 1)) score -= 1; // bottom edge in shadow
+        if (isEmpty(x + 1, y)) score -= 1; // right edge in shadow
+
+        let fillColor = color;
+        if (score > 0) fillColor = highlight;
+        else if (score < 0) fillColor = shadow;
+
         rects.push(
-          <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={color} />
+          <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill={fillColor} />
         );
       }
     }
