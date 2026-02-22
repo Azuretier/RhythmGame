@@ -9,6 +9,7 @@ import type {
   MCServerMessage, MCGameStateUpdate, MCRoomState, MCLobbyPlayer,
   MCPublicRoom, MCGamePhase, Direction, MCTileUpdate, WorldTile,
   MCVisiblePlayer, MCMobState, MCPlayerState, DayPhase, ItemType,
+  SideBoardVisibleState, AnomalyAlert,
 } from '@/types/minecraft-board';
 
 const MULTIPLAYER_URL = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
@@ -54,6 +55,11 @@ export function useMinecraftBoardSocket() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [gameMessage, setGameMessage] = useState<string | null>(null);
   const [winner, setWinner] = useState<{ id: string; name: string } | null>(null);
+
+  // Side board & anomaly state
+  const [leftSideBoard, setLeftSideBoard] = useState<SideBoardVisibleState | null>(null);
+  const [rightSideBoard, setRightSideBoard] = useState<SideBoardVisibleState | null>(null);
+  const [anomalyAlerts, setAnomalyAlerts] = useState<AnomalyAlert[]>([]);
 
   // === WebSocket Connection ===
 
@@ -225,6 +231,18 @@ export function useMinecraftBoardSocket() {
           setGameMessage(state.gameMessage);
           setTimeout(() => setGameMessage(null), 3000);
         }
+        // Side board updates
+        if (state.sideBoards) {
+          const left = state.sideBoards.find(sb => sb.side === 'left');
+          const right = state.sideBoards.find(sb => sb.side === 'right');
+          if (left) setLeftSideBoard(left);
+          if (right) setRightSideBoard(right);
+        }
+        if (state.anomalyAlerts) {
+          setAnomalyAlerts(state.anomalyAlerts);
+        } else {
+          setAnomalyAlerts([]);
+        }
         break;
       }
 
@@ -300,6 +318,18 @@ export function useMinecraftBoardSocket() {
       case 'mc_game_over': {
         setPhase('ended');
         setWinner({ id: msg.winnerId, name: msg.winnerName });
+        break;
+      }
+
+      case 'mc_anomaly_start': {
+        setGameMessage(msg.message);
+        setTimeout(() => setGameMessage(null), 5000);
+        break;
+      }
+
+      case 'mc_anomaly_end': {
+        setGameMessage(`The ${msg.side} anomaly has been defeated!`);
+        setTimeout(() => setGameMessage(null), 3000);
         break;
       }
 
@@ -417,6 +447,11 @@ export function useMinecraftBoardSocket() {
     chatMessages,
     gameMessage,
     winner,
+
+    // Side board & anomaly
+    leftSideBoard,
+    rightSideBoard,
+    anomalyAlerts,
 
     // Actions
     createRoom,

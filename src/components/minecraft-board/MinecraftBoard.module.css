@@ -1144,4 +1144,172 @@
     max-width: 95vw;
     margin: 0.5rem;
   }
+
+  .boardWithSides {
+    gap: 2px;
+  }
+
+  .sideBoard {
+    display: none;
+  }
+
+  .sideBoardMobileIndicator {
+    display: flex;
+  }
+}
+
+/* === Side Board Layout === */
+
+.boardWithSides {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.sideBoard {
+  position: relative;
+  border: 2px solid #2a0040;
+  background: #0D0015;
+  flex-shrink: 0;
+}
+
+.sideBoardLeft {
+  border-right-color: #440066;
+}
+
+.sideBoardRight {
+  border-left-color: #440066;
+}
+
+.sideBoardLabel {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: #8844aa;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.sideBoardGrid {
+  display: grid;
+  gap: 1px;
+  background: #0a000f;
+}
+
+.sideBoardTile {
+  position: relative;
+  overflow: hidden;
+}
+
+/* === Corruption Glow Effects === */
+
+.corruptionNode {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  animation: corruptionPulse 3s ease-in-out infinite;
+}
+
+.corruptionLevel0 {
+  background: radial-gradient(circle, rgba(100, 0, 150, 0.3) 20%, transparent 70%);
+  animation-duration: 3s;
+}
+
+.corruptionLevel1 {
+  background: radial-gradient(circle, rgba(130, 0, 180, 0.4) 20%, transparent 70%);
+  animation-duration: 2.5s;
+}
+
+.corruptionLevel2 {
+  background: radial-gradient(circle, rgba(160, 0, 210, 0.5) 25%, transparent 70%);
+  animation-duration: 2s;
+}
+
+.corruptionLevel3 {
+  background: radial-gradient(circle, rgba(190, 20, 240, 0.6) 25%, transparent 70%);
+  animation-duration: 1.5s;
+}
+
+.corruptionLevel4 {
+  background: radial-gradient(circle, rgba(220, 40, 255, 0.8) 30%, transparent 70%);
+  animation-duration: 1s;
+}
+
+.corruptionLevel5 {
+  background: radial-gradient(circle, rgba(255, 60, 255, 1.0) 30%, transparent 65%);
+  animation-duration: 0.5s;
+}
+
+.corruptionMature {
+  box-shadow: 0 0 8px 4px rgba(200, 0, 255, 0.6),
+              0 0 16px 8px rgba(200, 0, 255, 0.3);
+}
+
+@keyframes corruptionPulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* === Side Board Entities (Raid Mobs on Side Board) === */
+
+.sideBoardEntity {
+  position: absolute;
+  inset: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #FF00FF;
+  border-radius: 2px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.sideBoardEntityIcon {
+  font-size: 10px;
+  color: #fff;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+}
+
+/* === Raid Mob on Main Board === */
+
+.entityRaid {
+  border: 2px solid #FF00FF;
+  box-shadow: 0 0 6px rgba(255, 0, 255, 0.5);
+  animation: raidPulse 1s ease-in-out infinite;
+}
+
+@keyframes raidPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 0, 255, 0.5); }
+  50% { box-shadow: 0 0 12px rgba(255, 0, 255, 0.8), 0 0 4px rgba(255, 0, 255, 0.4); }
+}
+
+/* === Anomaly Alert Banner === */
+
+.anomalyBanner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.anomalyAlert {
+  background: linear-gradient(90deg, rgba(100, 0, 50, 0.9) 0%, rgba(60, 0, 80, 0.9) 50%, rgba(100, 0, 50, 0.9) 100%);
+  color: #ff66aa;
+  text-align: center;
+  padding: 4px 12px;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: 1px solid #aa0066;
+  animation: anomalyFlash 2s ease-in-out infinite;
+}
+
+@keyframes anomalyFlash {
+  0%, 100% { opacity: 0.8; border-color: #aa0066; }
+  50% { opacity: 1; border-color: #ff00aa; }
 }

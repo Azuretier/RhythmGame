@@ -149,6 +149,8 @@ export interface MCGameStateUpdate {
   dayPhase: DayPhase;
   tick: number;
   gameMessage?: string;
+  sideBoards?: SideBoardVisibleState[];
+  anomalyAlerts?: AnomalyAlert[];
 }
 
 // === Game Configuration ===
@@ -183,6 +185,23 @@ export const MC_BOARD_CONFIG = {
     '#44DDDD', '#FF8844', '#FF88AA', '#DDDDDD',
   ] as readonly string[],
   SPAWN_CLEARING_RADIUS: 4,
+  // Side board config
+  SIDE_BOARD_WIDTH: 10,
+  SIDE_BOARD_HEIGHT: 48,
+  // Corruption config
+  CORRUPTION_SEED_INTERVAL: 300,       // ~30s between new corruption seed spawns
+  CORRUPTION_GROWTH_INTERVAL: 100,     // ~10s between growth level increments
+  CORRUPTION_MAX_LEVEL: 5,
+  MAX_CORRUPTION_NODES_PER_BOARD: 12,
+  CORRUPTION_SPREAD_CHANCE: 0.3,
+  // Anomaly/Raid config
+  RAID_MOB_SPEED: 8,                   // Ticks between raid mob moves (faster than normal mobs)
+  RAID_WAVE_INTERVAL: 100,             // ~10s between waves within an anomaly
+  RAID_WAVE_SIZE: 4,                   // Mobs per wave
+  RAID_MAX_WAVES: 3,
+  RAID_MOB_DAMAGE: 4,
+  RAID_MOB_HEALTH: 15,
+  MAX_RAID_MOBS: 30,
 } as const;
 
 // === Tool Tier Ordering (for mining requirement checks) ===
@@ -462,6 +481,67 @@ export const MOB_DROPS: Record<MobType, { item: ItemType; quantity: number; chan
   chicken:  [{ item: 'raw_meat', quantity: 1, chance: 1 }],
 };
 
+// === Side Board & Anomaly Types ===
+
+export type SideBoardSide = 'left' | 'right';
+
+export interface CorruptionNode {
+  x: number;
+  y: number;
+  level: number;        // 0 = seed, 1-4 = growing, 5 = mature (triggers anomaly)
+  maxLevel: number;     // Always 5
+  spawnTick: number;
+  lastGrowTick: number;
+}
+
+export interface SideBoardState {
+  side: SideBoardSide;
+  width: number;        // SIDE_BOARD_WIDTH (10)
+  height: number;       // Same as WORLD_SIZE (48)
+  corruption: CorruptionNode[];
+}
+
+export interface RaidMob {
+  id: string;
+  type: MobType;
+  x: number;
+  y: number;
+  health: number;
+  maxHealth: number;
+  boardSide: SideBoardSide | 'main';
+  originSide: SideBoardSide;  // Which side board this mob originated from
+  targetX: number;
+  targetY: number;
+  speed: number;
+  damage: number;
+  lastMoveTick: number;
+}
+
+export interface AnomalyEvent {
+  id: string;
+  side: SideBoardSide;
+  triggerTick: number;
+  raidMobs: string[];
+  waveCount: number;
+  maxWaves: number;
+  nextWaveTick: number;
+  active: boolean;
+}
+
+export interface SideBoardVisibleState {
+  side: SideBoardSide;
+  width: number;
+  height: number;
+  corruption: CorruptionNode[];
+  raidMobs: RaidMob[];
+}
+
+export interface AnomalyAlert {
+  side: SideBoardSide;
+  message: string;
+  active: boolean;
+}
+
 // === Client <-> Server Message Types ===
 
 export type MCClientMessage =
@@ -507,4 +587,8 @@ export type MCServerMessage =
   | { type: 'mc_mob_spawned'; mob: MCMobState }
   | { type: 'mc_mob_died'; mobId: string; killerName: string }
   | { type: 'mc_game_over'; winnerId: string; winnerName: string }
+  | { type: 'mc_anomaly_start'; side: SideBoardSide; message: string }
+  | { type: 'mc_anomaly_end'; side: SideBoardSide }
+  | { type: 'mc_raid_mob_entered_main'; mobId: string; x: number; y: number }
+  | { type: 'mc_corruption_spread'; side: SideBoardSide; node: CorruptionNode }
   | { type: 'mc_error'; message: string };
