@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Keybindings } from '../types';
-import { DEFAULT_KEYBINDINGS } from '../types';
 import styles from '../VanillaGame.module.css';
+
+// Keybind types are self-contained since the inventory/shop toggles
+// are no longer part of the main game loop
+type Keybindings = {
+    inventory: string;
+    shop: string;
+};
+
+const DEFAULT_KEYBINDINGS: Keybindings = {
+    inventory: 'e',
+    shop: 'l',
+};
 
 interface KeyBindSettingsProps {
     bindings: Keybindings;
