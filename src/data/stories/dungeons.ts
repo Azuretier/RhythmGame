@@ -95,8 +95,18 @@ export interface DungeonProgress {
 const MAP_WIDTH = 24;
 const MAP_HEIGHT = 16;
 
+// Seeded PRNG for deterministic terrain (stable across renders)
+function mapSeededRandom(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
 function generateMapTerrain(): MapTile[] {
   const tiles: MapTile[] = [];
+  const rand = mapSeededRandom(54321);
 
   for (let y = 0; y < MAP_HEIGHT; y++) {
     for (let x = 0; x < MAP_WIDTH; x++) {
@@ -105,8 +115,8 @@ function generateMapTerrain(): MapTile[] {
 
       // Forest region (left side)
       if (x < 8 && y > 3 && y < 13) {
-        terrain = Math.random() > 0.7 ? 'tree' : 'grass';
-        elevation = Math.random() > 0.8 ? 1 : 0;
+        terrain = rand() > 0.7 ? 'tree' : 'grass';
+        elevation = rand() > 0.8 ? 1 : 0;
         if (x < 3) terrain = 'tree';
       }
 
@@ -118,7 +128,7 @@ function generateMapTerrain(): MapTile[] {
 
       // Storm/mountain region (right side)
       if (x > 16 && y < 10) {
-        terrain = Math.random() > 0.5 ? 'stone' : 'rock';
+        terrain = rand() > 0.5 ? 'stone' : 'rock';
         elevation = Math.min(3, Math.floor((x - 16) / 2) + 1);
       }
 
@@ -148,10 +158,10 @@ function generateMapTerrain(): MapTile[] {
       }
 
       // Decorative elements
-      if (terrain === 'grass' && Math.random() > 0.92) {
+      if (terrain === 'grass' && rand() > 0.92) {
         terrain = 'flower';
       }
-      if (terrain === 'grass' && y > 12 && Math.random() > 0.85) {
+      if (terrain === 'grass' && y > 12 && rand() > 0.85) {
         terrain = 'mushroom';
       }
 
@@ -161,7 +171,6 @@ function generateMapTerrain(): MapTile[] {
           [x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1],
         ].some(([nx, ny]) => {
           if (nx < 0 || nx >= MAP_WIDTH || ny < 0 || ny >= MAP_HEIGHT) return false;
-          // Check inline (simplified — terrain gen is deterministic by position)
           return (
             (nx >= 7 && nx <= 8 && ny >= 0 && ny <= 7) ||
             (nx >= 8 && nx <= 10 && ny >= 7 && ny <= 8) ||
@@ -178,7 +187,7 @@ function generateMapTerrain(): MapTile[] {
   return tiles;
 }
 
-// Use a stable seeded generation (call once)
+// Deterministic terrain (stable across renders)
 export const MAP_TERRAIN: MapTile[] = generateMapTerrain();
 export { MAP_WIDTH, MAP_HEIGHT };
 
