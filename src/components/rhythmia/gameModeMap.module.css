@@ -1,6 +1,6 @@
 /* ============================================
-   Game Mode Map — Isometric Map for Mode Select
-   Blends Dungeons warm palette with skin-aware theme
+   Game Mode Map — Modern 2D Flat Map Aesthetic
+   Clean, minimal design with soft glows & glass
    ============================================ */
 
 .mapWrapper {
@@ -9,74 +9,100 @@
   max-width: 900px;
   aspect-ratio: 16 / 10;
   margin: 0 auto;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    rgba(40, 32, 20, 0.6) 0%,
-    rgba(20, 16, 10, 0.8) 70%,
-    rgba(10, 8, 5, 0.95) 100%
+  background: linear-gradient(
+    160deg,
+    rgba(12, 12, 24, 0.95) 0%,
+    rgba(16, 14, 28, 0.98) 50%,
+    rgba(10, 10, 20, 1) 100%
   );
-  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 240, 210, 0.04);
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-/* Warm ambient glow behind the map */
-.mapGlow {
+/* Soft ambient background glow */
+.mapBg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 25% 30%, rgba(76, 175, 80, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 75% 30%, rgba(255, 107, 107, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse at 75% 75%, rgba(33, 150, 243, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse at 25% 75%, rgba(156, 39, 176, 0.05) 0%, transparent 50%);
+    radial-gradient(ellipse at 22% 28%, rgba(76, 175, 80, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 78% 25%, rgba(255, 107, 107, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 78% 75%, rgba(33, 150, 243, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 22% 75%, rgba(156, 39, 176, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Subtle scanline overlay for retro feel */
-.scanlines {
+/* Subtle dot grid overlay */
+.gridOverlay {
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
+  background-image: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px
   );
+  background-size: 24px 24px;
   pointer-events: none;
-  z-index: 5;
+  z-index: 1;
 }
 
-/* SVG map container */
+/* Noise texture for depth */
+.noiseOverlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 2;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* SVG map canvas */
 .mapSvg {
   position: relative;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 3;
 }
 
-/* Terrain layer */
-.terrainLayer {
-  opacity: 0.95;
+/* Biome regions */
+.biomeLayer {
+  opacity: 1;
+}
+
+.biomeRegion {
+  transition: opacity 0.6s ease;
+}
+
+/* Decorative grid dots within SVG */
+.gridDots {
+  opacity: 1;
 }
 
 /* Path layer */
 .pathLayer {
-  filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.15));
+  opacity: 1;
 }
 
-/* Active path glow animation */
-.activePath {
-  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.3));
+/* Animated path dashes */
+.pathAnimated {
+  animation: pathDash 4s linear infinite;
 }
 
-@keyframes pathFlow {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -12; }
+@keyframes pathDash {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Animated dot travelling along the path */
+.pathDot {
+  opacity: 0.7;
 }
 
 /* Location layer */
@@ -86,15 +112,23 @@
 
 /* Location node interactive states */
 .locationNode {
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: filter 0.2s ease;
 }
 
 .locationNode:hover {
-  filter: brightness(1.15);
+  filter: brightness(1.1);
+}
+
+.nodeCircle {
+  transition: stroke 0.2s ease, stroke-width 0.2s ease;
+}
+
+.nodeGlow {
+  transition: opacity 0.25s ease;
 }
 
 .status_locked {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed !important;
 }
 
@@ -112,61 +146,58 @@
 
 /* Pulse ring animation for available locations */
 .pulseRing {
-  animation: pulseGlow 2.5s ease-in-out infinite;
+  animation: pulseGlow 3s ease-in-out infinite;
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; stroke-width: 1.5; }
-  50% { opacity: 1; stroke-width: 2.5; }
+  0%, 100% { opacity: 0.1; r: 34; }
+  50% { opacity: 0.35; r: 38; }
 }
 
-/* Water shimmer effect */
-.waterShimmer {
-  animation: shimmer 3s ease-in-out infinite;
+/* Online indicator dot pulse */
+.onlineDot {
+  animation: onlinePulse 2s ease-in-out infinite;
 }
 
-@keyframes shimmer {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.35; }
+@keyframes onlinePulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
-/* Online count badge near multiplayer locations */
-.onlineBadge {
-  font-family: 'VT323', monospace;
-  pointer-events: none;
-}
-
-/* ---- Bottom Info Panel (glassmorphism blend) ---- */
+/* ---- Bottom Info Panel (glassmorphism) ---- */
 .infoPanel {
   position: absolute;
-  bottom: 16px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
-  width: 360px;
+  width: 380px;
   max-width: calc(100% - 32px);
-  padding: 16px 20px;
+  border-radius: 14px;
+  overflow: hidden;
   background: linear-gradient(
     180deg,
-    var(--skin-surface, rgba(30, 24, 18, 0.92)) 0%,
-    var(--skin-surface, rgba(20, 16, 10, 0.96)) 100%
+    rgba(20, 18, 32, 0.88) 0%,
+    rgba(14, 12, 24, 0.94) 100%
   );
-  border: 1px solid var(--skin-border, rgba(255, 240, 210, 0.1));
-  border-radius: 10px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
-  animation: infoPanelIn 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-@keyframes infoPanelIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+/* Accent color bar at top of info panel */
+.infoPanelAccent {
+  height: 2px;
+  width: 100%;
+  opacity: 0.7;
+}
+
+.infoPanelContent {
+  padding: 16px 20px;
 }
 
 .infoPanelHeader {
@@ -176,23 +207,48 @@
   margin-bottom: 8px;
 }
 
-.infoIcon {
-  font-size: 20px;
+.infoIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.infoIconWrap svg {
+  width: 16px;
+  height: 16px;
 }
 
 .infoName {
   font-family: var(--font-theme-heading, 'Inter'), sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--skin-foreground, rgba(255, 240, 210, 0.9));
-  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+
+.infoStatusBadge {
+  padding: 2px 10px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid;
+  border-radius: 20px;
+  flex-shrink: 0;
 }
 
 .infoDesc {
   font-size: 0.8rem;
-  line-height: 1.6;
-  color: var(--skin-subtext, rgba(255, 240, 210, 0.55));
-  margin-bottom: 10px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.45);
+  margin-bottom: 12px;
 }
 
 /* Feature tags row */
@@ -200,25 +256,26 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .infoFeatureTag {
-  padding: 3px 8px;
+  padding: 3px 10px;
   font-size: 0.65rem;
-  letter-spacing: 0.05em;
-  background: var(--skin-surface, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.08));
-  border-radius: 4px;
-  color: var(--skin-subtext, rgba(255, 240, 210, 0.6));
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Stats row */
 .infoStats {
   display: flex;
   gap: 20px;
-  padding-top: 10px;
-  border-top: 1px solid var(--skin-border, rgba(255, 255, 255, 0.06));
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .infoStatItem {
@@ -228,15 +285,16 @@
 .infoStatValue {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--skin-foreground, rgba(255, 240, 210, 0.85));
+  color: rgba(255, 255, 255, 0.8);
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-theme-mono, monospace);
 }
 
 .infoStatLabel {
   font-size: 0.6rem;
-  color: var(--skin-subtext, rgba(255, 240, 210, 0.4));
+  color: rgba(255, 255, 255, 0.3);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   margin-top: 2px;
 }
 
@@ -244,52 +302,45 @@
 .infoLocked {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  padding: 8px 12px;
-  background: rgba(255, 107, 107, 0.08);
-  border: 1px solid rgba(255, 107, 107, 0.15);
-  border-radius: 6px;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(255, 107, 107, 0.06);
+  border: 1px solid rgba(255, 107, 107, 0.1);
+  border-radius: 10px;
 }
 
 .infoLockedIcon {
   width: 14px;
   height: 14px;
-  color: rgba(255, 107, 107, 0.7);
+  color: rgba(255, 107, 107, 0.6);
+  flex-shrink: 0;
 }
 
 .infoLockedText {
-  font-size: 0.7rem;
-  color: rgba(255, 107, 107, 0.7);
-  letter-spacing: 0.03em;
-}
-
-/* Play hint */
-.infoHint {
-  margin-top: 8px;
-  font-size: 0.65rem;
-  color: var(--skin-accent, rgba(255, 240, 210, 0.5));
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-align: center;
-  opacity: 0.7;
+  font-size: 0.72rem;
+  color: rgba(255, 107, 107, 0.6);
+  letter-spacing: 0.02em;
 }
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
   .mapWrapper {
     aspect-ratio: 4 / 3;
-    border-radius: 8px;
+    border-radius: 12px;
   }
 
   .infoPanel {
-    width: 300px;
-    padding: 12px 16px;
-    bottom: 12px;
+    width: 320px;
+    bottom: 14px;
+  }
+
+  .infoPanelContent {
+    padding: 14px 16px;
   }
 
   .infoName {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
 
   .infoDesc {
@@ -297,7 +348,7 @@
   }
 
   .infoStats {
-    gap: 14px;
+    gap: 16px;
   }
 }
 
@@ -305,10 +356,15 @@
   .mapWrapper {
     aspect-ratio: 1 / 1;
     max-width: 100%;
+    border-radius: 10px;
   }
 
   .infoPanel {
     width: calc(100% - 24px);
     bottom: 8px;
+  }
+
+  .infoPanelContent {
+    padding: 12px 14px;
   }
 }
