@@ -4,6 +4,7 @@ import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
+import { PuzzleGameManager } from './src/lib/puzzle/PuzzleGameManager';
 import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
@@ -21,6 +22,10 @@ import {
   ARENA_MAX_PLAYERS,
   ARENA_QUEUE_TIMEOUT,
 } from './src/types/arena';
+import type {
+  PuzzleServerMessage,
+  PuzzleDifficulty,
+} from './src/types/puzzle';
 
 // Environment configuration
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -314,6 +319,52 @@ const mcBoardManager = new MinecraftBoardManager({
     broadcastToMCBoard(roomCode, message, excludePlayerId);
   },
 });
+
+// ===== Puzzle Memory Game System =====
+
+const puzzleGameManager = new PuzzleGameManager({
+  onSendToPlayer: (playerId, message) => {
+    sendToPlayer(playerId, message as ServerMessage);
+  },
+  onBroadcastToRoom: (roomCode, message, excludePlayerId) => {
+    broadcastToPuzzle(roomCode, message as ServerMessage, excludePlayerId);
+  },
+});
+
+function isPuzzleMessage(type: string): boolean {
+  return type.startsWith('puzzle_');
+}
+
+function broadcastToPuzzle(roomCode: string, message: ServerMessage, excludePlayerId?: string): void {
+  const playerIds = puzzleGameManager.getPlayerIdsInRoom(roomCode);
+  for (const pid of playerIds) {
+    if (pid !== excludePlayerId) {
+      sendToPlayer(pid, message);
+    }
+  }
+}
+
+function sendPuzzleRoomState(roomCode: string): void {
+  const roomState = puzzleGameManager.getRoomState(roomCode);
+  if (roomState) {
+    broadcastToPuzzle(roomCode, { type: 'puzzle_room_state', roomState } as ServerMessage);
+  }
+}
+
+function startPuzzleCountdown(roomCode: string): void {
+  let count = COUNTDOWN_SECONDS;
+  const tick = () => {
+    if (count > 0) {
+      broadcastToPuzzle(roomCode, { type: 'puzzle_countdown', count } as ServerMessage);
+      count--;
+      setTimeout(tick, 1000);
+    } else {
+      puzzleGameManager.beginPlaying(roomCode);
+      console.log(`[PUZZLE] Countdown finished for room ${roomCode}`);
+    }
+  };
+  tick();
+}
 
 function broadcastToMCBoard(roomCode: string, message: ServerMessage, excludePlayerId?: string): void {
   const playerIds = mcBoardManager.getPlayerIdsInRoom(roomCode);
@@ -1278,6 +1329,130 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
+    // ===== Puzzle Memory Game Messages =====
+
+    case 'puzzle_create_room': {
+      const existingPuzzle = puzzleGameManager.getRoomByPlayer(playerId);
+      if (existingPuzzle) {
+        const oldPuzzleCode = existingPuzzle.code;
+        puzzleGameManager.removePlayer(playerId);
+        broadcastToPuzzle(oldPuzzleCode, { type: 'puzzle_player_left', playerId } as ServerMessage);
+        sendPuzzleRoomState(oldPuzzleCode);
+      }
+      const { roomCode: puzzleRoomCode } = puzzleGameManager.createRoom(
+        playerId,
+        message.playerName,
+        message.roomName,
+        message.difficulty as PuzzleDifficulty | undefined,
+      );
+      const puzzleToken = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'puzzle_room_created',
+        roomCode: puzzleRoomCode,
+        playerId,
+        reconnectToken: puzzleToken,
+      } as ServerMessage);
+      break;
+    }
+
+    case 'puzzle_join_room': {
+      const existingPuzzle = puzzleGameManager.getRoomByPlayer(playerId);
+      if (existingPuzzle) {
+        const oldPuzzleCode = existingPuzzle.code;
+        puzzleGameManager.removePlayer(playerId);
+        broadcastToPuzzle(oldPuzzleCode, { type: 'puzzle_player_left', playerId } as ServerMessage);
+        sendPuzzleRoomState(oldPuzzleCode);
+      }
+      const joinResult = puzzleGameManager.joinRoom(message.roomCode, playerId, message.playerName);
+      if (!joinResult.success) {
+        sendError(playerId, joinResult.error || 'Failed to join', 'PUZZLE_JOIN_FAILED');
+        break;
+      }
+      const puzzleToken = issueReconnectToken(playerId);
+      const puzzleRoomState = puzzleGameManager.getRoomState(message.roomCode);
+      sendToPlayer(playerId, {
+        type: 'puzzle_joined_room',
+        roomCode: message.roomCode,
+        playerId,
+        roomState: puzzleRoomState,
+        reconnectToken: puzzleToken,
+      } as ServerMessage);
+      broadcastToPuzzle(message.roomCode, {
+        type: 'puzzle_player_joined',
+        player: puzzleRoomState?.players.find(p => p.id === playerId),
+      } as ServerMessage, playerId);
+      sendPuzzleRoomState(message.roomCode);
+      break;
+    }
+
+    case 'puzzle_get_rooms': {
+      const rooms = puzzleGameManager.getPublicRooms();
+      sendToPlayer(playerId, { type: 'puzzle_room_list', rooms } as ServerMessage);
+      break;
+    }
+
+    case 'puzzle_leave': {
+      const result = puzzleGameManager.removePlayer(playerId);
+      if (conn?.reconnectToken) {
+        reconnectTokens.delete(conn.reconnectToken);
+      }
+      if (result.roomCode) {
+        broadcastToPuzzle(result.roomCode, { type: 'puzzle_player_left', playerId } as ServerMessage);
+        sendPuzzleRoomState(result.roomCode);
+      }
+      break;
+    }
+
+    case 'puzzle_ready': {
+      const result = puzzleGameManager.setPlayerReady(playerId, message.ready);
+      if (!result.success) {
+        sendError(playerId, result.error || 'Failed to set ready');
+        break;
+      }
+      const puzzleRoom = puzzleGameManager.getRoomByPlayer(playerId);
+      if (puzzleRoom) {
+        broadcastToPuzzle(puzzleRoom.code, {
+          type: 'puzzle_player_ready',
+          playerId,
+          ready: message.ready,
+        } as ServerMessage);
+        sendPuzzleRoomState(puzzleRoom.code);
+      }
+      break;
+    }
+
+    case 'puzzle_set_difficulty': {
+      const result = puzzleGameManager.setDifficulty(playerId, message.difficulty);
+      if (!result.success) {
+        sendError(playerId, result.error || 'Failed to set difficulty');
+        break;
+      }
+      const puzzleRoom = puzzleGameManager.getRoomByPlayer(playerId);
+      if (puzzleRoom) {
+        sendPuzzleRoomState(puzzleRoom.code);
+      }
+      break;
+    }
+
+    case 'puzzle_start': {
+      const result = puzzleGameManager.startGame(playerId);
+      if (!result.success) {
+        sendError(playerId, result.error || 'Failed to start', 'PUZZLE_START_FAILED');
+        break;
+      }
+      const puzzleRoom = puzzleGameManager.getRoomByPlayer(playerId);
+      if (puzzleRoom) {
+        sendPuzzleRoomState(puzzleRoom.code);
+        startPuzzleCountdown(puzzleRoom.code);
+      }
+      break;
+    }
+
+    case 'puzzle_flip_card': {
+      puzzleGameManager.handleFlipCard(playerId, message.cardId);
+      break;
+    }
+
     default:
       sendError(playerId, `Unknown message type`, 'UNKNOWN_TYPE');
   }
@@ -1307,6 +1482,16 @@ function handleDisconnect(playerId: string, reason: string): void {
   const mcResult = mcBoardManager.markDisconnected(playerId);
   if (mcResult.roomCode) {
     sendMCBoardRoomState(mcResult.roomCode);
+  }
+
+  // Handle puzzle disconnect
+  const puzzleRoom = puzzleGameManager.getRoomByPlayer(playerId);
+  if (puzzleRoom) {
+    const puzzleResult = puzzleGameManager.removePlayer(playerId);
+    if (puzzleResult.roomCode) {
+      broadcastToPuzzle(puzzleResult.roomCode, { type: 'puzzle_player_left', playerId } as ServerMessage);
+      sendPuzzleRoomState(puzzleResult.roomCode);
+    }
   }
 
   const result = roomManager.markPlayerDisconnected(playerId);

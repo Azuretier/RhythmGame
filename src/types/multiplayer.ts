@@ -96,8 +96,9 @@ export interface CancelRankedMessage {
 // Arena client messages (re-exported from arena types for the unified union)
 import type { ArenaClientMessage, ArenaServerMessage } from './arena';
 import type { MCClientMessage, MCServerMessage as MCBoardServerMessage } from './minecraft-board';
+import type { PuzzleClientMessage, PuzzleServerMessage } from './puzzle';
 
-export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage };
+export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, PuzzleClientMessage, PuzzleServerMessage };
 
 export type ClientMessage =
   | CreateRoomMessage
@@ -114,6 +115,7 @@ export type ClientMessage =
   | CancelRankedMessage
   | ArenaClientMessage
   | MCClientMessage
+  | PuzzleClientMessage
   | SetProfileMessage
   | GetOnlineUsersMessage;
 
@@ -276,7 +278,8 @@ export type ServerMessage =
   | RankedMatchFoundMessage
   | RankedQueuedMessage
   | ArenaServerMessage
-  | MCBoardServerMessage;
+  | MCBoardServerMessage
+  | PuzzleServerMessage;
 
 // ===== Relay Payload Types =====
 // These are game-specific messages relayed between players

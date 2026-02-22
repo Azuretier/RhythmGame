@@ -1,0 +1,735 @@
+/* =============================================================
+   Puzzle Memory Card Game - Styles
+   Indie pixel aesthetic with azure accents
+   ============================================================= */
+
+/* === Page Layout === */
+
+.page {
+  background: #0a0a1a;
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  position: relative;
+  overflow: hidden;
+}
+
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(0, 127, 255, 0.08) 0%, transparent 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0, 0, 0, 0.03) 3px, rgba(0, 0, 0, 0.03) 4px);
+  pointer-events: none;
+}
+
+/* === Center Box === */
+
+.centerBox {
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem;
+  z-index: 1;
+}
+
+/* === Menu Container === */
+
+.menuContainer {
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid rgba(0, 127, 255, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+}
+
+.title {
+  font-size: 1.75rem;
+  color: #007FFF;
+  text-align: center;
+  margin: 0 0 0.25rem;
+  text-shadow: 0 0 20px rgba(0, 127, 255, 0.4);
+  letter-spacing: 2px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #888;
+  font-size: 0.8rem;
+  margin: 0 0 1.25rem;
+}
+
+/* === Connecting === */
+
+.connecting {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #333;
+  border-top-color: #007FFF;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* === Name Input === */
+
+.nameInput {
+  margin-bottom: 1rem;
+}
+
+.nameInput label {
+  display: block;
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-bottom: 0.25rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: white;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: #007FFF;
+}
+
+.input::placeholder {
+  color: #555;
+}
+
+/* === Difficulty Selector === */
+
+.difficultySelector {
+  margin-bottom: 1rem;
+}
+
+.difficultySelector label {
+  display: block;
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-bottom: 0.5rem;
+}
+
+.difficultyBtn {
+  padding: 0.4rem 0.75rem;
+  margin: 0 0.25rem 0.25rem 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #ccc;
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.difficultyBtn:hover {
+  border-color: rgba(0, 127, 255, 0.5);
+  color: white;
+}
+
+.difficultyActive {
+  background: rgba(0, 127, 255, 0.2);
+  border-color: #007FFF;
+  color: #007FFF;
+}
+
+/* === Menu Actions === */
+
+.menuActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.joinSection {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.joinSection .input {
+  flex: 1;
+}
+
+/* === Buttons === */
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: rgba(0, 127, 255, 0.2);
+  border-color: #007FFF;
+  color: #007FFF;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: rgba(0, 127, 255, 0.35);
+}
+
+.btnSecondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ccc;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: white;
+}
+
+.btnStart {
+  background: rgba(0, 200, 100, 0.2);
+  border-color: #00c864;
+  color: #00c864;
+  font-weight: bold;
+}
+
+.btnStart:hover:not(:disabled) {
+  background: rgba(0, 200, 100, 0.35);
+}
+
+.btnDanger {
+  background: rgba(255, 60, 60, 0.1);
+  border-color: rgba(255, 60, 60, 0.4);
+  color: #ff6060;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: rgba(255, 60, 60, 0.2);
+}
+
+.btnSmall {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+/* === Room Info (Lobby) === */
+
+.roomInfo {
+  background: rgba(0, 127, 255, 0.08);
+  border: 1px solid rgba(0, 127, 255, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.roomCode {
+  color: #aaa;
+}
+
+.roomCode strong {
+  color: #007FFF;
+  letter-spacing: 2px;
+}
+
+.difficultyDisplay {
+  color: #aaa;
+}
+
+.difficultyDisplay strong {
+  color: #00c864;
+}
+
+/* === Player List === */
+
+.playerList {
+  margin-bottom: 1rem;
+}
+
+.playerList h3 {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.playerItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.playerReady {
+  border-color: rgba(0, 200, 100, 0.3);
+}
+
+.readyBadge {
+  color: #00c864;
+  font-size: 0.75rem;
+}
+
+.notReadyBadge {
+  color: #ff6060;
+  font-size: 0.75rem;
+}
+
+.playerSlotEmpty {
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  text-align: center;
+  color: #555;
+  font-size: 0.8rem;
+}
+
+.lobbyActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* === Room List === */
+
+.roomList {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 1rem;
+}
+
+.roomList h3 {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin: 0 0 0.5rem;
+}
+
+.noRooms {
+  color: #555;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.roomItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.roomDifficulty {
+  margin-left: 0.5rem;
+  color: #007FFF;
+  font-size: 0.75rem;
+}
+
+.roomMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #aaa;
+  font-size: 0.8rem;
+}
+
+/* === Error === */
+
+.error {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: rgba(255, 60, 60, 0.1);
+  border: 1px solid rgba(255, 60, 60, 0.3);
+  border-radius: 6px;
+  color: #ff8080;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* === Countdown === */
+
+.countdownOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 100;
+}
+
+.countdownNumber {
+  font-size: 8rem;
+  font-weight: bold;
+  color: #007FFF;
+  text-shadow: 0 0 40px rgba(0, 127, 255, 0.6);
+}
+
+/* === Game Container === */
+
+.gameContainer {
+  width: 100%;
+  max-width: 700px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  z-index: 1;
+}
+
+.gameHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gameTitle {
+  font-size: 1.2rem;
+  color: #007FFF;
+  margin: 0;
+}
+
+.turnBanner {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.myTurn {
+  color: #00c864;
+  text-shadow: 0 0 10px rgba(0, 200, 100, 0.4);
+}
+
+.opponentTurn {
+  color: #ff8c00;
+}
+
+/* === Scoreboard === */
+
+.scoreboard {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.playerScore {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.playerActive {
+  border-color: rgba(0, 127, 255, 0.5);
+  background: rgba(0, 127, 255, 0.08);
+}
+
+.playerMe {
+  border-left: 3px solid #007FFF;
+}
+
+.playerName {
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.youTag {
+  font-size: 0.65rem;
+  color: #007FFF;
+  background: rgba(0, 127, 255, 0.15);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: normal;
+}
+
+.playerStats {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: #aaa;
+}
+
+.statScore {
+  color: #FFD700;
+  font-weight: bold;
+}
+
+.statPairs {
+  color: #00c864;
+}
+
+.statCombo {
+  color: #ff8c00;
+  font-weight: bold;
+}
+
+.turnIndicator {
+  font-size: 0.65rem;
+  color: #007FFF;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* === Game Board === */
+
+.board {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 127, 255, 0.15);
+  border-radius: 12px;
+  aspect-ratio: auto;
+}
+
+/* === Card === */
+
+.card {
+  position: relative;
+  aspect-ratio: 1;
+  perspective: 600px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+}
+
+.card:disabled {
+  cursor: default;
+}
+
+.cardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s ease;
+  transform-style: preserve-3d;
+}
+
+.cardFlipped .cardInner {
+  transform: rotateY(180deg);
+}
+
+.cardFront,
+.cardBack {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  border: 2px solid rgba(0, 127, 255, 0.2);
+}
+
+.cardFront {
+  background: linear-gradient(135deg, rgba(0, 127, 255, 0.15), rgba(0, 50, 120, 0.3));
+  border-color: rgba(0, 127, 255, 0.3);
+}
+
+.card:hover:not(:disabled) .cardFront {
+  border-color: rgba(0, 127, 255, 0.6);
+  background: linear-gradient(135deg, rgba(0, 127, 255, 0.25), rgba(0, 50, 120, 0.4));
+}
+
+.cardBack {
+  background: rgba(20, 20, 40, 0.9);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: rotateY(180deg);
+}
+
+.cardSymbol {
+  font-size: 1.75rem;
+  user-select: none;
+}
+
+.cardFront .cardSymbol {
+  color: rgba(0, 127, 255, 0.5);
+  font-size: 1.5rem;
+}
+
+/* Card matched states */
+
+.cardMatched .cardFront,
+.cardMatched .cardBack {
+  opacity: 0.85;
+}
+
+.cardMyMatch .cardBack {
+  border-color: rgba(0, 200, 100, 0.5);
+  box-shadow: 0 0 12px rgba(0, 200, 100, 0.2);
+}
+
+.cardOpponentMatch .cardBack {
+  border-color: rgba(255, 140, 0, 0.5);
+  box-shadow: 0 0 12px rgba(255, 140, 0, 0.2);
+}
+
+/* === Progress Bar === */
+
+.progressBar {
+  position: relative;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #007FFF, #00c864);
+  border-radius: 12px;
+  transition: width 0.5s ease;
+}
+
+.progressText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* === Game Over === */
+
+.gameOverContainer {
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem;
+  z-index: 1;
+}
+
+.gameOverCard {
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid rgba(0, 127, 255, 0.3);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.gameOverTitle {
+  font-size: 2rem;
+  margin: 0 0 1.5rem;
+  text-shadow: 0 0 20px rgba(0, 127, 255, 0.4);
+}
+
+.gameOverScores {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.gameOverPlayer {
+  flex: 1;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.winner {
+  border-color: #FFD700;
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.gameOverName {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.gameOverScore {
+  display: block;
+  font-size: 1.2rem;
+  color: #FFD700;
+  font-weight: bold;
+}
+
+.gameOverPairs {
+  display: block;
+  font-size: 0.8rem;
+  color: #00c864;
+  margin-top: 0.25rem;
+}
+
+.gameOverActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+/* === Responsive === */
+
+@media (max-width: 480px) {
+  .board {
+    gap: 0.3rem;
+    padding: 0.5rem;
+  }
+
+  .cardSymbol {
+    font-size: 1.25rem;
+  }
+
+  .scoreboard {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .gameOverScores {
+    flex-direction: column;
+  }
+
+  .menuContainer {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+}

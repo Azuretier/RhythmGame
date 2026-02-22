@@ -35,6 +35,11 @@ function getDefaultStats(): PlayerStats {
     pollsVoted: 0,
     totalGoldEarned: 0,
     totalTreasuresCollected: 0,
+    puzzleGamesPlayed: 0,
+    puzzleGamesWon: 0,
+    puzzlePairsMatched: 0,
+    puzzleBestCombo: 0,
+    puzzlePerfectGames: 0,
   };
 }
 
@@ -373,6 +378,43 @@ export function syncTreasureStats(treasureStats: { totalGoldEarned: number; tota
 
   state.stats.totalGoldEarned = treasureStats.totalGoldEarned;
   state.stats.totalTreasuresCollected = treasureStats.totalTreasuresCollected;
+
+  const updated = checkNewAdvancements(state);
+  saveAdvancementState(updated);
+
+  syncToFirestore(updated);
+  for (const advId of updated.newlyUnlockedIds) {
+    writeNotification(advId);
+  }
+
+  return updated;
+}
+
+export interface PuzzleGameEndStats {
+  won: boolean;
+  pairsMatched: number;
+  bestCombo: number;
+  isPerfect: boolean; // no misses
+}
+
+export function recordPuzzleGameEnd(stats: PuzzleGameEndStats): AdvancementState {
+  const state = loadAdvancementState();
+
+  state.stats.puzzleGamesPlayed += 1;
+  state.stats.totalGamesPlayed += 1;
+  state.stats.puzzlePairsMatched += stats.pairsMatched;
+
+  if (stats.bestCombo > state.stats.puzzleBestCombo) {
+    state.stats.puzzleBestCombo = stats.bestCombo;
+  }
+
+  if (stats.won) {
+    state.stats.puzzleGamesWon += 1;
+  }
+
+  if (stats.isPerfect) {
+    state.stats.puzzlePerfectGames += 1;
+  }
 
   const updated = checkNewAdvancements(state);
   saveAdvancementState(updated);

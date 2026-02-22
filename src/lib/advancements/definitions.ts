@@ -172,6 +172,20 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'treasure_200', category: 'treasure', icon: 'chest', threshold: 200, statKey: 'totalTreasuresCollected' },
   { id: 'treasure_500', category: 'treasure', icon: 'chest', threshold: 500, statKey: 'totalTreasuresCollected' },
   { id: 'treasure_1000', category: 'treasure', icon: 'chest', threshold: 1000, statKey: 'totalTreasuresCollected' },
+
+  // === Puzzle ===
+  { id: 'puzzle_games_1', category: 'puzzle', icon: 'puzzle', threshold: 1, statKey: 'puzzleGamesPlayed' },
+  { id: 'puzzle_games_10', category: 'puzzle', icon: 'puzzle', threshold: 10, statKey: 'puzzleGamesPlayed' },
+  { id: 'puzzle_games_50', category: 'puzzle', icon: 'puzzle', threshold: 50, statKey: 'puzzleGamesPlayed' },
+  { id: 'puzzle_wins_1', category: 'puzzle', icon: 'trophy', threshold: 1, statKey: 'puzzleGamesWon' },
+  { id: 'puzzle_wins_10', category: 'puzzle', icon: 'trophy', threshold: 10, statKey: 'puzzleGamesWon' },
+  { id: 'puzzle_wins_25', category: 'puzzle', icon: 'trophy', threshold: 25, statKey: 'puzzleGamesWon' },
+  { id: 'puzzle_pairs_10', category: 'puzzle', icon: 'gem', threshold: 10, statKey: 'puzzlePairsMatched' },
+  { id: 'puzzle_pairs_50', category: 'puzzle', icon: 'gem', threshold: 50, statKey: 'puzzlePairsMatched' },
+  { id: 'puzzle_pairs_200', category: 'puzzle', icon: 'gem', threshold: 200, statKey: 'puzzlePairsMatched' },
+  { id: 'puzzle_combo_3', category: 'puzzle', icon: 'flame', threshold: 3, statKey: 'puzzleBestCombo' },
+  { id: 'puzzle_combo_5', category: 'puzzle', icon: 'flame', threshold: 5, statKey: 'puzzleBestCombo' },
+  { id: 'puzzle_perfect_1', category: 'puzzle', icon: 'star', threshold: 1, statKey: 'puzzlePerfectGames' },
 ];
 
 export const BATTLE_ARENA_REQUIRED_ADVANCEMENTS = 3;

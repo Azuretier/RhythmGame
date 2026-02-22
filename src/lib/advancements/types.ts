@@ -6,7 +6,8 @@ export type AdvancementCategory =
   | 'general'
   | 'multiplayer'
   | 'loyalty'
-  | 'treasure';
+  | 'treasure'
+  | 'puzzle';
 
 export interface Advancement {
   id: string;
@@ -49,6 +50,12 @@ export interface PlayerStats {
   // Treasure stats
   totalGoldEarned: number;
   totalTreasuresCollected: number;
+  // Puzzle stats
+  puzzleGamesPlayed: number;
+  puzzleGamesWon: number;
+  puzzlePairsMatched: number;
+  puzzleBestCombo: number;
+  puzzlePerfectGames: number;
 }
 
 export interface AdvancementState {
