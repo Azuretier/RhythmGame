@@ -813,6 +813,43 @@ export function useGameState() {
         return totalKills;
     }, []);
 
+    // Add garbage rows to the bottom of the board (used by TD: enemy reach + corruption raids)
+    const addGarbageRows = useCallback((count: number) => {
+        setBoard(prev => {
+            const rows: (string | null)[][] = [];
+            for (let g = 0; g < count; g++) {
+                const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+                rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
+            }
+            const newBoard = [...prev.slice(count), ...rows];
+            boardRef.current = newBoard;
+            return newBoard;
+        });
+    }, []);
+
+    // Spawn an enemy at a specific grid cell (used by corruption system)
+    const spawnEnemyAtCell = useCallback((gx: number, gz: number) => {
+        const occupied = getOccupiedCells();
+        const key = `${gx},${gz}`;
+        if (occupied.has(key)) return;
+
+        const worldX = gx * GRID_TILE_SIZE;
+        const worldZ = gz * GRID_TILE_SIZE;
+
+        const enemy: Enemy = {
+            id: nextEnemyId++,
+            x: worldX, y: 0.5, z: worldZ,
+            gridX: gx, gridZ: gz,
+            speed: 1,
+            health: ENEMY_HP,
+            maxHealth: ENEMY_HP,
+            alive: true,
+            spawnTime: Date.now(),
+        };
+        setEnemies(prev => [...prev, enemy]);
+        enemiesRef.current = [...enemiesRef.current, enemy];
+    }, [getOccupiedCells]);
+
     // Set phase to PLAYING (after world creation animation)
     const enterPlayPhase = useCallback(() => {
         setGamePhase('PLAYING');
@@ -1153,5 +1190,7 @@ export function useGameState() {
         setEnemies,
         setTowerHealth,
         towerHealthRef,
+        addGarbageRows,
+        spawnEnemyAtCell,
     };
 }

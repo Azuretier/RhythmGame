@@ -343,23 +343,20 @@ export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
 export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
 
 // ===== Corruption & Anomaly Settings =====
-export const SIDE_BOARD_WIDTH = 4;
-export const SIDE_BOARD_HEIGHT = 20;     // Match VISIBLE_HEIGHT
-export const SIDE_BOARD_CELL_SIZE = 16;  // Smaller than main board's 28px
+// Side board minimap dimensions
+export const SIDE_BOARD_COLS = 9;
+export const SIDE_BOARD_ROWS = 18;
+export const SIDE_BOARD_CELL_SIZE = 8;   // Small minimap cells
 
-export const CORRUPTION_SEED_INTERVAL = 30000;    // 30s between new seeds (ms)
-export const CORRUPTION_GROWTH_INTERVAL = 10000;   // 10s per growth tick (ms)
+// Terrain corruption (runs during TD phase only)
+export const CORRUPTION_CHANCE_PER_SECOND = 0.15;   // 15% chance per second to infect a block
+export const CORRUPTION_GROWTH_INTERVAL = 10000;     // 10s per growth tick (ms)
 export const CORRUPTION_MAX_LEVEL = 5;
-export const MAX_CORRUPTION_NODES = 8;             // Per side board
+export const CORRUPTION_MAX_TERRAIN_NODES = 20;      // Max corrupted cells on terrain
 export const CORRUPTION_SPREAD_CHANCE = 0.25;
-
-export const RAID_MOB_MOVE_INTERVAL = 800;         // ms between mob movements
-export const RAID_WAVE_INTERVAL = 8000;            // 8s between waves
-export const RAID_WAVE_SIZE = 3;
-export const RAID_MAX_WAVES = 3;
-export const RAID_MOB_HP = 2;
-export const RAID_GARBAGE_ROWS = 1;                // Garbage rows added when mob reaches board
-export const RAID_TOWER_DAMAGE = 10;               // Tower health damage per mob reaching board
+export const CORRUPTION_ENEMY_SPAWN_CHANCE = 0.3;    // 30% chance per beat for mature cell to spawn enemy
+export const CORRUPTION_ANOMALY_THRESHOLD = 12;      // Cells needed to trigger anomaly state
+export const TERRAIN_RADIUS = 18;                    // Matches GRID_HALF
 
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];

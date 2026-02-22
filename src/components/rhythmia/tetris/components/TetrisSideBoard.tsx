@@ -1,68 +1,112 @@
-import React from 'react';
-import type { SideBoardState, SideBoardSide } from '../types';
-import { SIDE_BOARD_CELL_SIZE } from '../constants';
-import { CorruptionOverlay } from './CorruptionOverlay';
-import { RaidMobIndicator } from './RaidMobIndicator';
+'use client';
+
+import React, { useMemo } from 'react';
+import type { CorruptionNode, Enemy } from '../types';
+import { SIDE_BOARD_COLS, SIDE_BOARD_ROWS, SIDE_BOARD_CELL_SIZE, TERRAIN_RADIUS } from '../constants';
 import styles from '../SideBoard.module.css';
 
 interface TetrisSideBoardProps {
-    board: SideBoardState;
-    side: SideBoardSide;
+    side: 'left' | 'right';
+    corruptedCells: Map<string, CorruptionNode>;
+    enemies: Enemy[];
+    terrainPhase: string;
 }
 
 /**
- * Simple seeded hash for tile color variation.
+ * Map terrain grid coordinates to a minimap cell index.
+ * Left board covers gx [-TERRAIN_RADIUS, -1], right board covers gx [0, TERRAIN_RADIUS].
+ * Returns null if the coordinate falls outside this side's range.
  */
-function tileHash(x: number, y: number): number {
-    const h = ((x * 374761393 + y * 668265263) ^ 0x5bf03635) >>> 0;
-    return (h % 100) / 100;
+function toMinimapCell(
+    gx: number,
+    gz: number,
+    side: 'left' | 'right',
+): { col: number; row: number } | null {
+    const R = TERRAIN_RADIUS;
+
+    if (side === 'left') {
+        if (gx >= 0 || gx < -R) return null;
+    } else {
+        if (gx < 0 || gx > R) return null;
+    }
+
+    const col = side === 'left'
+        ? Math.min(SIDE_BOARD_COLS - 1, Math.floor((gx + R) * SIDE_BOARD_COLS / R))
+        : Math.min(SIDE_BOARD_COLS - 1, Math.floor(gx * SIDE_BOARD_COLS / (R + 1)));
+
+    const row = Math.min(
+        SIDE_BOARD_ROWS - 1,
+        Math.floor((gz + R) * SIDE_BOARD_ROWS / (2 * R + 1)),
+    );
+
+    if (col < 0 || col >= SIDE_BOARD_COLS || row < 0 || row >= SIDE_BOARD_ROWS) return null;
+    return { col, row };
 }
 
 /**
- * Renders one side board as a grid with corruption nodes and raid mobs.
- * Non-interactive — purely visual display flanking the Tetris board.
+ * Terrain corruption minimap — shows a top-down 2D view of one half of the
+ * circular TD terrain. Corrupted cells are purple, enemies are red dots.
  */
-export function TetrisSideBoard({ board, side }: TetrisSideBoardProps) {
+export function TetrisSideBoard({ side, corruptedCells, enemies, terrainPhase }: TetrisSideBoardProps) {
     const containerClass = side === 'left' ? styles.sideBoardLeft : styles.sideBoardRight;
 
-    // Build lookup maps for corruption and raid mobs by position
-    const corruptionMap = new Map<string, typeof board.corruption[number]>();
-    for (const node of board.corruption) {
-        corruptionMap.set(`${node.x},${node.y}`, node);
-    }
+    const { corruptionMap, enemySet } = useMemo(() => {
+        const corruptionMap = new Map<string, number>();
+        const enemySet = new Set<string>();
 
-    const mobMap = new Map<string, typeof board.raidMobs[number]>();
-    for (const mob of board.raidMobs) {
-        if (mob.alive) {
-            mobMap.set(`${mob.x},${mob.y}`, mob);
+        for (const [, node] of corruptedCells) {
+            const cell = toMinimapCell(node.gx, node.gz, side);
+            if (cell) {
+                const key = `${cell.col},${cell.row}`;
+                const existing = corruptionMap.get(key) ?? -1;
+                if (node.level > existing) {
+                    corruptionMap.set(key, node.level);
+                }
+            }
         }
-    }
+
+        for (const enemy of enemies) {
+            if (!enemy.alive) continue;
+            const cell = toMinimapCell(enemy.gridX, enemy.gridZ, side);
+            if (cell) {
+                enemySet.add(`${cell.col},${cell.row}`);
+            }
+        }
+
+        return { corruptionMap, enemySet };
+    }, [corruptedCells, enemies, side]);
+
+    const isActive = terrainPhase === 'td';
 
     return (
         <div className={containerClass}>
             <div
                 className={styles.sideBoardGrid}
                 style={{
-                    gridTemplateColumns: `repeat(${board.width}, ${SIDE_BOARD_CELL_SIZE}px)`,
-                    gridTemplateRows: `repeat(${board.height}, ${SIDE_BOARD_CELL_SIZE}px)`,
+                    gridTemplateColumns: `repeat(${SIDE_BOARD_COLS}, ${SIDE_BOARD_CELL_SIZE}px)`,
+                    gridTemplateRows: `repeat(${SIDE_BOARD_ROWS}, ${SIDE_BOARD_CELL_SIZE}px)`,
                 }}
             >
-                {Array.from({ length: board.height * board.width }, (_, i) => {
-                    const x = i % board.width;
-                    const y = Math.floor(i / board.width);
-                    const key = `${x},${y}`;
-                    const corruption = corruptionMap.get(key);
-                    const mob = mobMap.get(key);
-                    const seed = tileHash(x, y);
+                {Array.from({ length: SIDE_BOARD_ROWS * SIDE_BOARD_COLS }, (_, i) => {
+                    const col = i % SIDE_BOARD_COLS;
+                    const row = Math.floor(i / SIDE_BOARD_COLS);
+                    const key = `${col},${row}`;
+                    const corruptionLevel = corruptionMap.get(key);
+                    const hasEnemy = enemySet.has(key);
 
                     return (
                         <div
                             key={i}
-                            className={styles.sideBoardTile}
-                            style={{ '--tile-seed': seed } as React.CSSProperties}
+                            className={`${styles.minimapTile} ${isActive ? styles.minimapTileActive : ''}`}
                         >
-                            {corruption && <CorruptionOverlay node={corruption} />}
-                            {mob && <RaidMobIndicator mob={mob} />}
+                            {corruptionLevel != null && (
+                                <div className={
+                                    corruptionLevel >= 5
+                                        ? styles.minimapCorruptionMature
+                                        : styles[`minimapCorruption${corruptionLevel}` as keyof typeof styles] || styles.minimapCorruption0
+                                } />
+                            )}
+                            {hasEnemy && <div className={styles.minimapEnemy} />}
                         </div>
                     );
                 })}

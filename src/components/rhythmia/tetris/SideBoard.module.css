@@ -25,73 +25,80 @@
     background: rgba(30, 0, 50, 0.5);
 }
 
-/* ===== Side Board Tile ===== */
-.sideBoardTile {
+/* ===== Minimap Tile ===== */
+.minimapTile {
     position: relative;
-    background: #120820;
+    background: #0a0a14;
 }
 
-/* Subtle position-based color variation via inline style --tile-seed */
-.sideBoardTile::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-        circle at center,
-        rgba(60, 20, 80, calc(0.05 + var(--tile-seed, 0) * 0.1)) 0%,
-        transparent 70%
-    );
-    pointer-events: none;
+.minimapTileActive {
+    background: #0d1a0d;
 }
 
-/* ===== Corruption Overlay ===== */
-.corruptionNode {
+/* ===== Minimap Corruption Overlays ===== */
+.minimapCorruption0 {
     position: absolute;
     inset: 0;
     border-radius: 50%;
     pointer-events: none;
     z-index: 2;
+    background: radial-gradient(circle, rgba(100, 0, 160, 0.2) 0%, transparent 70%);
 }
 
-.corruptionLevel0 {
-    composes: corruptionNode;
-    background: radial-gradient(circle, rgba(100, 0, 160, 0.15) 0%, transparent 70%);
+.minimapCorruption1 {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    background: radial-gradient(circle, rgba(120, 0, 200, 0.3) 0%, transparent 65%);
 }
 
-.corruptionLevel1 {
-    composes: corruptionNode;
-    background: radial-gradient(circle, rgba(120, 0, 200, 0.25) 0%, transparent 65%);
+.minimapCorruption2 {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    background: radial-gradient(circle, rgba(150, 0, 230, 0.45) 0%, transparent 60%);
+    animation: minimapPulse 3s ease-in-out infinite;
 }
 
-.corruptionLevel2 {
-    composes: corruptionNode;
-    background: radial-gradient(circle, rgba(150, 0, 230, 0.4) 0%, transparent 60%);
-    animation: corruptionPulse 3s ease-in-out infinite;
+.minimapCorruption3 {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    background: radial-gradient(circle, rgba(180, 0, 255, 0.6) 0%, transparent 55%);
+    animation: minimapPulse 2s ease-in-out infinite;
 }
 
-.corruptionLevel3 {
-    composes: corruptionNode;
-    background: radial-gradient(circle, rgba(180, 0, 255, 0.55) 0%, transparent 55%);
-    animation: corruptionPulse 2s ease-in-out infinite;
+.minimapCorruption4 {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
+    background: radial-gradient(circle, rgba(200, 50, 255, 0.75) 0%, rgba(180, 0, 255, 0.3) 50%, transparent 80%);
+    animation: minimapPulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 4px rgba(200, 50, 255, 0.4);
 }
 
-.corruptionLevel4 {
-    composes: corruptionNode;
-    background: radial-gradient(circle, rgba(200, 50, 255, 0.7) 0%, rgba(180, 0, 255, 0.3) 50%, transparent 80%);
-    animation: corruptionPulse 1.5s ease-in-out infinite;
-    box-shadow: 0 0 6px rgba(200, 50, 255, 0.4);
-}
-
-.corruptionMature {
-    composes: corruptionNode;
+.minimapCorruptionMature {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2;
     background: radial-gradient(circle, rgba(255, 0, 255, 0.9) 0%, rgba(200, 0, 255, 0.5) 40%, transparent 70%);
-    animation: corruptionPulse 0.8s ease-in-out infinite;
-    box-shadow: 0 0 12px rgba(255, 0, 255, 0.6), 0 0 24px rgba(200, 0, 255, 0.3);
+    animation: minimapPulse 0.8s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(255, 0, 255, 0.6);
 }
 
-@keyframes corruptionPulse {
+@keyframes minimapPulse {
     0%, 100% {
-        transform: scale(0.9);
+        transform: scale(0.85);
         opacity: 0.7;
     }
     50% {
@@ -100,69 +107,29 @@
     }
 }
 
-/* ===== Raid Mob ===== */
-.raidMob {
+/* ===== Minimap Enemy Dot ===== */
+.minimapEnemy {
     position: absolute;
-    inset: 1px;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-}
-
-.raidMobBody {
-    width: 10px;
-    height: 10px;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: #ff00ff;
-    border: 1px solid rgba(255, 100, 255, 0.8);
-    box-shadow: 0 0 6px rgba(255, 0, 255, 0.5);
-    animation: raidMobPulse 1s ease-in-out infinite;
+    background: #ff3333;
+    box-shadow: 0 0 4px rgba(255, 50, 50, 0.8);
+    z-index: 3;
+    pointer-events: none;
+    animation: enemyDotPulse 1.2s ease-in-out infinite;
 }
 
-.raidMobHealthBar {
-    width: 100%;
-    height: 2px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 1px;
-    margin-top: 1px;
-    overflow: hidden;
-}
-
-.raidMobHealthFill {
-    height: 100%;
-    background: #ff00ff;
-    transition: width 0.2s;
-}
-
-@keyframes raidMobPulse {
+@keyframes enemyDotPulse {
     0%, 100% {
-        box-shadow: 0 0 4px rgba(255, 0, 255, 0.4);
+        box-shadow: 0 0 3px rgba(255, 50, 50, 0.6);
     }
     50% {
-        box-shadow: 0 0 10px rgba(255, 0, 255, 0.8);
+        box-shadow: 0 0 8px rgba(255, 50, 50, 1);
     }
-}
-
-/* Walking animation — horizontal slide */
-.raidMobWalkLeft {
-    animation: raidMobPulse 1s ease-in-out infinite, walkLeft 0.8s ease-in-out;
-}
-
-.raidMobWalkRight {
-    animation: raidMobPulse 1s ease-in-out infinite, walkRight 0.8s ease-in-out;
-}
-
-@keyframes walkLeft {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
-}
-
-@keyframes walkRight {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
 }
 
 /* ===== Anomaly Banner ===== */

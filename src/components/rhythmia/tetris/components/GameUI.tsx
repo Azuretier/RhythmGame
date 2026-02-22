@@ -1,5 +1,5 @@
 import React from 'react';
-import { WORLDS, TERRAINS_PER_WORLD, ColorTheme, MAX_HEALTH } from '../constants';
+import { WORLDS, TERRAINS_PER_WORLD, ColorTheme } from '../constants';
 import type { TerrainPhase } from '../types';
 import styles from '../VanillaGame.module.css';
 
@@ -106,28 +106,23 @@ interface TerrainProgressProps {
     terrainTotal: number;
     stageNumber: number;
     terrainPhase: TerrainPhase;
-    towerHealth?: number;
     tdBeatsRemaining?: number;
+    enemyCount?: number;
 }
 
 /**
  * Progress display — phase-aware
- * Dig phase: terrain destruction progress
- * TD phase: tower HP bar + wave countdown
+ * Dig phase: terrain destruction progress ("READY" label)
+ * TD phase: enemy count + wave countdown (no HP bar)
  */
-export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, terrainPhase, towerHealth, tdBeatsRemaining }: TerrainProgressProps) {
+export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, terrainPhase, tdBeatsRemaining, enemyCount }: TerrainProgressProps) {
     if (terrainPhase === 'td') {
-        const hp = towerHealth ?? 0;
-        const hpPct = Math.max(0, Math.min(100, (hp / MAX_HEALTH) * 100));
-        const hpColor = hpPct > 50 ? '#44ff44' : hpPct > 25 ? '#ffaa00' : '#ff4444';
+        const alive = enemyCount ?? 0;
         return (
             <>
                 <div className={styles.terrainLabel}>STAGE {stageNumber} — DEFEND</div>
-                <div className={styles.terrainBar}>
-                    <div className={styles.terrainFill} style={{ width: `${hpPct}%`, background: hpColor }} />
-                </div>
                 <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
-                    HP: {Math.ceil(hp)} / {MAX_HEALTH}
+                    ENEMIES: {alive}
                     {tdBeatsRemaining != null && tdBeatsRemaining > 0 && (
                         <span style={{ marginLeft: '8px', color: '#ff8888' }}>WAVE {tdBeatsRemaining}</span>
                     )}
@@ -140,7 +135,7 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, t
     const remainingPct = terrainTotal > 0 ? Math.max(0, (terrainRemaining / terrainTotal) * 100) : 100;
     return (
         <>
-            <div className={styles.terrainLabel}>STAGE {stageNumber} — DIG</div>
+            <div className={styles.terrainLabel}>STAGE {stageNumber} — READY</div>
             <div className={styles.terrainBar}>
                 <div className={styles.terrainFill} style={{ width: `${remainingPct}%` }} />
             </div>

@@ -7,16 +7,16 @@ interface CorruptionOverlayProps {
 }
 
 const LEVEL_CLASSES = [
-    styles.corruptionLevel0,
-    styles.corruptionLevel1,
-    styles.corruptionLevel2,
-    styles.corruptionLevel3,
-    styles.corruptionLevel4,
-    styles.corruptionMature,
+    styles.minimapCorruption0,
+    styles.minimapCorruption1,
+    styles.minimapCorruption2,
+    styles.minimapCorruption3,
+    styles.minimapCorruption4,
+    styles.minimapCorruptionMature,
 ];
 
 /**
- * Renders a corruption node glow overlay within a side board tile.
+ * Renders a corruption node glow overlay within a minimap tile.
  * Visual intensity scales with corruption level (0=subtle seed → 5=bright magenta pulse).
  */
 export function CorruptionOverlay({ node }: CorruptionOverlayProps) {

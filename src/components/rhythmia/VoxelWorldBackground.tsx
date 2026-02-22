@@ -2,8 +2,8 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
-import type { Enemy, Bullet, TerrainPhase } from './tetris/types';
-import { BULLET_GRAVITY, BULLET_GROUND_Y } from './tetris/constants';
+import type { Enemy, Bullet, TerrainPhase, CorruptionNode } from './tetris/types';
+import { BULLET_GRAVITY, BULLET_GROUND_Y, CORRUPTION_MAX_TERRAIN_NODES } from './tetris/constants';
 
 // Simple seeded random for deterministic terrain
 function seededRandom(seed: number) {
@@ -533,6 +533,9 @@ interface SceneState {
   impactMesh: THREE.InstancedMesh | null;
   impactGeo: THREE.BoxGeometry;
   impactMat: THREE.MeshBasicMaterial;
+  corruptMesh: THREE.InstancedMesh | null;
+  corruptGeo: THREE.BoxGeometry;
+  corruptMat: THREE.MeshStandardMaterial;
 }
 
 interface VoxelWorldBackgroundProps {
@@ -541,6 +544,7 @@ interface VoxelWorldBackgroundProps {
   terrainDestroyedCount?: number;
   enemies?: Enemy[];
   bullets?: Bullet[];
+  corruptedCells?: Map<string, CorruptionNode>;
   onTerrainReady?: (totalBlocks: number) => void;
   worldIdx?: number;
 }
@@ -551,6 +555,7 @@ export default function VoxelWorldBackground({
   terrainDestroyedCount = 0,
   enemies = [],
   bullets = [],
+  corruptedCells,
   onTerrainReady,
   worldIdx = 0,
 }: VoxelWorldBackgroundProps) {
@@ -564,6 +569,8 @@ export default function VoxelWorldBackground({
   enemiesRef.current = enemies;
   const bulletsRef = useRef<Bullet[]>(bullets);
   bulletsRef.current = bullets;
+  const corruptedCellsRef = useRef(corruptedCells);
+  corruptedCellsRef.current = corruptedCells;
   const terrainPhaseLocalRef = useRef<TerrainPhase>(terrainPhase);
   terrainPhaseLocalRef.current = terrainPhase;
   const terrainDestroyedCountRef = useRef(terrainDestroyedCount);
@@ -740,6 +747,21 @@ export default function VoxelWorldBackground({
     impactMesh.count = 0;
     scene.add(impactMesh);
 
+    // Corruption overlay instanced mesh — purple glowing flat cubes on corrupted terrain cells
+    const corruptGeo = new THREE.BoxGeometry(1.05, 0.3, 1.05);
+    const corruptMat = new THREE.MeshStandardMaterial({
+      color: 0x8800ff,
+      roughness: 0.3,
+      metalness: 0.2,
+      emissive: 0xaa00ff,
+      emissiveIntensity: 1.5,
+      transparent: true,
+      opacity: 0.6,
+    });
+    const corruptMesh = new THREE.InstancedMesh(corruptGeo, corruptMat, CORRUPTION_MAX_TERRAIN_NODES);
+    corruptMesh.count = 0;
+    scene.add(corruptMesh);
+
     const gridLines = createGridLines();
     scene.add(gridLines);
 
@@ -752,6 +774,7 @@ export default function VoxelWorldBackground({
       enemyMesh, enemyGeo, enemyMat,
       bulletMesh, bulletGeo, bulletMat,
       impactMesh, impactGeo, impactMat,
+      corruptMesh, corruptGeo, corruptMat,
     };
 
     // Handle resize
@@ -989,6 +1012,42 @@ export default function VoxelWorldBackground({
 
           if (impactParticles.length > 0) {
             ss.impactMesh.instanceMatrix.needsUpdate = true;
+          }
+        }
+      }
+
+      // === Corruption overlay — purple glow on corrupted terrain cells ===
+      {
+        const scState = sceneStateRef.current;
+        if (scState?.corruptMesh) {
+          const cells = corruptedCellsRef.current;
+          const terrainRotY = scState.instancedMesh?.rotation.y ?? 0;
+          const cosR = Math.cos(terrainRotY);
+          const sinR = Math.sin(terrainRotY);
+
+          if (cells && cells.size > 0) {
+            let ci = 0;
+            for (const [, node] of cells) {
+              const rx = node.gx * cosR - node.gz * sinR;
+              const rz = node.gx * sinR + node.gz * cosR;
+              const pulse = 0.8 + 0.2 * Math.sin(time * 0.003 + node.gx * 0.5 + node.gz * 0.7);
+              dummy.position.set(rx, 0.6 + node.level * 0.05, rz);
+              dummy.scale.set(pulse, 0.3 + node.level * 0.1, pulse);
+              dummy.rotation.set(0, 0, 0);
+              dummy.updateMatrix();
+              scState.corruptMesh.setMatrixAt(ci++, dummy.matrix);
+            }
+            // Hide remaining instances
+            for (; ci < CORRUPTION_MAX_TERRAIN_NODES; ci++) {
+              dummy.position.set(0, -1000, 0);
+              dummy.scale.set(0, 0, 0);
+              dummy.updateMatrix();
+              scState.corruptMesh.setMatrixAt(ci, dummy.matrix);
+            }
+            scState.corruptMesh.count = cells.size;
+            scState.corruptMesh.instanceMatrix.needsUpdate = true;
+          } else {
+            scState.corruptMesh.count = 0;
           }
         }
       }

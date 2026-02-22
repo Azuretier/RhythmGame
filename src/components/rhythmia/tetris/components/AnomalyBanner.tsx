@@ -1,21 +1,19 @@
 import React from 'react';
-import type { SideBoardSide } from '../types';
 import styles from '../SideBoard.module.css';
 
 interface AnomalyBannerProps {
     active: boolean;
-    side: SideBoardSide | null;
 }
 
 /**
- * Alert banner displayed when an anomaly is active.
- * Pulsing red/purple gradient with the affected side indicated.
+ * Alert banner displayed when terrain corruption reaches anomaly threshold.
+ * Pulsing red/purple gradient overlay.
  */
-export function AnomalyBanner({ active, side }: AnomalyBannerProps) {
+export function AnomalyBanner({ active }: AnomalyBannerProps) {
     return (
         <div className={active ? styles.anomalyBannerActive : styles.anomalyBanner}>
             <div className={styles.anomalyAlert}>
-                ANOMALY — {side ?? 'unknown'} board
+                ANOMALY DETECTED
             </div>
         </div>
     );

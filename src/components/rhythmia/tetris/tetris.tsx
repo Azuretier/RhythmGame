@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, RAID_GARBAGE_ROWS, RAID_TOWER_DAMAGE } from './constants';
-import type { Piece, GameMode, FeatureSettings, SideBoardSide } from './types';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
+import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 
@@ -60,7 +60,6 @@ import {
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
-  HealthManaHUD,
   TutorialGuide,
   hasTutorialBeenSeen,
 
@@ -294,7 +293,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     // Tower defense
     enemies,
     bullets,
-    towerHealth,
     // Terrain (vanilla)
     terrainDestroyedCount,
     terrainTotal,
@@ -369,8 +367,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     fireBullet,
     updateBullets,
     setGameOver,
-    setTowerHealth,
-    towerHealthRef,
   } = gameState;
 
   const {
@@ -383,48 +379,16 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
 
   // ===== Corruption & Anomaly System =====
-  const handleRaidReached = useCallback((side: SideBoardSide) => {
-    // Add garbage rows to the bottom of the board
-    setBoard(prev => {
-      const garbageRows = [];
-      for (let g = 0; g < RAID_GARBAGE_ROWS; g++) {
-        const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
-        const row = Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage');
-        garbageRows.push(row);
-      }
-      // Remove top rows to make room, add garbage at bottom
-      const newBoard = [...prev.slice(RAID_GARBAGE_ROWS), ...garbageRows];
-      return newBoard;
-    });
-    boardRef.current = (() => {
-      const prev = boardRef.current;
-      const garbageRows = [];
-      for (let g = 0; g < RAID_GARBAGE_ROWS; g++) {
-        const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
-        const row = Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage');
-        garbageRows.push(row);
-      }
-      return [...prev.slice(RAID_GARBAGE_ROWS), ...garbageRows];
-    })();
-
-    // Deal tower damage in TD phase, board shake always
-    if (terrainPhaseRef.current === 'td') {
-      const newHealth = Math.max(0, towerHealthRef.current - RAID_TOWER_DAMAGE);
-      towerHealthRef.current = newHealth;
-      setTowerHealth(newHealth);
-      if (newHealth <= 0) {
-        setGameOver(true);
-        gameOverRef.current = true;
-      }
-    }
-    triggerBoardShake();
-  }, [setBoard, boardRef, terrainPhaseRef, towerHealthRef, setTowerHealth, setGameOver, gameOverRef, triggerBoardShake]);
+  const handleCorruptionSpawnEnemy = useCallback((gx: number, gz: number) => {
+    gameState.spawnEnemyAtCell(gx, gz);
+  }, [gameState]);
 
   const corruption = useCorruptionSystem({
     isPlaying,
     isPaused,
     gameOver,
-    onRaidReached: handleRaidReached,
+    terrainPhase,
+    onCorruptionSpawnEnemy: handleCorruptionSpawnEnemy,
   });
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
@@ -432,8 +396,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   spawnEnemiesRef.current = spawnEnemies;
   const updateEnemiesRef = useRef(updateEnemies);
   updateEnemiesRef.current = updateEnemies;
-  const setTowerHealthRef = useRef(setTowerHealth);
-  setTowerHealthRef.current = setTowerHealth;
   const setGameOverRef = useRef(setGameOver);
   setGameOverRef.current = setGameOver;
   const fireBulletRef = useRef(fireBullet);
@@ -452,6 +414,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   enterCheckpointRef.current = enterCheckpoint;
   const completeWaveRef = useRef(completeWave);
   completeWaveRef.current = completeWave;
+  const addGarbageRowsRef = useRef(gameState.addGarbageRows);
+  addGarbageRowsRef.current = gameState.addGarbageRows;
+  const triggerBoardShakeRef = useRef(triggerBoardShake);
+  triggerBoardShakeRef.current = triggerBoardShake;
+  const spawnFromCorruptionRef = useRef(corruption.spawnFromCorruption);
+  spawnFromCorruptionRef.current = corruption.spawnFromCorruption;
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -845,9 +813,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
       const center = getBoardCenter();
 
-      // Kill raid mobs from corruption system (both phases)
-      corruption.killRaidMobs(clearedLines);
-
       if (phase === 'td') {
         // === TD PHASE: Kill enemies when lines are cleared ===
         const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * amplifiedCombo);
@@ -906,7 +871,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     showJudgment, updateScore, triggerBoardShake, spawnPiece, playTone, playLineClear,
     currentPieceRef, vfx, killEnemies, destroyTerrain, enterCheckpoint,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
-    consumeComboGuard, consumeShield, showActionMessage, corruption,
+    consumeComboGuard, consumeShield, showActionMessage,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -1134,20 +1099,16 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           playKillSoundRef.current();
         }
 
-        // Apply damage when enemies reach the tower
+        // Enemies reaching tower → add garbage rows instead of HP damage
         if (reached > 0) {
-          const damage = reached * ENEMY_REACH_DAMAGE;
-          const newHealth = Math.max(0, towerHealthRef.current - damage);
-          towerHealthRef.current = newHealth;
-          setTowerHealthRef.current(newHealth);
-          if (newHealth <= 0) {
-            setGameOverRef.current(true);
-            gameOverRef.current = true;
-          }
+          addGarbageRowsRef.current(reached);
+          triggerBoardShakeRef.current();
         }
 
+        // Corruption: mature cells may spawn additional enemies
+        spawnFromCorruptionRef.current();
+
         // Check wave complete: no more spawning and all enemies dead
-        // Skip if player just died (tower destroyed) to prevent stage transition on death
         if (!gameOverRef.current && tdBeatsRemainingRef.current <= 0 && gamePhaseRef.current === 'PLAYING') {
           const aliveCount = enemiesRef.current.filter(e => e.alive).length;
           if (aliveCount === 0) {
@@ -1582,6 +1543,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           terrainDestroyedCount={terrainPhase === 'dig' ? terrainDestroyedCount : 0}
           enemies={terrainPhase === 'td' ? enemies : []}
           bullets={terrainPhase === 'td' ? bullets : []}
+          corruptedCells={terrainPhase === 'td' ? corruption.corruptedCells : undefined}
           onTerrainReady={handleTerrainReady}
           worldIdx={worldIdx}
         />
@@ -1628,21 +1590,26 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
           <TerrainProgress
-            terrainRemaining={terrainPhase === 'td' ? enemies.filter(e => e.alive).length : terrainTotal - terrainDestroyedCount}
-            terrainTotal={terrainPhase === 'td' ? enemies.length : terrainTotal}
+            terrainRemaining={terrainTotal - terrainDestroyedCount}
+            terrainTotal={terrainTotal}
             stageNumber={stageNumber}
             terrainPhase={terrainPhase}
-            towerHealth={towerHealth}
             tdBeatsRemaining={tdBeatsRemaining}
+            enemyCount={enemies.filter(e => e.alive).length}
           />
           <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
 
           {/* Anomaly alert banner */}
-          <AnomalyBanner active={corruption.activeAnomaly} side={corruption.anomalySide} />
+          <AnomalyBanner active={corruption.activeAnomaly} />
 
           <div className={styles.gameArea} ref={gameAreaRef}>
-            {/* Left side board (corruption/anomaly) */}
-            <TetrisSideBoard board={corruption.leftBoard} side="left" />
+            {/* Left side board (corruption minimap) */}
+            <TetrisSideBoard
+              side="left"
+              corruptedCells={corruption.corruptedCells}
+              enemies={enemies}
+              terrainPhase={terrainPhase}
+            />
 
             {/* Left sidebar: Hold + Inventory (separate containers) */}
             <div className={styles.sidePanelLeft}>
@@ -1716,11 +1683,15 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                 <div className={styles.nextLabel}>NEXT</div>
                 {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
               </div>
-              {terrainPhase === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
 
-            {/* Right side board (corruption/anomaly) */}
-            <TetrisSideBoard board={corruption.rightBoard} side="right" />
+            {/* Right side board (corruption minimap) */}
+            <TetrisSideBoard
+              side="right"
+              corruptedCells={corruption.corruptedCells}
+              enemies={enemies}
+              terrainPhase={terrainPhase}
+            />
           </div>
 
           <TouchControls
