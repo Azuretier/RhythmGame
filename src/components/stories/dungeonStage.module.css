@@ -1,0 +1,279 @@
+/* ============================================
+   Dungeon Stage — Tetris Game Wrapper
+   ============================================ */
+
+.container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---- Loading state ---- */
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0812;
+}
+
+.loadingText {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 4px;
+  animation: loadPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes loadPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+/* ---- Mission Briefing Banner ---- */
+.briefing {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  pointer-events: none;
+  animation: briefingFade 3s ease forwards;
+}
+
+@keyframes briefingFade {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+}
+
+.briefingContent {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 24px;
+  background: linear-gradient(180deg, rgba(10, 8, 20, 0.92) 0%, rgba(6, 4, 14, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.briefingIcon {
+  font-size: 28px;
+}
+
+.briefingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.briefingName {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 2px;
+}
+
+.briefingDifficulty {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(255, 215, 0, 0.7);
+  letter-spacing: 2px;
+}
+
+/* ---- Mission Results Overlay ---- */
+.resultsOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 3, 10, 0.88);
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.resultsCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 360px;
+  max-width: calc(100vw - 40px);
+  padding: 32px 28px;
+  background: linear-gradient(180deg, rgba(15, 12, 25, 0.95) 0%, rgba(8, 6, 16, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.resultsTitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: rgba(255, 215, 0, 0.8);
+  letter-spacing: 4px;
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+}
+
+.resultsIcon {
+  font-size: 40px;
+  margin: 4px 0;
+}
+
+.resultsName {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 2px;
+}
+
+/* ---- Stats Grid ---- */
+.statsGrid {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  justify-content: center;
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 80px;
+}
+
+.statLabel {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 1px;
+}
+
+.statValue {
+  font-family: 'VT323', monospace;
+  font-size: 28px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ---- Rewards Section ---- */
+.rewardsSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.rewardsTitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(255, 215, 0, 0.5);
+  letter-spacing: 3px;
+}
+
+.rewardsList {
+  display: flex;
+  gap: 20px;
+}
+
+.reward {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 1px;
+}
+
+/* ---- Action Buttons ---- */
+.resultsActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.completeBtn {
+  width: 100%;
+  padding: 14px 0;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 3px;
+  color: #4CAF50;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.completeBtn:hover {
+  background: rgba(76, 175, 80, 0.25);
+  border-color: rgba(76, 175, 80, 0.5);
+  color: #66BB6A;
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+.retreatBtn {
+  width: 100%;
+  padding: 10px 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.retreatBtn:hover {
+  color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .briefingName {
+    font-size: 10px;
+  }
+
+  .briefingIcon {
+    font-size: 22px;
+  }
+
+  .resultsCard {
+    padding: 24px 20px;
+  }
+
+  .resultsTitle {
+    font-size: 11px;
+  }
+
+  .statValue {
+    font-size: 22px;
+  }
+
+  .statsGrid {
+    gap: 10px;
+  }
+
+  .statItem {
+    min-width: 60px;
+  }
+}
