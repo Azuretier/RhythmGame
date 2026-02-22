@@ -530,7 +530,7 @@ export class EoEManager {
 
       const damage: DamageInstance = {
         sourceId: actorId,
-        targetId: 'definitionId' in target ? target.definitionId : target.id,
+        targetId: 'id' in target ? target.id : target.definitionId,
         ...damageResult,
       };
 
