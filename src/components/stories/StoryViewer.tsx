@@ -3,15 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import dynamic from 'next/dynamic';
 import { CHAPTERS, PARTICLE_EMOJIS } from '@/data/stories/chapters';
 import type { Chapter, StoryScene, DialogueLine } from '@/data/stories/chapters';
 import type { DungeonLocation, DungeonProgress } from '@/data/stories/dungeons';
 import { DUNGEON_LOCATIONS, getChapterForLocation, DEFAULT_PROGRESS } from '@/data/stories/dungeons';
+import DungeonMap from './DungeonMap';
 import DungeonStage from './DungeonStage';
 import styles from './stories.module.css';
-
-const DungeonMapVoxel = dynamic(() => import('./DungeonMapVoxel'), { ssr: false });
 
 type ViewState = 'dungeon-map' | 'story-intro' | 'playing' | 'exploring';
 
@@ -312,7 +310,7 @@ export default function StoryViewer() {
     if (viewState === 'dungeon-map') {
         return (
             <>
-                <DungeonMapVoxel
+                <DungeonMap
                     progress={progress}
                     onSelectLocation={handleSelectLocation}
                     onBack={() => router.push('/')}

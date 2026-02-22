@@ -246,7 +246,6 @@ function VoxelTerrain({ data }: { data: { positions: Float32Array; colors: Float
     roughness: 0.75,
     metalness: 0.05,
     flatShading: true,
-    vertexColors: true,
   }), []);
 
   useEffect(() => {
@@ -284,7 +283,6 @@ function TrackBlocks({ data }: { data: { positions: Float32Array; colors: Float3
     roughness: 0.6,
     metalness: 0.2,
     flatShading: true,
-    vertexColors: true,
   }), []);
 
   useEffect(() => {
