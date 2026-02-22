@@ -494,10 +494,10 @@ export default function DungeonMapVoxel({ progress, onSelectLocation, onBack }: 
         />
 
         {/* Lighting */}
-        <ambientLight intensity={0.5} />
+        <ambientLight intensity={1.2} />
         <directionalLight
           position={[15, 25, 10]}
-          intensity={1.2}
+          intensity={2.0}
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
@@ -510,17 +510,17 @@ export default function DungeonMapVoxel({ progress, onSelectLocation, onBack }: 
         />
         <directionalLight
           position={[-10, 10, -5]}
-          intensity={0.3}
-          color="#8888ff"
+          intensity={0.8}
+          color="#aabbff"
         />
 
-        {/* Fog for atmosphere */}
-        <fog attach="fog" args={['#0a0812', 30, 55]} />
+        {/* Subtle fog for depth — pushed far back so terrain stays bright */}
+        <fog attach="fog" args={['#0a0812', 55, 90]} />
 
         {/* Ground plane */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
           <planeGeometry args={[60, 60]} />
-          <meshStandardMaterial color="#1a2a1a" roughness={1} />
+          <meshStandardMaterial color="#2a3a2a" roughness={1} />
         </mesh>
 
         {/* Terrain voxels */}
