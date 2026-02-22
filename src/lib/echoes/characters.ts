@@ -572,7 +572,7 @@ export function applyConstellation(instance: CharacterInstance, constellation: n
     for (const [key, value] of Object.entries(bonusPerConstellation)) {
       const k = key as keyof CharacterStats;
       if (typeof instance.stats[k] === 'number' && typeof value === 'number') {
-        (instance.stats as Record<string, number>)[k] += value;
+        (instance.stats as unknown as Record<string, number>)[k] += value;
       }
     }
   }
