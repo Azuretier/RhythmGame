@@ -174,8 +174,12 @@ export default function RhythmiaLobby() {
     };
 
     const handleLogoComplete = () => {
-        setShowLogoAnimation(false);
         setGameMode('vanilla');
+        // Keep logo overlay visible while game mounts underneath,
+        // then remove it — its exit animation reveals the game
+        requestAnimationFrame(() => {
+            setShowLogoAnimation(false);
+        });
     };
 
     const closeGame = () => {
@@ -184,37 +188,36 @@ export default function RhythmiaLobby() {
         connectMultiplayerWs();
     };
 
-    if (gameMode === 'vanilla') {
-        return (
-            <motion.div
-                className={styles.gameContainer + ' ' + styles.active}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-            >
-                <VanillaGame onQuit={closeGame} />
-            </motion.div>
-        );
-    }
-
-    if (gameMode === 'multiplayer') {
-        return (
-            <motion.div
-                className={styles.gameContainer + ' ' + styles.active}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-            >
-                <MultiplayerGame onQuit={closeGame} />
-            </motion.div>
-        );
-    }
-
     const slidesEnabled = gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showOnlineUsers && !showLogoAnimation;
 
     return (
+        <>
+            {/* Cinematic logo animation overlay — always on top, independent of game mode */}
+            <AnimatePresence>
+                {showLogoAnimation && (
+                    <AnimatedLogo onComplete={handleLogoComplete} />
+                )}
+            </AnimatePresence>
+
+            {gameMode === 'vanilla' && (
+                <div className={styles.gameContainer + ' ' + styles.active}>
+                    <VanillaGame onQuit={closeGame} />
+                </div>
+            )}
+
+            {gameMode === 'multiplayer' && (
+                <motion.div
+                    className={styles.gameContainer + ' ' + styles.active}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <MultiplayerGame onQuit={closeGame} />
+                </motion.div>
+            )}
+
+        {gameMode === 'lobby' && (
         <div className={styles.page}>
             {/* Skin-specific ambient effects (sakura petals, sunset embers) */}
             <SkinAmbientEffects intensity="idle" />
@@ -236,13 +239,6 @@ export default function RhythmiaLobby() {
                         <div className={styles.loader}></div>
                         <div className={styles.loadingText}>{t('lobby.loading')}</div>
                     </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Cinematic logo animation before singleplayer */}
-            <AnimatePresence>
-                {showLogoAnimation && (
-                    <AnimatedLogo onComplete={handleLogoComplete} />
                 )}
             </AnimatePresence>
 
@@ -517,5 +513,7 @@ export default function RhythmiaLobby() {
                 ))}
             </nav>
         </div>
+        )}
+        </>
     );
 }
