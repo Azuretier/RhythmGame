@@ -51,7 +51,7 @@ import {
   RhythmVFX,
   FloatingItems,
   ItemSlots,
-  CraftingUI,
+  CardSelectUI,
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
@@ -277,7 +277,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     floatingItems,
     terrainParticles,
     // Rogue-like cards
-    craftedCards,
+    equippedCards,
     showCardSelect,
     offeredCards,
     activeEffects,
@@ -1567,7 +1567,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           <GamePhaseIndicator
             phase={gamePhase}
             stageNumber={stageNumber}
-            equippedCardCount={craftedCards.length}
+            equippedCardCount={equippedCards.length}
             terrainPhase={terrainPhase}
           />
 
@@ -1592,9 +1592,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
               </div>
               <ItemSlots
                 inventory={inventory}
-                craftedCards={craftedCards}
-                damageMultiplier={1.0}
-                onCraftOpen={() => {/* TODO: implement crafting UI toggle */}}
+                equippedCards={equippedCards}
+                activeEffects={activeEffects}
               />
             </div>
 
@@ -1685,17 +1684,16 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         />
       )}
 
-      {/* Card selection overlay - now using CraftingUI */}
+      {/* Rogue-like card selection overlay */}
       {showCardSelect && (
-        <CraftingUI
+        <CardSelectUI
+          offers={offeredCards}
           inventory={inventory}
-          craftedCards={craftedCards}
-          onCraft={(cardId) => {
-            // Stub: old card select system, need to adapt to crafting
-            return false;
-          }}
-          canCraft={(cardId) => false}
-          onClose={skipCardSelect}
+          equippedCards={equippedCards}
+          onSelect={selectCard}
+          onSkip={skipCardSelect}
+          worldIdx={worldIdx}
+          stageNumber={stageNumber}
         />
       )}
 
