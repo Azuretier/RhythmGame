@@ -117,7 +117,7 @@
 /* Category tabs */
 .tabs {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   gap: 3px;
   padding: 0 20px;
   margin-bottom: 12px;
@@ -242,6 +242,16 @@
   border-color: rgba(140, 100, 255, 0.25);
   background: rgba(140, 100, 255, 0.08);
   box-shadow: 0 0 8px rgba(140, 80, 255, 0.15);
+  animation: iconGlow 3s ease-in-out infinite;
+}
+
+@keyframes iconGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(140, 80, 255, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(140, 80, 255, 0.3), 0 0 4px rgba(180, 130, 255, 0.1) inset;
+  }
 }
 
 .advInfo {
