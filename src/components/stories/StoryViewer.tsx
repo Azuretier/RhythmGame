@@ -5,13 +5,35 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { CHAPTERS, PARTICLE_EMOJIS } from '@/data/stories/chapters';
 import type { Chapter, StoryScene, DialogueLine } from '@/data/stories/chapters';
+import type { DungeonLocation, DungeonProgress } from '@/data/stories/dungeons';
+import { DUNGEON_LOCATIONS, getChapterForLocation, DEFAULT_PROGRESS } from '@/data/stories/dungeons';
+import DungeonMap from './DungeonMap';
+import DungeonStage from './DungeonStage';
 import styles from './stories.module.css';
 
-type ViewState = 'chapter-select' | 'playing';
+type ViewState = 'dungeon-map' | 'story-intro' | 'playing' | 'exploring';
 
 interface LogEntry {
     speaker: string | null;
     text: string;
+}
+
+// Local storage key for dungeon progress
+const PROGRESS_KEY = 'azuretier_dungeon_progress';
+
+function loadProgress(): DungeonProgress {
+    if (typeof window === 'undefined') return DEFAULT_PROGRESS;
+    try {
+        const saved = localStorage.getItem(PROGRESS_KEY);
+        if (saved) return JSON.parse(saved);
+    } catch { /* ignore */ }
+    return DEFAULT_PROGRESS;
+}
+
+function saveProgress(progress: DungeonProgress) {
+    try {
+        localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    } catch { /* ignore */ }
 }
 
 export default function StoryViewer() {
@@ -19,7 +41,12 @@ export default function StoryViewer() {
     const locale = useLocale();
     const router = useRouter();
 
-    const [viewState, setViewState] = useState<ViewState>('chapter-select');
+    // Dungeon map state
+    const [viewState, setViewState] = useState<ViewState>('dungeon-map');
+    const [progress, setProgress] = useState<DungeonProgress>(DEFAULT_PROGRESS);
+    const [selectedLocation, setSelectedLocation] = useState<DungeonLocation | null>(null);
+
+    // Visual novel state
     const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
     const [sceneIndex, setSceneIndex] = useState(0);
     const [lineIndex, setLineIndex] = useState(0);
@@ -34,6 +61,11 @@ export default function StoryViewer() {
     const typingRef = useRef<NodeJS.Timeout | null>(null);
     const autoRef = useRef<NodeJS.Timeout | null>(null);
     const fullTextRef = useRef('');
+
+    // Load progress from local storage on mount
+    useEffect(() => {
+        setProgress(loadProgress());
+    }, []);
 
     const currentScene: StoryScene | null = currentChapter
         ? currentChapter.scenes[sceneIndex] ?? null
@@ -57,7 +89,7 @@ export default function StoryViewer() {
 
     // Typing effect
     useEffect(() => {
-        if (!currentLine || viewState !== 'playing') return;
+        if (!currentLine || (viewState !== 'playing' && viewState !== 'story-intro')) return;
 
         const text = getLineText(currentLine);
         fullTextRef.current = text;
@@ -81,7 +113,7 @@ export default function StoryViewer() {
 
     // Auto-advance
     useEffect(() => {
-        if (!autoMode || isTyping || viewState !== 'playing') return;
+        if (!autoMode || isTyping || (viewState !== 'playing' && viewState !== 'story-intro')) return;
 
         autoRef.current = setTimeout(() => {
             advance();
@@ -121,19 +153,25 @@ export default function StoryViewer() {
                     setTransitioning(false);
                 }, 600);
             } else {
-                // Chapter complete — return to select
+                // Chapter/story complete — transition to exploration or map
                 setTransitioning(true);
                 setTimeout(() => {
-                    setViewState('chapter-select');
+                    if (viewState === 'story-intro' && selectedLocation && selectedLocation.dungeonTiles.length > 0) {
+                        // Story intro finished — start dungeon exploration
+                        setViewState('exploring');
+                    } else {
+                        // Story-only location or chapter replay — complete and return to map
+                        handleLocationComplete(0, 0);
+                    }
                     setTransitioning(false);
                 }, 600);
             }
         }
-    }, [currentChapter, currentScene, isTyping, lineIndex, sceneIndex, showLog, showMenu, completeTyping]);
+    }, [currentChapter, currentScene, isTyping, lineIndex, sceneIndex, showLog, showMenu, completeTyping, viewState, selectedLocation]);
 
     // Add to log when line advances
     useEffect(() => {
-        if (!currentLine || viewState !== 'playing') return;
+        if (!currentLine || (viewState !== 'playing' && viewState !== 'story-intro')) return;
         const speaker = getSpeaker(currentLine);
         const text = getLineText(currentLine);
         setLog(prev => [...prev, { speaker, text }]);
@@ -142,7 +180,7 @@ export default function StoryViewer() {
     // Keyboard controls
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
-            if (viewState !== 'playing') return;
+            if (viewState !== 'playing' && viewState !== 'story-intro') return;
 
             switch (e.key.toLowerCase()) {
                 case ' ':
@@ -172,6 +210,64 @@ export default function StoryViewer() {
         return () => window.removeEventListener('keydown', handleKey);
     }, [viewState, advance]);
 
+    // Handle location selection from dungeon map
+    const handleSelectLocation = useCallback((location: DungeonLocation) => {
+        setSelectedLocation(location);
+
+        // Check if location has a story chapter
+        const chapter = getChapterForLocation(location);
+        if (chapter) {
+            // Start with story intro
+            setCurrentChapter(chapter);
+            setSceneIndex(0);
+            setLineIndex(0);
+            setLog([]);
+            setAutoMode(false);
+            setShowLog(false);
+            setShowMenu(false);
+            setTransitioning(true);
+            setTimeout(() => {
+                setViewState('story-intro');
+                setTransitioning(false);
+            }, 400);
+        } else if (location.dungeonTiles.length > 0) {
+            // No story — go straight to exploration
+            setTransitioning(true);
+            setTimeout(() => {
+                setViewState('exploring');
+                setTransitioning(false);
+            }, 400);
+        }
+    }, []);
+
+    // Handle dungeon exploration complete
+    const handleLocationComplete = useCallback((emeralds: number, defeated: number) => {
+        if (!selectedLocation) return;
+
+        const newProgress: DungeonProgress = {
+            ...progress,
+            completedLocations: progress.completedLocations.includes(selectedLocation.id)
+                ? progress.completedLocations
+                : [...progress.completedLocations, selectedLocation.id],
+            currentLocation: null,
+            totalEmeralds: progress.totalEmeralds + emeralds,
+            totalDefeated: progress.totalDefeated + defeated,
+        };
+
+        setProgress(newProgress);
+        saveProgress(newProgress);
+        setViewState('dungeon-map');
+        setSelectedLocation(null);
+        setCurrentChapter(null);
+    }, [selectedLocation, progress]);
+
+    // Handle exit from exploration back to map
+    const handleExplorationExit = useCallback(() => {
+        setViewState('dungeon-map');
+        setSelectedLocation(null);
+        setCurrentChapter(null);
+    }, []);
+
     const startChapter = (chapter: Chapter) => {
         setCurrentChapter(chapter);
         setSceneIndex(0);
@@ -200,69 +296,59 @@ export default function StoryViewer() {
         } else {
             setTransitioning(true);
             setTimeout(() => {
-                setViewState('chapter-select');
+                if (viewState === 'story-intro' && selectedLocation && selectedLocation.dungeonTiles.length > 0) {
+                    setViewState('exploring');
+                } else {
+                    handleLocationComplete(0, 0);
+                }
                 setTransitioning(false);
             }, 400);
         }
     };
 
-    // ---- Chapter Select Screen ----
-    if (viewState === 'chapter-select') {
+    // ---- Dungeon Map Screen ----
+    if (viewState === 'dungeon-map') {
         return (
-            <div className={styles.chapterSelect}>
-                <div className={styles.chapterSelectBg} />
-                <div className={styles.scanlines} />
-
-                <h1 className={styles.chapterSelectTitle}>{t('title')}</h1>
-
-                <div className={styles.chapterGrid}>
-                    {CHAPTERS.map((chapter) => (
-                        <button
-                            key={chapter.id}
-                            className={styles.chapterCard}
-                            onClick={() => startChapter(chapter)}
-                        >
-                            <div
-                                className={styles.chapterCardAccent}
-                                style={{ background: chapter.accent }}
-                            />
-                            <div className={styles.chapterCardNumber}>
-                                {t('chapter')} {String(chapter.number).padStart(2, '0')}
-                            </div>
-                            <div className={styles.chapterCardTitle}>
-                                {locale === 'en' ? chapter.titleEn : chapter.title}
-                            </div>
-                            <div className={styles.chapterCardSubtitle}>
-                                {chapter.subtitle}
-                            </div>
-                        </button>
-                    ))}
-                </div>
-
-                <div className={styles.chapterSelectBack}>
-                    <button
-                        className={styles.backButton}
-                        style={{ position: 'relative', top: 'auto', left: 'auto' }}
-                        onClick={() => router.push('/')}
-                    >
-                        {t('backToLobby')}
-                    </button>
-                </div>
-
+            <>
+                <DungeonMap
+                    progress={progress}
+                    onSelectLocation={handleSelectLocation}
+                    onBack={() => router.push('/')}
+                />
                 {transitioning && (
                     <div
                         className={styles.transitionOverlay}
                         style={{ opacity: 1 }}
                     />
                 )}
-            </div>
+            </>
         );
     }
 
-    // ---- Playing Screen ----
+    // ---- Dungeon Exploration Screen ----
+    if (viewState === 'exploring' && selectedLocation) {
+        return (
+            <>
+                <DungeonStage
+                    location={selectedLocation}
+                    onComplete={handleLocationComplete}
+                    onExit={handleExplorationExit}
+                />
+                {transitioning && (
+                    <div
+                        className={styles.transitionOverlay}
+                        style={{ opacity: 1 }}
+                    />
+                )}
+            </>
+        );
+    }
+
+    // ---- Story Playing Screen (both story-intro and playing) ----
     if (!currentScene || !currentLine || !currentChapter) return null;
 
     const particles = PARTICLE_EMOJIS[currentScene.particleType ?? 'butterflies'] ?? PARTICLE_EMOJIS.butterflies;
+    const isStoryIntro = viewState === 'story-intro';
 
     return (
         <div className={styles.container} onClick={advance}>
@@ -348,13 +434,24 @@ export default function StoryViewer() {
                     className={styles.backButton}
                     style={{ position: 'relative', top: 'auto', left: 'auto' }}
                     onClick={() => {
-                        setViewState('chapter-select');
+                        if (isStoryIntro) {
+                            setViewState('dungeon-map');
+                            setSelectedLocation(null);
+                            setCurrentChapter(null);
+                        } else {
+                            setViewState('dungeon-map');
+                        }
                         setAutoMode(false);
                     }}
                 >
                     {t('backToLobby')}
                 </button>
                 <span className={styles.chapterInfo}>
+                    {isStoryIntro && selectedLocation && (
+                        <span className={styles.missionLabel}>
+                            {selectedLocation.icon}{' '}
+                        </span>
+                    )}
                     {t('chapter')} {String(currentChapter.number).padStart(2, '0')} — {locale === 'en' ? currentChapter.titleEn : currentChapter.title}
                 </span>
             </div>
@@ -450,7 +547,9 @@ export default function StoryViewer() {
                         className={styles.menuItem}
                         onClick={() => {
                             setShowMenu(false);
-                            setViewState('chapter-select');
+                            setViewState('dungeon-map');
+                            setSelectedLocation(null);
+                            setCurrentChapter(null);
                             setAutoMode(false);
                         }}
                     >

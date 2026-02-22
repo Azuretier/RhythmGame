@@ -105,13 +105,14 @@ function detectTSpin(
 
 interface RhythmiaProps {
   onQuit?: () => void;
+  onGameEnd?: (stats: { score: number; lines: number; bestCombo: number }) => void;
 }
 
 /**
  * Rhythmia - A rhythm-based Tetris game with full game loop:
  * World Creation → Dig → Item Drop → Craft → Firepower → Collapse → Reload → Next World
  */
-export default function Rhythmia({ onQuit }: RhythmiaProps) {
+export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   // Device type detection for responsive layouts
   const deviceInfo = useDeviceType();
   const { type: deviceType, isLandscape } = deviceInfo;
@@ -1020,8 +1021,14 @@ export default function Rhythmia({ onQuit }: RhythmiaProps) {
       if (result.newlyUnlockedIds.length > 0) {
         setToastIds(prev => [...prev, ...result.newlyUnlockedIds]);
       }
+      // Fire onGameEnd callback with stats for external consumers
+      onGameEnd?.({
+        score: scoreRef.current,
+        lines: linesRef.current,
+        bestCombo: gameBestComboRef.current,
+      });
     }
-  }, [gameOver]);
+  }, [gameOver, onGameEnd]);
 
   // Reset beat timing when unpausing to avoid desync
   useEffect(() => {
