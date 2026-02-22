@@ -1,0 +1,1246 @@
+{
+  "minecraft_board": {
+    "title": "Майнкрафт Настольная Игра",
+    "subtitle": "Исследуй, Добывай, Крафти, Выживай!",
+    "playerName": "Имя игрока",
+    "worldName": "Название мира",
+    "create": "Создать",
+    "join": "Присоединиться",
+    "browse": "Обзор",
+    "createWorld": "Создать мир",
+    "joinWorld": "Присоединиться к миру",
+    "roomCode": "Код комнаты",
+    "noRooms": "Нет доступных публичных миров",
+    "players": "Игроки",
+    "ready": "Готов",
+    "notReady": "Не готов",
+    "startGame": "Начать игру",
+    "leave": "Выйти",
+    "connecting": "Подключение...",
+    "reconnecting": "Переподключение...",
+    "disconnected": "Отключено от сервера",
+    "reconnect": "Переподключиться",
+    "howToPlay": "Как играть",
+    "controls": {
+      "move": "WASD / Стрелки для движения",
+      "mine": "Нажмите на соседний блок для добычи",
+      "craft": "E для крафта, I для инвентаря",
+      "eat": "ПКМ по еде в хотбаре для употребления",
+      "hotbar": "1-9 для выбора слота хотбара",
+      "win": "Скрафтите Рамку Портала Энда, чтобы победить!"
+    },
+    "hud": {
+      "equipped": "Экипировано",
+      "fist": "Кулак",
+      "armor": "Броня",
+      "kills": "Убийства",
+      "mined": "Добыто",
+      "craft": "Крафт",
+      "inventory": "Инвентарь"
+    },
+    "crafting": {
+      "title": "Крафт",
+      "craftingTable": "Верстак",
+      "furnace": "Печь",
+      "craft": "Создать"
+    },
+    "game": {
+      "youDied": "Вы погибли!",
+      "respawning": "Возрождение...",
+      "gameOver": "Игра окончена!",
+      "youWin": "Победа!",
+      "wins": "{name} побеждает!",
+      "enderPortal": "Рамка Портала Энда создана!",
+      "backToMenu": "В меню",
+      "day": "День",
+      "dusk": "Сумерки",
+      "night": "Ночь",
+      "dawn": "Рассвет"
+    }
+  },
+  "arena": {
+    "badge": "9И",
+    "title": "РИТМ-АРЕНА",
+    "subtitle": "Батл-рояль на 9 игроков",
+    "description": "9 игроков, 1 ритм. Общий хаос, синхронный темп, случайные эффекты. Потеряй ритм — и темп рухнет.",
+    "features": {
+      "players": "9 игроков",
+      "chaos": "Хаос",
+      "sync": "Синхронизация"
+    },
+    "stats": {
+      "players": "Игроки",
+      "bpm": "BPM",
+      "status": "Статус"
+    },
+    "maxPlayers": "Макс. {count} игроков",
+    "quickMatch": "БЫСТРЫЙ МАТЧ",
+    "createArena": "Создать арену",
+    "joinByCode": "Войти по коду",
+    "enterName": "Введите имя",
+    "namePlaceholder": "Имя игрока",
+    "enterCode": "Код арены",
+    "join": "Войти",
+    "next": "Далее",
+    "back": "Назад",
+    "online": "Онлайн",
+    "connecting": "Подключение...",
+    "connectionError": "Ошибка подключения",
+    "offline": "Офлайн",
+    "searching": "Поиск игроков",
+    "queueInfo": "Ожидание игроков для формирования арены...",
+    "playersInQueue": "{count} в очереди",
+    "cancel": "Отмена",
+    "arenaCode": "Код арены",
+    "copy": "Копировать",
+    "reconnecting": "Переподключение...",
+    "ready": "ГОТОВ",
+    "notReady": "Не готов",
+    "waiting": "Ожидание...",
+    "cancelReady": "Отменить готовность",
+    "readyUp": "Готов!",
+    "startArena": "Начать арену",
+    "waitingForPlayers": "Ожидание игроков...",
+    "leave": "Выйти",
+    "getReady": "ПРИГОТОВЬТЕСЬ",
+    "chaos": "ХАОС",
+    "sync": "Синхронизация",
+    "eliminated": "выбыл",
+    "resultLastStanding": "ПОСЛЕДНИЙ ВЫЖИВШИЙ",
+    "resultTempoCollapse": "ТЕМП РУХНУЛ",
+    "resultChaosOverload": "ПЕРЕГРУЗКА ХАОСА",
+    "victory": "ПОБЕДА",
+    "wins": "ПОБЕДЫ",
+    "noWinner": "НЕТ ПОБЕДИТЕЛЯ",
+    "duration": "ДЛИТЕЛЬНОСТЬ",
+    "peakBpm": "МАКС. BPM",
+    "gimmicks": "ЭФФЕКТЫ",
+    "peakChaos": "МАКС. ХАОС",
+    "tempoCollapses": "ОБВАЛЫ",
+    "lowestBpm": "МИН. BPM",
+    "backToLobby": "В лобби"
+  },
+  "forYou": {
+    "title": "ДЛЯ ВАС",
+    "subtitle": "Подобрано по вашему прогрессу",
+    "loading": "ГЕНЕРАЦИЯ",
+    "error": "Не удалось загрузить рекомендации",
+    "retry": "ПОВТОРИТЬ",
+    "refresh": "ОБНОВИТЬ",
+    "watchOnYouTube": "Смотреть на YouTube",
+    "tutorialsTitle": "ОБУЧЕНИЕ",
+    "tutorialsSubtitle": "Изучайте техники и стратегии",
+    "columnForYou": "РЕКОМЕНДАЦИИ",
+    "columnTutorials": "ОБУЧЕНИЕ",
+    "searchTutorials": "Поиск обучения...",
+    "noTutorialResults": "Обучение не найдено",
+    "moreBelow": "Ещё {count} ниже",
+    "endOfList": "Конец списка",
+    "types": {
+      "tutorial": "ОБУЧЕНИЕ",
+      "video": "ВИДЕО",
+      "tip": "СОВЕТ"
+    }
+  },
+  "loyalty": {
+    "meta": {
+      "title": "Рейтинг очков | RHYTHMIA - Azuretier",
+      "description": "Отслеживайте рейтинг, повышайте ранг, открывайте достижения и соревнуйтесь в сообществе RHYTHMIA."
+    },
+    "backToLobby": "← Назад",
+    "currentTier": "ТЕКУЩИЙ РАНГ",
+    "totalScore": "ОБЩИЙ СЧЁТ",
+    "scoreToNext": "{score} до следующего ранга",
+    "maxTier": "МАКСИМАЛЬНЫЙ РАНГ ДОСТИГНУТ",
+    "viewAll": "РЕЙТИНГ И ДЕТАЛИ",
+    "tiers": {
+      "rank1": "Без ранга",
+      "rank2": "Бит I",
+      "rank3": "Бит II",
+      "rank4": "Ритм",
+      "rank5": "Маэстро",
+      "rank6": "Антигравитация"
+    },
+    "stats": {
+      "bestScore": "ЛУЧШИЙ СЧЁТ",
+      "games": "ИГРЫ",
+      "lines": "ЛИНИИ",
+      "badges": "ДОСТИЖЕНИЯ",
+      "totalVisits": "ПОСЕЩЕНИЯ",
+      "currentStreak": "ТЕКУЩАЯ СЕРИЯ",
+      "bestStreak": "ЛУЧШАЯ СЕРИЯ",
+      "bonusXP": "БОНУС XP"
+    },
+    "sections": {
+      "tierRoadmap": "КАРТА РАНГОВ",
+      "badges": "НЕДАВНИЕ ДОСТИЖЕНИЯ",
+      "community": "ГОЛОС СООБЩЕСТВА",
+      "howItWorks": "КАК ЭТО РАБОТАЕТ",
+      "dailyBonus": "ЕЖЕДНЕВНЫЙ БОНУС"
+    },
+    "poll": {
+      "question": "Какой следующий игровой режим RHYTHMIA вы хотите?",
+      "options": {
+        "0": "Кооперативный режим (командные бои 2v2)",
+        "1": "Режим выживания (бесконечные волны)",
+        "2": "Турнирный режим (плей-офф)",
+        "3": "Дзен-режим (расслабленный, без давления)"
+      },
+      "vote": "ГОЛОСОВАТЬ",
+      "voted": "Спасибо за голос!",
+      "loading": "Загрузка опроса...",
+      "submitting": "Отправка...",
+      "noPoll": "Сейчас нет активных опросов.",
+      "totalVotes": "{count} голосов"
+    },
+    "strategy": {
+      "0": {
+        "step": "ШАГ 01",
+        "title": "Играй и набирай очки",
+        "desc": "Каждая игра приносит очки. Убирай линии, собирай комбо и стремись к рекордам для повышения ранга."
+      },
+      "1": {
+        "step": "ШАГ 02",
+        "title": "Повышай ранг",
+        "desc": "Ваш накопленный счёт определяет ранг. Прогрессируй от Без ранга через Бит, Ритм, Маэстро до Антигравитации."
+      },
+      "2": {
+        "step": "ШАГ 03",
+        "title": "Открывай достижения",
+        "desc": "Достигай вех для открытия достижений. Каждое достижение отмечает ваш путь в RHYTHMIA."
+      },
+      "3": {
+        "step": "ШАГ 04",
+        "title": "Формируй будущее",
+        "desc": "Голосуй в опросах сообщества и помогай решать, что будет дальше в RHYTHMIA."
+      }
+    },
+    "streakDays": "дней подряд",
+    "bonusXP": "БОНУС XP"
+  },
+  "nav": {
+    "wiki": "Вики",
+    "updates": "Обновления",
+    "lobby": "Лобби"
+  },
+  "lobby": {
+    "loading": "ЗАГРУЗКА",
+    "selectServer": "ВЫБОР РЕЖИМА",
+    "chooseMode": "Выберите игровой режим",
+    "tagline": "Ритмическая головоломка. Ставьте блоки в такт, сражайтесь с друзьями и открывайте достижения.",
+    "play": "ИГРАТЬ",
+    "battle": "БИТВА",
+    "back": "← Назад",
+    "online": "Онлайн",
+    "onlineCount": "{count} онлайн",
+    "loyalty": "Рейтинг"
+  },
+  "googleSync": {
+    "sectionTitle": "Синхронизация с Google",
+    "description": "Войдите через Google для синхронизации профиля, достижений, прогресса и настроек скинов между устройствами.",
+    "signIn": "Войти через Google",
+    "signOut": "Выйти",
+    "linking": "Подключение...",
+    "syncing": "Синхронизация...",
+    "syncNow": "Синхронизировать",
+    "synced": "Синхронизировано",
+    "error": "Ошибка синхронизации"
+  },
+  "stories": {
+    "title": "ИСТОРИИ",
+    "chapter": "ГЛАВА",
+    "backToLobby": "← Назад",
+    "log": "ЛОГ",
+    "auto": "АВТО",
+    "skip": "ПРОПУСК",
+    "menu": "МЕНЮ",
+    "logTitle": "Текстовый лог",
+    "close": "Закрыть",
+    "resume": "Продолжить",
+    "chapterSelect": "Выбор главы"
+  },
+  "footer": {
+    "copyright": "azuretier.net © 2025"
+  },
+  "profile": {
+    "iconTitle": "Выберите иконку",
+    "iconSubtitle": "Выберите иконку, которая вас представляет",
+    "nameTitle": "Введите имя",
+    "nameSubtitle": "Это имя будет видно другим игрокам",
+    "nameLabel": "Никнейм",
+    "namePlaceholder": "Имя",
+    "friendCodeLabel": "Код друга",
+    "langTitle": "Язык",
+    "langSubtitle": "Выберите язык интерфейса",
+    "confirmTitle": "Подтверждение профиля",
+    "confirmSubtitle": "Всё выглядит правильно?",
+    "next": "Далее",
+    "back": "Назад",
+    "onlineTitle": "Игроки онлайн",
+    "onlineCount": "{count} онлайн",
+    "noOnlineUsers": "Сейчас нет игроков онлайн",
+    "privateProfile": "Приватный профиль",
+    "privateProfileDesc": "Ваше имя и иконка скрыты из списка онлайн-игроков",
+    "publicProfile": "Публичный профиль",
+    "publicProfileDesc": "Ваше имя и иконка видны другим игрокам"
+  },
+  "uiTheme": {
+    "selectTheme": "Тема интерфейса",
+    "neoFuturistic": "Нео-футуризм",
+    "pixelNostalgia": "Пиксельная ностальгия",
+    "neoDesc": "Элегантный современный дизайн с эффектами матового стекла",
+    "pixelDesc": "Ретро 8-бит/16-бит пиксельный стиль с CRT-эффектами"
+  },
+  "meta": {
+    "title": "RHYTHMIA | Ритм × Тетрис — Новая Головоломка - Azuretier",
+    "description": "Ощутите слияние музыки и головоломок! Играйте в RHYTHMIA — бесплатную ритм-тетрис игру в браузере. Попадайте в такт, убирайте блоки и поднимайтесь в рейтинге.",
+    "ogTitle": "RHYTHMIA — Ритмическая головоломка нового поколения",
+    "ogDescription": "Сможете удержать ритм? Играйте в RHYTHMIA — энергичное сочетание ритм-экшена и классической головоломки с блоками. Бесплатно на Azuretier.",
+    "ogType": "website",
+    "keywords": "RHYTHMIA, Тетрис, Ритм-игра, Музыкальная головоломка, Бесплатная онлайн-игра, Браузерная игра, Аркада, Azuretier"
+  },
+  "wiki": {
+    "meta": {
+      "title": "Вики | RHYTHMIA - Azuretier",
+      "description": "Полная вики RHYTHMIA. Режимы игры, миры, ранговая система, предметы, крафт, достижения и многое другое."
+    },
+    "backToLobby": "← Лобби",
+    "updatesLink": "Обновления",
+    "contents": "Содержание",
+    "sectionOverview": "Обзор",
+    "sectionModes": "Режимы игры",
+    "sectionWorlds": "Миры",
+    "sectionControls": "Управление",
+    "sectionRanked": "Ранговые бои",
+    "sectionAdvancements": "Достижения",
+    "sectionCrafting": "Предметы и крафт",
+    "sectionTowerDefense": "Защита башни",
+    "overviewTitle": "Что такое RHYTHMIA",
+    "overviewDesc": "RHYTHMIA — браузерная головоломка, объединяющая классику падающих блоков с ритмическим экшеном. Ставьте фигуры в такт, убирайте линии и проходите музыкальные миры.",
+    "boardSize": "Размер поля",
+    "tetrominoes": "Тетромино",
+    "worldsLabel": "Миры",
+    "rotationSystem": "Система вращения",
+    "advancementsLabel": "Достижения",
+    "rankTiersLabel": "Ранговые уровни",
+    "coreMechanics": "Основные механики",
+    "mechanic1": "Суперсистема вращения (SRS) с отталкиванием от стен",
+    "mechanic2": "Удержание фигуры и предпросмотр следующей",
+    "mechanic3": "Визуальные эффекты, синхронизированные с ритмом",
+    "mechanic4": "Бонусные очки за действия в такт",
+    "mechanic5": "Система комбо с режимом Fever (10+ комбо)",
+    "modesTitle": "Режимы игры",
+    "vanillaTitle": "Одиночная игра",
+    "vanillaDesc": "Играйте соло через 5 музыкальных миров. Разрушайте местность, собирайте предметы и крафтите оружие. Каждый мир увеличивает BPM, требуя быстрых рефлексов.",
+    "terrainDestruction": "Разрушение местности",
+    "itemDrops": "Выпадение предметов",
+    "craftingFeat": "Крафт",
+    "worldProgression": "Прохождение миров",
+    "battleTitle": "Боевая арена",
+    "battleDesc": "1v1 бои в реальном времени через WebSocket. Отправляйте мусорные линии противнику. Ранговый матчмейкинг. Если соперник не найден за 8 секунд — бой с ИИ.",
+    "rankedFeat": "Ранговые",
+    "aiFallback": "ИИ-соперник",
+    "battleNote": "Разблокируется после 3 достижений",
+    "arenaTitle": "Арена на 9 игроков",
+    "arenaDesc": "До 9 игроков в синхронном ритм-бою. Случайные эффекты, нарастающий хаос и обвалы темпа создают уникальные матчи. Несколько условий победы.",
+    "ninePlayers": "9 игроков",
+    "rhythmSync": "Синхронизация",
+    "gimmicks": "Эффекты",
+    "chaosLabel": "Хаос",
+    "worldsSectionTitle": "Миры",
+    "worldsDesc": "В RHYTHMIA 5 уникальных миров с разными BPM и цветовыми темами. Миры открываются при прохождении этапов — каждые 4 этапа новый мир. Чем выше BPM, тем сложнее.",
+    "melodia": "Мелодия",
+    "harmonia": "Гармония",
+    "crescenda": "Крещенда",
+    "fortissimo": "Фортиссимо",
+    "silenceChamber": "Палата Тишины",
+    "worldProgressionTitle": "Прохождение миров",
+    "worldProg1": "4 этапа в каждом мире",
+    "worldProg2": "Убирайте линии для прохождения этапа",
+    "worldProg3": "4 блока местности за линию",
+    "worldProg4": "Множитель ритма увеличивает урон",
+    "controlsTitle": "Управление",
+    "controlsDesc": "Клавиши можно настроить в игре. Значения DAS, ARR и SDF по умолчанию указаны ниже.",
+    "actionHeader": "Действие",
+    "defaultKey": "Клавиша",
+    "moveLeft": "Влево",
+    "moveRight": "Вправо",
+    "softDrop": "Мягкий сброс",
+    "hardDrop": "Жёсткий сброс",
+    "rotateCW": "Поворот вправо",
+    "rotateCCW": "Поворот влево",
+    "hold": "Удержание",
+    "inventoryKey": "Инвентарь",
+    "shopKey": "Магазин",
+    "forgeKey": "Кузница",
+    "timingSettings": "Настройки тайминга",
+    "dasDesc": "Задержка перед повтором",
+    "arrDesc": "Интервал повтора",
+    "sdfDesc": "Скорость мягкого сброса",
+    "lockDelay": "Задержка фиксации",
+    "lockDelayDesc": "Время до фиксации",
+    "rankedTitle": "Ранговая система",
+    "rankedDesc": "Ранговая система использует очковую систему в стиле Арены. За каждый матч взимается плата за вход, победа приносит очки. Серии побед дают бонусы.",
+    "tierHeader": "Уровень",
+    "pointsHeader": "Очки",
+    "busFareHeader": "Вход",
+    "winRewardHeader": "Награда",
+    "openI": "Open I",
+    "openII": "Open II",
+    "openIII": "Open III",
+    "contenderI": "Contender I",
+    "contenderII": "Contender II",
+    "contenderIII": "Contender III",
+    "championI": "Champion I",
+    "championII": "Champion II",
+    "championIII": "Champion III",
+    "streakTitle": "Бонус за серию побед",
+    "streakDesc": "Серии побед дают бонусные очки: 2 победы = +5, 3 = +10, 4 = +15, 5 = +20, 6+ = +25",
+    "matchmakingTitle": "Матчмейкинг",
+    "matchmaking1": "Подбор игроков в пределах 500 очков",
+    "matchmaking2": "Таймаут: 8 секунд",
+    "matchmaking3": "При таймауте — бой с ИИ",
+    "advancementsTitle": "Достижения",
+    "advancementsDesc": "В RHYTHMIA более 45 достижений. Прогресс сохраняется локально и в Firestore. Уведомления при разблокировке. Боевая арена требует 3 достижения.",
+    "catLines": "Линии",
+    "catScore": "Счёт",
+    "catTSpin": "T-Спин",
+    "catMultiplayer": "Мультиплеер",
+    "lineBeginner": "Новичок линий",
+    "lineBeginnerDesc": "Убрать 10 линий",
+    "lineApprentice": "Ученик линий",
+    "lineApprenticeDesc": "Убрать 50 линий",
+    "lineExpert": "Эксперт линий",
+    "lineExpertDesc": "Убрать 200 линий",
+    "lineMaster": "Мастер линий",
+    "lineMasterDesc": "Убрать 500 линий",
+    "lineLegend": "Легенда линий",
+    "lineLegendDesc": "Убрать 1 000 линий",
+    "scoreRookie": "Новичок очков",
+    "scoreRookieDesc": "Набрать 10 000 очков",
+    "scoreHunter": "Охотник за очками",
+    "scoreHunterDesc": "Набрать 100 000 очков",
+    "scoreMaster": "Мастер очков",
+    "scoreMasterDesc": "Набрать 1 000 000 очков",
+    "scoreLegend": "Легенда очков",
+    "scoreLegendDesc": "Набрать 10 000 000 очков",
+    "firstTwist": "Первый спин",
+    "firstTwistDesc": "Выполните первый T-Спин",
+    "spinDoctor": "Доктор спинов",
+    "spinDoctorDesc": "Выполните 10 T-Спинов",
+    "tSpinExpert": "Эксперт T-Спина",
+    "tSpinExpertDesc": "Выполните 50 T-Спинов",
+    "tSpinLegend": "Легенда T-Спина",
+    "tSpinLegendDesc": "Выполните 200 T-Спинов",
+    "firstVictory": "Первая победа",
+    "firstVictoryDesc": "Победа в первом мультиплеерном матче",
+    "arenaFighter": "Боец арены",
+    "arenaFighterDesc": "10 побед в мультиплеере",
+    "arenaChampion": "Чемпион арены",
+    "arenaChampionDesc": "50 побед в мультиплеере",
+    "hotStreak": "Горячая серия",
+    "hotStreakDesc": "3 победы подряд",
+    "unbreakable": "Несокрушимый",
+    "unbreakableDesc": "10 побед подряд",
+    "additionalCatTitle": "Дополнительные категории",
+    "additionalCat1": "Комбо: 3, 10, 20 комбо",
+    "additionalCat2": "Тетрис: 4 линии за раз (1, 10, 50 раз)",
+    "additionalCat3": "Идеальные биты: 10, 50 за игру",
+    "additionalCat4": "Жёсткие сбросы: 100, 1 000",
+    "additionalCat5": "Установлено фигур: 100, 1 000, 10 000",
+    "additionalCat6": "Сыграно игр: 1, 10, 50, 100",
+    "additionalCat7": "Путешественник: 5 миров пройдено",
+    "craftingTitle": "Предметы и крафт",
+    "craftingDesc": "Предметы выпадают при разрушении местности. Собирайте материалы и крафтите оружие для увеличения урона. Редкие предметы выпадают реже.",
+    "materialsTitle": "Материалы",
+    "weaponsTitle": "Оружие",
+    "materialHeader": "Материал",
+    "rarityHeader": "Редкость",
+    "dropRateHeader": "Шанс выпадения",
+    "stoneFragment": "Каменный осколок",
+    "ironOre": "Железная руда",
+    "crystalShard": "Кристаллический осколок",
+    "goldNugget": "Золотой самородок",
+    "obsidianCore": "Обсидиановое ядро",
+    "starFragment": "Звёздный осколок",
+    "common": "Обычный",
+    "uncommon": "Необычный",
+    "rare": "Редкий",
+    "epic": "Эпический",
+    "legendary": "Легендарный",
+    "weaponHeader": "Оружие",
+    "damageHeader": "Урон",
+    "specialHeader": "Особое",
+    "recipeHeader": "Рецепт",
+    "stoneBlade": "Каменный клинок",
+    "ironPickaxe": "Железная кирка",
+    "crystalWand": "Кристаллический жезл",
+    "goldHammer": "Золотой молот",
+    "obsidianEdge": "Обсидиановое лезвие",
+    "starCannon": "Звёздная пушка",
+    "wideBeat": "Широкий бит",
+    "shatter": "Раскол",
+    "burst": "Взрыв",
+    "stoneBladeRecipe": "Камень x3",
+    "ironPickaxeRecipe": "Железо x3",
+    "crystalWandRecipe": "Кристалл x2 + Камень x2",
+    "goldHammerRecipe": "Золото x2 + Железо x2",
+    "obsidianEdgeRecipe": "Обсидиан x1 + Железо x2",
+    "starCannonRecipe": "Звезда x1 + Кристалл x2",
+    "towerDefenseTitle": "Защита башни",
+    "towerDefenseDesc": "В режиме Vanilla есть механика защиты башни. Башня в центре сетки. Враги появляются с периметра в такт и идут к башне. Убирание линий уничтожает врагов, турели стреляют автоматически.",
+    "towerHP": "HP башни",
+    "enemyReachDMG": "Урон при достижении",
+    "enemyHP": "HP врага",
+    "killsPerLine": "Убийства за линию",
+    "gridSystem": "Система сетки",
+    "grid1": "Враги двигаются на 1 клетку за ход (только ортогонально)",
+    "grid2": "Сетка: ±18 клеток от центра",
+    "grid3": "Враги появляются на периметре с манхэттенским расстоянием 18",
+    "grid4": "Турель стреляет каждые 1 000мс, скорость пули: 18 ед/с",
+    "grid5": "Пули летят по параболе (гравитация: 40 ед/с²)",
+    "sectionGameOverview": "Обзор игры",
+    "sectionCommunityResources": "Ресурсы сообщества",
+    "sectionUpdates": "Обновления",
+    "gameOverviewTitle": "Обзор игры",
+    "communityResourcesTitle": "Ресурсы сообщества",
+    "communityResourcesDesc": "Обучающие материалы, гайды и видео от сообщества RHYTHMIA.",
+    "updatesTitle": "Обновления версий",
+    "updatesDesc": "Смотрите обзоры последних версий RHYTHMIA.",
+    "videoComingSoon": "Скоро",
+    "watchVideo": "Смотреть",
+    "resourceVideosTitle": "Видео",
+    "resourceTutorialsTitle": "Обучение",
+    "resourceTypeTutorial": "ОБУЧЕНИЕ",
+    "resourceTypeVideo": "ВИДЕО",
+    "visitChannel": "YouTube-канал",
+    "res_vid_beginner": "RHYTHMIA — Гайд для новичков",
+    "res_vid_tspin_tutorial": "T-Спин — От нуля до героя",
+    "res_vid_ranked_guide": "Как подняться в ранговых",
+    "res_vid_advanced_combos": "Продвинутые комбо-техники",
+    "res_vid_update_showcase": "Обзор обновления",
+    "res_vid_music_showcase": "RHYTHMIA — Превью саундтрека",
+    "res_vid_multiplayer_tips": "Советы для 1v1 боёв",
+    "res_vid_world_tour": "Тур по мирам — Все этапы",
+    "res_tut_tspin": "T-Спин",
+    "res_tut_stacking": "Чистая укладка",
+    "res_tut_combos": "Комбо-цепочки",
+    "res_tut_opener": "Дебюты и сетапы",
+    "res_tut_rhythm": "Ритм-тайминг",
+    "res_tut_downstack": "Разбор завалов",
+    "res_tut_harddrop": "Скорость жёсткого сброса",
+    "res_tut_garbage": "Управление мусором",
+    "res_tut_finesse": "Финесса и эффективность",
+    "res_tut_back2back": "Back-to-Back цепочки",
+    "res_tut_crafting": "Гайд по крафту",
+    "res_tut_items": "Стратегия предметов",
+    "res_tut_ranked": "Советы по ранговым",
+    "res_tut_worlds": "Прохождение миров",
+    "sectionTutorials": "Обучение",
+    "sectionTutBeginner": "Начальное",
+    "sectionTutIntermediate": "Среднее",
+    "sectionTutAdvanced": "Продвинутое",
+    "tutBeginnerTitle": "Beginner Tutorials",
+    "tutBeginnerIntro": "Start your RHYTHMIA journey with these fundamental tutorials. Learn the basic controls, stacking techniques, and rhythm timing to build a solid foundation.",
+    "tut1Title": "1. Basic Controls & Movement",
+    "tut1Desc": "Master the fundamental controls to move, rotate, and drop pieces effectively.",
+    "tut1Step1Title": "Movement Keys",
+    "tut1Step1Desc": "Use Arrow Left/A to move pieces left and Arrow Right/D to move right. Practice moving pieces smoothly across the board.",
+    "tut1Step2Title": "Rotation",
+    "tut1Step2Desc": "Press Arrow Up/W/X to rotate clockwise, or Z to rotate counter-clockwise. Experiment with different rotation options to find the best placement.",
+    "tut1Step3Title": "Soft Drop & Hard Drop",
+    "tut1Step3Desc": "Hold Arrow Down/S for soft drop (slower descent with points). Press Space for hard drop (instant placement). Use hard drop to place pieces quickly.",
+    "tut1Step4Title": "Hold Piece",
+    "tut1Step4Desc": "Press C or Shift to hold the current piece for later use. This is crucial for saving pieces you need for specific situations.",
+    "tut2Title": "2. Clean Stacking",
+    "tut2Desc": "Learn how to build a clean, flat stack that's easy to manage and clear lines from.",
+    "tut2Step1Title": "Avoid Gaps",
+    "tut2Step1Desc": "Always try to place pieces without leaving empty holes. Gaps make it harder to clear lines and can lead to a messy board.",
+    "tut2Step2Title": "Keep It Flat",
+    "tut2Step2Desc": "Maintain an even height across your board. Avoid creating tall towers or deep valleys unless you have a specific strategy.",
+    "tut2Step3Title": "Plan Ahead",
+    "tut2Step3Desc": "Look at the next piece preview and think about where each piece will go. Planning 2-3 pieces ahead will help you avoid mistakes.",
+    "tut3Title": "3. Rhythm Timing Basics",
+    "tut3Desc": "Understand the rhythm system and how timing your drops to the beat earns bonus points.",
+    "tut3Step1Title": "Listen to the Beat",
+    "tut3Step1Desc": "Each world has a unique BPM (beats per minute). Pay attention to the music and visual cues that mark the beat.",
+    "tut3Step2Title": "Drop on the Beat",
+    "tut3Step2Desc": "Try to hard drop your pieces exactly on the beat. You'll see visual effects and earn bonus points when you time it correctly.",
+    "tut3Step3Title": "Practice Timing",
+    "tut3Step3Desc": "Start with slower worlds (100-110 BPM) to practice timing. As you improve, move to faster worlds for greater challenges and rewards.",
+    "tutIntermediateTitle": "Intermediate Tutorials",
+    "tutIntermediateIntro": "Take your skills to the next level with these intermediate techniques. Learn combo chains, recovery strategies, and advanced scoring methods.",
+    "tut4Title": "4. Building Combo Chains",
+    "tut4Desc": "Learn how to create consecutive line clears (combos) to maximize your score and attack power in battles.",
+    "tut4Step1Title": "Understanding Combos",
+    "tut4Step1Desc": "A combo occurs when you clear lines on consecutive piece placements without breaks. Each combo adds bonus points and increases your multiplier.",
+    "tut4Step2Title": "Setup Your Stack",
+    "tut4Step2Desc": "Build your board with multiple clearable lines ready. Leave strategic gaps that can be filled to trigger continuous clears.",
+    "tut4Step3Title": "Chain Clearing",
+    "tut4Step3Desc": "Clear one line, then immediately clear another with your next piece. Continue this pattern to build long combo chains.",
+    "tut4Step4Title": "Fever Mode",
+    "tut4Step4Desc": "Reach 10+ combos to activate Fever mode, which grants massive point bonuses and special visual effects.",
+    "tut5Title": "5. Downstacking Techniques",
+    "tut5Desc": "Master the art of quickly reducing your stack height, especially when under pressure from garbage lines.",
+    "tut5Step1Title": "Identify Problem Areas",
+    "tut5Step1Desc": "Look for high spots and trapped gaps in your stack. These are your priority targets for clearing.",
+    "tut5Step2Title": "Fast Placement",
+    "tut5Step2Desc": "Use hard drops and quick rotations to place pieces rapidly. Speed is essential when downstacking under pressure.",
+    "tut5Step3Title": "Clear Efficiently",
+    "tut5Step3Desc": "Focus on clearing multiple lines at once when possible. Double, triple, and quad line clears reduce your stack faster than singles.",
+    "tut6Title": "6. Back-to-Back (B2B) Chains",
+    "tut6Desc": "Learn how to maintain Back-to-Back chains for increased attack power and scoring.",
+    "tut6Step1Title": "What is B2B?",
+    "tut6Step1Desc": "B2B occurs when you clear difficult lines (Tetris, T-Spin) consecutively. Each B2B clear adds bonus points and extra garbage lines in multiplayer.",
+    "tut6Step2Title": "Setting Up Tetris",
+    "tut6Step2Desc": "Keep a vertical column open for I-pieces. Clear 4 lines at once (Tetris) to start or continue your B2B chain.",
+    "tut6Step3Title": "Maintaining the Chain",
+    "tut6Step3Desc": "After a Tetris, immediately setup another Tetris or T-Spin. If you clear 1-3 lines normally, your B2B chain breaks and you must start over.",
+    "tutAdvancedTitle": "Advanced Tutorials",
+    "tutAdvancedIntro": "Master the most challenging techniques in RHYTHMIA. These advanced strategies will help you dominate ranked matches and achieve top scores.",
+    "tut7Title": "7. T-Spin Mastery",
+    "tut7Desc": "Learn T-Spin techniques to maximize your scoring potential and send devastating attacks in multiplayer.",
+    "tut7Step1Title": "T-Spin Basics",
+    "tut7Step1Desc": "A T-Spin occurs when you rotate a T-piece into a position it couldn't slide into. This requires a specific setup with three corners blocked.",
+    "tut7Step2Title": "T-Spin Single & Double",
+    "tut7Step2Desc": "T-Spin Single clears 1 line, T-Spin Double clears 2. Doubles are more powerful and preferred in competitive play.",
+    "tut7Step3Title": "Common Setups",
+    "tut7Step3Desc": "Learn standard T-Spin patterns like overhang setups, fin setups, and kaidan stairs. Practice these in single player before using them in battles.",
+    "tut7Step4Title": "Integrating with Combos",
+    "tut7Step4Desc": "Combine T-Spins with combo chains for maximum effect. A T-Spin Double in a combo chain can send massive garbage to opponents.",
+    "tut8Title": "8. Finesse & Efficiency",
+    "tut8Desc": "Optimize your key presses and movement efficiency to achieve maximum speed and precision.",
+    "tut8Step1Title": "Minimize Inputs",
+    "tut8Step1Desc": "Finesse means placing each piece with the minimum number of key presses. Study optimal paths for each piece to each position.",
+    "tut8Step2Title": "Rotation Efficiency",
+    "tut8Step2Desc": "Choose the shorter rotation direction. If a piece needs to rotate 270° clockwise, rotate 90° counter-clockwise instead.",
+    "tut8Step3Title": "Movement Patterns",
+    "tut8Step3Desc": "Practice efficient movement patterns: move while the piece spawns, use DAS (Delayed Auto Shift) effectively, and minimize wasted movements.",
+    "tut9Title": "9. Advanced Opening Strategies",
+    "tut9Desc": "Master opening patterns (openers) to start each game with a strong foundation and early attack potential.",
+    "tut9Step1Title": "Common Openers",
+    "tut9Step1Desc": "Learn standard openers like TKI, DT Cannon, or Perfect Clear openers. These provide early B2B chains and strong attack power.",
+    "tut9Step2Title": "Perfect Clear (PC)",
+    "tut9Step2Desc": "A Perfect Clear happens when you clear your entire board. PC openers send massive garbage (10+ lines) in multiplayer matches.",
+    "tut9Step3Title": "Adapting to Pieces",
+    "tut9Step3Desc": "Your opener choice depends on your piece sequence. Learn to recognize which opener works best with your starting pieces.",
+    "tut9Step4Title": "Transition to Mid-Game",
+    "tut9Step4Desc": "After your opener, smoothly transition to your mid-game strategy. Maintain your B2B chain and continue applying pressure.",
+    "tut10Title": "10. Hard Drop Speed",
+    "tut10Desc": "Learn to use hard drops effectively to increase your overall speed and pieces per second.",
+    "tut10Step1Title": "Hard Drop Basics",
+    "tut10Step1Desc": "Press Space to instantly drop a piece to the bottom. This is much faster than soft dropping and essential for high-speed play.",
+    "tut10Step2Title": "Pre-Positioning",
+    "tut10Step2Desc": "Move and rotate your piece into position before hard dropping. The faster you decide placement, the higher your pieces per second.",
+    "tut10Step3Title": "Speed vs Accuracy",
+    "tut10Step3Desc": "Start by focusing on accurate placement, then gradually increase speed. Misdrops cost more time than careful placement.",
+    "tut11Title": "11. Crafting System Guide",
+    "tut11Desc": "Understand how the crafting system works, from collecting materials to forging powerful weapons.",
+    "tut11Step1Title": "Collecting Materials",
+    "tut11Step1Desc": "Materials drop from clearing lines during Vanilla mode. Rarer materials have lower drop rates — clear more lines to collect them faster.",
+    "tut11Step2Title": "Using the Forge",
+    "tut11Step2Desc": "Press F to open the forge menu. Select a weapon recipe, ensure you have the required materials, and craft your weapon.",
+    "tut11Step3Title": "Weapon Effects",
+    "tut11Step3Desc": "Each weapon provides a damage bonus and some have special abilities. Higher-tier weapons require rarer materials but deal significantly more damage.",
+    "tut12Title": "12. World Progression",
+    "tut12Desc": "Learn how to progress through the five worlds of RHYTHMIA, each with increasing BPM and unique challenges.",
+    "tut12Step1Title": "World Structure",
+    "tut12Step1Desc": "There are 5 worlds: Melodia (100 BPM), Harmonia (110 BPM), Crescenda (120 BPM), Fortissimo (140 BPM), and Silence Chamber (160 BPM).",
+    "tut12Step2Title": "Unlocking Worlds",
+    "tut12Step2Desc": "Complete challenges and earn advancements to unlock the next world. Each world requires mastering the previous one's mechanics.",
+    "tut12Step3Title": "World-Specific Tips",
+    "tut12Step3Desc": "Higher BPM worlds require faster decision-making. Practice rhythm timing in slower worlds first, then apply those skills as you progress.",
+    "tut13Title": "13. Garbage Management",
+    "tut13Desc": "Master dealing with garbage lines sent by opponents in multiplayer battles.",
+    "tut13Step1Title": "Understanding Garbage",
+    "tut13Step1Desc": "When opponents clear lines, garbage rows appear at the bottom of your board with random gaps. More garbage means a taller, messier stack.",
+    "tut13Step2Title": "Canceling Garbage",
+    "tut13Step2Desc": "Clear lines to cancel incoming garbage before it appears. Clearing lines while garbage is pending will reduce or eliminate it entirely.",
+    "tut13Step3Title": "Digging Through Garbage",
+    "tut13Step3Desc": "If garbage lands on your board, look for the gap column and build toward clearing those rows. Prioritize clearing garbage to regain board control.",
+    "tut14Title": "14. Item Strategy",
+    "tut14Desc": "Learn when and how to use items effectively to gain an advantage in Vanilla mode.",
+    "tut14Step1Title": "Item Types",
+    "tut14Step1Desc": "Items drop from line clears and range from common to legendary rarity. Each item provides unique benefits like extra damage or defensive abilities.",
+    "tut14Step2Title": "Inventory Management",
+    "tut14Step2Desc": "Press E to open your inventory. You have limited slots, so use or discard items strategically to keep space for rarer drops.",
+    "tut14Step3Title": "Timing Your Items",
+    "tut14Step3Desc": "Save powerful items for critical moments like boss encounters or difficult sections. Using the right item at the right time can turn the tide.",
+    "tut15Title": "15. Ranked Climbing Tips",
+    "tut15Desc": "Strategies and mindset for consistently climbing the ranked ladder in multiplayer.",
+    "tut15Step1Title": "Know the Tier System",
+    "tut15Step1Desc": "Ranked has 9 tiers from Open I to Champion III. Each match costs bus fare and rewards points on win. Higher tiers have steeper bus fares.",
+    "tut15Step2Title": "Consistency Over Speed",
+    "tut15Step2Desc": "Focus on clean, reliable play rather than risky all-in strategies. Avoid misdrops and maintain your stack to minimize losses.",
+    "tut15Step3Title": "Adapt to Opponents",
+    "tut15Step3Desc": "Watch how opponents play — if they attack aggressively, focus on defense and canceling garbage. If they play slowly, apply pressure with combos and T-Spins."
+  },
+  "advancements": {
+    "title": "ДОСТИЖЕНИЯ",
+    "button": "{count}/{total} Достижений",
+    "unlocked": "ДОСТИЖЕНИЕ ОТКРЫТО",
+    "locked": "ЗАБЛОКИРОВАНО",
+    "lockMessage": "{current}/{required} достижений для разблокировки",
+    "lines_10": {
+      "name": "Новичок линий",
+      "desc": "Убрать 10 линий"
+    },
+    "lines_50": {
+      "name": "Ученик линий",
+      "desc": "Убрать 50 линий"
+    },
+    "lines_200": {
+      "name": "Эксперт линий",
+      "desc": "Убрать 200 линий"
+    },
+    "lines_500": {
+      "name": "Мастер линий",
+      "desc": "Убрать 500 линий"
+    },
+    "lines_1000": {
+      "name": "Легенда линий",
+      "desc": "Убрать 1 000 линий"
+    },
+    "lines_2500": {
+      "name": "Покоритель линий",
+      "desc": "Убрать 2 500 линий"
+    },
+    "lines_5000": {
+      "name": "Бессмертие линий",
+      "desc": "Убрать 5 000 линий"
+    },
+    "best_lines_10": {
+      "name": "Разминка",
+      "desc": "Убрать 10 линий за игру"
+    },
+    "best_lines_25": {
+      "name": "Начало",
+      "desc": "Убрать 25 линий за игру"
+    },
+    "best_lines_50": {
+      "name": "Машина линий",
+      "desc": "Убрать 50 линий за игру"
+    },
+    "best_lines_100": {
+      "name": "Неудержимый",
+      "desc": "Убрать 100 линий за игру"
+    },
+    "best_lines_200": {
+      "name": "Полубог линий",
+      "desc": "Убрать 200 линий за игру"
+    },
+    "tspin_1": {
+      "name": "Первый спин",
+      "desc": "Выполните первый T-Спин"
+    },
+    "tspin_10": {
+      "name": "Доктор спинов",
+      "desc": "Выполните 10 T-Спинов"
+    },
+    "tspin_50": {
+      "name": "Эксперт T-Спина",
+      "desc": "Выполните 50 T-Спинов"
+    },
+    "tspin_200": {
+      "name": "Легенда T-Спина",
+      "desc": "Выполните 200 T-Спинов"
+    },
+    "tspin_500": {
+      "name": "Гроссмейстер T-Спина",
+      "desc": "Выполните 500 T-Спинов"
+    },
+    "tspin_1000": {
+      "name": "Бессмертие T-Спина",
+      "desc": "Выполните 1 000 T-Спинов"
+    },
+    "best_tspin_1": {
+      "name": "Начинающий спиннер",
+      "desc": "1 T-Спин за игру"
+    },
+    "best_tspin_5": {
+      "name": "Специалист спинов",
+      "desc": "5 T-Спинов за игру"
+    },
+    "best_tspin_10": {
+      "name": "Виртуоз спинов",
+      "desc": "10 T-Спинов за игру"
+    },
+    "best_tspin_25": {
+      "name": "Вундеркинд спинов",
+      "desc": "25 T-Спинов за игру"
+    },
+    "score_10k": {
+      "name": "Новичок очков",
+      "desc": "Набрать 10 000 очков"
+    },
+    "score_100k": {
+      "name": "Охотник за очками",
+      "desc": "Набрать 100 000 очков"
+    },
+    "score_1m": {
+      "name": "Мастер очков",
+      "desc": "Набрать 1 000 000 очков"
+    },
+    "score_10m": {
+      "name": "Легенда очков",
+      "desc": "Набрать 10 000 000 очков"
+    },
+    "score_50m": {
+      "name": "Повелитель очков",
+      "desc": "Набрать 50 000 000 очков"
+    },
+    "score_100m": {
+      "name": "Бессмертие очков",
+      "desc": "Набрать 100 000 000 очков"
+    },
+    "best_score_5k": {
+      "name": "Хорошая игра",
+      "desc": "5 000 очков за игру"
+    },
+    "best_score_25k": {
+      "name": "Отличная игра",
+      "desc": "25 000 очков за игру"
+    },
+    "best_score_100k": {
+      "name": "Потрясающая игра",
+      "desc": "100 000 очков за игру"
+    },
+    "best_score_500k": {
+      "name": "Легендарная игра",
+      "desc": "500 000 очков за игру"
+    },
+    "best_score_1m": {
+      "name": "Мифическая игра",
+      "desc": "1 000 000 очков за игру"
+    },
+    "combo_3": {
+      "name": "Старт комбо",
+      "desc": "Достичь комбо 3"
+    },
+    "combo_10": {
+      "name": "Король комбо",
+      "desc": "Достичь комбо 10"
+    },
+    "combo_20": {
+      "name": "Бог комбо",
+      "desc": "Достичь комбо 20"
+    },
+    "combo_30": {
+      "name": "Повелитель комбо",
+      "desc": "Достичь комбо 30"
+    },
+    "combo_50": {
+      "name": "Бессмертие комбо",
+      "desc": "Достичь комбо 50"
+    },
+    "combo_75": {
+      "name": "Трансцендентность комбо",
+      "desc": "Достичь комбо 75"
+    },
+    "combo_100": {
+      "name": "Божество комбо",
+      "desc": "Достичь комбо 100"
+    },
+    "combo_150": {
+      "name": "Небесное комбо",
+      "desc": "Достичь комбо 150"
+    },
+    "combo_200": {
+      "name": "Вечное комбо",
+      "desc": "Достичь комбо 200"
+    },
+    "total_combo_50": {
+      "name": "Коллекционер комбо",
+      "desc": "Всего 50 комбо"
+    },
+    "total_combo_100": {
+      "name": "Накопитель комбо",
+      "desc": "Всего 100 комбо"
+    },
+    "total_combo_250": {
+      "name": "Ветеран комбо",
+      "desc": "Всего 250 комбо"
+    },
+    "total_combo_500": {
+      "name": "Мастер комбо",
+      "desc": "Всего 500 комбо"
+    },
+    "total_combo_1000": {
+      "name": "Легенда комбо",
+      "desc": "Всего 1 000 комбо"
+    },
+    "total_combo_2500": {
+      "name": "Мифическое комбо",
+      "desc": "Всего 2 500 комбо"
+    },
+    "total_combo_5000": {
+      "name": "Бесконечное комбо",
+      "desc": "Всего 5 000 комбо"
+    },
+    "games_1": {
+      "name": "Первые шаги",
+      "desc": "Сыграйте первую игру"
+    },
+    "games_10": {
+      "name": "Серьёзный подход",
+      "desc": "Сыграйте 10 игр"
+    },
+    "games_50": {
+      "name": "Преданный игрок",
+      "desc": "Сыграйте 50 игр"
+    },
+    "games_100": {
+      "name": "Ветеран",
+      "desc": "Сыграйте 100 игр"
+    },
+    "games_250": {
+      "name": "Хардкорный геймер",
+      "desc": "Сыграйте 250 игр"
+    },
+    "games_500": {
+      "name": "Игрок на всю жизнь",
+      "desc": "Сыграйте 500 игр"
+    },
+    "worlds_5": {
+      "name": "Путешественник",
+      "desc": "Пройдите 5 миров"
+    },
+    "tetris_1": {
+      "name": "Тетрис!",
+      "desc": "Убрать 4 линии за раз"
+    },
+    "tetris_10": {
+      "name": "Тетрис-маньяк",
+      "desc": "Убрать 4 линии за раз 10 раз"
+    },
+    "tetris_50": {
+      "name": "Мастер тетриса",
+      "desc": "Убрать 4 линии за раз 50 раз"
+    },
+    "tetris_100": {
+      "name": "Гроссмейстер тетриса",
+      "desc": "Убрать 4 линии за раз 100 раз"
+    },
+    "tetris_200": {
+      "name": "Бог тетриса",
+      "desc": "Убрать 4 линии за раз 200 раз"
+    },
+    "best_tetris_1": {
+      "name": "Четвёрка",
+      "desc": "4 линии за раз в одной игре"
+    },
+    "best_tetris_3": {
+      "name": "Серия тетрисов",
+      "desc": "4 линии за раз 3 раза в игре"
+    },
+    "best_tetris_5": {
+      "name": "Специалист тетриса",
+      "desc": "4 линии за раз 5 раз в игре"
+    },
+    "best_tetris_10": {
+      "name": "Вундеркинд тетриса",
+      "desc": "4 линии за раз 10 раз в игре"
+    },
+    "perfect_beats_10": {
+      "name": "Ритм-новичок",
+      "desc": "10 идеальных битов за игру"
+    },
+    "perfect_beats_50": {
+      "name": "Ритм-мастер",
+      "desc": "50 идеальных битов за игру"
+    },
+    "perfect_beats_100": {
+      "name": "Ритм-легенда",
+      "desc": "100 идеальных битов за игру"
+    },
+    "total_perfect_beats_50": {
+      "name": "Коллекционер битов",
+      "desc": "Всего 50 идеальных битов"
+    },
+    "total_perfect_beats_200": {
+      "name": "Энтузиаст битов",
+      "desc": "Всего 200 идеальных битов"
+    },
+    "total_perfect_beats_500": {
+      "name": "Виртуоз битов",
+      "desc": "Всего 500 идеальных битов"
+    },
+    "total_perfect_beats_1000": {
+      "name": "Бессмертие битов",
+      "desc": "Всего 1 000 идеальных битов"
+    },
+    "hard_drops_100": {
+      "name": "Быстрый сброс",
+      "desc": "100 жёстких сбросов"
+    },
+    "hard_drops_1000": {
+      "name": "Предельная скорость",
+      "desc": "1 000 жёстких сбросов"
+    },
+    "hard_drops_5000": {
+      "name": "Удар метеора",
+      "desc": "5 000 жёстких сбросов"
+    },
+    "best_hard_drops_50": {
+      "name": "Скоростной сброс",
+      "desc": "50 жёстких сбросов за игру"
+    },
+    "best_hard_drops_100": {
+      "name": "Демон скорости",
+      "desc": "100 жёстких сбросов за игру"
+    },
+    "best_hard_drops_200": {
+      "name": "Машина сбросов",
+      "desc": "200 жёстких сбросов за игру"
+    },
+    "best_hard_drops_500": {
+      "name": "Мастер гравитации",
+      "desc": "500 жёстких сбросов за игру"
+    },
+    "pieces_100": {
+      "name": "Строитель блоков",
+      "desc": "Установить 100 фигур"
+    },
+    "pieces_1000": {
+      "name": "Архитектор блоков",
+      "desc": "Установить 1 000 фигур"
+    },
+    "pieces_10000": {
+      "name": "Легенда блоков",
+      "desc": "Установить 10 000 фигур"
+    },
+    "pieces_50000": {
+      "name": "Титан блоков",
+      "desc": "Установить 50 000 фигур"
+    },
+    "pieces_100000": {
+      "name": "Бессмертие блоков",
+      "desc": "Установить 100 000 фигур"
+    },
+    "best_pieces_50": {
+      "name": "Расстановщик",
+      "desc": "50 фигур за игру"
+    },
+    "best_pieces_100": {
+      "name": "Укладчик",
+      "desc": "100 фигур за игру"
+    },
+    "best_pieces_250": {
+      "name": "Мастер фигур",
+      "desc": "250 фигур за игру"
+    },
+    "best_pieces_500": {
+      "name": "Титан фигур",
+      "desc": "500 фигур за игру"
+    },
+    "mp_win_1": {
+      "name": "Первая победа",
+      "desc": "Победа в мультиплеере"
+    },
+    "mp_win_10": {
+      "name": "Боец арены",
+      "desc": "10 побед в мультиплеере"
+    },
+    "mp_win_50": {
+      "name": "Чемпион арены",
+      "desc": "50 побед в мультиплеере"
+    },
+    "mp_win_100": {
+      "name": "Легенда арены",
+      "desc": "100 побед в мультиплеере"
+    },
+    "mp_win_200": {
+      "name": "Бог арены",
+      "desc": "200 побед в мультиплеере"
+    },
+    "mp_streak_3": {
+      "name": "Горячая серия",
+      "desc": "3 победы подряд"
+    },
+    "mp_streak_5": {
+      "name": "Доминирование",
+      "desc": "5 побед подряд"
+    },
+    "mp_streak_10": {
+      "name": "Несокрушимый",
+      "desc": "10 побед подряд"
+    },
+    "mp_streak_15": {
+      "name": "Неприкасаемый",
+      "desc": "15 побед подряд"
+    },
+    "mp_streak_20": {
+      "name": "Непобедимый",
+      "desc": "20 побед подряд"
+    },
+    "mp_games_10": {
+      "name": "Завсегдатай арены",
+      "desc": "10 мультиплеерных матчей"
+    },
+    "mp_games_50": {
+      "name": "Ветеран арены",
+      "desc": "50 мультиплеерных матчей"
+    },
+    "mp_games_100": {
+      "name": "Гладиатор арены",
+      "desc": "100 мультиплеерных матчей"
+    },
+    "mp_games_200": {
+      "name": "Полководец арены",
+      "desc": "200 мультиплеерных матчей"
+    },
+    "loyalty_streak_3": {
+      "name": "Серия 3 дня",
+      "desc": "Посещение 3 дня подряд"
+    },
+    "loyalty_streak_7": {
+      "name": "Недельный ритм",
+      "desc": "Посещение 7 дней подряд"
+    },
+    "loyalty_streak_14": {
+      "name": "Двухнедельный бит",
+      "desc": "Посещение 14 дней подряд"
+    },
+    "loyalty_streak_30": {
+      "name": "Месячный пульс",
+      "desc": "Посещение 30 дней подряд"
+    },
+    "loyalty_streak_60": {
+      "name": "Сезонный бит",
+      "desc": "Посещение 60 дней подряд"
+    },
+    "loyalty_streak_100": {
+      "name": "Вечный ритм",
+      "desc": "Посещение 100 дней подряд"
+    },
+    "loyalty_visits_5": {
+      "name": "Завсегдатай",
+      "desc": "5 посещений"
+    },
+    "loyalty_visits_25": {
+      "name": "Знакомое лицо",
+      "desc": "25 посещений"
+    },
+    "loyalty_visits_100": {
+      "name": "Часть семьи",
+      "desc": "100 посещений"
+    },
+    "loyalty_visits_250": {
+      "name": "Живая легенда",
+      "desc": "250 посещений"
+    },
+    "loyalty_visits_500": {
+      "name": "Вечный гость",
+      "desc": "500 посещений"
+    },
+    "loyalty_games_10": {
+      "name": "Игрок",
+      "desc": "10 игр сыграно"
+    },
+    "loyalty_games_50": {
+      "name": "Энтузиаст",
+      "desc": "50 игр сыграно"
+    },
+    "loyalty_games_200": {
+      "name": "Преданный",
+      "desc": "200 игр сыграно"
+    },
+    "loyalty_games_500": {
+      "name": "Одержимый",
+      "desc": "500 игр сыграно"
+    },
+    "loyalty_games_1000": {
+      "name": "Трансцендент",
+      "desc": "1 000 игр сыграно"
+    },
+    "loyalty_polls_1": {
+      "name": "Первый голос",
+      "desc": "Проголосуйте в опросе"
+    },
+    "loyalty_polls_5": {
+      "name": "Активный избиратель",
+      "desc": "5 голосований"
+    },
+    "loyalty_polls_10": {
+      "name": "Голос сообщества",
+      "desc": "10 голосований"
+    },
+    "loyalty_polls_25": {
+      "name": "Чемпион демократии",
+      "desc": "25 голосований"
+    },
+    "loyalty_polls_50": {
+      "name": "Глас народа",
+      "desc": "50 голосований"
+    }
+  },
+  "localeSwitcher": {
+    "label": "Язык",
+    "en": "English",
+    "ja": "日本語",
+    "th": "ไทย",
+    "es": "Español",
+    "fr": "Français",
+    "ru": "Русский"
+  },
+  "vanilla": {
+    "badge": "СОЛО",
+    "title": "RHYTHMIA",
+    "subtitle": "Классическая ритм-головоломка",
+    "description": "Ставьте блоки в такт. Убирайте линии, стройте комбо и стремитесь к рекордам в оригинальном соло-режиме.",
+    "gameTitle": "RHYTHMIA"
+  },
+  "updates": {
+    "title": "Последние обновления",
+    "pageTitle": "Обновления разработки",
+    "pageSubtitle": "Следите за изменениями и улучшениями RHYTHMIA",
+    "recentUpdates": "Недавние обновления",
+    "prsMerged": "PR объединено",
+    "merged": "Объединено",
+    "features": "Новое",
+    "enhancements": "Улучшения",
+    "fixes": "Исправления",
+    "all": "Все",
+    "viewPR": "Открыть PR",
+    "viewAllPRs": "Все PR",
+    "viewAllPRsGithub": "Все PR на GitHub",
+    "videoTitle": "Обзор обновления",
+    "changes": "изменений",
+    "change": "изменение",
+    "categories": {
+      "feature": "Новое",
+      "enhancement": "Улучшения",
+      "fix": "Исправления",
+      "refactor": "Рефакторинг",
+      "docs": "Документация",
+      "i18n": "Интернационализация"
+    }
+  },
+  "skin": {
+    "title": "Профиль и скин",
+    "selectSkin": "Выбрать цветовой скин",
+    "currentSkin": "Текущий скин",
+    "selectLanguage": "Язык",
+    "privacy": "Приватность",
+    "profileButton": "Профиль",
+    "changeName": "Никнейм",
+    "saveNameButton": "Сохранить"
+  },
+  "multiplayer": {
+    "badge": "1v1",
+    "title": "БОЙ 1v1",
+    "gameTitle": "БОЙ 1v1",
+    "subtitle": "Ранговый мультиплеер",
+    "description": "Бои 1v1 в реальном времени. Отправляйте мусорные линии противнику. Последний выживший побеждает.",
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Ранговые"
+    },
+    "stats": {
+      "mode": "Режим",
+      "battle": "Бой",
+      "status": "Статус"
+    }
+  }
+}

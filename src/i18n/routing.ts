@@ -2,7 +2,7 @@ import { defineRouting } from 'next-intl/routing';
 
 export const routing = defineRouting({
     // List of all supported locales
-    locales: ['ja', 'en', 'th', 'es', 'fr'],
+    locales: ['ja', 'en', 'th', 'es', 'fr', 'ru'],
 
     // Japanese as the default locale (no prefix)
     defaultLocale: 'ja',
