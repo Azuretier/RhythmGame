@@ -395,20 +395,44 @@ export function useGameState() {
         resetStageEffects();
     }, [resetStageEffects]);
 
-    // Finish card select and proceed to next stage
+    // Finish card select and proceed to next stage (full transition)
     const finishCardSelect = useCallback(() => {
         setShowCardSelect(false);
         setIsPaused(false);
+
+        // Abort if player died during card select
+        if (gameOverRef.current) return;
+
+        // Advance to next stage
         const nextStage = stageNumberRef.current + 1;
         startNewStage(nextStage);
+
+        // Switch to dig phase
+        setTerrainPhase('dig');
+        terrainPhaseRef.current = 'dig';
+
+        // Reset tower health for next TD phase
+        setTowerHealth(MAX_HEALTH);
+        towerHealthRef.current = MAX_HEALTH;
+
+        setGamePhase('WORLD_CREATION');
+        gamePhaseRef.current = 'WORLD_CREATION';
+
+        setTimeout(() => {
+            if (gameOverRef.current) return;
+            setGamePhase('PLAYING');
+            gamePhaseRef.current = 'PLAYING';
+        }, 1500);
     }, [startNewStage]);
 
     // Enter card selection phase
+    // Called after TD wave collapse → transition, before advancing to next stage
     const enterCardSelect = useCallback(() => {
         const offers = generateCardOffers(worldIdxRef.current);
         setOfferedCards(offers);
         setShowCardSelect(true);
         setGamePhase('CARD_SELECT');
+        gamePhaseRef.current = 'CARD_SELECT';
         setIsPaused(true);
     }, [generateCardOffers]);
 
@@ -935,31 +959,11 @@ export function useGameState() {
                 // Abort transition if player died during transition
                 if (gameOverRef.current) return;
 
-                // Advance to next stage
-                const nextStage = stageNumberRef.current + 1;
-                startNewStage(nextStage);
-
-                // Switch to dig phase
-                setTerrainPhase('dig');
-                terrainPhaseRef.current = 'dig';
-
-                // Reset tower health for next TD phase
-                setTowerHealth(MAX_HEALTH);
-                towerHealthRef.current = MAX_HEALTH;
-
-                setGamePhase('WORLD_CREATION');
-                gamePhaseRef.current = 'WORLD_CREATION';
-
-                setTimeout(() => {
-                    // Abort transition if player died during world creation
-                    if (gameOverRef.current) return;
-
-                    setGamePhase('PLAYING');
-                    gamePhaseRef.current = 'PLAYING';
-                }, 1500);
+                // Enter card select — player picks a rogue card before next stage
+                enterCardSelect();
             }, 1200);
         }, 1200);
-    }, [startNewStage]);
+    }, [enterCardSelect]);
 
     // Initialize/reset game
     const initGame = useCallback((mode: GameMode = 'vanilla') => {
