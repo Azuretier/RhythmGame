@@ -51,6 +51,7 @@ interface PlayerConnection {
   profileName?: string;
   profileIcon?: string;
   profilePrivate?: boolean;
+  clientId?: string;
 }
 
 // Ranked matchmaking queue
@@ -1456,14 +1457,47 @@ const tokenCleanupInterval = setInterval(() => {
 wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
   const playerId = generatePlayerId();
 
+  // Parse clientId from query params to detect duplicate connections from the same browser tab
+  // (e.g. when locale change causes WebSocket reconnect before the old one fully closes)
+  let clientId: string | undefined;
+  try {
+    const url = new URL(request.url || '', `http://${request.headers.host || 'localhost'}`);
+    clientId = url.searchParams.get('clientId') || undefined;
+  } catch { }
+
+  // Evict any existing connection from the same client to prevent duplicates
+  if (clientId) {
+    for (const [oldId, oldConn] of playerConnections) {
+      if (oldConn.clientId === clientId && oldId !== playerId) {
+        console.log(`[EVICT] Closing stale connection ${oldId} (same clientId: ${clientId})`);
+        // Clear any pending disconnect grace timer for the old connection
+        const graceTimer = disconnectTimers.get(oldId);
+        if (graceTimer) {
+          clearTimeout(graceTimer);
+          disconnectTimers.delete(oldId);
+        }
+        // Clean up ranked/arena queues for old connection
+        rankedQueue.delete(oldId);
+        clearRankedTimer(oldId);
+        arenaQueue.delete(oldId);
+        clearArenaTimer(oldId);
+        // Remove from playerConnections before terminating to avoid double-handling
+        playerConnections.delete(oldId);
+        try { oldConn.ws.terminate(); } catch { }
+        break;
+      }
+    }
+  }
+
   const conn: PlayerConnection = {
     ws,
     isAlive: true,
     lastActivity: Date.now(),
+    clientId,
   };
   playerConnections.set(playerId, conn);
 
-  console.log(`[CONNECT] Player ${playerId}`);
+  console.log(`[CONNECT] Player ${playerId}${clientId ? ` (client: ${clientId})` : ''}`);
 
   sendToPlayer(playerId, {
     type: 'connected',

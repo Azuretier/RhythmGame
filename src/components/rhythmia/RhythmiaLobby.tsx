@@ -44,6 +44,10 @@ export default function RhythmiaLobby() {
     const router = useRouter();
     const { profile, showProfileSetup } = useProfile();
 
+    // Keep profileRef in sync so the WS onopen handler reads the latest value
+    const profileRef = useRef(profile);
+    profileRef.current = profile;
+
     const isArenaLocked = unlockedCount < BATTLE_ARENA_REQUIRED_ADVANCEMENTS;
 
     const TOTAL_SLIDES = 3;
@@ -86,17 +90,29 @@ export default function RhythmiaLobby() {
         if (wsRef.current?.readyState === WebSocket.CONNECTING) return;
 
         const wsUrl = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
-        const ws = new WebSocket(wsUrl);
+
+        // Use a persistent clientId per tab so the server can evict stale connections
+        // (e.g. when locale changes cause unmount/remount of this component)
+        let clientId = sessionStorage.getItem('azuretier_ws_client_id');
+        if (!clientId) {
+            clientId = typeof crypto !== 'undefined' && crypto.randomUUID
+                ? crypto.randomUUID()
+                : `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+            sessionStorage.setItem('azuretier_ws_client_id', clientId);
+        }
+
+        const ws = new WebSocket(`${wsUrl}?clientId=${encodeURIComponent(clientId)}`);
         profileSentRef.current = false;
 
         ws.onopen = () => {
-            // Send profile info once connected
-            if (profile) {
+            // Send profile info once connected (read from ref for latest value)
+            const currentProfile = profileRef.current;
+            if (currentProfile) {
                 ws.send(JSON.stringify({
                     type: 'set_profile',
-                    name: profile.name,
-                    icon: profile.icon,
-                    isPrivate: profile.isPrivate,
+                    name: currentProfile.name,
+                    icon: currentProfile.icon,
+                    isPrivate: currentProfile.isPrivate,
                 }));
                 profileSentRef.current = true;
             }
@@ -121,7 +137,7 @@ export default function RhythmiaLobby() {
         };
 
         wsRef.current = ws;
-    }, [profile]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         connectMultiplayerWs();
