@@ -1266,5 +1266,86 @@
             "battle": "バトル",
             "status": "状態"
         }
+    },
+    "echoes": {
+        "title": "ECHOES OF ETERNITY",
+        "subtitle": "究極のアクションRPG",
+        "loading": "読み込み中...",
+        "enterName": "エコーズへ",
+        "chooseName": "旅人よ、名前を選べ",
+        "beginJourney": "旅を始める",
+        "selectMode": "ゲームモード選択",
+        "launch": "開始",
+        "play": "プレイ",
+        "characters": "キャラクター",
+        "inventory": "インベントリ",
+        "profile": "プロフィール",
+        "storyMode": "ストーリーモード",
+        "storyDesc": "時間軸を渡り、マルチバースを救え",
+        "battleRoyale": "バトルロイヤル",
+        "brDesc": "100人サバイバル — 収集、建設、戦闘",
+        "rankedMatch": "ランクマッチ",
+        "rankedDesc": "5v5戦略バトル・バン/ピックフェーズ付き",
+        "rhythmChallenge": "リズムチャレンジ",
+        "rhythmDesc": "純粋なリズムマスタリーと世界ランキング",
+        "endlessDungeon": "エンドレスダンジョン",
+        "dungeonDesc": "ハクスラで伝説の装備を手に入れろ",
+        "creativeMode": "クリエイティブモード",
+        "creativeDesc": "世界を構築してコミュニティと共有",
+        "assembleParty": "パーティーを編成",
+        "beginCombat": "戦闘開始",
+        "combat": {
+            "attack": "攻撃",
+            "defend": "防御",
+            "ultimate": "必殺技",
+            "execute": "実行",
+            "rhythmPhase": "リズムフェーズ",
+            "enemyTurn": "敵のターン...",
+            "victory": "勝利",
+            "defeated": "敗北",
+            "battleAgain": "再挑戦",
+            "return": "戻る",
+            "retreat": "撤退"
+        },
+        "exploration": {
+            "return": "戻る",
+            "outOfStamina": "スタミナ切れ！",
+            "gathered": "{resource}を{quantity}個入手！",
+            "enemyEncounter": "敵と遭遇！"
+        },
+        "crafting": {
+            "title": "クラフトステーション",
+            "station": "作業台",
+            "recipes": "レシピ",
+            "materials": "素材",
+            "output": "生成物",
+            "craft": "製作",
+            "resources": "資源"
+        },
+        "gacha": {
+            "title": "永遠のエコーズ",
+            "pullSingle": "1回召喚",
+            "pullTen": "10連召喚",
+            "results": "結果",
+            "close": "閉じる",
+            "pity": "天井！",
+            "softPityActive": "確率アップ中！"
+        },
+        "lobby": {
+            "title": "マルチプレイロビー",
+            "createLobby": "ロビーを作成",
+            "joinLobby": "ロビーに参加",
+            "lobbyCode": "ロビーコードを入力",
+            "lobbyName": "ロビー名（任意）",
+            "create": "作成",
+            "join": "参加",
+            "ready": "準備完了",
+            "startGame": "ゲーム開始",
+            "selectCharacter": "キャラクター選択",
+            "host": "ホスト",
+            "notReady": "準備中"
+        },
+        "sessionComplete": "セッション完了",
+        "returnToMenu": "メニューに戻る"
     }
 }

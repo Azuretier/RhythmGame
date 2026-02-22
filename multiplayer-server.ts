@@ -4,6 +4,7 @@ import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
+import { EchoesLobbyManager } from './src/lib/echoes/EchoesManager';
 import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
@@ -92,6 +93,33 @@ interface ArenaQueuedPlayer {
 
 const arenaQueue: Map<string, ArenaQueuedPlayer> = new Map();
 const arenaQueueTimers: Map<string, NodeJS.Timeout> = new Map();
+
+// ===== Echoes of Eternity System =====
+
+const echoesManager = new EchoesLobbyManager({
+  onBroadcast: (lobbyCode, message, excludePlayerId) => {
+    broadcastToEchoesLobby(lobbyCode, message as ServerMessage, excludePlayerId);
+  },
+  onSendToPlayer: (playerId, message) => {
+    sendToPlayer(playerId, message as ServerMessage);
+  },
+});
+
+function broadcastToEchoesLobby(lobbyCode: string, message: ServerMessage, excludePlayerId?: string): void {
+  const playerIds = echoesManager.getPlayerIdsInLobby(lobbyCode);
+  for (const pid of playerIds) {
+    if (pid !== excludePlayerId) {
+      sendToPlayer(pid, message);
+    }
+  }
+}
+
+function sendEchoesLobbyState(lobbyCode: string): void {
+  const lobbyState = echoesManager.getRoomState(lobbyCode);
+  if (lobbyState) {
+    broadcastToEchoesLobby(lobbyCode, { type: 'echoes_lobby_state', lobbyState } as ServerMessage);
+  }
+}
 
 // ===== Utility Functions =====
 
@@ -1278,6 +1306,187 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
+    // ===== Echoes of Eternity Messages =====
+
+    case 'echoes_create_lobby': {
+      const echoMsg = message as { type: string; playerName: string; mode: string; lobbyName?: string };
+      const result = echoesManager.createLobby(
+        playerId,
+        echoMsg.playerName.slice(0, 20),
+        echoMsg.mode as import('./src/types/echoes').GameMode,
+        echoMsg.lobbyName?.slice(0, 30),
+      );
+
+      const token = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'echoes_lobby_created',
+        lobbyCode: result.lobbyCode,
+        playerId,
+        reconnectToken: token,
+      } as ServerMessage);
+
+      sendToPlayer(playerId, {
+        type: 'echoes_joined_lobby',
+        lobbyCode: result.lobbyCode,
+        playerId,
+        lobbyState: echoesManager.getRoomState(result.lobbyCode),
+        reconnectToken: token,
+      } as ServerMessage);
+      break;
+    }
+
+    case 'echoes_join_lobby': {
+      const joinMsg = message as { type: string; lobbyCode: string; playerName: string };
+      const result = echoesManager.joinLobby(
+        joinMsg.lobbyCode,
+        playerId,
+        joinMsg.playerName.slice(0, 20),
+      );
+
+      if (!result.success) {
+        sendError(playerId, result.error || 'Failed to join lobby');
+        break;
+      }
+
+      const token = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'echoes_joined_lobby',
+        lobbyCode: joinMsg.lobbyCode,
+        playerId,
+        lobbyState: result.lobbyState,
+        reconnectToken: token,
+      } as ServerMessage);
+
+      broadcastToEchoesLobby(joinMsg.lobbyCode, {
+        type: 'echoes_player_joined',
+        player: result.lobbyState!.players.find((p: { id: string }) => p.id === playerId),
+      } as ServerMessage, playerId);
+      break;
+    }
+
+    case 'echoes_leave_lobby': {
+      const { lobbyCode } = echoesManager.leaveLobby(playerId);
+      if (lobbyCode) {
+        broadcastToEchoesLobby(lobbyCode, {
+          type: 'echoes_player_left',
+          playerId,
+        } as ServerMessage);
+        sendEchoesLobbyState(lobbyCode);
+      }
+      break;
+    }
+
+    case 'echoes_ready': {
+      const readyMsg = message as { type: string; ready: boolean };
+      const lobbyCode = echoesManager.setReady(playerId, readyMsg.ready);
+      if (lobbyCode) {
+        sendEchoesLobbyState(lobbyCode);
+      }
+      break;
+    }
+
+    case 'echoes_select_character': {
+      const selMsg = message as { type: string; characterId: string };
+      const lobbyCode = echoesManager.selectCharacter(playerId, selMsg.characterId);
+      if (lobbyCode) {
+        sendEchoesLobbyState(lobbyCode);
+      }
+      break;
+    }
+
+    case 'echoes_ban_character': {
+      const banMsg = message as { type: string; characterId: string };
+      const lobbyCode = echoesManager.getPlayerLobbyCode(playerId);
+      if (lobbyCode) {
+        echoesManager.banCharacter(lobbyCode, banMsg.characterId);
+        sendEchoesLobbyState(lobbyCode);
+      }
+      break;
+    }
+
+    case 'echoes_start_game': {
+      const startResult = echoesManager.startGame(playerId);
+      if (!startResult.success) {
+        sendError(playerId, startResult.error || 'Cannot start game');
+        break;
+      }
+
+      // Send countdown
+      const echLobbyCode = startResult.lobbyCode!;
+      let count = COUNTDOWN_SECONDS;
+      const countdownInterval = setInterval(() => {
+        broadcastToEchoesLobby(echLobbyCode, {
+          type: 'echoes_countdown',
+          count,
+        } as ServerMessage);
+        count--;
+
+        if (count < 0) {
+          clearInterval(countdownInterval);
+          broadcastToEchoesLobby(echLobbyCode, {
+            type: 'echoes_game_started',
+            seed: startResult.seed,
+            mode: startResult.mode,
+            serverTime: Date.now(),
+          } as ServerMessage);
+        }
+      }, 1000);
+      break;
+    }
+
+    case 'echoes_chat': {
+      const chatMsg = message as { type: string; message: string };
+      const lobbyCode = echoesManager.getPlayerLobbyCode(playerId);
+      if (lobbyCode) {
+        const lobbyState = echoesManager.getRoomState(lobbyCode);
+        const player = lobbyState?.players.find((p: { id: string }) => p.id === playerId);
+        broadcastToEchoesLobby(lobbyCode, {
+          type: 'echoes_chat_message',
+          playerId,
+          playerName: player?.name || 'Unknown',
+          message: chatMsg.message.slice(0, 200),
+        } as ServerMessage);
+      }
+      break;
+    }
+
+    case 'echoes_emote': {
+      const emoteMsg = message as { type: string; emote: string };
+      const lobbyCode = echoesManager.getPlayerLobbyCode(playerId);
+      if (lobbyCode) {
+        const lobbyState = echoesManager.getRoomState(lobbyCode);
+        const player = lobbyState?.players.find((p: { id: string }) => p.id === playerId);
+        broadcastToEchoesLobby(lobbyCode, {
+          type: 'echoes_emote_broadcast',
+          playerId,
+          playerName: player?.name || 'Unknown',
+          emote: emoteMsg.emote,
+        } as ServerMessage);
+      }
+      break;
+    }
+
+    // Other echoes message types are handled client-side for now
+    // (combat, exploration, crafting, gacha, etc. use local state)
+    case 'echoes_combat_action':
+    case 'echoes_rhythm_hit':
+    case 'echoes_puzzle_action':
+    case 'echoes_explore_move':
+    case 'echoes_gather_resource':
+    case 'echoes_craft':
+    case 'echoes_build':
+    case 'echoes_use_item':
+    case 'echoes_queue_ranked':
+    case 'echoes_cancel_queue':
+    case 'echoes_br_move':
+    case 'echoes_br_build':
+    case 'echoes_br_attack':
+    case 'echoes_br_loot': {
+      // These will be implemented with full server-side game state
+      // For now, acknowledge receipt
+      break;
+    }
+
     default:
       sendError(playerId, `Unknown message type`, 'UNKNOWN_TYPE');
   }
@@ -1307,6 +1516,12 @@ function handleDisconnect(playerId: string, reason: string): void {
   const mcResult = mcBoardManager.markDisconnected(playerId);
   if (mcResult.roomCode) {
     sendMCBoardRoomState(mcResult.roomCode);
+  }
+
+  // Handle Echoes disconnect
+  const echoesResult = echoesManager.markDisconnected(playerId);
+  if (echoesResult.lobbyCode) {
+    sendEchoesLobbyState(echoesResult.lobbyCode);
   }
 
   const result = roomManager.markPlayerDisconnected(playerId);
