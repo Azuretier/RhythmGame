@@ -11,6 +11,7 @@ import type {
   Party,
   PartyMember,
   CharacterInstance,
+  EnemyInstance,
   BattleState,
   BattleRoyaleState,
   MobaState,
