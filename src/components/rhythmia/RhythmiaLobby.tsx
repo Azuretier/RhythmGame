@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import type { ServerMessage, OnlineUser } from '@/types/multiplayer';
+import type { UserProfile } from '@/lib/profile/types';
 import { getUnlockedCount } from '@/lib/advancements/storage';
 import { ADVANCEMENTS, BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { useProfile } from '@/lib/profile/context';
@@ -38,11 +39,17 @@ export default function RhythmiaLobby() {
     const [showLogoAnimation, setShowLogoAnimation] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
     const profileSentRef = useRef(false);
+    const profileRef = useRef<UserProfile | null>(null);
 
     const t = useTranslations();
     const locale = useLocale();
     const router = useRouter();
     const { profile, showProfileSetup } = useProfile();
+
+    // Keep profileRef in sync so connectMultiplayerWs can read latest profile without dependency
+    useEffect(() => {
+        profileRef.current = profile;
+    }, [profile]);
 
     const isArenaLocked = unlockedCount < BATTLE_ARENA_REQUIRED_ADVANCEMENTS;
 
@@ -90,13 +97,14 @@ export default function RhythmiaLobby() {
         profileSentRef.current = false;
 
         ws.onopen = () => {
-            // Send profile info once connected
-            if (profile) {
+            // Send profile info once connected (use ref to avoid stale closure)
+            const currentProfile = profileRef.current;
+            if (currentProfile) {
                 ws.send(JSON.stringify({
                     type: 'set_profile',
-                    name: profile.name,
-                    icon: profile.icon,
-                    isPrivate: profile.isPrivate,
+                    name: currentProfile.name,
+                    icon: currentProfile.icon,
+                    isPrivate: currentProfile.isPrivate,
                 }));
                 profileSentRef.current = true;
             }
@@ -121,7 +129,7 @@ export default function RhythmiaLobby() {
         };
 
         wsRef.current = ws;
-    }, [profile]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         connectMultiplayerWs();
