@@ -305,7 +305,7 @@ export function useGameState() {
                     effects.luckyDropsBonus += totalValue;
                     break;
                 case 'combo_amplify':
-                    effects.comboAmplifyFactor *= totalValue;
+                    effects.comboAmplifyFactor *= Math.pow(card.attributeValue, ec.stackCount);
                     break;
             }
         }
