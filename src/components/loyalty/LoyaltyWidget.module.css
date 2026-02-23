@@ -1,4 +1,4 @@
-/* Score Ranking Widget — 3-row compact card with tab switcher */
+/* Score Ranking Widget — persistent profile + inline text tabs */
 .widget {
   position: relative;
   width: 100%;
@@ -7,74 +7,25 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 10px;
-  overflow: visible;
+  overflow: hidden;
 }
 
-/* ========== Tab bar — attached to right edge ========== */
-.tabBar {
-  position: absolute;
-  right: -36px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  z-index: 5;
-}
-
-.tab {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(12, 12, 20, 0.85);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-left: none;
-  border-radius: 0 8px 8px 0;
-  color: rgba(255, 255, 255, 0.3);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.tab:hover {
-  background: rgba(20, 20, 35, 0.95);
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.tab.tabActive {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* ====================================================
-   COMPACT / SUMMARY — 3-row vertical stack
-   ==================================================== */
-.compact {
-  display: flex;
-  flex-direction: column;
-  padding: 20px 24px;
-  gap: 16px;
-}
-
-/* ---- Row 1: Profile info ---- */
-.row1 {
+/* ========== Persistent profile row ========== */
+.profileRow {
   display: flex;
   align-items: center;
   gap: 14px;
+  padding: 18px 24px 14px;
 }
 
 .profileAvatar {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -86,7 +37,7 @@
 }
 
 .profileName {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: rgba(255, 255, 255, 0.92);
@@ -102,85 +53,58 @@
 }
 
 .profileTier {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   line-height: 1.4;
   margin-top: 1px;
 }
 
-/* ---- Generic tab content (streak / stats / roadmap / badges) ---- */
-.tabContent {
-  padding: 20px 24px;
+/* ========== Inline text tab bar ========== */
+.tabBar {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  gap: 0;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.tabTitle {
+.tab {
+  padding: 8px 14px;
   font-size: 0.5rem;
   font-weight: 600;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  opacity: 0.3;
-  margin: 0;
+  color: rgba(255, 255, 255, 0.25);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-/* Streak dots row — centered */
-.streakRow {
-  display: flex;
-  justify-content: center;
-  padding: 10px 0;
+.tab:hover {
+  color: rgba(255, 255, 255, 0.55);
 }
 
-.streakDots {
-  display: flex;
-  gap: 8px;
+.tab.tabActive {
+  color: rgba(255, 255, 255, 0.85);
+  border-bottom-color: rgba(255, 255, 255, 0.5);
 }
 
-.streakDotWrap {
+/* ========== Tab body — stable height ========== */
+.tabBody {
+  min-height: 120px;
+}
+
+.tabPane {
+  padding: 16px 24px 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 3px;
+  gap: 12px;
 }
 
-.streakDot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.3s;
-}
-
-.streakDot.filled {
-  background: rgba(76, 175, 80, 0.3);
-  border-color: rgba(76, 175, 80, 0.5);
-}
-
-.streakDot.today {
-  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.2);
-}
-
-.streakDayLabel {
-  font-size: 0.4rem;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  color: rgba(255, 255, 255, 0.2);
-  text-transform: uppercase;
-}
-
-
-
-/* ---- Row 3: Score gauge ---- */
-.row3 {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Line 1: TOTAL SCORE  1.2B  ...  X to next rank */
+/* ========== Score gauge ========== */
 .gaugeHeader {
   display: flex;
   justify-content: space-between;
@@ -215,7 +139,6 @@
   letter-spacing: 0.02em;
 }
 
-/* Line 2: Current rank — Next rank */
 .gaugeRanks {
   display: flex;
   justify-content: space-between;
@@ -235,7 +158,6 @@
   letter-spacing: 0.04em;
 }
 
-/* Progress bar */
 .gaugeBar {
   width: 100%;
   height: 6px;
@@ -251,7 +173,6 @@
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Line 3: Score thresholds below bar */
 .gaugeThresholds {
   display: flex;
   justify-content: space-between;
@@ -265,25 +186,52 @@
   opacity: 0.5;
 }
 
-/* ====================================================
-   Shared detail styles (used by individual tabs)
-   ==================================================== */
-
-/* Sections */
-.detailSection {
-  margin-bottom: 20px;
+/* ========== Streak ========== */
+.streakRow {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
 }
 
-.detailSectionTitle {
-  font-size: 0.5rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
+.streakDots {
+  display: flex;
+  gap: 10px;
+}
+
+.streakDotWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.streakDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s;
+}
+
+.streakDot.filled {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.streakDot.today {
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.2);
+}
+
+.streakDayLabel {
+  font-size: 0.4rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.2);
   text-transform: uppercase;
-  opacity: 0.3;
-  margin: 0 0 10px;
 }
 
-/* 4-col grid */
+/* ========== Shared detail styles ========== */
 .detailGrid4 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -462,37 +410,34 @@
     margin-top: 16px;
   }
 
-  .tabBar {
-    right: -30px;
-  }
-
-  .tab {
-    width: 28px;
-    height: 28px;
-    font-size: 0.65rem;
-  }
-
-  .compact {
-    padding: 14px 18px;
-    gap: 12px;
+  .profileRow {
+    padding: 14px 18px 10px;
   }
 
   .profileAvatar {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 10px;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
 
-  .row2 {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 12px;
+  .tabBar {
+    padding: 0 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
-  .details {
-    padding: 18px;
-    max-height: 60vh;
+  .tabBar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    padding: 6px 10px;
+    font-size: 0.45rem;
+  }
+
+  .tabPane {
+    padding: 14px 18px 18px;
   }
 
   .detailGrid4 {
