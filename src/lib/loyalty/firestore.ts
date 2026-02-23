@@ -8,7 +8,7 @@
  *   loyalty_states/{playerId}    — per-player loyalty state sync
  */
 
-import { db, auth } from '@/lib/rhythmia/firebase';
+import { db, auth, appCheckAvailable } from '@/lib/rhythmia/firebase';
 import {
   doc,
   getDoc,
@@ -33,7 +33,14 @@ export function initAuth(): Promise<User | null> {
   if (!auth) return Promise.resolve(null);
   if (authReady) return authReady;
 
-  authReady = new Promise<User | null>((resolve) => {
+  authReady = new Promise<User | null>(async (resolve) => {
+    // Wait for App Check validation — skip auth if broken
+    const isAppCheckOk = await appCheckAvailable;
+    if (!isAppCheckOk) {
+      resolve(null);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth!, (user) => {
       if (user) {
         currentUser = user;
