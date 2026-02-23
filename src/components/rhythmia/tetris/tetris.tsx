@@ -211,6 +211,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   const gameHardDropsRef = useRef(0);
   const gamePiecesPlacedRef = useRef(0);
   const gameWorldsClearedRef = useRef(0);
+  const pendingCheckpointRef = useRef(false);
   const advRecordedRef = useRef(false);
   const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
@@ -816,8 +817,14 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
         // Check if terrain is fully destroyed → enter checkpoint for TD phase
         if (remaining <= 0) {
-          gameWorldsClearedRef.current++;
-          enterCheckpoint();
+          if (gamePhaseRef.current === 'PLAYING') {
+            gameWorldsClearedRef.current++;
+            enterCheckpoint();
+          } else {
+            // Terrain fully destroyed during a non-PLAYING phase (e.g. WORLD_CREATION).
+            // Defer the checkpoint until the game phase returns to PLAYING.
+            pendingCheckpointRef.current = true;
+          }
         }
       }
 
@@ -974,6 +981,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     gameHardDropsRef.current = 0;
     gamePiecesPlacedRef.current = 0;
     gameWorldsClearedRef.current = 0;
+    pendingCheckpointRef.current = false;
     advRecordedRef.current = false;
     liveNotifiedRef.current = new Set();
     lockStartTimeRef.current = null;
@@ -1220,6 +1228,13 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           } else {
             lockStartTimeRef.current = null;
           }
+        }
+
+        // Process deferred terrain checkpoint when game returns to PLAYING
+        if (pendingCheckpointRef.current && gamePhaseRef.current === 'PLAYING') {
+          pendingCheckpointRef.current = false;
+          gameWorldsClearedRef.current++;
+          enterCheckpointRef.current();
         }
       }
 
