@@ -1687,7 +1687,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       )}
 
       {/* Rogue-like card selection overlay */}
-      {showCardSelect && (
+      {(showCardSelect || gamePhase === 'CARD_ABSORBING') && (
         <CardSelectUI
           offers={offeredCards}
           inventory={inventory}
