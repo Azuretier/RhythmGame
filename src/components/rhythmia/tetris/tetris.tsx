@@ -836,9 +836,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       // Charge Fury from T-spins
       if (tSpin !== 'none') {
         const tSpinType = tSpin === 'mini' ? 'mini' : 'full';
+        const oldFury = dragonGaugeRef.current.furyGauge;
         const newFury = chargeDragonFury(tSpinType as 'mini' | 'full', clearedLines);
-        if (newFury > dragonGaugeRef.current.furyGauge - 1) {
-          vfxRef.current.emit({ type: 'dragonGaugeCharge', gauge: 'fury', amount: 1, newValue: newFury });
+        if (newFury > oldFury) {
+          vfxRef.current.emit({ type: 'dragonGaugeCharge', gauge: 'fury', amount: newFury - oldFury, newValue: newFury });
           playDragonChargeTickRef.current(newFury);
           gaugeChanged = true;
         }
@@ -846,9 +847,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
       // Charge Might from Tetrises (4-line) and Triples (3-line)
       if (clearedLines >= 3) {
+        const oldMight = dragonGaugeRef.current.mightGauge;
         const newMight = chargeDragonMight(clearedLines);
-        if (newMight > dragonGaugeRef.current.mightGauge - 1) {
-          vfxRef.current.emit({ type: 'dragonGaugeCharge', gauge: 'might', amount: 1, newValue: newMight });
+        if (newMight > oldMight) {
+          vfxRef.current.emit({ type: 'dragonGaugeCharge', gauge: 'might', amount: newMight - oldMight, newValue: newMight });
           playDragonChargeTickRef.current(newMight);
           gaugeChanged = true;
         }
