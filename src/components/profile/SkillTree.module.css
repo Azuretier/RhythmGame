@@ -1,0 +1,1046 @@
+/* ============================================
+   RPG Skill Tree — Pixel Art / Minecraft UI
+   Three-panel layout: Detail | Ability Tree | Class Selector
+   Dark obsidian + inventory slots + chunky borders
+   ============================================ */
+
+/* ---- Overlay ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.92);
+  padding: 12px;
+  image-rendering: pixelated;
+}
+
+/* ---- Main Frame (three-panel grid) ---- */
+.frame {
+  position: relative;
+  width: 100%;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 720px;
+  display: grid;
+  grid-template-columns: 280px 1fr 220px;
+  background: #1a1a1a;
+  border: 4px solid;
+  border-color: #3b3b3b #0d0d0d #0d0d0d #3b3b3b;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 2px #2a2a2a,
+    0 0 0 2px #000,
+    0 8px 40px rgba(0, 0, 0, 0.9);
+}
+
+/* Pixel grid texture on entire frame */
+.frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.008) 3px,
+      rgba(255, 255, 255, 0.008) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.008) 3px,
+      rgba(255, 255, 255, 0.008) 4px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ================================================================
+   LEFT PANEL — Class Detail
+   ================================================================ */
+.classDetail {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 18px;
+  overflow-y: auto;
+  border-right: 4px solid;
+  border-right-color: #333;
+  background: #1e1e1e;
+}
+
+/* Character portrait — square pixel item frame */
+.portraitArea {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.portrait {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  background: #2a2a2a;
+  border: 4px solid;
+  border-color: #555 #1a1a1a #1a1a1a #555;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+/* Inner bevel */
+.portrait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid;
+  border-color: #3a3a3a #444 #444 #3a3a3a;
+  pointer-events: none;
+}
+
+.portraitIcon {
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.8));
+  image-rendering: pixelated;
+}
+
+.portraitNames {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.className {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.classAltName {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.7rem;
+  color: #888;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* SP badge in detail panel */
+.detailSp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #111;
+  border: 3px solid;
+  border-color: #444 #1a1a1a #1a1a1a #444;
+  padding: 3px 10px;
+  margin-bottom: 12px;
+  align-self: flex-start;
+}
+
+.detailSpNum {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #55ff55;
+  text-shadow: 0 0 6px rgba(85, 255, 85, 0.4), 2px 2px 0 #000;
+}
+
+.detailSpLabel {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.55rem;
+  color: #666;
+  text-transform: uppercase;
+}
+
+/* Class description */
+.classDescription {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.65rem;
+  line-height: 1.6;
+  color: #aaa;
+  margin-bottom: 16px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* Subclass section */
+.subclassHeader {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #888;
+  border-bottom: 2px solid #333;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.subclassList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subclassEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subclassTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subclassIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #444 #1a1a1a #1a1a1a #444;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.subclassName {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ddd;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.statBars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 32px;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statLabel {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.5rem;
+  color: #777;
+  width: 56px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.statBarTrack {
+  flex: 1;
+  height: 6px;
+  background: #111;
+  border: 1px solid #333;
+  overflow: hidden;
+  max-width: 100px;
+}
+
+.statBarFill {
+  height: 100%;
+  image-rendering: pixelated;
+  transition: width 0.15s steps(5);
+}
+
+/* Placeholder when no class is selected */
+.noClassPlaceholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.75rem;
+  color: #555;
+  text-align: center;
+  padding: 40px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ================================================================
+   CENTER PANEL — Ability Tree
+   ================================================================ */
+.treePanel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  background: #111;
+  overflow: hidden;
+}
+
+/* Obsidian frame border */
+.treePanel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 4px solid;
+  border-color: #3a3a3a #0a0a0a #0a0a0a #3a3a3a;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Page navigation header */
+.pageNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: #1a1a1a;
+  border-bottom: 3px solid;
+  border-bottom-color: #333;
+  z-index: 2;
+}
+
+.pageArrow {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.8rem;
+  color: #777;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  transition: color 0.05s steps(1);
+  text-shadow: 1px 1px 0 #000;
+}
+
+.pageArrow:hover {
+  color: #fff;
+}
+
+.pageArrow:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.pageLabel {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  min-width: 70px;
+  text-align: center;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* Tree canvas area — dark grid */
+.treeArea {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+  overflow-y: auto;
+  position: relative;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 15px,
+      rgba(255, 255, 255, 0.015) 15px,
+      rgba(255, 255, 255, 0.015) 16px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 15px,
+      rgba(255, 255, 255, 0.015) 15px,
+      rgba(255, 255, 255, 0.015) 16px
+    ),
+    #0e0e0e;
+}
+
+.treeCanvas {
+  position: relative;
+  z-index: 1;
+}
+
+.connectionsSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* ---- Skill Nodes — Minecraft inventory slots ---- */
+.node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: #373737;
+  border: 3px solid;
+  border-color: #555 #222 #222 #555;
+  cursor: pointer;
+  transition: background 0.05s steps(1), box-shadow 0.05s steps(1);
+  z-index: 1;
+  image-rendering: pixelated;
+}
+
+/* Inner bevel for inventory slot feel */
+.node::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid;
+  border-color: #2a2a2a #444 #444 #2a2a2a;
+  pointer-events: none;
+}
+
+.node:hover {
+  background: #444;
+  z-index: 3;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.node_locked {
+  opacity: 0.25;
+  filter: grayscale(1) brightness(0.4);
+  background: #222;
+}
+
+.node_available {
+  background: #373737;
+  animation: slotPulse 2s steps(8) infinite;
+}
+
+.node_partial {
+  background: color-mix(in srgb, var(--cat-color) 20%, #373737);
+  border-color:
+    color-mix(in srgb, var(--cat-color) 35%, #555)
+    color-mix(in srgb, var(--cat-color) 25%, #222)
+    color-mix(in srgb, var(--cat-color) 25%, #222)
+    color-mix(in srgb, var(--cat-color) 35%, #555);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--cat-color) 20%, transparent);
+}
+
+.node_maxed {
+  background: color-mix(in srgb, var(--cat-color) 30%, #373737);
+  border-color:
+    color-mix(in srgb, var(--cat-color) 50%, #555)
+    color-mix(in srgb, var(--cat-color) 35%, #222)
+    color-mix(in srgb, var(--cat-color) 35%, #222)
+    color-mix(in srgb, var(--cat-color) 50%, #555);
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--cat-color) 35%, transparent),
+    0 0 4px var(--cat-color);
+}
+
+/* Enchantment glint overlay on maxed nodes */
+.node_maxed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(128, 0, 255, 0.12) 45%,
+    transparent 60%
+  );
+  background-size: 200% 200%;
+  animation: enchantGlint 2s steps(12) infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.nodeSelected {
+  outline: 2px solid var(--cat-color);
+  outline-offset: 2px;
+  z-index: 3;
+}
+
+.nodeIcon {
+  font-size: 1.2rem;
+  line-height: 1;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.9));
+  image-rendering: pixelated;
+}
+
+.levelPips {
+  display: flex;
+  gap: 2px;
+}
+
+.pip {
+  width: 6px;
+  height: 6px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  transition: background 0.05s steps(1);
+}
+
+.pipFilled {
+  background: var(--cat-color, #4FC3F7);
+  border-color: color-mix(in srgb, var(--cat-color, #4FC3F7) 60%, #000);
+  box-shadow: 0 0 3px var(--cat-color, #4FC3F7);
+}
+
+@keyframes slotPulse {
+  0%, 100% {
+    box-shadow: 0 0 6px color-mix(in srgb, var(--cat-color) 15%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 16px color-mix(in srgb, var(--cat-color) 35%, transparent),
+      inset 0 0 6px color-mix(in srgb, var(--cat-color) 8%, transparent);
+  }
+}
+
+@keyframes enchantGlint {
+  0% { background-position: 200% 200%; }
+  100% { background-position: -200% -200%; }
+}
+
+/* No class selected placeholder for tree */
+.treePlaceholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.8rem;
+  color: #555;
+  text-align: center;
+  padding: 40px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ---- Detail Panel (node tooltip) — purple enchant table ---- */
+.detailPanel {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: calc(100% - 32px);
+  max-width: 380px;
+  padding: 10px 14px;
+  background: #140a28;
+  border: 3px solid;
+  border-color: #5a20aa #200848 #200848 #5a20aa;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow:
+    inset 0 0 0 1px #0d0520,
+    0 4px 20px rgba(30, 0, 60, 0.8);
+}
+
+.detailTop {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.detailIcon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: #373737;
+  border: 2px solid;
+  border-color: #555 #222 #222 #555;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.detailInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.detailName {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.detailDesc {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.6rem;
+  color: #aa55ff;
+  line-height: 1.4;
+  margin-top: 2px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.detailBottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.detailStat {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.6rem;
+  color: #888;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.detailTier {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.55rem;
+  color: #666;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.unlockBtn {
+  margin-left: auto;
+  padding: 5px 14px;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.05s steps(1);
+  border: 3px solid;
+  border-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.5) rgba(255, 255, 255, 0.25);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.unlockBtn:hover {
+  filter: brightness(1.2);
+}
+
+.unlockBtn:active {
+  border-color: rgba(0, 0, 0, 0.5) rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.5);
+}
+
+.maxedBadge {
+  margin-left: auto;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ffff55;
+  text-shadow:
+    2px 2px 0 #4a3a00,
+    0 0 8px rgba(255, 255, 85, 0.3);
+}
+
+.lockedHint {
+  margin-left: auto;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.55rem;
+  color: #555;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ================================================================
+   RIGHT PANEL — Class Selector
+   ================================================================ */
+.classSelector {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  border-left: 4px solid;
+  border-left-color: #333;
+  background: #1a1a1a;
+}
+
+.selectorHeader {
+  padding: 12px 14px;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #888;
+  border-bottom: 3px solid #333;
+  text-align: center;
+  flex-shrink: 0;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.classCardList {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Class cards — dark inventory row */
+.classCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #252525;
+  border: 2px solid;
+  border-color: #444 #1a1a1a #1a1a1a #444;
+  cursor: pointer;
+  transition: background 0.05s steps(1), box-shadow 0.05s steps(1);
+  text-align: left;
+}
+
+.classCard:hover {
+  background: #333;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.classCardActive {
+  background: #2e2e2e;
+  border-color: var(--class-color);
+  box-shadow:
+    0 0 0 1px var(--class-color),
+    0 0 12px color-mix(in srgb, var(--class-color) 25%, transparent);
+}
+
+/* Small square portrait on class card — item frame */
+.cardPortrait {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #555 #1a1a1a #1a1a1a #555;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+.cardInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cardName {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #ddd;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.cardAlt {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.5rem;
+  color: #777;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* Difficulty bar on class card */
+.diffRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.diffLabel {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.45rem;
+  color: #666;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.diffTrack {
+  flex: 1;
+  height: 4px;
+  background: #111;
+  border: 1px solid #333;
+  overflow: hidden;
+}
+
+.diffFill {
+  height: 100%;
+  transition: width 0.15s steps(5);
+  image-rendering: pixelated;
+}
+
+/* ---- Header bar across the top ---- */
+.topBar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #1a1a1a;
+  border-bottom: 4px solid;
+  border-bottom-color: #333;
+  z-index: 2;
+}
+
+.topBarTitle {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resetLink {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  color: #777;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  letter-spacing: 0.05em;
+  transition: color 0.05s steps(1);
+  text-shadow: 1px 1px 0 #000;
+}
+
+.resetLink:hover {
+  color: #ff5555;
+}
+
+.closeX {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.75rem;
+  color: #888;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #444 #1a1a1a #1a1a1a #444;
+  cursor: pointer;
+  transition: color 0.05s steps(1), background 0.05s steps(1);
+}
+
+.closeX:hover {
+  color: #ff5555;
+  background: #333;
+}
+
+/* ---- Reset Confirmation Dialog ---- */
+.resetOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 20;
+}
+
+.resetDialog {
+  background: #1a1a1a;
+  border: 4px solid;
+  border-color: #555 #111 #111 #555;
+  padding: 24px;
+  text-align: center;
+  max-width: 300px;
+  box-shadow:
+    inset 0 0 0 2px #2a2a2a,
+    0 0 0 2px #000,
+    0 4px 30px rgba(0, 0, 0, 0.8);
+}
+
+.resetDialog p {
+  margin: 0 0 18px;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.75rem;
+  color: #ccc;
+  line-height: 1.5;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.resetActions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.resetCancel,
+.resetConfirmBtn {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  padding: 6px 16px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 3px solid;
+  transition: background 0.05s steps(1);
+}
+
+.resetCancel {
+  background: #333;
+  color: #ddd;
+  border-color: #555 #1a1a1a #1a1a1a #555;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.resetCancel:hover {
+  background: #444;
+}
+
+.resetConfirmBtn {
+  background: #551111;
+  color: #ff5555;
+  border-color: #882222 #330808 #330808 #882222;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.resetConfirmBtn:hover {
+  background: #661919;
+}
+
+/* ================================================================
+   MOBILE RESPONSIVE
+   ================================================================ */
+
+/* Tablet: stack detail below, tree + selector side-by-side */
+@media (max-width: 900px) {
+  .frame {
+    grid-template-columns: 1fr 180px;
+    grid-template-rows: auto 1fr auto;
+    max-height: 95vh;
+  }
+
+  .topBar {
+    grid-column: 1 / -1;
+  }
+
+  .treePanel {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+  }
+
+  .classSelector {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+  }
+
+  .classDetail {
+    grid-column: 1 / -1;
+    grid-row: 3 / 4;
+    border-right: none;
+    border-top: 4px solid #333;
+    max-height: 200px;
+    flex-direction: row;
+    gap: 16px;
+    padding: 12px 16px;
+  }
+
+  .portraitArea {
+    flex-direction: column;
+    margin-bottom: 0;
+  }
+
+  .subclassList {
+    flex-direction: row;
+    gap: 16px;
+    overflow-x: auto;
+  }
+
+  .subclassEntry {
+    min-width: 140px;
+  }
+
+  .statBars {
+    padding-left: 0;
+  }
+}
+
+/* Phone: single column */
+@media (max-width: 600px) {
+  .frame {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    max-height: 98vh;
+  }
+
+  .classSelector {
+    grid-column: 1;
+    grid-row: auto;
+    border-left: none;
+    border-top: 4px solid #333;
+    max-height: 140px;
+  }
+
+  .classCardList {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 6px 8px;
+  }
+
+  .classCard {
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  .classDetail {
+    grid-column: 1;
+    max-height: 160px;
+  }
+
+  .treePanel {
+    grid-column: 1;
+    min-height: 280px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node_available {
+    animation: none;
+  }
+  .node_maxed::after {
+    animation: none;
+  }
+}

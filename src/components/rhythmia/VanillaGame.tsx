@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './VanillaGame.module.css';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { recordGameEnd, checkLiveGameAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
+import { useSkillTree } from '@/lib/skill-tree/context';
 import AdvancementToast from './AdvancementToast';
 import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
 
@@ -108,6 +109,7 @@ const WALL_KICK_I: Record<string, [number, number][]> = {
 export const Rhythmia: React.FC = () => {
   // Hook to detect mobile devices
   const isMobile = useIsMobile();
+  const { awardGamePoints } = useSkillTree();
 
   // Game state
   const [board, setBoard] = useState<(PieceCell | null)[][]>([]);
@@ -372,7 +374,10 @@ export const Rhythmia: React.FC = () => {
     if (result.newlyUnlockedIds.length > 0) {
       setToastIds(result.newlyUnlockedIds);
     }
-  }, [playTone]);
+
+    // Award skill tree points
+    awardGamePoints();
+  }, [playTone, awardGamePoints]);
 
   const completeBoard = useCallback((partialBoard: (PieceCell | null)[][]) => {
     const completed = [...partialBoard];

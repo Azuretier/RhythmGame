@@ -8,6 +8,7 @@ import type { FeatureSettings } from './tetris/types';
 import { DEFAULT_FEATURE_SETTINGS } from './tetris/types';
 import { FeatureCustomizer } from './tetris/components/FeatureCustomizer';
 import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
+import { useSkillTree } from '@/lib/skill-tree/context';
 import AdvancementToast from './AdvancementToast';
 import { useRhythmVFX } from './tetris/hooks/useRhythmVFX';
 import { RhythmVFX } from './tetris/components/RhythmVFX';
@@ -299,6 +300,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     onBackToLobby,
 }) => {
     const opponent = opponents[0];
+    const { awardGamePoints, awardMultiplayerWinPoints } = useSkillTree();
 
     // Game state
     const boardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
@@ -621,6 +623,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     bestTetrisIn60s: bestTetrisIn60sRef.current,
                 });
                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
+                awardGamePoints();
             }
             onGameEnd(opponent?.id || '');
             render();
@@ -638,7 +641,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         }
         render();
         return true;
-    }, [fillQueue, sendGameOver, onGameEnd, opponent, render]);
+    }, [fillQueue, sendGameOver, onGameEnd, opponent, render, awardGamePoints]);
 
     // ===== Lock Delay =====
     const startLockTimer = useCallback(() => {
@@ -1050,6 +1053,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                     bestTetrisIn60s: bestTetrisIn60sRef.current,
                                 });
                                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
+                                awardGamePoints();
+                                awardMultiplayerWinPoints();
                             }
                             onGameEnd(playerId);
                             render();
@@ -1063,7 +1068,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
         ws.addEventListener('message', handler);
         return () => ws.removeEventListener('message', handler);
-    }, [ws, playerId, onGameEnd, render]);
+    }, [ws, playerId, onGameEnd, render, awardGamePoints, awardMultiplayerWinPoints]);
 
     // ===== Initialize Game =====
     useEffect(() => {
