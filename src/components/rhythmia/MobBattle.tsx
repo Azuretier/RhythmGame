@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MobBattle.module.css';
 import type { Player, ServerMessage, BoardCell } from '@/types/multiplayer';
 import type { ActiveMob, MobBattleRelayPayload } from '@/lib/mob-battle/types';
+import { useSkillTree } from '@/lib/skill-tree/context';
 import {
   MOB_DEFINITIONS,
   MOB_MAP,
@@ -219,6 +220,7 @@ export const MobBattle: React.FC<Props> = ({
   onBackToLobby,
 }) => {
   const opponent = opponents[0];
+  const { awardGamePoints, awardMultiplayerWinPoints } = useSkillTree();
 
   // ===== Game State Refs =====
   const boardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
@@ -479,6 +481,7 @@ export const MobBattle: React.FC<Props> = ({
       if (baseHpRef.current <= 0) {
         gameOverRef.current = true;
         sendGameOver();
+        awardGamePoints();
         onGameEnd(opponent?.id || '');
       }
     }
@@ -486,7 +489,7 @@ export const MobBattle: React.FC<Props> = ({
     // Remove dead mobs
     incomingMobsRef.current = mobs.filter(m => m.alive);
     render();
-  }, [playBaseDamage, sendGameOver, onGameEnd, opponent, render]);
+  }, [playBaseDamage, sendGameOver, onGameEnd, opponent, render, awardGamePoints]);
 
   // ===== Piece Queue =====
   const fillQueue = useCallback(() => {
@@ -511,6 +514,7 @@ export const MobBattle: React.FC<Props> = ({
     if (!isValid(piece, boardRef.current)) {
       gameOverRef.current = true;
       sendGameOver();
+      awardGamePoints();
       onGameEnd(opponent?.id || '');
       render();
       return false;
@@ -526,7 +530,7 @@ export const MobBattle: React.FC<Props> = ({
     }
     render();
     return true;
-  }, [fillQueue, sendGameOver, onGameEnd, opponent, render]);
+  }, [fillQueue, sendGameOver, onGameEnd, opponent, render, awardGamePoints]);
 
   // ===== Lock Delay =====
   const startLockTimer = useCallback(() => {
@@ -754,6 +758,8 @@ export const MobBattle: React.FC<Props> = ({
           } else if (payload.event === 'game_over') {
             if (!gameOverRef.current) {
               gameOverRef.current = true;
+              awardGamePoints();
+              awardMultiplayerWinPoints();
               onGameEnd(playerId);
               render();
             }
@@ -766,7 +772,7 @@ export const MobBattle: React.FC<Props> = ({
 
     ws.addEventListener('message', handler);
     return () => ws.removeEventListener('message', handler);
-  }, [ws, playerId, onGameEnd, spawnIncomingMob, render]);
+  }, [ws, playerId, onGameEnd, spawnIncomingMob, render, awardGamePoints, awardMultiplayerWinPoints]);
 
   // ===== Initialize Game =====
   useEffect(() => {
