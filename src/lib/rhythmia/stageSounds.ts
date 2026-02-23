@@ -15,31 +15,18 @@ export function playWorldDrum(ctx: AudioContext, worldIdx: number): void {
 
     switch (worldIdx) {
         case 0: {
-            // 🎀 メロディア — Bouncy rubber "boing" squeak
-            const osc1 = ctx.createOscillator();
-            const gain1 = ctx.createGain();
-            osc1.type = 'square';
-            osc1.frequency.setValueAtTime(180, t);
-            osc1.frequency.exponentialRampToValueAtTime(520, t + 0.06);
-            osc1.frequency.exponentialRampToValueAtTime(330, t + 0.14);
-            gain1.gain.setValueAtTime(0.35, t);
-            gain1.gain.exponentialRampToValueAtTime(0.01, t + 0.16);
-            osc1.connect(gain1);
-            gain1.connect(ctx.destination);
-            osc1.start(t);
-            osc1.stop(t + 0.16);
-
-            const osc2 = ctx.createOscillator();
-            const gain2 = ctx.createGain();
-            osc2.type = 'sine';
-            osc2.frequency.setValueAtTime(120, t);
-            osc2.frequency.exponentialRampToValueAtTime(60, t + 0.1);
-            gain2.gain.setValueAtTime(0.25, t);
-            gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
-            osc2.connect(gain2);
-            gain2.connect(ctx.destination);
-            osc2.start(t);
-            osc2.stop(t + 0.1);
+            // 🎀 メロディア — Original default drum
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, t);
+            osc.frequency.exponentialRampToValueAtTime(50, t + 0.1);
+            gain.gain.setValueAtTime(0.5, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.1);
             break;
         }
         case 1: {
@@ -201,8 +188,8 @@ export function playWorldDrum(ctx: AudioContext, worldIdx: number): void {
 
 /** World-specific line clear chime configurations. */
 export const WORLD_LINE_CLEAR_CHIMES: { freqs: number[]; type: OscillatorType; dur: number; delay: number }[] = [
-    // 🎀 Melodia — playful bouncy major scale pings
-    { freqs: [523, 698, 880, 1047], type: 'square', dur: 0.12, delay: 70 },
+    // 🎀 Melodia — original default line clear
+    { freqs: [523, 659, 784, 1047], type: 'triangle', dur: 0.15, delay: 60 },
     // 🌊 Harmonia — flowing watery pentatonic tones
     { freqs: [440, 587, 740, 880], type: 'sine', dur: 0.18, delay: 80 },
     // ☀️ Crescenda — bright sparkling triangle arpeggios
