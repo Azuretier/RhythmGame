@@ -6,9 +6,10 @@
 // biome-specific colors, fog of war, and interactive raycasting
 // =============================================================
 
-import { Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
+import { Component, Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
+import type { ReactNode, ErrorInfo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrthographicCamera, Html } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type {
   WorldTile, MCTileUpdate, MCVisiblePlayer, MCMobState,
@@ -21,6 +22,29 @@ import {
 } from './terrain-utils';
 import type { LightingPreset, VoxelBlock } from './terrain-utils';
 import styles from './MinecraftBoard.module.css';
+
+// === Error Boundary ===
+
+interface ErrorBoundaryState { hasError: boolean; error: string | null }
+
+class Canvas3DErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error: error.message };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error('[BoardRenderer3D] Canvas error:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 
 // === Shared types ===
 
@@ -143,7 +167,6 @@ function PlayerEntity({
   const baseHeight = heightMap.get(`${player.x},${player.y}`) ?? 2;
   const topY = baseHeight;
 
-  // Gentle bob animation
   useFrame(({ clock }) => {
     if (!groupRef.current) return;
     groupRef.current.position.y = topY + Math.sin(clock.elapsedTime * 2 + player.x) * 0.08;
@@ -165,7 +188,6 @@ function PlayerEntity({
 
   return (
     <group ref={groupRef} position={[player.x, topY, player.y]}>
-      {/* Body */}
       <mesh position={[0, 0.3, 0]} castShadow>
         <boxGeometry args={[0.55, 0.6, 0.55]} />
         <meshStandardMaterial
@@ -176,27 +198,17 @@ function PlayerEntity({
           flatShading
         />
       </mesh>
-      {/* Head */}
       <mesh position={[0, 0.8, 0]} castShadow>
         <boxGeometry args={[0.45, 0.45, 0.45]} />
         <meshStandardMaterial color={headColor} roughness={0.5} flatShading />
       </mesh>
-      {/* Glow for self */}
       {isSelf && (
-        <pointLight
-          position={[0, 1.5, 0]}
-          color={player.color}
-          intensity={2}
-          distance={4}
-        />
+        <pointLight position={[0, 1.5, 0]} color={player.color} intensity={2} distance={4} />
       )}
-      {/* Health bar */}
       {!isSelf && (
         <Html position={[0, 1.5, 0]} center style={{ pointerEvents: 'none' }}>
           <div className={styles.entityHp3d}>
-            <span className={styles.entityName3d}>
-              {player.name.slice(0, 6)}
-            </span>
+            <span className={styles.entityName3d}>{player.name.slice(0, 6)}</span>
             <div className={styles.hpBar3d}>
               <div
                 className={styles.hpFill3d}
@@ -213,20 +225,13 @@ function PlayerEntity({
   );
 }
 
-function MobEntity({
-  mob,
-  heightMap,
-}: {
-  mob: MCMobState;
-  heightMap: Map<string, number>;
-}) {
+function MobEntity({ mob, heightMap }: { mob: MCMobState; heightMap: Map<string, number> }) {
   const groupRef = useRef<THREE.Group>(null);
   const baseHeight = heightMap.get(`${mob.x},${mob.y}`) ?? 2;
   const topY = baseHeight;
   const mobColor = new THREE.Color(MOB_COLORS[mob.type] || '#888');
   const isTall = mob.type !== 'chicken';
 
-  // Gentle bob for hostile mobs
   useFrame(({ clock }) => {
     if (!groupRef.current || !mob.hostile) return;
     groupRef.current.position.y = topY + Math.sin(clock.elapsedTime * 3 + mob.x * 7) * 0.06;
@@ -234,7 +239,6 @@ function MobEntity({
 
   return (
     <group ref={groupRef} position={[mob.x, topY, mob.y]}>
-      {/* Body */}
       <mesh position={[0, isTall ? 0.3 : 0.15, 0]} castShadow>
         <boxGeometry args={isTall ? [0.5, 0.6, 0.5] : [0.4, 0.3, 0.4]} />
         <meshStandardMaterial
@@ -245,14 +249,12 @@ function MobEntity({
           flatShading
         />
       </mesh>
-      {/* Head for tall mobs */}
       {isTall && (
         <mesh position={[0, 0.75, 0]} castShadow>
           <boxGeometry args={[0.4, 0.35, 0.4]} />
           <meshStandardMaterial color={mobColor.clone().lerp(new THREE.Color('#ffffff'), 0.15)} roughness={0.6} flatShading />
         </mesh>
       )}
-      {/* Health bar */}
       <Html position={[0, isTall ? 1.3 : 0.8, 0]} center style={{ pointerEvents: 'none' }}>
         <div className={styles.entityHp3d}>
           <div className={styles.hpBar3d}>
@@ -271,12 +273,11 @@ function MobEntity({
 }
 
 // =============================================================
-// Mining indicator — pulsing scale animation on target block
+// Mining indicator
 // =============================================================
 
 function MiningIndicator({
-  mining,
-  heightMap,
+  mining, heightMap,
 }: {
   mining: { x: number; y: number; progress: number; total: number };
   heightMap: Map<string, number>;
@@ -296,17 +297,10 @@ function MiningIndicator({
     <group position={[mining.x, topY, mining.y]}>
       <mesh ref={meshRef}>
         <boxGeometry args={[1.0, 1.0, 1.0]} />
-        <meshStandardMaterial
-          color="#ffffff"
-          transparent
-          opacity={0.2 + progress * 0.3}
-          wireframe
-        />
+        <meshStandardMaterial color="#ffffff" transparent opacity={0.2 + progress * 0.3} wireframe />
       </mesh>
       <Html position={[0, 1.2, 0]} center style={{ pointerEvents: 'none' }}>
-        <div className={styles.miningLabel3d}>
-          {Math.floor(progress * 100)}%
-        </div>
+        <div className={styles.miningLabel3d}>{Math.floor(progress * 100)}%</div>
       </Html>
     </group>
   );
@@ -328,26 +322,18 @@ function DayNightLighting({ dayPhase }: { dayPhase: DayPhase }) {
     targetPreset.current = preset;
   }, [preset]);
 
-  // Smooth lighting transitions
   useFrame(() => {
     const target = targetPreset.current;
     const lerpSpeed = 0.02;
-
     if (ambientRef.current) {
-      ambientRef.current.intensity = THREE.MathUtils.lerp(
-        ambientRef.current.intensity, target.ambientIntensity, lerpSpeed
-      );
+      ambientRef.current.intensity = THREE.MathUtils.lerp(ambientRef.current.intensity, target.ambientIntensity, lerpSpeed);
       ambientRef.current.color.lerp(new THREE.Color(target.ambientColor), lerpSpeed);
     }
     if (hemiRef.current) {
-      hemiRef.current.intensity = THREE.MathUtils.lerp(
-        hemiRef.current.intensity, target.hemisphereIntensity, lerpSpeed
-      );
+      hemiRef.current.intensity = THREE.MathUtils.lerp(hemiRef.current.intensity, target.hemisphereIntensity, lerpSpeed);
     }
     if (dirRef.current) {
-      dirRef.current.intensity = THREE.MathUtils.lerp(
-        dirRef.current.intensity, target.directionalIntensity, lerpSpeed
-      );
+      dirRef.current.intensity = THREE.MathUtils.lerp(dirRef.current.intensity, target.directionalIntensity, lerpSpeed);
       dirRef.current.color.lerp(new THREE.Color(target.directionalColor), lerpSpeed);
     }
   });
@@ -371,37 +357,39 @@ function DayNightLighting({ dayPhase }: { dayPhase: DayPhase }) {
         shadow-camera-top={25}
         shadow-camera-bottom={-25}
       />
-      <directionalLight
-        position={[-10, 15, -5]}
-        intensity={Math.max(0.1, preset.directionalIntensity * 0.24)}
-        color="#ffd8a0"
-      />
+      <directionalLight position={[-10, 15, -5]} intensity={Math.max(0.1, preset.directionalIntensity * 0.24)} color="#ffd8a0" />
     </>
   );
 }
 
 // =============================================================
 // Camera controller — smoothly tracks player position
+// Sets correct lookAt on mount via useEffect, then tracks via useFrame
 // =============================================================
 
 function CameraController({ targetX, targetZ }: { targetX: number; targetZ: number }) {
   const { camera } = useThree();
   const targetRef = useRef(new THREE.Vector3(targetX, 3, targetZ));
+  const initialized = useRef(false);
 
   useEffect(() => {
     targetRef.current.set(targetX, 3, targetZ);
   }, [targetX, targetZ]);
 
+  // Set initial camera orientation immediately (not waiting for useFrame)
+  useEffect(() => {
+    if (!initialized.current) {
+      const target = targetRef.current;
+      camera.position.set(target.x + 20, 22, target.z + 20);
+      camera.lookAt(target.x, target.y, target.z);
+      camera.updateProjectionMatrix();
+      initialized.current = true;
+    }
+  }, [camera]);
+
   useFrame(() => {
     const target = targetRef.current;
-    const offset = new THREE.Vector3(20, 22, 20);
-    const desiredPos = new THREE.Vector3(
-      target.x + offset.x,
-      offset.y,
-      target.z + offset.z,
-    );
-
-    // Smooth lerp camera position
+    const desiredPos = new THREE.Vector3(target.x + 20, 22, target.z + 20);
     camera.position.lerp(desiredPos, 0.08);
     camera.lookAt(target.x, target.y, target.z);
     camera.updateProjectionMatrix();
@@ -415,14 +403,8 @@ function CameraController({ targetX, targetZ }: { targetX: number; targetZ: numb
 // =============================================================
 
 function InteractionPlane({
-  heightMap,
-  visibleTiles,
-  visiblePlayers,
-  visibleMobs,
-  playerId,
-  onTileClick,
-  onMobClick,
-  onPlayerClick,
+  heightMap, visibleTiles, visiblePlayers, visibleMobs, playerId,
+  onTileClick, onMobClick, onPlayerClick,
 }: {
   heightMap: Map<string, number>;
   visibleTiles: MCTileUpdate[];
@@ -440,25 +422,15 @@ function InteractionPlane({
     const wx = Math.round(point.x);
     const wz = Math.round(point.z);
 
-    // Check for mob at this position
     const mob = visibleMobs.find(m => m.x === wx && m.y === wz && m.hostile);
-    if (mob) {
-      onMobClick(mob.id);
-      return;
-    }
+    if (mob) { onMobClick(mob.id); return; }
 
-    // Check for player at this position
     const player = visiblePlayers.find(p => p.x === wx && p.y === wz && p.id !== playerId);
-    if (player) {
-      onPlayerClick(player.id);
-      return;
-    }
+    if (player) { onPlayerClick(player.id); return; }
 
-    // Otherwise tile click (mine/interact)
     onTileClick(wx, wz);
   }, [visibleMobs, visiblePlayers, playerId, onTileClick, onMobClick, onPlayerClick]);
 
-  // Create individual clickable tiles at their correct heights
   const tilePositions = useMemo(() => {
     const tiles: { x: number; z: number; y: number }[] = [];
     for (const tu of visibleTiles) {
@@ -471,12 +443,7 @@ function InteractionPlane({
   return (
     <group>
       {tilePositions.map(t => (
-        <mesh
-          key={`${t.x},${t.z}`}
-          position={[t.x, t.y, t.z]}
-          onClick={handleClick}
-          visible={false}
-        >
+        <mesh key={`${t.x},${t.z}`} position={[t.x, t.y, t.z]} onClick={handleClick} visible={false}>
           <boxGeometry args={[1, 1, 1]} />
           <meshBasicMaterial transparent opacity={0} />
         </mesh>
@@ -486,38 +453,18 @@ function InteractionPlane({
 }
 
 // =============================================================
-// Torch lights — point lights at torch positions
+// Torch lights
 // =============================================================
 
-function TorchLights({
-  tiles,
-  heightMap,
-  dayPhase,
-}: {
-  tiles: MCTileUpdate[];
-  heightMap: Map<string, number>;
-  dayPhase: DayPhase;
-}) {
-  const torchTiles = useMemo(
-    () => tiles.filter(t => t.tile.block === 'torch'),
-    [tiles]
-  );
-
+function TorchLights({ tiles, heightMap, dayPhase }: { tiles: MCTileUpdate[]; heightMap: Map<string, number>; dayPhase: DayPhase }) {
+  const torchTiles = useMemo(() => tiles.filter(t => t.tile.block === 'torch'), [tiles]);
   const intensity = dayPhase === 'night' ? 3 : dayPhase === 'dusk' || dayPhase === 'dawn' ? 1.5 : 0.5;
 
   return (
     <>
       {torchTiles.slice(0, 10).map(t => {
         const h = heightMap.get(`${t.x},${t.y}`) ?? 2;
-        return (
-          <pointLight
-            key={`torch-${t.x}-${t.y}`}
-            position={[t.x, h + 1, t.y]}
-            color="#ffa040"
-            intensity={intensity}
-            distance={6}
-          />
-        );
+        return <pointLight key={`torch-${t.x}-${t.y}`} position={[t.x, h + 1, t.y]} color="#ffa040" intensity={intensity} distance={6} />;
       })}
     </>
   );
@@ -528,23 +475,12 @@ function TorchLights({
 // =============================================================
 
 function SceneContent({
-  visibleTiles,
-  exploredTilesRef,
-  visiblePlayers,
-  visibleMobs,
-  selfState,
-  dayPhase,
-  playerId,
-  onTileClick,
-  onMobClick,
-  onPlayerClick,
+  visibleTiles, exploredTilesRef, visiblePlayers, visibleMobs,
+  selfState, dayPhase, playerId, onTileClick, onMobClick, onPlayerClick,
 }: Omit<BoardRendererProps, 'onMove'>) {
-  // Separate visible vs explored-only tiles
   const visibleKeys = useMemo(() => {
     const set = new Set<string>();
-    for (const tu of visibleTiles) {
-      set.add(`${tu.x},${tu.y}`);
-    }
+    for (const tu of visibleTiles) set.add(`${tu.x},${tu.y}`);
     return set;
   }, [visibleTiles]);
 
@@ -557,30 +493,19 @@ function SceneContent({
       }
     });
     return tiles;
-    // Re-compute when visibleTiles changes (which means visibleKeys changed)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleKeys]);
 
-  // Build terrain data
   const { visibleTerrainData, exploredTerrainData, heightMap } = useMemo(() => {
     const { blocks: vBlocks, heightMap: hMap } = buildTerrainBlocks(visibleTiles, false, TERRAIN_SEED);
     const { blocks: eBlocks, heightMap: eMap } = buildTerrainBlocks(exploredOnlyTiles, true, TERRAIN_SEED);
-
-    // Merge height maps
     eMap.forEach((v, k) => { if (!hMap.has(k)) hMap.set(k, v); });
-
-    return {
-      visibleTerrainData: packBlocks(vBlocks),
-      exploredTerrainData: packBlocks(eBlocks),
-      heightMap: hMap,
-    };
+    return { visibleTerrainData: packBlocks(vBlocks), exploredTerrainData: packBlocks(eBlocks), heightMap: hMap };
   }, [visibleTiles, exploredOnlyTiles]);
 
-  // Build surface features
   const visibleFeaturesData = useMemo(() => {
     const featureBlocks: VoxelBlock[] = [];
     const smallBlocks: VoxelBlock[] = [];
-
     const features = buildSurfaceFeatures(visibleTiles, heightMap, false, TERRAIN_SEED);
     for (const b of features) {
       const tu = visibleTiles.find(t => t.x === b.x && t.y === b.z);
@@ -590,24 +515,16 @@ function SceneContent({
         featureBlocks.push(b);
       }
     }
-
-    return {
-      features: packBlocks(featureBlocks),
-      smallFeatures: packBlocks(smallBlocks),
-    };
+    return { features: packBlocks(featureBlocks), smallFeatures: packBlocks(smallBlocks) };
   }, [visibleTiles, heightMap]);
 
   const exploredFeaturesData = useMemo(() => {
-    const features = buildSurfaceFeatures(exploredOnlyTiles, heightMap, true, TERRAIN_SEED);
-    return packBlocks(features);
+    return packBlocks(buildSurfaceFeatures(exploredOnlyTiles, heightMap, true, TERRAIN_SEED));
   }, [exploredOnlyTiles, heightMap]);
 
   return (
     <>
-      {/* Dynamic lighting */}
       <DayNightLighting dayPhase={dayPhase} />
-
-      {/* Camera follow player */}
       <CameraController targetX={selfState.x} targetZ={selfState.y} />
 
       {/* Ground plane */}
@@ -625,30 +542,18 @@ function SceneContent({
       <VoxelTerrain data={visibleFeaturesData.features} />
       <FeatureBlocks data={visibleFeaturesData.smallFeatures} />
 
-      {/* Torch lights */}
       <TorchLights tiles={visibleTiles} heightMap={heightMap} dayPhase={dayPhase} />
 
-      {/* Entities — players */}
       {visiblePlayers.map(p => (
-        <PlayerEntity
-          key={p.id}
-          player={p}
-          heightMap={heightMap}
-          isSelf={p.id === playerId}
-        />
+        <PlayerEntity key={p.id} player={p} heightMap={heightMap} isSelf={p.id === playerId} />
       ))}
 
-      {/* Entities — mobs */}
       {visibleMobs.map(m => (
         <MobEntity key={m.id} mob={m} heightMap={heightMap} />
       ))}
 
-      {/* Mining indicator */}
-      {selfState.mining && (
-        <MiningIndicator mining={selfState.mining} heightMap={heightMap} />
-      )}
+      {selfState.mining && <MiningIndicator mining={selfState.mining} heightMap={heightMap} />}
 
-      {/* Interaction plane for raycasting clicks */}
       <InteractionPlane
         heightMap={heightMap}
         visibleTiles={visibleTiles}
@@ -668,23 +573,13 @@ function SceneContent({
 // =============================================================
 
 export default function BoardRenderer3D({
-  visibleTiles,
-  exploredTilesRef,
-  visiblePlayers,
-  visibleMobs,
-  selfState,
-  dayPhase,
-  playerId,
-  onTileClick,
-  onMobClick,
-  onPlayerClick,
-  onMove,
+  visibleTiles, exploredTilesRef, visiblePlayers, visibleMobs,
+  selfState, dayPhase, playerId,
+  onTileClick, onMobClick, onPlayerClick, onMove,
 }: BoardRendererProps) {
-  // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
       switch (e.key) {
         case 'ArrowUp': case 'w': case 'W': e.preventDefault(); onMove('up'); break;
         case 'ArrowDown': case 's': case 'S': e.preventDefault(); onMove('down'); break;
@@ -692,52 +587,62 @@ export default function BoardRenderer3D({
         case 'ArrowRight': case 'd': case 'D': e.preventDefault(); onMove('right'); break;
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onMove]);
 
-  // Mobile touch controls handler
-  const handleTouchMove = useCallback((dir: Direction) => {
-    onMove(dir);
-  }, [onMove]);
+  const handleTouchMove = useCallback((dir: Direction) => { onMove(dir); }, [onMove]);
 
   const bgColor = DAY_NIGHT_PRESETS[dayPhase]?.bgColor || '#1e1812';
 
+  const canvasFallback = (
+    <div className={styles.boardWrapper3d} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a2e' }}>
+      <p style={{ color: '#888', fontFamily: 'var(--font-pixel, monospace)', fontSize: '0.8rem' }}>
+        3D renderer failed to load. Try refreshing.
+      </p>
+    </div>
+  );
+
   return (
     <div className={styles.boardWrapper3d}>
-      <Canvas
-        shadows
-        gl={{ antialias: true, alpha: false }}
-        style={{ position: 'absolute', inset: 0 }}
-        onCreated={({ gl }) => {
-          gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        }}
-      >
-        <Suspense fallback={null}>
-          <color attach="background" args={[bgColor]} />
-          <OrthographicCamera
-            makeDefault
-            position={[selfState.x + 20, 22, selfState.y + 20]}
-            zoom={22}
-            near={0.1}
-            far={200}
-          />
+      <Canvas3DErrorBoundary fallback={canvasFallback}>
+        <Canvas
+          shadows
+          gl={{ antialias: true, alpha: false }}
+          style={{ position: 'absolute', inset: 0 }}
+          camera={{
+            type: 'OrthographicCamera',
+            position: [selfState.x + 20, 22, selfState.y + 20],
+            zoom: 22,
+            near: 0.1,
+            far: 200,
+          } as never}
+          orthographic
+          onCreated={({ gl, camera }) => {
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            // Set correct initial lookAt so camera points at terrain from frame 0
+            camera.lookAt(selfState.x, 3, selfState.y);
+            camera.updateProjectionMatrix();
+          }}
+        >
+          <Suspense fallback={null}>
+            <color attach="background" args={[bgColor]} />
 
-          <SceneContent
-            visibleTiles={visibleTiles}
-            exploredTilesRef={exploredTilesRef}
-            visiblePlayers={visiblePlayers}
-            visibleMobs={visibleMobs}
-            selfState={selfState}
-            dayPhase={dayPhase}
-            playerId={playerId}
-            onTileClick={onTileClick}
-            onMobClick={onMobClick}
-            onPlayerClick={onPlayerClick}
-          />
-        </Suspense>
-      </Canvas>
+            <SceneContent
+              visibleTiles={visibleTiles}
+              exploredTilesRef={exploredTilesRef}
+              visiblePlayers={visiblePlayers}
+              visibleMobs={visibleMobs}
+              selfState={selfState}
+              dayPhase={dayPhase}
+              playerId={playerId}
+              onTileClick={onTileClick}
+              onMobClick={onMobClick}
+              onPlayerClick={onPlayerClick}
+            />
+          </Suspense>
+        </Canvas>
+      </Canvas3DErrorBoundary>
 
       {/* Coordinates display */}
       <div className={styles.coordsDisplay3d}>

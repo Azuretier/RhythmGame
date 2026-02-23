@@ -372,6 +372,18 @@ export default function MinecraftBoardGame() {
     );
   }
 
+  // === Playing Phase (waiting for initial state) ===
+  if (phase === 'playing' && (!selfState || !playerId)) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.centerBox}>
+          <div className={styles.spinner} />
+          <p>Loading world...</p>
+        </div>
+      </div>
+    );
+  }
+
   // === Playing Phase ===
   if (phase === 'playing' && selfState && playerId) {
     return (
