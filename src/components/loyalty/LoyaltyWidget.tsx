@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useProfile } from '@/lib/profile/context';
@@ -50,10 +50,6 @@ export default function LoyaltyWidget() {
     setAdvState(advancementState);
   }, []);
 
-  const toggleTab = useCallback(() => {
-    setTab(prev => prev === 'summary' ? 'details' : 'summary');
-  }, []);
-
   if (!state) return null;
 
   const { bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
@@ -99,7 +95,7 @@ export default function LoyaltyWidget() {
       {/* ===== SUMMARY TAB — Compact horizontal card ===== */}
       {tab === 'summary' && (
         <div className={styles.compact}>
-          {/* Left: Profile avatar + info */}
+          {/* Left: Profile avatar + name + code + tier */}
           <div className={styles.compactLeft}>
             {profile && profileIcon ? (
               <div
@@ -117,36 +113,25 @@ export default function LoyaltyWidget() {
               </div>
             )}
             <div className={styles.compactMeta}>
-              <div className={styles.compactName}>{profile?.name ?? t(`tiers.${currentTier.id}`)}</div>
+              <span className={styles.compactName}>{profile?.name ?? 'Player'}</span>
               {profile?.friendCode && (
-                <div className={styles.compactCode}>{profile.friendCode}</div>
+                <span className={styles.compactCode}>{profile.friendCode}</span>
               )}
-              <div className={styles.compactTier}>
-                <span style={{ color: currentTier.color }}>{currentTier.icon}</span>{' '}
-                {t(`tiers.${currentTier.id}`)}
-              </div>
+              <span className={styles.compactTier} style={{ color: currentTier.color }}>
+                {currentTier.icon} {t(`tiers.${currentTier.id}`)}
+              </span>
             </div>
           </div>
 
-          {/* Center: Score + progress bar + streak dots */}
+          {/* Center: Score label + progress bar + streak dots */}
           <div className={styles.compactCenter}>
-            {/* Score label row */}
-            <div className={styles.compactScoreRow}>
-              <span className={styles.compactScoreLabel}>{t('totalScore')}</span>
-              <span className={styles.compactNextReq}>
-                {nextTierScore !== null
-                  ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
-                  : t('maxTier')}
-              </span>
-            </div>
-            {/* Progress bar */}
+            <div className={styles.compactScoreLabel}>{t('totalScore')}</div>
             <div className={styles.compactBar}>
               <div
                 className={styles.compactBarFill}
-                style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})` }}
+                style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}66, ${currentTier.color})` }}
               />
             </div>
-            {/* Streak dots */}
             <div className={styles.compactDots}>
               {DAY_LABELS.map((label, i) => {
                 const isFilled = i < currentStreak % 7 || currentStreak >= 7;
@@ -161,14 +146,19 @@ export default function LoyaltyWidget() {
             </div>
           </div>
 
-          {/* Right: Streak count + bonus */}
+          {/* Right: Streak count + bonus XP + next rank */}
           <div className={styles.compactRight}>
-            <div className={styles.compactStreak}>
+            <span className={styles.compactStreak}>
               {currentStreak} {t('streakDays')}
-            </div>
-            <div className={styles.compactBonus}>
+            </span>
+            <span className={styles.compactBonus}>
               +{dailyBonusXP} {t('bonusXP')}
-            </div>
+            </span>
+            <span className={styles.compactNextReq}>
+              {nextTierScore !== null
+                ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
+                : t('maxTier')}
+            </span>
           </div>
         </div>
       )}
@@ -176,6 +166,31 @@ export default function LoyaltyWidget() {
       {/* ===== DETAILS TAB — Expanded card ===== */}
       {tab === 'details' && (
         <div className={styles.details}>
+          {/* Profile header */}
+          <div className={styles.detailProfile}>
+            {profile && profileIcon ? (
+              <div
+                className={styles.detailAvatar}
+                style={{ backgroundColor: profileIcon.bgColor, color: profileIcon.color }}
+              >
+                {profileIcon.emoji}
+              </div>
+            ) : (
+              <div
+                className={styles.detailAvatar}
+                style={{ backgroundColor: currentTier.color + '20', color: currentTier.color }}
+              >
+                {currentTier.icon}
+              </div>
+            )}
+            <div className={styles.detailProfileMeta}>
+              <span className={styles.detailProfileName}>{profile?.name ?? 'Player'}</span>
+              {profile?.friendCode && (
+                <span className={styles.detailProfileCode}>{profile.friendCode}</span>
+              )}
+            </div>
+          </div>
+
           {/* Rank hero */}
           <div className={styles.detailHero}>
             <div

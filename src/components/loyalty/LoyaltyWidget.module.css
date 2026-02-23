@@ -5,15 +5,15 @@
   max-width: 1080px;
   margin-top: 24px;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
   overflow: visible;
 }
 
-/* ========== Tab bar — attached to right side ========== */
+/* ========== Tab bar — attached to right edge ========== */
 .tabBar {
   position: absolute;
-  right: -38px;
+  right: -36px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
@@ -23,42 +23,44 @@
 }
 
 .tab {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(12, 12, 20, 0.9);
+  background: rgba(12, 12, 20, 0.85);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-left: none;
   border-radius: 0 8px 8px 0;
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tab:hover {
   background: rgba(20, 20, 35, 0.95);
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .tab.tabActive {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
 }
 
-/* ========== COMPACT / SUMMARY view ========== */
+/* ====================================================
+   COMPACT / SUMMARY — matches reference image exactly
+   ==================================================== */
 .compact {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 20px 28px;
+  padding: 18px 24px;
+  gap: 24px;
 }
 
-/* Left — avatar + meta */
+/* ---- Left block: avatar + meta ---- */
 .compactLeft {
   display: flex;
   align-items: center;
@@ -67,13 +69,13 @@
 }
 
 .compactAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -81,45 +83,37 @@
 .compactMeta {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 1px;
 }
 
 .compactName {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.9);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.3;
 }
 
 .compactCode {
   font-size: 0.5rem;
-  opacity: 0.25;
-  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.03em;
   font-variant-numeric: tabular-nums;
+  line-height: 1.3;
 }
 
 .compactTier {
-  font-size: 0.55rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  opacity: 0.5;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  margin-top: 1px;
 }
 
-/* Center — score + bar + dots */
+/* ---- Center block: score + bar + dots ---- */
 .compactCenter {
   flex: 1;
   min-width: 0;
-}
-
-.compactScoreRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 6px;
 }
 
 .compactScoreLabel {
@@ -127,22 +121,17 @@
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: 0.3;
-}
-
-.compactNextReq {
-  font-size: 0.5rem;
-  opacity: 0.2;
-  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.25);
+  margin-bottom: 8px;
 }
 
 .compactBar {
   width: 100%;
-  height: 6px;
+  height: 5px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .compactBarFill {
@@ -153,41 +142,41 @@
 
 .compactDots {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .compactDot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s;
 }
 
 .compactDot.filled {
-  background: rgba(76, 175, 80, 0.25);
+  background: rgba(76, 175, 80, 0.3);
   border-color: rgba(76, 175, 80, 0.5);
 }
 
 .compactDot.today {
-  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.2);
 }
 
-/* Right — streak + bonus */
+/* ---- Right block: streak + bonus + next rank ---- */
 .compactRight {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 3px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
 .compactStreak {
   font-size: 0.65rem;
   font-weight: 500;
-  opacity: 0.5;
-  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
 
@@ -195,14 +184,23 @@
   font-size: 0.7rem;
   font-weight: 600;
   color: #4CAF50;
-  opacity: 0.85;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
-/* ========== DETAILS view ========== */
+.compactNextReq {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.18);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
+/* ====================================================
+   DETAILS view
+   ==================================================== */
 .details {
-  padding: 28px 32px;
+  padding: 24px 28px;
   max-height: 70vh;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -216,6 +214,48 @@
 .details::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;
+}
+
+/* Profile header — top of details view */
+.detailProfile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.detailAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.detailProfileMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detailProfileName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.detailProfileCode {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Detail hero */
@@ -493,20 +533,19 @@
   }
 
   .tabBar {
-    right: -32px;
+    right: -30px;
   }
 
   .tab {
-    width: 30px;
-    height: 30px;
-    font-size: 0.7rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.65rem;
   }
 
   .compact {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 14px;
-    padding: 16px 20px;
+    padding: 14px 18px;
   }
 
   .compactLeft {
@@ -514,18 +553,23 @@
   }
 
   .compactCenter {
-    width: 100%;
+    flex: 1;
+    min-width: 140px;
   }
 
   .compactRight {
-    flex-direction: row;
-    gap: 12px;
-    width: 100%;
-    justify-content: flex-end;
+    align-items: flex-end;
+  }
+
+  .compactAvatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    font-size: 1.2rem;
   }
 
   .details {
-    padding: 20px;
+    padding: 18px;
     max-height: 60vh;
   }
 
