@@ -6,13 +6,13 @@
 // biome-specific colors, fog of war, and interactive raycasting
 // =============================================================
 
-import { useMemo, useCallback, useRef, useEffect } from 'react';
+import { Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrthographicCamera, MapControls, Html } from '@react-three/drei';
+import { OrthographicCamera, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type {
   WorldTile, MCTileUpdate, MCVisiblePlayer, MCMobState,
-  MCPlayerState, DayPhase, BlockType, Direction,
+  MCPlayerState, DayPhase, Direction,
 } from '@/types/minecraft-board';
 import { MOB_COLORS } from '@/types/minecraft-board';
 import {
@@ -381,32 +381,30 @@ function DayNightLighting({ dayPhase }: { dayPhase: DayPhase }) {
 }
 
 // =============================================================
-// Camera follow — smoothly tracks player position
+// Camera controller — smoothly tracks player position
 // =============================================================
 
-function CameraFollow({ targetX, targetZ }: { targetX: number; targetZ: number }) {
+function CameraController({ targetX, targetZ }: { targetX: number; targetZ: number }) {
   const { camera } = useThree();
-  const target = useRef(new THREE.Vector3(targetX, 3, targetZ));
+  const targetRef = useRef(new THREE.Vector3(targetX, 3, targetZ));
 
   useEffect(() => {
-    target.current.set(targetX, 3, targetZ);
+    targetRef.current.set(targetX, 3, targetZ);
   }, [targetX, targetZ]);
 
   useFrame(() => {
-    // Smooth camera position follow
+    const target = targetRef.current;
     const offset = new THREE.Vector3(20, 22, 20);
-    const desired = target.current.clone().add(offset);
-
-    camera.position.lerp(desired, 0.08);
-    const lookTarget = target.current.clone();
-    lookTarget.y = 3;
-
-    // For OrthographicCamera, we update the lookAt
-    camera.lookAt(
-      THREE.MathUtils.lerp(camera.position.x - offset.x, lookTarget.x, 0.08),
-      lookTarget.y,
-      THREE.MathUtils.lerp(camera.position.z - offset.z, lookTarget.z, 0.08),
+    const desiredPos = new THREE.Vector3(
+      target.x + offset.x,
+      offset.y,
+      target.z + offset.z,
     );
+
+    // Smooth lerp camera position
+    camera.position.lerp(desiredPos, 0.08);
+    camera.lookAt(target.x, target.y, target.z);
+    camera.updateProjectionMatrix();
   });
 
   return null;
@@ -559,7 +557,9 @@ function SceneContent({
       }
     });
     return tiles;
-  }, [exploredTilesRef, visibleKeys, visibleTiles]);
+    // Re-compute when visibleTiles changes (which means visibleKeys changed)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleKeys]);
 
   // Build terrain data
   const { visibleTerrainData, exploredTerrainData, heightMap } = useMemo(() => {
@@ -578,14 +578,11 @@ function SceneContent({
 
   // Build surface features
   const visibleFeaturesData = useMemo(() => {
-    // Feature blocks: trees (wood), flowers, mushrooms, etc. — full-size blocks
     const featureBlocks: VoxelBlock[] = [];
-    // Small decorations: flowers, torch — smaller geometry
     const smallBlocks: VoxelBlock[] = [];
 
     const features = buildSurfaceFeatures(visibleTiles, heightMap, false, TERRAIN_SEED);
     for (const b of features) {
-      // Small items get separate geometry
       const tu = visibleTiles.find(t => t.x === b.x && t.y === b.z);
       if (tu && (tu.tile.block === 'flower_red' || tu.tile.block === 'flower_yellow' || tu.tile.block === 'torch')) {
         smallBlocks.push(b);
@@ -611,7 +608,7 @@ function SceneContent({
       <DayNightLighting dayPhase={dayPhase} />
 
       {/* Camera follow player */}
-      <CameraFollow targetX={selfState.x} targetZ={selfState.y} />
+      <CameraController targetX={selfState.x} targetZ={selfState.y} />
 
       {/* Ground plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[selfState.x, -0.5, selfState.y]} receiveShadow>
@@ -661,16 +658,6 @@ function SceneContent({
         onTileClick={onTileClick}
         onMobClick={onMobClick}
         onPlayerClick={onPlayerClick}
-      />
-
-      {/* Camera controls — pan only, no rotate */}
-      <MapControls
-        enableRotate={false}
-        enableZoom={true}
-        minZoom={10}
-        maxZoom={45}
-        panSpeed={1.5}
-        screenSpacePanning
       />
     </>
   );
@@ -723,28 +710,33 @@ export default function BoardRenderer3D({
         shadows
         gl={{ antialias: true, alpha: false }}
         style={{ position: 'absolute', inset: 0 }}
+        onCreated={({ gl }) => {
+          gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        }}
       >
-        <color attach="background" args={[bgColor]} />
-        <OrthographicCamera
-          makeDefault
-          position={[selfState.x + 20, 22, selfState.y + 20]}
-          zoom={22}
-          near={0.1}
-          far={200}
-        />
+        <Suspense fallback={null}>
+          <color attach="background" args={[bgColor]} />
+          <OrthographicCamera
+            makeDefault
+            position={[selfState.x + 20, 22, selfState.y + 20]}
+            zoom={22}
+            near={0.1}
+            far={200}
+          />
 
-        <SceneContent
-          visibleTiles={visibleTiles}
-          exploredTilesRef={exploredTilesRef}
-          visiblePlayers={visiblePlayers}
-          visibleMobs={visibleMobs}
-          selfState={selfState}
-          dayPhase={dayPhase}
-          playerId={playerId}
-          onTileClick={onTileClick}
-          onMobClick={onMobClick}
-          onPlayerClick={onPlayerClick}
-        />
+          <SceneContent
+            visibleTiles={visibleTiles}
+            exploredTilesRef={exploredTilesRef}
+            visiblePlayers={visiblePlayers}
+            visibleMobs={visibleMobs}
+            selfState={selfState}
+            dayPhase={dayPhase}
+            playerId={playerId}
+            onTileClick={onTileClick}
+            onMobClick={onMobClick}
+            onPlayerClick={onPlayerClick}
+          />
+        </Suspense>
       </Canvas>
 
       {/* Coordinates display */}

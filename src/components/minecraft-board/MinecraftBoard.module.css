@@ -390,6 +390,7 @@
 
 .boardArea {
   position: relative;
+  width: 100%;
 }
 
 /* === Board === */
