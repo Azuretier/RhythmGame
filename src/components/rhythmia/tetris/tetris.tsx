@@ -24,6 +24,7 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
 import { useCorruptionSystem } from './hooks/useCorruptionSystem';
+import { useGalaxyTD } from './hooks/useGalaxyTD';
 
 // Corruption system
 
@@ -62,7 +63,7 @@ import {
   TutorialGuide,
   hasTutorialBeenSeen,
   DragonGauge,
-
+  GalaxyBoard,
 } from './components';
 import type { JudgmentDisplayMode } from './components';
 
@@ -405,6 +406,18 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     terrainPhase,
     onCorruptionSpawnEnemy: handleCorruptionSpawnEnemy,
   });
+
+  // ===== Galaxy TD System (ring around board during dig phase) =====
+  const galaxyTD = useGalaxyTD({
+    isPlaying,
+    isPaused,
+    gameOver,
+    terrainPhase,
+  });
+  const galaxyTDTickRef = useRef(galaxyTD.tick);
+  galaxyTDTickRef.current = galaxyTD.tick;
+  const galaxyTDOnLineClearRef = useRef(galaxyTD.onLineClear);
+  galaxyTDOnLineClearRef.current = galaxyTD.onLineClear;
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -904,6 +917,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * amplifiedCombo * (1 + surgeBonus));
         const remaining = destroyTerrain(damage);
 
+        // Galaxy TD: line clears power up towers on the ring
+        galaxyTDOnLineClearRef.current(clearedLines);
+
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
 
@@ -1092,7 +1108,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     setToastIds([]);
     setActionToasts([]);
     corruption.reset();
-  }, [initAudio, initGame, corruption]);
+    galaxyTD.reset();
+  }, [initAudio, initGame, corruption, galaxyTD]);
 
   // Start game — intercept for tutorial on first play
   const startGame = useCallback((protocolId: number = 0) => {
@@ -1208,8 +1225,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             completeWaveRef.current();
           }
         }
+      } else {
+        // === Dig phase: Galaxy TD ring tick ===
+        galaxyTDTickRef.current();
       }
-      // Dig phase: no enemy/bullet/tower logic — just rhythm VFX below
 
       // VFX: beat pulse ring — intensity scales with BPM (both modes)
       const intensity = Math.min(1, (effectiveBpm - 80) / 100);
@@ -1721,7 +1740,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             {/* Center column: Board + Beat bar + Stats */}
             <div className={styles.centerColumn}>
               <div className={styles.boardActionArea}>
-              <Board
+              <GalaxyBoard
+                galaxyEnemies={galaxyTD.enemies}
+                galaxyTowers={galaxyTD.towers}
+                galaxyGates={galaxyTD.gates}
+                galaxyActive={terrainPhase === 'dig'}
+                waveNumber={galaxyTD.waveNumber}
                 board={board}
                 currentPiece={currentPiece}
                 boardBeat={boardBeat}
