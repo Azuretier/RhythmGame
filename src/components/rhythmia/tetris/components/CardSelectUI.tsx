@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { CardOffer, InventoryItem, EquippedCard } from '../types';
 import { ITEM_MAP, ROGUE_CARD_MAP, WORLDS } from '../constants';
 import { ItemIcon } from './ItemIcon';
@@ -24,13 +24,39 @@ const RARITY_COLORS: Record<string, string> = {
     legendary: '#FFFFFF',
 };
 
-const RARITY_EXTRA_DELAY: Record<string, number> = {
-    common: 0,
-    uncommon: 50,
-    rare: 100,
-    epic: 150,
-    legendary: 200,
+// ===== Dopamine-Optimized Timing Configuration =====
+
+// Phase 1: Anticipation — "wind-up" before the reveal
+// Standard cards keep it fast; rare+ extends anticipation to spike dopamine
+const RARITY_ANTICIPATION_MS: Record<string, number> = {
+    common: 500,
+    uncommon: 650,
+    rare: 900,
+    epic: 1100,
+    legendary: 1400,
 };
+
+// Phase 2: Hitstop — micro-freeze before the grand reveal (rare+ only)
+// Momentarily freezing game state artificially spikes the impact
+const RARITY_HITSTOP_MS: Record<string, number> = {
+    common: 0,
+    uncommon: 0,
+    rare: 60,
+    epic: 100,
+    legendary: 150,
+};
+
+// Phase 3: Impact duration — burst/flash/"OBTAINED!" slam
+const IMPACT_DURATION_MS = 350;
+
+// Phase 4: Display — auto-dismiss fallback (wait-for-input is primary)
+const DISPLAY_AUTO_DISMISS_MS = 3500;
+
+// Phase 5: Done — fade-out
+const DONE_FADE_MS = 200;
+
+// Variable ratio jitter: ±range added to anticipation (prevents habituation)
+const JITTER_RANGE_MS = 100;
 
 const RARITY_PARTICLE_CONFIG: Record<string, { count: number; spread: number; size: number; waves: number }> = {
     common:    { count: 8,  spread: 60,  size: 6,  waves: 1 },
@@ -82,17 +108,42 @@ function spawnAbsorptionParticles(color: string, glowColor: string, rarity: stri
     }
 }
 
+type AnimPhase = 'idle' | 'anticipation' | 'hitstop' | 'impact' | 'display' | 'done';
+
 export function CardSelectUI({
     offers, inventory, equippedCards, onSelect, onSkip, worldIdx, stageNumber,
     absorbingCardId, onAbsorptionComplete,
 }: CardSelectUIProps) {
     const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-    const [animPhase, setAnimPhase] = useState<'idle' | 'absorbing' | 'flash' | 'done'>('idle');
+    const [animPhase, setAnimPhase] = useState<AnimPhase>('idle');
+    const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+    const displayDismissedRef = useRef(false);
 
-    // Animation sequence when absorbingCardId is set
+    // Clear all pending timers
+    const clearTimers = useCallback(() => {
+        timersRef.current.forEach(t => clearTimeout(t));
+        timersRef.current = [];
+    }, []);
+
+    const addTimer = useCallback((fn: () => void, ms: number) => {
+        timersRef.current.push(setTimeout(fn, ms));
+    }, []);
+
+    // Dismiss from display phase (player input or auto-dismiss)
+    const dismissDisplay = useCallback(() => {
+        if (displayDismissedRef.current) return;
+        displayDismissedRef.current = true;
+        setAnimPhase('done');
+        addTimer(() => {
+            onAbsorptionComplete();
+        }, DONE_FADE_MS);
+    }, [onAbsorptionComplete, addTimer]);
+
+    // Dopamine-optimized animation sequence
     useEffect(() => {
         if (!absorbingCardId) {
             setAnimPhase('idle');
+            displayDismissedRef.current = false;
             return;
         }
 
@@ -100,44 +151,66 @@ export function CardSelectUI({
         if (idx === -1) return;
 
         setSelectedIdx(idx);
-        setAnimPhase('absorbing');
+        displayDismissedRef.current = false;
 
         const rarity = offers[idx].card.rarity;
-        const extraDelay = RARITY_EXTRA_DELAY[rarity] || 0;
 
-        // Phase 2: Flash + particles at 500ms
-        const flashTimer = setTimeout(() => {
-            setAnimPhase('flash');
+        // Variable ratio jitter: randomize anticipation ±JITTER_RANGE_MS
+        const jitter = Math.floor(Math.random() * JITTER_RANGE_MS * 2) - JITTER_RANGE_MS;
+        const anticipationMs = Math.max(300, (RARITY_ANTICIPATION_MS[rarity] || 500) + jitter);
+        const hitstopMs = RARITY_HITSTOP_MS[rarity] || 0;
+
+        // Phase 1: Anticipation — card hovers with building glow
+        setAnimPhase('anticipation');
+
+        let elapsed = anticipationMs;
+
+        // Phase 2: Hitstop — micro-freeze (rare+ only)
+        if (hitstopMs > 0) {
+            addTimer(() => {
+                setAnimPhase('hitstop');
+            }, elapsed);
+            elapsed += hitstopMs;
+        }
+
+        // Phase 3: Impact — burst, particles, "OBTAINED!" slam
+        addTimer(() => {
+            setAnimPhase('impact');
             spawnAbsorptionParticles(
                 offers[idx].card.color,
                 offers[idx].card.glowColor,
                 rarity,
             );
-        }, 500);
+        }, elapsed);
+        elapsed += IMPACT_DURATION_MS;
 
-        // Phase 3: Done (fade out) at 800ms + rarity delay
-        const doneTimer = setTimeout(() => {
-            setAnimPhase('done');
-        }, 800 + extraDelay);
+        // Phase 4: Display — wait for player input (cognitive processing reward)
+        addTimer(() => {
+            setAnimPhase('display');
+        }, elapsed);
 
-        // Phase 4: Complete — hand control back to game
-        const completeTimer = setTimeout(() => {
-            onAbsorptionComplete();
-        }, 1000 + extraDelay);
+        // Auto-dismiss fallback to prevent soft-lock
+        addTimer(() => {
+            dismissDisplay();
+        }, elapsed + DISPLAY_AUTO_DISMISS_MS);
 
-        return () => {
-            clearTimeout(flashTimer);
-            clearTimeout(doneTimer);
-            clearTimeout(completeTimer);
-        };
-    }, [absorbingCardId, offers, onAbsorptionComplete]);
+        return clearTimers;
+    }, [absorbingCardId, offers, dismissDisplay, clearTimers, addTimer]);
 
     const isAnimating = animPhase !== 'idle';
 
-    // Keyboard support: 1/2/3 to select, Escape to skip
+    // Keyboard: 1/2/3 to select, Escape to skip, any key to dismiss display
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
+            // During display phase: any key dismisses
+            if (animPhase === 'display') {
+                e.preventDefault();
+                dismissDisplay();
+                return;
+            }
+            // Block all input during other animation phases
             if (isAnimating) return;
+
             if (e.key === '1' && offers[0]?.affordable) {
                 onSelect(offers[0].card.id);
                 return;
@@ -156,18 +229,25 @@ export function CardSelectUI({
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
-    }, [offers, onSelect, onSkip, isAnimating]);
+    }, [offers, onSelect, onSkip, isAnimating, animPhase, dismissDisplay]);
 
     const world = WORLDS[worldIdx];
 
+    // Overlay classes per phase
     const overlayClasses = [
         styles.cardSelectOverlay,
-        animPhase === 'flash' ? styles.cardAbsorbFlash : '',
+        animPhase === 'impact' ? styles.cardAbsorbFlash : '',
         animPhase === 'done' ? styles.cardAbsorbDone : '',
+        animPhase === 'hitstop' ? styles.cardHitstopOverlay : '',
     ].filter(Boolean).join(' ');
 
     return (
-        <div className={overlayClasses}>
+        <div
+            className={overlayClasses}
+            onClick={() => {
+                if (animPhase === 'display') dismissDisplay();
+            }}
+        >
             <div className={styles.cardSelectPanel}>
                 {/* Header — hidden during animation */}
                 {!isAnimating && (
@@ -203,18 +283,28 @@ export function CardSelectUI({
                     {offers.map((offer, idx) => {
                         const stackInfo = equippedCards.find(ec => ec.cardId === offer.card.id);
                         const isSelected = selectedIdx === idx;
+                        const rarityClass = styles[`cardRarity_${offer.card.rarity}`];
+
+                        // Determine per-card animation class
+                        let animClass = '';
+                        if (isAnimating && isSelected) {
+                            if (animPhase === 'anticipation') animClass = styles.cardAnticipation;
+                            else if (animPhase === 'hitstop') animClass = styles.cardHitstop;
+                            else if (animPhase === 'impact') animClass = styles.cardAbsorbBurst;
+                            else if (animPhase === 'display' || animPhase === 'done') animClass = styles.cardAbsorbHidden;
+                        } else if (isAnimating && !isSelected) {
+                            animClass = styles.cardDismissed;
+                        }
 
                         return (
                             <div
                                 key={offer.card.id}
                                 className={[
                                     styles.cardSelectCard,
-                                    styles[`cardRarity_${offer.card.rarity}`],
+                                    rarityClass,
                                     !isAnimating && selectedIdx === idx ? styles.cardSelectCardSelected : '',
                                     !isAnimating && !offer.affordable ? styles.cardSelectCardDisabled : '',
-                                    isAnimating && isSelected ? styles.cardAbsorbing : '',
-                                    isAnimating && !isSelected ? styles.cardDismissed : '',
-                                    animPhase === 'flash' && isSelected ? styles.cardAbsorbBurst : '',
+                                    animClass,
                                 ].filter(Boolean).join(' ')}
                                 onClick={() => {
                                     if (!isAnimating && offer.affordable) {
@@ -227,6 +317,7 @@ export function CardSelectUI({
                                 style={{
                                     '--card-color': offer.card.color,
                                     '--card-glow': offer.card.glowColor,
+                                    '--anticipation-duration': `${RARITY_ANTICIPATION_MS[offer.card.rarity] || 500}ms`,
                                 } as React.CSSProperties}
                             >
                                 {/* Card number shortcut */}
@@ -273,9 +364,9 @@ export function CardSelectUI({
                     })}
                 </div>
 
-                {/* "OBTAINED!" text during flash phase */}
-                {(animPhase === 'flash' || animPhase === 'done') && selectedIdx !== null && (
-                    <div className={styles.cardObtainedText}>
+                {/* "OBTAINED!" text during impact and display phases */}
+                {(animPhase === 'impact' || animPhase === 'display' || animPhase === 'done') && selectedIdx !== null && (
+                    <div className={`${styles.cardObtainedText} ${animPhase === 'display' ? styles.cardObtainedDisplay : ''}`}>
                         <span className={styles.cardObtainedIcon}>
                             {offers[selectedIdx].card.icon}
                         </span>
@@ -283,6 +374,17 @@ export function CardSelectUI({
                         <span className={styles.cardObtainedName}>
                             {offers[selectedIdx].card.name}
                         </span>
+                        {/* Display phase: show card description for cognitive processing */}
+                        {animPhase === 'display' && (
+                            <>
+                                <span className={styles.cardObtainedDesc}>
+                                    {offers[selectedIdx].card.description}
+                                </span>
+                                <span className={styles.cardObtainedContinue}>
+                                    CLICK OR PRESS ANY KEY
+                                </span>
+                            </>
+                        )}
                     </div>
                 )}
 
