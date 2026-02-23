@@ -6,17 +6,32 @@
 .mapWrapper {
   position: relative;
   width: 100%;
-  max-width: 920px;
+  max-width: 1000px;
   aspect-ratio: 16 / 10;
   margin: 0 auto;
   border-radius: 6px;
   overflow: hidden;
-  background: #1a1410;
+  background: #1e1812;
   border: 2px solid rgba(40, 30, 20, 0.8);
   box-shadow:
     0 8px 40px rgba(0, 0, 0, 0.7),
     inset 0 0 0 1px rgba(255, 240, 210, 0.04);
   user-select: none;
+}
+
+/* Warm parchment vignette overlay */
+.mapWrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 70% 65% at 50% 50%,
+    transparent 40%,
+    rgba(30, 24, 18, 0.4) 75%,
+    rgba(20, 16, 10, 0.7) 100%
+  );
 }
 
 /* ── Location labels (drei Html overlays) ── */

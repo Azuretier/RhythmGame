@@ -78,7 +78,7 @@ function colorForLayer(y: number, maxY: number, pal: BiomePalette): THREE.Color 
 }
 
 // ────────────────────────────────────────────
-// Terrain height calculation
+// Terrain height — dramatic Dungeons-style
 // ────────────────────────────────────────────
 
 const SEED = 12345;
@@ -86,31 +86,170 @@ const SEED = 12345;
 interface VoxelBlock { x: number; y: number; z: number; color: THREE.Color }
 
 function terrainHeight(tile: { x: number; y: number; terrain: string; elevation: number }): number {
-  const n = fractalNoise(tile.x * 0.18, tile.y * 0.18, SEED, 3);
+  const n = fractalNoise(tile.x * 0.12, tile.y * 0.12, SEED, 4);
+
   switch (tile.terrain) {
-    case 'water': return 2;
-    case 'stone': case 'rock':
-      return Math.max(1, 5 + tile.elevation * 2 + Math.floor(n * 4));
-    case 'tree':
-      return Math.max(1, 3 + tile.elevation + Math.floor(n * 2));
+    case 'water':
+      return 1;
     case 'sand':
-      return Math.max(1, 2 + Math.floor(n * 1.5));
-    case 'path': case 'bridge':
-      return Math.max(1, 3 + tile.elevation + Math.floor(n * 1.5));
+      return 2 + Math.floor(n * 1.5);
+    case 'snow':
+      return Math.max(5, 8 + tile.elevation * 2 + Math.floor(n * 5));
+    case 'stone': case 'rock':
+      return Math.max(4, 7 + tile.elevation * 2 + Math.floor(n * 5));
+    case 'tree':
+      return Math.max(3, 4 + tile.elevation + Math.floor(n * 3));
+    case 'mushroom':
+      return Math.max(3, 3 + Math.floor(n * 2));
     case 'dirt':
-      return Math.max(1, 3 + tile.elevation + Math.floor(n * 2));
+      return Math.max(3, 3 + tile.elevation + Math.floor(n * 2));
+    case 'path': case 'bridge':
+      return Math.max(3, 4 + tile.elevation + Math.floor(n * 2));
+    case 'lava':
+      return Math.max(3, 5 + Math.floor(n * 3));
     default:
-      return Math.max(1, 3 + tile.elevation + Math.floor(n * 3));
+      return Math.max(3, 4 + tile.elevation + Math.floor(n * 3));
   }
 }
 
+// Fast lookup map for tile heights
+const tileMap = new Map<string, { x: number; y: number; terrain: string; elevation: number }>();
+for (const t of GAMEMODE_TERRAIN) { tileMap.set(`${t.x},${t.y}`, t); }
+
 function heightAt(x: number, y: number): number {
-  const tile = GAMEMODE_TERRAIN.find(t => t.x === x && t.y === y);
+  const tile = tileMap.get(`${x},${y}`);
   return tile ? terrainHeight(tile) : 3;
 }
 
 // ────────────────────────────────────────────
-// Voxel generation (terrain + decorations)
+// Tree type determination by biome/position
+// ────────────────────────────────────────────
+
+type TreeType = 'oak' | 'spruce' | 'autumn' | 'dead';
+
+function getTreeType(x: number, y: number): TreeType {
+  const nx = (x - GAMEMODE_MAP_WIDTH / 2) / (GAMEMODE_MAP_WIDTH / 2);
+  const ny = (y - GAMEMODE_MAP_HEIGHT / 2) / (GAMEMODE_MAP_HEIGHT / 2);
+
+  // Near mountains / north → spruce
+  if (ny < -0.1 || (nx > 0.1 && ny < 0.2)) return 'spruce';
+  // Southwest swamp → dead
+  if (nx < -0.1 && ny > 0.3) return 'dead';
+  // Center → mix of autumn and oak
+  if (Math.abs(nx) < 0.3 && ny > -0.1) {
+    return noise2D(x * 5, y * 5, SEED + 2222) > 0.5 ? 'autumn' : 'oak';
+  }
+  return 'oak';
+}
+
+// ────────────────────────────────────────────
+// Structure generators
+// ────────────────────────────────────────────
+
+function generateHut(bx: number, by: number, bz: number): VoxelBlock[] {
+  const blocks: VoxelBlock[] = [];
+  const wood = new THREE.Color('#8a6030');
+  const darkWood = new THREE.Color('#5a3818');
+
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dz = -1; dz <= 1; dz++) {
+      blocks.push({ x: bx + dx, y: by, z: bz + dz, color: darkWood.clone() });
+      if (Math.abs(dx) === 1 || Math.abs(dz) === 1) {
+        blocks.push({ x: bx + dx, y: by + 1, z: bz + dz, color: wood.clone() });
+        blocks.push({ x: bx + dx, y: by + 2, z: bz + dz, color: wood.clone() });
+      }
+      blocks.push({ x: bx + dx, y: by + 3, z: bz + dz, color: darkWood.clone() });
+    }
+  }
+  // Peaked roof
+  blocks.push({ x: bx, y: by + 4, z: bz, color: darkWood.clone() });
+  return blocks;
+}
+
+function generateTower(bx: number, by: number, bz: number): VoxelBlock[] {
+  const blocks: VoxelBlock[] = [];
+  const stone = new THREE.Color('#7a7880');
+  const darkStone = new THREE.Color('#5a5860');
+
+  for (let dy = 0; dy < 7; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        if (dy > 0 && dy < 6 && dx === 0 && dz === 0) continue;
+        blocks.push({ x: bx + dx, y: by + dy, z: bz + dz, color: dy < 6 ? stone.clone() : darkStone.clone() });
+      }
+    }
+  }
+  // Battlements at corners
+  for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as [number, number][]) {
+    blocks.push({ x: bx + dx, y: by + 7, z: bz + dz, color: stone.clone() });
+  }
+  // Flag pole
+  blocks.push({ x: bx, y: by + 7, z: bz, color: darkStone.clone() });
+  blocks.push({ x: bx, y: by + 8, z: bz, color: new THREE.Color('#cc3333') });
+  return blocks;
+}
+
+function generateColosseum(bx: number, by: number, bz: number): VoxelBlock[] {
+  const blocks: VoxelBlock[] = [];
+  const sand = new THREE.Color('#c8a868');
+  const darkSand = new THREE.Color('#a08040');
+
+  // Ring of pillars
+  for (let angle = 0; angle < 8; angle++) {
+    const dx = Math.round(Math.cos(angle * Math.PI / 4) * 2.5);
+    const dz = Math.round(Math.sin(angle * Math.PI / 4) * 2.5);
+    for (let dy = 0; dy < 4; dy++) {
+      blocks.push({ x: bx + dx, y: by + dy, z: bz + dz, color: sand.clone() });
+    }
+    if (angle % 2 === 0) {
+      blocks.push({ x: bx + dx, y: by + 4, z: bz + dz, color: darkSand.clone() });
+    }
+  }
+  // Floor
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dz = -1; dz <= 1; dz++) {
+      blocks.push({ x: bx + dx, y: by, z: bz + dz, color: darkSand.clone() });
+    }
+  }
+  return blocks;
+}
+
+function generateRuins(bx: number, by: number, bz: number): VoxelBlock[] {
+  const blocks: VoxelBlock[] = [];
+  const stone = new THREE.Color('#6a6870');
+  const moss = new THREE.Color('#4a6838');
+
+  // Broken archway
+  for (let dx = -2; dx <= 2; dx++) {
+    if (Math.abs(dx) === 2) {
+      for (let dy = 0; dy < 5; dy++) {
+        blocks.push({ x: bx + dx, y: by + dy, z: bz, color: dy > 3 ? moss.clone() : stone.clone() });
+      }
+    }
+    if (Math.abs(dx) <= 1) {
+      blocks.push({ x: bx + dx, y: by + 4, z: bz, color: stone.clone() });
+    }
+  }
+  // Rubble
+  blocks.push({ x: bx - 1, y: by, z: bz + 1, color: stone.clone() });
+  blocks.push({ x: bx + 1, y: by, z: bz - 1, color: moss.clone() });
+  return blocks;
+}
+
+function generateCampfire(bx: number, by: number, bz: number): VoxelBlock[] {
+  const blocks: VoxelBlock[] = [];
+  const darkWood = new THREE.Color('#5a3818');
+  const fire = new THREE.Color('#e88520');
+
+  blocks.push({ x: bx, y: by, z: bz, color: fire });
+  for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
+    blocks.push({ x: bx + dx, y: by, z: bz + dz, color: darkWood.clone() });
+  }
+  return blocks;
+}
+
+// ────────────────────────────────────────────
+// Voxel generation — terrain + decorations + structures
 // ────────────────────────────────────────────
 
 function generateTerrainVoxels() {
@@ -124,6 +263,9 @@ function generateTerrainVoxels() {
     const pal = getPalette(tile.terrain);
     const h = terrainHeight(tile);
 
+    // Skip water tiles — they'll be covered by the water plane
+    if (tile.terrain === 'water') continue;
+
     // Stack terrain blocks
     for (let y = 0; y < h; y++) {
       const col = colorForLayer(y, h, pal);
@@ -134,35 +276,94 @@ function generateTerrainVoxels() {
       blocks.push({ x: wx, y, z: wz, color: col });
     }
 
-    // Trees
+    // ── TREES ──
     if (tile.terrain === 'tree') {
+      const treeType = getTreeType(tile.x, tile.y);
       const dn = smoothNoise(tile.x * 0.4, tile.y * 0.4, SEED + 300);
-      const trunkCol = new THREE.Color('#6a4820');
-      const trunkH = 2 + Math.floor(dn * 2);
-      for (let ty = 0; ty < trunkH; ty++) {
-        blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
-      }
-      const cb = h + trunkH;
-      const leafCol = new THREE.Color('#2e7a20');
-      const lv = noise2D(tile.x * 3, tile.y * 3, SEED + 999) * 0.08;
-      // Lower canopy cross
-      for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
-        const lc = leafCol.clone();
-        lc.g += lv + (noise2D(tile.x + dx, tile.y + dz, SEED + 888) - 0.5) * 0.05;
-        blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc });
-      }
-      // Upper canopy
-      blocks.push({ x: wx, y: cb + 1, z: wz, color: leafCol.clone() });
-      for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
-        if (noise2D(tile.x + dx * 2, tile.y + dz * 2, SEED + 777) > 0.4) {
+
+      if (treeType === 'dead') {
+        // Dead tree: just trunk
+        const trunkCol = new THREE.Color('#4a3818');
+        const trunkH = 2 + Math.floor(dn * 2);
+        for (let ty = 0; ty < trunkH; ty++) {
+          blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
+        }
+      } else if (treeType === 'spruce') {
+        // Spruce: tall triangular shape, dark green
+        const trunkCol = new THREE.Color('#5a3818');
+        const trunkH = 3 + Math.floor(dn * 2);
+        for (let ty = 0; ty < trunkH; ty++) {
+          blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
+        }
+        const cb = h + trunkH;
+        const leafCol = new THREE.Color('#1a5528');
+        // Bottom layer: 3×3 cross
+        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]] as [number, number][]) {
+          if (Math.abs(dx) + Math.abs(dz) <= 1) {
+            const lc = leafCol.clone();
+            lc.g += (noise2D(tile.x + dx, tile.y + dz, SEED + 888) - 0.5) * 0.04;
+            blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc });
+          }
+        }
+        // Middle layer: cross
+        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
           const lc = leafCol.clone();
-          lc.g += (noise2D(tile.x + dx, tile.y + dz, SEED + 666) - 0.5) * 0.06;
+          lc.g += 0.02;
           blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: lc });
+        }
+        // Top: just center
+        blocks.push({ x: wx, y: cb + 2, z: wz, color: leafCol.clone() });
+        blocks.push({ x: wx, y: cb + 3, z: wz, color: leafCol.clone() });
+      } else if (treeType === 'autumn') {
+        // Autumn: orange/red canopy
+        const trunkCol = new THREE.Color('#6a4820');
+        const trunkH = 2 + Math.floor(dn * 2);
+        for (let ty = 0; ty < trunkH; ty++) {
+          blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
+        }
+        const cb = h + trunkH;
+        const leafColors = [new THREE.Color('#cc6622'), new THREE.Color('#dd8833'), new THREE.Color('#bb4411'), new THREE.Color('#ee9944')];
+        // Lower canopy cross
+        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
+          const lc = leafColors[Math.floor(noise2D(tile.x + dx * 3, tile.y + dz * 3, SEED + 444) * leafColors.length)].clone();
+          blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc });
+        }
+        // Upper canopy
+        blocks.push({ x: wx, y: cb + 1, z: wz, color: leafColors[0].clone() });
+        for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
+          if (noise2D(tile.x + dx * 2, tile.y + dz * 2, SEED + 555) > 0.4) {
+            blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: leafColors[1].clone() });
+          }
+        }
+      } else {
+        // Oak: standard green canopy
+        const trunkCol = new THREE.Color('#6a4820');
+        const trunkH = 2 + Math.floor(dn * 2);
+        for (let ty = 0; ty < trunkH; ty++) {
+          blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
+        }
+        const cb = h + trunkH;
+        const leafCol = new THREE.Color('#2e7a20');
+        const lv = noise2D(tile.x * 3, tile.y * 3, SEED + 999) * 0.08;
+        // Lower canopy cross
+        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
+          const lc = leafCol.clone();
+          lc.g += lv + (noise2D(tile.x + dx, tile.y + dz, SEED + 888) - 0.5) * 0.05;
+          blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc });
+        }
+        // Upper canopy
+        blocks.push({ x: wx, y: cb + 1, z: wz, color: leafCol.clone() });
+        for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
+          if (noise2D(tile.x + dx * 2, tile.y + dz * 2, SEED + 777) > 0.4) {
+            const lc = leafCol.clone();
+            lc.g += (noise2D(tile.x + dx, tile.y + dz, SEED + 666) - 0.5) * 0.06;
+            blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: lc });
+          }
         }
       }
     }
 
-    // Mushroom caps
+    // ── MUSHROOM CAPS ──
     if (tile.terrain === 'mushroom') {
       blocks.push({ x: wx, y: h, z: wz, color: new THREE.Color('#e8dcc0') });
       blocks.push({ x: wx, y: h + 1, z: wz, color: new THREE.Color('#c04030') });
@@ -173,37 +374,60 @@ function generateTerrainVoxels() {
       }
     }
 
-    // Flowers
+    // ── FLOWERS ──
     if (tile.terrain === 'flower') {
       const fc = [new THREE.Color('#e06878'), new THREE.Color('#e0c040'), new THREE.Color('#8060d0'), new THREE.Color('#e08840')];
       blocks.push({ x: wx, y: h, z: wz, color: fc[Math.floor(noise2D(tile.x, tile.y, SEED + 333) * fc.length)] });
     }
   }
 
-  // Border terrain taper for cliff edges
-  const BORDER = 3;
-  for (let bx = -BORDER; bx < GAMEMODE_MAP_WIDTH + BORDER; bx++) {
-    for (let bz = -BORDER; bz < GAMEMODE_MAP_HEIGHT + BORDER; bz++) {
-      if (bx >= 0 && bx < GAMEMODE_MAP_WIDTH && bz >= 0 && bz < GAMEMODE_MAP_HEIGHT) continue;
-      const dx = bx < 0 ? -bx : bx >= GAMEMODE_MAP_WIDTH ? bx - GAMEMODE_MAP_WIDTH + 1 : 0;
-      const dz = bz < 0 ? -bz : bz >= GAMEMODE_MAP_HEIGHT ? bz - GAMEMODE_MAP_HEIGHT + 1 : 0;
-      const dist = Math.max(dx, dz);
-      if (dist > BORDER) continue;
-      const edgeX = Math.max(0, Math.min(GAMEMODE_MAP_WIDTH - 1, bx));
-      const edgeZ = Math.max(0, Math.min(GAMEMODE_MAP_HEIGHT - 1, bz));
-      const edgeH = heightAt(edgeX, edgeZ);
-      const h = Math.max(1, Math.floor(edgeH * (1 - dist / (BORDER + 1))));
-      const pal = BIOME.grass;
-      const wx = bx - GAMEMODE_MAP_WIDTH / 2;
-      const wz = bz - GAMEMODE_MAP_HEIGHT / 2;
-      for (let y = 0; y < h; y++) {
-        const col = colorForLayer(y, h, pal);
-        const cn = (noise2D(bx + y * 7, bz + y * 13, SEED + 600) - 0.5) * 0.04;
-        col.r = Math.max(0, Math.min(1, col.r + cn));
-        col.g = Math.max(0, Math.min(1, col.g + cn));
-        col.b = Math.max(0, Math.min(1, col.b + cn));
-        blocks.push({ x: wx, y, z: wz, color: col });
+  // ── WATERFALLS ── (where river meets cliff edge)
+  const waterCol = new THREE.Color('#4a90c8');
+  for (const tile of GAMEMODE_TERRAIN) {
+    if (tile.terrain !== 'water') continue;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as [number, number][]) {
+      const nx = tile.x + dx, ny = tile.y + dy;
+      const neighbor = tileMap.get(`${nx},${ny}`);
+      if (neighbor && neighbor.terrain !== 'water') {
+        const nh = terrainHeight(neighbor);
+        if (nh > 4) {
+          const wx = tile.x - hx;
+          const wz = tile.y - hz;
+          for (let y = 2; y < nh; y++) {
+            const wc = waterCol.clone();
+            wc.b += (noise2D(tile.x + y, tile.y + y, SEED + 555) - 0.5) * 0.08;
+            wc.r += 0.02;
+            blocks.push({ x: wx, y, z: wz, color: wc });
+          }
+        }
       }
+    }
+  }
+
+  // ── STRUCTURES at locations ──
+  for (const loc of GAMEMODE_LOCATIONS) {
+    const bx = loc.mapX - hx;
+    const bz = loc.mapY - hz;
+    const by = heightAt(loc.mapX, loc.mapY);
+
+    switch (loc.action) {
+      case 'hub':
+        blocks.push(...generateCampfire(bx, by, bz));
+        blocks.push(...generateHut(bx - 3, by, bz - 2));
+        blocks.push(...generateHut(bx + 3, by, bz + 1));
+        break;
+      case 'vanilla':
+        blocks.push(...generateHut(bx, by, bz));
+        break;
+      case 'multiplayer':
+        blocks.push(...generateTower(bx, by, bz));
+        break;
+      case 'arena':
+        blocks.push(...generateColosseum(bx, by, bz));
+        break;
+      case 'stories':
+        blocks.push(...generateRuins(bx, by, bz));
+        break;
     }
   }
 
@@ -298,6 +522,29 @@ function TrackBlocks({ data }: { data: { positions: Float32Array; colors: Float3
   }, [data]);
 
   return <instancedMesh ref={ref} args={[geo, mat, data.count]} />;
+}
+
+// Animated water plane surrounding the island
+function WaterPlane() {
+  const ref = useRef<THREE.Mesh>(null);
+
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    ref.current.position.y = 1.5 + Math.sin(clock.elapsedTime * 0.5) * 0.04;
+  });
+
+  return (
+    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 1.5, 0]}>
+      <planeGeometry args={[100, 100]} />
+      <meshStandardMaterial
+        color="#3a7ab8"
+        transparent
+        opacity={0.82}
+        roughness={0.15}
+        metalness={0.1}
+      />
+    </mesh>
+  );
 }
 
 // ────────────────────────────────────────────
@@ -395,12 +642,12 @@ function LocationBeacon({
   );
 }
 
-// Camera setup
+// Camera setup for the larger island map
 function CameraSetup() {
   const { camera } = useThree();
   useEffect(() => {
-    camera.position.set(14, 18, 14);
-    camera.lookAt(0, 3, 0);
+    camera.position.set(25, 30, 25);
+    camera.lookAt(0, 4, 0);
   }, [camera]);
   return null;
 }
@@ -447,34 +694,38 @@ export default function GameModeMap({
         gl={{ antialias: true, alpha: false }}
         style={{ position: 'absolute', inset: 0 }}
       >
-        <color attach="background" args={['#1a1410']} />
+        <color attach="background" args={['#1e1812']} />
+        <fog attach="fog" args={['#2a2018', 40, 90]} />
         <CameraSetup />
-        <OrthographicCamera makeDefault position={[14, 18, 14]} zoom={26} near={0.1} far={200} />
+        <OrthographicCamera makeDefault position={[25, 30, 25]} zoom={16} near={0.1} far={200} />
 
         {/* Warm Minecraft Dungeons lighting */}
-        <ambientLight intensity={1.6} color="#fff8f0" />
-        <hemisphereLight args={['#ffeedd', '#556644', 0.6]} />
+        <ambientLight intensity={1.4} color="#fff8f0" />
+        <hemisphereLight args={['#ffeedd', '#556644', 0.7]} />
         <directionalLight
-          position={[12, 25, 8]}
-          intensity={2.5}
+          position={[18, 35, 12]}
+          intensity={2.8}
           color="#fff0d8"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-near={0.5}
-          shadow-camera-far={80}
-          shadow-camera-left={-20}
-          shadow-camera-right={20}
-          shadow-camera-top={20}
-          shadow-camera-bottom={-20}
+          shadow-camera-far={100}
+          shadow-camera-left={-30}
+          shadow-camera-right={30}
+          shadow-camera-top={30}
+          shadow-camera-bottom={-30}
         />
-        <directionalLight position={[-8, 12, -4]} intensity={0.5} color="#ffd8a0" />
+        <directionalLight position={[-12, 18, -6]} intensity={0.5} color="#ffd8a0" />
 
-        {/* Ground plane */}
+        {/* Deep ocean floor */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-          <planeGeometry args={[60, 60]} />
-          <meshStandardMaterial color="#1a1410" roughness={1} />
+          <planeGeometry args={[100, 100]} />
+          <meshStandardMaterial color="#182028" roughness={1} />
         </mesh>
+
+        {/* Animated water surface */}
+        <WaterPlane />
 
         {/* Voxel terrain */}
         <VoxelTerrain data={terrainData} />

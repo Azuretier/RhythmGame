@@ -1,7 +1,8 @@
 // =============================================================
 // Game Mode Map — Data & Types
 // Isometric map for the gamemode select screen in RhythmiaLobby.
-// Adapts the Dungeons map system for game mode selection.
+// Minecraft Dungeons–style island with distinct biomes, dramatic
+// mountains, ocean, rivers, and varied terrain.
 // =============================================================
 
 import type { TerrainType, MapTile, MapPath } from './stories/dungeons';
@@ -26,10 +27,10 @@ export interface GameModeLocation {
 
 export type GameModeStatus = 'locked' | 'available' | 'completed';
 
-// === Map dimensions (smaller, focused map) ===
+// === Map dimensions (larger island map) ===
 
-export const GAMEMODE_MAP_WIDTH = 16;
-export const GAMEMODE_MAP_HEIGHT = 12;
+export const GAMEMODE_MAP_WIDTH = 36;
+export const GAMEMODE_MAP_HEIGHT = 28;
 
 // === Seeded PRNG for deterministic terrain ===
 
@@ -41,92 +42,187 @@ function seededRandom(seed: number) {
   };
 }
 
-// === Terrain generation ===
+// === Noise helpers ===
+
+function hash2D(x: number, y: number, seed: number): number {
+  let s = (x * 73856093 ^ y * 19349663 ^ seed) % 2147483647;
+  if (s < 0) s += 2147483647;
+  return s / 2147483647;
+}
+
+function smoothNoise(x: number, y: number, seed: number): number {
+  const ix = Math.floor(x), iy = Math.floor(y);
+  const fx = x - ix, fy = y - iy;
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+  const n00 = hash2D(ix, iy, seed), n10 = hash2D(ix + 1, iy, seed);
+  const n01 = hash2D(ix, iy + 1, seed), n11 = hash2D(ix + 1, iy + 1, seed);
+  return (n00 + sx * (n10 - n00)) + sy * ((n01 + sx * (n11 - n01)) - (n00 + sx * (n10 - n00)));
+}
+
+function fractalNoise(x: number, y: number, seed: number, octaves = 3): number {
+  let v = 0, a = 1, f = 1, m = 0;
+  for (let i = 0; i < octaves; i++) {
+    v += smoothNoise(x * f, y * f, seed + i * 1000) * a;
+    m += a; a *= 0.5; f *= 2;
+  }
+  return v / m;
+}
+
+// === Geometry helpers ===
+
+function distToSegment(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
+  const dx = bx - ax, dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.sqrt((px - ax) ** 2 + (py - ay) ** 2);
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
+  const projX = ax + t * dx, projY = ay + t * dy;
+  return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+}
+
+function distToPolyline(px: number, py: number, points: [number, number][]): number {
+  let minDist = Infinity;
+  for (let i = 0; i < points.length - 1; i++) {
+    const d = distToSegment(px, py, points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
+    if (d < minDist) minDist = d;
+  }
+  return minDist;
+}
+
+// === Terrain generation — Dungeons-style island ===
 
 function generateGameModeTerrain(): MapTile[] {
   const tiles: MapTile[] = [];
   const rand = seededRandom(12345);
+  const W = GAMEMODE_MAP_WIDTH;
+  const H = GAMEMODE_MAP_HEIGHT;
+  const cx = W / 2;
+  const cy = H / 2;
 
-  for (let y = 0; y < GAMEMODE_MAP_HEIGHT; y++) {
-    for (let x = 0; x < GAMEMODE_MAP_WIDTH; x++) {
+  // Mountain ridge: northwest to center-east
+  const mtA: [number, number] = [14, 2];
+  const mtB: [number, number] = [27, 13];
+  // Secondary ridge branch toward northeast
+  const mt2A: [number, number] = [22, 5];
+  const mt2B: [number, number] = [32, 8];
+
+  // River polyline: from mountains through center to south coast
+  const riverPts: [number, number][] = [[20, 8], [18, 13], [16, 18], [15, 24]];
+
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const nx = (x - cx) / cx;
+      const ny = (y - cy) / cy;
+
+      // Island shape: elliptical with noise for irregular coastline
+      const dist = Math.sqrt(nx * nx * 0.85 + ny * ny * 1.1);
+      const coastNoise = fractalNoise(x * 0.09, y * 0.09, 54321, 2) * 0.15;
+      const islandEdge = 0.82 + coastNoise;
+
+      // Ocean
+      if (dist > islandEdge) {
+        tiles.push({ x, y, terrain: 'water' as TerrainType, elevation: 0 });
+        continue;
+      }
+
+      // River
+      const riverDist = distToPolyline(x, y, riverPts);
+      const riverNoise = smoothNoise(x * 0.3, y * 0.3, 11111) * 0.4;
+      if (riverDist < 0.9 + riverNoise) {
+        tiles.push({ x, y, terrain: 'water' as TerrainType, elevation: 0 });
+        continue;
+      }
+
+      // Beach ring
+      if (dist > islandEdge - 0.06) {
+        tiles.push({ x, y, terrain: 'sand' as TerrainType, elevation: 0 });
+        continue;
+      }
+
+      // River banks
+      if (riverDist < 1.6 + riverNoise * 0.5) {
+        tiles.push({ x, y, terrain: 'sand' as TerrainType, elevation: 0 });
+        continue;
+      }
+
+      // Biome noise
+      const bn = fractalNoise(x * 0.06, y * 0.06, 77777, 2);
+
+      // Mountain ridge check
+      const mtDist1 = distToSegment(x, y, mtA[0], mtA[1], mtB[0], mtB[1]);
+      const mtDist2 = distToSegment(x, y, mt2A[0], mt2A[1], mt2B[0], mt2B[1]);
+      const mtDist = Math.min(mtDist1, mtDist2);
+      const mtWidth = 5.5 + bn * 2;
+
+      if (mtDist < mtWidth) {
+        const mtIntensity = 1 - (mtDist / mtWidth);
+        const elevation = Math.min(7, Math.floor(mtIntensity * 7 + bn * 2));
+
+        // Snow on highest peaks in the north
+        if (elevation >= 5 && y < 12) {
+          tiles.push({ x, y, terrain: 'snow' as TerrainType, elevation });
+        } else {
+          tiles.push({ x, y, terrain: 'stone' as TerrainType, elevation });
+        }
+        continue;
+      }
+
+      // Biome zones
       let terrain: TerrainType = 'grass';
       let elevation = 0;
 
-      // Forest region (top-left, around solo mode)
-      if (x < 7 && y < 6) {
-        terrain = rand() > 0.65 ? 'tree' : 'grass';
-        elevation = rand() > 0.85 ? 1 : 0;
-        if (x < 2 && y < 4) terrain = 'tree';
+      // Forest (west, northwest)
+      if (nx < -0.05 && ny < 0.15) {
+        if (rand() > 0.5) {
+          terrain = 'tree';
+          elevation = Math.floor(bn * 2);
+        } else {
+          terrain = 'grass';
+          elevation = Math.floor(bn * 1.5);
+        }
+        if (rand() > 0.94) terrain = 'flower';
       }
-
-      // Storm/mountain region (top-right, around battle arena)
-      if (x > 9 && y < 6) {
-        terrain = rand() > 0.45 ? 'stone' : 'rock';
-        elevation = Math.min(3, Math.floor((x - 9) / 2) + 1);
-        if (x > 13 && y < 3) elevation = 3;
+      // Desert/ruins (east, southeast)
+      else if (nx > 0.25 && ny > 0.1) {
+        terrain = rand() > 0.7 ? 'sand' : 'dirt';
+        elevation = Math.floor(bn * 1);
+        if (rand() > 0.95) terrain = 'rock';
       }
-
-      // Village region (bottom-right, around grand arena)
-      if (x > 9 && y > 6) {
-        terrain = 'dirt';
-        elevation = 0;
-        if (rand() > 0.85) terrain = 'path';
-      }
-
-      // Cave/mystery region (bottom-left, around stories)
-      if (x < 7 && y > 6) {
-        if (rand() > 0.6) {
-          terrain = 'stone';
-        } else if (rand() > 0.7) {
+      // Swamp/dark cave (southwest)
+      else if (nx < -0.1 && ny > 0.25) {
+        if (rand() > 0.7) {
           terrain = 'mushroom';
+        } else if (rand() > 0.5) {
+          terrain = 'tree';
+        } else {
+          terrain = 'dirt';
         }
-        elevation = rand() > 0.7 ? 1 : 0;
-      }
-
-      // Central river (flowing from top to bottom through middle)
-      if (
-        (x >= 7 && x <= 8 && y >= 0 && y <= 4) ||
-        (x >= 7 && x <= 9 && y >= 4 && y <= 5) ||
-        (x >= 7 && x <= 8 && y >= 7 && y <= 11)
-      ) {
-        terrain = 'water';
         elevation = 0;
       }
-
-      // Bridges at path crossings
-      if (terrain === 'water' && ((x === 7 && y === 6) || (x === 8 && y === 6))) {
-        terrain = 'bridge';
+      // Autumn plains/village (center)
+      else if (Math.abs(nx) < 0.35 && Math.abs(ny) < 0.35) {
+        terrain = 'grass';
+        elevation = Math.floor(bn * 1.5);
+        if (rand() > 0.85) terrain = 'tree';
+        if (rand() > 0.95) terrain = 'flower';
+        if (rand() > 0.97) terrain = 'path';
       }
-
-      // Central hub paths
-      if (
-        (y === 6 && x >= 3 && x <= 13) ||
-        (x === 8 && y >= 3 && y <= 9)
-      ) {
-        if (terrain !== 'water' && terrain !== 'bridge') {
-          terrain = 'path';
-          elevation = 0;
+      // Snow/tundra transition (north)
+      else if (ny < -0.3) {
+        if (rand() > 0.6) {
+          terrain = 'snow';
+          elevation = Math.floor(bn * 2) + 1;
+        } else {
+          terrain = 'stone';
+          elevation = Math.floor(bn * 2);
         }
       }
-
-      // Decorative flowers in grass areas
-      if (terrain === 'grass' && rand() > 0.92) {
-        terrain = 'flower';
-      }
-
-      // Sandy edges near water
-      if (terrain === 'grass' || terrain === 'dirt') {
-        const nearWater = [
-          [x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1],
-        ].some(([nx, ny]) => {
-          if (nx < 0 || nx >= GAMEMODE_MAP_WIDTH || ny < 0 || ny >= GAMEMODE_MAP_HEIGHT) return false;
-          return (
-            (nx >= 7 && nx <= 8 && ny >= 0 && ny <= 4) ||
-            (nx >= 7 && nx <= 9 && ny >= 4 && ny <= 5) ||
-            (nx >= 7 && nx <= 8 && ny >= 7 && ny <= 11)
-          );
-        });
-        if (nearWater) terrain = 'sand';
+      // Default
+      else {
+        terrain = 'grass';
+        elevation = Math.floor(bn * 2);
+        if (rand() > 0.88) terrain = 'tree';
+        if (rand() > 0.96) terrain = 'flower';
       }
 
       tiles.push({ x, y, terrain, elevation });
@@ -147,8 +243,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Home',
     description: '全ての冒険はここから始まる。',
     descriptionEn: 'All adventures begin here.',
-    mapX: 8,
-    mapY: 6,
+    mapX: 18,
+    mapY: 16,
     icon: '🏕️',
     accentColor: '#8B6914',
     action: 'hub',
@@ -161,8 +257,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Rhythmia',
     description: 'リズムに合わせてブロックを操る、ソロモード。5つの世界が待っている。',
     descriptionEn: 'Master the blocks to the rhythm in solo mode. Five worlds await.',
-    mapX: 4,
-    mapY: 3,
+    mapX: 8,
+    mapY: 8,
     icon: '🎵',
     accentColor: '#4CAF50',
     action: 'vanilla',
@@ -182,8 +278,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Battle Arena',
     description: 'リアルタイムで他のプレイヤーと対戦。ランクマッチやモブバトルも。',
     descriptionEn: 'Battle other players in real-time. Ranked matches and mob battles available.',
-    mapX: 12,
-    mapY: 3,
+    mapX: 29,
+    mapY: 7,
     icon: '⚔️',
     accentColor: '#FF6B6B',
     action: 'multiplayer',
@@ -205,8 +301,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Grand Arena',
     description: '9人のプレイヤーが同時に戦う大規模バトル。カオスシステムとギミックが待つ。',
     descriptionEn: '9 players battle simultaneously. Chaos system and gimmicks await.',
-    mapX: 12,
-    mapY: 9,
+    mapX: 29,
+    mapY: 21,
     icon: '🏟️',
     accentColor: '#2196F3',
     action: 'arena',
@@ -227,8 +323,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Adventures',
     description: 'ダンジョンを探索し、物語を紡ぐ。リズミアの世界を冒険しよう。',
     descriptionEn: 'Explore dungeons and weave stories. Adventure through the world of Rhythmia.',
-    mapX: 4,
-    mapY: 9,
+    mapX: 8,
+    mapY: 22,
     icon: '📖',
     accentColor: '#9C27B0',
     action: 'stories',
@@ -251,44 +347,32 @@ export const GAMEMODE_PATHS: MapPath[] = [
     from: 'hub',
     to: 'solo',
     waypoints: [
-      { x: 8, y: 6 },
-      { x: 7, y: 5 },
-      { x: 6, y: 4 },
-      { x: 5, y: 3 },
-      { x: 4, y: 3 },
+      { x: 18, y: 16 }, { x: 16, y: 14 }, { x: 14, y: 12 },
+      { x: 12, y: 10 }, { x: 10, y: 9 }, { x: 8, y: 8 },
     ],
   },
   {
     from: 'hub',
     to: 'battle',
     waypoints: [
-      { x: 8, y: 6 },
-      { x: 9, y: 5 },
-      { x: 10, y: 4 },
-      { x: 11, y: 3 },
-      { x: 12, y: 3 },
+      { x: 18, y: 16 }, { x: 20, y: 14 }, { x: 22, y: 12 },
+      { x: 24, y: 10 }, { x: 27, y: 8 }, { x: 29, y: 7 },
     ],
   },
   {
     from: 'hub',
     to: 'arena',
     waypoints: [
-      { x: 8, y: 6 },
-      { x: 9, y: 7 },
-      { x: 10, y: 8 },
-      { x: 11, y: 9 },
-      { x: 12, y: 9 },
+      { x: 18, y: 16 }, { x: 20, y: 17 }, { x: 22, y: 18 },
+      { x: 24, y: 19 }, { x: 27, y: 20 }, { x: 29, y: 21 },
     ],
   },
   {
     from: 'hub',
     to: 'stories',
     waypoints: [
-      { x: 8, y: 6 },
-      { x: 7, y: 7 },
-      { x: 6, y: 8 },
-      { x: 5, y: 9 },
-      { x: 4, y: 9 },
+      { x: 18, y: 16 }, { x: 16, y: 17 }, { x: 14, y: 18 },
+      { x: 12, y: 20 }, { x: 10, y: 21 }, { x: 8, y: 22 },
     ],
   },
 ];
@@ -301,14 +385,9 @@ export function getGameModeStatus(
 ): GameModeStatus {
   const location = GAMEMODE_LOCATIONS.find(l => l.id === locationId);
   if (!location) return 'locked';
-
-  // Hub is always "completed" (decorative)
   if (location.action === 'hub') return 'completed';
-
-  // Check advancement requirements
   if (location.requiresAdvancements && unlockedAdvancements < location.requiresAdvancements) {
     return 'locked';
   }
-
   return 'available';
 }
