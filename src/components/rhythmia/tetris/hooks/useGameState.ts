@@ -952,16 +952,8 @@ export function useGameState() {
             // Abort transition if player died during collapse
             if (gameOverRef.current) return;
 
-            setGamePhase('TRANSITION');
-            gamePhaseRef.current = 'TRANSITION';
-
-            setTimeout(() => {
-                // Abort transition if player died during transition
-                if (gameOverRef.current) return;
-
-                // Enter card select — player picks a rogue card before next stage
-                enterCardSelect();
-            }, 1200);
+            // Enter card select directly — stage transition effects play after selection
+            enterCardSelect();
         }, 1200);
     }, [enterCardSelect]);
 
