@@ -1,6 +1,7 @@
 /* ============================================
-   RPG Skill Tree — Wynncraft-inspired medieval
+   RPG Skill Tree — Pixel Art / Minecraft UI
    Three-panel layout: Detail | Ability Tree | Class Selector
+   Dark obsidian + inventory slots + chunky borders
    ============================================ */
 
 /* ---- Overlay ---- */
@@ -11,8 +12,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.88);
+  background: rgba(0, 0, 0, 0.92);
   padding: 12px;
+  image-rendering: pixelated;
 }
 
 /* ---- Main Frame (three-panel grid) ---- */
@@ -24,17 +26,17 @@
   max-height: 720px;
   display: grid;
   grid-template-columns: 280px 1fr 220px;
-  background: #c4b28e;
-  border: 4px solid #7a6842;
-  border-radius: 4px;
+  background: #1a1a1a;
+  border: 4px solid;
+  border-color: #3b3b3b #0d0d0d #0d0d0d #3b3b3b;
   overflow: hidden;
   box-shadow:
-    inset 0 0 0 2px #a89870,
-    0 0 0 3px #3a2e1a,
-    0 8px 40px rgba(0, 0, 0, 0.7);
+    inset 0 0 0 2px #2a2a2a,
+    0 0 0 2px #000,
+    0 8px 40px rgba(0, 0, 0, 0.9);
 }
 
-/* Parchment texture on entire frame */
+/* Pixel grid texture on entire frame */
 .frame::before {
   content: '';
   position: absolute;
@@ -44,15 +46,15 @@
       0deg,
       transparent,
       transparent 3px,
-      rgba(0, 0, 0, 0.015) 3px,
-      rgba(0, 0, 0, 0.015) 4px
+      rgba(255, 255, 255, 0.008) 3px,
+      rgba(255, 255, 255, 0.008) 4px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
-      transparent 5px,
-      rgba(0, 0, 0, 0.01) 5px,
-      rgba(0, 0, 0, 0.01) 6px
+      transparent 3px,
+      rgba(255, 255, 255, 0.008) 3px,
+      rgba(255, 255, 255, 0.008) 4px
     );
   pointer-events: none;
   z-index: 0;
@@ -68,11 +70,12 @@
   flex-direction: column;
   padding: 20px 18px;
   overflow-y: auto;
-  border-right: 3px solid #8a7a58;
-  background: linear-gradient(180deg, #c8b890 0%, #bca87a 100%);
+  border-right: 4px solid;
+  border-right-color: #333;
+  background: #1e1e1e;
 }
 
-/* Character hexagonal portrait */
+/* Character portrait — square pixel item frame */
 .portraitArea {
   display: flex;
   align-items: center;
@@ -80,31 +83,34 @@
   margin-bottom: 14px;
 }
 
-.hexPortrait {
-  width: 72px;
-  height: 72px;
+.portrait {
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
-  background: linear-gradient(135deg, #3a3020 0%, #2a2418 100%);
-  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  background: #2a2a2a;
+  border: 4px solid;
+  border-color: #555 #1a1a1a #1a1a1a #555;
   position: relative;
+  image-rendering: pixelated;
 }
 
-/* Bronze ring around hex */
-.hexPortrait::before {
+/* Inner bevel */
+.portrait::after {
   content: '';
   position: absolute;
-  inset: -3px;
-  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
-  background: linear-gradient(180deg, #c9a44c 0%, #8a6d2f 50%, #c9a44c 100%);
-  z-index: -1;
+  inset: 0;
+  border: 2px solid;
+  border-color: #3a3a3a #444 #444 #3a3a3a;
+  pointer-events: none;
 }
 
 .portraitIcon {
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.8));
+  image-rendering: pixelated;
 }
 
 .portraitNames {
@@ -118,15 +124,17 @@
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 1rem;
   font-weight: 700;
-  color: #2a2010;
+  color: #fff;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  text-shadow: 2px 2px 0 #000;
 }
 
 .classAltName {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.7rem;
-  color: #6a5a3a;
+  color: #888;
+  text-shadow: 1px 1px 0 #000;
 }
 
 /* SP badge in detail panel */
@@ -134,9 +142,9 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #3a3020;
-  border: 2px solid #5a4a2e;
-  border-radius: 3px;
+  background: #111;
+  border: 3px solid;
+  border-color: #444 #1a1a1a #1a1a1a #444;
   padding: 3px 10px;
   margin-bottom: 12px;
   align-self: flex-start;
@@ -146,14 +154,14 @@
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.85rem;
   font-weight: 700;
-  color: #80ff20;
-  text-shadow: 0 0 6px rgba(128, 255, 32, 0.4);
+  color: #55ff55;
+  text-shadow: 0 0 6px rgba(85, 255, 85, 0.4), 2px 2px 0 #000;
 }
 
 .detailSpLabel {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.55rem;
-  color: #8a8060;
+  color: #666;
   text-transform: uppercase;
 }
 
@@ -162,8 +170,9 @@
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.65rem;
   line-height: 1.6;
-  color: #4a3e28;
+  color: #aaa;
   margin-bottom: 16px;
+  text-shadow: 1px 1px 0 #000;
 }
 
 /* Subclass section */
@@ -173,10 +182,11 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #5a4a30;
-  border-bottom: 2px solid #9a8a68;
+  color: #888;
+  border-bottom: 2px solid #333;
   padding-bottom: 6px;
   margin-bottom: 10px;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .subclassList {
@@ -204,17 +214,19 @@
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
-  background: #4a3e28;
-  border: 2px solid #6a5a3a;
-  border-radius: 3px;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #444 #1a1a1a #1a1a1a #444;
   flex-shrink: 0;
+  image-rendering: pixelated;
 }
 
 .subclassName {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.72rem;
   font-weight: 700;
-  color: #2a2010;
+  color: #ddd;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .statBars {
@@ -233,25 +245,26 @@
 .statLabel {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.5rem;
-  color: #6a5a3a;
+  color: #777;
   width: 56px;
   text-transform: uppercase;
   flex-shrink: 0;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .statBarTrack {
   flex: 1;
-  height: 7px;
-  background: #3a3020;
-  border-radius: 1px;
+  height: 6px;
+  background: #111;
+  border: 1px solid #333;
   overflow: hidden;
   max-width: 100px;
 }
 
 .statBarFill {
   height: 100%;
-  border-radius: 1px;
-  transition: width 0.3s ease;
+  image-rendering: pixelated;
+  transition: width 0.15s steps(5);
 }
 
 /* Placeholder when no class is selected */
@@ -262,9 +275,10 @@
   justify-content: center;
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.75rem;
-  color: #8a7a58;
+  color: #555;
   text-align: center;
   padding: 40px;
+  text-shadow: 1px 1px 0 #000;
 }
 
 /* ================================================================
@@ -275,24 +289,17 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  background: #3a3d5c;
+  background: #111;
   overflow: hidden;
 }
 
-/* Stone frame border */
+/* Obsidian frame border */
 .treePanel::before {
   content: '';
   position: absolute;
   inset: 0;
-  border: 6px solid;
-  border-image: linear-gradient(
-    180deg,
-    #7a7a88 0%,
-    #5a5a68 30%,
-    #4a4a58 50%,
-    #5a5a68 70%,
-    #7a7a88 100%
-  ) 1;
+  border: 4px solid;
+  border-color: #3a3a3a #0a0a0a #0a0a0a #3a3a3a;
   pointer-events: none;
   z-index: 5;
 }
@@ -304,28 +311,30 @@
   justify-content: center;
   gap: 16px;
   padding: 10px 16px;
-  background: linear-gradient(180deg, #2e3048 0%, #343654 100%);
-  border-bottom: 2px solid #50527a;
+  background: #1a1a1a;
+  border-bottom: 3px solid;
+  border-bottom-color: #333;
   z-index: 2;
 }
 
 .pageArrow {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.8rem;
-  color: #8888aa;
+  color: #777;
   background: none;
   border: none;
   cursor: pointer;
   padding: 2px 8px;
-  transition: color 0.1s;
+  transition: color 0.05s steps(1);
+  text-shadow: 1px 1px 0 #000;
 }
 
 .pageArrow:hover {
-  color: #ccccee;
+  color: #fff;
 }
 
 .pageArrow:disabled {
-  opacity: 0.3;
+  opacity: 0.2;
   cursor: default;
 }
 
@@ -333,14 +342,15 @@
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.7rem;
   font-weight: 700;
-  color: #aaaacc;
+  color: #999;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   min-width: 70px;
   text-align: center;
+  text-shadow: 1px 1px 0 #000;
 }
 
-/* Tree canvas area */
+/* Tree canvas area — dark grid */
 .treeArea {
   flex: 1;
   display: flex;
@@ -353,19 +363,18 @@
     repeating-linear-gradient(
       0deg,
       transparent,
-      transparent 11px,
-      rgba(255, 255, 255, 0.012) 11px,
-      rgba(255, 255, 255, 0.012) 12px
+      transparent 15px,
+      rgba(255, 255, 255, 0.015) 15px,
+      rgba(255, 255, 255, 0.015) 16px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
-      transparent 11px,
-      rgba(255, 255, 255, 0.012) 11px,
-      rgba(255, 255, 255, 0.012) 12px
+      transparent 15px,
+      rgba(255, 255, 255, 0.015) 15px,
+      rgba(255, 255, 255, 0.015) 16px
     ),
-    radial-gradient(ellipse at center, rgba(80, 80, 140, 0.08) 0%, transparent 70%),
-    #343654;
+    #0e0e0e;
 }
 
 .treeCanvas {
@@ -380,7 +389,7 @@
   pointer-events: none;
 }
 
-/* Skill nodes */
+/* ---- Skill Nodes — Minecraft inventory slots ---- */
 .node {
   position: absolute;
   display: flex;
@@ -388,80 +397,92 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  background: #555568;
+  background: #373737;
   border: 3px solid;
-  border-color: #3a3a4a #7a7a8a #7a7a8a #3a3a4a;
+  border-color: #555 #222 #222 #555;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.1s, box-shadow 0.15s;
+  transition: background 0.05s steps(1), box-shadow 0.05s steps(1);
   z-index: 1;
-  border-radius: 4px;
+  image-rendering: pixelated;
 }
 
-.node:hover {
-  background: #65657a;
-  z-index: 3;
-  box-shadow: 0 0 12px rgba(200, 200, 255, 0.15);
-}
-
-.node_locked {
-  opacity: 0.3;
-  filter: grayscale(1) brightness(0.5);
-  background: #3a3a48;
-}
-
-.node_available {
-  background: #555568;
-  animation: slotPulse 2s ease-in-out infinite;
-}
-
-.node_partial {
-  background: color-mix(in srgb, var(--cat-color) 25%, #555568);
-  border-color:
-    color-mix(in srgb, var(--cat-color) 40%, #3a3a4a)
-    color-mix(in srgb, var(--cat-color) 30%, #7a7a8a)
-    color-mix(in srgb, var(--cat-color) 30%, #7a7a8a)
-    color-mix(in srgb, var(--cat-color) 40%, #3a3a4a);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--cat-color) 25%, transparent);
-}
-
-.node_maxed {
-  background: color-mix(in srgb, var(--cat-color) 35%, #555568);
-  border-color:
-    color-mix(in srgb, var(--cat-color) 50%, #3a3a4a)
-    color-mix(in srgb, var(--cat-color) 40%, #7a7a8a)
-    color-mix(in srgb, var(--cat-color) 40%, #7a7a8a)
-    color-mix(in srgb, var(--cat-color) 50%, #3a3a4a);
-  box-shadow:
-    0 0 16px color-mix(in srgb, var(--cat-color) 40%, transparent),
-    0 0 4px var(--cat-color);
-}
-
-.node_maxed::after {
+/* Inner bevel for inventory slot feel */
+.node::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  border-radius: 4px;
-  background: linear-gradient(
-    135deg,
-    transparent 30%,
-    rgba(255, 255, 200, 0.1) 45%,
-    transparent 60%
-  );
-  background-size: 200% 200%;
-  animation: enchantShimmer 3s ease-in-out infinite;
+  inset: 0;
+  border: 1px solid;
+  border-color: #2a2a2a #444 #444 #2a2a2a;
   pointer-events: none;
 }
 
+.node:hover {
+  background: #444;
+  z-index: 3;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.node_locked {
+  opacity: 0.25;
+  filter: grayscale(1) brightness(0.4);
+  background: #222;
+}
+
+.node_available {
+  background: #373737;
+  animation: slotPulse 2s steps(8) infinite;
+}
+
+.node_partial {
+  background: color-mix(in srgb, var(--cat-color) 20%, #373737);
+  border-color:
+    color-mix(in srgb, var(--cat-color) 35%, #555)
+    color-mix(in srgb, var(--cat-color) 25%, #222)
+    color-mix(in srgb, var(--cat-color) 25%, #222)
+    color-mix(in srgb, var(--cat-color) 35%, #555);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--cat-color) 20%, transparent);
+}
+
+.node_maxed {
+  background: color-mix(in srgb, var(--cat-color) 30%, #373737);
+  border-color:
+    color-mix(in srgb, var(--cat-color) 50%, #555)
+    color-mix(in srgb, var(--cat-color) 35%, #222)
+    color-mix(in srgb, var(--cat-color) 35%, #222)
+    color-mix(in srgb, var(--cat-color) 50%, #555);
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--cat-color) 35%, transparent),
+    0 0 4px var(--cat-color);
+}
+
+/* Enchantment glint overlay on maxed nodes */
+.node_maxed::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(128, 0, 255, 0.12) 45%,
+    transparent 60%
+  );
+  background-size: 200% 200%;
+  animation: enchantGlint 2s steps(12) infinite;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
 .nodeSelected {
-  outline: 3px solid var(--cat-color);
-  outline-offset: 3px;
+  outline: 2px solid var(--cat-color);
+  outline-offset: 2px;
   z-index: 3;
 }
 
 .nodeIcon {
   font-size: 1.2rem;
   line-height: 1;
-  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.9));
+  image-rendering: pixelated;
 }
 
 .levelPips {
@@ -472,10 +493,9 @@
 .pip {
   width: 6px;
   height: 6px;
-  background: #2a2a3a;
-  border: 1px solid #1a1a2a;
-  border-radius: 1px;
-  transition: background 0.15s;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  transition: background 0.05s steps(1);
 }
 
 .pipFilled {
@@ -486,16 +506,16 @@
 
 @keyframes slotPulse {
   0%, 100% {
-    box-shadow: 0 0 8px color-mix(in srgb, var(--cat-color) 20%, transparent);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--cat-color) 15%, transparent);
   }
   50% {
     box-shadow:
-      0 0 20px color-mix(in srgb, var(--cat-color) 40%, transparent),
-      inset 0 0 8px color-mix(in srgb, var(--cat-color) 10%, transparent);
+      0 0 16px color-mix(in srgb, var(--cat-color) 35%, transparent),
+      inset 0 0 6px color-mix(in srgb, var(--cat-color) 8%, transparent);
   }
 }
 
-@keyframes enchantShimmer {
+@keyframes enchantGlint {
   0% { background-position: 200% 200%; }
   100% { background-position: -200% -200%; }
 }
@@ -508,12 +528,13 @@
   justify-content: center;
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.8rem;
-  color: #6a6a8a;
+  color: #555;
   text-align: center;
   padding: 40px;
+  text-shadow: 1px 1px 0 #000;
 }
 
-/* ---- Detail Panel (node tooltip) ---- */
+/* ---- Detail Panel (node tooltip) — purple enchant table ---- */
 .detailPanel {
   position: absolute;
   bottom: 12px;
@@ -523,16 +544,15 @@
   width: calc(100% - 32px);
   max-width: 380px;
   padding: 10px 14px;
-  background: #1a1028;
+  background: #140a28;
   border: 3px solid;
-  border-color: #28007f #5020a0 #5020a0 #28007f;
-  border-radius: 4px;
+  border-color: #5a20aa #200848 #200848 #5a20aa;
   display: flex;
   flex-direction: column;
   gap: 6px;
   box-shadow:
-    inset 0 0 0 1px #1a0050,
-    0 4px 20px rgba(40, 0, 80, 0.6);
+    inset 0 0 0 1px #0d0520,
+    0 4px 20px rgba(30, 0, 60, 0.8);
 }
 
 .detailTop {
@@ -548,11 +568,11 @@
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  background: #555568;
+  background: #373737;
   border: 2px solid;
-  border-color: #3a3a4a #7a7a8a #7a7a8a #3a3a4a;
-  border-radius: 3px;
+  border-color: #555 #222 #222 #555;
   flex-shrink: 0;
+  image-rendering: pixelated;
 }
 
 .detailInfo {
@@ -564,7 +584,7 @@
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.78rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   text-transform: uppercase;
   text-shadow: 2px 2px 0 #000;
 }
@@ -572,9 +592,10 @@
 .detailDesc {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.6rem;
-  color: #bb66ff;
+  color: #aa55ff;
   line-height: 1.4;
   margin-top: 2px;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .detailBottom {
@@ -587,14 +608,16 @@
 .detailStat {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.6rem;
-  color: #7a7a9a;
+  color: #888;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .detailTier {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.55rem;
-  color: #5a5a7a;
+  color: #666;
   text-transform: uppercase;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .unlockBtn {
@@ -607,18 +630,18 @@
   letter-spacing: 0.04em;
   color: #fff;
   cursor: pointer;
-  transition: filter 0.08s;
+  transition: filter 0.05s steps(1);
   border: 3px solid;
-  border-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.4) rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
+  border-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.5) rgba(255, 255, 255, 0.25);
+  text-shadow: 2px 2px 0 #000;
 }
 
 .unlockBtn:hover {
-  filter: brightness(1.15);
+  filter: brightness(1.2);
 }
 
 .unlockBtn:active {
-  border-color: rgba(0, 0, 0, 0.4) rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.4);
+  border-color: rgba(0, 0, 0, 0.5) rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.5);
 }
 
 .maxedBadge {
@@ -627,17 +650,18 @@
   font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #ffff00;
+  color: #ffff55;
   text-shadow:
     2px 2px 0 #4a3a00,
-    0 0 8px rgba(255, 255, 0, 0.3);
+    0 0 8px rgba(255, 255, 85, 0.3);
 }
 
 .lockedHint {
   margin-left: auto;
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.55rem;
-  color: #5a5a7a;
+  color: #555;
+  text-shadow: 1px 1px 0 #000;
 }
 
 /* ================================================================
@@ -650,8 +674,9 @@
   flex-direction: column;
   gap: 0;
   overflow-y: auto;
-  border-left: 3px solid #8a7a58;
-  background: linear-gradient(180deg, #c0a878 0%, #b09868 100%);
+  border-left: 4px solid;
+  border-left-color: #333;
+  background: #1a1a1a;
 }
 
 .selectorHeader {
@@ -661,10 +686,11 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #5a4a30;
-  border-bottom: 2px solid #9a8a68;
+  color: #888;
+  border-bottom: 3px solid #333;
   text-align: center;
   flex-shrink: 0;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .classCardList {
@@ -676,55 +702,47 @@
   overflow-y: auto;
 }
 
-/* Class cards */
+/* Class cards — dark inventory row */
 .classCard {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: #b09060;
-  border: 2px solid #9a8050;
-  border-radius: 4px;
+  background: #252525;
+  border: 2px solid;
+  border-color: #444 #1a1a1a #1a1a1a #444;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.15s, box-shadow 0.15s;
+  transition: background 0.05s steps(1), box-shadow 0.05s steps(1);
   text-align: left;
 }
 
 .classCard:hover {
-  background: #c0a070;
-  border-color: #aa9060;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  background: #333;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .classCardActive {
-  background: #c8a870;
+  background: #2e2e2e;
   border-color: var(--class-color);
   box-shadow:
     0 0 0 1px var(--class-color),
-    0 2px 16px rgba(0, 0, 0, 0.25);
+    0 0 12px color-mix(in srgb, var(--class-color) 25%, transparent);
 }
 
-/* Small hex portrait on class card */
-.cardHex {
-  width: 40px;
-  height: 40px;
+/* Small square portrait on class card — item frame */
+.cardPortrait {
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  background: linear-gradient(135deg, #3a3020 0%, #2a2418 100%);
-  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  font-size: 1rem;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #555 #1a1a1a #1a1a1a #555;
   position: relative;
-}
-
-.cardHex::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
-  background: linear-gradient(180deg, #b89a4c 0%, #7a6030 100%);
-  z-index: -1;
+  image-rendering: pixelated;
 }
 
 .cardInfo {
@@ -739,15 +757,17 @@
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.7rem;
   font-weight: 700;
-  color: #2a2010;
+  color: #ddd;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .cardAlt {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.5rem;
-  color: #6a5a3a;
+  color: #777;
+  text-shadow: 1px 1px 0 #000;
 }
 
 /* Difficulty bar on class card */
@@ -761,23 +781,24 @@
 .diffLabel {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.45rem;
-  color: #6a5a3a;
+  color: #666;
   text-transform: uppercase;
   flex-shrink: 0;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .diffTrack {
   flex: 1;
-  height: 5px;
-  background: #5a4a30;
-  border-radius: 2px;
+  height: 4px;
+  background: #111;
+  border: 1px solid #333;
   overflow: hidden;
 }
 
 .diffFill {
   height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s ease;
+  transition: width 0.15s steps(5);
+  image-rendering: pixelated;
 }
 
 /* ---- Header bar across the top ---- */
@@ -787,8 +808,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: linear-gradient(180deg, #a8945c 0%, #9a864e 100%);
-  border-bottom: 3px solid #7a6842;
+  background: #1a1a1a;
+  border-bottom: 4px solid;
+  border-bottom-color: #333;
   z-index: 2;
 }
 
@@ -798,7 +820,8 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #2a2010;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
 }
 
 .topBarRight {
@@ -811,17 +834,18 @@
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.5rem;
   text-transform: uppercase;
-  color: #6a5040;
+  color: #777;
   background: none;
   border: none;
   cursor: pointer;
   padding: 2px 4px;
   letter-spacing: 0.05em;
-  transition: color 0.1s;
+  transition: color 0.05s steps(1);
+  text-shadow: 1px 1px 0 #000;
 }
 
 .resetLink:hover {
-  color: #cc3333;
+  color: #ff5555;
 }
 
 .closeX {
@@ -832,17 +856,17 @@
   justify-content: center;
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.75rem;
-  color: #6a5a3a;
-  background: #b09868;
-  border: 2px solid #8a7a58;
-  border-radius: 3px;
+  color: #888;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #444 #1a1a1a #1a1a1a #444;
   cursor: pointer;
-  transition: color 0.08s, background 0.08s;
+  transition: color 0.05s steps(1), background 0.05s steps(1);
 }
 
 .closeX:hover {
-  color: #cc3333;
-  background: #c0a878;
+  color: #ff5555;
+  background: #333;
 }
 
 /* ---- Reset Confirmation Dialog ---- */
@@ -852,29 +876,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.8);
   z-index: 20;
 }
 
 .resetDialog {
-  background: #c4b28e;
-  border: 4px solid #7a6842;
-  border-radius: 4px;
+  background: #1a1a1a;
+  border: 4px solid;
+  border-color: #555 #111 #111 #555;
   padding: 24px;
   text-align: center;
   max-width: 300px;
   box-shadow:
-    inset 0 0 0 2px #a89870,
-    0 0 0 3px #3a2e1a,
-    0 4px 30px rgba(0, 0, 0, 0.5);
+    inset 0 0 0 2px #2a2a2a,
+    0 0 0 2px #000,
+    0 4px 30px rgba(0, 0, 0, 0.8);
 }
 
 .resetDialog p {
   margin: 0 0 18px;
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.75rem;
-  color: #3a3020;
+  color: #ccc;
   line-height: 1.5;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .resetActions {
@@ -890,29 +915,30 @@
   font-size: 0.68rem;
   font-weight: 600;
   cursor: pointer;
-  border: 2px solid;
-  border-radius: 3px;
-  transition: background 0.08s;
+  border: 3px solid;
+  transition: background 0.05s steps(1);
 }
 
 .resetCancel {
-  background: #9a8a68;
-  color: #fff;
-  border-color: #7a6a48;
+  background: #333;
+  color: #ddd;
+  border-color: #555 #1a1a1a #1a1a1a #555;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .resetCancel:hover {
-  background: #aa9a78;
+  background: #444;
 }
 
 .resetConfirmBtn {
-  background: #993333;
-  color: #fff;
-  border-color: #772222;
+  background: #551111;
+  color: #ff5555;
+  border-color: #882222 #330808 #330808 #882222;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .resetConfirmBtn:hover {
-  background: #aa3b3b;
+  background: #661919;
 }
 
 /* ================================================================
@@ -945,7 +971,7 @@
     grid-column: 1 / -1;
     grid-row: 3 / 4;
     border-right: none;
-    border-top: 3px solid #8a7a58;
+    border-top: 4px solid #333;
     max-height: 200px;
     flex-direction: row;
     gap: 16px;
@@ -984,7 +1010,7 @@
     grid-column: 1;
     grid-row: auto;
     border-left: none;
-    border-top: 3px solid #8a7a58;
+    border-top: 4px solid #333;
     max-height: 140px;
   }
 

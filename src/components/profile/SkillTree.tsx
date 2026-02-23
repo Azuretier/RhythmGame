@@ -385,7 +385,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
                 style={{ '--class-color': arch.color } as React.CSSProperties}
                 onClick={() => handleSelectArchetype(arch.id)}
               >
-                <div className={styles.cardHex}>
+                <div className={styles.cardPortrait}>
                   <span>{arch.icon}</span>
                 </div>
                 <div className={styles.cardInfo}>
@@ -466,8 +466,8 @@ function ClassDetailContent({
       {/* Portrait + name */}
       <div className={styles.portraitArea}>
         <div
-          className={styles.hexPortrait}
-          style={{ boxShadow: `0 0 20px ${arch.color}33` }}
+          className={styles.portrait}
+          style={{ boxShadow: `0 0 12px ${arch.color}33` }}
         >
           <span className={styles.portraitIcon}>{arch.icon}</span>
         </div>
