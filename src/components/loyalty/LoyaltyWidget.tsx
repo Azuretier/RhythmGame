@@ -148,25 +148,22 @@ export default function LoyaltyWidget() {
               </span>
               {/* Hover progress bar popup */}
               {hoveredGroup === group.groupId && group.tiers.length > 1 && (() => {
-                // Segment-aware fill: each tier = equal visual segment
+                // Fill aligned with space-between labels: N labels → (N-1) spans
                 const count = group.tiers.length;
                 let fillPct = 0;
-                if (combinedScore >= group.maxScore && group.maxScore !== Infinity) {
-                  fillPct = 100; // fully completed group
+                if (combinedScore < group.tiers[0].minScore) {
+                  fillPct = 0;
+                } else if (combinedScore >= group.tiers[count - 1].minScore) {
+                  fillPct = 100; // reached or passed the last tier label
                 } else {
-                  for (let i = 0; i < count; i++) {
-                    const tier = group.tiers[i];
-                    if (combinedScore < tier.minScore) break; // haven't reached this tier
-                    const tierRange = (tier.maxScore === Infinity ? tier.minScore * 2 : tier.maxScore) - tier.minScore + 1;
-                    const segmentSize = 100 / count;
-                    if (combinedScore <= tier.maxScore || tier.maxScore === Infinity) {
-                      // Currently in this tier — partial fill
-                      const progressInTier = (combinedScore - tier.minScore) / tierRange;
-                      fillPct = segmentSize * i + segmentSize * Math.min(1, progressInTier);
+                  const segmentSize = 100 / (count - 1);
+                  for (let i = 0; i < count - 1; i++) {
+                    if (combinedScore >= group.tiers[i].minScore && combinedScore < group.tiers[i + 1].minScore) {
+                      const spanRange = group.tiers[i + 1].minScore - group.tiers[i].minScore;
+                      const progress = (combinedScore - group.tiers[i].minScore) / spanRange;
+                      fillPct = segmentSize * i + segmentSize * progress;
                       break;
                     }
-                    // Completed this tier
-                    fillPct = segmentSize * (i + 1);
                   }
                 }
 
