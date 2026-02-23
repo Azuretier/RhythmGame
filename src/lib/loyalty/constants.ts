@@ -185,6 +185,54 @@ export const SCORE_RANK_TIERS: ScoreRankTier[] = [
 // Legacy alias
 export const LOYALTY_TIERS = SCORE_RANK_TIERS;
 
+// ===== Rank Groups (collapsed view) =====
+export interface RankGroup {
+  groupId: string;         // e.g. 'beat', 'rhythm', 'flow'
+  tiers: ScoreRankTier[];  // sub-tiers within this group
+  color: string;           // representative color (highest sub-tier)
+  icon: string;            // representative icon
+  minScore: number;        // first sub-tier minScore
+  maxScore: number;        // last sub-tier maxScore
+}
+
+/** Collapse SCORE_RANK_TIERS into rank groups for display */
+export function getRankGroups(): RankGroup[] {
+  const groupMap = new Map<string, ScoreRankTier[]>();
+  const groupOrder: string[] = [];
+
+  for (const tier of SCORE_RANK_TIERS) {
+    // Extract group name: 'beat_1' → 'beat', 'unranked' → 'unranked', 'flow' → 'flow'
+    const groupId = tier.id.replace(/_\d+$/, '');
+    if (!groupMap.has(groupId)) {
+      groupMap.set(groupId, []);
+      groupOrder.push(groupId);
+    }
+    groupMap.get(groupId)!.push(tier);
+  }
+
+  return groupOrder.map((groupId) => {
+    const tiers = groupMap.get(groupId)!;
+    const last = tiers[tiers.length - 1];
+    return {
+      groupId,
+      tiers,
+      color: last.color,
+      icon: last.icon,
+      minScore: tiers[0].minScore,
+      maxScore: last.maxScore,
+    };
+  });
+}
+
+/** Get the rank group that contains the current tier */
+export function getCurrentRankGroup(score: number): RankGroup {
+  const groups = getRankGroups();
+  for (let i = groups.length - 1; i >= 0; i--) {
+    if (score >= groups[i].minScore) return groups[i];
+  }
+  return groups[0];
+}
+
 // XP rewards for daily engagement
 export const XP_REWARDS = {
   dailyVisit: 10,

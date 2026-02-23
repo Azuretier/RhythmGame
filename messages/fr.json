@@ -516,6 +516,16 @@
       "gravity_3": "Gravity Ⅲ",
       "flow": "Flow"
     },
+    "tierGroups": {
+      "unranked": "Non classé",
+      "beat": "Beat",
+      "rhythm": "Rhythm",
+      "melody": "Melody",
+      "harmony": "Harmony",
+      "maestro": "Maestro",
+      "gravity": "Gravity",
+      "flow": "Flow"
+    },
     "stats": {
       "bestScore": "MEILLEUR SCORE",
       "games": "PARTIES",

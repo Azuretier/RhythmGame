@@ -165,6 +165,32 @@ export class MinecraftBoardManager {
     return { roomCode };
   }
 
+  transferPlayer(oldPlayerId: string, newPlayerId: string): void {
+    const roomCode = this.playerRoomMap.get(oldPlayerId);
+    if (!roomCode) return;
+    const room = this.rooms.get(roomCode);
+    if (!room) return;
+    const player = room.players.get(oldPlayerId);
+    if (!player) return;
+
+    player.id = newPlayerId;
+    player.connected = true;
+    room.players.delete(oldPlayerId);
+    room.players.set(newPlayerId, player);
+    this.playerRoomMap.delete(oldPlayerId);
+    this.playerRoomMap.set(newPlayerId, roomCode);
+    if (room.hostId === oldPlayerId) room.hostId = newPlayerId;
+  }
+
+  markReconnected(playerId: string): void {
+    const roomCode = this.playerRoomMap.get(playerId);
+    if (!roomCode) return;
+    const room = this.rooms.get(roomCode);
+    if (!room) return;
+    const player = room.players.get(playerId);
+    if (player) player.connected = true;
+  }
+
   // === Game Start ===
 
   startGame(playerId: string): { success: boolean; error?: string; gameSeed?: number } {
