@@ -213,45 +213,62 @@
   opacity: 1;
 }
 
-/* Hover tooltip */
-.miniTooltip {
+/* Hover graph popup */
+.tierGraphPopup {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
-  min-width: 140px;
-  padding: 8px 10px;
-  background: rgba(20, 20, 30, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  width: 360px;
+  padding: 16px 20px 12px;
+  background: rgba(12, 12, 22, 0.96);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  animation: graphFadeIn 0.18s ease-out;
 }
 
-.miniTooltipRow {
+@keyframes graphFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.tierGraphHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 4px 0;
-  font-size: 0.6rem;
-  opacity: 0.5;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.miniTooltipRow.tooltipActive {
-  opacity: 1;
+.tierGraphIcon {
+  font-size: 1.1rem;
+}
+
+.tierGraphTitle {
+  font-size: 0.7rem;
   font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
-.miniTooltipRow.tooltipDone {
-  opacity: 0.35;
-}
-
-.miniTooltipXP {
-  font-size: 0.5rem;
-  opacity: 0.5;
-  font-variant-numeric: tabular-nums;
+.tierGraphSvg {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* Stats grid */

@@ -146,21 +146,98 @@ export default function LoyaltyWidget() {
               <span className={styles.miniStepName}>
                 {t(`tierGroups.${group.groupId}`)}
               </span>
-              {/* Hover tooltip with sub-tier details */}
-              {hoveredGroup === group.groupId && group.tiers.length > 1 && (
-                <div className={styles.miniTooltip}>
-                  {group.tiers.map((tier) => {
-                    const isTierActive = tier.id === currentTier.id;
-                    const isTierDone = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
-                    return (
-                      <div key={tier.id} className={`${styles.miniTooltipRow} ${isTierActive ? styles.tooltipActive : ''} ${isTierDone ? styles.tooltipDone : ''}`}>
-                        <span style={{ color: tier.color }}>{t(`tiers.${tier.id}`)}</span>
-                        <span className={styles.miniTooltipXP}>{formatScoreCompact(tier.minScore)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {/* Hover line-graph widget */}
+              {hoveredGroup === group.groupId && group.tiers.length > 1 && (() => {
+                const count = group.tiers.length;
+                const svgW = 320;
+                const svgH = 120;
+                const padX = 40;
+                const padTop = 24;
+                const padBot = 34;
+                const graphH = svgH - padTop - padBot;
+                const stepX = (svgW - padX * 2) / (count - 1);
+
+                return (
+                  <div className={styles.tierGraphPopup}>
+                    <div className={styles.tierGraphHeader}>
+                      <span className={styles.tierGraphIcon} style={{ color: group.color }}>{group.icon}</span>
+                      <span className={styles.tierGraphTitle}>{t(`tierGroups.${group.groupId}`)}</span>
+                    </div>
+                    <svg
+                      viewBox={`0 0 ${svgW} ${svgH}`}
+                      className={styles.tierGraphSvg}
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      {/* Connecting line */}
+                      <polyline
+                        points={group.tiers.map((_, i) => {
+                          const x = padX + i * stepX;
+                          const y = padTop + graphH - (i / (count - 1)) * graphH;
+                          return `${x},${y}`;
+                        }).join(' ')}
+                        fill="none"
+                        stroke={group.color}
+                        strokeWidth="2"
+                        strokeOpacity="0.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      {/* Gradient fill under line */}
+                      <defs>
+                        <linearGradient id={`grad-${group.groupId}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={group.color} stopOpacity="0.2" />
+                          <stop offset="100%" stopColor={group.color} stopOpacity="0" />
+                        </linearGradient>
+                      </defs>
+                      <polygon
+                        points={[
+                          ...group.tiers.map((_, i) => {
+                            const x = padX + i * stepX;
+                            const y = padTop + graphH - (i / (count - 1)) * graphH;
+                            return `${x},${y}`;
+                          }),
+                          `${padX + (count - 1) * stepX},${padTop + graphH}`,
+                          `${padX},${padTop + graphH}`,
+                        ].join(' ')}
+                        fill={`url(#grad-${group.groupId})`}
+                      />
+                      {/* Data points + labels */}
+                      {group.tiers.map((tier, i) => {
+                        const x = padX + i * stepX;
+                        const y = padTop + graphH - (i / (count - 1)) * graphH;
+                        const isTierActive = tier.id === currentTier.id;
+                        const isTierDone = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
+                        const dotOpacity = isTierActive ? 1 : isTierDone ? 0.4 : 0.6;
+                        return (
+                          <g key={tier.id}>
+                            {/* Active ring */}
+                            {isTierActive && (
+                              <circle cx={x} cy={y} r="10" fill="none" stroke={tier.color} strokeWidth="1.5" strokeOpacity="0.4">
+                                <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite" />
+                                <animate attributeName="stroke-opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite" />
+                              </circle>
+                            )}
+                            {/* Dot */}
+                            <circle cx={x} cy={y} r={isTierActive ? 5 : 4} fill={tier.color} fillOpacity={dotOpacity} />
+                            {/* Check for done */}
+                            {isTierDone && (
+                              <text x={x} y={y + 3.5} textAnchor="middle" fontSize="7" fill="#fff" fillOpacity="0.8">✓</text>
+                            )}
+                            {/* Tier name (above) */}
+                            <text x={x} y={y - 10} textAnchor="middle" fontSize="8" fill="#fff" fillOpacity={isTierActive ? 0.95 : 0.5} fontWeight={isTierActive ? 600 : 400}>
+                              {t(`tiers.${tier.id}`)}
+                            </text>
+                            {/* Score (below graph) */}
+                            <text x={x} y={svgH - 6} textAnchor="middle" fontSize="7" fill="#fff" fillOpacity="0.3" fontFamily="monospace">
+                              {formatScoreCompact(tier.minScore)}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}
