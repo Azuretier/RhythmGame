@@ -14,6 +14,7 @@ import {
   getRankGroups,
   recordDailyVisit,
   syncGameplayStats,
+  SCORE_RANK_TIERS,
 } from '@/lib/loyalty';
 import type { ScoreRankingState } from '@/lib/loyalty';
 import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
@@ -52,6 +53,8 @@ export default function LoyaltyWidget() {
   const { totalScore, bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
+  const currentTierIndex = SCORE_RANK_TIERS.indexOf(currentTier);
+  const nextTier = currentTierIndex < SCORE_RANK_TIERS.length - 1 ? SCORE_RANK_TIERS[currentTierIndex + 1] : null;
   const progress = scoreProgress(combinedScore);
   const nextTierScore = scoreToNextTier(combinedScore);
 
@@ -109,21 +112,44 @@ export default function LoyaltyWidget() {
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className={styles.progressRow}>
-        <div className={styles.scoreLabel} style={{ marginBottom: 8 }}>{t('totalScore')}</div>
+      {/* Score Gauge Section — 4 rows */}
+      <div className={styles.gaugeSection}>
+        {/* Row 1: TOTAL SCORE label + big score + next rank requirement */}
+        <div className={styles.gaugeRow1}>
+          <div className={styles.gaugeHeaderLeft}>
+            <span className={styles.gaugeLabel}>{t('totalScore')}</span>
+            <span className={styles.gaugeBigScore}>{formatScoreCompact(combinedScore)}</span>
+          </div>
+          <span className={styles.gaugeNextReq}>
+            {nextTierScore !== null
+              ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
+              : t('maxTier')}
+          </span>
+        </div>
+
+        {/* Row 2: Current rank (left) — Next rank (right) */}
+        <div className={styles.gaugeRow2}>
+          <span className={styles.gaugeRankCurrent} style={{ color: currentTier.color }}>
+            {currentTier.icon} {t(`tiers.${currentTier.id}`)}
+          </span>
+          <span className={styles.gaugeRankNext} style={nextTier ? { color: nextTier.color } : undefined}>
+            {nextTier ? `${nextTier.icon} ${t(`tiers.${nextTier.id}`)}` : '—'}
+          </span>
+        </div>
+
+        {/* Row 3: Gauge bar */}
         <div className={styles.progressBar}>
           <div
             className={styles.progressFill}
             style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})` }}
           />
         </div>
-        <div className={styles.progressLabels}>
-          <span>{formatScoreCompact(combinedScore)}</span>
-          <span>
-            {nextTierScore !== null
-              ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
-              : t('maxTier')}
+
+        {/* Row 4: Score markers for current and next tier */}
+        <div className={styles.gaugeRow4}>
+          <span className={styles.gaugeScore}>{formatScoreCompact(currentTier.minScore)}</span>
+          <span className={styles.gaugeScore}>
+            {nextTier ? formatScoreCompact(nextTier.minScore) : '∞'}
           </span>
         </div>
       </div>
