@@ -1,27 +1,46 @@
 // ===== Skill Tree Types =====
 
-export type SkillCategory = 'speed' | 'power' | 'technique' | 'rhythm' | 'survival';
+/** Archetypes — each has a unique branching skill tree */
+export type Archetype = 'striker' | 'guardian' | 'virtuoso' | 'trickster';
 
 export interface SkillNode {
   id: string;
-  category: SkillCategory;
+  archetype: Archetype;
   /** i18n key suffix for name (used as skillTree.nodes.<nameKey>) */
   nameKey: string;
   /** i18n key suffix for description */
   descKey: string;
   /** Icon identifier for the node */
   icon: string;
-  /** Skill point cost to unlock */
+  /** Skill point cost per level */
   cost: number;
   /** Maximum upgrade level */
   maxLevel: number;
   /** IDs of prerequisite skill nodes (must be fully unlocked) */
   requires: string[];
-  /** Position in the tree grid (row, col) for visual layout */
+  /** Which page this node appears on (0-indexed) */
+  page: number;
+  /** Position within the page grid (row, col — 3 columns: 0, 1, 2) */
   position: { row: number; col: number };
 }
 
+export interface ArchetypeMeta {
+  id: Archetype;
+  /** i18n key suffix (skillTree.archetypes.<nameKey>) */
+  nameKey: string;
+  /** i18n key suffix for tagline */
+  descKey: string;
+  /** Accent color for this archetype */
+  color: string;
+  /** Icon/emoji */
+  icon: string;
+  /** Number of pages in this archetype's tree */
+  pageCount: number;
+}
+
 export interface SkillTreeState {
+  /** Currently selected archetype (null = not yet chosen) */
+  archetype: Archetype | null;
   /** Skill points available to spend */
   skillPoints: number;
   /** Total skill points ever earned */

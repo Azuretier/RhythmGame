@@ -1,200 +1,483 @@
-import type { SkillNode } from './types';
+import type { SkillNode, ArchetypeMeta, Archetype } from './types';
 
 /**
- * Skill tree node definitions.
+ * Archetype metadata.
  *
- * The tree has 5 branches (categories):
- *  - speed:     Drop speed & soft drop bonuses
- *  - power:     Score multipliers & line clear bonuses
- *  - technique: T-Spin & combo bonuses
- *  - rhythm:    Beat timing & perfect beat rewards
- *  - survival:  Board tolerance & recovery aids
- *
- * Layout: each category occupies a column (0-4), nodes flow downward (rows).
- * Top node in each column has no prerequisites; deeper nodes require the one above.
+ * Each archetype has a unique colour, icon, and personality.
+ * - Striker:   aggressive scorer — red / fire
+ * - Guardian:  resilient survivor — green / shield
+ * - Virtuoso:  technical precision — purple / target
+ * - Trickster: speed & disruption — cyan / bolt
  */
-export const SKILL_NODES: SkillNode[] = [
-  // ===== Speed (column 0) =====
+export const ARCHETYPES: ArchetypeMeta[] = [
   {
-    id: 'speed_drop',
-    category: 'speed',
-    nameKey: 'speedDrop',
-    descKey: 'speedDropDesc',
-    icon: 'bolt',
-    cost: 1,
-    maxLevel: 3,
-    requires: [],
-    position: { row: 0, col: 0 },
+    id: 'striker',
+    nameKey: 'striker',
+    descKey: 'strikerDesc',
+    color: '#EF5350',
+    icon: '\uD83D\uDD25',
+    pageCount: 3,
   },
   {
-    id: 'speed_soft',
-    category: 'speed',
-    nameKey: 'speedSoft',
-    descKey: 'speedSoftDesc',
-    icon: 'arrow-down',
-    cost: 2,
-    maxLevel: 3,
-    requires: ['speed_drop'],
-    position: { row: 1, col: 0 },
+    id: 'guardian',
+    nameKey: 'guardian',
+    descKey: 'guardianDesc',
+    color: '#66BB6A',
+    icon: '\uD83D\uDEE1\uFE0F',
+    pageCount: 3,
   },
   {
-    id: 'speed_das',
-    category: 'speed',
-    nameKey: 'speedDas',
-    descKey: 'speedDasDesc',
-    icon: 'fast-forward',
-    cost: 3,
-    maxLevel: 2,
-    requires: ['speed_soft'],
-    position: { row: 2, col: 0 },
+    id: 'virtuoso',
+    nameKey: 'virtuoso',
+    descKey: 'virtuosoDesc',
+    color: '#AB47BC',
+    icon: '\uD83C\uDFAF',
+    pageCount: 3,
   },
+  {
+    id: 'trickster',
+    nameKey: 'trickster',
+    descKey: 'tricksterDesc',
+    color: '#4FC3F7',
+    icon: '\u26A1',
+    pageCount: 3,
+  },
+];
 
-  // ===== Power (column 1) =====
+// =========================================================
+//  Skill nodes — unique trees per archetype
+//
+//  Grid layout per page: 3 columns (0-2), rows top-down.
+//  Connection lines are drawn between requires → child.
+// =========================================================
+
+export const SKILL_NODES: SkillNode[] = [
+  // =====================================================
+  //  STRIKER — aggressive V-shape branching
+  //
+  //  Page 0:         [score_amp]
+  //                  /         \
+  //          [line_surge]   [combo_ignite]
+  //
+  //  Page 1:   [tetris_force]  [chain_fire]  [fever_spark]
+  //                      \        |       /
+  //  Page 2:           [devastator]  [overdrive]
+  // =====================================================
   {
-    id: 'power_score',
-    category: 'power',
-    nameKey: 'powerScore',
-    descKey: 'powerScoreDesc',
+    id: 'stk_score_amp',
+    archetype: 'striker',
+    nameKey: 'stkScoreAmp',
+    descKey: 'stkScoreAmpDesc',
     icon: 'gem',
     cost: 1,
     maxLevel: 3,
     requires: [],
+    page: 0,
     position: { row: 0, col: 1 },
   },
   {
-    id: 'power_lines',
-    category: 'power',
-    nameKey: 'powerLines',
-    descKey: 'powerLinesDesc',
+    id: 'stk_line_surge',
+    archetype: 'striker',
+    nameKey: 'stkLineSurge',
+    descKey: 'stkLineSurgeDesc',
     icon: 'layers',
-    cost: 2,
-    maxLevel: 3,
-    requires: ['power_score'],
-    position: { row: 1, col: 1 },
-  },
-  {
-    id: 'power_tetris',
-    category: 'power',
-    nameKey: 'powerTetris',
-    descKey: 'powerTetrisDesc',
-    icon: 'star',
-    cost: 3,
-    maxLevel: 2,
-    requires: ['power_lines'],
-    position: { row: 2, col: 1 },
-  },
-
-  // ===== Technique (column 2) =====
-  {
-    id: 'tech_tspin',
-    category: 'technique',
-    nameKey: 'techTSpin',
-    descKey: 'techTSpinDesc',
-    icon: 'spin',
     cost: 1,
     maxLevel: 3,
-    requires: [],
-    position: { row: 0, col: 2 },
+    requires: ['stk_score_amp'],
+    page: 0,
+    position: { row: 1, col: 0 },
   },
   {
-    id: 'tech_combo',
-    category: 'technique',
-    nameKey: 'techCombo',
-    descKey: 'techComboDesc',
+    id: 'stk_combo_ignite',
+    archetype: 'striker',
+    nameKey: 'stkComboIgnite',
+    descKey: 'stkComboIgniteDesc',
     icon: 'flame',
-    cost: 2,
+    cost: 1,
     maxLevel: 3,
-    requires: ['tech_tspin'],
+    requires: ['stk_score_amp'],
+    page: 0,
     position: { row: 1, col: 2 },
   },
   {
-    id: 'tech_backtoback',
-    category: 'technique',
-    nameKey: 'techBackToBack',
-    descKey: 'techBackToBackDesc',
-    icon: 'chain',
-    cost: 3,
-    maxLevel: 2,
-    requires: ['tech_combo'],
-    position: { row: 2, col: 2 },
-  },
-
-  // ===== Rhythm (column 3) =====
-  {
-    id: 'rhythm_timing',
-    category: 'rhythm',
-    nameKey: 'rhythmTiming',
-    descKey: 'rhythmTimingDesc',
-    icon: 'note',
-    cost: 1,
-    maxLevel: 3,
-    requires: [],
-    position: { row: 0, col: 3 },
-  },
-  {
-    id: 'rhythm_perfect',
-    category: 'rhythm',
-    nameKey: 'rhythmPerfect',
-    descKey: 'rhythmPerfectDesc',
-    icon: 'sparkle',
+    id: 'stk_tetris_force',
+    archetype: 'striker',
+    nameKey: 'stkTetrisForce',
+    descKey: 'stkTetrisForceDesc',
+    icon: 'star',
     cost: 2,
-    maxLevel: 3,
-    requires: ['rhythm_timing'],
-    position: { row: 1, col: 3 },
+    maxLevel: 2,
+    requires: ['stk_line_surge'],
+    page: 1,
+    position: { row: 0, col: 0 },
   },
   {
-    id: 'rhythm_fever',
-    category: 'rhythm',
-    nameKey: 'rhythmFever',
-    descKey: 'rhythmFeverDesc',
-    icon: 'fire',
-    cost: 3,
+    id: 'stk_chain_fire',
+    archetype: 'striker',
+    nameKey: 'stkChainFire',
+    descKey: 'stkChainFireDesc',
+    icon: 'chain',
+    cost: 2,
     maxLevel: 2,
-    requires: ['rhythm_perfect'],
-    position: { row: 2, col: 3 },
+    requires: ['stk_line_surge', 'stk_combo_ignite'],
+    page: 1,
+    position: { row: 0, col: 1 },
+  },
+  {
+    id: 'stk_fever_spark',
+    archetype: 'striker',
+    nameKey: 'stkFeverSpark',
+    descKey: 'stkFeverSparkDesc',
+    icon: 'fire',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['stk_combo_ignite'],
+    page: 1,
+    position: { row: 0, col: 2 },
+  },
+  {
+    id: 'stk_devastator',
+    archetype: 'striker',
+    nameKey: 'stkDevastator',
+    descKey: 'stkDevastatorDesc',
+    icon: 'crown',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['stk_tetris_force', 'stk_chain_fire'],
+    page: 2,
+    position: { row: 0, col: 0 },
+  },
+  {
+    id: 'stk_overdrive',
+    archetype: 'striker',
+    nameKey: 'stkOverdrive',
+    descKey: 'stkOverdriveDesc',
+    icon: 'sparkle',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['stk_chain_fire', 'stk_fever_spark'],
+    page: 2,
+    position: { row: 0, col: 2 },
   },
 
-  // ===== Survival (column 4) =====
+  // =====================================================
+  //  GUARDIAN — defensive funnel pattern
+  //
+  //  Page 0:           [fortify]
+  //                       |
+  //                 [board_shield]
+  //
+  //  Page 1:   [last_stand]  [recovery]  [steady_hand]
+  //                    \        |       /
+  //  Page 2:            [sanctuary]
+  // =====================================================
   {
-    id: 'survival_shield',
-    category: 'survival',
-    nameKey: 'survivalShield',
-    descKey: 'survivalShieldDesc',
+    id: 'grd_fortify',
+    archetype: 'guardian',
+    nameKey: 'grdFortify',
+    descKey: 'grdFortifyDesc',
     icon: 'shield',
     cost: 1,
     maxLevel: 3,
     requires: [],
-    position: { row: 0, col: 4 },
+    page: 0,
+    position: { row: 0, col: 1 },
   },
   {
-    id: 'survival_recovery',
-    category: 'survival',
-    nameKey: 'survivalRecovery',
-    descKey: 'survivalRecoveryDesc',
+    id: 'grd_board_shield',
+    archetype: 'guardian',
+    nameKey: 'grdBoardShield',
+    descKey: 'grdBoardShieldDesc',
+    icon: 'heart',
+    cost: 1,
+    maxLevel: 3,
+    requires: ['grd_fortify'],
+    page: 0,
+    position: { row: 1, col: 1 },
+  },
+  {
+    id: 'grd_last_stand',
+    archetype: 'guardian',
+    nameKey: 'grdLastStand',
+    descKey: 'grdLastStandDesc',
+    icon: 'crown',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['grd_board_shield'],
+    page: 1,
+    position: { row: 0, col: 0 },
+  },
+  {
+    id: 'grd_recovery',
+    archetype: 'guardian',
+    nameKey: 'grdRecovery',
+    descKey: 'grdRecoveryDesc',
     icon: 'heart',
     cost: 2,
-    maxLevel: 3,
-    requires: ['survival_shield'],
-    position: { row: 1, col: 4 },
+    maxLevel: 2,
+    requires: ['grd_board_shield'],
+    page: 1,
+    position: { row: 0, col: 1 },
   },
   {
-    id: 'survival_laststand',
-    category: 'survival',
-    nameKey: 'survivalLastStand',
-    descKey: 'survivalLastStandDesc',
+    id: 'grd_steady_hand',
+    archetype: 'guardian',
+    nameKey: 'grdSteadyHand',
+    descKey: 'grdSteadyHandDesc',
+    icon: 'note',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['grd_board_shield'],
+    page: 1,
+    position: { row: 0, col: 2 },
+  },
+  {
+    id: 'grd_sanctuary',
+    archetype: 'guardian',
+    nameKey: 'grdSanctuary',
+    descKey: 'grdSanctuaryDesc',
+    icon: 'sparkle',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['grd_last_stand', 'grd_recovery', 'grd_steady_hand'],
+    page: 2,
+    position: { row: 0, col: 1 },
+  },
+
+  // =====================================================
+  //  VIRTUOSO — wide diamond shape
+  //
+  //  Page 0:       [precision]
+  //                /         \
+  //       [tspin_adept]   [beat_sync]
+  //
+  //  Page 1:  [tspin_master]  [harmonic]  [perfect_rhythm]
+  //
+  //  Page 2:      [grand_master]  [crescendo]
+  // =====================================================
+  {
+    id: 'vrt_precision',
+    archetype: 'virtuoso',
+    nameKey: 'vrtPrecision',
+    descKey: 'vrtPrecisionDesc',
+    icon: 'gem',
+    cost: 1,
+    maxLevel: 3,
+    requires: [],
+    page: 0,
+    position: { row: 0, col: 1 },
+  },
+  {
+    id: 'vrt_tspin_adept',
+    archetype: 'virtuoso',
+    nameKey: 'vrtTSpinAdept',
+    descKey: 'vrtTSpinAdeptDesc',
+    icon: 'spin',
+    cost: 1,
+    maxLevel: 3,
+    requires: ['vrt_precision'],
+    page: 0,
+    position: { row: 1, col: 0 },
+  },
+  {
+    id: 'vrt_beat_sync',
+    archetype: 'virtuoso',
+    nameKey: 'vrtBeatSync',
+    descKey: 'vrtBeatSyncDesc',
+    icon: 'note',
+    cost: 1,
+    maxLevel: 3,
+    requires: ['vrt_precision'],
+    page: 0,
+    position: { row: 1, col: 2 },
+  },
+  {
+    id: 'vrt_tspin_master',
+    archetype: 'virtuoso',
+    nameKey: 'vrtTSpinMaster',
+    descKey: 'vrtTSpinMasterDesc',
+    icon: 'spin',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['vrt_tspin_adept'],
+    page: 1,
+    position: { row: 0, col: 0 },
+  },
+  {
+    id: 'vrt_harmonic',
+    archetype: 'virtuoso',
+    nameKey: 'vrtHarmonic',
+    descKey: 'vrtHarmonicDesc',
+    icon: 'sparkle',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['vrt_tspin_adept', 'vrt_beat_sync'],
+    page: 1,
+    position: { row: 0, col: 1 },
+  },
+  {
+    id: 'vrt_perfect_rhythm',
+    archetype: 'virtuoso',
+    nameKey: 'vrtPerfectRhythm',
+    descKey: 'vrtPerfectRhythmDesc',
+    icon: 'fire',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['vrt_beat_sync'],
+    page: 1,
+    position: { row: 0, col: 2 },
+  },
+  {
+    id: 'vrt_grand_master',
+    archetype: 'virtuoso',
+    nameKey: 'vrtGrandMaster',
+    descKey: 'vrtGrandMasterDesc',
     icon: 'crown',
     cost: 3,
+    maxLevel: 1,
+    requires: ['vrt_tspin_master', 'vrt_harmonic'],
+    page: 2,
+    position: { row: 0, col: 0 },
+  },
+  {
+    id: 'vrt_crescendo',
+    archetype: 'virtuoso',
+    nameKey: 'vrtCrescendo',
+    descKey: 'vrtCrescendoDesc',
+    icon: 'star',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['vrt_harmonic', 'vrt_perfect_rhythm'],
+    page: 2,
+    position: { row: 0, col: 2 },
+  },
+
+  // =====================================================
+  //  TRICKSTER — parallel double-path
+  //
+  //  Page 0:        [quick_hands]
+  //                 /           \
+  //         [das_boost]     [soft_rush]
+  //
+  //  Page 1:  [hyper_speed]        [ghost_step]
+  //                |                    |
+  //  Page 2:  [time_warp]    [chaos_master]   [phantom]
+  // =====================================================
+  {
+    id: 'trk_quick_hands',
+    archetype: 'trickster',
+    nameKey: 'trkQuickHands',
+    descKey: 'trkQuickHandsDesc',
+    icon: 'bolt',
+    cost: 1,
+    maxLevel: 3,
+    requires: [],
+    page: 0,
+    position: { row: 0, col: 1 },
+  },
+  {
+    id: 'trk_das_boost',
+    archetype: 'trickster',
+    nameKey: 'trkDasBoost',
+    descKey: 'trkDasBoostDesc',
+    icon: 'fast-forward',
+    cost: 1,
+    maxLevel: 3,
+    requires: ['trk_quick_hands'],
+    page: 0,
+    position: { row: 1, col: 0 },
+  },
+  {
+    id: 'trk_soft_rush',
+    archetype: 'trickster',
+    nameKey: 'trkSoftRush',
+    descKey: 'trkSoftRushDesc',
+    icon: 'arrow-down',
+    cost: 1,
+    maxLevel: 3,
+    requires: ['trk_quick_hands'],
+    page: 0,
+    position: { row: 1, col: 2 },
+  },
+  {
+    id: 'trk_hyper_speed',
+    archetype: 'trickster',
+    nameKey: 'trkHyperSpeed',
+    descKey: 'trkHyperSpeedDesc',
+    icon: 'bolt',
+    cost: 2,
     maxLevel: 2,
-    requires: ['survival_recovery'],
-    position: { row: 2, col: 4 },
+    requires: ['trk_das_boost'],
+    page: 1,
+    position: { row: 0, col: 0 },
+  },
+  {
+    id: 'trk_ghost_step',
+    archetype: 'trickster',
+    nameKey: 'trkGhostStep',
+    descKey: 'trkGhostStepDesc',
+    icon: 'sparkle',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['trk_soft_rush'],
+    page: 1,
+    position: { row: 0, col: 2 },
+  },
+  {
+    id: 'trk_time_warp',
+    archetype: 'trickster',
+    nameKey: 'trkTimeWarp',
+    descKey: 'trkTimeWarpDesc',
+    icon: 'spin',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['trk_hyper_speed'],
+    page: 2,
+    position: { row: 0, col: 0 },
+  },
+  {
+    id: 'trk_chaos_master',
+    archetype: 'trickster',
+    nameKey: 'trkChaosMaster',
+    descKey: 'trkChaosMasterDesc',
+    icon: 'crown',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['trk_hyper_speed', 'trk_ghost_step'],
+    page: 2,
+    position: { row: 0, col: 1 },
+  },
+  {
+    id: 'trk_phantom',
+    archetype: 'trickster',
+    nameKey: 'trkPhantom',
+    descKey: 'trkPhantomDesc',
+    icon: 'fire',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['trk_ghost_step'],
+    page: 2,
+    position: { row: 0, col: 2 },
   },
 ];
 
-/** Total number of skill points needed to max all nodes */
-export const MAX_TOTAL_POINTS = SKILL_NODES.reduce(
-  (sum, node) => sum + node.cost * node.maxLevel,
-  0
-);
+/** Helper: get nodes for a specific archetype */
+export function getNodesForArchetype(archetype: string): SkillNode[] {
+  return SKILL_NODES.filter((n) => n.archetype === archetype);
+}
+
+/** Helper: get archetype metadata by id */
+export function getArchetypeMeta(id: Archetype): ArchetypeMeta | undefined {
+  return ARCHETYPES.find((a) => a.id === id);
+}
+
+/** Total number of skill points needed to max all nodes of an archetype */
+export function getMaxPointsForArchetype(archetype: string): number {
+  return getNodesForArchetype(archetype).reduce(
+    (sum, node) => sum + node.cost * node.maxLevel,
+    0
+  );
+}
 
 /** Points awarded per game played */
 export const POINTS_PER_GAME = 1;

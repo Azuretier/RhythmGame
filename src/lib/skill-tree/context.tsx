@@ -1,10 +1,11 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import type { SkillTreeState } from './types';
+import type { SkillTreeState, Archetype } from './types';
 import {
   loadSkillTreeState,
   saveSkillTreeState,
+  selectArchetype as selectArchetypeFn,
   unlockSkill as unlockSkillFn,
   resetSkills as resetSkillsFn,
   awardGamePoints as awardGamePointsFn,
@@ -19,6 +20,8 @@ import { isGoogleLinked } from '@/lib/google-sync/service';
 
 interface SkillTreeContextType {
   state: SkillTreeState;
+  /** Select (or switch) archetype — resets skills and refunds points */
+  selectArchetype: (archetype: Archetype) => void;
   /** Unlock or upgrade a skill by one level */
   unlockSkill: (skillId: string) => boolean;
   /** Reset all skills, refunding spent points */
@@ -66,16 +69,30 @@ export function SkillTreeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const unlockSkill = useCallback((skillId: string): boolean => {
-    const current = loadSkillTreeState();
-    if (!canUnlockSkillFn(current, skillId)) return false;
+  const selectArchetype = useCallback(
+    (archetype: Archetype) => {
+      const current = loadSkillTreeState();
+      const updated = selectArchetypeFn(current, archetype);
+      setState(updated);
+      saveSkillTreeState(updated);
+      syncToCloud(updated);
+    },
+    [syncToCloud]
+  );
 
-    const updated = unlockSkillFn(current, skillId);
-    setState(updated);
-    saveSkillTreeState(updated);
-    syncToCloud(updated);
-    return true;
-  }, [syncToCloud]);
+  const unlockSkill = useCallback(
+    (skillId: string): boolean => {
+      const current = loadSkillTreeState();
+      if (!canUnlockSkillFn(current, skillId)) return false;
+
+      const updated = unlockSkillFn(current, skillId);
+      setState(updated);
+      saveSkillTreeState(updated);
+      syncToCloud(updated);
+      return true;
+    },
+    [syncToCloud]
+  );
 
   const resetAllSkills = useCallback(() => {
     const current = loadSkillTreeState();
@@ -101,13 +118,19 @@ export function SkillTreeProvider({ children }: { children: ReactNode }) {
     syncToCloud(updated);
   }, [syncToCloud]);
 
-  const canUnlock = useCallback((skillId: string) => {
-    return canUnlockSkillFn(state, skillId);
-  }, [state]);
+  const canUnlock = useCallback(
+    (skillId: string) => {
+      return canUnlockSkillFn(state, skillId);
+    },
+    [state]
+  );
 
-  const getLevel = useCallback((skillId: string) => {
-    return getSkillLevelFn(state, skillId);
-  }, [state]);
+  const getLevel = useCallback(
+    (skillId: string) => {
+      return getSkillLevelFn(state, skillId);
+    },
+    [state]
+  );
 
   const totalSpent = getTotalSpentPoints(state);
 
@@ -120,6 +143,7 @@ export function SkillTreeProvider({ children }: { children: ReactNode }) {
     <SkillTreeContext.Provider
       value={{
         state,
+        selectArchetype,
         unlockSkill,
         resetAllSkills,
         awardGamePoints,

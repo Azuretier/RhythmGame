@@ -1,6 +1,7 @@
 /* ======================================
    RPG Dungeon-style Skill Tree
-   Stone frame, medallion nodes, pixel font
+   Archetype-based, branching tree with
+   SVG connections and stone frame
    ====================================== */
 
 .overlay {
@@ -84,10 +85,15 @@
   transition: all 0.15s;
 }
 
-.pageArrow:hover {
+.pageArrow:hover:not(:disabled) {
   color: #bbb;
   border-color: #5a5a6a;
   background: #1e1e38;
+}
+
+.pageArrow:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
 }
 
 .pageBanner {
@@ -106,8 +112,8 @@
   text-transform: uppercase;
 }
 
-/* ---- Category Title ---- */
-.categoryTitle {
+/* ---- Archetype Title ---- */
+.archetypeTitle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,49 +132,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px 16px 16px;
-  min-height: 280px;
+  padding: 16px;
+  min-height: 240px;
+  overflow: hidden;
   background: radial-gradient(ellipse at center, #14142a 0%, #0d0d15 70%);
 }
 
-.treeColumn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* ---- Node Groups ---- */
-.nodeGroup {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Connector line between nodes */
-.connector {
-  width: 3px;
-  height: 30px;
-  background: #2a2a3a;
-  border-radius: 2px;
-  transition: all 0.3s;
-}
-
-.connectorActive {
-  background: var(--cat-color, #4FC3F7);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--cat-color, #4FC3F7) 50%, transparent);
-}
-
-/* ---- Skill Nodes (Medallions) ---- */
-.node {
+.treeCanvas {
   position: relative;
-  width: 70px;
-  height: 70px;
+}
+
+.connectionsSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* ---- Skill Nodes (absolute within treeCanvas) ---- */
+.node {
+  position: absolute;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   background: #1a1a2e;
   border: 3px solid #3a3a4a;
   cursor: pointer;
@@ -176,11 +165,13 @@
   box-shadow:
     inset 0 3px 10px rgba(0, 0, 0, 0.6),
     0 3px 10px rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
 
 .node:hover {
   transform: scale(1.12);
   border-color: #5a5a6a;
+  z-index: 3;
 }
 
 .node_locked {
@@ -216,6 +207,7 @@
 .nodeSelected {
   outline: 2px solid var(--cat-color);
   outline-offset: 4px;
+  z-index: 3;
 }
 
 @keyframes nodePulse {
@@ -232,7 +224,7 @@
 }
 
 .nodeIcon {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   line-height: 1;
 }
 
@@ -242,8 +234,8 @@
 }
 
 .pip {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: #2a2a3a;
   transition: background 0.2s, box-shadow 0.2s;
@@ -254,15 +246,55 @@
   box-shadow: 0 0 4px var(--cat-color, #4FC3F7);
 }
 
-.nodeName {
-  margin-top: 6px;
+/* ---- Archetype Picker Grid ---- */
+.archetypeGrid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+
+.archetypeCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 12px;
+  background: #14142a;
+  border: 2px solid #2a2a3a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.3);
+}
+
+.archetypeCard:hover {
+  border-color: var(--arch-color);
+  box-shadow:
+    inset 0 1px 6px rgba(0, 0, 0, 0.3),
+    0 0 16px color-mix(in srgb, var(--arch-color) 35%, transparent);
+  transform: translateY(-2px);
+}
+
+.archetypeIcon {
+  font-size: 2rem;
+}
+
+.archetypeName {
   font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ddd;
+  letter-spacing: 0.06em;
+}
+
+.archetypeDesc {
   font-size: 0.6rem;
   color: #5a5a6a;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   text-align: center;
-  max-width: 90px;
   line-height: 1.3;
 }
 
@@ -379,49 +411,33 @@
   gap: 10px;
 }
 
-/* Category tab selector */
-.categoryTabs {
+/* Page dots */
+.pageDots {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
 }
 
-.catTab {
-  width: 46px;
-  height: 46px;
+.pageDot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0d0d15;
-  border: 2px solid #2a2a3a;
+  background: #2a2a3a;
+  border: none;
   cursor: pointer;
   transition: all 0.2s;
-  opacity: 0.4;
 }
 
-.catTab:hover {
-  opacity: 0.75;
-  transform: scale(1.1);
+.pageDot:hover {
+  background: #4a4a5a;
 }
 
-.catTabActive {
-  opacity: 1;
-  border-color: var(--tab-color) !important;
-  box-shadow:
-    0 0 14px color-mix(in srgb, var(--tab-color) 45%, transparent),
-    inset 0 0 8px color-mix(in srgb, var(--tab-color) 15%, transparent);
+.pageDotActive {
+  transform: scale(1.3);
+  box-shadow: 0 0 8px currentColor;
 }
 
-.catTabProgress {
-  opacity: 0.65;
-}
-
-.catTabIcon {
-  font-size: 1.25rem;
-}
-
-/* Toolbar (points, reset, close) */
+/* Toolbar (points, archetype switch, reset, close) */
 .toolbar {
   display: flex;
   align-items: center;
@@ -453,6 +469,25 @@
   color: #4a4a5a;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+.switchArchBtn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  background: #15152a;
+  border: 2px solid #2a2a3a;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.switchArchBtn:hover {
+  border-color: #5a5a6a;
+  background: #1e1e38;
 }
 
 .resetBtn {
@@ -572,26 +607,13 @@
     max-height: 95vh;
   }
 
-  .node {
-    width: 60px;
-    height: 60px;
-  }
-
-  .nodeIcon {
-    font-size: 1.3rem;
-  }
-
-  .catTab {
-    width: 40px;
-    height: 40px;
-  }
-
-  .catTabIcon {
-    font-size: 1.1rem;
-  }
-
   .treeArea {
-    min-height: 240px;
-    padding: 16px 12px 12px;
+    min-height: 200px;
+    padding: 12px 8px;
+  }
+
+  .archetypeGrid {
+    gap: 8px;
+    padding: 16px 12px;
   }
 }

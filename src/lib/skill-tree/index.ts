@@ -1,7 +1,16 @@
-export { SKILL_NODES, MAX_TOTAL_POINTS, POINTS_PER_GAME, POINTS_PER_MP_WIN } from './definitions';
+export {
+  SKILL_NODES,
+  ARCHETYPES,
+  getNodesForArchetype,
+  getArchetypeMeta,
+  getMaxPointsForArchetype,
+  POINTS_PER_GAME,
+  POINTS_PER_MP_WIN,
+} from './definitions';
 export {
   loadSkillTreeState,
   saveSkillTreeState,
+  selectArchetype,
   canUnlockSkill,
   unlockSkill,
   resetSkills,
@@ -11,4 +20,4 @@ export {
   getTotalSpentPoints,
 } from './storage';
 export { SkillTreeProvider, useSkillTree } from './context';
-export type { SkillNode, SkillCategory, SkillTreeState } from './types';
+export type { SkillNode, Archetype, ArchetypeMeta, SkillTreeState } from './types';

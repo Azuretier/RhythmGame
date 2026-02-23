@@ -1,10 +1,11 @@
-import type { SkillTreeState } from './types';
+import type { SkillTreeState, Archetype } from './types';
 import { SKILL_NODES, POINTS_PER_GAME, POINTS_PER_MP_WIN } from './definitions';
 
 const STORAGE_KEY = 'rhythmia_skill_tree';
 
 function getDefaultState(): SkillTreeState {
   return {
+    archetype: null,
     skillPoints: 0,
     totalPointsEarned: 0,
     unlockedSkills: {},
@@ -41,11 +42,36 @@ export function saveSkillTreeState(state: SkillTreeState): void {
 }
 
 /**
+ * Select an archetype. Resets all skills and refunds points.
+ */
+export function selectArchetype(
+  state: SkillTreeState,
+  archetype: Archetype
+): SkillTreeState {
+  // Refund any spent points from previous archetype
+  let refunded = 0;
+  for (const node of SKILL_NODES) {
+    const level = state.unlockedSkills[node.id] || 0;
+    refunded += level * node.cost;
+  }
+
+  return {
+    ...state,
+    archetype,
+    skillPoints: state.skillPoints + refunded,
+    unlockedSkills: {},
+  };
+}
+
+/**
  * Check if a skill node can be unlocked (or upgraded) given the current state.
  */
 export function canUnlockSkill(state: SkillTreeState, skillId: string): boolean {
   const node = SKILL_NODES.find((n) => n.id === skillId);
   if (!node) return false;
+
+  // Must match active archetype
+  if (node.archetype !== state.archetype) return false;
 
   const currentLevel = state.unlockedSkills[skillId] || 0;
 
@@ -89,7 +115,6 @@ export function unlockSkill(state: SkillTreeState, skillId: string): SkillTreeSt
  * Reset all skill points — refunds all spent points back to the pool.
  */
 export function resetSkills(state: SkillTreeState): SkillTreeState {
-  // Calculate spent points
   let spent = 0;
   for (const node of SKILL_NODES) {
     const level = state.unlockedSkills[node.id] || 0;
