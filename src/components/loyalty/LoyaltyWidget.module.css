@@ -213,29 +213,27 @@
   opacity: 1;
 }
 
-/* Hover graph popup */
-.tierGraphPopup {
+/* Hover bar popup */
+.tierBarPopup {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
-  width: 360px;
-  padding: 16px 20px 12px;
-  background: rgba(12, 12, 22, 0.96);
-  backdrop-filter: blur(20px);
+  min-width: 200px;
+  padding: 12px 16px;
+  background: rgba(20, 20, 30, 0.95);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  animation: graphFadeIn 0.18s ease-out;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: barPopIn 0.15s ease-out;
 }
 
-@keyframes graphFadeIn {
+@keyframes barPopIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(4px);
+    transform: translateX(-50%) translateY(3px);
   }
 
   to {
@@ -244,31 +242,63 @@
   }
 }
 
-.tierGraphHeader {
+.tierBarHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.tierGraphIcon {
-  font-size: 1.1rem;
-}
-
-.tierGraphTitle {
+  gap: 6px;
+  margin-bottom: 10px;
   font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.7;
 }
 
-.tierGraphSvg {
+.tierBarTitle {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.tierBarLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.tierBarLabel {
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.45;
+  flex: 1;
+  text-align: center;
+}
+
+.tierBarTrack {
   width: 100%;
-  height: auto;
-  display: block;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tierBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tierBarScores {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.tierBarScore {
+  font-size: 0.5rem;
+  opacity: 0.25;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+  text-align: center;
 }
 
 /* Stats grid */

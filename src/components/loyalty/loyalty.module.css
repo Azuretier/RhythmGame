@@ -275,29 +275,27 @@
   opacity: 0.5;
 }
 
-/* Tier hover graph popup */
-.tierGraphPopup {
+/* Tier hover bar popup */
+.tierBarPopup {
   position: absolute;
-  top: calc(100% + 12px);
+  top: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
-  width: 460px;
-  padding: 20px 24px 16px;
-  background: rgba(10, 10, 20, 0.97);
-  backdrop-filter: blur(24px);
+  min-width: 240px;
+  padding: 14px 18px;
+  background: rgba(20, 20, 30, 0.95);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  animation: tierGraphIn 0.2s ease-out;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: barPopIn 0.15s ease-out;
 }
 
-@keyframes tierGraphIn {
+@keyframes barPopIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(6px);
+    transform: translateX(-50%) translateY(3px);
   }
 
   to {
@@ -306,31 +304,63 @@
   }
 }
 
-.tierGraphHeader {
+.tierBarHeader {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.75rem;
 }
 
-.tierGraphIcon {
-  font-size: 1.3rem;
-}
-
-.tierGraphTitle {
-  font-size: 0.8rem;
+.tierBarTitle {
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
-.tierGraphSvg {
+.tierBarLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.tierBarLabel {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.45;
+  flex: 1;
+  text-align: center;
+}
+
+.tierBarTrack {
   width: 100%;
-  height: auto;
-  display: block;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.tierBarFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tierBarScores {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+}
+
+.tierBarScore {
+  font-size: 0.55rem;
+  opacity: 0.25;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+  text-align: center;
 }
 
 /* Streak Display */
@@ -693,8 +723,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .tierGraphPopup {
-    width: 280px;
-    padding: 14px 16px 10px;
+  .tierBarPopup {
+    min-width: 180px;
   }
 }

@@ -263,110 +263,40 @@ export default function LoyaltyDashboard() {
                   <div className={styles.tierStepXP}>
                     {group.maxScore === Infinity ? `${formatScoreCompact(group.minScore)}+` : `${formatScoreCompact(group.minScore)} – ${formatScoreCompact(group.maxScore)}`}
                   </div>
-                  {/* Hover line-graph widget */}
+                  {/* Hover progress bar popup */}
                   {hoveredGroup === group.groupId && group.tiers.length > 1 && (() => {
-                    const count = group.tiers.length;
-                    const svgW = 420;
-                    const svgH = 140;
-                    const padX = 50;
-                    const padTop = 28;
-                    const padBot = 38;
-                    const graphH = svgH - padTop - padBot;
-                    const stepX = (svgW - padX * 2) / (count - 1);
+                    const groupRange = (group.maxScore === Infinity ? group.tiers[group.tiers.length - 1].minScore * 2 : group.maxScore) - group.minScore;
+                    const fillPct = Math.min(100, Math.max(0, ((combinedScore - group.minScore) / groupRange) * 100));
 
                     return (
-                      <div className={styles.tierGraphPopup}>
-                        <div className={styles.tierGraphHeader}>
-                          <span className={styles.tierGraphIcon} style={{ color: group.color }}>{group.icon}</span>
-                          <span className={styles.tierGraphTitle}>{t(`tierGroups.${group.groupId}`)}</span>
+                      <div className={styles.tierBarPopup}>
+                        <div className={styles.tierBarHeader}>
+                          <span style={{ color: group.color }}>{group.icon}</span>
+                          <span className={styles.tierBarTitle}>{t(`tierGroups.${group.groupId}`)}</span>
                         </div>
-                        <svg
-                          viewBox={`0 0 ${svgW} ${svgH}`}
-                          className={styles.tierGraphSvg}
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          {/* Connecting line */}
-                          <polyline
-                            points={group.tiers.map((_, i) => {
-                              const x = padX + i * stepX;
-                              const y = padTop + graphH - (i / (count - 1)) * graphH;
-                              return `${x},${y}`;
-                            }).join(' ')}
-                            fill="none"
-                            stroke={group.color}
-                            strokeWidth="2.5"
-                            strokeOpacity="0.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          {/* Gradient fill */}
-                          <defs>
-                            <linearGradient id={`dg-${group.groupId}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={group.color} stopOpacity="0.2" />
-                              <stop offset="100%" stopColor={group.color} stopOpacity="0" />
-                            </linearGradient>
-                          </defs>
-                          <polygon
-                            points={[
-                              ...group.tiers.map((_, i) => {
-                                const x = padX + i * stepX;
-                                const y = padTop + graphH - (i / (count - 1)) * graphH;
-                                return `${x},${y}`;
-                              }),
-                              `${padX + (count - 1) * stepX},${padTop + graphH}`,
-                              `${padX},${padTop + graphH}`,
-                            ].join(' ')}
-                            fill={`url(#dg-${group.groupId})`}
-                          />
-                          {/* Horizontal grid lines */}
-                          {[0.25, 0.5, 0.75].map((frac) => (
-                            <line
-                              key={frac}
-                              x1={padX}
-                              x2={svgW - padX}
-                              y1={padTop + graphH * (1 - frac)}
-                              y2={padTop + graphH * (1 - frac)}
-                              stroke="#fff"
-                              strokeOpacity="0.04"
-                              strokeWidth="0.5"
-                            />
+                        {/* Tier labels */}
+                        <div className={styles.tierBarLabels}>
+                          {group.tiers.map((tier) => (
+                            <span key={tier.id} className={styles.tierBarLabel} style={tier.id === currentTier.id ? { color: tier.color, opacity: 1 } : undefined}>
+                              {t(`tiers.${tier.id}`)}
+                            </span>
                           ))}
-                          {/* Data points + labels */}
-                          {group.tiers.map((tier, i) => {
-                            const x = padX + i * stepX;
-                            const y = padTop + graphH - (i / (count - 1)) * graphH;
-                            const isTierActive = tier.id === currentTier.id;
-                            const isTierDone = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
-                            const dotOpacity = isTierActive ? 1 : isTierDone ? 0.4 : 0.6;
-                            return (
-                              <g key={tier.id}>
-                                {/* Vertical guide */}
-                                <line x1={x} x2={x} y1={y} y2={padTop + graphH} stroke="#fff" strokeOpacity="0.06" strokeWidth="0.5" strokeDasharray="2,2" />
-                                {/* Active pulsing ring */}
-                                {isTierActive && (
-                                  <circle cx={x} cy={y} r="10" fill="none" stroke={tier.color} strokeWidth="1.5" strokeOpacity="0.4">
-                                    <animate attributeName="r" values="9;14;9" dur="2s" repeatCount="indefinite" />
-                                    <animate attributeName="stroke-opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite" />
-                                  </circle>
-                                )}
-                                {/* Dot */}
-                                <circle cx={x} cy={y} r={isTierActive ? 6 : 5} fill={tier.color} fillOpacity={dotOpacity} />
-                                {/* Checkmark for completed */}
-                                {isTierDone && (
-                                  <text x={x} y={y + 4} textAnchor="middle" fontSize="8" fill="#fff" fillOpacity="0.8">✓</text>
-                                )}
-                                {/* Tier name (above dot) */}
-                                <text x={x} y={y - 12} textAnchor="middle" fontSize="10" fill="#fff" fillOpacity={isTierActive ? 0.95 : 0.5} fontWeight={isTierActive ? 600 : 400}>
-                                  {t(`tiers.${tier.id}`)}
-                                </text>
-                                {/* Score (below graph baseline) */}
-                                <text x={x} y={svgH - 8} textAnchor="middle" fontSize="8.5" fill="#fff" fillOpacity="0.3" fontFamily="monospace">
-                                  {formatScoreCompact(tier.minScore)}
-                                </text>
-                              </g>
-                            );
-                          })}
-                        </svg>
+                        </div>
+                        {/* Progress bar */}
+                        <div className={styles.tierBarTrack}>
+                          <div
+                            className={styles.tierBarFill}
+                            style={{ width: `${fillPct}%`, background: group.color }}
+                          />
+                        </div>
+                        {/* Score labels */}
+                        <div className={styles.tierBarScores}>
+                          {group.tiers.map((tier) => (
+                            <span key={tier.id} className={styles.tierBarScore}>
+                              {formatScoreCompact(tier.minScore)}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     );
                   })()}
