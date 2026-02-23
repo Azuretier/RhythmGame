@@ -28,6 +28,7 @@ interface BoardRendererProps {
   onMobClick: (mobId: string) => void;
   onPlayerClick: (targetPlayerId: string) => void;
   onMove: (direction: Direction) => void;
+  activeAnomaly?: boolean;
 }
 
 const TILE_SIZE = 40;
@@ -46,6 +47,7 @@ export default function BoardRenderer({
   onMobClick,
   onPlayerClick,
   onMove,
+  activeAnomaly = false,
 }: BoardRendererProps) {
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -245,7 +247,7 @@ export default function BoardRenderer({
     }
 
     return cells;
-  }, [visibleTileMap, exploredTilesRef, playerMap, mobMap, selfState, playerId, onTileClick, onMobClick, onPlayerClick]);
+  }, [visibleTileMap, exploredTilesRef, playerMap, mobMap, selfState, playerId, onTileClick, onMobClick, onPlayerClick, activeAnomaly]);
 
   // Mobile touch controls
   const handleTouchMove = useCallback((dir: Direction) => {
@@ -253,7 +255,7 @@ export default function BoardRenderer({
   }, [onMove]);
 
   return (
-    <div className={styles.boardWrapper}>
+    <div className={`${styles.boardWrapper} ${activeAnomaly ? styles.boardAnomaly : ''}`}>
       <div
         ref={boardRef}
         className={styles.board}

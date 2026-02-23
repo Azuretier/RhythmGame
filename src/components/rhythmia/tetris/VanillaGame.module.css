@@ -100,22 +100,13 @@
   color: #ffffff;
 }
 
-/* Game area — five-column grid: sideBoard | sidebar | board+beatbar | sidebar | sideBoard
-   auto 1fr auto 1fr auto ensures the board stays perfectly centered with
-   side boards flanking the sidebars. */
+/* Game area — three-column grid: sidebar | board+beatbar | sidebar */
 .gameArea {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr auto 1fr auto;
+  grid-template-columns: 1fr auto 1fr;
   gap: 12px;
   align-items: start;
-}
-
-/* Mobile: hide side boards and revert to 3-column */
-@media (max-width: 768px) {
-  .gameArea {
-    grid-template-columns: 1fr auto 1fr;
-  }
 }
 
 /* Side panels — flex column, content-sized */
@@ -172,6 +163,32 @@
 
 .boardWrap.beat.fever {
   box-shadow: 0 0 30px rgba(255, 100, 255, 0.3), 0 0 60px rgba(255, 50, 200, 0.15);
+}
+
+/* Anomaly state — corruption tint on blocks */
+.boardWrap.anomaly {
+  border-color: rgba(180, 0, 255, 0.5);
+  animation: anomalyPulse 2s ease-in-out infinite;
+}
+
+.boardWrap.anomaly .cell.filled {
+  filter: hue-rotate(-30deg) saturate(1.4) brightness(0.9);
+  box-shadow: inset 0 0 4px rgba(180, 0, 255, 0.4), 0 0 6px rgba(180, 0, 255, 0.25);
+}
+
+.boardWrap.anomaly .cell.ghost {
+  filter: hue-rotate(-30deg) saturate(1.4);
+}
+
+@keyframes anomalyPulse {
+  0%, 100% {
+    border-color: rgba(180, 0, 255, 0.4);
+    box-shadow: 0 0 12px rgba(120, 0, 200, 0.15);
+  }
+  50% {
+    border-color: rgba(220, 0, 255, 0.6);
+    box-shadow: 0 0 24px rgba(180, 0, 255, 0.3);
+  }
 }
 
 @keyframes feverBorder {

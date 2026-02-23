@@ -8,7 +8,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMinecraftBoardSocket } from '@/hooks/useMinecraftBoardSocket';
 import BoardRenderer from './BoardRenderer';
-import SideBoardRenderer from './SideBoardRenderer';
 import PlayerHUD, { InventoryPanel } from './PlayerHUD';
 import CraftingPanel from './CraftingPanel';
 import type { Direction, MCPublicRoom } from '@/types/minecraft-board';
@@ -22,7 +21,7 @@ export default function MinecraftBoardGame() {
     exploredTilesRef, visibleTiles, visiblePlayers, visibleMobs,
     selfState, dayPhase, timeOfDay,
     chatMessages, gameMessage, winner,
-    leftSideBoard, rightSideBoard, anomalyAlerts,
+    anomalyAlerts,
     createRoom, joinRoom, getRooms, leaveRoom,
     setReady, startGame,
     move, mine, cancelMine, craft, attack, placeBlock, eat, selectSlot, sendChat,
@@ -391,53 +390,22 @@ export default function MinecraftBoardGame() {
     return (
       <div className={styles.page}>
         <div className={styles.gameLayout}>
-          {/* Anomaly Alert Banner */}
-          {anomalyAlerts.length > 0 && (
-            <div className={styles.anomalyBanner}>
-              {anomalyAlerts.map((alert, i) => (
-                <div key={i} className={styles.anomalyAlert}>
-                  ANOMALY: {alert.side.toUpperCase()} — {alert.message}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Side Boards + Main Board */}
-          <div className={styles.boardWithSides}>
-            {/* Left Side Board */}
-            {leftSideBoard && (
-              <SideBoardRenderer
-                sideBoard={leftSideBoard}
-                side="left"
-                mainBoardCenterY={selfState.y}
-              />
-            )}
-
-            {/* Main Board */}
-            <div className={styles.boardArea}>
-              <BoardRenderer
-                visibleTiles={visibleTiles}
-                exploredTilesRef={exploredTilesRef}
-                visiblePlayers={visiblePlayers}
-                visibleMobs={visibleMobs}
-                selfState={selfState}
-                dayPhase={dayPhase}
-                playerId={playerId}
-                onTileClick={handleTileClick}
-                onMobClick={handleMobClick}
-                onPlayerClick={handlePlayerClick}
-                onMove={handleMove}
-              />
-            </div>
-
-            {/* Right Side Board */}
-            {rightSideBoard && (
-              <SideBoardRenderer
-                sideBoard={rightSideBoard}
-                side="right"
-                mainBoardCenterY={selfState.y}
-              />
-            )}
+          {/* Main Board */}
+          <div className={styles.boardArea}>
+            <BoardRenderer
+              visibleTiles={visibleTiles}
+              exploredTilesRef={exploredTilesRef}
+              visiblePlayers={visiblePlayers}
+              visibleMobs={visibleMobs}
+              selfState={selfState}
+              dayPhase={dayPhase}
+              playerId={playerId}
+              onTileClick={handleTileClick}
+              onMobClick={handleMobClick}
+              onPlayerClick={handlePlayerClick}
+              onMove={handleMove}
+              activeAnomaly={anomalyAlerts.length > 0}
+            />
           </div>
 
           {/* HUD */}

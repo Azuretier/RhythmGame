@@ -24,9 +24,7 @@ import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmV
 import { useKeybinds } from './hooks/useKeybinds';
 import { useCorruptionSystem } from './hooks/useCorruptionSystem';
 
-// Side board components
-import { TetrisSideBoard } from './components/TetrisSideBoard';
-import { AnomalyBanner } from './components/AnomalyBanner';
+// Corruption system
 
 // Utilities
 import {
@@ -1601,17 +1599,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           />
           <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
 
-          {/* Anomaly alert banner */}
-          <AnomalyBanner active={corruption.activeAnomaly} />
-
           <div className={styles.gameArea} ref={gameAreaRef}>
-            {/* Left side board (corruption minimap) */}
-            <TetrisSideBoard
-              side="left"
-              corruptedCells={corruption.corruptedCells}
-              enemies={enemies}
-              terrainPhase={terrainPhase}
-            />
 
             {/* Left sidebar: Hold + Inventory (separate containers) */}
             <div className={styles.sidePanelLeft}>
@@ -1658,6 +1646,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                 defaultKeybinds={defaultKeybinds}
                 featureSettings={featureSettings}
                 onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
+                activeAnomaly={corruption.activeAnomaly}
               />
               {/* Action display toasts (T-spin, Tetris, Back-to-Back) — stacking */}
               {actionToasts.length > 0 && (
@@ -1686,13 +1675,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
               </div>
             </div>
 
-            {/* Right side board (corruption minimap) */}
-            <TetrisSideBoard
-              side="right"
-              corruptedCells={corruption.corruptedCells}
-              enemies={enemies}
-              terrainPhase={terrainPhase}
-            />
           </div>
 
           <TouchControls

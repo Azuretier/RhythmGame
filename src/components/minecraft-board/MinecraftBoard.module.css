@@ -398,6 +398,32 @@
   position: relative;
 }
 
+/* Anomaly state — corruption tint on blocks */
+.boardAnomaly .board {
+  border-color: rgba(180, 0, 255, 0.6);
+  animation: mcAnomalyPulse 2s ease-in-out infinite;
+}
+
+.boardAnomaly .tile {
+  filter: hue-rotate(-30deg) saturate(1.4) brightness(0.9);
+  box-shadow: inset 0 0 3px rgba(180, 0, 255, 0.3);
+}
+
+.boardAnomaly .tile:hover {
+  filter: hue-rotate(-30deg) saturate(1.4) brightness(1.1);
+}
+
+@keyframes mcAnomalyPulse {
+  0%, 100% {
+    border-color: rgba(180, 0, 255, 0.4);
+    box-shadow: 0 0 10px rgba(120, 0, 200, 0.15);
+  }
+  50% {
+    border-color: rgba(220, 0, 255, 0.7);
+    box-shadow: 0 0 20px rgba(180, 0, 255, 0.3);
+  }
+}
+
 .board {
   display: grid;
   gap: 1px;
