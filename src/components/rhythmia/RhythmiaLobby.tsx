@@ -425,7 +425,7 @@ export default function RhythmiaLobby() {
                         </section>
 
                         {/* Slide 2: Loyalty + Footer */}
-                        <section className={`${styles.slideSection} ${styles.slideSectionBottom}`}>
+                        <section className={`${styles.slideSection} ${styles.slideSectionBottom}`} data-slide-scrollable>
                             <LoyaltyWidget />
                             <motion.footer
                                 className={styles.footer}

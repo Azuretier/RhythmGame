@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { useProfile } from '@/lib/profile/context';
+import { getIconById } from '@/lib/profile/types';
 import {
   getTierByScore,
   scoreProgress,
@@ -26,6 +28,8 @@ export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
   const tAdv = useTranslations('advancements');
   const router = useRouter();
+  const { profile } = useProfile();
+  const profileIcon = profile ? getIconById(profile.icon) : null;
   const [state, setState] = useState<ScoreRankingState | null>(null);
   const [advState, setAdvState] = useState<AdvancementState | null>(null);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
@@ -78,6 +82,18 @@ export default function LoyaltyWidget() {
     >
       {/* Rank Emblem Hero */}
       <div className={styles.rankHero}>
+        {/* Profile Info */}
+        {profile && profileIcon && (
+          <div className={styles.profileInfo}>
+            <div
+              className={styles.profileAvatar}
+              style={{ backgroundColor: profileIcon.bgColor, color: profileIcon.color }}
+            >
+              {profileIcon.emoji}
+            </div>
+            <span className={styles.profileName}>{profile.name}</span>
+          </div>
+        )}
         <div
           className={styles.rankEmblem}
           style={{
