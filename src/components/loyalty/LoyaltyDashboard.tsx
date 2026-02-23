@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import {
-  SCORE_RANK_TIERS,
   getTierByScore,
   scoreProgress,
   scoreToNextTier,
   formatScoreCompact,
+  getRankGroups,
   buildScoreRankingState,
   recordDailyVisit,
   syncGameplayStats,
@@ -40,11 +40,13 @@ export default function LoyaltyDashboard() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [pollLoading, setPollLoading] = useState(true);
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const rankGroups = useMemo(() => getRankGroups(), []);
 
   // Initialize score ranking + auth + poll
   useEffect(() => {
     const advancementState = loadAdvancementState();
-    
+
     let dailyState = recordDailyVisit();
     dailyState = syncGameplayStats(
       advancementState.stats.totalScore,
@@ -53,7 +55,7 @@ export default function LoyaltyDashboard() {
       advancementState.unlockedIds.length,
       advancementState.stats.totalLines,
     );
-    
+
     setState(dailyState);
     setAdvState(advancementState);
 
@@ -117,10 +119,10 @@ export default function LoyaltyDashboard() {
   // Recent advancements — last 8 unlocked, newest first
   const recentAdvancements = advState
     ? advState.unlockedIds
-        .slice(-8)
-        .reverse()
-        .map((id) => ADVANCEMENTS.find((a) => a.id === id))
-        .filter(Boolean)
+      .slice(-8)
+      .reverse()
+      .map((id) => ADVANCEMENTS.find((a) => a.id === id))
+      .filter(Boolean)
     : [];
 
   return (
@@ -242,23 +244,78 @@ export default function LoyaltyDashboard() {
         >
           <h2 className={styles.sectionTitle}>{t('sections.tierRoadmap')}</h2>
           <div className={styles.tierRoadmap}>
-            {SCORE_RANK_TIERS.map((tier) => {
-              const isActive = tier.id === currentTier.id;
-              const isCompleted = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
+            {rankGroups.map((group) => {
+              const isActive = group.tiers.some(t => t.id === currentTier.id);
+              const isCompleted = combinedScore >= group.maxScore && group.maxScore !== Infinity;
 
               return (
                 <div
-                  key={tier.id}
+                  key={group.groupId}
                   className={`${styles.tierStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
+                  onMouseEnter={() => setHoveredGroup(group.groupId)}
+                  onMouseLeave={() => setHoveredGroup(null)}
                 >
                   {isCompleted && <span className={styles.tierStepCheck}>&#10003;</span>}
-                  <span className={styles.tierStepIcon}>{tier.icon}</span>
-                  <div className={styles.tierStepName} style={{ color: isActive ? tier.color : undefined }}>
-                    {t(`tiers.${tier.id}`)}
+                  <span className={styles.tierStepIcon}>{group.icon}</span>
+                  <div className={styles.tierStepName} style={{ color: isActive ? group.color : undefined }}>
+                    {t(`tierGroups.${group.groupId}`)}
                   </div>
                   <div className={styles.tierStepXP}>
-                    {tier.maxScore === Infinity ? `${formatScoreCompact(tier.minScore)}+` : `${formatScoreCompact(tier.minScore)} - ${formatScoreCompact(tier.maxScore)}`}
+                    {group.maxScore === Infinity ? `${formatScoreCompact(group.minScore)}+` : `${formatScoreCompact(group.minScore)} – ${formatScoreCompact(group.maxScore)}`}
                   </div>
+                  {/* Hover progress bar popup */}
+                  {hoveredGroup === group.groupId && group.tiers.length > 1 && (() => {
+                    // Fill aligned with space-between labels: N labels → (N-1) spans
+                    const count = group.tiers.length;
+                    let fillPct = 0;
+                    if (combinedScore < group.tiers[0].minScore) {
+                      fillPct = 0;
+                    } else if (combinedScore >= group.tiers[count - 1].minScore) {
+                      fillPct = 100; // reached or passed the last tier label
+                    } else {
+                      const segmentSize = 100 / (count - 1);
+                      for (let i = 0; i < count - 1; i++) {
+                        if (combinedScore >= group.tiers[i].minScore && combinedScore < group.tiers[i + 1].minScore) {
+                          const spanRange = group.tiers[i + 1].minScore - group.tiers[i].minScore;
+                          const progress = (combinedScore - group.tiers[i].minScore) / spanRange;
+                          fillPct = segmentSize * i + segmentSize * progress;
+                          break;
+                        }
+                      }
+                    }
+
+                    return (
+                      <div className={styles.tierBarPopup}>
+                        <div className={styles.tierBarHeader}>
+                          <span style={{ color: group.color }}>{group.icon}</span>
+                          <span className={styles.tierBarTitle}>{t(`tierGroups.${group.groupId}`)}</span>
+                        </div>
+                        {/* Tier labels */}
+                        <div className={styles.tierBarLabels}>
+                          {group.tiers.map((tier) => (
+                            <span key={tier.id} className={styles.tierBarLabel} style={tier.id === currentTier.id ? { color: tier.color, opacity: 1 } : undefined}>
+                              {t(`tiers.${tier.id}`)}
+                            </span>
+                          ))}
+                        </div>
+                        {/* Progress bar */}
+                        <div className={styles.tierBarTrack}>
+                          <div
+                            className={styles.tierBarFill}
+                            style={{ width: `${fillPct}%`, background: group.color }}
+                          />
+                        </div>
+                        {/* Score labels */}
+                        <div className={styles.tierBarScores}>
+                          {group.tiers.map((tier) => (
+                            <span key={tier.id} className={styles.tierBarScore}>
+                              {formatScoreCompact(tier.minScore)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}

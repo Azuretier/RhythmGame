@@ -119,7 +119,8 @@ export function GamePhaseIndicator({ phase, stageNumber, equippedCardCount, terr
     const phaseLabels: Record<GamePhase, string> = {
         WORLD_CREATION: 'CONSTRUCTING',
         PLAYING: terrainPhase === 'td' ? 'DEFEND' : 'DIG',
-        CRAFTING: 'FORGE',
+        CARD_SELECT: 'CARDS',
+        CARD_ABSORBING: 'OBTAINING',
         COLLAPSE: 'COLLAPSE',
         TRANSITION: 'RELOAD',
         CHECKPOINT: 'CHECKPOINT',

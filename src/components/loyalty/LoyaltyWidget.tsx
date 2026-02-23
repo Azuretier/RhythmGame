@@ -1,17 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useProfile } from '@/lib/profile/context';
 import { getIconById } from '@/lib/profile/types';
 import {
-  SCORE_RANK_TIERS,
   getTierByScore,
   scoreProgress,
   scoreToNextTier,
   formatScoreCompact,
+  getRankGroups,
   recordDailyVisit,
   syncGameplayStats,
 } from '@/lib/loyalty';
@@ -26,6 +26,8 @@ export default function LoyaltyWidget() {
   const router = useRouter();
   const { profile } = useProfile();
   const [state, setState] = useState<ScoreRankingState | null>(null);
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const rankGroups = useMemo(() => getRankGroups(), []);
 
   useEffect(() => {
     // Record daily visit first (awards XP for visits/streaks)
@@ -52,7 +54,7 @@ export default function LoyaltyWidget() {
   const currentTier = getTierByScore(combinedScore);
   const progress = scoreProgress(combinedScore);
   const nextTierScore = scoreToNextTier(combinedScore);
-  const currentIndex = SCORE_RANK_TIERS.indexOf(currentTier);
+
 
   return (
     <motion.div
@@ -126,22 +128,77 @@ export default function LoyaltyWidget() {
         </div>
       </div>
 
-      {/* Tier roadmap */}
+      {/* Tier roadmap (grouped) */}
       <div className={styles.miniRoadmap}>
-        {SCORE_RANK_TIERS.map((tier, i) => {
-          const isActive = tier.id === currentTier.id;
-          const isCompleted = i < currentIndex;
+        {rankGroups.map((group) => {
+          const isActive = group.tiers.some(t => t.id === currentTier.id);
+          const isCompleted = combinedScore >= group.maxScore && group.maxScore !== Infinity;
           return (
             <div
-              key={tier.id}
+              key={group.groupId}
               className={`${styles.miniStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
+              onMouseEnter={() => setHoveredGroup(group.groupId)}
+              onMouseLeave={() => setHoveredGroup(null)}
             >
-              <span className={styles.miniStepIcon} style={isActive || isCompleted ? { color: tier.color } : undefined}>
-                {tier.icon}
+              <span className={styles.miniStepIcon} style={isActive || isCompleted ? { color: group.color } : undefined}>
+                {group.icon}
               </span>
               <span className={styles.miniStepName}>
-                {t(`tiers.${tier.id}`)}
+                {t(`tierGroups.${group.groupId}`)}
               </span>
+              {/* Hover progress bar popup */}
+              {hoveredGroup === group.groupId && group.tiers.length > 1 && (() => {
+                // Fill aligned with space-between labels: N labels → (N-1) spans
+                const count = group.tiers.length;
+                let fillPct = 0;
+                if (combinedScore < group.tiers[0].minScore) {
+                  fillPct = 0;
+                } else if (combinedScore >= group.tiers[count - 1].minScore) {
+                  fillPct = 100; // reached or passed the last tier label
+                } else {
+                  const segmentSize = 100 / (count - 1);
+                  for (let i = 0; i < count - 1; i++) {
+                    if (combinedScore >= group.tiers[i].minScore && combinedScore < group.tiers[i + 1].minScore) {
+                      const spanRange = group.tiers[i + 1].minScore - group.tiers[i].minScore;
+                      const progress = (combinedScore - group.tiers[i].minScore) / spanRange;
+                      fillPct = segmentSize * i + segmentSize * progress;
+                      break;
+                    }
+                  }
+                }
+
+                return (
+                  <div className={styles.tierBarPopup}>
+                    <div className={styles.tierBarHeader}>
+                      <span style={{ color: group.color }}>{group.icon}</span>
+                      <span className={styles.tierBarTitle}>{t(`tierGroups.${group.groupId}`)}</span>
+                    </div>
+                    {/* Tier labels */}
+                    <div className={styles.tierBarLabels}>
+                      {group.tiers.map((tier) => (
+                        <span key={tier.id} className={styles.tierBarLabel} style={tier.id === currentTier.id ? { color: tier.color, opacity: 1 } : undefined}>
+                          {t(`tiers.${tier.id}`)}
+                        </span>
+                      ))}
+                    </div>
+                    {/* Progress bar */}
+                    <div className={styles.tierBarTrack}>
+                      <div
+                        className={styles.tierBarFill}
+                        style={{ width: `${fillPct}%`, background: group.color }}
+                      />
+                    </div>
+                    {/* Score labels */}
+                    <div className={styles.tierBarScores}>
+                      {group.tiers.map((tier) => (
+                        <span key={tier.id} className={styles.tierBarScore}>
+                          {formatScoreCompact(tier.minScore)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           );
         })}

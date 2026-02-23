@@ -11,7 +11,7 @@ const firebaseConfig = {
   //messagingSenderId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_MESSAGING_SENDER_ID,
   //appId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_APP_ID,
   apiKey: "AIzaSyBPzQ0xqJYktU6GMp2tzM1nvZJZDz5PWUk",
-  authDomain: "azuret-website.firebaseapp.com",
+  authDomain: "azuretier.net",
   projectId: "azuret-website",
   storageBucket: "azuret-website.firebasestorage.app",
   messagingSenderId: "527106975022",

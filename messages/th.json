@@ -1141,12 +1141,36 @@
     "maxTier": "อันดับสูงสุดแล้ว",
     "viewAll": "ดูอันดับ & รายละเอียด",
     "tiers": {
-      "rank1": "ไม่มีอันดับ",
-      "rank2": "Beat I",
-      "rank3": "Beat II",
-      "rank4": "Rhythm",
-      "rank5": "Maestro",
-      "rank6": "Antigravity"
+      "unranked": "ไม่มีอันดับ",
+      "beat_1": "Beat Ⅰ",
+      "beat_2": "Beat Ⅱ",
+      "beat_3": "Beat Ⅲ",
+      "rhythm_1": "Rhythm Ⅰ",
+      "rhythm_2": "Rhythm Ⅱ",
+      "rhythm_3": "Rhythm Ⅲ",
+      "melody_1": "Melody Ⅰ",
+      "melody_2": "Melody Ⅱ",
+      "melody_3": "Melody Ⅲ",
+      "harmony_1": "Harmony Ⅰ",
+      "harmony_2": "Harmony Ⅱ",
+      "harmony_3": "Harmony Ⅲ",
+      "maestro_1": "Maestro Ⅰ",
+      "maestro_2": "Maestro Ⅱ",
+      "maestro_3": "Maestro Ⅲ",
+      "gravity_1": "Gravity Ⅰ",
+      "gravity_2": "Gravity Ⅱ",
+      "gravity_3": "Gravity Ⅲ",
+      "flow": "Flow"
+    },
+    "tierGroups": {
+      "unranked": "ไม่มีอันดับ",
+      "beat": "Beat",
+      "rhythm": "Rhythm",
+      "melody": "Melody",
+      "harmony": "Harmony",
+      "maestro": "Maestro",
+      "gravity": "Gravity",
+      "flow": "Flow"
     },
     "stats": {
       "bestScore": "คะแนนดีสุด",
@@ -1189,7 +1213,7 @@
       "1": {
         "step": "ขั้นตอน 02",
         "title": "ไต่อันดับ",
-        "desc": "คะแนนสะสมกำหนดอันดับของคุณ ก้าวจากไม่มีอันดับผ่าน Beat, Rhythm, Maestro สู่ Antigravity"
+        "desc": "คะแนนสะสมกำหนดอันดับของคุณ ก้าวจากไม่มีอันดับผ่าน Beat, Rhythm, Melody, Harmony, Maestro, Gravity สู่ Flow"
       },
       "2": {
         "step": "ขั้นตอน 03",
