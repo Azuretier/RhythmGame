@@ -265,8 +265,25 @@ export default function LoyaltyDashboard() {
                   </div>
                   {/* Hover progress bar popup */}
                   {hoveredGroup === group.groupId && group.tiers.length > 1 && (() => {
-                    const groupRange = (group.maxScore === Infinity ? group.tiers[group.tiers.length - 1].minScore * 2 : group.maxScore) - group.minScore;
-                    const fillPct = Math.min(100, Math.max(0, ((combinedScore - group.minScore) / groupRange) * 100));
+                    // Segment-aware fill: each tier = equal visual segment
+                    const count = group.tiers.length;
+                    let fillPct = 0;
+                    if (combinedScore >= group.maxScore && group.maxScore !== Infinity) {
+                      fillPct = 100; // fully completed group
+                    } else {
+                      for (let i = 0; i < count; i++) {
+                        const tier = group.tiers[i];
+                        if (combinedScore < tier.minScore) break;
+                        const tierRange = (tier.maxScore === Infinity ? tier.minScore * 2 : tier.maxScore) - tier.minScore + 1;
+                        const segmentSize = 100 / count;
+                        if (combinedScore <= tier.maxScore || tier.maxScore === Infinity) {
+                          const progressInTier = (combinedScore - tier.minScore) / tierRange;
+                          fillPct = segmentSize * i + segmentSize * Math.min(1, progressInTier);
+                          break;
+                        }
+                        fillPct = segmentSize * (i + 1);
+                      }
+                    }
 
                     return (
                       <div className={styles.tierBarPopup}>
