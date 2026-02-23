@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { CardOffer, InventoryItem, EquippedCard } from '../types';
 import { ITEM_MAP, ROGUE_CARD_MAP, WORLDS } from '../constants';
 import { ItemIcon } from './ItemIcon';
@@ -211,7 +211,10 @@ export function CardSelectUI({
     }, [offers, isAnimating]);
 
     // Navigate to next/previous affordable card, cycling only through affordable cards
-    const affordableIndices = offers.map((o, i) => o.affordable ? i : -1).filter(i => i !== -1);
+    const affordableIndices = useMemo(
+        () => offers.map((o, i) => o.affordable ? i : -1).filter(i => i !== -1),
+        [offers]
+    );
     const findNextAffordable = useCallback((from: number, direction: 1 | -1): number => {
         if (affordableIndices.length === 0) return from; // no affordable cards, stay put
         const currentPos = affordableIndices.indexOf(from);
