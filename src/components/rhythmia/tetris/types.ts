@@ -235,3 +235,23 @@ export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
     garbageMeter: true,
     mouseControls: false,
 };
+
+// ===== Corruption & Anomaly System =====
+
+export type SideBoardSide = 'left' | 'right';
+
+export interface CorruptionNode {
+    id: number;
+    gx: number;          // Terrain grid X coordinate
+    gz: number;          // Terrain grid Z coordinate
+    level: number;       // 0=seed → 5=mature (enemy spawn point)
+    maxLevel: number;
+    spawnTime: number;
+    lastGrowTime: number;
+}
+
+export interface AnomalyEvent {
+    id: number;
+    triggerTime: number;
+    active: boolean;
+}
