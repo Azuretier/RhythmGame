@@ -1,6 +1,6 @@
 /* ============================================
-   Game Mode Map — Illustrated 2D Map (3D art)
-   Hand-painted look with depth, shadows, layers
+   Game Mode Map — Low-Poly / Minecraft Style
+   Faceted geometry, blocky colors, pixel feel
    ============================================ */
 
 .mapWrapper {
@@ -9,61 +9,60 @@
   max-width: 920px;
   aspect-ratio: 16 / 10;
   margin: 0 auto;
-  border-radius: 14px;
+  border-radius: 4px;
   overflow: hidden;
-  background: #1e2a1e;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #2a3828;
+  border: 3px solid #1a1a2e;
   box-shadow:
-    0 12px 48px rgba(0, 0, 0, 0.6),
-    0 4px 12px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    0 0 0 1px rgba(80, 40, 120, 0.3),
+    0 8px 32px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  image-rendering: auto;
 }
 
-/* Warm atmospheric light from above-center */
+/* Warm sunlight from top-center */
 .ambientLight {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 45% 30%, rgba(255, 240, 200, 0.06) 0%, transparent 55%),
-    radial-gradient(ellipse at 20% 20%, rgba(80, 180, 80, 0.04) 0%, transparent 45%),
-    radial-gradient(ellipse at 80% 80%, rgba(60, 100, 180, 0.03) 0%, transparent 45%);
+    radial-gradient(ellipse at 50% 20%, rgba(255, 240, 180, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 20%, rgba(91, 135, 49, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 25%, rgba(125, 125, 125, 0.04) 0%, transparent 40%);
   pointer-events: none;
   z-index: 4;
 }
 
-/* Vignette for painted-map framing */
+/* Dark vignette corners */
 .vignetteOverlay {
   position: absolute;
   inset: 0;
   background: radial-gradient(
     ellipse at center,
-    transparent 50%,
-    rgba(10, 8, 12, 0.4) 100%
+    transparent 45%,
+    rgba(8, 4, 12, 0.5) 100%
   );
   pointer-events: none;
   z-index: 5;
 }
 
-/* SVG canvas */
 .mapSvg {
   position: relative;
   width: 100%;
   height: 100%;
   z-index: 3;
+  /* Crisp polygon edges */
+  shape-rendering: crispEdges;
 }
 
-/* Decoration layers */
 .decorLayer {
   pointer-events: none;
 }
 
-/* --- Path styling --- */
-.pathLayer {
-  opacity: 1;
-}
+/* ── Paths ── */
+.pathLayer { opacity: 1; }
 
 .pathAnimated {
-  animation: pathFlow 5s linear infinite;
+  animation: pathFlow 3s linear infinite;
 }
 
 @keyframes pathFlow {
@@ -72,38 +71,36 @@
 }
 
 .pathDot {
-  filter: blur(0.5px);
+  filter: none;
 }
 
-/* --- Water animation --- */
+/* ── Water shimmer ── */
 .waterHighlight {
-  animation: waterShimmer 4s ease-in-out infinite;
+  animation: waterBob 3s ease-in-out infinite;
 }
 
 .waterHighlight2 {
-  animation: waterShimmer 4s ease-in-out infinite 2s;
+  animation: waterBob 3s ease-in-out infinite 1.5s;
 }
 
-@keyframes waterShimmer {
-  0%, 100% { opacity: 0.15; transform: translateX(0); }
-  50% { opacity: 0.35; transform: translateX(2px); }
+@keyframes waterBob {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.45; }
 }
 
-/* --- Location nodes --- */
-.locationLayer {
-  cursor: default;
-}
+/* ── Location nodes ── */
+.locationLayer { cursor: default; }
 
 .locationNode {
-  transition: filter 0.25s ease, opacity 0.25s ease;
+  transition: filter 0.15s ease, transform 0.15s ease;
 }
 
 .locationNode:hover {
-  filter: brightness(1.12) drop-shadow(0 0 8px rgba(255,255,255,0.08));
+  filter: brightness(1.15) drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
 .status_locked {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed !important;
 }
 
@@ -119,28 +116,28 @@
   cursor: default;
 }
 
-/* Pulse glow ring on available locations */
+/* Pulse ring — blocky diamond shape */
 .pulseRing {
-  animation: pulseGlow 3s ease-in-out infinite;
+  animation: pulseBlock 2.5s ease-in-out infinite;
   transform-origin: center;
 }
 
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.08; }
-  50% { opacity: 0.4; }
+@keyframes pulseBlock {
+  0%, 100% { opacity: 0.06; stroke-width: 1; }
+  50% { opacity: 0.5; stroke-width: 2.5; }
 }
 
-/* Online dot pulse */
+/* Online dot — square pulse (Minecraft style) */
 .onlineDot {
-  animation: onlinePulse 2s ease-in-out infinite;
+  animation: squarePulse 2s ease-in-out infinite;
 }
 
-@keyframes onlinePulse {
-  0%, 100% { opacity: 0.6; }
+@keyframes squarePulse {
+  0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
 
-/* ---- Info Panel (illustrated parchment feel) ---- */
+/* ── Info Panel — Minecraft inventory tooltip ── */
 .infoPanel {
   position: absolute;
   bottom: 18px;
@@ -149,95 +146,77 @@
   z-index: 10;
   width: 380px;
   max-width: calc(100% - 28px);
-  border-radius: 12px;
-  overflow: hidden;
-  background: linear-gradient(
-    175deg,
-    rgba(22, 20, 30, 0.92) 0%,
-    rgba(16, 14, 22, 0.96) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  /* MC tooltip: dark purple-black bg, bright purple border */
+  background: rgba(16, 0, 16, 0.94);
+  border: 2px solid #50288c;
   box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.5),
-    0 2px 10px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.infoPanelAccent {
-  height: 2px;
-  width: 100%;
-  opacity: 0.8;
+    inset 0 0 0 1px rgba(40, 0, 80, 0.5),
+    0 4px 16px rgba(0, 0, 0, 0.6);
+  /* No rounded corners — blocky! */
+  border-radius: 0;
 }
 
 .infoPanelContent {
-  padding: 14px 18px;
+  padding: 12px 16px;
 }
 
 .infoPanelHeader {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .infoIcon {
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
   flex-shrink: 0;
 }
 
 .infoName {
-  font-family: var(--font-theme-heading, 'Inter'), sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0.02em;
+  font-family: var(--font-pixel, 'Press Start 2P', monospace);
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
   flex: 1;
 }
 
 .infoPlayBadge {
-  padding: 2px 10px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  border: 1px solid;
-  border-radius: 20px;
+  font-family: var(--font-pixel, 'Press Start 2P', monospace);
+  font-size: 0.55rem;
+  color: #aaa;
+  letter-spacing: 0.05em;
   flex-shrink: 0;
 }
 
 .infoDesc {
-  font-size: 0.78rem;
-  line-height: 1.65;
-  color: rgba(255, 255, 255, 0.42);
-  margin-bottom: 10px;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: rgba(170, 170, 170, 0.7);
+  margin-bottom: 8px;
 }
 
 .infoFeatures {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-bottom: 10px;
+  gap: 4px;
+  margin-bottom: 8px;
 }
 
 .infoFeatureTag {
-  padding: 3px 9px;
-  font-size: 0.62rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.48);
+  padding: 2px 6px;
+  font-family: var(--font-pixel, 'Press Start 2P', monospace);
+  font-size: 0.5rem;
+  color: #aaaaaa;
+  background: rgba(80, 40, 120, 0.2);
+  border: 1px solid rgba(80, 40, 120, 0.4);
 }
 
 .infoStats {
   display: flex;
-  gap: 18px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(80, 40, 120, 0.3);
 }
 
 .infoStatItem {
@@ -245,18 +224,17 @@
 }
 
 .infoStatValue {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--font-pixel, 'Press Start 2P', monospace);
+  font-size: 0.72rem;
+  color: #fcee4b;
   font-variant-numeric: tabular-nums;
-  font-family: var(--font-theme-mono, monospace);
 }
 
 .infoStatLabel {
-  font-size: 0.58rem;
-  color: rgba(255, 255, 255, 0.28);
+  font-size: 0.5rem;
+  color: rgba(170, 170, 170, 0.4);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin-top: 2px;
 }
 
@@ -264,31 +242,29 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
-  padding: 8px 12px;
-  background: rgba(255, 100, 100, 0.06);
-  border: 1px solid rgba(255, 100, 100, 0.1);
-  border-radius: 8px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: rgba(170, 0, 0, 0.12);
+  border: 1px solid rgba(170, 0, 0, 0.3);
 }
 
 .infoLockedIcon {
   width: 14px;
   height: 14px;
-  color: rgba(255, 100, 100, 0.55);
+  color: rgba(170, 0, 0, 0.6);
   flex-shrink: 0;
 }
 
 .infoLockedText {
-  font-size: 0.7rem;
-  color: rgba(255, 100, 100, 0.55);
+  font-size: 0.65rem;
+  color: rgba(170, 0, 0, 0.7);
   letter-spacing: 0.02em;
 }
 
-/* ---- Responsive ---- */
+/* ── Responsive ── */
 @media (max-width: 768px) {
   .mapWrapper {
     aspect-ratio: 4 / 3;
-    border-radius: 10px;
   }
 
   .infoPanel {
@@ -296,20 +272,16 @@
     bottom: 12px;
   }
 
-  .infoPanelContent {
-    padding: 12px 14px;
-  }
-
-  .infoName { font-size: 0.82rem; }
-  .infoDesc { font-size: 0.72rem; }
-  .infoStats { gap: 14px; }
+  .infoPanelContent { padding: 10px 12px; }
+  .infoName { font-size: 0.7rem; }
+  .infoDesc { font-size: 0.65rem; }
+  .infoStats { gap: 12px; }
 }
 
 @media (max-width: 480px) {
   .mapWrapper {
     aspect-ratio: 1 / 1;
     max-width: 100%;
-    border-radius: 8px;
   }
 
   .infoPanel {
@@ -317,7 +289,5 @@
     bottom: 8px;
   }
 
-  .infoPanelContent {
-    padding: 10px 12px;
-  }
+  .infoPanelContent { padding: 8px 10px; }
 }
