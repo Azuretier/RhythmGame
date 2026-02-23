@@ -92,73 +92,83 @@ export default function LoyaltyWidget() {
         </button>
       </div>
 
-      {/* ===== SUMMARY TAB — Compact horizontal card ===== */}
+      {/* ===== SUMMARY TAB — 3-row compact card ===== */}
       {tab === 'summary' && (
         <div className={styles.compact}>
-          {/* Left: Profile avatar + name + code + tier */}
-          <div className={styles.compactLeft}>
+          {/* Row 1: Profile info */}
+          <div className={styles.row1}>
             {profile && profileIcon ? (
               <div
-                className={styles.compactAvatar}
+                className={styles.profileAvatar}
                 style={{ backgroundColor: profileIcon.bgColor, color: profileIcon.color }}
               >
                 {profileIcon.emoji}
               </div>
             ) : (
               <div
-                className={styles.compactAvatar}
+                className={styles.profileAvatar}
                 style={{ backgroundColor: currentTier.color + '20', color: currentTier.color }}
               >
                 {currentTier.icon}
               </div>
             )}
-            <div className={styles.compactMeta}>
-              <span className={styles.compactName}>{profile?.name ?? 'Player'}</span>
+            <div className={styles.profileMeta}>
+              <span className={styles.profileName}>{profile?.name ?? 'Player'}</span>
               {profile?.friendCode && (
-                <span className={styles.compactCode}>{profile.friendCode}</span>
+                <span className={styles.profileCode}>{profile.friendCode}</span>
               )}
-              <span className={styles.compactTier} style={{ color: currentTier.color }}>
+              <span className={styles.profileTier} style={{ color: currentTier.color }}>
                 {currentTier.icon} {t(`tiers.${currentTier.id}`)}
               </span>
             </div>
           </div>
 
-          {/* Center: Score label + progress bar + streak dots */}
-          <div className={styles.compactCenter}>
-            <div className={styles.compactScoreLabel}>{t('totalScore')}</div>
-            <div className={styles.compactBar}>
-              <div
-                className={styles.compactBarFill}
-                style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}66, ${currentTier.color})` }}
-              />
-            </div>
-            <div className={styles.compactDots}>
+          {/* Row 2: Daily streak */}
+          <div className={styles.row2}>
+            <div className={styles.streakDots}>
               {DAY_LABELS.map((label, i) => {
                 const isFilled = i < currentStreak % 7 || currentStreak >= 7;
                 const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
                 return (
                   <div
                     key={i}
-                    className={`${styles.compactDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
+                    className={`${styles.streakDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
                   />
                 );
               })}
             </div>
+            <div className={styles.streakInfo}>
+              <span className={styles.streakCount}>
+                {currentStreak} {t('stats.currentStreak')}
+              </span>
+              <span className={styles.streakBonus}>
+                +{dailyBonusXP} {t('stats.bonusXP')}
+              </span>
+            </div>
           </div>
 
-          {/* Right: Streak count + bonus XP + next rank */}
-          <div className={styles.compactRight}>
-            <span className={styles.compactStreak}>
-              {currentStreak} {t('streakDays')}
-            </span>
-            <span className={styles.compactBonus}>
-              +{dailyBonusXP} {t('bonusXP')}
-            </span>
-            <span className={styles.compactNextReq}>
-              {nextTierScore !== null
-                ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
-                : t('maxTier')}
-            </span>
+          {/* Row 3: Score gauge */}
+          <div className={styles.row3}>
+            <div className={styles.gaugeMeta}>
+              <span className={styles.gaugeLabel}>{t('totalScore')}</span>
+              <span className={styles.gaugeNext}>
+                {nextTierScore !== null
+                  ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
+                  : t('maxTier')}
+              </span>
+            </div>
+            <div className={styles.gaugeBar}>
+              <div
+                className={styles.gaugeBarFill}
+                style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}66, ${currentTier.color})` }}
+              />
+            </div>
+            <div className={styles.gaugeEnds}>
+              <span style={{ color: currentTier.color }}>{currentTier.icon} {t(`tiers.${currentTier.id}`)}</span>
+              <span className={styles.gaugeEndNext}>
+                {nextTier ? `${nextTier.icon} ${t(`tiers.${nextTier.id}`)}` : '—'}
+              </span>
+            </div>
           </div>
         </div>
       )}
