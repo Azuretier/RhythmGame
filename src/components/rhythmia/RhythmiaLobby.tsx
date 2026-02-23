@@ -253,222 +253,204 @@ export default function RhythmiaLobby() {
                 )}
             </AnimatePresence>
 
-            {gameMode === 'vanilla' && (
-                <div className={styles.gameContainer + ' ' + styles.active}>
-                    <VanillaGame onQuit={closeGame} />
-                </div>
-            )}
+            {gameMode === 'lobby' && (
+                <div className={styles.page}>
+                    {/* Skin-specific ambient effects (sakura petals, sunset embers) */}
+                    <SkinAmbientEffects intensity="idle" />
 
-            {gameMode === 'multiplayer' && (
-                <motion.div
-                    className={styles.gameContainer + ' ' + styles.active}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <MultiplayerGame onQuit={closeGame} />
-                </motion.div>
-            )}
-
-        {gameMode === 'lobby' && (
-        <div className={styles.page}>
-            {/* Skin-specific ambient effects (sakura petals, sunset embers) */}
-            <SkinAmbientEffects intensity="idle" />
-
-            {/* Profile setup overlay */}
-            <AnimatePresence>
-                {showProfileSetup && <ProfileSetup />}
-            </AnimatePresence>
-
-            {/* Loading overlay */}
-            <AnimatePresence>
-                {isLoading && !showProfileSetup && (
-                    <motion.div
-                        className={styles.loadingOverlay}
-                        initial={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.4 }}
-                    >
-                        <div className={styles.loader}></div>
-                        <div className={styles.loadingText}>{t('lobby.loading')}</div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Online users panel */}
-            <AnimatePresence>
-                {showOnlineUsers && (
-                    <OnlineUsers
-                        users={onlineUsers}
-                        onClose={() => setShowOnlineUsers(false)}
-                    />
-                )}
-            </AnimatePresence>
-
-            {/* Advancements panel */}
-            <AnimatePresence>
-                {showAdvancements && (
-                    <motion.div
-                        className={styles.advOverlay}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                    >
-                        <Advancements onClose={() => setShowAdvancements(false)} />
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Skin customizer panel */}
-            <AnimatePresence>
-                {showSkinCustomizer && (
-                    <SkinCustomizer onClose={() => setShowSkinCustomizer(false)} />
-                )}
-            </AnimatePresence>
-
-            {/* Slide container */}
-            <div
-                className={styles.slideContainer}
-                ref={containerRef}
-                style={slideStyle}
-            >
-                {/* Slide 0: Landing — Header + Hero + Server Grid */}
-                <section className={`${styles.slideSection} ${styles.slideSectionLanding}`}>
-                    <motion.header
-                        className={styles.header}
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? -20 : 0 }}
-                        transition={{ duration: 0.6, delay: 0.1 }}
-                    >
-                        <div className={styles.logo}>azuretier<span className={styles.logoAccent}>.net</span></div>
-                        <div className={styles.statusBar}>
-                            <button
-                                className={styles.advButton}
-                                onClick={() => setShowAdvancements(true)}
-                            >
-                                {t('advancements.button', { count: unlockedCount, total: ADVANCEMENTS.length })}
-                            </button>
-                            <button
-                                className={onlineStyles.onlineButton}
-                                onClick={requestOnlineUsers}
-                            >
-                                <span className={styles.statusDot}></span>
-                                <span>{t('lobby.onlineCount', { count: onlineCount })}</span>
-                            </button>
-                            <div className={styles.statusItem}>
-                                <span>v{rhythmiaConfig.version}</span>
-                            </div>
-                            <button
-                                className={styles.advButton}
-                                onClick={() => router.push('/wiki')}
-                            >
-                                Wiki
-                            </button>
-                            <button
-                                className={styles.advButton}
-                                onClick={() => router.push('/updates')}
-                            >
-                                {t('nav.updates')}
-                            </button>
-                            <button
-                                className={styles.advButton}
-                                onClick={() => setShowSkinCustomizer(true)}
-                            >
-                                {t('skin.profileButton')}
-                            </button>
-                            <LocaleSwitcher />
-                        </div>
-                    </motion.header>
-
-                    <main className={styles.main}>
-                        <motion.div
-                            className={styles.heroText}
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
-                            transition={{ duration: 0.7, delay: 0.2 }}
-                        >
-                            <h1>{t('lobby.selectServer')}</h1>
-                            <p>{t('lobby.chooseMode')}</p>
-                            <p className={styles.heroTagline}>{t('lobby.tagline')}</p>
-                        </motion.div>
-
-                        <GameModeMap
-                            isArenaLocked={isArenaLocked}
-                            unlockedCount={unlockedCount}
-                            requiredAdvancements={BATTLE_ARENA_REQUIRED_ADVANCEMENTS}
-                            onlineCount={onlineCount}
-                            onSelectMode={handleMapSelect}
-                            locale={locale}
-                        />
-                    </main>
-
-                    {/* Scroll hint — only visible on first slide */}
+                    {/* Profile setup overlay */}
                     <AnimatePresence>
-                        {currentSlide === 0 && slidesEnabled && (
+                        {showProfileSetup && <ProfileSetup />}
+                    </AnimatePresence>
+
+                    {/* Loading overlay */}
+                    <AnimatePresence>
+                        {isLoading && !showProfileSetup && (
                             <motion.div
-                                className={styles.scrollHint}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
+                                className={styles.loadingOverlay}
+                                initial={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
+                                transition={{ duration: 0.4 }}
                             >
-                                <svg className={styles.scrollHintIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M7 13l5 5 5-5" />
-                                    <path d="M7 6l5 5 5-5" />
-                                </svg>
+                                <div className={styles.loader}></div>
+                                <div className={styles.loadingText}>{t('lobby.loading')}</div>
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </section>
 
-                {/* Slide 1: For You */}
-                <section
-                    className={`${styles.slideSection} ${styles.slideSectionPlay}`}
-                    data-slide-scrollable
-                >
-                    <motion.div
-                        className={styles.forYouSection}
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
-                        transition={{ duration: 0.6, delay: 0.7 }}
+                    {/* Online users panel */}
+                    <AnimatePresence>
+                        {showOnlineUsers && (
+                            <OnlineUsers
+                                users={onlineUsers}
+                                onClose={() => setShowOnlineUsers(false)}
+                            />
+                        )}
+                    </AnimatePresence>
+
+                    {/* Advancements panel */}
+                    <AnimatePresence>
+                        {showAdvancements && (
+                            <motion.div
+                                className={styles.advOverlay}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.25 }}
+                            >
+                                <Advancements onClose={() => setShowAdvancements(false)} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Skin customizer panel */}
+                    <AnimatePresence>
+                        {showSkinCustomizer && (
+                            <SkinCustomizer onClose={() => setShowSkinCustomizer(false)} />
+                        )}
+                    </AnimatePresence>
+
+                    {/* Slide container */}
+                    <div
+                        className={styles.slideContainer}
+                        ref={containerRef}
+                        style={slideStyle}
                     >
-                        <ForYouTab
-                            locale={locale}
-                            unlockedAdvancements={unlockedCount}
-                            totalAdvancements={ADVANCEMENTS.length}
-                        />
-                    </motion.div>
-                </section>
+                        {/* Slide 0: Landing — Header + Hero + Server Grid */}
+                        <section className={`${styles.slideSection} ${styles.slideSectionLanding}`}>
+                            <motion.header
+                                className={styles.header}
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? -20 : 0 }}
+                                transition={{ duration: 0.6, delay: 0.1 }}
+                            >
+                                <div className={styles.logo}>azuretier<span className={styles.logoAccent}>.net</span></div>
+                                <div className={styles.statusBar}>
+                                    <button
+                                        className={styles.advButton}
+                                        onClick={() => setShowAdvancements(true)}
+                                    >
+                                        {t('advancements.button', { count: unlockedCount, total: ADVANCEMENTS.length })}
+                                    </button>
+                                    <button
+                                        className={onlineStyles.onlineButton}
+                                        onClick={requestOnlineUsers}
+                                    >
+                                        <span className={styles.statusDot}></span>
+                                        <span>{t('lobby.onlineCount', { count: onlineCount })}</span>
+                                    </button>
+                                    <div className={styles.statusItem}>
+                                        <span>v{rhythmiaConfig.version}</span>
+                                    </div>
+                                    <button
+                                        className={styles.advButton}
+                                        onClick={() => router.push('/wiki')}
+                                    >
+                                        Wiki
+                                    </button>
+                                    <button
+                                        className={styles.advButton}
+                                        onClick={() => router.push('/updates')}
+                                    >
+                                        {t('nav.updates')}
+                                    </button>
+                                    <button
+                                        className={styles.advButton}
+                                        onClick={() => setShowSkinCustomizer(true)}
+                                    >
+                                        {t('skin.profileButton')}
+                                    </button>
+                                    <LocaleSwitcher />
+                                </div>
+                            </motion.header>
 
-                {/* Slide 2: Loyalty + Footer */}
-                <section className={`${styles.slideSection} ${styles.slideSectionBottom}`}>
-                    <LoyaltyWidget />
-                    <motion.footer
-                        className={styles.footer}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: isLoading ? 0 : 0.4 }}
-                        transition={{ duration: 0.6, delay: 0.6 }}
-                    >
-                        {t('footer.copyright')}
-                    </motion.footer>
-                </section>
-            </div>
+                            <main className={styles.main}>
+                                <motion.div
+                                    className={styles.heroText}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+                                    transition={{ duration: 0.7, delay: 0.2 }}
+                                >
+                                    <h1>{t('lobby.selectServer')}</h1>
+                                    <p>{t('lobby.chooseMode')}</p>
+                                    <p className={styles.heroTagline}>{t('lobby.tagline')}</p>
+                                </motion.div>
 
-            {/* Dot navigation */}
-            <nav className={`${styles.slideNav} ${!slidesEnabled ? styles.slideNavHidden : ''}`}>
-                {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
-                    <button
-                        key={i}
-                        className={`${styles.slideDot} ${currentSlide === i ? styles.slideDotActive : ''}`}
-                        onClick={() => goToSlide(i)}
-                        aria-label={`Go to slide ${i + 1}`}
-                    />
-                ))}
-            </nav>
-        </div>
-        )}
+                                <GameModeMap
+                                    isArenaLocked={isArenaLocked}
+                                    unlockedCount={unlockedCount}
+                                    requiredAdvancements={BATTLE_ARENA_REQUIRED_ADVANCEMENTS}
+                                    onlineCount={onlineCount}
+                                    onSelectMode={handleMapSelect}
+                                    locale={locale}
+                                />
+                            </main>
+
+                            {/* Scroll hint — only visible on first slide */}
+                            <AnimatePresence>
+                                {currentSlide === 0 && slidesEnabled && (
+                                    <motion.div
+                                        className={styles.scrollHint}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <svg className={styles.scrollHintIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M7 13l5 5 5-5" />
+                                            <path d="M7 6l5 5 5-5" />
+                                        </svg>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </section>
+
+                        {/* Slide 1: For You */}
+                        <section
+                            className={`${styles.slideSection} ${styles.slideSectionPlay}`}
+                            data-slide-scrollable
+                        >
+                            <motion.div
+                                className={styles.forYouSection}
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+                                transition={{ duration: 0.6, delay: 0.7 }}
+                            >
+                                <ForYouTab
+                                    locale={locale}
+                                    unlockedAdvancements={unlockedCount}
+                                    totalAdvancements={ADVANCEMENTS.length}
+                                />
+                            </motion.div>
+                        </section>
+
+                        {/* Slide 2: Loyalty + Footer */}
+                        <section className={`${styles.slideSection} ${styles.slideSectionBottom}`}>
+                            <LoyaltyWidget />
+                            <motion.footer
+                                className={styles.footer}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: isLoading ? 0 : 0.4 }}
+                                transition={{ duration: 0.6, delay: 0.6 }}
+                            >
+                                {t('footer.copyright')}
+                            </motion.footer>
+                        </section>
+                    </div>
+
+                    {/* Dot navigation */}
+                    <nav className={`${styles.slideNav} ${!slidesEnabled ? styles.slideNavHidden : ''}`}>
+                        {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
+                            <button
+                                key={i}
+                                className={`${styles.slideDot} ${currentSlide === i ? styles.slideDotActive : ''}`}
+                                onClick={() => goToSlide(i)}
+                                aria-label={`Go to slide ${i + 1}`}
+                            />
+                        ))}
+                    </nav>
+                </div>
+            )}
         </>
     );
 }
