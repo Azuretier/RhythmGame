@@ -1,8 +1,8 @@
 // =============================================================
 // Game Mode Map — Data & Types
-// Isometric map for the gamemode select screen in RhythmiaLobby.
-// Minecraft Dungeons–style island with distinct biomes, dramatic
-// mountains, ocean, rivers, and varied terrain.
+// Minecraft Dungeons–style floating island diorama.
+// 48×38 grid with multi-peak mountains (35+ blocks), lava zone,
+// irregular coastline with peninsulas, dense biomes.
 // =============================================================
 
 import type { TerrainType, MapTile, MapPath } from './stories/dungeons';
@@ -27,12 +27,12 @@ export interface GameModeLocation {
 
 export type GameModeStatus = 'locked' | 'available' | 'completed';
 
-// === Map dimensions (larger island map) ===
+// === Map dimensions ===
 
-export const GAMEMODE_MAP_WIDTH = 36;
-export const GAMEMODE_MAP_HEIGHT = 28;
+export const GAMEMODE_MAP_WIDTH = 48;
+export const GAMEMODE_MAP_HEIGHT = 38;
 
-// === Seeded PRNG for deterministic terrain ===
+// === Seeded PRNG ===
 
 function seededRandom(seed: number) {
   let s = seed;
@@ -42,7 +42,7 @@ function seededRandom(seed: number) {
   };
 }
 
-// === Noise helpers ===
+// === Noise ===
 
 function hash2D(x: number, y: number, seed: number): number {
   let s = (x * 73856093 ^ y * 19349663 ^ seed) % 2147483647;
@@ -69,97 +69,131 @@ function fractalNoise(x: number, y: number, seed: number, octaves = 3): number {
   return v / m;
 }
 
-// === Geometry helpers ===
+// === Geometry ===
 
 function distToSegment(px: number, py: number, ax: number, ay: number, bx: number, by: number): number {
   const dx = bx - ax, dy = by - ay;
   const lenSq = dx * dx + dy * dy;
   if (lenSq === 0) return Math.sqrt((px - ax) ** 2 + (py - ay) ** 2);
   const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lenSq));
-  const projX = ax + t * dx, projY = ay + t * dy;
-  return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
+  return Math.sqrt((px - (ax + t * dx)) ** 2 + (py - (ay + t * dy)) ** 2);
 }
 
 function distToPolyline(px: number, py: number, points: [number, number][]): number {
-  let minDist = Infinity;
+  let minD = Infinity;
   for (let i = 0; i < points.length - 1; i++) {
-    const d = distToSegment(px, py, points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
-    if (d < minDist) minDist = d;
+    minD = Math.min(minD, distToSegment(px, py, points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]));
   }
-  return minDist;
+  return minD;
 }
 
-// === Terrain generation — Dungeons-style island ===
+function distPt(px: number, py: number, qx: number, qy: number): number {
+  return Math.sqrt((px - qx) ** 2 + (py - qy) ** 2);
+}
+
+// === Mountain peaks ===
+
+interface Peak { x: number; y: number; height: number; radius: number }
+
+const PEAKS: Peak[] = [
+  { x: 26, y: 13, height: 7, radius: 7 },   // Central peak (tallest)
+  { x: 20, y: 9, height: 6, radius: 6 },    // Left peak
+  { x: 34, y: 11, height: 6, radius: 6.5 }, // Right peak
+  { x: 18, y: 5, height: 5, radius: 5.5 },  // NW snow peak
+  { x: 30, y: 7, height: 5, radius: 5 },    // NE peak
+  { x: 22, y: 17, height: 4, radius: 4.5 }, // South foothills
+  { x: 36, y: 16, height: 4, radius: 4 },   // East foothills
+];
+
+function mountainElevation(x: number, y: number): number {
+  let maxElev = 0;
+  for (const p of PEAKS) {
+    const d = distPt(x, y, p.x, p.y);
+    if (d < p.radius) {
+      const t = 1 - (d / p.radius);
+      // Steep falloff for dramatic cliffs
+      const elev = p.height * Math.pow(t, 1.3);
+      if (elev > maxElev) maxElev = elev;
+    }
+  }
+  return maxElev;
+}
+
+// === Terrain generation ===
 
 function generateGameModeTerrain(): MapTile[] {
   const tiles: MapTile[] = [];
   const rand = seededRandom(12345);
   const W = GAMEMODE_MAP_WIDTH;
   const H = GAMEMODE_MAP_HEIGHT;
-  const cx = W / 2;
-  const cy = H / 2;
+  const cx = W / 2; // 24
+  const cy = H / 2; // 19
 
-  // Mountain ridge: northwest to center-east
-  const mtA: [number, number] = [14, 2];
-  const mtB: [number, number] = [27, 13];
-  // Secondary ridge branch toward northeast
-  const mt2A: [number, number] = [22, 5];
-  const mt2B: [number, number] = [32, 8];
-
-  // River polyline: from mountains through center to south coast
-  const riverPts: [number, number][] = [[20, 8], [18, 13], [16, 18], [15, 24]];
+  // River from mountains through center to south coast
+  const riverPts: [number, number][] = [[24, 10], [22, 16], [20, 22], [18, 30]];
 
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const nx = (x - cx) / cx;
       const ny = (y - cy) / cy;
 
-      // Island shape: elliptical with noise for irregular coastline
-      const dist = Math.sqrt(nx * nx * 0.85 + ny * ny * 1.1);
-      const coastNoise = fractalNoise(x * 0.09, y * 0.09, 54321, 2) * 0.15;
-      const islandEdge = 0.82 + coastNoise;
+      // Island shape: elliptical + noise + peninsula extensions
+      const baseDist = Math.sqrt(nx * nx * 0.75 + ny * ny * 1.0);
+      const coastNoise = fractalNoise(x * 0.07, y * 0.07, 54321, 3) * 0.18;
+
+      // Peninsula extensions (lower distance in certain directions)
+      const seAngle = Math.atan2(ny - 0.2, nx - 0.3); // SE peninsula toward desert
+      const sePen = Math.abs(seAngle - 0.3) < 0.4 ? 0.12 : 0;
+      const nwAngle = Math.atan2(ny + 0.4, nx + 0.3); // NW peninsula
+      const nwPen = Math.abs(nwAngle - 3.5) < 0.5 || Math.abs(nwAngle + 2.8) < 0.5 ? 0.08 : 0;
+
+      const islandEdge = 0.80 + coastNoise + sePen + nwPen;
 
       // Ocean
-      if (dist > islandEdge) {
+      if (baseDist > islandEdge) {
         tiles.push({ x, y, terrain: 'water' as TerrainType, elevation: 0 });
         continue;
       }
 
       // River
       const riverDist = distToPolyline(x, y, riverPts);
-      const riverNoise = smoothNoise(x * 0.3, y * 0.3, 11111) * 0.4;
-      if (riverDist < 0.9 + riverNoise) {
+      const riverNoise = smoothNoise(x * 0.25, y * 0.25, 11111) * 0.4;
+      if (riverDist < 0.8 + riverNoise) {
         tiles.push({ x, y, terrain: 'water' as TerrainType, elevation: 0 });
         continue;
       }
 
-      // Beach ring
-      if (dist > islandEdge - 0.06) {
+      // Beach
+      if (baseDist > islandEdge - 0.05) {
         tiles.push({ x, y, terrain: 'sand' as TerrainType, elevation: 0 });
         continue;
       }
 
       // River banks
-      if (riverDist < 1.6 + riverNoise * 0.5) {
+      if (riverDist < 1.4 + riverNoise * 0.3) {
         tiles.push({ x, y, terrain: 'sand' as TerrainType, elevation: 0 });
         continue;
       }
 
       // Biome noise
-      const bn = fractalNoise(x * 0.06, y * 0.06, 77777, 2);
+      const bn = fractalNoise(x * 0.05, y * 0.05, 77777, 3);
 
-      // Mountain ridge check
-      const mtDist1 = distToSegment(x, y, mtA[0], mtA[1], mtB[0], mtB[1]);
-      const mtDist2 = distToSegment(x, y, mt2A[0], mt2A[1], mt2B[0], mt2B[1]);
-      const mtDist = Math.min(mtDist1, mtDist2);
-      const mtWidth = 5.5 + bn * 2;
+      // Mountain check
+      const mtElev = mountainElevation(x, y);
 
-      if (mtDist < mtWidth) {
-        const mtIntensity = 1 - (mtDist / mtWidth);
-        const elevation = Math.min(7, Math.floor(mtIntensity * 7 + bn * 2));
+      if (mtElev > 0.5) {
+        const elevation = Math.min(7, Math.round(mtElev));
 
-        // Snow on highest peaks in the north
-        if (elevation >= 5 && y < 12) {
+        // Lava zone: east side of mountains (between central and right peaks)
+        if (nx > 0.1 && nx < 0.4 && ny > -0.2 && ny < 0.15 && mtElev > 1.5 && mtElev < 4) {
+          tiles.push({ x, y, terrain: 'lava' as TerrainType, elevation: Math.min(elevation, 4) });
+          continue;
+        }
+
+        // Snow on highest northern peaks
+        if (elevation >= 5 && y < 16) {
+          tiles.push({ x, y, terrain: 'snow' as TerrainType, elevation });
+        } else if (elevation >= 4 && y < 10) {
           tiles.push({ x, y, terrain: 'snow' as TerrainType, elevation });
         } else {
           tiles.push({ x, y, terrain: 'stone' as TerrainType, elevation });
@@ -167,62 +201,53 @@ function generateGameModeTerrain(): MapTile[] {
         continue;
       }
 
-      // Biome zones
+      // === Biome zones ===
       let terrain: TerrainType = 'grass';
       let elevation = 0;
 
-      // Forest (west, northwest)
-      if (nx < -0.05 && ny < 0.15) {
-        if (rand() > 0.5) {
-          terrain = 'tree';
-          elevation = Math.floor(bn * 2);
-        } else {
-          terrain = 'grass';
-          elevation = Math.floor(bn * 1.5);
-        }
-        if (rand() > 0.94) terrain = 'flower';
+      // Dense forest (west)
+      if (nx < -0.1 && ny < 0.15 && ny > -0.55) {
+        terrain = rand() > 0.35 ? 'tree' : 'grass';
+        elevation = Math.floor(bn * 2);
+        if (rand() > 0.96) terrain = 'flower';
       }
-      // Desert/ruins (east, southeast)
-      else if (nx > 0.25 && ny > 0.1) {
-        terrain = rand() > 0.7 ? 'sand' : 'dirt';
+      // Desert (far east)
+      else if (nx > 0.35 && ny > 0.0) {
+        terrain = rand() > 0.6 ? 'sand' : 'dirt';
         elevation = Math.floor(bn * 1);
-        if (rand() > 0.95) terrain = 'rock';
+        if (rand() > 0.93) terrain = 'rock';
       }
-      // Swamp/dark cave (southwest)
-      else if (nx < -0.1 && ny > 0.25) {
-        if (rand() > 0.7) {
-          terrain = 'mushroom';
-        } else if (rand() > 0.5) {
-          terrain = 'tree';
-        } else {
-          terrain = 'dirt';
-        }
+      // Swamp (southwest)
+      else if (nx < 0.0 && ny > 0.3) {
+        if (rand() > 0.65) terrain = 'mushroom';
+        else if (rand() > 0.4) terrain = 'tree';
+        else terrain = 'dirt';
         elevation = 0;
       }
-      // Autumn plains/village (center)
-      else if (Math.abs(nx) < 0.35 && Math.abs(ny) < 0.35) {
+      // Autumn village (center-south, around hub)
+      else if (nx > -0.2 && nx < 0.2 && ny > 0.1 && ny < 0.5) {
         terrain = 'grass';
         elevation = Math.floor(bn * 1.5);
-        if (rand() > 0.85) terrain = 'tree';
-        if (rand() > 0.95) terrain = 'flower';
+        if (rand() > 0.75) terrain = 'tree'; // dense autumn trees
+        if (rand() > 0.96) terrain = 'flower';
         if (rand() > 0.97) terrain = 'path';
       }
-      // Snow/tundra transition (north)
-      else if (ny < -0.3) {
-        if (rand() > 0.6) {
-          terrain = 'snow';
-          elevation = Math.floor(bn * 2) + 1;
-        } else {
-          terrain = 'stone';
-          elevation = Math.floor(bn * 2);
-        }
+      // Snow tundra (far north)
+      else if (ny < -0.45) {
+        terrain = rand() > 0.5 ? 'snow' : 'stone';
+        elevation = Math.floor(bn * 2) + 1;
       }
-      // Default
+      // Mountain foothills transition
+      else if (mtElev > 0.1) {
+        terrain = rand() > 0.6 ? 'stone' : 'rock';
+        elevation = Math.floor(bn * 2) + 1;
+      }
+      // Default grasslands
       else {
         terrain = 'grass';
         elevation = Math.floor(bn * 2);
-        if (rand() > 0.88) terrain = 'tree';
-        if (rand() > 0.96) terrain = 'flower';
+        if (rand() > 0.82) terrain = 'tree';
+        if (rand() > 0.97) terrain = 'flower';
       }
 
       tiles.push({ x, y, terrain, elevation });
@@ -243,8 +268,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Home',
     description: '全ての冒険はここから始まる。',
     descriptionEn: 'All adventures begin here.',
-    mapX: 18,
-    mapY: 16,
+    mapX: 22,
+    mapY: 24,
     icon: '🏕️',
     accentColor: '#8B6914',
     action: 'hub',
@@ -257,8 +282,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Rhythmia',
     description: 'リズムに合わせてブロックを操る、ソロモード。5つの世界が待っている。',
     descriptionEn: 'Master the blocks to the rhythm in solo mode. Five worlds await.',
-    mapX: 8,
-    mapY: 8,
+    mapX: 10,
+    mapY: 13,
     icon: '🎵',
     accentColor: '#4CAF50',
     action: 'vanilla',
@@ -278,8 +303,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Battle Arena',
     description: 'リアルタイムで他のプレイヤーと対戦。ランクマッチやモブバトルも。',
     descriptionEn: 'Battle other players in real-time. Ranked matches and mob battles available.',
-    mapX: 29,
-    mapY: 7,
+    mapX: 38,
+    mapY: 10,
     icon: '⚔️',
     accentColor: '#FF6B6B',
     action: 'multiplayer',
@@ -301,8 +326,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Grand Arena',
     description: '9人のプレイヤーが同時に戦う大規模バトル。カオスシステムとギミックが待つ。',
     descriptionEn: '9 players battle simultaneously. Chaos system and gimmicks await.',
-    mapX: 29,
-    mapY: 21,
+    mapX: 38,
+    mapY: 26,
     icon: '🏟️',
     accentColor: '#2196F3',
     action: 'arena',
@@ -323,8 +348,8 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
     nameEn: 'Adventures',
     description: 'ダンジョンを探索し、物語を紡ぐ。リズミアの世界を冒険しよう。',
     descriptionEn: 'Explore dungeons and weave stories. Adventure through the world of Rhythmia.',
-    mapX: 8,
-    mapY: 22,
+    mapX: 10,
+    mapY: 28,
     icon: '📖',
     accentColor: '#9C27B0',
     action: 'stories',
@@ -340,39 +365,36 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
   },
 ];
 
-// === Paths connecting hub to each game mode ===
+// === Paths ===
 
 export const GAMEMODE_PATHS: MapPath[] = [
   {
-    from: 'hub',
-    to: 'solo',
+    from: 'hub', to: 'solo',
     waypoints: [
-      { x: 18, y: 16 }, { x: 16, y: 14 }, { x: 14, y: 12 },
-      { x: 12, y: 10 }, { x: 10, y: 9 }, { x: 8, y: 8 },
+      { x: 22, y: 24 }, { x: 20, y: 22 }, { x: 18, y: 20 },
+      { x: 16, y: 18 }, { x: 14, y: 16 }, { x: 12, y: 14 }, { x: 10, y: 13 },
     ],
   },
   {
-    from: 'hub',
-    to: 'battle',
+    from: 'hub', to: 'battle',
     waypoints: [
-      { x: 18, y: 16 }, { x: 20, y: 14 }, { x: 22, y: 12 },
-      { x: 24, y: 10 }, { x: 27, y: 8 }, { x: 29, y: 7 },
+      { x: 22, y: 24 }, { x: 24, y: 22 }, { x: 26, y: 20 },
+      { x: 28, y: 18 }, { x: 30, y: 16 }, { x: 33, y: 14 },
+      { x: 36, y: 12 }, { x: 38, y: 10 },
     ],
   },
   {
-    from: 'hub',
-    to: 'arena',
+    from: 'hub', to: 'arena',
     waypoints: [
-      { x: 18, y: 16 }, { x: 20, y: 17 }, { x: 22, y: 18 },
-      { x: 24, y: 19 }, { x: 27, y: 20 }, { x: 29, y: 21 },
+      { x: 22, y: 24 }, { x: 24, y: 24 }, { x: 27, y: 25 },
+      { x: 30, y: 25 }, { x: 33, y: 25 }, { x: 36, y: 26 }, { x: 38, y: 26 },
     ],
   },
   {
-    from: 'hub',
-    to: 'stories',
+    from: 'hub', to: 'stories',
     waypoints: [
-      { x: 18, y: 16 }, { x: 16, y: 17 }, { x: 14, y: 18 },
-      { x: 12, y: 20 }, { x: 10, y: 21 }, { x: 8, y: 22 },
+      { x: 22, y: 24 }, { x: 20, y: 25 }, { x: 18, y: 26 },
+      { x: 16, y: 27 }, { x: 14, y: 28 }, { x: 12, y: 28 }, { x: 10, y: 28 },
     ],
   },
 ];

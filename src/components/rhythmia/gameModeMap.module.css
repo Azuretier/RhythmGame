@@ -1,25 +1,25 @@
 /* ============================================
    Game Mode Map — Minecraft Dungeons Voxel Style
-   3D isometric voxel diorama with warm lighting
+   Warm parchment diorama with massive terrain
    ============================================ */
 
 .mapWrapper {
   position: relative;
   width: 100%;
-  max-width: 1000px;
+  max-width: 1060px;
   aspect-ratio: 16 / 10;
   margin: 0 auto;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
-  background: #1e1812;
-  border: 2px solid rgba(40, 30, 20, 0.8);
+  background: #d5c4a8;
+  border: 3px solid #a89878;
   box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 1px rgba(255, 240, 210, 0.04);
+    0 8px 40px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 250, 230, 0.3);
   user-select: none;
 }
 
-/* Warm parchment vignette overlay */
+/* Subtle warm vignette (lighter than before — parchment-style) */
 .mapWrapper::after {
   content: '';
   position: absolute;
@@ -27,10 +27,10 @@
   pointer-events: none;
   z-index: 1;
   background: radial-gradient(
-    ellipse 70% 65% at 50% 50%,
-    transparent 40%,
-    rgba(30, 24, 18, 0.4) 75%,
-    rgba(20, 16, 10, 0.7) 100%
+    ellipse 75% 70% at 50% 48%,
+    transparent 50%,
+    rgba(160, 140, 110, 0.15) 80%,
+    rgba(120, 100, 70, 0.3) 100%
   );
 }
 
@@ -60,18 +60,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(20, 16, 10, 0.88);
+  background: rgba(40, 32, 20, 0.88);
   border: 2px solid #888;
   border-radius: 6px;
   font-size: 17px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .locName {
   font-family: var(--font-pixel, 'Press Start 2P', monospace);
   font-size: 7px;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+  color: #2a2010;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5), 0 0 6px rgba(255, 255, 255, 0.3);
   letter-spacing: 1px;
   text-transform: uppercase;
   white-space: nowrap;
@@ -99,7 +99,7 @@
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  background: rgba(20, 16, 10, 0.88);
+  background: rgba(40, 32, 20, 0.88);
   border: 1px solid rgba(76, 175, 80, 0.4);
   border-radius: 3px;
   font-family: var(--font-pixel, 'Press Start 2P', monospace);
@@ -132,12 +132,12 @@
   width: 380px;
   max-width: calc(100% - 28px);
   padding: 14px 18px;
-  background: linear-gradient(180deg, rgba(36, 28, 20, 0.94) 0%, rgba(24, 18, 12, 0.97) 100%);
-  border: 1px solid rgba(255, 240, 210, 0.1);
+  background: linear-gradient(180deg, rgba(60, 48, 32, 0.94) 0%, rgba(40, 30, 18, 0.97) 100%);
+  border: 1px solid rgba(255, 240, 210, 0.12);
   border-radius: 4px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
   pointer-events: auto;
   animation: panelIn 0.2s ease;
 }

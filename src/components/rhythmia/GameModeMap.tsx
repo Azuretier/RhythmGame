@@ -17,14 +17,10 @@ import styles from './gameModeMap.module.css';
 // Noise helpers (deterministic)
 // ────────────────────────────────────────────
 
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; };
-}
-
 function noise2D(x: number, z: number, seed: number): number {
-  const r = seededRandom(Math.floor(x * 73856093) ^ Math.floor(z * 19349663) ^ seed);
-  return r();
+  let s = (Math.floor(x * 73856093) ^ Math.floor(z * 19349663) ^ seed) % 2147483647;
+  if (s < 0) s += 2147483647;
+  return s / 2147483647;
 }
 
 function smoothNoise(x: number, z: number, seed: number): number {
@@ -46,57 +42,54 @@ function fractalNoise(x: number, z: number, seed: number, octaves = 3): number {
 }
 
 // ────────────────────────────────────────────
-// Minecraft Dungeons warm biome palettes
+// Warm biome palettes
 // ────────────────────────────────────────────
 
-type BiomePalette = { top: THREE.Color; mid: THREE.Color; deep: THREE.Color };
+type Pal = { top: THREE.Color; mid: THREE.Color; deep: THREE.Color };
 
-const BIOME: Record<string, BiomePalette> = {
+const BIOME: Record<string, Pal> = {
   grass:    { top: new THREE.Color('#7db044'), mid: new THREE.Color('#5e8a32'), deep: new THREE.Color('#4a6828') },
   dirt:     { top: new THREE.Color('#b89060'), mid: new THREE.Color('#956e42'), deep: new THREE.Color('#7a5530') },
-  stone:    { top: new THREE.Color('#8a8890'), mid: new THREE.Color('#6a6870'), deep: new THREE.Color('#504e56') },
-  water:    { top: new THREE.Color('#4a90c8'), mid: new THREE.Color('#3570a0'), deep: new THREE.Color('#2a5580') },
+  stone:    { top: new THREE.Color('#8a8480'), mid: new THREE.Color('#706860'), deep: new THREE.Color('#585048') },
+  water:    { top: new THREE.Color('#6a98b0'), mid: new THREE.Color('#507888'), deep: new THREE.Color('#405868') },
   sand:     { top: new THREE.Color('#d8c088'), mid: new THREE.Color('#bca068'), deep: new THREE.Color('#a08850') },
-  snow:     { top: new THREE.Color('#e8eaf0'), mid: new THREE.Color('#c8ccd8'), deep: new THREE.Color('#a0a4b0') },
+  snow:     { top: new THREE.Color('#eaecf0'), mid: new THREE.Color('#ccd0d8'), deep: new THREE.Color('#a8aab4') },
   path:     { top: new THREE.Color('#c8a868'), mid: new THREE.Color('#a88848'), deep: new THREE.Color('#886830') },
   bridge:   { top: new THREE.Color('#8a6030'), mid: new THREE.Color('#6a4820'), deep: new THREE.Color('#503818') },
   tree:     { top: new THREE.Color('#3a7828'), mid: new THREE.Color('#2e6020'), deep: new THREE.Color('#4a6828') },
   flower:   { top: new THREE.Color('#d06878'), mid: new THREE.Color('#5e8a32'), deep: new THREE.Color('#4a6828') },
-  rock:     { top: new THREE.Color('#6a6870'), mid: new THREE.Color('#585660'), deep: new THREE.Color('#484650') },
+  rock:     { top: new THREE.Color('#6a6460'), mid: new THREE.Color('#585250'), deep: new THREE.Color('#484440') },
   mushroom: { top: new THREE.Color('#c04030'), mid: new THREE.Color('#5e8a32'), deep: new THREE.Color('#4a6828') },
-  lava:     { top: new THREE.Color('#e85020'), mid: new THREE.Color('#c03810'), deep: new THREE.Color('#802808') },
+  lava:     { top: new THREE.Color('#e86830'), mid: new THREE.Color('#c04018'), deep: new THREE.Color('#703020') },
   void:     { top: new THREE.Color('#181418'), mid: new THREE.Color('#100e12'), deep: new THREE.Color('#080608') },
 };
 
-function getPalette(t: string): BiomePalette { return BIOME[t] || BIOME.grass; }
+function getPal(t: string): Pal { return BIOME[t] || BIOME.grass; }
 
-function colorForLayer(y: number, maxY: number, pal: BiomePalette): THREE.Color {
+function layerColor(y: number, maxY: number, p: Pal): THREE.Color {
   const t = maxY > 1 ? y / (maxY - 1) : 1;
-  if (t > 0.7) return pal.top.clone();
-  if (t > 0.3) return pal.mid.clone();
-  return pal.deep.clone();
+  return t > 0.7 ? p.top.clone() : t > 0.3 ? p.mid.clone() : p.deep.clone();
 }
 
 // ────────────────────────────────────────────
-// Terrain height — dramatic Dungeons-style
+// Terrain height — MASSIVE Dungeons-scale
 // ────────────────────────────────────────────
 
 const SEED = 12345;
-
-interface VoxelBlock { x: number; y: number; z: number; color: THREE.Color }
+interface VB { x: number; y: number; z: number; color: THREE.Color }
 
 function terrainHeight(tile: { x: number; y: number; terrain: string; elevation: number }): number {
-  const n = fractalNoise(tile.x * 0.12, tile.y * 0.12, SEED, 4);
+  const n = fractalNoise(tile.x * 0.1, tile.y * 0.1, SEED, 4);
 
   switch (tile.terrain) {
-    case 'water':
-      return 1;
-    case 'sand':
-      return 2 + Math.floor(n * 1.5);
+    case 'water': return 1;
+    case 'sand': return 2 + Math.floor(n * 1.5);
     case 'snow':
-      return Math.max(5, 8 + tile.elevation * 2 + Math.floor(n * 5));
+      return Math.max(6, 10 + tile.elevation * 4 + Math.floor(n * 4));
     case 'stone': case 'rock':
-      return Math.max(4, 7 + tile.elevation * 2 + Math.floor(n * 5));
+      return Math.max(5, 8 + tile.elevation * 4 + Math.floor(n * 5));
+    case 'lava':
+      return Math.max(5, 8 + tile.elevation * 3 + Math.floor(n * 3));
     case 'tree':
       return Math.max(3, 4 + tile.elevation + Math.floor(n * 3));
     case 'mushroom':
@@ -105,14 +98,12 @@ function terrainHeight(tile: { x: number; y: number; terrain: string; elevation:
       return Math.max(3, 3 + tile.elevation + Math.floor(n * 2));
     case 'path': case 'bridge':
       return Math.max(3, 4 + tile.elevation + Math.floor(n * 2));
-    case 'lava':
-      return Math.max(3, 5 + Math.floor(n * 3));
     default:
       return Math.max(3, 4 + tile.elevation + Math.floor(n * 3));
   }
 }
 
-// Fast lookup map for tile heights
+// Fast lookup
 const tileMap = new Map<string, { x: number; y: number; terrain: string; elevation: number }>();
 for (const t of GAMEMODE_TERRAIN) { tileMap.set(`${t.x},${t.y}`, t); }
 
@@ -122,22 +113,18 @@ function heightAt(x: number, y: number): number {
 }
 
 // ────────────────────────────────────────────
-// Tree type determination by biome/position
+// Tree types by biome
 // ────────────────────────────────────────────
 
-type TreeType = 'oak' | 'spruce' | 'autumn' | 'dead';
+type TT = 'oak' | 'spruce' | 'autumn' | 'dead';
 
-function getTreeType(x: number, y: number): TreeType {
+function treeType(x: number, y: number): TT {
   const nx = (x - GAMEMODE_MAP_WIDTH / 2) / (GAMEMODE_MAP_WIDTH / 2);
   const ny = (y - GAMEMODE_MAP_HEIGHT / 2) / (GAMEMODE_MAP_HEIGHT / 2);
-
-  // Near mountains / north → spruce
-  if (ny < -0.1 || (nx > 0.1 && ny < 0.2)) return 'spruce';
-  // Southwest swamp → dead
+  if (ny < -0.15) return 'spruce';
   if (nx < -0.1 && ny > 0.3) return 'dead';
-  // Center → mix of autumn and oak
-  if (Math.abs(nx) < 0.3 && ny > -0.1) {
-    return noise2D(x * 5, y * 5, SEED + 2222) > 0.5 ? 'autumn' : 'oak';
+  if (Math.abs(nx) < 0.25 && ny > 0.05) {
+    return noise2D(x * 5, y * 5, SEED + 2222) > 0.45 ? 'autumn' : 'oak';
   }
   return 'oak';
 }
@@ -146,129 +133,135 @@ function getTreeType(x: number, y: number): TreeType {
 // Structure generators
 // ────────────────────────────────────────────
 
-function generateHut(bx: number, by: number, bz: number): VoxelBlock[] {
-  const blocks: VoxelBlock[] = [];
-  const wood = new THREE.Color('#8a6030');
-  const darkWood = new THREE.Color('#5a3818');
+const C = (hex: string) => new THREE.Color(hex);
 
-  for (let dx = -1; dx <= 1; dx++) {
-    for (let dz = -1; dz <= 1; dz++) {
-      blocks.push({ x: bx + dx, y: by, z: bz + dz, color: darkWood.clone() });
-      if (Math.abs(dx) === 1 || Math.abs(dz) === 1) {
-        blocks.push({ x: bx + dx, y: by + 1, z: bz + dz, color: wood.clone() });
-        blocks.push({ x: bx + dx, y: by + 2, z: bz + dz, color: wood.clone() });
-      }
-      blocks.push({ x: bx + dx, y: by + 3, z: bz + dz, color: darkWood.clone() });
+function mkHut(bx: number, by: number, bz: number): VB[] {
+  const b: VB[] = [];
+  const w = '#8a6030', d = '#5a3818';
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+    b.push({ x: bx + dx, y: by, z: bz + dz, color: C(d) });
+    if (Math.abs(dx) === 1 || Math.abs(dz) === 1) {
+      b.push({ x: bx + dx, y: by + 1, z: bz + dz, color: C(w) });
+      b.push({ x: bx + dx, y: by + 2, z: bz + dz, color: C(w) });
     }
+    b.push({ x: bx + dx, y: by + 3, z: bz + dz, color: C(d) });
   }
-  // Peaked roof
-  blocks.push({ x: bx, y: by + 4, z: bz, color: darkWood.clone() });
-  return blocks;
+  b.push({ x: bx, y: by + 4, z: bz, color: C(d) });
+  return b;
 }
 
-function generateTower(bx: number, by: number, bz: number): VoxelBlock[] {
-  const blocks: VoxelBlock[] = [];
-  const stone = new THREE.Color('#7a7880');
-  const darkStone = new THREE.Color('#5a5860');
-
-  for (let dy = 0; dy < 7; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dz = -1; dz <= 1; dz++) {
-        if (dy > 0 && dy < 6 && dx === 0 && dz === 0) continue;
-        blocks.push({ x: bx + dx, y: by + dy, z: bz + dz, color: dy < 6 ? stone.clone() : darkStone.clone() });
-      }
+function mkTower(bx: number, by: number, bz: number, h: number): VB[] {
+  const b: VB[] = [];
+  const s = '#7a7870', ds = '#5a5850';
+  for (let dy = 0; dy < h; dy++) {
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+      if (dy > 0 && dy < h - 1 && dx === 0 && dz === 0) continue;
+      b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(dy < h - 1 ? s : ds) });
     }
   }
-  // Battlements at corners
   for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as [number, number][]) {
-    blocks.push({ x: bx + dx, y: by + 7, z: bz + dz, color: stone.clone() });
+    b.push({ x: bx + dx, y: by + h, z: bz + dz, color: C(s) });
   }
-  // Flag pole
-  blocks.push({ x: bx, y: by + 7, z: bz, color: darkStone.clone() });
-  blocks.push({ x: bx, y: by + 8, z: bz, color: new THREE.Color('#cc3333') });
-  return blocks;
+  b.push({ x: bx, y: by + h, z: bz, color: C(ds) });
+  b.push({ x: bx, y: by + h + 1, z: bz, color: C('#cc3333') });
+  return b;
 }
 
-function generateColosseum(bx: number, by: number, bz: number): VoxelBlock[] {
-  const blocks: VoxelBlock[] = [];
-  const sand = new THREE.Color('#c8a868');
-  const darkSand = new THREE.Color('#a08040');
-
-  // Ring of pillars
-  for (let angle = 0; angle < 8; angle++) {
-    const dx = Math.round(Math.cos(angle * Math.PI / 4) * 2.5);
-    const dz = Math.round(Math.sin(angle * Math.PI / 4) * 2.5);
-    for (let dy = 0; dy < 4; dy++) {
-      blocks.push({ x: bx + dx, y: by + dy, z: bz + dz, color: sand.clone() });
-    }
-    if (angle % 2 === 0) {
-      blocks.push({ x: bx + dx, y: by + 4, z: bz + dz, color: darkSand.clone() });
+function mkCastle(bx: number, by: number, bz: number): VB[] {
+  const b: VB[] = [];
+  const s = '#706860', ds = '#585048';
+  // Walls
+  for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) {
+    if (Math.abs(dx) < 3 && Math.abs(dz) < 3) continue; // only edges
+    for (let dy = 0; dy < 5; dy++) {
+      b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(s) });
     }
   }
-  // Floor
-  for (let dx = -1; dx <= 1; dx++) {
-    for (let dz = -1; dz <= 1; dz++) {
-      blocks.push({ x: bx + dx, y: by, z: bz + dz, color: darkSand.clone() });
+  // Corner towers (taller)
+  for (const [dx, dz] of [[-3, -3], [3, -3], [-3, 3], [3, 3]] as [number, number][]) {
+    for (let dy = 5; dy < 9; dy++) {
+      b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(ds) });
+    }
+    b.push({ x: bx + dx, y: by + 9, z: bz + dz, color: C(s) });
+  }
+  // Central keep
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+    for (let dy = 0; dy < 7; dy++) {
+      b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(dy < 6 ? ds : s) });
     }
   }
-  return blocks;
+  return b;
 }
 
-function generateRuins(bx: number, by: number, bz: number): VoxelBlock[] {
-  const blocks: VoxelBlock[] = [];
-  const stone = new THREE.Color('#6a6870');
-  const moss = new THREE.Color('#4a6838');
+function mkColosseum(bx: number, by: number, bz: number): VB[] {
+  const b: VB[] = [];
+  const s = '#c8a868', ds = '#a08040';
+  for (let a = 0; a < 12; a++) {
+    const dx = Math.round(Math.cos(a * Math.PI / 6) * 3);
+    const dz = Math.round(Math.sin(a * Math.PI / 6) * 3);
+    for (let dy = 0; dy < 5; dy++) {
+      b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(s) });
+    }
+    if (a % 3 === 0) {
+      b.push({ x: bx + dx, y: by + 5, z: bz + dz, color: C(ds) });
+      b.push({ x: bx + dx, y: by + 6, z: bz + dz, color: C(ds) });
+    }
+  }
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+    b.push({ x: bx + dx, y: by, z: bz + dz, color: C(ds) });
+  }
+  return b;
+}
 
+function mkRuins(bx: number, by: number, bz: number): VB[] {
+  const b: VB[] = [];
+  const s = '#6a6460', m = '#4a6838';
   // Broken archway
   for (let dx = -2; dx <= 2; dx++) {
     if (Math.abs(dx) === 2) {
-      for (let dy = 0; dy < 5; dy++) {
-        blocks.push({ x: bx + dx, y: by + dy, z: bz, color: dy > 3 ? moss.clone() : stone.clone() });
-      }
+      for (let dy = 0; dy < 6; dy++) b.push({ x: bx + dx, y: by + dy, z: bz, color: C(dy > 4 ? m : s) });
     }
-    if (Math.abs(dx) <= 1) {
-      blocks.push({ x: bx + dx, y: by + 4, z: bz, color: stone.clone() });
-    }
+    if (Math.abs(dx) <= 1) b.push({ x: bx + dx, y: by + 5, z: bz, color: C(s) });
   }
-  // Rubble
-  blocks.push({ x: bx - 1, y: by, z: bz + 1, color: stone.clone() });
-  blocks.push({ x: bx + 1, y: by, z: bz - 1, color: moss.clone() });
-  return blocks;
+  // Scattered rubble
+  b.push({ x: bx - 1, y: by, z: bz + 1, color: C(s) });
+  b.push({ x: bx + 1, y: by, z: bz - 1, color: C(m) });
+  b.push({ x: bx + 2, y: by, z: bz + 2, color: C(s) });
+  b.push({ x: bx - 2, y: by, z: bz - 1, color: C(s) });
+  // Second broken pillar
+  for (let dy = 0; dy < 3; dy++) b.push({ x: bx + 3, y: by + dy, z: bz - 2, color: C(s) });
+  return b;
 }
 
-function generateCampfire(bx: number, by: number, bz: number): VoxelBlock[] {
-  const blocks: VoxelBlock[] = [];
-  const darkWood = new THREE.Color('#5a3818');
-  const fire = new THREE.Color('#e88520');
-
-  blocks.push({ x: bx, y: by, z: bz, color: fire });
+function mkCampfire(bx: number, by: number, bz: number): VB[] {
+  const b: VB[] = [];
+  b.push({ x: bx, y: by, z: bz, color: C('#e88520') });
+  b.push({ x: bx, y: by + 1, z: bz, color: C('#f0a030') }); // flame tip
   for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
-    blocks.push({ x: bx + dx, y: by, z: bz + dz, color: darkWood.clone() });
+    b.push({ x: bx + dx, y: by, z: bz + dz, color: C('#5a3818') });
   }
-  return blocks;
+  return b;
 }
 
 // ────────────────────────────────────────────
-// Voxel generation — terrain + decorations + structures
+// Voxel generation
 // ────────────────────────────────────────────
 
 function generateTerrainVoxels() {
-  const blocks: VoxelBlock[] = [];
+  const blocks: VB[] = [];
   const hx = GAMEMODE_MAP_WIDTH / 2;
   const hz = GAMEMODE_MAP_HEIGHT / 2;
 
   for (const tile of GAMEMODE_TERRAIN) {
+    if (tile.terrain === 'water') continue;
     const wx = tile.x - hx;
     const wz = tile.y - hz;
-    const pal = getPalette(tile.terrain);
+    const pal = getPal(tile.terrain);
     const h = terrainHeight(tile);
-
-    // Skip water tiles — they'll be covered by the water plane
-    if (tile.terrain === 'water') continue;
 
     // Stack terrain blocks
     for (let y = 0; y < h; y++) {
-      const col = colorForLayer(y, h, pal);
+      const col = layerColor(y, h, pal);
       const cn = (noise2D(tile.x + y * 7, tile.y + y * 13, SEED + 500) - 0.5) * 0.06;
       col.r = Math.max(0, Math.min(1, col.r + cn));
       col.g = Math.max(0, Math.min(1, col.g + cn));
@@ -278,160 +271,145 @@ function generateTerrainVoxels() {
 
     // ── TREES ──
     if (tile.terrain === 'tree') {
-      const treeType = getTreeType(tile.x, tile.y);
+      const tt = treeType(tile.x, tile.y);
       const dn = smoothNoise(tile.x * 0.4, tile.y * 0.4, SEED + 300);
 
-      if (treeType === 'dead') {
-        // Dead tree: just trunk
-        const trunkCol = new THREE.Color('#4a3818');
-        const trunkH = 2 + Math.floor(dn * 2);
-        for (let ty = 0; ty < trunkH; ty++) {
-          blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
-        }
-      } else if (treeType === 'spruce') {
-        // Spruce: tall triangular shape, dark green
-        const trunkCol = new THREE.Color('#5a3818');
-        const trunkH = 3 + Math.floor(dn * 2);
-        for (let ty = 0; ty < trunkH; ty++) {
-          blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
-        }
-        const cb = h + trunkH;
-        const leafCol = new THREE.Color('#1a5528');
-        // Bottom layer: 3×3 cross
-        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]] as [number, number][]) {
-          if (Math.abs(dx) + Math.abs(dz) <= 1) {
-            const lc = leafCol.clone();
-            lc.g += (noise2D(tile.x + dx, tile.y + dz, SEED + 888) - 0.5) * 0.04;
-            blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc });
-          }
-        }
-        // Middle layer: cross
+      if (tt === 'dead') {
+        const tc = C('#4a3818');
+        for (let ty = 0; ty < 2 + Math.floor(dn * 2); ty++) blocks.push({ x: wx, y: h + ty, z: wz, color: tc.clone() });
+      } else if (tt === 'spruce') {
+        const tc = C('#5a3818');
+        const th = 3 + Math.floor(dn * 2);
+        for (let ty = 0; ty < th; ty++) blocks.push({ x: wx, y: h + ty, z: wz, color: tc.clone() });
+        const cb = h + th;
+        const lc = C('#1a5528');
+        // Tall triangular canopy
         for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
-          const lc = leafCol.clone();
-          lc.g += 0.02;
-          blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: lc });
+          if (Math.abs(dx) + Math.abs(dz) <= 1) blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc.clone() });
         }
-        // Top: just center
-        blocks.push({ x: wx, y: cb + 2, z: wz, color: leafCol.clone() });
-        blocks.push({ x: wx, y: cb + 3, z: wz, color: leafCol.clone() });
-      } else if (treeType === 'autumn') {
-        // Autumn: orange/red canopy
-        const trunkCol = new THREE.Color('#6a4820');
-        const trunkH = 2 + Math.floor(dn * 2);
-        for (let ty = 0; ty < trunkH; ty++) {
-          blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
-        }
-        const cb = h + trunkH;
-        const leafColors = [new THREE.Color('#cc6622'), new THREE.Color('#dd8833'), new THREE.Color('#bb4411'), new THREE.Color('#ee9944')];
-        // Lower canopy cross
         for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
-          const lc = leafColors[Math.floor(noise2D(tile.x + dx * 3, tile.y + dz * 3, SEED + 444) * leafColors.length)].clone();
-          blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc });
+          blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: lc.clone() });
         }
-        // Upper canopy
-        blocks.push({ x: wx, y: cb + 1, z: wz, color: leafColors[0].clone() });
+        blocks.push({ x: wx, y: cb + 2, z: wz, color: lc.clone() });
+        blocks.push({ x: wx, y: cb + 3, z: wz, color: lc.clone() });
+      } else if (tt === 'autumn') {
+        const tc = C('#6a4820');
+        const th = 2 + Math.floor(dn * 2);
+        for (let ty = 0; ty < th; ty++) blocks.push({ x: wx, y: h + ty, z: wz, color: tc.clone() });
+        const cb = h + th;
+        const lcs = [C('#cc6622'), C('#dd8833'), C('#bb4411'), C('#ee9944')];
+        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
+          blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lcs[Math.floor(noise2D(tile.x + dx * 3, tile.y + dz * 3, SEED + 444) * lcs.length)].clone() });
+        }
+        blocks.push({ x: wx, y: cb + 1, z: wz, color: lcs[0].clone() });
         for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
-          if (noise2D(tile.x + dx * 2, tile.y + dz * 2, SEED + 555) > 0.4) {
-            blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: leafColors[1].clone() });
-          }
+          if (noise2D(tile.x + dx * 2, tile.y + dz * 2, SEED + 555) > 0.4) blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: lcs[1].clone() });
         }
       } else {
-        // Oak: standard green canopy
-        const trunkCol = new THREE.Color('#6a4820');
-        const trunkH = 2 + Math.floor(dn * 2);
-        for (let ty = 0; ty < trunkH; ty++) {
-          blocks.push({ x: wx, y: h + ty, z: wz, color: trunkCol.clone() });
-        }
-        const cb = h + trunkH;
-        const leafCol = new THREE.Color('#2e7a20');
+        // Oak
+        const tc = C('#6a4820');
+        const th = 2 + Math.floor(dn * 2);
+        for (let ty = 0; ty < th; ty++) blocks.push({ x: wx, y: h + ty, z: wz, color: tc.clone() });
+        const cb = h + th;
+        const lc = C('#2e7a20');
         const lv = noise2D(tile.x * 3, tile.y * 3, SEED + 999) * 0.08;
-        // Lower canopy cross
         for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
-          const lc = leafCol.clone();
-          lc.g += lv + (noise2D(tile.x + dx, tile.y + dz, SEED + 888) - 0.5) * 0.05;
-          blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc });
+          const c = lc.clone(); c.g += lv + (noise2D(tile.x + dx, tile.y + dz, SEED + 888) - 0.5) * 0.05;
+          blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: c });
         }
-        // Upper canopy
-        blocks.push({ x: wx, y: cb + 1, z: wz, color: leafCol.clone() });
+        blocks.push({ x: wx, y: cb + 1, z: wz, color: lc.clone() });
         for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
           if (noise2D(tile.x + dx * 2, tile.y + dz * 2, SEED + 777) > 0.4) {
-            const lc = leafCol.clone();
-            lc.g += (noise2D(tile.x + dx, tile.y + dz, SEED + 666) - 0.5) * 0.06;
-            blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: lc });
+            const c = lc.clone(); c.g += (noise2D(tile.x + dx, tile.y + dz, SEED + 666) - 0.5) * 0.06;
+            blocks.push({ x: wx + dx, y: cb + 1, z: wz + dz, color: c });
           }
         }
       }
     }
 
-    // ── MUSHROOM CAPS ──
+    // Mushroom
     if (tile.terrain === 'mushroom') {
-      blocks.push({ x: wx, y: h, z: wz, color: new THREE.Color('#e8dcc0') });
-      blocks.push({ x: wx, y: h + 1, z: wz, color: new THREE.Color('#c04030') });
+      blocks.push({ x: wx, y: h, z: wz, color: C('#e8dcc0') });
+      blocks.push({ x: wx, y: h + 1, z: wz, color: C('#c04030') });
       for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
-        if (noise2D(tile.x + dx, tile.y + dz, SEED + 444) > 0.5) {
-          blocks.push({ x: wx + dx, y: h + 1, z: wz + dz, color: new THREE.Color('#b83828') });
-        }
+        if (noise2D(tile.x + dx, tile.y + dz, SEED + 444) > 0.5) blocks.push({ x: wx + dx, y: h + 1, z: wz + dz, color: C('#b83828') });
       }
     }
 
-    // ── FLOWERS ──
+    // Flowers
     if (tile.terrain === 'flower') {
-      const fc = [new THREE.Color('#e06878'), new THREE.Color('#e0c040'), new THREE.Color('#8060d0'), new THREE.Color('#e08840')];
+      const fc = [C('#e06878'), C('#e0c040'), C('#8060d0'), C('#e08840')];
       blocks.push({ x: wx, y: h, z: wz, color: fc[Math.floor(noise2D(tile.x, tile.y, SEED + 333) * fc.length)] });
+    }
+
+    // Lava glow blocks on top
+    if (tile.terrain === 'lava') {
+      const glowCol = C('#ff8040');
+      glowCol.r += (noise2D(tile.x * 2, tile.y * 2, SEED + 111) - 0.5) * 0.15;
+      blocks.push({ x: wx, y: h, z: wz, color: glowCol });
     }
   }
 
-  // ── WATERFALLS ── (where river meets cliff edge)
-  const waterCol = new THREE.Color('#4a90c8');
+  // ── WATERFALLS ──
   for (const tile of GAMEMODE_TERRAIN) {
     if (tile.terrain !== 'water') continue;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as [number, number][]) {
-      const nx = tile.x + dx, ny = tile.y + dy;
-      const neighbor = tileMap.get(`${nx},${ny}`);
-      if (neighbor && neighbor.terrain !== 'water') {
-        const nh = terrainHeight(neighbor);
-        if (nh > 4) {
-          const wx = tile.x - hx;
-          const wz = tile.y - hz;
+      const nb = tileMap.get(`${tile.x + dx},${tile.y + dy}`);
+      if (nb && nb.terrain !== 'water') {
+        const nh = terrainHeight(nb);
+        if (nh > 5) {
+          const wc = C('#6a98b0');
+          const wx = tile.x - hx, wz = tile.y - hz;
           for (let y = 2; y < nh; y++) {
-            const wc = waterCol.clone();
-            wc.b += (noise2D(tile.x + y, tile.y + y, SEED + 555) - 0.5) * 0.08;
-            wc.r += 0.02;
-            blocks.push({ x: wx, y, z: wz, color: wc });
+            const c = wc.clone();
+            c.b += (noise2D(tile.x + y, tile.y + y, SEED + 555) - 0.5) * 0.06;
+            blocks.push({ x: wx, y, z: wz, color: c });
           }
         }
       }
     }
   }
 
-  // ── STRUCTURES at locations ──
+  // ── STRUCTURES ──
   for (const loc of GAMEMODE_LOCATIONS) {
-    const bx = loc.mapX - hx;
-    const bz = loc.mapY - hz;
+    const bx = loc.mapX - hx, bz = loc.mapY - hz;
     const by = heightAt(loc.mapX, loc.mapY);
-
     switch (loc.action) {
       case 'hub':
-        blocks.push(...generateCampfire(bx, by, bz));
-        blocks.push(...generateHut(bx - 3, by, bz - 2));
-        blocks.push(...generateHut(bx + 3, by, bz + 1));
+        blocks.push(...mkCampfire(bx, by, bz));
+        blocks.push(...mkHut(bx - 3, by, bz - 2));
+        blocks.push(...mkHut(bx + 3, by, bz + 1));
+        blocks.push(...mkHut(bx - 2, by, bz + 3));
         break;
       case 'vanilla':
-        blocks.push(...generateHut(bx, by, bz));
+        blocks.push(...mkHut(bx, by, bz));
         break;
       case 'multiplayer':
-        blocks.push(...generateTower(bx, by, bz));
+        blocks.push(...mkCastle(bx, by, bz));
         break;
       case 'arena':
-        blocks.push(...generateColosseum(bx, by, bz));
+        blocks.push(...mkColosseum(bx, by, bz));
         break;
       case 'stories':
-        blocks.push(...generateRuins(bx, by, bz));
+        blocks.push(...mkRuins(bx, by, bz));
         break;
     }
   }
 
-  // Pack into typed arrays
+  // Scattered extra buildings for visual richness
+  const extraBuildings: [number, number, string][] = [
+    [14, 20, 'hut'], [28, 28, 'hut'], [16, 26, 'hut'],
+    [34, 20, 'tower'], [40, 16, 'tower'],
+  ];
+  for (const [ex, ey, type] of extraBuildings) {
+    const t = tileMap.get(`${ex},${ey}`);
+    if (t && t.terrain !== 'water') {
+      const bx = ex - hx, bz = ey - hz, by = terrainHeight(t);
+      if (type === 'hut') blocks.push(...mkHut(bx, by, bz));
+      else blocks.push(...mkTower(bx, by, bz, 5));
+    }
+  }
+
   const count = blocks.length;
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
@@ -442,27 +420,20 @@ function generateTerrainVoxels() {
   return { positions, colors, count };
 }
 
-// Path / track blocks
+// Path blocks
 function generateTrackVoxels(statuses: Record<string, GameModeStatus>) {
-  const blocks: VoxelBlock[] = [];
-  const hx = GAMEMODE_MAP_WIDTH / 2;
-  const hz = GAMEMODE_MAP_HEIGHT / 2;
-  const pathCol = new THREE.Color('#c8a060');
-  const activeCol = new THREE.Color('#e8c878');
+  const blocks: VB[] = [];
+  const hx = GAMEMODE_MAP_WIDTH / 2, hz = GAMEMODE_MAP_HEIGHT / 2;
 
   for (const path of GAMEMODE_PATHS) {
-    const toStatus = statuses[path.to];
-    const isActive = toStatus !== 'locked';
+    const isActive = statuses[path.to] !== 'locked';
+    const col = isActive ? C('#e8c878') : C('#c8a060');
     for (const wp of path.waypoints) {
-      const wx = wp.x - hx;
-      const wz = wp.y - hz;
-      const baseY = heightAt(wp.x, wp.y);
-      const col = isActive ? activeCol.clone() : pathCol.clone();
+      const c = col.clone();
       const cn = (noise2D(wp.x * 3, wp.y * 3, SEED + 700) - 0.5) * 0.05;
-      col.r = Math.max(0, Math.min(1, col.r + cn));
-      col.g = Math.max(0, Math.min(1, col.g + cn));
-      col.b = Math.max(0, Math.min(1, col.b + cn));
-      blocks.push({ x: wx, y: baseY, z: wz, color: col });
+      c.r = Math.max(0, Math.min(1, c.r + cn));
+      c.g = Math.max(0, Math.min(1, c.g + cn));
+      blocks.push({ x: wp.x - hx, y: heightAt(wp.x, wp.y), z: wp.y - hz, color: c });
     }
   }
 
@@ -477,13 +448,13 @@ function generateTrackVoxels(statuses: Record<string, GameModeStatus>) {
 }
 
 // ────────────────────────────────────────────
-// Three.js sub-components
+// Three.js components
 // ────────────────────────────────────────────
 
 function VoxelTerrain({ data }: { data: { positions: Float32Array; colors: Float32Array; count: number } }) {
   const ref = useRef<THREE.InstancedMesh>(null);
-  const geo = useMemo(() => new THREE.BoxGeometry(0.95, 0.95, 0.95), []);
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0.05, flatShading: true, vertexColors: true }), []);
+  const geo = useMemo(() => new THREE.BoxGeometry(0.96, 0.96, 0.96), []);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.78, metalness: 0.04, flatShading: true, vertexColors: true }), []);
 
   useEffect(() => {
     const m = ref.current; if (!m) return;
@@ -524,75 +495,53 @@ function TrackBlocks({ data }: { data: { positions: Float32Array; colors: Float3
   return <instancedMesh ref={ref} args={[geo, mat, data.count]} />;
 }
 
-// Animated water plane surrounding the island
+// Silver-gray water with subtle animation
 function WaterPlane() {
   const ref = useRef<THREE.Mesh>(null);
-
   useFrame(({ clock }) => {
-    if (!ref.current) return;
-    ref.current.position.y = 1.5 + Math.sin(clock.elapsedTime * 0.5) * 0.04;
+    if (ref.current) ref.current.position.y = 1.5 + Math.sin(clock.elapsedTime * 0.4) * 0.03;
   });
 
   return (
     <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 1.5, 0]}>
-      <planeGeometry args={[100, 100]} />
-      <meshStandardMaterial
-        color="#3a7ab8"
-        transparent
-        opacity={0.82}
-        roughness={0.15}
-        metalness={0.1}
-      />
+      <planeGeometry args={[120, 120]} />
+      <meshStandardMaterial color="#8898a8" transparent opacity={0.55} roughness={0.25} metalness={0.08} />
     </mesh>
   );
 }
 
-// ────────────────────────────────────────────
-// Location beacon (3D glowing block + HTML label)
-// ────────────────────────────────────────────
+// Island shadow on the water
+function IslandShadow() {
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2, 0.5, 2]}>
+      <planeGeometry args={[42, 34]} />
+      <meshBasicMaterial color="#000000" transparent opacity={0.12} />
+    </mesh>
+  );
+}
 
+// Location beacon
 function LocationBeacon({
   location, status, isHovered, locale,
   onClick, onHoverIn, onHoverOut, onlineCount,
 }: {
-  location: GameModeLocation;
-  status: GameModeStatus;
-  isHovered: boolean;
-  locale: string;
-  onClick: () => void;
-  onHoverIn: () => void;
-  onHoverOut: () => void;
-  onlineCount: number;
+  location: GameModeLocation; status: GameModeStatus; isHovered: boolean; locale: string;
+  onClick: () => void; onHoverIn: () => void; onHoverOut: () => void; onlineCount: number;
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  const hx = GAMEMODE_MAP_WIDTH / 2;
-  const hz = GAMEMODE_MAP_HEIGHT / 2;
-
-  const wx = location.mapX - hx;
-  const wz = location.mapY - hz;
+  const hx = GAMEMODE_MAP_WIDTH / 2, hz = GAMEMODE_MAP_HEIGHT / 2;
+  const wx = location.mapX - hx, wz = location.mapY - hz;
   const baseY = heightAt(location.mapX, location.mapY) + 1;
-
   const name = locale === 'en' ? location.nameEn : location.name;
   const accent = new THREE.Color(location.accentColor);
 
-  const markerColor = status === 'locked'
-    ? new THREE.Color(0.35, 0.35, 0.38)
-    : status === 'completed'
-      ? new THREE.Color(0.55, 0.42, 0.12)
-      : accent;
-
-  const emissive = status === 'locked'
-    ? new THREE.Color(0, 0, 0)
-    : status === 'completed'
-      ? new THREE.Color(0.3, 0.25, 0.08)
-      : accent;
-
+  const markerColor = status === 'locked' ? new THREE.Color(0.35, 0.35, 0.38) : status === 'completed' ? new THREE.Color(0.55, 0.42, 0.12) : accent;
+  const emissive = status === 'locked' ? new THREE.Color(0, 0, 0) : status === 'completed' ? new THREE.Color(0.3, 0.25, 0.08) : accent;
   const emissiveIntensity = status === 'locked' ? 0 : isHovered ? 1.8 : 0.7;
   const scale = isHovered && status !== 'locked' ? 1.15 : 1;
 
   useFrame(({ clock }) => {
-    if (!groupRef.current || status === 'locked') return;
-    groupRef.current.position.y = Math.sin(clock.elapsedTime * 2) * 0.12;
+    if (groupRef.current && status !== 'locked') groupRef.current.position.y = Math.sin(clock.elapsedTime * 2) * 0.12;
   });
 
   const showOnline = (location.action === 'multiplayer' || location.action === 'arena') && onlineCount > 0 && status !== 'locked';
@@ -607,53 +556,35 @@ function LocationBeacon({
       <group ref={groupRef} scale={[scale, scale, scale]}>
         <mesh castShadow>
           <boxGeometry args={[0.9, 0.9, 0.9]} />
-          <meshStandardMaterial
-            color={markerColor}
-            emissive={emissive}
-            emissiveIntensity={emissiveIntensity}
-            roughness={0.3}
-            metalness={0.2}
-            flatShading
-          />
+          <meshStandardMaterial color={markerColor} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={0.3} metalness={0.2} flatShading />
         </mesh>
-        {status !== 'locked' && (
-          <pointLight position={[0, 1.2, 0]} color={markerColor} intensity={isHovered ? 3.5 : 1.2} distance={8} />
-        )}
+        {status !== 'locked' && <pointLight position={[0, 1.2, 0]} color={markerColor} intensity={isHovered ? 3.5 : 1.2} distance={8} />}
       </group>
-
       <Html position={[0, 2.8, 0]} center style={{ pointerEvents: 'none' }}>
         <div className={`${styles.locLabel} ${status === 'locked' ? styles.locLocked : ''} ${isHovered ? styles.locHovered : ''}`}>
           <div className={styles.locIconBadge} style={{ borderColor: status === 'locked' ? '#555' : location.accentColor }}>
             {status === 'locked' ? '🔒' : location.icon}
           </div>
           <div className={styles.locName}>{name}</div>
-          {status === 'completed' && location.action === 'hub' && (
-            <div className={styles.locCheck}>✓</div>
-          )}
-          {showOnline && (
-            <div className={styles.locOnline}>
-              <span className={styles.locOnlineDot} />
-              {onlineCount}
-            </div>
-          )}
+          {status === 'completed' && location.action === 'hub' && <div className={styles.locCheck}>✓</div>}
+          {showOnline && <div className={styles.locOnline}><span className={styles.locOnlineDot} />{onlineCount}</div>}
         </div>
       </Html>
     </group>
   );
 }
 
-// Camera setup for the larger island map
 function CameraSetup() {
   const { camera } = useThree();
   useEffect(() => {
-    camera.position.set(25, 30, 25);
-    camera.lookAt(0, 4, 0);
+    camera.position.set(30, 38, 30);
+    camera.lookAt(0, 6, 0);
   }, [camera]);
   return null;
 }
 
 // ────────────────────────────────────────────
-// Main GameModeMap component
+// Main component
 // ────────────────────────────────────────────
 
 interface GameModeMapProps {
@@ -666,71 +597,62 @@ interface GameModeMapProps {
 }
 
 export default function GameModeMap({
-  isArenaLocked,
-  unlockedCount,
-  requiredAdvancements,
-  onlineCount,
-  onSelectMode,
-  locale,
+  isArenaLocked, unlockedCount, requiredAdvancements, onlineCount, onSelectMode, locale,
 }: GameModeMapProps) {
   const t = useTranslations();
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
 
   const locationStatuses = useMemo(() => {
     const s: Record<string, GameModeStatus> = {};
-    for (const loc of GAMEMODE_LOCATIONS) { s[loc.id] = getGameModeStatus(loc.id, unlockedCount); }
+    for (const loc of GAMEMODE_LOCATIONS) s[loc.id] = getGameModeStatus(loc.id, unlockedCount);
     return s;
   }, [unlockedCount]);
 
   const terrainData = useMemo(() => generateTerrainVoxels(), []);
   const trackData = useMemo(() => generateTrackVoxels(locationStatuses), [locationStatuses]);
-
   const hoveredLoc = hoveredLocation ? GAMEMODE_LOCATIONS.find(l => l.id === hoveredLocation) : null;
 
   return (
     <div className={styles.mapWrapper}>
-      <Canvas
-        shadows
-        gl={{ antialias: true, alpha: false }}
-        style={{ position: 'absolute', inset: 0 }}
-      >
-        <color attach="background" args={['#1e1812']} />
-        <fog attach="fog" args={['#2a2018', 40, 90]} />
+      <Canvas shadows gl={{ antialias: true, alpha: false }} style={{ position: 'absolute', inset: 0 }}>
+        {/* Warm parchment background */}
+        <color attach="background" args={['#d5c4a8']} />
         <CameraSetup />
-        <OrthographicCamera makeDefault position={[25, 30, 25]} zoom={16} near={0.1} far={200} />
+        <OrthographicCamera makeDefault position={[30, 38, 30]} zoom={13} near={0.1} far={250} />
 
-        {/* Warm Minecraft Dungeons lighting */}
-        <ambientLight intensity={1.4} color="#fff8f0" />
-        <hemisphereLight args={['#ffeedd', '#556644', 0.7]} />
+        {/* Warm golden lighting */}
+        <ambientLight intensity={1.5} color="#fff8ee" />
+        <hemisphereLight args={['#ffeedd', '#778866', 0.6]} />
         <directionalLight
-          position={[18, 35, 12]}
-          intensity={2.8}
-          color="#fff0d8"
+          position={[20, 45, 15]}
+          intensity={2.6}
+          color="#fff2d8"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-near={0.5}
-          shadow-camera-far={100}
-          shadow-camera-left={-30}
-          shadow-camera-right={30}
-          shadow-camera-top={30}
-          shadow-camera-bottom={-30}
+          shadow-camera-far={120}
+          shadow-camera-left={-35}
+          shadow-camera-right={35}
+          shadow-camera-top={35}
+          shadow-camera-bottom={-35}
         />
-        <directionalLight position={[-12, 18, -6]} intensity={0.5} color="#ffd8a0" />
+        <directionalLight position={[-15, 20, -8]} intensity={0.4} color="#ffd0a0" />
 
-        {/* Deep ocean floor */}
+        {/* Ocean floor (parchment tint visible through water) */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-          <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial color="#182028" roughness={1} />
+          <planeGeometry args={[120, 120]} />
+          <meshStandardMaterial color="#c8b898" roughness={1} />
         </mesh>
 
-        {/* Animated water surface */}
+        {/* Island shadow */}
+        <IslandShadow />
+
+        {/* Water surface */}
         <WaterPlane />
 
-        {/* Voxel terrain */}
+        {/* Terrain */}
         <VoxelTerrain data={terrainData} />
-
-        {/* Path tracks */}
         <TrackBlocks data={trackData} />
 
         {/* Location beacons */}
@@ -742,18 +664,14 @@ export default function GameModeMap({
             isHovered={hoveredLocation === loc.id}
             locale={locale}
             onlineCount={onlineCount}
-            onClick={() => {
-              if (locationStatuses[loc.id] !== 'locked' && loc.action !== 'hub') {
-                onSelectMode(loc.action);
-              }
-            }}
+            onClick={() => { if (locationStatuses[loc.id] !== 'locked' && loc.action !== 'hub') onSelectMode(loc.action); }}
             onHoverIn={() => { if (loc.action !== 'hub') setHoveredLocation(loc.id); }}
             onHoverOut={() => setHoveredLocation(null)}
           />
         ))}
       </Canvas>
 
-      {/* Bottom info panel (HTML overlay) */}
+      {/* Info panel */}
       {hoveredLoc && (() => {
         const status = locationStatuses[hoveredLoc.id];
         const name = locale === 'en' ? hoveredLoc.nameEn : hoveredLoc.name;
@@ -763,18 +681,12 @@ export default function GameModeMap({
             <div className={styles.infoPanelHeader}>
               <span className={styles.infoIcon}>{hoveredLoc.icon}</span>
               <span className={styles.infoName} style={{ color: hoveredLoc.accentColor }}>{name}</span>
-              {status === 'available' && (
-                <span className={styles.infoPlayBadge}>
-                  {locale === 'en' ? 'PLAY' : 'プレイ'}
-                </span>
-              )}
+              {status === 'available' && <span className={styles.infoPlayBadge}>{locale === 'en' ? 'PLAY' : 'プレイ'}</span>}
             </div>
             <div className={styles.infoDesc}>{desc}</div>
             {hoveredLoc.features.length > 0 && (
               <div className={styles.infoFeatures}>
-                {hoveredLoc.features.map((f, i) => (
-                  <span key={i} className={styles.infoTag}>{locale === 'en' ? f.labelEn : f.label}</span>
-                ))}
+                {hoveredLoc.features.map((f, i) => <span key={i} className={styles.infoTag}>{locale === 'en' ? f.labelEn : f.label}</span>)}
               </div>
             )}
             {hoveredLoc.stats.length > 0 && (
@@ -788,9 +700,7 @@ export default function GameModeMap({
               </div>
             )}
             {status === 'locked' && (
-              <div className={styles.infoLocked}>
-                🔒 {t('advancements.lockMessage', { current: unlockedCount, required: requiredAdvancements })}
-              </div>
+              <div className={styles.infoLocked}>🔒 {t('advancements.lockMessage', { current: unlockedCount, required: requiredAdvancements })}</div>
             )}
           </div>
         );
