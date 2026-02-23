@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { useProfile } from '@/lib/profile/context';
+import { getIconById } from '@/lib/profile/types';
 import {
   getTierByScore,
   scoreProgress,
@@ -16,37 +18,45 @@ import {
 } from '@/lib/loyalty';
 import type { ScoreRankingState } from '@/lib/loyalty';
 import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
+import type { AdvancementState } from '@/lib/advancements';
+import { PixelIcon } from '@/components/rhythmia/PixelIcon';
 import styles from './LoyaltyWidget.module.css';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
+  const tAdv = useTranslations('advancements');
   const router = useRouter();
+  const { profile } = useProfile();
+  const profileIcon = profile ? getIconById(profile.icon) : null;
+
+  const [tab, setTab] = useState<'summary' | 'details'>('summary');
   const [state, setState] = useState<ScoreRankingState | null>(null);
-  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const [advState, setAdvState] = useState<AdvancementState | null>(null);
   const rankGroups = useMemo(() => getRankGroups(), []);
 
   useEffect(() => {
-    // Record daily visit first (awards XP for visits/streaks)
     let dailyState = recordDailyVisit();
-
-    // Sync with gameplay stats
-    const advState = loadAdvancementState();
+    const advancementState = loadAdvancementState();
     dailyState = syncGameplayStats(
-      advState.stats.totalScore,
-      advState.stats.bestScorePerGame,
-      advState.stats.totalGamesPlayed,
-      advState.unlockedIds.length,
-      advState.stats.totalLines,
+      advancementState.stats.totalScore,
+      advancementState.stats.bestScorePerGame,
+      advancementState.stats.totalGamesPlayed,
+      advancementState.unlockedIds.length,
+      advancementState.stats.totalLines,
     );
-
     setState(dailyState);
+    setAdvState(advancementState);
+  }, []);
+
+  const toggleTab = useCallback(() => {
+    setTab(prev => prev === 'summary' ? 'details' : 'summary');
   }, []);
 
   if (!state) return null;
 
-  const { bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
+  const { bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
   const currentTierIndex = SCORE_RANK_TIERS.indexOf(currentTier);
@@ -54,6 +64,14 @@ export default function LoyaltyWidget() {
   const progress = scoreProgress(combinedScore);
   const nextTierScore = scoreToNextTier(combinedScore);
 
+  // Recent advancements — last 4 unlocked, newest first
+  const recentAdvancements = advState
+    ? advState.unlockedIds
+      .slice(-4)
+      .reverse()
+      .map((id) => ADVANCEMENTS.find((a) => a.id === id))
+      .filter(Boolean)
+    : [];
 
   return (
     <motion.div
@@ -61,195 +79,242 @@ export default function LoyaltyWidget() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.7 }}
-      style={{ background: `radial-gradient(ellipse at 50% 0%, ${currentTier.color}08 0%, transparent 60%), rgba(255, 255, 255, 0.03)` }}
     >
-      {/* Rank Emblem Hero */}
-      <div className={styles.rankHero}>
-        <div
-          className={styles.rankEmblem}
-          style={{
-            borderColor: currentTier.color,
-            boxShadow: `0 0 40px ${currentTier.color}30, 0 0 80px ${currentTier.color}10`,
-          }}
+      {/* Tabs — attached to the right side of the widget */}
+      <div className={styles.tabBar}>
+        <button
+          className={`${styles.tab} ${tab === 'summary' ? styles.tabActive : ''}`}
+          onClick={() => setTab('summary')}
         >
-          <span className={styles.rankEmblemIcon}>{currentTier.icon}</span>
-        </div>
-        <div className={styles.rankTitle} style={{ color: currentTier.color }}>
-          {t(`tiers.${currentTier.id}`)}
-        </div>
-        <div className={styles.rankScore}>
-          {formatScoreCompact(combinedScore)} SP
-        </div>
+          {currentTier.icon}
+        </button>
+        <button
+          className={`${styles.tab} ${tab === 'details' ? styles.tabActive : ''}`}
+          onClick={() => setTab('details')}
+        >
+          ≡
+        </button>
       </div>
 
-      {/* Daily Streak Section */}
-      <div className={styles.streakSection}>
-        <div className={styles.streakDays}>
-          {DAY_LABELS.map((label, i) => {
-            const isFilled = i < currentStreak % 7 || currentStreak >= 7;
-            const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
-            return (
+      {/* ===== SUMMARY TAB — Compact horizontal card ===== */}
+      {tab === 'summary' && (
+        <div className={styles.compact}>
+          {/* Left: Profile avatar + info */}
+          <div className={styles.compactLeft}>
+            {profile && profileIcon ? (
               <div
-                key={i}
-                className={`${styles.streakDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
+                className={styles.compactAvatar}
+                style={{ backgroundColor: profileIcon.bgColor, color: profileIcon.color }}
               >
-                {label}
+                {profileIcon.emoji}
               </div>
-            );
-          })}
-        </div>
-        <div className={styles.streakInfo}>
-          <span className={styles.streakLabel}>
-            {currentStreak} {t('streakDays')}
-          </span>
-          <span className={styles.bonusXP}>
-            +{dailyBonusXP} {t('bonusXP')}
-          </span>
-        </div>
-      </div>
-
-      {/* Score Gauge Section — 4 rows */}
-      <div className={styles.gaugeSection}>
-        {/* Row 1: TOTAL SCORE label + big score + next rank requirement */}
-        <div className={styles.gaugeRow1}>
-          <div className={styles.gaugeHeaderLeft}>
-            <span className={styles.gaugeLabel}>{t('totalScore')}</span>
-            <span className={styles.gaugeBigScore}>{formatScoreCompact(combinedScore)}</span>
+            ) : (
+              <div
+                className={styles.compactAvatar}
+                style={{ backgroundColor: currentTier.color + '20', color: currentTier.color }}
+              >
+                {currentTier.icon}
+              </div>
+            )}
+            <div className={styles.compactMeta}>
+              <div className={styles.compactName}>{profile?.name ?? t(`tiers.${currentTier.id}`)}</div>
+              {profile?.friendCode && (
+                <div className={styles.compactCode}>{profile.friendCode}</div>
+              )}
+              <div className={styles.compactTier}>
+                <span style={{ color: currentTier.color }}>{currentTier.icon}</span>{' '}
+                {t(`tiers.${currentTier.id}`)}
+              </div>
+            </div>
           </div>
-          <span className={styles.gaugeNextReq}>
-            {nextTierScore !== null
-              ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
-              : t('maxTier')}
-          </span>
-        </div>
 
-        {/* Row 2: Current rank (left) — Next rank (right) */}
-        <div className={styles.gaugeRow2}>
-          <span className={styles.gaugeRankCurrent} style={{ color: currentTier.color }}>
-            {currentTier.icon} {t(`tiers.${currentTier.id}`)}
-          </span>
-          <span className={styles.gaugeRankNext} style={nextTier ? { color: nextTier.color } : undefined}>
-            {nextTier ? `${nextTier.icon} ${t(`tiers.${nextTier.id}`)}` : '—'}
-          </span>
-        </div>
-
-        {/* Row 3: Gauge bar */}
-        <div className={styles.progressBar}>
-          <div
-            className={styles.progressFill}
-            style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})` }}
-          />
-        </div>
-
-        {/* Row 4: Score markers for current and next tier */}
-        <div className={styles.gaugeRow4}>
-          <span className={styles.gaugeScore}>{formatScoreCompact(currentTier.minScore)}</span>
-          <span className={styles.gaugeScore}>
-            {nextTier ? formatScoreCompact(nextTier.minScore) : '∞'}
-          </span>
-        </div>
-      </div>
-
-      {/* Tier roadmap (grouped) */}
-      <div className={styles.miniRoadmap}>
-        {rankGroups.map((group) => {
-          const isActive = group.tiers.some(t => t.id === currentTier.id);
-          const isCompleted = combinedScore >= group.maxScore && group.maxScore !== Infinity;
-          return (
-            <div
-              key={group.groupId}
-              className={`${styles.miniStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
-              onMouseEnter={() => setHoveredGroup(group.groupId)}
-              onMouseLeave={() => setHoveredGroup(null)}
-            >
-              <span className={styles.miniStepIcon} style={isActive || isCompleted ? { color: group.color } : undefined}>
-                {group.icon}
+          {/* Center: Score + progress bar + streak dots */}
+          <div className={styles.compactCenter}>
+            {/* Score label row */}
+            <div className={styles.compactScoreRow}>
+              <span className={styles.compactScoreLabel}>{t('totalScore')}</span>
+              <span className={styles.compactNextReq}>
+                {nextTierScore !== null
+                  ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
+                  : t('maxTier')}
               </span>
-              <span className={styles.miniStepName}>
-                {t(`tierGroups.${group.groupId}`)}
-              </span>
-              {/* Hover progress bar popup */}
-              {hoveredGroup === group.groupId && group.tiers.length > 1 && (() => {
-                // Fill aligned with space-between labels: N labels → (N-1) spans
-                const count = group.tiers.length;
-                let fillPct = 0;
-                if (combinedScore < group.tiers[0].minScore) {
-                  fillPct = 0;
-                } else if (combinedScore >= group.tiers[count - 1].minScore) {
-                  fillPct = 100; // reached or passed the last tier label
-                } else {
-                  const segmentSize = 100 / (count - 1);
-                  for (let i = 0; i < count - 1; i++) {
-                    if (combinedScore >= group.tiers[i].minScore && combinedScore < group.tiers[i + 1].minScore) {
-                      const spanRange = group.tiers[i + 1].minScore - group.tiers[i].minScore;
-                      const progress = (combinedScore - group.tiers[i].minScore) / spanRange;
-                      fillPct = segmentSize * i + segmentSize * progress;
-                      break;
-                    }
-                  }
-                }
-
+            </div>
+            {/* Progress bar */}
+            <div className={styles.compactBar}>
+              <div
+                className={styles.compactBarFill}
+                style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})` }}
+              />
+            </div>
+            {/* Streak dots */}
+            <div className={styles.compactDots}>
+              {DAY_LABELS.map((label, i) => {
+                const isFilled = i < currentStreak % 7 || currentStreak >= 7;
+                const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
                 return (
-                  <div className={styles.tierBarPopup}>
-                    <div className={styles.tierBarHeader}>
-                      <span style={{ color: group.color }}>{group.icon}</span>
-                      <span className={styles.tierBarTitle}>{t(`tierGroups.${group.groupId}`)}</span>
-                    </div>
-                    {/* Tier labels */}
-                    <div className={styles.tierBarLabels}>
-                      {group.tiers.map((tier) => (
-                        <span key={tier.id} className={styles.tierBarLabel} style={tier.id === currentTier.id ? { color: tier.color, opacity: 1 } : undefined}>
-                          {t(`tiers.${tier.id}`)}
-                        </span>
-                      ))}
-                    </div>
-                    {/* Progress bar */}
-                    <div className={styles.tierBarTrack}>
-                      <div
-                        className={styles.tierBarFill}
-                        style={{ width: `${fillPct}%`, background: group.color }}
-                      />
-                    </div>
-                    {/* Score labels */}
-                    <div className={styles.tierBarScores}>
-                      {group.tiers.map((tier) => (
-                        <span key={tier.id} className={styles.tierBarScore}>
-                          {formatScoreCompact(tier.minScore)}
-                        </span>
-                      ))}
+                  <div
+                    key={i}
+                    className={`${styles.compactDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right: Streak count + bonus */}
+          <div className={styles.compactRight}>
+            <div className={styles.compactStreak}>
+              {currentStreak} {t('streakDays')}
+            </div>
+            <div className={styles.compactBonus}>
+              +{dailyBonusXP} {t('bonusXP')}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== DETAILS TAB — Expanded card ===== */}
+      {tab === 'details' && (
+        <div className={styles.details}>
+          {/* Rank hero */}
+          <div className={styles.detailHero}>
+            <div
+              className={styles.detailEmblem}
+              style={{
+                borderColor: currentTier.color,
+                boxShadow: `0 0 24px ${currentTier.color}20`,
+              }}
+            >
+              <span className={styles.detailEmblemIcon}>{currentTier.icon}</span>
+            </div>
+            <div>
+              <div className={styles.detailRankName} style={{ color: currentTier.color }}>
+                {t(`tiers.${currentTier.id}`)}
+              </div>
+              <div className={styles.detailScore}>{formatScoreCompact(combinedScore)} SP</div>
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div className={styles.detailProgress}>
+            <div className={styles.detailProgressMeta}>
+              <span style={{ color: currentTier.color }}>{currentTier.icon} {t(`tiers.${currentTier.id}`)}</span>
+              <span className={styles.detailProgressNext}>
+                {nextTier ? `${nextTier.icon} ${t(`tiers.${nextTier.id}`)}` : '—'}
+              </span>
+            </div>
+            <div className={styles.detailBar}>
+              <div
+                className={styles.detailBarFill}
+                style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})` }}
+              />
+            </div>
+            <div className={styles.detailProgressReq}>
+              {nextTierScore !== null
+                ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
+                : t('maxTier')}
+            </div>
+          </div>
+
+          {/* Daily Bonus */}
+          <div className={styles.detailSection}>
+            <h3 className={styles.detailSectionTitle}>{t('sections.dailyBonus')}</h3>
+            <div className={styles.detailGrid4}>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{totalVisits}</div>
+                <div className={styles.detailStatLbl}>{t('stats.totalVisits')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{currentStreak}</div>
+                <div className={styles.detailStatLbl}>{t('stats.currentStreak')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{bestStreak}</div>
+                <div className={styles.detailStatLbl}>{t('stats.bestStreak')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal} style={{ color: '#4CAF50' }}>+{dailyBonusXP}</div>
+                <div className={styles.detailStatLbl}>{t('stats.bonusXP')}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className={styles.detailSection}>
+            <div className={styles.detailGrid4}>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{formatScoreCompact(bestScorePerGame)}</div>
+                <div className={styles.detailStatLbl}>{t('stats.bestScore')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{totalGamesPlayed}</div>
+                <div className={styles.detailStatLbl}>{t('stats.games')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{totalLines.toLocaleString()}</div>
+                <div className={styles.detailStatLbl}>{t('stats.lines')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{advancementsUnlocked}/{ADVANCEMENTS.length}</div>
+                <div className={styles.detailStatLbl}>{t('stats.badges')}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tier Roadmap */}
+          <div className={styles.detailSection}>
+            <h3 className={styles.detailSectionTitle}>{t('sections.tierRoadmap')}</h3>
+            <div className={styles.detailRoadmap}>
+              {rankGroups.map((group) => {
+                const isActive = group.tiers.some(t => t.id === currentTier.id);
+                const isCompleted = combinedScore >= group.maxScore && group.maxScore !== Infinity;
+                return (
+                  <div
+                    key={group.groupId}
+                    className={`${styles.detailTierStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
+                  >
+                    {isCompleted && <span className={styles.detailTierCheck}>✓</span>}
+                    <span className={styles.detailTierIcon} style={isActive || isCompleted ? { color: group.color } : undefined}>
+                      {group.icon}
+                    </span>
+                    <div className={styles.detailTierMeta}>
+                      <span className={styles.detailTierName}>{t(`tierGroups.${group.groupId}`)}</span>
+                      <span className={styles.detailTierXP}>
+                        {group.maxScore === Infinity
+                          ? `${formatScoreCompact(group.minScore)}+`
+                          : `${formatScoreCompact(group.minScore)} – ${formatScoreCompact(group.maxScore)}`}
+                      </span>
                     </div>
                   </div>
                 );
-              })()}
+              })}
             </div>
-          );
-        })}
-      </div>
+          </div>
 
-      {/* Stats grid */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{formatScoreCompact(bestScorePerGame)}</span>
-          <span className={styles.statLabel}>{t('stats.bestScore')}</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalGamesPlayed}</span>
-          <span className={styles.statLabel}>{t('stats.games')}</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalLines.toLocaleString()}</span>
-          <span className={styles.statLabel}>{t('stats.lines')}</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{advancementsUnlocked}/{ADVANCEMENTS.length}</span>
-          <span className={styles.statLabel}>{t('stats.badges')}</span>
-        </div>
-      </div>
+          {/* Recent Advancements */}
+          <div className={styles.detailSection}>
+            <h3 className={styles.detailSectionTitle}>{t('sections.badges')}</h3>
+            {recentAdvancements.length > 0 ? (
+              <div className={styles.detailBadges}>
+                {recentAdvancements.map((adv) => adv && (
+                  <div key={adv.id} className={styles.detailBadge}>
+                    <span className={styles.detailBadgeIcon}><PixelIcon name={adv.icon} size={16} /></span>
+                    <div className={styles.detailBadgeName}>{tAdv(`${adv.id}.name`)}</div>
+                    <div className={styles.detailBadgeDesc}>{tAdv(`${adv.id}.desc`)}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.detailEmpty}>{tAdv('locked')}</div>
+            )}
+          </div>
 
-      {/* View all link */}
-      <button className={styles.viewAll} onClick={() => router.push('/loyalty')}>
-        {t('viewAll')}
-      </button>
+          {/* View full page */}
+          <button className={styles.viewAll} onClick={() => router.push('/loyalty')}>
+            {t('viewAll')}
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }
