@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMinecraftBoardSocket } from '@/hooks/useMinecraftBoardSocket';
-import BoardRenderer from './BoardRenderer';
+import BoardRenderer from './BoardRenderer3D';
 import PlayerHUD, { InventoryPanel } from './PlayerHUD';
 import CraftingPanel from './CraftingPanel';
 import type { Direction, MCPublicRoom } from '@/types/minecraft-board';

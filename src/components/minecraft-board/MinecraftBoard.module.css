@@ -1145,3 +1145,117 @@
     margin: 0.5rem;
   }
 }
+
+/* =============================================================
+   3D Board Renderer Styles
+   ============================================================= */
+
+.boardWrapper3d {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 700px;
+}
+
+/* Coordinates overlay for 3D view */
+.coordsDisplay3d {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 6px;
+  pointer-events: none;
+  z-index: 10;
+  letter-spacing: 1px;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+}
+
+/* Entity health bars in 3D (Html overlay) */
+.entityHp3d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  white-space: nowrap;
+}
+
+.entityName3d {
+  font-size: 8px;
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.9);
+  font-family: var(--font-pixel, 'Courier New', monospace);
+}
+
+.hpBar3d {
+  width: 36px;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.hpFill3d {
+  height: 100%;
+  transition: width 0.2s;
+}
+
+/* Mining progress label in 3D */
+.miningLabel3d {
+  font-size: 10px;
+  color: #FFD700;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+}
+
+/* 3D D-Pad (Mobile) */
+.dpad3d {
+  display: none;
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 100px;
+  height: 100px;
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .dpad3d {
+    display: block;
+  }
+
+  .boardWrapper3d {
+    aspect-ratio: auto;
+    height: 60vh;
+    max-width: 100%;
+  }
+}
+
+.dpadBtn3d {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  font-family: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.dpadBtn3d:active {
+  background: rgba(74, 237, 217, 0.3);
+  border-color: #4aedd9;
+}
+
+.dpadUp3d { top: 0; left: 34px; }
+.dpadDown3d { bottom: 0; left: 34px; }
+.dpadLeft3d { top: 34px; left: 0; }
+.dpadRight3d { top: 34px; right: 0; }
