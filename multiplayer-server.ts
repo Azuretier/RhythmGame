@@ -339,8 +339,15 @@ function startMCBoardCountdown(roomCode: string, gameSeed: number): void {
       count--;
       setTimeout(tick, 1000);
     } else {
-      mcBoardManager.beginPlaying(roomCode);
+      // Send game_started FIRST so client transitions to 'playing' phase
+      // before receiving the initial state update from beginPlaying()
       broadcastToMCBoard(roomCode, { type: 'mc_game_started', seed: gameSeed } as ServerMessage);
+      try {
+        mcBoardManager.beginPlaying(roomCode);
+      } catch (err) {
+        console.error(`[MC_BOARD] beginPlaying failed for room ${roomCode}:`, err);
+        broadcastToMCBoard(roomCode, { type: 'mc_error', message: 'Failed to start game' } as ServerMessage);
+      }
       console.log(`[MC_BOARD] Game started in room ${roomCode}`);
     }
   };
@@ -708,8 +715,33 @@ function handleMessage(playerId: string, raw: string): void {
 
       const room = roomManager.getRoomByPlayerId(oldPlayerId);
       if (!room) {
-        sendError(playerId, 'Room no longer exists', 'ROOM_GONE');
+        // Check MC Board rooms as fallback
+        const mcRoom = mcBoardManager.getRoomByPlayerId(oldPlayerId);
+        if (!mcRoom) {
+          sendError(playerId, 'Room no longer exists', 'ROOM_GONE');
+          reconnectTokens.delete(message.reconnectToken);
+          break;
+        }
+
+        // Handle MC Board reconnection
+        mcBoardManager.transferPlayer(oldPlayerId, playerId);
+        mcBoardManager.markReconnected(playerId);
         reconnectTokens.delete(message.reconnectToken);
+
+        const newToken = issueReconnectToken(playerId);
+        const mcRoomState = mcBoardManager.getRoomState(mcRoom.code);
+
+        sendToPlayer(playerId, {
+          type: 'mc_reconnected',
+          roomCode: mcRoom.code,
+          playerId,
+          roomState: mcRoomState,
+          reconnectToken: newToken,
+          status: mcRoom.status,
+        } as unknown as ServerMessage);
+
+        sendMCBoardRoomState(mcRoom.code);
+        console.log(`[MC_BOARD] Player reconnected to room ${mcRoom.code}`);
         break;
       }
 

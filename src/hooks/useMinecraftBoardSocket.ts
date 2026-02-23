@@ -34,9 +34,11 @@ export function useMinecraftBoardSocket() {
   const reconnectAttemptsRef = useRef(0);
   const reconnectTokenRef = useRef<string | null>(null);
   const lastPingRef = useRef<number>(Date.now());
+  const phaseRef = useRef<MCGamePhase>('menu');
 
   // Game state
-  const [phase, setPhase] = useState<MCGamePhase>('menu');
+  const [phase, setPhaseRaw] = useState<MCGamePhase>('menu');
+  const setPhase = useCallback((p: MCGamePhase) => { phaseRef.current = p; setPhaseRaw(p); }, []);
   const [roomState, setRoomState] = useState<MCRoomState | null>(null);
   const [publicRooms, setPublicRooms] = useState<MCPublicRoom[]>([]);
   const [countdownCount, setCountdownCount] = useState(0);
@@ -65,11 +67,14 @@ export function useMinecraftBoardSocket() {
     wsRef.current = ws;
 
     ws.onopen = () => {
+      // Ignore if a newer WebSocket has replaced this one
+      if (wsRef.current !== ws) { ws.close(); return; }
+
       setConnectionStatus('connected');
       reconnectAttemptsRef.current = 0;
       lastPingRef.current = Date.now();
 
-      // Try reconnect with token
+      // Try reconnect with token if we were in a room
       const token = reconnectTokenRef.current || sessionStorage.getItem('mc_reconnectToken');
       if (token) {
         ws.send(JSON.stringify({ type: 'reconnect', reconnectToken: token }));
@@ -84,6 +89,8 @@ export function useMinecraftBoardSocket() {
     };
 
     ws.onclose = () => {
+      // Ignore if a newer WebSocket has replaced this one
+      if (wsRef.current !== ws) return;
       setConnectionStatus('disconnected');
       wsRef.current = null;
       attemptReconnect();
@@ -95,6 +102,9 @@ export function useMinecraftBoardSocket() {
   }, []);
 
   const attemptReconnect = useCallback(() => {
+    // Only auto-reconnect if we were in a room (have a session token)
+    const hasSession = reconnectTokenRef.current || sessionStorage.getItem('mc_reconnectToken');
+    if (!hasSession) return;
     if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) return;
     reconnectAttemptsRef.current++;
     const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 15000);
@@ -196,6 +206,13 @@ export function useMinecraftBoardSocket() {
       }
 
       case 'mc_countdown': {
+        if (phaseRef.current !== 'countdown') {
+          // First countdown message — reset game state for new game
+          exploredTilesRef.current = new Map();
+          setSelfState(null);
+          setChatMessages([]);
+          setWinner(null);
+        }
         setPhase('countdown');
         setCountdownCount(msg.count);
         break;
@@ -203,9 +220,6 @@ export function useMinecraftBoardSocket() {
 
       case 'mc_game_started': {
         setPhase('playing');
-        exploredTilesRef.current = new Map();
-        setChatMessages([]);
-        setWinner(null);
         break;
       }
 
@@ -303,7 +317,30 @@ export function useMinecraftBoardSocket() {
         break;
       }
 
+      case 'mc_reconnected' as MCServerMessage['type']: {
+        const rcMsg = msg as unknown as { roomCode: string; playerId: string; roomState: MCRoomState; reconnectToken: string; status?: string };
+        reconnectTokenRef.current = rcMsg.reconnectToken;
+        sessionStorage.setItem('mc_reconnectToken', rcMsg.reconnectToken);
+        playerIdRef.current = rcMsg.playerId;
+        setPlayerId(rcMsg.playerId);
+        setRoomState(rcMsg.roomState);
+        if (rcMsg.status === 'playing') {
+          setPhase('playing');
+        } else {
+          setPhase('lobby');
+        }
+        break;
+      }
+
       case 'mc_error': {
+        const errorCode = (msg as unknown as { code?: string }).code;
+        if (errorCode === 'RECONNECT_FAILED' || errorCode === 'ROOM_GONE') {
+          // Stale reconnect token — clear it and reset to menu
+          reconnectTokenRef.current = null;
+          sessionStorage.removeItem('mc_reconnectToken');
+          setPhase('menu');
+          setRoomState(null);
+        }
         setGameMessage(msg.message);
         setTimeout(() => setGameMessage(null), 3000);
         break;
