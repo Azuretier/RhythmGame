@@ -20,6 +20,7 @@ import VanillaGame from '@/components/rhythmia/tetris';
 import MultiplayerGame from '@/components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import LoyaltyWidget from '@/components/loyalty/LoyaltyWidget';
+import LoyaltyPanel from '@/components/loyalty/LoyaltyPanel';
 import AnimatedLogo from '@/components/rhythmia/AnimatedLogo';
 import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
@@ -425,7 +426,7 @@ export default function RhythmiaLobby() {
                         </section>
 
                         {/* Slide 2: Loyalty + Footer */}
-                        <section className={`${styles.slideSection} ${styles.slideSectionBottom}`} data-slide-scrollable>
+                        <section className={`${styles.slideSection} ${styles.slideSectionBottom}`}>
                             <LoyaltyWidget />
                             <motion.footer
                                 className={styles.footer}
@@ -449,6 +450,9 @@ export default function RhythmiaLobby() {
                             />
                         ))}
                     </nav>
+
+                    {/* Right-side loyalty panel */}
+                    <LoyaltyPanel />
                 </div>
             )}
         </>

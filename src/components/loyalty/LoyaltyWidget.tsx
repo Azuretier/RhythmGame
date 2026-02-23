@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { useProfile } from '@/lib/profile/context';
-import { getIconById } from '@/lib/profile/types';
 import {
   getTierByScore,
   scoreProgress,
@@ -18,20 +16,14 @@ import {
 } from '@/lib/loyalty';
 import type { ScoreRankingState } from '@/lib/loyalty';
 import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
-import type { AdvancementState } from '@/lib/advancements';
-import { PixelIcon } from '@/components/rhythmia/PixelIcon';
 import styles from './LoyaltyWidget.module.css';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
-  const tAdv = useTranslations('advancements');
   const router = useRouter();
-  const { profile } = useProfile();
-  const profileIcon = profile ? getIconById(profile.icon) : null;
   const [state, setState] = useState<ScoreRankingState | null>(null);
-  const [advState, setAdvState] = useState<AdvancementState | null>(null);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const rankGroups = useMemo(() => getRankGroups(), []);
 
@@ -40,22 +32,21 @@ export default function LoyaltyWidget() {
     let dailyState = recordDailyVisit();
 
     // Sync with gameplay stats
-    const advancementState = loadAdvancementState();
+    const advState = loadAdvancementState();
     dailyState = syncGameplayStats(
-      advancementState.stats.totalScore,
-      advancementState.stats.bestScorePerGame,
-      advancementState.stats.totalGamesPlayed,
-      advancementState.unlockedIds.length,
-      advancementState.stats.totalLines,
+      advState.stats.totalScore,
+      advState.stats.bestScorePerGame,
+      advState.stats.totalGamesPlayed,
+      advState.unlockedIds.length,
+      advState.stats.totalLines,
     );
 
     setState(dailyState);
-    setAdvState(advancementState);
   }, []);
 
   if (!state) return null;
 
-  const { bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
+  const { bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
   const currentTierIndex = SCORE_RANK_TIERS.indexOf(currentTier);
@@ -63,14 +54,6 @@ export default function LoyaltyWidget() {
   const progress = scoreProgress(combinedScore);
   const nextTierScore = scoreToNextTier(combinedScore);
 
-  // Recent advancements — last 4 unlocked, newest first
-  const recentAdvancements = advState
-    ? advState.unlockedIds
-      .slice(-4)
-      .reverse()
-      .map((id) => ADVANCEMENTS.find((a) => a.id === id))
-      .filter(Boolean)
-    : [];
 
   return (
     <motion.div
@@ -82,18 +65,6 @@ export default function LoyaltyWidget() {
     >
       {/* Rank Emblem Hero */}
       <div className={styles.rankHero}>
-        {/* Profile Info */}
-        {profile && profileIcon && (
-          <div className={styles.profileInfo}>
-            <div
-              className={styles.profileAvatar}
-              style={{ backgroundColor: profileIcon.bgColor, color: profileIcon.color }}
-            >
-              {profileIcon.emoji}
-            </div>
-            <span className={styles.profileName}>{profile.name}</span>
-          </div>
-        )}
         <div
           className={styles.rankEmblem}
           style={{
@@ -179,31 +150,7 @@ export default function LoyaltyWidget() {
         </div>
       </div>
 
-      {/* Daily Bonus Stats Card */}
-      <div className={styles.dailyBonusCard}>
-        <h3 className={styles.dailyBonusTitle}>{t('sections.dailyBonus')}</h3>
-        <div className={styles.dailyBonusGrid}>
-          <div className={styles.dailyBonusStat}>
-            <div className={styles.dailyBonusValue}>{totalVisits}</div>
-            <div className={styles.dailyBonusLabel}>{t('stats.totalVisits')}</div>
-          </div>
-          <div className={styles.dailyBonusStat}>
-            <div className={styles.dailyBonusValue}>{currentStreak}</div>
-            <div className={styles.dailyBonusLabel}>{t('stats.currentStreak')}</div>
-          </div>
-          <div className={styles.dailyBonusStat}>
-            <div className={styles.dailyBonusValue}>{bestStreak}</div>
-            <div className={styles.dailyBonusLabel}>{t('stats.bestStreak')}</div>
-          </div>
-          <div className={styles.dailyBonusStat}>
-            <div className={styles.dailyBonusValue} style={{ color: '#4CAF50' }}>+{dailyBonusXP}</div>
-            <div className={styles.dailyBonusLabel}>{t('stats.bonusXP')}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tier roadmap (grouped) — enhanced with score ranges & checkmarks */}
-      <div className={styles.sectionTitle}>{t('sections.tierRoadmap')}</div>
+      {/* Tier roadmap (grouped) */}
       <div className={styles.miniRoadmap}>
         {rankGroups.map((group) => {
           const isActive = group.tiers.some(t => t.id === currentTier.id);
@@ -215,18 +162,12 @@ export default function LoyaltyWidget() {
               onMouseEnter={() => setHoveredGroup(group.groupId)}
               onMouseLeave={() => setHoveredGroup(null)}
             >
-              {isCompleted && <span className={styles.miniStepCheck}>&#10003;</span>}
               <span className={styles.miniStepIcon} style={isActive || isCompleted ? { color: group.color } : undefined}>
                 {group.icon}
               </span>
-              <div className={styles.miniStepMeta}>
-                <span className={styles.miniStepName}>
-                  {t(`tierGroups.${group.groupId}`)}
-                </span>
-                <span className={styles.miniStepXP}>
-                  {group.maxScore === Infinity ? `${formatScoreCompact(group.minScore)}+` : `${formatScoreCompact(group.minScore)} – ${formatScoreCompact(group.maxScore)}`}
-                </span>
-              </div>
+              <span className={styles.miniStepName}>
+                {t(`tierGroups.${group.groupId}`)}
+              </span>
               {/* Hover progress bar popup */}
               {hoveredGroup === group.groupId && group.tiers.length > 1 && (() => {
                 // Fill aligned with space-between labels: N labels → (N-1) spans
@@ -304,31 +245,6 @@ export default function LoyaltyWidget() {
           <span className={styles.statLabel}>{t('stats.badges')}</span>
         </div>
       </div>
-
-      {/* Recent Advancements */}
-      <div className={styles.sectionTitle}>{t('sections.badges')}</div>
-      {recentAdvancements.length > 0 ? (
-        <div className={styles.badgesGrid}>
-          {recentAdvancements.map((adv) => adv && (
-            <div
-              key={adv.id}
-              className={`${styles.badgeCard} ${styles.unlocked}`}
-            >
-              <span className={styles.badgeIcon}><PixelIcon name={adv.icon} size={18} /></span>
-              <div className={styles.badgeName}>
-                {tAdv(`${adv.id}.name`)}
-              </div>
-              <div className={styles.badgeDesc}>
-                {tAdv(`${adv.id}.desc`)}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className={styles.emptyAdvancements}>
-          {tAdv('locked')}
-        </div>
-      )}
 
       {/* View all link */}
       <button className={styles.viewAll} onClick={() => router.push('/loyalty')}>

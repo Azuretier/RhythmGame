@@ -20,33 +20,6 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Profile info */
-.profileInfo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.profileAvatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.profileName {
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  opacity: 0.75;
-}
-
 .rankEmblem {
   width: 96px;
   height: 96px;
@@ -238,68 +211,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Daily Bonus Card */
-.dailyBonusCard {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.06), rgba(76, 175, 80, 0.01));
-  border: 1px solid rgba(76, 175, 80, 0.15);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-}
-
-.dailyBonusTitle {
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: #4CAF50;
-  opacity: 0.9;
-  margin: 0 0 16px;
-}
-
-.dailyBonusGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
-.dailyBonusStat {
-  text-align: center;
-  padding: 10px 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-
-.dailyBonusValue {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #ffffff;
-  opacity: 0.85;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 4px;
-}
-
-.dailyBonusLabel {
-  font-size: 0.5rem;
-  opacity: 0.4;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-/* Section titles */
-.sectionTitle {
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  opacity: 0.4;
-  margin-bottom: 16px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-/* Mini roadmap — enhanced */
+/* Mini roadmap */
 .miniRoadmap {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -313,6 +225,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 10px 8px;
   border-radius: 8px;
@@ -341,24 +254,9 @@
   opacity: 1;
 }
 
-.miniStepCheck {
-  position: absolute;
-  top: 4px;
-  right: 5px;
-  font-size: 0.55rem;
-  opacity: 0.5;
-}
-
 .miniStepIcon {
   font-size: 0.9rem;
   flex-shrink: 0;
-}
-
-.miniStepMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
 }
 
 .miniStepName {
@@ -367,13 +265,6 @@
   letter-spacing: 0.06em;
   opacity: 0.6;
   white-space: nowrap;
-}
-
-.miniStepXP {
-  font-size: 0.45rem;
-  opacity: 0.25;
-  letter-spacing: 0.02em;
-  font-variant-numeric: tabular-nums;
 }
 
 .miniStep.active .miniStepName {
@@ -513,64 +404,6 @@
   letter-spacing: 0.1em;
 }
 
-/* Recent Advancements (Badges) */
-.badgesGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 24px;
-}
-
-.badgeCard {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  padding: 14px 10px;
-  text-align: center;
-  transition: all 0.3s;
-}
-
-.badgeCard.unlocked {
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.badgeCard.unlocked:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.badgeIcon {
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.badgeName {
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  margin-bottom: 3px;
-  opacity: 0.8;
-}
-
-.badgeDesc {
-  font-size: 0.5rem;
-  opacity: 0.35;
-  letter-spacing: 0.03em;
-  line-height: 1.4;
-}
-
-.emptyAdvancements {
-  text-align: center;
-  font-size: 0.7rem;
-  opacity: 0.2;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  padding: 28px 0;
-  margin-bottom: 24px;
-}
-
 /* View all button */
 .viewAll {
   width: 100%;
@@ -639,14 +472,6 @@
   }
 
   .statsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dailyBonusGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .badgesGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 
