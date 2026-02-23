@@ -1308,15 +1308,51 @@
         "resetConfirmBtn": "リセット",
         "chooseArchetype": "クラスを選択せよ",
         "switchArchetype": "クラス変更",
+        "page": "ページ",
+        "classes": "クラス一覧",
+        "selectClassForTree": "クラスを選択してアビリティツリーを表示",
+        "difficulty": "難易度",
+        "subclassesTitle": "サブクラス",
+        "stats": {
+            "difficulty": "難易度",
+            "damage": "攻撃",
+            "defence": "防御",
+            "range": "射程",
+            "speed": "速度"
+        },
         "archetypes": {
             "striker": "ストライカー",
             "strikerDesc": "攻撃型スコアラー — コンボと倍率特化",
+            "strikerAlt": "ナイト",
             "guardian": "ガーディアン",
             "guardianDesc": "堅牢な生存者 — シールドと回復特化",
+            "guardianAlt": "バスティオン",
             "virtuoso": "ヴィルトゥオーソ",
             "virtuosoDesc": "技巧派 — T-Spinとリズム特化",
+            "virtuosoAlt": "ダークメイジ",
             "trickster": "トリックスター",
-            "tricksterDesc": "速度と撹乱 — 素早い操作と混沌特化"
+            "tricksterDesc": "速度と撹乱 — 素早い操作と混沌特化",
+            "tricksterAlt": "ニンジャ",
+            "conductor": "コンダクター",
+            "conductorDesc": "リズムマスタリー — ビート同期とテンポ制御",
+            "conductorAlt": "スカイシーアー"
+        },
+        "subclasses": {
+            "brawler": "ブロウラー",
+            "berserker": "バーサーカー",
+            "paladin": "パラディン",
+            "sentinel": "センチネル",
+            "medic": "メディック",
+            "warden": "ウォーデン",
+            "arcanist": "アルカニスト",
+            "chronomancer": "クロノマンサー",
+            "enchanter": "エンチャンター",
+            "shadow": "シャドウ",
+            "phantom": "ファントム",
+            "saboteur": "サボトゥール",
+            "harmonist": "ハーモニスト",
+            "resonator": "レゾネーター",
+            "orchestrator": "オーケストレーター"
         },
         "nodes": {
             "stkScoreAmp": "スコアアンプ",
@@ -1378,7 +1414,23 @@
             "trkChaosMaster": "カオスマスター",
             "trkChaosMasterDesc": "受信お邪魔ラインをランダムボーナスアイテムに変換",
             "trkPhantom": "ファントム",
-            "trkPhantomDesc": "ピースが一瞬だけ1ブロックの隙間を通過可能"
+            "trkPhantomDesc": "ピースが一瞬だけ1ブロックの隙間を通過可能",
+            "cndTempoSense": "テンポセンス",
+            "cndTempoSenseDesc": "リズム認識が深まり、ビート判定窓がレベルごとに拡大",
+            "cndSyncPulse": "シンクパルス",
+            "cndSyncPulseDesc": "ビートに合わせて防御パルスを生成",
+            "cndBeatWeave": "ビートウィーブ",
+            "cndBeatWeaveDesc": "コンボをリズムパターンに織り込みボーナスポイントを獲得",
+            "cndResonance": "レゾナンス",
+            "cndResonanceDesc": "ライン消去が反響し追加の遅延ダメージを与える",
+            "cndFlowState": "フロウステート",
+            "cndFlowStateDesc": "高集中ゾーンに入りドロップスピードボーナスが向上",
+            "cndHarmonicShield": "ハーモニックシールド",
+            "cndHarmonicShieldDesc": "リズム同期により受信お邪魔ラインを軽減",
+            "cndSymphony": "シンフォニー",
+            "cndSymphonyDesc": "究極のリズムマスタリー — 大規模コンボ倍率クレッシェンド",
+            "cndEncore": "アンコール",
+            "cndEncoreDesc": "1ゲームに1回、ノックアウトからビートバーストで復活"
         }
     }
 }

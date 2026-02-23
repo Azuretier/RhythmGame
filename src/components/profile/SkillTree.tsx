@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useSkillTree } from '@/lib/skill-tree/context';
 import { ARCHETYPES, getNodesForArchetype } from '@/lib/skill-tree/definitions';
-import type { SkillNode, Archetype } from '@/lib/skill-tree/types';
+import type { SkillNode, Archetype, ArchetypeMeta, SubclassStats } from '@/lib/skill-tree/types';
 import styles from './SkillTree.module.css';
 
-/** Pixel-art style icons via Unicode */
+/** Unicode icons for skill node rendering */
 const NODE_ICONS: Record<string, string> = {
   bolt: '\u26A1',
   'arrow-down': '\u2B07',
@@ -25,16 +25,18 @@ const NODE_ICONS: Record<string, string> = {
   shield: '\uD83D\uDEE1\uFE0F',
   heart: '\u2764\uFE0F',
   crown: '\uD83D\uDC51',
+  fist: '\u270A',
 };
 
 /** Grid cell dimensions */
 const CELL_W = 110;
 const CELL_H = 120;
-const NODE_SIZE = 60;
+const NODE_SIZE = 56;
 const NODE_HALF = NODE_SIZE / 2;
+const ROWS_PER_PAGE = 2;
 
-/** Tier divider labels */
 const TIER_LABELS = ['I', 'II', 'III'];
+const STAT_KEYS: (keyof SubclassStats)[] = ['difficulty', 'damage', 'defence', 'range', 'speed'];
 
 interface SkillTreeProps {
   onClose?: () => void;
@@ -52,9 +54,9 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     totalSpent,
   } = useSkillTree();
 
-  const [pickingClass, setPickingClass] = useState(false);
   const [selectedNode, setSelectedNode] = useState<SkillNode | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [page, setPage] = useState(0);
 
   const archMeta = useMemo(
     () => ARCHETYPES.find((a) => a.id === state.archetype) ?? null,
@@ -65,6 +67,25 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     () => (state.archetype ? getNodesForArchetype(state.archetype) : []),
     [state.archetype]
   );
+
+  const maxRow = useMemo(
+    () =>
+      archetypeNodes.length > 0
+        ? Math.max(...archetypeNodes.map((n) => n.position.row))
+        : 0,
+    [archetypeNodes]
+  );
+
+  const totalPages = Math.max(1, Math.ceil((maxRow + 1) / ROWS_PER_PAGE));
+
+  // Filter nodes for current page
+  const pageNodes = useMemo(() => {
+    const startRow = page * ROWS_PER_PAGE;
+    const endRow = startRow + ROWS_PER_PAGE;
+    return archetypeNodes.filter(
+      (n) => n.position.row >= startRow && n.position.row < endRow
+    );
+  }, [archetypeNodes, page]);
 
   const getNodeStatus = useCallback(
     (node: SkillNode): 'locked' | 'available' | 'partial' | 'maxed' => {
@@ -77,33 +98,30 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     [getLevel, canUnlock]
   );
 
-  /** Node center position in the global grid */
-  const nodeCenter = (node: SkillNode) => ({
-    x: node.position.col * CELL_W + CELL_W / 2,
-    y: node.position.row * CELL_H + CELL_H / 2,
-  });
-
-  const svgWidth = 3 * CELL_W;
-
-  // Compute max row for SVG height
-  const maxRow = useMemo(
-    () =>
-      archetypeNodes.length > 0
-        ? Math.max(...archetypeNodes.map((n) => n.position.row))
-        : 0,
-    [archetypeNodes]
+  /** Node center relative to current page */
+  const nodeCenter = useCallback(
+    (node: SkillNode) => ({
+      x: node.position.col * CELL_W + CELL_W / 2,
+      y: (node.position.row - page * ROWS_PER_PAGE) * CELL_H + CELL_H / 2,
+    }),
+    [page]
   );
 
-  const svgHeight = (maxRow + 1) * CELL_H;
+  const svgWidth = 3 * CELL_W;
+  const svgHeight = ROWS_PER_PAGE * CELL_H;
 
-  // Pre-compute all connection paths (single SVG, no page breaks)
+  // Connection paths for current page
   const connectionPaths = useMemo(() => {
     const paths: { d: string; active: boolean }[] = [];
+    const startRow = page * ROWS_PER_PAGE;
+    const endRow = startRow + ROWS_PER_PAGE;
 
-    for (const node of archetypeNodes) {
+    for (const node of pageNodes) {
       for (const reqId of node.requires) {
         const parent = archetypeNodes.find((n) => n.id === reqId);
         if (!parent) continue;
+        // Only draw if parent is also on this page
+        if (parent.position.row < startRow || parent.position.row >= endRow) continue;
 
         const from = nodeCenter(parent);
         const to = nodeCenter(node);
@@ -123,28 +141,11 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
         }
       }
     }
-
     return paths;
-  }, [archetypeNodes, getNodeStatus]);
-
-  // Tier divider Y positions (between rows)
-  const tierDividers = useMemo(() => {
-    const dividers: { y: number; label: string }[] = [];
-    // Divider between row 1 and row 2 → Tier II
-    if (maxRow >= 2) {
-      dividers.push({ y: 1.5 * CELL_H, label: TIER_LABELS[1] });
-    }
-    // Divider between row 2 and row 3 → Tier III
-    if (maxRow >= 3) {
-      dividers.push({ y: 2.5 * CELL_H, label: TIER_LABELS[2] });
-    }
-    return dividers;
-  }, [maxRow]);
+  }, [pageNodes, archetypeNodes, page, getNodeStatus, nodeCenter]);
 
   const handleUnlock = useCallback(
-    (skillId: string) => {
-      unlockSkill(skillId);
-    },
+    (skillId: string) => unlockSkill(skillId),
     [unlockSkill]
   );
 
@@ -158,109 +159,26 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     (arch: Archetype) => {
       selectArchetype(arch);
       setSelectedNode(null);
-      setPickingClass(false);
+      setPage(0);
     },
     [selectArchetype]
   );
 
-  // ───── Class Picker (initial or switching) ─────
-  if (!state.archetype || pickingClass) {
-    return (
-      <div className={styles.overlay} onClick={pickingClass ? onClose : undefined}>
-        <motion.div
-          className={styles.frame}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className={styles.frameHeader}>
-            <div className={styles.headerTitle}>
-              <span className={styles.headerTitleText}>{t('chooseArchetype')}</span>
-            </div>
-            <div className={styles.headerRight}>
-              <div className={styles.spBadge}>
-                <span className={styles.spIcon}>{'\u2B50'}</span>
-                <span className={styles.spNum}>{state.skillPoints}</span>
-                <span className={styles.spLabel}>SP</span>
-              </div>
-              {onClose && (
-                <button
-                  className={styles.closeX}
-                  onClick={pickingClass ? () => setPickingClass(false) : onClose}
-                >
-                  {'\u2715'}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Class cards — vertical RPG list */}
-          <div className={styles.classList}>
-            {ARCHETYPES.map((arch) => (
-              <button
-                key={arch.id}
-                className={`${styles.classCard} ${
-                  state.archetype === arch.id ? styles.classCardActive : ''
-                }`}
-                style={{ '--class-color': arch.color } as React.CSSProperties}
-                onClick={() => handleSelectArchetype(arch.id)}
-              >
-                <span className={styles.classIcon}>{arch.icon}</span>
-                <div className={styles.classInfo}>
-                  <span className={styles.className}>
-                    {t(`archetypes.${arch.nameKey}`)}
-                  </span>
-                  <span className={styles.classDesc}>
-                    {t(`archetypes.${arch.descKey}`)}
-                  </span>
-                </div>
-                <span className={styles.classArrow}>{'\u25B6'}</span>
-              </button>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // ───── Main Tree View ─────
+  // ───── Render ─────
   return (
     <div className={styles.overlay} onClick={onClose}>
       <motion.div
         className={styles.frame}
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
+        exit={{ opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.2 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header — class icon, name, SP, close */}
-        <div className={styles.frameHeader}>
-          <button
-            className={styles.classSwitch}
-            style={{ '--class-color': archMeta?.color } as React.CSSProperties}
-            onClick={() => setPickingClass(true)}
-            title={t('switchArchetype')}
-          >
-            <span>{archMeta?.icon}</span>
-          </button>
-          <div className={styles.headerTitle}>
-            <span
-              className={styles.headerTitleText}
-              style={{ color: archMeta?.color }}
-            >
-              {t(`archetypes.${archMeta?.nameKey}`)}
-            </span>
-          </div>
-          <div className={styles.headerRight}>
-            <div className={styles.spBadge}>
-              <span className={styles.spIcon}>{'\u2B50'}</span>
-              <span className={styles.spNum}>{state.skillPoints}</span>
-              <span className={styles.spLabel}>SP</span>
-            </div>
+        {/* ===== Top bar ===== */}
+        <div className={styles.topBar}>
+          <span className={styles.topBarTitle}>{t('title')}</span>
+          <div className={styles.topBarRight}>
             {totalSpent > 0 && (
               <button
                 className={styles.resetLink}
@@ -277,164 +195,225 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
           </div>
         </div>
 
-        {/* Continuous tree area — native scroll */}
-        <div className={styles.treeArea}>
-          <div
-            className={styles.treeCanvas}
-            style={{ width: svgWidth, minHeight: svgHeight }}
-          >
-            {/* Single SVG for all connections — no page breaks */}
-            <svg
-              className={styles.connectionsSvg}
-              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-              width={svgWidth}
-              height={svgHeight}
-              shapeRendering="crispEdges"
-            >
-              {/* Tier divider lines */}
-              {tierDividers.map((div, i) => (
-                <g key={i}>
-                  <line
-                    x1={16}
-                    y1={div.y}
-                    x2={svgWidth - 16}
-                    y2={div.y}
-                    stroke="#2a2a2a"
-                    strokeWidth={2}
-                    strokeDasharray="6 4"
-                  />
-                  <text
-                    x={svgWidth - 10}
-                    y={div.y - 6}
-                    fill="#3a3a3a"
-                    fontSize="10"
-                    fontFamily="var(--font-pixel, 'Courier New', monospace)"
-                    textAnchor="end"
-                  >
-                    {t('tier')} {div.label}
-                  </text>
-                </g>
-              ))}
+        {/* ===== Left Panel — Class Detail ===== */}
+        <div className={styles.classDetail}>
+          {archMeta ? (
+            <ClassDetailContent
+              arch={archMeta}
+              skillPoints={state.skillPoints}
+              t={t}
+            />
+          ) : (
+            <div className={styles.noClassPlaceholder}>
+              {t('chooseArchetype')}
+            </div>
+          )}
+        </div>
 
-              {/* Connection paths */}
-              {connectionPaths.map((conn, i) => (
-                <path
-                  key={i}
-                  d={conn.d}
-                  fill="none"
-                  stroke={conn.active ? archMeta?.color ?? '#888' : '#2a2a2a'}
-                  strokeWidth={4}
-                  strokeLinejoin="miter"
-                  strokeLinecap="butt"
-                  style={
-                    conn.active
-                      ? { filter: `drop-shadow(0 0 6px ${archMeta?.color ?? '#888'})` }
-                      : undefined
-                  }
-                />
-              ))}
-            </svg>
-
-            {/* Skill nodes */}
-            {archetypeNodes.map((node) => {
-              const status = getNodeStatus(node);
-              const level = getLevel(node.id);
-              const isSelected = selectedNode?.id === node.id;
-              const pos = nodeCenter(node);
-
-              return (
+        {/* ===== Center Panel — Ability Tree ===== */}
+        <div className={styles.treePanel}>
+          {state.archetype ? (
+            <>
+              {/* Page navigation */}
+              <div className={styles.pageNav}>
                 <button
-                  key={node.id}
-                  className={`${styles.node} ${styles[`node_${status}`]} ${
-                    isSelected ? styles.nodeSelected : ''
-                  }`}
-                  style={{
-                    '--cat-color': archMeta?.color ?? '#888',
-                    left: pos.x - NODE_HALF,
-                    top: pos.y - NODE_HALF,
-                    width: NODE_SIZE,
-                    height: NODE_SIZE,
-                  } as React.CSSProperties}
-                  onClick={() => setSelectedNode(isSelected ? null : node)}
+                  className={styles.pageArrow}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0}
                 >
-                  <span className={styles.nodeIcon}>
-                    {NODE_ICONS[node.icon] || node.icon}
-                  </span>
-                  <div className={styles.levelPips}>
-                    {Array.from({ length: node.maxLevel }).map((_, i) => (
-                      <div
+                  {'\u25C0'}
+                </button>
+                <span className={styles.pageLabel}>
+                  {t('page')} {page + 1}
+                </span>
+                <button
+                  className={styles.pageArrow}
+                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  disabled={page >= totalPages - 1}
+                >
+                  {'\u25B6'}
+                </button>
+              </div>
+
+              {/* Tree canvas */}
+              <div className={styles.treeArea}>
+                <div
+                  className={styles.treeCanvas}
+                  style={{ width: svgWidth, minHeight: svgHeight }}
+                >
+                  <svg
+                    className={styles.connectionsSvg}
+                    viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                    width={svgWidth}
+                    height={svgHeight}
+                    shapeRendering="crispEdges"
+                  >
+                    {connectionPaths.map((conn, i) => (
+                      <path
                         key={i}
-                        className={`${styles.pip} ${
-                          i < level ? styles.pipFilled : ''
-                        }`}
+                        d={conn.d}
+                        fill="none"
+                        stroke={conn.active ? archMeta?.color ?? '#888' : '#4a4a68'}
+                        strokeWidth={3}
+                        strokeLinejoin="miter"
+                        strokeLinecap="butt"
+                        strokeDasharray={conn.active ? undefined : '6 4'}
+                        style={
+                          conn.active
+                            ? { filter: `drop-shadow(0 0 4px ${archMeta?.color ?? '#888'})` }
+                            : undefined
+                        }
                       />
                     ))}
+                  </svg>
+
+                  {pageNodes.map((node) => {
+                    const status = getNodeStatus(node);
+                    const level = getLevel(node.id);
+                    const isSelected = selectedNode?.id === node.id;
+                    const pos = nodeCenter(node);
+
+                    return (
+                      <button
+                        key={node.id}
+                        className={`${styles.node} ${styles[`node_${status}`]} ${
+                          isSelected ? styles.nodeSelected : ''
+                        }`}
+                        style={{
+                          '--cat-color': archMeta?.color ?? '#888',
+                          left: pos.x - NODE_HALF,
+                          top: pos.y - NODE_HALF,
+                          width: NODE_SIZE,
+                          height: NODE_SIZE,
+                        } as React.CSSProperties}
+                        onClick={() => setSelectedNode(isSelected ? null : node)}
+                      >
+                        <span className={styles.nodeIcon}>
+                          {NODE_ICONS[node.icon] || node.icon}
+                        </span>
+                        <div className={styles.levelPips}>
+                          {Array.from({ length: node.maxLevel }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`${styles.pip} ${
+                                i < level ? styles.pipFilled : ''
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Node detail tooltip */}
+                <AnimatePresence>
+                  {selectedNode && (
+                    <motion.div
+                      className={styles.detailPanel}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.12 }}
+                    >
+                      <div className={styles.detailTop}>
+                        <span className={styles.detailIcon}>
+                          {NODE_ICONS[selectedNode.icon] || selectedNode.icon}
+                        </span>
+                        <div className={styles.detailInfo}>
+                          <div className={styles.detailName}>
+                            {t(`nodes.${selectedNode.nameKey}`)}
+                          </div>
+                          <div className={styles.detailDesc}>
+                            {t(`nodes.${selectedNode.descKey}`)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.detailBottom}>
+                        <span className={styles.detailStat}>
+                          {t('level')}: {getLevel(selectedNode.id)}/
+                          {selectedNode.maxLevel}
+                        </span>
+                        <span className={styles.detailStat}>
+                          {t('cost')}: {selectedNode.cost} {t('pointsUnit')}
+                        </span>
+                        <span className={styles.detailTier}>
+                          {t('tier')} {TIER_LABELS[selectedNode.tier - 1]}
+                        </span>
+                        {canUnlock(selectedNode.id) && (
+                          <button
+                            className={styles.unlockBtn}
+                            style={{ backgroundColor: archMeta?.color }}
+                            onClick={() => handleUnlock(selectedNode.id)}
+                          >
+                            {getLevel(selectedNode.id) > 0
+                              ? t('upgrade')
+                              : t('unlock')}
+                          </button>
+                        )}
+                        {getNodeStatus(selectedNode) === 'maxed' && (
+                          <span className={styles.maxedBadge}>{t('maxed')}</span>
+                        )}
+                        {getNodeStatus(selectedNode) === 'locked' && (
+                          <span className={styles.lockedHint}>
+                            {t('lockedHint')}
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </>
+          ) : (
+            <div className={styles.treePlaceholder}>
+              {t('selectClassForTree')}
+            </div>
+          )}
+        </div>
+
+        {/* ===== Right Panel — Class Selector ===== */}
+        <div className={styles.classSelector}>
+          <div className={styles.selectorHeader}>{t('classes')}</div>
+          <div className={styles.classCardList}>
+            {ARCHETYPES.map((arch) => (
+              <button
+                key={arch.id}
+                className={`${styles.classCard} ${
+                  state.archetype === arch.id ? styles.classCardActive : ''
+                }`}
+                style={{ '--class-color': arch.color } as React.CSSProperties}
+                onClick={() => handleSelectArchetype(arch.id)}
+              >
+                <div className={styles.cardHex}>
+                  <span>{arch.icon}</span>
+                </div>
+                <div className={styles.cardInfo}>
+                  <span className={styles.cardName}>
+                    {t(`archetypes.${arch.nameKey}`)}
+                  </span>
+                  <span className={styles.cardAlt}>
+                    ({t(`archetypes.${arch.altNameKey}`)})
+                  </span>
+                  <div className={styles.diffRow}>
+                    <span className={styles.diffLabel}>{t('difficulty')}</span>
+                    <div className={styles.diffTrack}>
+                      <div
+                        className={styles.diffFill}
+                        style={{
+                          width: `${(arch.difficulty / 5) * 100}%`,
+                          backgroundColor: arch.color,
+                        }}
+                      />
+                    </div>
                   </div>
-                </button>
-              );
-            })}
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Detail panel (Minecraft tooltip) */}
-        <AnimatePresence>
-          {selectedNode && (
-            <motion.div
-              className={styles.detailPanel}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.12 }}
-            >
-              <div className={styles.detailTop}>
-                <span className={styles.detailIcon}>
-                  {NODE_ICONS[selectedNode.icon] || selectedNode.icon}
-                </span>
-                <div className={styles.detailInfo}>
-                  <div className={styles.detailName}>
-                    {t(`nodes.${selectedNode.nameKey}`)}
-                  </div>
-                  <div className={styles.detailDesc}>
-                    {t(`nodes.${selectedNode.descKey}`)}
-                  </div>
-                </div>
-              </div>
-              <div className={styles.detailBottom}>
-                <span className={styles.detailStat}>
-                  {t('level')}: {getLevel(selectedNode.id)}/
-                  {selectedNode.maxLevel}
-                </span>
-                <span className={styles.detailStat}>
-                  {t('cost')}: {selectedNode.cost} {t('pointsUnit')}
-                </span>
-                <span className={styles.detailTier}>
-                  {t('tier')} {TIER_LABELS[selectedNode.tier - 1]}
-                </span>
-                {canUnlock(selectedNode.id) && (
-                  <button
-                    className={styles.unlockBtn}
-                    style={{ backgroundColor: archMeta?.color }}
-                    onClick={() => handleUnlock(selectedNode.id)}
-                  >
-                    {getLevel(selectedNode.id) > 0
-                      ? t('upgrade')
-                      : t('unlock')}
-                  </button>
-                )}
-                {getNodeStatus(selectedNode) === 'maxed' && (
-                  <span className={styles.maxedBadge}>{t('maxed')}</span>
-                )}
-                {getNodeStatus(selectedNode) === 'locked' && (
-                  <span className={styles.lockedHint}>
-                    {t('lockedHint')}
-                  </span>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Reset confirmation dialog */}
+        {/* ===== Reset Confirmation ===== */}
         <AnimatePresence>
           {showResetConfirm && (
             <motion.div
@@ -465,5 +444,86 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
         </AnimatePresence>
       </motion.div>
     </div>
+  );
+}
+
+/* ================================================================
+   Sub-components
+   ================================================================ */
+
+/** Left panel content when a class is selected */
+function ClassDetailContent({
+  arch,
+  skillPoints,
+  t,
+}: {
+  arch: ArchetypeMeta;
+  skillPoints: number;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <>
+      {/* Portrait + name */}
+      <div className={styles.portraitArea}>
+        <div
+          className={styles.hexPortrait}
+          style={{ boxShadow: `0 0 20px ${arch.color}33` }}
+        >
+          <span className={styles.portraitIcon}>{arch.icon}</span>
+        </div>
+        <div className={styles.portraitNames}>
+          <span className={styles.className}>
+            {t(`archetypes.${arch.nameKey}`)}
+          </span>
+          <span className={styles.classAltName}>
+            ({t(`archetypes.${arch.altNameKey}`)})
+          </span>
+        </div>
+      </div>
+
+      {/* SP badge */}
+      <div className={styles.detailSp}>
+        <span className={styles.detailSpNum}>{skillPoints}</span>
+        <span className={styles.detailSpLabel}>SP</span>
+      </div>
+
+      {/* Description */}
+      <p className={styles.classDescription}>
+        {t(`archetypes.${arch.descKey}`)}
+      </p>
+
+      {/* Subclasses */}
+      <div className={styles.subclassHeader}>{t('subclassesTitle')}</div>
+      <div className={styles.subclassList}>
+        {arch.subclasses.map((sub) => (
+          <div key={sub.id} className={styles.subclassEntry}>
+            <div className={styles.subclassTop}>
+              <span className={styles.subclassIcon}>
+                {NODE_ICONS[sub.icon] || sub.icon}
+              </span>
+              <span className={styles.subclassName}>
+                {t(`subclasses.${sub.nameKey}`)}
+              </span>
+            </div>
+            <div className={styles.statBars}>
+              {STAT_KEYS.map((key) => (
+                <div key={key} className={styles.statRow}>
+                  <span className={styles.statLabel}>{t(`stats.${key}`)}</span>
+                  <div className={styles.statBarTrack}>
+                    <div
+                      className={styles.statBarFill}
+                      style={{
+                        width: `${(sub.stats[key] / 5) * 100}%`,
+                        backgroundColor: arch.color,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

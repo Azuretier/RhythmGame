@@ -8,35 +8,153 @@ import type { SkillNode, ArchetypeMeta, Archetype } from './types';
  * - Guardian:  resilient survivor — green / shield
  * - Virtuoso:  technical precision — purple / target
  * - Trickster: speed & disruption — cyan / bolt
+ * - Conductor: rhythm mastery — gold / music
  */
 export const ARCHETYPES: ArchetypeMeta[] = [
   {
     id: 'striker',
     nameKey: 'striker',
     descKey: 'strikerDesc',
+    altNameKey: 'strikerAlt',
     color: '#EF5350',
     icon: '\uD83D\uDD25',
+    difficulty: 2,
+    subclasses: [
+      {
+        id: 'brawler',
+        nameKey: 'brawler',
+        icon: 'fist',
+        stats: { difficulty: 2, damage: 5, defence: 3, range: 1, speed: 3 },
+      },
+      {
+        id: 'berserker',
+        nameKey: 'berserker',
+        icon: 'flame',
+        stats: { difficulty: 3, damage: 5, defence: 1, range: 2, speed: 5 },
+      },
+      {
+        id: 'paladin',
+        nameKey: 'paladin',
+        icon: 'shield',
+        stats: { difficulty: 2, damage: 3, defence: 4, range: 2, speed: 2 },
+      },
+    ],
   },
   {
     id: 'guardian',
     nameKey: 'guardian',
     descKey: 'guardianDesc',
+    altNameKey: 'guardianAlt',
     color: '#66BB6A',
     icon: '\uD83D\uDEE1\uFE0F',
+    difficulty: 3,
+    subclasses: [
+      {
+        id: 'sentinel',
+        nameKey: 'sentinel',
+        icon: 'shield',
+        stats: { difficulty: 2, damage: 2, defence: 5, range: 1, speed: 2 },
+      },
+      {
+        id: 'medic',
+        nameKey: 'medic',
+        icon: 'heart',
+        stats: { difficulty: 3, damage: 1, defence: 4, range: 3, speed: 3 },
+      },
+      {
+        id: 'warden',
+        nameKey: 'warden',
+        icon: 'crown',
+        stats: { difficulty: 4, damage: 2, defence: 4, range: 4, speed: 1 },
+      },
+    ],
   },
   {
     id: 'virtuoso',
     nameKey: 'virtuoso',
     descKey: 'virtuosoDesc',
+    altNameKey: 'virtuosoAlt',
     color: '#AB47BC',
     icon: '\uD83C\uDFAF',
+    difficulty: 4,
+    subclasses: [
+      {
+        id: 'arcanist',
+        nameKey: 'arcanist',
+        icon: 'gem',
+        stats: { difficulty: 4, damage: 5, defence: 1, range: 5, speed: 2 },
+      },
+      {
+        id: 'chronomancer',
+        nameKey: 'chronomancer',
+        icon: 'spin',
+        stats: { difficulty: 5, damage: 3, defence: 2, range: 3, speed: 5 },
+      },
+      {
+        id: 'enchanter',
+        nameKey: 'enchanter',
+        icon: 'sparkle',
+        stats: { difficulty: 3, damage: 4, defence: 2, range: 4, speed: 2 },
+      },
+    ],
   },
   {
     id: 'trickster',
     nameKey: 'trickster',
     descKey: 'tricksterDesc',
+    altNameKey: 'tricksterAlt',
     color: '#4FC3F7',
     icon: '\u26A1',
+    difficulty: 3,
+    subclasses: [
+      {
+        id: 'shadow',
+        nameKey: 'shadow',
+        icon: 'bolt',
+        stats: { difficulty: 3, damage: 4, defence: 1, range: 2, speed: 5 },
+      },
+      {
+        id: 'phantom',
+        nameKey: 'phantom',
+        icon: 'sparkle',
+        stats: { difficulty: 4, damage: 3, defence: 2, range: 1, speed: 5 },
+      },
+      {
+        id: 'saboteur',
+        nameKey: 'saboteur',
+        icon: 'chain',
+        stats: { difficulty: 3, damage: 3, defence: 1, range: 4, speed: 4 },
+      },
+    ],
+  },
+  {
+    id: 'conductor',
+    nameKey: 'conductor',
+    descKey: 'conductorDesc',
+    altNameKey: 'conductorAlt',
+    color: '#FFB74D',
+    icon: '\uD83C\uDFB5',
+    difficulty: 5,
+    subclasses: [
+      {
+        id: 'harmonist',
+        nameKey: 'harmonist',
+        icon: 'note',
+        stats: { difficulty: 4, damage: 2, defence: 3, range: 4, speed: 3 },
+      },
+      {
+        id: 'resonator',
+        nameKey: 'resonator',
+        icon: 'fire',
+        stats: { difficulty: 5, damage: 4, defence: 1, range: 3, speed: 4 },
+      },
+      {
+        id: 'orchestrator',
+        nameKey: 'orchestrator',
+        icon: 'crown',
+        stats: { difficulty: 5, damage: 1, defence: 5, range: 5, speed: 1 },
+      },
+    ],
   },
 ];
 
@@ -453,6 +571,114 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['trk_ghost_step'],
+    tier: 3,
+    position: { row: 3, col: 2 },
+  },
+
+  // =====================================================
+  //  CONDUCTOR — rhythm fan shape
+  //
+  //  Row 0:        [tempo_sense]
+  //                 /           \
+  //  Row 1:  [sync_pulse]     [beat_weave]
+  //               |    \    /    |
+  //  Row 2: [resonance] [flow_state] [harmonic_shield]
+  //                \        |       /
+  //  Row 3:     [symphony]    [encore]
+  // =====================================================
+  {
+    id: 'cnd_tempo_sense',
+    archetype: 'conductor',
+    nameKey: 'cndTempoSense',
+    descKey: 'cndTempoSenseDesc',
+    icon: 'note',
+    cost: 1,
+    maxLevel: 3,
+    requires: [],
+    tier: 1,
+    position: { row: 0, col: 1 },
+  },
+  {
+    id: 'cnd_sync_pulse',
+    archetype: 'conductor',
+    nameKey: 'cndSyncPulse',
+    descKey: 'cndSyncPulseDesc',
+    icon: 'shield',
+    cost: 1,
+    maxLevel: 3,
+    requires: ['cnd_tempo_sense'],
+    tier: 1,
+    position: { row: 1, col: 0 },
+  },
+  {
+    id: 'cnd_beat_weave',
+    archetype: 'conductor',
+    nameKey: 'cndBeatWeave',
+    descKey: 'cndBeatWeaveDesc',
+    icon: 'chain',
+    cost: 1,
+    maxLevel: 3,
+    requires: ['cnd_tempo_sense'],
+    tier: 1,
+    position: { row: 1, col: 2 },
+  },
+  {
+    id: 'cnd_resonance',
+    archetype: 'conductor',
+    nameKey: 'cndResonance',
+    descKey: 'cndResonanceDesc',
+    icon: 'sparkle',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['cnd_sync_pulse'],
+    tier: 2,
+    position: { row: 2, col: 0 },
+  },
+  {
+    id: 'cnd_flow_state',
+    archetype: 'conductor',
+    nameKey: 'cndFlowState',
+    descKey: 'cndFlowStateDesc',
+    icon: 'star',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['cnd_sync_pulse', 'cnd_beat_weave'],
+    tier: 2,
+    position: { row: 2, col: 1 },
+  },
+  {
+    id: 'cnd_harmonic_shield',
+    archetype: 'conductor',
+    nameKey: 'cndHarmonicShield',
+    descKey: 'cndHarmonicShieldDesc',
+    icon: 'heart',
+    cost: 2,
+    maxLevel: 2,
+    requires: ['cnd_beat_weave'],
+    tier: 2,
+    position: { row: 2, col: 2 },
+  },
+  {
+    id: 'cnd_symphony',
+    archetype: 'conductor',
+    nameKey: 'cndSymphony',
+    descKey: 'cndSymphonyDesc',
+    icon: 'crown',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['cnd_resonance', 'cnd_flow_state'],
+    tier: 3,
+    position: { row: 3, col: 0 },
+  },
+  {
+    id: 'cnd_encore',
+    archetype: 'conductor',
+    nameKey: 'cndEncore',
+    descKey: 'cndEncoreDesc',
+    icon: 'fire',
+    cost: 3,
+    maxLevel: 1,
+    requires: ['cnd_flow_state', 'cnd_harmonic_shield'],
     tier: 3,
     position: { row: 3, col: 2 },
   },

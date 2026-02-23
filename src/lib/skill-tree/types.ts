@@ -1,7 +1,7 @@
 // ===== Skill Tree Types =====
 
 /** Archetypes — each has a unique branching skill tree */
-export type Archetype = 'striker' | 'guardian' | 'virtuoso' | 'trickster';
+export type Archetype = 'striker' | 'guardian' | 'virtuoso' | 'trickster' | 'conductor';
 
 export interface SkillNode {
   id: string;
@@ -24,16 +24,42 @@ export interface SkillNode {
   position: { row: number; col: number };
 }
 
+/** Stat ratings for subclass stat bars (1–5 scale) */
+export interface SubclassStats {
+  difficulty: number;
+  damage: number;
+  defence: number;
+  range: number;
+  speed: number;
+}
+
+/** Subclass metadata for the class detail panel */
+export interface SubclassMeta {
+  id: string;
+  /** i18n key suffix (skillTree.subclasses.<nameKey>) */
+  nameKey: string;
+  /** Icon identifier */
+  icon: string;
+  /** Stat ratings (1–5) */
+  stats: SubclassStats;
+}
+
 export interface ArchetypeMeta {
   id: Archetype;
   /** i18n key suffix (skillTree.archetypes.<nameKey>) */
   nameKey: string;
   /** i18n key suffix for tagline */
   descKey: string;
+  /** i18n key suffix for alternate class name (e.g., "Knight" for Warrior) */
+  altNameKey: string;
   /** Accent color for this archetype */
   color: string;
   /** Icon/emoji */
   icon: string;
+  /** Class difficulty rating (1–5) shown on class selector cards */
+  difficulty: number;
+  /** Three subclasses per class */
+  subclasses: SubclassMeta[];
 }
 
 export interface SkillTreeState {

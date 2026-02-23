@@ -18,6 +18,7 @@ export {
   awardMultiplayerWinPoints,
   getSkillLevel,
   getTotalSpentPoints,
+  mergeSkillTreeStates,
 } from './storage';
 export { SkillTreeProvider, useSkillTree } from './context';
-export type { SkillNode, Archetype, ArchetypeMeta, SkillTreeState } from './types';
+export type { SkillNode, Archetype, ArchetypeMeta, SkillTreeState, SubclassMeta, SubclassStats } from './types';

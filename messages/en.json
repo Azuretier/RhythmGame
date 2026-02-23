@@ -1308,15 +1308,51 @@
     "resetConfirmBtn": "Reset All",
     "chooseArchetype": "CHOOSE YOUR CLASS",
     "switchArchetype": "Switch class",
+    "page": "PAGE",
+    "classes": "CLASSES",
+    "selectClassForTree": "Select a class to view the ability tree",
+    "difficulty": "Difficulty",
+    "subclassesTitle": "SUBCLASSES",
+    "stats": {
+      "difficulty": "Difficulty",
+      "damage": "Damage",
+      "defence": "Defence",
+      "range": "Range",
+      "speed": "Speed"
+    },
     "archetypes": {
       "striker": "Striker",
       "strikerDesc": "Aggressive scorer — combos and multipliers",
+      "strikerAlt": "Knight",
       "guardian": "Guardian",
       "guardianDesc": "Resilient survivor — shields and recovery",
+      "guardianAlt": "Bastion",
       "virtuoso": "Virtuoso",
       "virtuosoDesc": "Technical precision — T-Spins and rhythm",
+      "virtuosoAlt": "Dark Mage",
       "trickster": "Trickster",
-      "tricksterDesc": "Speed and disruption — fast hands and chaos"
+      "tricksterDesc": "Speed and disruption — fast hands and chaos",
+      "tricksterAlt": "Ninja",
+      "conductor": "Conductor",
+      "conductorDesc": "Rhythm mastery — beat sync and tempo control",
+      "conductorAlt": "Skyseer"
+    },
+    "subclasses": {
+      "brawler": "Brawler",
+      "berserker": "Berserker",
+      "paladin": "Paladin",
+      "sentinel": "Sentinel",
+      "medic": "Medic",
+      "warden": "Warden",
+      "arcanist": "Arcanist",
+      "chronomancer": "Chronomancer",
+      "enchanter": "Enchanter",
+      "shadow": "Shadow",
+      "phantom": "Phantom",
+      "saboteur": "Saboteur",
+      "harmonist": "Harmonist",
+      "resonator": "Resonator",
+      "orchestrator": "Orchestrator"
     },
     "nodes": {
       "stkScoreAmp": "Score Amp",
@@ -1378,7 +1414,23 @@
       "trkChaosMaster": "Chaos Master",
       "trkChaosMasterDesc": "Convert incoming garbage into random bonus items",
       "trkPhantom": "Phantom",
-      "trkPhantomDesc": "Pieces can pass through single-block gaps briefly"
+      "trkPhantomDesc": "Pieces can pass through single-block gaps briefly",
+      "cndTempoSense": "Tempo Sense",
+      "cndTempoSenseDesc": "Deepens rhythm awareness, widening beat windows per level",
+      "cndSyncPulse": "Sync Pulse",
+      "cndSyncPulseDesc": "Generate defensive pulses when hitting beats on time",
+      "cndBeatWeave": "Beat Weave",
+      "cndBeatWeaveDesc": "Weave combos into rhythm patterns for bonus points",
+      "cndResonance": "Resonance",
+      "cndResonanceDesc": "Line clears echo for additional delayed damage",
+      "cndFlowState": "Flow State",
+      "cndFlowStateDesc": "Enter a heightened focus zone that boosts drop speed bonus",
+      "cndHarmonicShield": "Harmonic Shield",
+      "cndHarmonicShieldDesc": "Reduce incoming garbage through rhythm synchronisation",
+      "cndSymphony": "Symphony",
+      "cndSymphonyDesc": "Ultimate rhythm mastery — massive combo multiplier crescendo",
+      "cndEncore": "Encore",
+      "cndEncoreDesc": "Once per game, revive from knockout with a beat burst"
     }
   }
 }

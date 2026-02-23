@@ -1,6 +1,6 @@
 /* ============================================
-   RPG Skill Tree — Minecraft-pixel × dark-fantasy
-   Continuous tree, class picker, no bottom panel
+   RPG Skill Tree — Wynncraft-inspired medieval
+   Three-panel layout: Detail | Ability Tree | Class Selector
    ============================================ */
 
 /* ---- Overlay ---- */
@@ -12,253 +12,362 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.88);
-  padding: 16px;
-  image-rendering: pixelated;
+  padding: 12px;
 }
 
-/* ---- Obsidian Frame ---- */
+/* ---- Main Frame (three-panel grid) ---- */
 .frame {
   position: relative;
   width: 100%;
-  max-width: 420px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  background: #1a1a1a;
-  border: 4px solid #2d2d2d;
-  border-color: #3b3b3b #1a1a1a #1a1a1a #3b3b3b;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 720px;
+  display: grid;
+  grid-template-columns: 280px 1fr 220px;
+  background: #c4b28e;
+  border: 4px solid #7a6842;
+  border-radius: 4px;
   overflow: hidden;
   box-shadow:
-    inset 0 0 0 2px #0a0a0a,
-    0 0 0 2px #0a0a0a,
-    0 0 40px rgba(80, 32, 160, 0.15),
-    0 0 80px rgba(0, 0, 0, 0.8);
+    inset 0 0 0 2px #a89870,
+    0 0 0 3px #3a2e1a,
+    0 8px 40px rgba(0, 0, 0, 0.7);
 }
 
-/* Pixel corner bolts */
-.frame::before,
-.frame::after {
+/* Parchment texture on entire frame */
+.frame::before {
   content: '';
   position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #4a4a4a;
-  border: 2px solid #2a2a2a;
-  z-index: 5;
-  pointer-events: none;
-}
-
-.frame::before {
-  top: 6px;
-  left: 6px;
-}
-
-.frame::after {
-  top: 6px;
-  right: 6px;
-}
-
-/* ---- Frame Header ---- */
-.frameHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  inset: 0;
   background:
     repeating-linear-gradient(
       0deg,
       transparent,
       transparent 3px,
-      rgba(255, 255, 255, 0.012) 3px,
-      rgba(255, 255, 255, 0.012) 4px
+      rgba(0, 0, 0, 0.015) 3px,
+      rgba(0, 0, 0, 0.015) 4px
     ),
-    linear-gradient(180deg, #252525 0%, #1e1e1e 100%);
-  border-bottom: 4px solid #0a0a0a;
-  box-shadow: inset 0 -2px 0 #3b3b3b;
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 5px,
+      rgba(0, 0, 0, 0.01) 5px,
+      rgba(0, 0, 0, 0.01) 6px
+    );
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* Class switch button in header */
-.classSwitch {
-  width: 32px;
-  height: 32px;
+/* ================================================================
+   LEFT PANEL — Class Detail
+   ================================================================ */
+.classDetail {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 18px;
+  overflow-y: auto;
+  border-right: 3px solid #8a7a58;
+  background: linear-gradient(180deg, #c8b890 0%, #bca87a 100%);
+}
+
+/* Character hexagonal portrait */
+.portraitArea {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.hexPortrait {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  background: #2a2a2a;
-  border: 3px solid;
-  border-color: #1a1a1a #4a4a4a #4a4a4a #1a1a1a;
-  cursor: pointer;
-  transition: background 0.08s, box-shadow 0.15s;
-  flex-shrink: 0;
+  font-size: 2rem;
+  background: linear-gradient(135deg, #3a3020 0%, #2a2418 100%);
+  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  position: relative;
 }
 
-.classSwitch:hover {
-  background: #353535;
-  box-shadow: 0 0 12px color-mix(in srgb, var(--class-color) 40%, transparent);
+/* Bronze ring around hex */
+.hexPortrait::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  background: linear-gradient(180deg, #c9a44c 0%, #8a6d2f 50%, #c9a44c 100%);
+  z-index: -1;
 }
 
-.classSwitch:active {
-  border-color: #4a4a4a #1a1a1a #1a1a1a #4a4a4a;
+.portraitIcon {
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.6));
 }
 
-/* Header title area */
-.headerTitle {
-  flex: 1;
+.portraitNames {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
-.headerTitleText {
+.className {
   font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.15em;
+  color: #2a2010;
   text-transform: uppercase;
-  text-shadow: 2px 2px 0 #000;
-  color: #aaaaaa;
+  letter-spacing: 0.05em;
 }
 
-/* Right side of header (SP + reset + close) */
-.headerRight {
-  display: flex;
+.classAltName {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.7rem;
+  color: #6a5a3a;
+}
+
+/* SP badge in detail panel */
+.detailSp {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
+  gap: 4px;
+  background: #3a3020;
+  border: 2px solid #5a4a2e;
+  border-radius: 3px;
+  padding: 3px 10px;
+  margin-bottom: 12px;
+  align-self: flex-start;
 }
 
-/* SP badge */
-.spBadge {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  background: #0a0a0a;
-  border: 2px solid;
-  border-color: #1a1a1a #3b3b3b #3b3b3b #1a1a1a;
-  padding: 3px 8px;
-}
-
-.spIcon {
-  font-size: 0.65rem;
-  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.8));
-}
-
-.spNum {
+.detailSpNum {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.85rem;
   font-weight: 700;
   color: #80ff20;
-  text-shadow:
-    2px 2px 0 #1a3a00,
-    0 0 6px rgba(128, 255, 32, 0.3);
+  text-shadow: 0 0 6px rgba(128, 255, 32, 0.4);
 }
 
-.spLabel {
+.detailSpLabel {
   font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.45rem;
-  color: #4a6a30;
+  font-size: 0.55rem;
+  color: #8a8060;
   text-transform: uppercase;
-  text-shadow: 1px 1px 0 #000;
 }
 
-/* Reset link */
-.resetLink {
+/* Class description */
+.classDescription {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.65rem;
+  line-height: 1.6;
+  color: #4a3e28;
+  margin-bottom: 16px;
+}
+
+/* Subclass section */
+.subclassHeader {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #5a4a30;
+  border-bottom: 2px solid #9a8a68;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.subclassList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subclassEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subclassTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subclassIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  background: #4a3e28;
+  border: 2px solid #6a5a3a;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.subclassName {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #2a2010;
+}
+
+.statBars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 32px;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statLabel {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.5rem;
+  color: #6a5a3a;
+  width: 56px;
   text-transform: uppercase;
-  color: #555;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 4px;
-  text-shadow: 1px 1px 0 #000;
-  letter-spacing: 0.05em;
-  transition: color 0.1s;
+  flex-shrink: 0;
 }
 
-.resetLink:hover {
-  color: #ff5555;
+.statBarTrack {
+  flex: 1;
+  height: 7px;
+  background: #3a3020;
+  border-radius: 1px;
+  overflow: hidden;
+  max-width: 100px;
 }
 
-/* Close X button */
-.closeX {
-  width: 28px;
-  height: 28px;
+.statBarFill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+/* Placeholder when no class is selected */
+.noClassPlaceholder {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.75rem;
-  color: #666;
-  background: #2a2a2a;
-  border: 2px solid;
-  border-color: #1a1a1a #4a4a4a #4a4a4a #1a1a1a;
+  color: #8a7a58;
+  text-align: center;
+  padding: 40px;
+}
+
+/* ================================================================
+   CENTER PANEL — Ability Tree
+   ================================================================ */
+.treePanel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  background: #3a3d5c;
+  overflow: hidden;
+}
+
+/* Stone frame border */
+.treePanel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 6px solid;
+  border-image: linear-gradient(
+    180deg,
+    #7a7a88 0%,
+    #5a5a68 30%,
+    #4a4a58 50%,
+    #5a5a68 70%,
+    #7a7a88 100%
+  ) 1;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Page navigation header */
+.pageNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, #2e3048 0%, #343654 100%);
+  border-bottom: 2px solid #50527a;
+  z-index: 2;
+}
+
+.pageArrow {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.8rem;
+  color: #8888aa;
+  background: none;
+  border: none;
   cursor: pointer;
-  transition: color 0.08s, background 0.08s;
+  padding: 2px 8px;
+  transition: color 0.1s;
 }
 
-.closeX:hover {
-  color: #ff5555;
-  background: #3a2020;
+.pageArrow:hover {
+  color: #ccccee;
 }
 
-.closeX:active {
-  border-color: #4a4a4a #1a1a1a #1a1a1a #4a4a4a;
+.pageArrow:disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
-/* ---- Tree Area (continuous scroll) ---- */
+.pageLabel {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #aaaacc;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  min-width: 70px;
+  text-align: center;
+}
+
+/* Tree canvas area */
 .treeArea {
   flex: 1;
-  min-height: 240px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
   display: flex;
   justify-content: center;
-  padding: 20px 16px 24px;
+  align-items: flex-start;
+  padding: 24px 16px;
+  overflow-y: auto;
+  position: relative;
   background:
-    /* Subtle pixel grid */
     repeating-linear-gradient(
       0deg,
       transparent,
-      transparent 7px,
-      rgba(255, 255, 255, 0.008) 7px,
-      rgba(255, 255, 255, 0.008) 8px
+      transparent 11px,
+      rgba(255, 255, 255, 0.012) 11px,
+      rgba(255, 255, 255, 0.012) 12px
     ),
     repeating-linear-gradient(
       90deg,
       transparent,
-      transparent 7px,
-      rgba(255, 255, 255, 0.008) 7px,
-      rgba(255, 255, 255, 0.008) 8px
+      transparent 11px,
+      rgba(255, 255, 255, 0.012) 11px,
+      rgba(255, 255, 255, 0.012) 12px
     ),
-    /* Enchant vignette */
-    radial-gradient(ellipse at center, rgba(60, 20, 100, 0.12) 0%, transparent 70%),
-    #111111;
+    radial-gradient(ellipse at center, rgba(80, 80, 140, 0.08) 0%, transparent 70%),
+    #343654;
 }
 
-/* Enchantment particle overlay */
-.treeArea::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(1px 1px at 20% 30%, rgba(128, 80, 200, 0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 60% 60%, rgba(128, 80, 200, 0.3) 0%, transparent 100%),
-    radial-gradient(1px 1px at 80% 20%, rgba(128, 80, 200, 0.35) 0%, transparent 100%),
-    radial-gradient(1px 1px at 40% 80%, rgba(128, 80, 200, 0.25) 0%, transparent 100%),
-    radial-gradient(1px 1px at 10% 70%, rgba(128, 80, 200, 0.3) 0%, transparent 100%);
-  animation: enchantFloat 8s linear infinite;
-  pointer-events: none;
-  opacity: 0.7;
-  z-index: 0;
-}
-
-@keyframes enchantFloat {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-20px); }
-}
-
-/* Tree canvas — single continuous area */
 .treeCanvas {
   position: relative;
   z-index: 1;
@@ -271,7 +380,7 @@
   pointer-events: none;
 }
 
-/* ---- Skill Nodes (Minecraft inventory slot) ---- */
+/* Skill nodes */
 .node {
   position: absolute;
   display: flex;
@@ -279,67 +388,68 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  background: #555555;
+  background: #555568;
   border: 3px solid;
-  border-color: #2a2a2a #8b8b8b #8b8b8b #2a2a2a;
+  border-color: #3a3a4a #7a7a8a #7a7a8a #3a3a4a;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.1s;
+  transition: background 0.1s, border-color 0.1s, box-shadow 0.15s;
   z-index: 1;
-  image-rendering: pixelated;
+  border-radius: 4px;
 }
 
 .node:hover {
-  background: #686868;
+  background: #65657a;
   z-index: 3;
-  box-shadow: 0 0 0 2px rgba(255, 255, 160, 0.2);
+  box-shadow: 0 0 12px rgba(200, 200, 255, 0.15);
 }
 
 .node_locked {
-  opacity: 0.25;
-  filter: grayscale(1) brightness(0.4);
-  background: #333333;
+  opacity: 0.3;
+  filter: grayscale(1) brightness(0.5);
+  background: #3a3a48;
 }
 
 .node_available {
-  background: #555555;
-  border-color: #2a2a2a #8b8b8b #8b8b8b #2a2a2a;
+  background: #555568;
   animation: slotPulse 2s ease-in-out infinite;
 }
 
 .node_partial {
-  background: color-mix(in srgb, var(--cat-color) 20%, #555555);
-  border-color: color-mix(in srgb, var(--cat-color) 40%, #2a2a2a) color-mix(in srgb, var(--cat-color) 30%, #8b8b8b) color-mix(in srgb, var(--cat-color) 30%, #8b8b8b) color-mix(in srgb, var(--cat-color) 40%, #2a2a2a);
-  box-shadow:
-    0 0 12px color-mix(in srgb, var(--cat-color) 25%, transparent);
+  background: color-mix(in srgb, var(--cat-color) 25%, #555568);
+  border-color:
+    color-mix(in srgb, var(--cat-color) 40%, #3a3a4a)
+    color-mix(in srgb, var(--cat-color) 30%, #7a7a8a)
+    color-mix(in srgb, var(--cat-color) 30%, #7a7a8a)
+    color-mix(in srgb, var(--cat-color) 40%, #3a3a4a);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--cat-color) 25%, transparent);
 }
 
 .node_maxed {
-  background: color-mix(in srgb, var(--cat-color) 30%, #555555);
-  border-color: color-mix(in srgb, var(--cat-color) 50%, #2a2a2a) color-mix(in srgb, var(--cat-color) 40%, #8b8b8b) color-mix(in srgb, var(--cat-color) 40%, #8b8b8b) color-mix(in srgb, var(--cat-color) 50%, #2a2a2a);
+  background: color-mix(in srgb, var(--cat-color) 35%, #555568);
+  border-color:
+    color-mix(in srgb, var(--cat-color) 50%, #3a3a4a)
+    color-mix(in srgb, var(--cat-color) 40%, #7a7a8a)
+    color-mix(in srgb, var(--cat-color) 40%, #7a7a8a)
+    color-mix(in srgb, var(--cat-color) 50%, #3a3a4a);
   box-shadow:
     0 0 16px color-mix(in srgb, var(--cat-color) 40%, transparent),
     0 0 4px var(--cat-color);
 }
 
-/* Enchantment shimmer on maxed nodes */
 .node_maxed::after {
   content: '';
   position: absolute;
   inset: -1px;
+  border-radius: 4px;
   background: linear-gradient(
     135deg,
     transparent 30%,
-    rgba(255, 255, 200, 0.08) 45%,
+    rgba(255, 255, 200, 0.1) 45%,
     transparent 60%
   );
   background-size: 200% 200%;
   animation: enchantShimmer 3s ease-in-out infinite;
   pointer-events: none;
-}
-
-@keyframes enchantShimmer {
-  0% { background-position: 200% 200%; }
-  100% { background-position: -200% -200%; }
 }
 
 .nodeSelected {
@@ -348,24 +458,12 @@
   z-index: 3;
 }
 
-@keyframes slotPulse {
-  0%, 100% {
-    box-shadow: 0 0 8px color-mix(in srgb, var(--cat-color) 20%, transparent);
-  }
-  50% {
-    box-shadow:
-      0 0 20px color-mix(in srgb, var(--cat-color) 45%, transparent),
-      inset 0 0 8px color-mix(in srgb, var(--cat-color) 10%, transparent);
-  }
-}
-
 .nodeIcon {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   line-height: 1;
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.6));
 }
 
-/* Level pips — square segments */
 .levelPips {
   display: flex;
   gap: 2px;
@@ -374,8 +472,9 @@
 .pip {
   width: 6px;
   height: 6px;
-  background: #2a2a2a;
-  border: 1px solid #1a1a1a;
+  background: #2a2a3a;
+  border: 1px solid #1a1a2a;
+  border-radius: 1px;
   transition: background 0.15s;
 }
 
@@ -385,109 +484,55 @@
   box-shadow: 0 0 3px var(--cat-color, #4FC3F7);
 }
 
-/* ---- RPG Class Picker ---- */
-.classList {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px 12px;
-  overflow-y: auto;
+@keyframes slotPulse {
+  0%, 100% {
+    box-shadow: 0 0 8px color-mix(in srgb, var(--cat-color) 20%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 20px color-mix(in srgb, var(--cat-color) 40%, transparent),
+      inset 0 0 8px color-mix(in srgb, var(--cat-color) 10%, transparent);
+  }
 }
 
-/* Class card — full-width horizontal RPG entry */
-.classCard {
+@keyframes enchantShimmer {
+  0% { background-position: 200% 200%; }
+  100% { background-position: -200% -200%; }
+}
+
+/* No class selected placeholder for tree */
+.treePlaceholder {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: #1e1e1e;
-  border: 3px solid;
-  border-color: #141414 #333 #333 #141414;
-  border-left: 4px solid var(--class-color);
-  cursor: pointer;
-  transition: background 0.1s, box-shadow 0.15s;
-  text-align: left;
-}
-
-.classCard:hover {
-  background: #262626;
-  box-shadow:
-    inset 0 0 20px color-mix(in srgb, var(--class-color) 8%, transparent),
-    0 0 20px color-mix(in srgb, var(--class-color) 20%, transparent);
-}
-
-.classCard:active {
-  border-color: #333 #141414 #141414 #333;
-  border-left-color: var(--class-color);
-}
-
-.classCardActive {
-  background: #252525;
-  box-shadow:
-    inset 0 0 30px color-mix(in srgb, var(--class-color) 10%, transparent),
-    0 0 12px color-mix(in srgb, var(--class-color) 25%, transparent);
-}
-
-.classIcon {
-  font-size: 2rem;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
-  flex-shrink: 0;
-  width: 44px;
+  justify-content: center;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.8rem;
+  color: #6a6a8a;
   text-align: center;
+  padding: 40px;
 }
 
-.classInfo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.className {
-  font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #e0e0e0;
-  letter-spacing: 0.1em;
-  text-shadow: 2px 2px 0 #000;
-}
-
-.classDesc {
-  font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.55rem;
-  color: #606060;
-  line-height: 1.4;
-  text-shadow: 1px 1px 0 #000;
-}
-
-.classArrow {
-  font-size: 0.6rem;
-  color: #333;
-  flex-shrink: 0;
-  transition: color 0.1s, transform 0.15s;
-}
-
-.classCard:hover .classArrow {
-  color: var(--class-color);
-  transform: translateX(3px);
-}
-
-/* ---- Detail Panel (Minecraft tooltip) ---- */
+/* ---- Detail Panel (node tooltip) ---- */
 .detailPanel {
-  margin: 0 10px;
-  padding: 10px 12px;
-  background: #100010;
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: calc(100% - 32px);
+  max-width: 380px;
+  padding: 10px 14px;
+  background: #1a1028;
   border: 3px solid;
   border-color: #28007f #5020a0 #5020a0 #28007f;
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   box-shadow:
     inset 0 0 0 1px #1a0050,
-    0 4px 20px rgba(40, 0, 80, 0.5);
+    0 4px 20px rgba(40, 0, 80, 0.6);
 }
 
 .detailTop {
@@ -503,9 +548,10 @@
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  background: #555555;
+  background: #555568;
   border: 2px solid;
-  border-color: #2a2a2a #8b8b8b #8b8b8b #2a2a2a;
+  border-color: #3a3a4a #7a7a8a #7a7a8a #3a3a4a;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
@@ -526,10 +572,9 @@
 .detailDesc {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.6rem;
-  color: #aa00ff;
+  color: #bb66ff;
   line-height: 1.4;
   margin-top: 2px;
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
 }
 
 .detailBottom {
@@ -542,19 +587,16 @@
 .detailStat {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.6rem;
-  color: #555555;
-  text-shadow: 1px 1px 0 #000;
+  color: #7a7a9a;
 }
 
 .detailTier {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.55rem;
-  color: #444;
+  color: #5a5a7a;
   text-transform: uppercase;
-  text-shadow: 1px 1px 0 #000;
 }
 
-/* Minecraft raised button */
 .unlockBtn {
   margin-left: auto;
   padding: 5px 14px;
@@ -565,10 +607,10 @@
   letter-spacing: 0.04em;
   color: #fff;
   cursor: pointer;
-  transition: background 0.08s;
+  transition: filter 0.08s;
   border: 3px solid;
   border-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.4) rgba(255, 255, 255, 0.3);
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+  border-radius: 3px;
 }
 
 .unlockBtn:hover {
@@ -595,8 +637,212 @@
   margin-left: auto;
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.55rem;
-  color: #4a4a4a;
-  text-shadow: 1px 1px 0 #000;
+  color: #5a5a7a;
+}
+
+/* ================================================================
+   RIGHT PANEL — Class Selector
+   ================================================================ */
+.classSelector {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  border-left: 3px solid #8a7a58;
+  background: linear-gradient(180deg, #c0a878 0%, #b09868 100%);
+}
+
+.selectorHeader {
+  padding: 12px 14px;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #5a4a30;
+  border-bottom: 2px solid #9a8a68;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.classCardList {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 6px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Class cards */
+.classCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #b09060;
+  border: 2px solid #9a8050;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.15s, box-shadow 0.15s;
+  text-align: left;
+}
+
+.classCard:hover {
+  background: #c0a070;
+  border-color: #aa9060;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.classCardActive {
+  background: #c8a870;
+  border-color: var(--class-color);
+  box-shadow:
+    0 0 0 1px var(--class-color),
+    0 2px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* Small hex portrait on class card */
+.cardHex {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #3a3020 0%, #2a2418 100%);
+  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  position: relative;
+}
+
+.cardHex::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  background: linear-gradient(180deg, #b89a4c 0%, #7a6030 100%);
+  z-index: -1;
+}
+
+.cardInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cardName {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #2a2010;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cardAlt {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.5rem;
+  color: #6a5a3a;
+}
+
+/* Difficulty bar on class card */
+.diffRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.diffLabel {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.45rem;
+  color: #6a5a3a;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.diffTrack {
+  flex: 1;
+  height: 5px;
+  background: #5a4a30;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.diffFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* ---- Header bar across the top ---- */
+.topBar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, #a8945c 0%, #9a864e 100%);
+  border-bottom: 3px solid #7a6842;
+  z-index: 2;
+}
+
+.topBarTitle {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #2a2010;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resetLink {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  color: #6a5040;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  letter-spacing: 0.05em;
+  transition: color 0.1s;
+}
+
+.resetLink:hover {
+  color: #cc3333;
+}
+
+.closeX {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.75rem;
+  color: #6a5a3a;
+  background: #b09868;
+  border: 2px solid #8a7a58;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color 0.08s, background 0.08s;
+}
+
+.closeX:hover {
+  color: #cc3333;
+  background: #c0a878;
 }
 
 /* ---- Reset Confirmation Dialog ---- */
@@ -606,30 +852,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.82);
-  z-index: 10;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: 20;
 }
 
 .resetDialog {
-  background: #1a1a1a;
-  border: 4px solid;
-  border-color: #3b3b3b #1a1a1a #1a1a1a #3b3b3b;
-  padding: 20px;
+  background: #c4b28e;
+  border: 4px solid #7a6842;
+  border-radius: 4px;
+  padding: 24px;
   text-align: center;
-  max-width: 280px;
+  max-width: 300px;
   box-shadow:
-    inset 0 0 0 2px #0a0a0a,
-    0 0 0 2px #0a0a0a,
-    0 0 30px rgba(0, 0, 0, 0.6);
+    inset 0 0 0 2px #a89870,
+    0 0 0 3px #3a2e1a,
+    0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
 .resetDialog p {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.75rem;
-  color: #c8c8c8;
+  color: #3a3020;
   line-height: 1.5;
-  text-shadow: 2px 2px 0 #000;
 }
 
 .resetActions {
@@ -641,61 +886,127 @@
 .resetCancel,
 .resetConfirmBtn {
   font-family: var(--font-pixel, 'Courier New', monospace);
-  padding: 5px 14px;
+  padding: 6px 16px;
   font-size: 0.68rem;
   font-weight: 600;
   cursor: pointer;
-  border: 3px solid;
+  border: 2px solid;
+  border-radius: 3px;
   transition: background 0.08s;
-  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
 }
 
 .resetCancel {
-  background: #555555;
-  color: #c8c8c8;
-  border-color: #7a7a7a #2a2a2a #2a2a2a #7a7a7a;
+  background: #9a8a68;
+  color: #fff;
+  border-color: #7a6a48;
 }
 
 .resetCancel:hover {
-  background: #666666;
-  color: #fff;
-}
-
-.resetCancel:active {
-  border-color: #2a2a2a #7a7a7a #7a7a7a #2a2a2a;
+  background: #aa9a78;
 }
 
 .resetConfirmBtn {
   background: #993333;
   color: #fff;
-  border-color: #cc5555 #661a1a #661a1a #cc5555;
+  border-color: #772222;
 }
 
 .resetConfirmBtn:hover {
   background: #aa3b3b;
 }
 
-.resetConfirmBtn:active {
-  border-color: #661a1a #cc5555 #cc5555 #661a1a;
-}
+/* ================================================================
+   MOBILE RESPONSIVE
+   ================================================================ */
 
-/* ---- Responsive ---- */
-@media (max-width: 480px) {
+/* Tablet: stack detail below, tree + selector side-by-side */
+@media (max-width: 900px) {
   .frame {
+    grid-template-columns: 1fr 180px;
+    grid-template-rows: auto 1fr auto;
     max-height: 95vh;
   }
 
-  .treeArea {
-    min-height: 200px;
-    padding: 16px 8px 20px;
+  .topBar {
+    grid-column: 1 / -1;
   }
 
-  .classList {
-    padding: 12px 8px;
+  .treePanel {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+  }
+
+  .classSelector {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+  }
+
+  .classDetail {
+    grid-column: 1 / -1;
+    grid-row: 3 / 4;
+    border-right: none;
+    border-top: 3px solid #8a7a58;
+    max-height: 200px;
+    flex-direction: row;
+    gap: 16px;
+    padding: 12px 16px;
+  }
+
+  .portraitArea {
+    flex-direction: column;
+    margin-bottom: 0;
+  }
+
+  .subclassList {
+    flex-direction: row;
+    gap: 16px;
+    overflow-x: auto;
+  }
+
+  .subclassEntry {
+    min-width: 140px;
+  }
+
+  .statBars {
+    padding-left: 0;
+  }
+}
+
+/* Phone: single column */
+@media (max-width: 600px) {
+  .frame {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    max-height: 98vh;
+  }
+
+  .classSelector {
+    grid-column: 1;
+    grid-row: auto;
+    border-left: none;
+    border-top: 3px solid #8a7a58;
+    max-height: 140px;
+  }
+
+  .classCardList {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 6px 8px;
   }
 
   .classCard {
-    padding: 12px 12px;
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  .classDetail {
+    grid-column: 1;
+    max-height: 160px;
+  }
+
+  .treePanel {
+    grid-column: 1;
+    min-height: 280px;
   }
 }
 
@@ -704,9 +1015,6 @@
     animation: none;
   }
   .node_maxed::after {
-    animation: none;
-  }
-  .treeArea::after {
     animation: none;
   }
 }
