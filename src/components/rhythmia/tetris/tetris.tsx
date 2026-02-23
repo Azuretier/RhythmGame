@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
 import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import { getModifiers } from './protocol';
@@ -23,6 +23,9 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
+import { useCorruptionSystem } from './hooks/useCorruptionSystem';
+
+// Corruption system
 
 // Utilities
 import {
@@ -56,7 +59,6 @@ import {
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
-  HealthManaHUD,
   TutorialGuide,
   hasTutorialBeenSeen,
 
@@ -212,6 +214,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   const gameHardDropsRef = useRef(0);
   const gamePiecesPlacedRef = useRef(0);
   const gameWorldsClearedRef = useRef(0);
+  const pendingCheckpointRef = useRef(false);
   const advRecordedRef = useRef(false);
   const liveNotifiedRef = useRef<Set<string>>(new Set());
   const [toastIds, setToastIds] = useState<string[]>([]);
@@ -294,7 +297,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     // Tower defense
     enemies,
     bullets,
-    towerHealth,
     // Terrain (vanilla)
     terrainDestroyedCount,
     terrainTotal,
@@ -370,8 +372,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     fireBullet,
     updateBullets,
     setGameOver,
-    setTowerHealth,
-    towerHealthRef,
   } = gameState;
 
   const {
@@ -383,13 +383,24 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
   const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
 
+  // ===== Corruption & Anomaly System =====
+  const handleCorruptionSpawnEnemy = useCallback((gx: number, gz: number) => {
+    gameState.spawnEnemyAtCell(gx, gz);
+  }, [gameState]);
+
+  const corruption = useCorruptionSystem({
+    isPlaying,
+    isPaused,
+    gameOver,
+    terrainPhase,
+    onCorruptionSpawnEnemy: handleCorruptionSpawnEnemy,
+  });
+
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
   spawnEnemiesRef.current = spawnEnemies;
   const updateEnemiesRef = useRef(updateEnemies);
   updateEnemiesRef.current = updateEnemies;
-  const setTowerHealthRef = useRef(setTowerHealth);
-  setTowerHealthRef.current = setTowerHealth;
   const setGameOverRef = useRef(setGameOver);
   setGameOverRef.current = setGameOver;
   const fireBulletRef = useRef(fireBullet);
@@ -408,6 +419,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   enterCheckpointRef.current = enterCheckpoint;
   const completeWaveRef = useRef(completeWave);
   completeWaveRef.current = completeWave;
+  const addGarbageRowsRef = useRef(gameState.addGarbageRows);
+  addGarbageRowsRef.current = gameState.addGarbageRows;
+  const triggerBoardShakeRef = useRef(triggerBoardShake);
+  triggerBoardShakeRef.current = triggerBoardShake;
+  const spawnFromCorruptionRef = useRef(corruption.spawnFromCorruption);
+  spawnFromCorruptionRef.current = corruption.spawnFromCorruption;
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -822,8 +839,14 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
         // Check if terrain is fully destroyed → enter checkpoint for TD phase
         if (remaining <= 0) {
-          gameWorldsClearedRef.current++;
-          enterCheckpoint();
+          if (gamePhaseRef.current === 'PLAYING') {
+            gameWorldsClearedRef.current++;
+            enterCheckpoint();
+          } else {
+            // Terrain fully destroyed during a non-PLAYING phase (e.g. WORLD_CREATION).
+            // Defer the checkpoint until the game phase returns to PLAYING.
+            pendingCheckpointRef.current = true;
+          }
         }
       }
 
@@ -984,6 +1007,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     gameHardDropsRef.current = 0;
     gamePiecesPlacedRef.current = 0;
     gameWorldsClearedRef.current = 0;
+    pendingCheckpointRef.current = false;
     advRecordedRef.current = false;
     liveNotifiedRef.current = new Set();
     lockStartTimeRef.current = null;
@@ -996,7 +1020,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     bestTetrisIn60sRef.current = 0;
     setToastIds([]);
     setActionToasts([]);
-  }, [initAudio, initGame]);
+    corruption.reset();
+  }, [initAudio, initGame, corruption]);
 
   // Start game — intercept for tutorial on first play
   const startGame = useCallback((protocolId: number = 0) => {
@@ -1094,20 +1119,16 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           playKillSoundRef.current();
         }
 
-        // Apply damage when enemies reach the tower
+        // Enemies reaching tower → add garbage rows instead of HP damage
         if (reached > 0) {
-          const damage = reached * ENEMY_REACH_DAMAGE;
-          const newHealth = Math.max(0, towerHealthRef.current - damage);
-          towerHealthRef.current = newHealth;
-          setTowerHealthRef.current(newHealth);
-          if (newHealth <= 0) {
-            setGameOverRef.current(true);
-            gameOverRef.current = true;
-          }
+          addGarbageRowsRef.current(reached);
+          triggerBoardShakeRef.current();
         }
 
+        // Corruption: mature cells may spawn additional enemies
+        spawnFromCorruptionRef.current();
+
         // Check wave complete: no more spawning and all enemies dead
-        // Skip if player just died (tower destroyed) to prevent stage transition on death
         if (!gameOverRef.current && tdBeatsRemainingRef.current <= 0 && gamePhaseRef.current === 'PLAYING') {
           const aliveCount = enemiesRef.current.filter(e => e.alive).length;
           if (aliveCount === 0) {
@@ -1234,6 +1255,13 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           } else {
             lockStartTimeRef.current = null;
           }
+        }
+
+        // Process deferred terrain checkpoint when game returns to PLAYING
+        if (pendingCheckpointRef.current && gamePhaseRef.current === 'PLAYING') {
+          pendingCheckpointRef.current = false;
+          gameWorldsClearedRef.current++;
+          enterCheckpointRef.current();
         }
       }
 
@@ -1544,6 +1572,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           terrainDestroyedCount={terrainPhase === 'dig' ? terrainDestroyedCount : 0}
           enemies={terrainPhase === 'td' ? enemies : []}
           bullets={terrainPhase === 'td' ? bullets : []}
+          corruptedCells={terrainPhase === 'td' ? corruption.corruptedCells : undefined}
           onTerrainReady={handleTerrainReady}
           worldIdx={worldIdx}
         />
@@ -1590,16 +1619,17 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           <ScoreDisplay score={score} scorePop={scorePop} />
           <ComboDisplay combo={combo} />
           <TerrainProgress
-            terrainRemaining={terrainPhase === 'td' ? enemies.filter(e => e.alive).length : terrainTotal - terrainDestroyedCount}
-            terrainTotal={terrainPhase === 'td' ? enemies.length : terrainTotal}
+            terrainRemaining={terrainTotal - terrainDestroyedCount}
+            terrainTotal={terrainTotal}
             stageNumber={stageNumber}
             terrainPhase={terrainPhase}
-            towerHealth={towerHealth}
             tdBeatsRemaining={tdBeatsRemaining}
+            enemyCount={enemies.filter(e => e.alive).length}
           />
           <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
 
           <div className={styles.gameArea} ref={gameAreaRef}>
+
             {/* Left sidebar: Hold + Inventory (separate containers) */}
             <div className={styles.sidePanelLeft}>
               <div className={styles.nextWrap}>
@@ -1645,6 +1675,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                 defaultKeybinds={defaultKeybinds}
                 featureSettings={featureSettings}
                 onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
+                activeAnomaly={corruption.activeAnomaly}
               />
               {/* Action display toasts (T-spin, Tetris, Back-to-Back) — stacking */}
               {actionToasts.length > 0 && (
@@ -1673,8 +1704,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                   <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />
                 )}
               </div>
-              {terrainPhase === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>
+
           </div>
 
           <TouchControls

@@ -28,6 +28,7 @@ interface BoardRendererProps {
   onMobClick: (mobId: string) => void;
   onPlayerClick: (targetPlayerId: string) => void;
   onMove: (direction: Direction) => void;
+  activeAnomaly?: boolean;
 }
 
 const TILE_SIZE = 40;
@@ -46,6 +47,7 @@ export default function BoardRenderer({
   onMobClick,
   onPlayerClick,
   onMove,
+  activeAnomaly = false,
 }: BoardRendererProps) {
   const boardRef = useRef<HTMLDivElement>(null);
 
@@ -182,21 +184,24 @@ export default function BoardRenderer({
             )}
 
             {/* Mob on tile */}
-            {mobOnTile && isVisible && (
-              <div
-                className={`${styles.entity} ${mobOnTile.hostile ? styles.entityHostile : styles.entityPassive}`}
-                style={{ backgroundColor: MOB_COLORS[mobOnTile.type] }}
-                title={`${mobOnTile.type} HP:${mobOnTile.health}/${mobOnTile.maxHealth}`}
-              >
-                <span className={styles.entityIcon}>{MOB_ICONS[mobOnTile.type]}</span>
-                <div className={styles.entityHealthBar}>
-                  <div
-                    className={styles.entityHealth}
-                    style={{ width: `${(mobOnTile.health / mobOnTile.maxHealth) * 100}%` }}
-                  />
+            {mobOnTile && isVisible && (() => {
+              const isRaidMob = mobOnTile.id.startsWith('raid_');
+              return (
+                <div
+                  className={`${styles.entity} ${isRaidMob ? styles.entityRaid : (mobOnTile.hostile ? styles.entityHostile : styles.entityPassive)}`}
+                  style={{ backgroundColor: MOB_COLORS[mobOnTile.type] }}
+                  title={`${isRaidMob ? '[RAID] ' : ''}${mobOnTile.type} HP:${mobOnTile.health}/${mobOnTile.maxHealth}`}
+                >
+                  <span className={styles.entityIcon}>{MOB_ICONS[mobOnTile.type]}</span>
+                  <div className={styles.entityHealthBar}>
+                    <div
+                      className={styles.entityHealth}
+                      style={{ width: `${(mobOnTile.health / mobOnTile.maxHealth) * 100}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Player on tile */}
             {playerOnTile && isVisible && !playerOnTile.dead && (
@@ -242,7 +247,7 @@ export default function BoardRenderer({
     }
 
     return cells;
-  }, [visibleTileMap, exploredTilesRef, playerMap, mobMap, selfState, playerId, onTileClick, onMobClick, onPlayerClick]);
+  }, [visibleTileMap, exploredTilesRef, playerMap, mobMap, selfState, playerId, onTileClick, onMobClick, onPlayerClick, activeAnomaly]);
 
   // Mobile touch controls
   const handleTouchMove = useCallback((dir: Direction) => {
@@ -250,7 +255,7 @@ export default function BoardRenderer({
   }, [onMove]);
 
   return (
-    <div className={styles.boardWrapper}>
+    <div className={`${styles.boardWrapper} ${activeAnomaly ? styles.boardAnomaly : ''}`}>
       <div
         ref={boardRef}
         className={styles.board}
