@@ -3,6 +3,7 @@ import styles from './VanillaGame.module.css';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { recordGameEnd, checkLiveGameAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
 import AdvancementToast from './AdvancementToast';
+import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
 
 // ===== Types =====
 interface PieceCell {
@@ -204,25 +205,18 @@ export const Rhythmia: React.FC = () => {
     osc.stop(ctx.currentTime + dur);
   }, []);
 
-  const playDrum = useCallback(() => {
+  const playDrum = useCallback((wIdx = 0) => {
     const ctx = audioCtxRef.current;
     if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(150, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.5, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.1);
+    if (ctx.state === 'suspended') ctx.resume();
+    playWorldDrum(ctx, wIdx);
   }, []);
 
-  const playLineClear = useCallback((count: number) => {
-    const freqs = [523, 659, 784, 1047];
-    freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
+  const playLineClear = useCallback((count: number, wIdx = 0) => {
+    const chime = WORLD_LINE_CLEAR_CHIMES[wIdx] || WORLD_LINE_CLEAR_CHIMES[0];
+    chime.freqs.slice(0, count).forEach((f, i) =>
+      setTimeout(() => playTone(f, chime.dur, chime.type), i * chime.delay)
+    );
   }, [playTone]);
 
   // ===== Particles =====
@@ -605,7 +599,7 @@ export const Rhythmia: React.FC = () => {
         setLevel(newLevel);
         levelRef.current = newLevel;
 
-        playLineClear(cleared);
+        playLineClear(cleared, worldIdxRef.current);
         setBoardShake(true);
         setTimeout(() => setBoardShake(false), 200);
 
@@ -821,7 +815,7 @@ export const Rhythmia: React.FC = () => {
     beatTimerRef.current = window.setInterval(() => {
       lastBeatRef.current = Date.now();
       setBoardBeat(true);
-      playDrum();
+      playDrum(worldIdx);
       setTimeout(() => setBoardBeat(false), 100);
     }, interval);
 

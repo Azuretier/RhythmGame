@@ -833,7 +833,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       // Particle effects (both modes)
       spawnTerrainParticles(center.x, center.y, clearedLines * TERRAIN_PARTICLES_PER_LINE);
 
-      playLineClear(clearedLines);
+      playLineClear(clearedLines, worldIdxRef.current);
       triggerBoardShake();
     }
 
@@ -1060,7 +1060,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
       lastBeatRef.current = Date.now();
       setBoardBeat(true);
-      playDrum();
+      playDrum(worldIdx);
 
       const currentTerrainPhase = terrainPhaseRef.current;
 

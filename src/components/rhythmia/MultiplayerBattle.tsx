@@ -12,6 +12,7 @@ import AdvancementToast from './AdvancementToast';
 import { useRhythmVFX } from './tetris/hooks/useRhythmVFX';
 import { RhythmVFX } from './tetris/components/RhythmVFX';
 import { BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, WORLDS, getThemedColor, PIECE_TYPES } from './tetris/constants';
+import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
 import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
@@ -461,28 +462,20 @@ export const MultiplayerBattle: React.FC<Props> = ({
         } catch { }
     }, []);
 
-    const playDrum = useCallback(() => {
+    const playDrum = useCallback((wIdx = 0) => {
         const ctx = audioCtxRef.current;
         if (!ctx) return;
         try {
             if (ctx.state === 'suspended') ctx.resume();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(150, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.4, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.1);
+            playWorldDrum(ctx, wIdx);
         } catch { }
     }, []);
 
-    const playLineClear = useCallback((count: number) => {
-        const freqs = [523, 659, 784, 1047];
-        freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
+    const playLineClear = useCallback((count: number, wIdx = 0) => {
+        const chime = WORLD_LINE_CLEAR_CHIMES[wIdx] || WORLD_LINE_CLEAR_CHIMES[0];
+        chime.freqs.slice(0, count).forEach((f, i) =>
+            setTimeout(() => playTone(f, chime.dur, chime.type), i * chime.delay)
+        );
     }, [playTone]);
 
     const playPerfectSound = useCallback(() => {
@@ -858,7 +851,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             }
             garbageToSend += Math.floor(comboRef.current / 3);
             sendGarbage(garbageToSend);
-            playLineClear(cleared);
+            playLineClear(cleared, worldIdx);
 
             // VFX: line clear (offset rows by BUFFER_ZONE for VFX hook coordinate system)
             vfx.emit({
@@ -1149,7 +1142,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
         beatTimerRef.current = window.setInterval(() => {
             lastBeatRef.current = Date.now();
-            playDrum();
+            playDrum(worldIdx);
 
             // VFX: beat pulse
             vfx.emit({ type: 'beat', bpm: BPM, intensity: 0.6 + Math.min(0.4, comboRef.current * 0.04) });
