@@ -85,21 +85,23 @@ function terrainHeight(tile: { x: number; y: number; terrain: string; elevation:
     case 'water': return 1;
     case 'sand': return 2 + Math.floor(n * 1.5);
     case 'snow':
-      return Math.max(6, 10 + tile.elevation * 4 + Math.floor(n * 4));
+      return Math.max(8, 12 + Math.floor(tile.elevation * 3.5) + Math.floor(n * 4));
     case 'stone': case 'rock':
-      return Math.max(5, 8 + tile.elevation * 4 + Math.floor(n * 5));
+      return Math.max(6, 10 + Math.floor(tile.elevation * 3.5) + Math.floor(n * 5));
     case 'lava':
-      return Math.max(5, 8 + tile.elevation * 3 + Math.floor(n * 3));
+      return Math.max(6, 10 + Math.floor(tile.elevation * 3) + Math.floor(n * 3));
     case 'tree':
-      return Math.max(3, 4 + tile.elevation + Math.floor(n * 3));
+      return Math.max(3, 4 + Math.floor(tile.elevation * 1.5) + Math.floor(n * 3));
     case 'mushroom':
       return Math.max(3, 3 + Math.floor(n * 2));
     case 'dirt':
       return Math.max(3, 3 + tile.elevation + Math.floor(n * 2));
     case 'path': case 'bridge':
-      return Math.max(3, 4 + tile.elevation + Math.floor(n * 2));
+      return Math.max(3, 4 + Math.floor(tile.elevation * 1.5) + Math.floor(n * 2));
+    case 'void':
+      return Math.max(6, 10 + Math.floor(tile.elevation * 3.5) + Math.floor(n * 4));
     default:
-      return Math.max(3, 4 + tile.elevation + Math.floor(n * 3));
+      return Math.max(3, 4 + Math.floor(tile.elevation * 1.5) + Math.floor(n * 3));
   }
 }
 
@@ -121,12 +123,12 @@ type TT = 'oak' | 'spruce' | 'autumn' | 'dead';
 // Voronoi biome anchor matching (mirrors gamemode-map.ts logic)
 function nearestFlatBiome(x: number, y: number): string {
   const anchors = [
-    { z: 'creeper_woods', x: 9, y: 12 },
-    { z: 'soggy_swamp', x: 9, y: 30 },
-    { z: 'pumpkin_pastures', x: 22, y: 25 },
-    { z: 'cacti_canyon', x: 40, y: 28 },
-    { z: 'desert_temple', x: 38, y: 18 },
-    { z: 'highblock_halls', x: 40, y: 7 },
+    { z: 'creeper_woods', x: 15, y: 18 },
+    { z: 'soggy_swamp', x: 15, y: 48 },
+    { z: 'pumpkin_pastures', x: 38, y: 42 },
+    { z: 'cacti_canyon', x: 68, y: 46 },
+    { z: 'desert_temple', x: 65, y: 30 },
+    { z: 'highblock_halls', x: 68, y: 12 },
   ];
   let best = anchors[0].z, bestD = Infinity;
   for (const a of anchors) {
@@ -139,11 +141,11 @@ function nearestFlatBiome(x: number, y: number): string {
 function treeType(x: number, y: number): TT {
   const biome = nearestFlatBiome(x, y);
   switch (biome) {
-    case 'creeper_woods': return 'spruce';   // Dark dense spruce forest
-    case 'soggy_swamp': return 'dead';       // Dead swamp trees
-    case 'pumpkin_pastures':                 // Autumn/oak mix
+    case 'creeper_woods': return 'spruce';
+    case 'soggy_swamp': return 'dead';
+    case 'pumpkin_pastures':
       return noise2D(x * 5, y * 5, SEED + 2222) > 0.4 ? 'autumn' : 'oak';
-    case 'highblock_halls': return 'spruce'; // Cold northern area
+    case 'highblock_halls': return 'spruce';
     default: return 'oak';
   }
 }
@@ -189,24 +191,23 @@ function mkTower(bx: number, by: number, bz: number, h: number): VB[] {
 function mkCastle(bx: number, by: number, bz: number): VB[] {
   const b: VB[] = [];
   const s = '#706860', ds = '#585048';
-  // Walls
-  for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) {
-    if (Math.abs(dx) < 3 && Math.abs(dz) < 3) continue; // only edges
-    for (let dy = 0; dy < 5; dy++) {
+  for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) {
+    if (Math.abs(dx) < 4 && Math.abs(dz) < 4) continue;
+    for (let dy = 0; dy < 6; dy++) {
       b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(s) });
     }
   }
   // Corner towers (taller)
-  for (const [dx, dz] of [[-3, -3], [3, -3], [-3, 3], [3, 3]] as [number, number][]) {
-    for (let dy = 5; dy < 9; dy++) {
+  for (const [dx, dz] of [[-4, -4], [4, -4], [-4, 4], [4, 4]] as [number, number][]) {
+    for (let dy = 6; dy < 11; dy++) {
       b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(ds) });
     }
-    b.push({ x: bx + dx, y: by + 9, z: bz + dz, color: C(s) });
+    b.push({ x: bx + dx, y: by + 11, z: bz + dz, color: C(s) });
   }
   // Central keep
   for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
-    for (let dy = 0; dy < 7; dy++) {
-      b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(dy < 6 ? ds : s) });
+    for (let dy = 0; dy < 8; dy++) {
+      b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(dy < 7 ? ds : s) });
     }
   }
   return b;
@@ -215,18 +216,18 @@ function mkCastle(bx: number, by: number, bz: number): VB[] {
 function mkColosseum(bx: number, by: number, bz: number): VB[] {
   const b: VB[] = [];
   const s = '#c8a868', ds = '#a08040';
-  for (let a = 0; a < 12; a++) {
-    const dx = Math.round(Math.cos(a * Math.PI / 6) * 3);
-    const dz = Math.round(Math.sin(a * Math.PI / 6) * 3);
-    for (let dy = 0; dy < 5; dy++) {
+  for (let a = 0; a < 16; a++) {
+    const dx = Math.round(Math.cos(a * Math.PI / 8) * 4);
+    const dz = Math.round(Math.sin(a * Math.PI / 8) * 4);
+    for (let dy = 0; dy < 6; dy++) {
       b.push({ x: bx + dx, y: by + dy, z: bz + dz, color: C(s) });
     }
-    if (a % 3 === 0) {
-      b.push({ x: bx + dx, y: by + 5, z: bz + dz, color: C(ds) });
+    if (a % 4 === 0) {
       b.push({ x: bx + dx, y: by + 6, z: bz + dz, color: C(ds) });
+      b.push({ x: bx + dx, y: by + 7, z: bz + dz, color: C(ds) });
     }
   }
-  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+  for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) {
     b.push({ x: bx + dx, y: by, z: bz + dz, color: C(ds) });
   }
   return b;
@@ -235,27 +236,28 @@ function mkColosseum(bx: number, by: number, bz: number): VB[] {
 function mkRuins(bx: number, by: number, bz: number): VB[] {
   const b: VB[] = [];
   const s = '#6a6460', m = '#4a6838';
-  // Broken archway
   for (let dx = -2; dx <= 2; dx++) {
     if (Math.abs(dx) === 2) {
       for (let dy = 0; dy < 6; dy++) b.push({ x: bx + dx, y: by + dy, z: bz, color: C(dy > 4 ? m : s) });
     }
     if (Math.abs(dx) <= 1) b.push({ x: bx + dx, y: by + 5, z: bz, color: C(s) });
   }
-  // Scattered rubble
   b.push({ x: bx - 1, y: by, z: bz + 1, color: C(s) });
   b.push({ x: bx + 1, y: by, z: bz - 1, color: C(m) });
   b.push({ x: bx + 2, y: by, z: bz + 2, color: C(s) });
   b.push({ x: bx - 2, y: by, z: bz - 1, color: C(s) });
-  // Second broken pillar
   for (let dy = 0; dy < 3; dy++) b.push({ x: bx + 3, y: by + dy, z: bz - 2, color: C(s) });
+  // Extra ruin pieces
+  for (let dy = 0; dy < 4; dy++) b.push({ x: bx - 3, y: by + dy, z: bz + 2, color: C(s) });
+  b.push({ x: bx, y: by, z: bz + 3, color: C(m) });
+  b.push({ x: bx, y: by + 1, z: bz + 3, color: C(m) });
   return b;
 }
 
 function mkCampfire(bx: number, by: number, bz: number): VB[] {
   const b: VB[] = [];
   b.push({ x: bx, y: by, z: bz, color: C('#e88520') });
-  b.push({ x: bx, y: by + 1, z: bz, color: C('#f0a030') }); // flame tip
+  b.push({ x: bx, y: by + 1, z: bz, color: C('#f0a030') });
   for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
     b.push({ x: bx + dx, y: by, z: bz + dz, color: C('#5a3818') });
   }
@@ -302,7 +304,6 @@ function generateTerrainVoxels() {
         for (let ty = 0; ty < th; ty++) blocks.push({ x: wx, y: h + ty, z: wz, color: tc.clone() });
         const cb = h + th;
         const lc = C('#1a5528');
-        // Tall triangular canopy
         for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
           if (Math.abs(dx) + Math.abs(dz) <= 1) blocks.push({ x: wx + dx, y: cb, z: wz + dz, color: lc.clone() });
         }
@@ -372,13 +373,15 @@ function generateTerrainVoxels() {
   // ── WATERFALLS ──
   for (const tile of GAMEMODE_TERRAIN) {
     if (tile.terrain !== 'water') continue;
+    const hxl = GAMEMODE_MAP_WIDTH / 2;
+    const hzl = GAMEMODE_MAP_HEIGHT / 2;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as [number, number][]) {
       const nb = tileMap.get(`${tile.x + dx},${tile.y + dy}`);
       if (nb && nb.terrain !== 'water') {
         const nh = terrainHeight(nb);
         if (nh > 5) {
           const wc = C('#6a98b0');
-          const wx = tile.x - hx, wz = tile.y - hz;
+          const wx = tile.x - hxl, wz = tile.y - hzl;
           for (let y = 2; y < nh; y++) {
             const c = wc.clone();
             c.b += (noise2D(tile.x + y, tile.y + y, SEED + 555) - 0.5) * 0.06;
@@ -390,58 +393,61 @@ function generateTerrainVoxels() {
   }
 
   // ── STRUCTURES ──
+  const hxs = GAMEMODE_MAP_WIDTH / 2;
+  const hzs = GAMEMODE_MAP_HEIGHT / 2;
   for (const loc of GAMEMODE_LOCATIONS) {
-    const bx = loc.mapX - hx, bz = loc.mapY - hz;
+    const bx = loc.mapX - hxs, bz = loc.mapY - hzs;
     const by = heightAt(loc.mapX, loc.mapY);
     switch (loc.action) {
       case 'hub':
-        // Pumpkin Pastures camp village
         blocks.push(...mkCampfire(bx, by, bz));
-        blocks.push(...mkHut(bx - 3, by, bz - 2));
-        blocks.push(...mkHut(bx + 3, by, bz + 1));
-        blocks.push(...mkHut(bx - 2, by, bz + 3));
+        blocks.push(...mkHut(bx - 4, by, bz - 3));
+        blocks.push(...mkHut(bx + 4, by, bz + 2));
+        blocks.push(...mkHut(bx - 3, by, bz + 4));
+        blocks.push(...mkHut(bx + 2, by, bz - 4));
         break;
       case 'vanilla':
-        // Creeper Woods crypt entrance
         blocks.push(...mkHut(bx, by, bz));
-        blocks.push(...mkTower(bx + 3, by, bz - 2, 4));
+        blocks.push(...mkTower(bx + 4, by, bz - 3, 5));
+        blocks.push(...mkTower(bx - 3, by, bz + 2, 4));
         break;
       case 'multiplayer':
-        // Highblock Halls castle
         blocks.push(...mkCastle(bx, by, bz));
         break;
       case 'arena':
-        // Cacti Canyon colosseum
         blocks.push(...mkColosseum(bx, by, bz));
         break;
       case 'stories':
-        // Soggy Swamp ruins
         blocks.push(...mkRuins(bx, by, bz));
         break;
     }
   }
 
-  // Biome-themed scattered structures
+  // Biome-themed scattered structures (scaled for 80×60)
   const extraBuildings: [number, number, string][] = [
     // Creeper Woods area: forest huts
-    [8, 10, 'hut'], [12, 16, 'hut'],
+    [12, 15, 'hut'], [18, 22, 'hut'], [14, 24, 'hut'],
     // Pumpkin Pastures: village buildings
-    [20, 26, 'hut'], [25, 22, 'hut'],
+    [34, 44, 'hut'], [42, 40, 'hut'], [36, 38, 'hut'],
     // Highblock Halls: castle towers
-    [36, 8, 'tower'], [40, 12, 'tower'],
+    [64, 10, 'tower'], [70, 14, 'tower'], [66, 18, 'tower'],
     // Desert Temple: pillars
-    [34, 18, 'tower'], [38, 16, 'tower'],
+    [60, 28, 'tower'], [68, 32, 'tower'], [63, 34, 'tower'],
     // Soggy Swamp: ruined outposts
-    [8, 30, 'hut'], [14, 26, 'hut'],
+    [12, 46, 'hut'], [18, 50, 'hut'], [20, 44, 'hut'],
+    // Cacti Canyon: watchtowers
+    [66, 48, 'tower'], [72, 44, 'tower'],
     // Redstone Mines entrance
-    [24, 18, 'tower'],
+    [36, 30, 'tower'], [40, 26, 'tower'],
+    // Mountain structures
+    [30, 10, 'tower'], [50, 12, 'tower'],
   ];
   for (const [ex, ey, type] of extraBuildings) {
     const t = tileMap.get(`${ex},${ey}`);
     if (t && t.terrain !== 'water') {
-      const bx = ex - hx, bz = ey - hz, by = terrainHeight(t);
+      const bx = ex - hxs, bz = ey - hzs, by = terrainHeight(t);
       if (type === 'hut') blocks.push(...mkHut(bx, by, bz));
-      else blocks.push(...mkTower(bx, by, bz, 5));
+      else blocks.push(...mkTower(bx, by, bz, 6));
     }
   }
 
@@ -541,7 +547,7 @@ function WaterPlane() {
 
   return (
     <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, 1.5, 0]}>
-      <planeGeometry args={[120, 120]} />
+      <planeGeometry args={[200, 200]} />
       <meshStandardMaterial color="#8898a8" transparent opacity={0.55} roughness={0.25} metalness={0.08} />
     </mesh>
   );
@@ -551,7 +557,7 @@ function WaterPlane() {
 function IslandShadow() {
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[2, 0.5, 2]}>
-      <planeGeometry args={[42, 34]} />
+      <planeGeometry args={[70, 50]} />
       <meshBasicMaterial color="#000000" transparent opacity={0.12} />
     </mesh>
   );
@@ -592,17 +598,17 @@ function LocationBeacon({
     >
       <group ref={groupRef} scale={[scale, scale, scale]}>
         {/* Large invisible hit area for easy clicking */}
-        <mesh position={[0, 2, 0]}>
-          <boxGeometry args={[5, 8, 5]} />
+        <mesh position={[0, 3, 0]}>
+          <boxGeometry args={[6, 10, 6]} />
           <meshBasicMaterial transparent opacity={0} depthWrite={false} />
         </mesh>
         <mesh castShadow>
           <boxGeometry args={[0.9, 0.9, 0.9]} />
           <meshStandardMaterial color={markerColor} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={0.3} metalness={0.2} flatShading />
         </mesh>
-        {status !== 'locked' && <pointLight position={[0, 1.2, 0]} color={markerColor} intensity={isHovered ? 3.5 : 1.2} distance={8} />}
+        {status !== 'locked' && <pointLight position={[0, 1.2, 0]} color={markerColor} intensity={isHovered ? 3.5 : 1.2} distance={10} />}
       </group>
-      <Html position={[0, 2.8, 0]} center style={{ pointerEvents: 'none' }}>
+      <Html position={[0, 4, 0]} center style={{ pointerEvents: 'none' }}>
         <div className={`${styles.locLabel} ${status === 'locked' ? styles.locLocked : ''} ${isHovered ? styles.locHovered : ''}`}>
           <div className={styles.locIconBadge} style={{ borderColor: status === 'locked' ? '#555' : location.accentColor }}>
             {status === 'locked' ? '🔒' : location.icon}
@@ -623,7 +629,7 @@ function CameraPan({ isDraggingRef }: { isDraggingRef: React.MutableRefObject<bo
 
   useEffect(() => {
     const el = gl.domElement;
-    const getZoom = () => (camera as THREE.OrthographicCamera).zoom || 13;
+    const getZoom = () => (camera as THREE.OrthographicCamera).zoom || 8;
 
     const onDown = (e: PointerEvent) => {
       drag.current = { active: true, sx: e.clientX, sy: e.clientY, px: pan.current.x, pz: pan.current.z };
@@ -635,7 +641,7 @@ function CameraPan({ isDraggingRef }: { isDraggingRef: React.MutableRefObject<bo
       const dx = e.clientX - d.sx;
       const dy = e.clientY - d.sy;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) isDraggingRef.current = true;
-      const s = 0.075 / (getZoom() / 13);
+      const s = 0.12 / (getZoom() / 8);
       pan.current.x = d.px + (dx * 0.7 + dy * 0.4) * s;
       pan.current.z = d.pz + (-dx * 0.7 + dy * 0.4) * s;
     };
@@ -656,8 +662,8 @@ function CameraPan({ isDraggingRef }: { isDraggingRef: React.MutableRefObject<bo
 
   useFrame(() => {
     const p = pan.current;
-    camera.position.set(30 + p.x, 38, 30 + p.z);
-    camera.lookAt(0 + p.x, 6, 0 + p.z);
+    camera.position.set(55 + p.x, 65, 55 + p.z);
+    camera.lookAt(0 + p.x, 10, 0 + p.z);
   });
 
   return null;
@@ -699,30 +705,30 @@ export default function GameModeMap({
         {/* Warm parchment background */}
         <color attach="background" args={['#d5c4a8']} />
         <CameraPan isDraggingRef={isDraggingRef} />
-        <OrthographicCamera makeDefault position={[30, 38, 30]} zoom={13} near={0.1} far={250} />
+        <OrthographicCamera makeDefault position={[55, 65, 55]} zoom={8} near={0.1} far={400} />
 
         {/* Warm golden lighting */}
         <ambientLight intensity={1.5} color="#fff8ee" />
         <hemisphereLight args={['#ffeedd', '#778866', 0.6]} />
         <directionalLight
-          position={[20, 45, 15]}
+          position={[30, 60, 20]}
           intensity={2.6}
           color="#fff2d8"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-near={0.5}
-          shadow-camera-far={120}
-          shadow-camera-left={-35}
-          shadow-camera-right={35}
-          shadow-camera-top={35}
-          shadow-camera-bottom={-35}
+          shadow-camera-far={200}
+          shadow-camera-left={-65}
+          shadow-camera-right={65}
+          shadow-camera-top={65}
+          shadow-camera-bottom={-65}
         />
-        <directionalLight position={[-15, 20, -8]} intensity={0.4} color="#ffd0a0" />
+        <directionalLight position={[-20, 30, -10]} intensity={0.4} color="#ffd0a0" />
 
         {/* Ocean floor (parchment tint visible through water) */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-          <planeGeometry args={[120, 120]} />
+          <planeGeometry args={[200, 200]} />
           <meshStandardMaterial color="#c8b898" roughness={1} />
         </mesh>
 
