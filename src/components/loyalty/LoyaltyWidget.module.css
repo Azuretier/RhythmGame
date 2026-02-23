@@ -109,20 +109,40 @@
   margin-top: 1px;
 }
 
-/* ---- Row 2: Daily streak ---- */
-.row2 {
+/* ---- Generic tab content (streak / stats / roadmap / badges) ---- */
+.tabContent {
+  padding: 20px 24px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 8px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tabTitle {
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.3;
+  margin: 0;
+}
+
+/* Streak dots row — centered */
+.streakRow {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
 }
 
 .streakDots {
   display: flex;
   gap: 8px;
+}
+
+.streakDotWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
 }
 
 .streakDot {
@@ -143,40 +163,34 @@
   box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.2);
 }
 
-.streakInfo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.streakCount {
-  font-size: 0.6rem;
+.streakDayLabel {
+  font-size: 0.4rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
   letter-spacing: 0.03em;
-  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
 }
 
-.streakBonus {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: #4CAF50;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
+
 
 /* ---- Row 3: Score gauge ---- */
 .row3 {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
-.gaugeMeta {
+/* Line 1: TOTAL SCORE  1.2B  ...  X to next rank */
+.gaugeHeader {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+}
+
+.gaugeHeaderLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
 
 .gaugeLabel {
@@ -187,18 +201,48 @@
   color: rgba(255, 255, 255, 0.25);
 }
 
-.gaugeNext {
+.gaugeValue {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.92);
+  font-variant-numeric: tabular-nums;
+}
+
+.gaugeHeaderRight {
   font-size: 0.5rem;
-  color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.2);
   letter-spacing: 0.02em;
 }
 
+/* Line 2: Current rank — Next rank */
+.gaugeRanks {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.gaugeRankCurrent {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.gaugeRankNext {
+  font-size: 0.5rem;
+  opacity: 0.3;
+  letter-spacing: 0.04em;
+}
+
+/* Progress bar */
 .gaugeBar {
   width: 100%;
   height: 6px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   overflow: hidden;
+  margin-top: 2px;
 }
 
 .gaugeBarFill {
@@ -207,160 +251,23 @@
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.gaugeEnds {
+/* Line 3: Score thresholds below bar */
+.gaugeThresholds {
   display: flex;
   justify-content: space-between;
-  font-size: 0.5rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
-.gaugeEndNext {
-  opacity: 0.25;
+.gaugeThresholdNext {
+  opacity: 0.5;
 }
 
 /* ====================================================
-   DETAILS view
+   Shared detail styles (used by individual tabs)
    ==================================================== */
-.details {
-  padding: 24px 28px;
-  max-height: 70vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
-}
-
-.details::-webkit-scrollbar {
-  width: 4px;
-}
-
-.details::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
-}
-
-/* Profile header — top of details view */
-.detailProfile {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.detailAvatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.detailProfileMeta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.detailProfileName {
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.detailProfileCode {
-  font-size: 0.5rem;
-  color: rgba(255, 255, 255, 0.25);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Detail hero */
-.detailHero {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.detailEmblem {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 2px solid;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.03);
-  flex-shrink: 0;
-}
-
-.detailEmblemIcon {
-  font-size: 1.6rem;
-  line-height: 1;
-}
-
-.detailRankName {
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.detailScore {
-  font-size: 0.65rem;
-  opacity: 0.3;
-  letter-spacing: 0.05em;
-  font-variant-numeric: tabular-nums;
-  margin-top: 2px;
-}
-
-/* Detail progress */
-.detailProgress {
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.detailProgressMeta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.55rem;
-  font-weight: 600;
-  margin-bottom: 6px;
-  letter-spacing: 0.04em;
-}
-
-.detailProgressNext {
-  opacity: 0.3;
-}
-
-.detailBar {
-  width: 100%;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.detailBarFill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.detailProgressReq {
-  font-size: 0.5rem;
-  opacity: 0.2;
-  margin-top: 4px;
-  text-align: right;
-}
 
 /* Sections */
 .detailSection {
