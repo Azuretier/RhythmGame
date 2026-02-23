@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useSkillTree } from '@/lib/skill-tree/context';
-import { SKILL_NODES, ARCHETYPES, getNodesForArchetype } from '@/lib/skill-tree/definitions';
+import { ARCHETYPES, getNodesForArchetype } from '@/lib/skill-tree/definitions';
 import type { SkillNode, Archetype } from '@/lib/skill-tree/types';
 import styles from './SkillTree.module.css';
 
@@ -30,8 +30,13 @@ const NODE_ICONS: Record<string, string> = {
 /** Grid cell dimensions — pixel-aligned */
 const CELL_W = 110;
 const CELL_H = 100;
-const NODE_SIZE = 60; // square side length
+const NODE_SIZE = 60;
 const NODE_HALF = NODE_SIZE / 2;
+
+/** Scroll behaviour constants (matching main page useSlideScroll) */
+const SCROLL_DEBOUNCE = 600;
+const DELTA_THRESHOLD = 50;
+const TOUCH_THRESHOLD = 50;
 
 interface SkillTreeProps {
   onClose?: () => void;
@@ -53,6 +58,13 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
   const [selectedNode, setSelectedNode] = useState<SkillNode | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
+  // ── Scroll refs ──
+  const treeAreaRef = useRef<HTMLDivElement>(null);
+  const isTransitioning = useRef(false);
+  const accumulatedDelta = useRef(0);
+  const deltaTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartY = useRef(0);
+
   const archMeta = useMemo(
     () => ARCHETYPES.find((a) => a.id === state.archetype) ?? null,
     [state.archetype]
@@ -65,16 +77,6 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
 
   const pageCount = archMeta?.pageCount ?? 1;
 
-  const nodesForPage = useMemo(
-    () => archetypeNodes.filter((n) => n.page === currentPage),
-    [archetypeNodes, currentPage]
-  );
-
-  const nextPageNodes = useMemo(
-    () => archetypeNodes.filter((n) => n.page === currentPage + 1),
-    [archetypeNodes, currentPage]
-  );
-
   const getNodeStatus = useCallback(
     (node: SkillNode): 'locked' | 'available' | 'partial' | 'maxed' => {
       const level = getLevel(node.id);
@@ -85,6 +87,187 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     },
     [getLevel, canUnlock]
   );
+
+  /** Node center position within the per-page SVG grid */
+  const nodeCenter = (node: SkillNode) => ({
+    x: node.position.col * CELL_W + CELL_W / 2,
+    y: node.position.row * CELL_H + CELL_H / 2,
+  });
+
+  const svgWidth = 3 * CELL_W;
+
+  // ── Pre-compute every page's nodes, SVG height and connections ──
+  const allPages = useMemo(() => {
+    return Array.from({ length: pageCount }).map((_, pageIdx) => {
+      const nodes = archetypeNodes.filter((n) => n.page === pageIdx);
+      const nextNodes = archetypeNodes.filter((n) => n.page === pageIdx + 1);
+
+      const maxRow =
+        nodes.length > 0 ? Math.max(...nodes.map((n) => n.position.row)) : 0;
+      const hasNext = nextNodes.some((nn) =>
+        nn.requires.some((r) => nodes.some((n) => n.id === r))
+      );
+      const svgH = (maxRow + 1) * CELL_H + (hasNext ? 20 : 0);
+
+      // Stepped connection paths
+      const paths: { d: string; active: boolean }[] = [];
+
+      for (const node of nodes) {
+        for (const reqId of node.requires) {
+          const parent = archetypeNodes.find((n) => n.id === reqId);
+          if (!parent) continue;
+
+          if (parent.page === pageIdx) {
+            const from = nodeCenter(parent);
+            const to = nodeCenter(node);
+            const startY = from.y + NODE_HALF;
+            const endY = to.y - NODE_HALF;
+            const midY = Math.round((startY + endY) / 2);
+            const pStatus = getNodeStatus(parent);
+            const active = pStatus === 'partial' || pStatus === 'maxed';
+
+            if (from.x === to.x) {
+              paths.push({ d: `M ${from.x} ${startY} L ${from.x} ${endY}`, active });
+            } else {
+              paths.push({
+                d: `M ${from.x} ${startY} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
+                active,
+              });
+            }
+          } else if (parent.page === pageIdx - 1) {
+            const to = nodeCenter(node);
+            const stubX = parent.position.col * CELL_W + CELL_W / 2;
+            const endY = to.y - NODE_HALF;
+            const midY = Math.round(endY * 0.3);
+            const pStatus = getNodeStatus(parent);
+            const active = pStatus === 'partial' || pStatus === 'maxed';
+
+            if (stubX === to.x) {
+              paths.push({ d: `M ${stubX} 0 L ${stubX} ${endY}`, active });
+            } else {
+              paths.push({
+                d: `M ${stubX} 0 L ${stubX} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
+                active,
+              });
+            }
+          }
+        }
+      }
+
+      // Bottom stubs to next page
+      for (const nextNode of nextNodes) {
+        for (const reqId of nextNode.requires) {
+          const parent = nodes.find((n) => n.id === reqId);
+          if (!parent) continue;
+          const from = nodeCenter(parent);
+          const pStatus = getNodeStatus(parent);
+          const active = pStatus === 'partial' || pStatus === 'maxed';
+          const bottomY = (maxRow + 1) * CELL_H + 10;
+          paths.push({
+            d: `M ${from.x} ${from.y + NODE_HALF} L ${from.x} ${bottomY}`,
+            active,
+          });
+        }
+      }
+
+      return { nodes, svgH, paths };
+    });
+  }, [archetypeNodes, pageCount, getNodeStatus]);
+
+  // ── Navigate to a page (debounced) ──
+  const goToPage = useCallback(
+    (index: number) => {
+      const clamped = Math.max(0, Math.min(pageCount - 1, index));
+      if (clamped === currentPage || isTransitioning.current) return;
+
+      isTransitioning.current = true;
+      setSelectedNode(null);
+      setCurrentPage(clamped);
+
+      setTimeout(() => {
+        isTransitioning.current = false;
+      }, SCROLL_DEBOUNCE);
+    },
+    [currentPage, pageCount]
+  );
+
+  // ── Wheel scroll handler (delta accumulation, same as main page) ──
+  useEffect(() => {
+    if (!state.archetype) return;
+    const el = treeAreaRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (isTransitioning.current) return;
+
+      accumulatedDelta.current += e.deltaY;
+      if (deltaTimer.current) clearTimeout(deltaTimer.current);
+      deltaTimer.current = setTimeout(() => {
+        accumulatedDelta.current = 0;
+      }, 100);
+
+      if (Math.abs(accumulatedDelta.current) < DELTA_THRESHOLD) return;
+
+      const direction = accumulatedDelta.current > 0 ? 1 : -1;
+      accumulatedDelta.current = 0;
+      goToPage(currentPage + direction);
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [state.archetype, currentPage, goToPage]);
+
+  // ── Touch swipe handler ──
+  useEffect(() => {
+    if (!state.archetype) return;
+    const el = treeAreaRef.current;
+    if (!el) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isTransitioning.current) return;
+      const deltaY = touchStartY.current - e.changedTouches[0].clientY;
+      if (Math.abs(deltaY) < TOUCH_THRESHOLD) return;
+      const direction = deltaY > 0 ? 1 : -1;
+      goToPage(currentPage + direction);
+    };
+
+    el.addEventListener('touchstart', handleTouchStart, { passive: true });
+    el.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [state.archetype, currentPage, goToPage]);
+
+  // ── Keyboard handler (ArrowUp/Down, PageUp/Down) ──
+  useEffect(() => {
+    if (!state.archetype) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isTransitioning.current) return;
+      let direction = 0;
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') direction = 1;
+      else if (e.key === 'ArrowUp' || e.key === 'PageUp') direction = -1;
+      else return;
+      e.preventDefault();
+      goToPage(currentPage + direction);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [state.archetype, currentPage, goToPage]);
+
+  // ── Cleanup delta timer ──
+  useEffect(() => {
+    return () => {
+      if (deltaTimer.current) clearTimeout(deltaTimer.current);
+    };
+  }, []);
 
   const handleUnlock = useCallback(
     (skillId: string) => {
@@ -107,106 +290,6 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     },
     [selectArchetype]
   );
-
-  const goPage = (dir: -1 | 1) => {
-    setSelectedNode(null);
-    setCurrentPage((p) => Math.max(0, Math.min(pageCount - 1, p + dir)));
-  };
-
-  /** Node center position within the SVG grid */
-  const nodeCenter = (node: SkillNode) => ({
-    x: node.position.col * CELL_W + CELL_W / 2,
-    y: node.position.row * CELL_H + CELL_H / 2,
-  });
-
-  /**
-   * Build stepped (orthogonal) SVG paths between connected nodes.
-   * Paths go: down from parent → horizontal to align with child → down to child.
-   * This creates Minecraft-style grid-aligned connections.
-   */
-  const connectionPaths = useMemo(() => {
-    const paths: { d: string; active: boolean }[] = [];
-
-    for (const node of nodesForPage) {
-      for (const reqId of node.requires) {
-        const parent = archetypeNodes.find((n) => n.id === reqId);
-        if (!parent) continue;
-
-        if (parent.page === node.page) {
-          // Same page — stepped path
-          const from = nodeCenter(parent);
-          const to = nodeCenter(node);
-          const startY = from.y + NODE_HALF;
-          const endY = to.y - NODE_HALF;
-          const midY = Math.round((startY + endY) / 2);
-          const parentStatus = getNodeStatus(parent);
-          const active = parentStatus === 'partial' || parentStatus === 'maxed';
-
-          if (from.x === to.x) {
-            // Straight vertical
-            paths.push({
-              d: `M ${from.x} ${startY} L ${from.x} ${endY}`,
-              active,
-            });
-          } else {
-            // Stepped L-shape
-            paths.push({
-              d: `M ${from.x} ${startY} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
-              active,
-            });
-          }
-        } else if (parent.page === node.page - 1) {
-          // Cross-page: parent on previous page — stub from top edge
-          const to = nodeCenter(node);
-          const stubX = parent.position.col * CELL_W + CELL_W / 2;
-          const endY = to.y - NODE_HALF;
-          const midY = Math.round(endY * 0.3);
-          const parentStatus = getNodeStatus(parent);
-          const active = parentStatus === 'partial' || parentStatus === 'maxed';
-
-          if (stubX === to.x) {
-            paths.push({ d: `M ${stubX} 0 L ${stubX} ${endY}`, active });
-          } else {
-            paths.push({
-              d: `M ${stubX} 0 L ${stubX} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
-              active,
-            });
-          }
-        }
-      }
-    }
-
-    // Bottom stubs to next page
-    for (const nextNode of nextPageNodes) {
-      for (const reqId of nextNode.requires) {
-        const parent = nodesForPage.find((n) => n.id === reqId);
-        if (!parent) continue;
-        const from = nodeCenter(parent);
-        const parentStatus = getNodeStatus(parent);
-        const active = parentStatus === 'partial' || parentStatus === 'maxed';
-        const maxRow = Math.max(...nodesForPage.map((n) => n.position.row));
-        const bottomY = (maxRow + 1) * CELL_H + 10;
-        paths.push({
-          d: `M ${from.x} ${from.y + NODE_HALF} L ${from.x} ${bottomY}`,
-          active,
-        });
-      }
-    }
-
-    return paths;
-  }, [nodesForPage, nextPageNodes, archetypeNodes, getNodeStatus]);
-
-  /** SVG viewBox dimensions */
-  const svgHeight = useMemo(() => {
-    if (nodesForPage.length === 0) return CELL_H;
-    const maxRow = Math.max(...nodesForPage.map((n) => n.position.row));
-    const hasNextPage = nextPageNodes.some((nn) =>
-      nn.requires.some((r) => nodesForPage.some((n) => n.id === r))
-    );
-    return (maxRow + 1) * CELL_H + (hasNextPage ? 20 : 0);
-  }, [nodesForPage, nextPageNodes]);
-
-  const svgWidth = 3 * CELL_W;
 
   // ───── Archetype picker ─────
   if (!state.archetype) {
@@ -273,120 +356,110 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
       >
-        {/* Header — page navigation */}
+        {/* Header — archetype + page indicator */}
         <div className={styles.frameHeader}>
-          <button
-            className={styles.pageArrow}
-            onClick={() => goPage(-1)}
-            disabled={currentPage === 0}
-          >
-            {'<'}
-          </button>
+          <span className={styles.archIcon} style={{ color: archMeta?.color }}>
+            {archMeta?.icon}
+          </span>
           <div className={styles.pageBanner}>
             <span className={styles.pageLabel}>
-              PAGE {currentPage + 1}
+              {t(`archetypes.${archMeta?.nameKey}`)}
             </span>
           </div>
-          <button
-            className={styles.pageArrow}
-            onClick={() => goPage(1)}
-            disabled={currentPage >= pageCount - 1}
+          <span className={styles.pageIndicator}>
+            {currentPage + 1}/{pageCount}
+          </span>
+        </div>
+
+        {/* Scrollable tree area — wheel / touch / keyboard to navigate */}
+        <div className={styles.treeArea} ref={treeAreaRef}>
+          <div
+            className={styles.treeSlider}
+            style={{ transform: `translateY(-${currentPage * 100}%)` }}
           >
-            {'>'}
-          </button>
-        </div>
-
-        {/* Archetype title */}
-        <div
-          className={styles.archetypeTitle}
-          style={{ color: archMeta?.color }}
-        >
-          <span>{archMeta?.icon}</span>
-          <span>{t(`archetypes.${archMeta?.nameKey}`)}</span>
-        </div>
-
-        {/* Tree area with stepped SVG connections */}
-        <div className={styles.treeArea}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${state.archetype}-${currentPage}`}
-              className={styles.treeCanvas}
-              style={{ width: svgWidth, minHeight: svgHeight }}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.15 }}
-            >
-              {/* SVG stepped connection paths */}
-              <svg
-                className={styles.connectionsSvg}
-                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-                width={svgWidth}
-                height={svgHeight}
-                shapeRendering="crispEdges"
-              >
-                {connectionPaths.map((conn, i) => (
-                  <path
-                    key={i}
-                    d={conn.d}
-                    fill="none"
-                    stroke={conn.active ? archMeta?.color ?? '#888' : '#2a2a2a'}
-                    strokeWidth={4}
-                    strokeLinejoin="miter"
-                    strokeLinecap="butt"
-                    style={
-                      conn.active
-                        ? {
-                            filter: `drop-shadow(0 0 6px ${archMeta?.color ?? '#888'})`,
-                          }
-                        : undefined
-                    }
-                  />
-                ))}
-              </svg>
-
-              {/* Square nodes (inventory slots) */}
-              {nodesForPage.map((node) => {
-                const status = getNodeStatus(node);
-                const level = getLevel(node.id);
-                const isSelected = selectedNode?.id === node.id;
-                const pos = nodeCenter(node);
-
-                return (
-                  <button
-                    key={node.id}
-                    className={`${styles.node} ${styles[`node_${status}`]} ${
-                      isSelected ? styles.nodeSelected : ''
-                    }`}
-                    style={{
-                      '--cat-color': archMeta?.color ?? '#888',
-                      left: pos.x - NODE_HALF,
-                      top: pos.y - NODE_HALF,
-                      width: NODE_SIZE,
-                      height: NODE_SIZE,
-                    } as React.CSSProperties}
-                    onClick={() =>
-                      setSelectedNode(isSelected ? null : node)
-                    }
+            {allPages.map((page, pageIdx) => (
+              <div key={pageIdx} className={styles.treePage}>
+                <div
+                  className={styles.treeCanvas}
+                  style={{ width: svgWidth, minHeight: page.svgH }}
+                >
+                  {/* SVG stepped connection paths */}
+                  <svg
+                    className={styles.connectionsSvg}
+                    viewBox={`0 0 ${svgWidth} ${page.svgH}`}
+                    width={svgWidth}
+                    height={page.svgH}
+                    shapeRendering="crispEdges"
                   >
-                    <span className={styles.nodeIcon}>
-                      {NODE_ICONS[node.icon] || node.icon}
-                    </span>
-                    <div className={styles.levelPips}>
-                      {Array.from({ length: node.maxLevel }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`${styles.pip} ${
-                            i < level ? styles.pipFilled : ''
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </button>
-                );
-              })}
-            </motion.div>
-          </AnimatePresence>
+                    {page.paths.map((conn, i) => (
+                      <path
+                        key={i}
+                        d={conn.d}
+                        fill="none"
+                        stroke={conn.active ? archMeta?.color ?? '#888' : '#2a2a2a'}
+                        strokeWidth={4}
+                        strokeLinejoin="miter"
+                        strokeLinecap="butt"
+                        style={
+                          conn.active
+                            ? { filter: `drop-shadow(0 0 6px ${archMeta?.color ?? '#888'})` }
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </svg>
+
+                  {/* Square nodes (inventory slots) */}
+                  {page.nodes.map((node) => {
+                    const status = getNodeStatus(node);
+                    const level = getLevel(node.id);
+                    const isSelected = selectedNode?.id === node.id;
+                    const pos = nodeCenter(node);
+
+                    return (
+                      <button
+                        key={node.id}
+                        className={`${styles.node} ${styles[`node_${status}`]} ${
+                          isSelected ? styles.nodeSelected : ''
+                        }`}
+                        style={{
+                          '--cat-color': archMeta?.color ?? '#888',
+                          left: pos.x - NODE_HALF,
+                          top: pos.y - NODE_HALF,
+                          width: NODE_SIZE,
+                          height: NODE_SIZE,
+                        } as React.CSSProperties}
+                        onClick={() =>
+                          setSelectedNode(isSelected ? null : node)
+                        }
+                      >
+                        <span className={styles.nodeIcon}>
+                          {NODE_ICONS[node.icon] || node.icon}
+                        </span>
+                        <div className={styles.levelPips}>
+                          {Array.from({ length: node.maxLevel }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`${styles.pip} ${
+                                i < level ? styles.pipFilled : ''
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Scroll hint on first page */}
+          {currentPage === 0 && pageCount > 1 && (
+            <div className={styles.scrollHint}>
+              <span className={styles.scrollArrow}>{'\u25BC'}</span>
+            </div>
+          )}
         </div>
 
         {/* Detail panel (Minecraft tooltip) */}
@@ -446,7 +519,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
 
         {/* Bottom panel */}
         <div className={styles.bottomPanel}>
-          {/* Page dots (square) */}
+          {/* Page dots (square, clickable) */}
           <div className={styles.pageDots}>
             {Array.from({ length: pageCount }).map((_, i) => (
               <button
@@ -462,10 +535,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
                       } as React.CSSProperties
                     : undefined
                 }
-                onClick={() => {
-                  setSelectedNode(null);
-                  setCurrentPage(i);
-                }}
+                onClick={() => goToPage(i)}
               />
             ))}
           </div>
