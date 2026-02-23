@@ -218,20 +218,25 @@
 /* Tier Roadmap */
 .tierRoadmap {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
   margin-bottom: 40px;
 }
 
 .tierStep {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 14px 10px;
+  border-radius: 12px;
+  padding: 20px 16px;
   text-align: center;
   position: relative;
   transition: all 0.3s;
-  overflow: hidden;
+  cursor: default;
+}
+
+.tierStep:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .tierStep.active {
@@ -244,23 +249,20 @@
 }
 
 .tierStepIcon {
-  font-size: 1.2rem;
-  margin-bottom: 6px;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
   display: block;
 }
 
 .tierStepName {
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
 }
 
 .tierStepXP {
-  font-size: 0.5rem;
+  font-size: 0.55rem;
   opacity: 0.3;
   letter-spacing: 0.03em;
 }
@@ -271,6 +273,58 @@
   right: 10px;
   font-size: 0.7rem;
   opacity: 0.5;
+}
+
+/* Tier hover tooltip */
+.tierTooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  min-width: 180px;
+  padding: 10px 14px;
+  background: rgba(15, 15, 25, 0.96);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
+  text-align: left;
+}
+
+.tierTooltipRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 5px 0;
+  font-size: 0.65rem;
+  opacity: 0.5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.tierTooltipRow:last-child {
+  border-bottom: none;
+}
+
+.tierTooltipRow.tooltipActive {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.tierTooltipRow.tooltipDone {
+  opacity: 0.3;
+}
+
+.tierTooltipName {
+  white-space: nowrap;
+}
+
+.tierTooltipXP {
+  font-size: 0.55rem;
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* Streak Display */

@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import {
-  SCORE_RANK_TIERS,
   getTierByScore,
   scoreProgress,
   scoreToNextTier,
   formatScoreCompact,
+  getRankGroups,
   buildScoreRankingState,
   recordDailyVisit,
   syncGameplayStats,
@@ -40,11 +40,13 @@ export default function LoyaltyDashboard() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [pollLoading, setPollLoading] = useState(true);
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const rankGroups = useMemo(() => getRankGroups(), []);
 
   // Initialize score ranking + auth + poll
   useEffect(() => {
     const advancementState = loadAdvancementState();
-    
+
     let dailyState = recordDailyVisit();
     dailyState = syncGameplayStats(
       advancementState.stats.totalScore,
@@ -53,7 +55,7 @@ export default function LoyaltyDashboard() {
       advancementState.unlockedIds.length,
       advancementState.stats.totalLines,
     );
-    
+
     setState(dailyState);
     setAdvState(advancementState);
 
@@ -117,10 +119,10 @@ export default function LoyaltyDashboard() {
   // Recent advancements — last 8 unlocked, newest first
   const recentAdvancements = advState
     ? advState.unlockedIds
-        .slice(-8)
-        .reverse()
-        .map((id) => ADVANCEMENTS.find((a) => a.id === id))
-        .filter(Boolean)
+      .slice(-8)
+      .reverse()
+      .map((id) => ADVANCEMENTS.find((a) => a.id === id))
+      .filter(Boolean)
     : [];
 
   return (
@@ -242,23 +244,40 @@ export default function LoyaltyDashboard() {
         >
           <h2 className={styles.sectionTitle}>{t('sections.tierRoadmap')}</h2>
           <div className={styles.tierRoadmap}>
-            {SCORE_RANK_TIERS.map((tier) => {
-              const isActive = tier.id === currentTier.id;
-              const isCompleted = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
+            {rankGroups.map((group) => {
+              const isActive = group.tiers.some(t => t.id === currentTier.id);
+              const isCompleted = combinedScore >= group.maxScore && group.maxScore !== Infinity;
 
               return (
                 <div
-                  key={tier.id}
+                  key={group.groupId}
                   className={`${styles.tierStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
+                  onMouseEnter={() => setHoveredGroup(group.groupId)}
+                  onMouseLeave={() => setHoveredGroup(null)}
                 >
                   {isCompleted && <span className={styles.tierStepCheck}>&#10003;</span>}
-                  <span className={styles.tierStepIcon}>{tier.icon}</span>
-                  <div className={styles.tierStepName} style={{ color: isActive ? tier.color : undefined }}>
-                    {t(`tiers.${tier.id}`)}
+                  <span className={styles.tierStepIcon}>{group.icon}</span>
+                  <div className={styles.tierStepName} style={{ color: isActive ? group.color : undefined }}>
+                    {t(`tierGroups.${group.groupId}`)}
                   </div>
                   <div className={styles.tierStepXP}>
-                    {tier.maxScore === Infinity ? `${formatScoreCompact(tier.minScore)}+` : `${formatScoreCompact(tier.minScore)} - ${formatScoreCompact(tier.maxScore)}`}
+                    {group.maxScore === Infinity ? `${formatScoreCompact(group.minScore)}+` : `${formatScoreCompact(group.minScore)} – ${formatScoreCompact(group.maxScore)}`}
                   </div>
+                  {/* Hover tooltip with sub-tier details */}
+                  {hoveredGroup === group.groupId && group.tiers.length > 1 && (
+                    <div className={styles.tierTooltip}>
+                      {group.tiers.map((tier) => {
+                        const isTierActive = tier.id === currentTier.id;
+                        const isTierDone = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
+                        return (
+                          <div key={tier.id} className={`${styles.tierTooltipRow} ${isTierActive ? styles.tooltipActive : ''} ${isTierDone ? styles.tooltipDone : ''}`}>
+                            <span className={styles.tierTooltipName} style={{ color: tier.color }}>{t(`tiers.${tier.id}`)}</span>
+                            <span className={styles.tierTooltipXP}>{formatScoreCompact(tier.minScore)} – {tier.maxScore === Infinity ? '∞' : formatScoreCompact(tier.maxScore)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}

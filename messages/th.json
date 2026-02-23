@@ -1162,6 +1162,16 @@
       "gravity_3": "Gravity Ⅲ",
       "flow": "Flow"
     },
+    "tierGroups": {
+      "unranked": "ไม่มีอันดับ",
+      "beat": "Beat",
+      "rhythm": "Rhythm",
+      "melody": "Melody",
+      "harmony": "Harmony",
+      "maestro": "Maestro",
+      "gravity": "Gravity",
+      "flow": "Flow"
+    },
     "stats": {
       "bestScore": "คะแนนดีสุด",
       "games": "เกม",

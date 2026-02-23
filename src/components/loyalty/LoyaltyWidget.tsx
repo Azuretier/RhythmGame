@@ -1,17 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useProfile } from '@/lib/profile/context';
 import { getIconById } from '@/lib/profile/types';
 import {
-  SCORE_RANK_TIERS,
   getTierByScore,
   scoreProgress,
   scoreToNextTier,
   formatScoreCompact,
+  getRankGroups,
   recordDailyVisit,
   syncGameplayStats,
 } from '@/lib/loyalty';
@@ -26,6 +26,8 @@ export default function LoyaltyWidget() {
   const router = useRouter();
   const { profile } = useProfile();
   const [state, setState] = useState<ScoreRankingState | null>(null);
+  const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
+  const rankGroups = useMemo(() => getRankGroups(), []);
 
   useEffect(() => {
     // Record daily visit first (awards XP for visits/streaks)
@@ -52,7 +54,7 @@ export default function LoyaltyWidget() {
   const currentTier = getTierByScore(combinedScore);
   const progress = scoreProgress(combinedScore);
   const nextTierScore = scoreToNextTier(combinedScore);
-  const currentIndex = SCORE_RANK_TIERS.indexOf(currentTier);
+
 
   return (
     <motion.div
@@ -126,22 +128,39 @@ export default function LoyaltyWidget() {
         </div>
       </div>
 
-      {/* Tier roadmap */}
+      {/* Tier roadmap (grouped) */}
       <div className={styles.miniRoadmap}>
-        {SCORE_RANK_TIERS.map((tier, i) => {
-          const isActive = tier.id === currentTier.id;
-          const isCompleted = i < currentIndex;
+        {rankGroups.map((group) => {
+          const isActive = group.tiers.some(t => t.id === currentTier.id);
+          const isCompleted = combinedScore >= group.maxScore && group.maxScore !== Infinity;
           return (
             <div
-              key={tier.id}
+              key={group.groupId}
               className={`${styles.miniStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
+              onMouseEnter={() => setHoveredGroup(group.groupId)}
+              onMouseLeave={() => setHoveredGroup(null)}
             >
-              <span className={styles.miniStepIcon} style={isActive || isCompleted ? { color: tier.color } : undefined}>
-                {tier.icon}
+              <span className={styles.miniStepIcon} style={isActive || isCompleted ? { color: group.color } : undefined}>
+                {group.icon}
               </span>
               <span className={styles.miniStepName}>
-                {t(`tiers.${tier.id}`)}
+                {t(`tierGroups.${group.groupId}`)}
               </span>
+              {/* Hover tooltip with sub-tier details */}
+              {hoveredGroup === group.groupId && group.tiers.length > 1 && (
+                <div className={styles.miniTooltip}>
+                  {group.tiers.map((tier) => {
+                    const isTierActive = tier.id === currentTier.id;
+                    const isTierDone = combinedScore >= tier.maxScore && tier.maxScore !== Infinity;
+                    return (
+                      <div key={tier.id} className={`${styles.miniTooltipRow} ${isTierActive ? styles.tooltipActive : ''} ${isTierDone ? styles.tooltipDone : ''}`}>
+                        <span style={{ color: tier.color }}>{t(`tiers.${tier.id}`)}</span>
+                        <span className={styles.miniTooltipXP}>{formatScoreCompact(tier.minScore)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}

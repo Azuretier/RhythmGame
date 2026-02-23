@@ -175,6 +175,16 @@
       "gravity_3": "Гравитация Ⅲ",
       "flow": "Поток"
     },
+    "tierGroups": {
+      "unranked": "Без ранга",
+      "beat": "Бит",
+      "rhythm": "Ритм",
+      "melody": "Мелодия",
+      "harmony": "Гармония",
+      "maestro": "Маэстро",
+      "gravity": "Гравитация",
+      "flow": "Поток"
+    },
     "stats": {
       "bestScore": "ЛУЧШИЙ СЧЁТ",
       "games": "ИГРЫ",
