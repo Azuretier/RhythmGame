@@ -281,6 +281,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     showCardSelect,
     offeredCards,
     activeEffects,
+    absorbingCardId,
     // Game mode
     gameMode,
     // Terrain phase
@@ -351,6 +352,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     enterCardSelect,
     selectCard,
     skipCardSelect,
+    finishAbsorption,
     consumeComboGuard,
     consumeShield,
     // Terrain phase actions
@@ -1685,7 +1687,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       )}
 
       {/* Rogue-like card selection overlay */}
-      {showCardSelect && (
+      {(showCardSelect || gamePhase === 'CARD_ABSORBING') && (
         <CardSelectUI
           offers={offeredCards}
           inventory={inventory}
@@ -1694,6 +1696,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           onSkip={skipCardSelect}
           worldIdx={worldIdx}
           stageNumber={stageNumber}
+          absorbingCardId={absorbingCardId}
+          onAbsorptionComplete={finishAbsorption}
         />
       )}
 

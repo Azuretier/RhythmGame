@@ -73,6 +73,7 @@ export type GamePhase =
     | 'WORLD_CREATION'
     | 'PLAYING'
     | 'CARD_SELECT'
+    | 'CARD_ABSORBING'
     | 'COLLAPSE'
     | 'TRANSITION'
     | 'CHECKPOINT';
