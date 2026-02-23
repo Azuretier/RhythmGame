@@ -259,7 +259,7 @@ function generateTrackVoxels(statuses: Record<string, GameModeStatus>) {
 function VoxelTerrain({ data }: { data: { positions: Float32Array; colors: Float32Array; count: number } }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const geo = useMemo(() => new THREE.BoxGeometry(0.95, 0.95, 0.95), []);
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0.05, flatShading: true }), []);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0.05, flatShading: true, vertexColors: true }), []);
 
   useEffect(() => {
     const m = ref.current; if (!m) return;
@@ -281,7 +281,7 @@ function VoxelTerrain({ data }: { data: { positions: Float32Array; colors: Float
 function TrackBlocks({ data }: { data: { positions: Float32Array; colors: Float32Array; count: number } }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const geo = useMemo(() => new THREE.BoxGeometry(0.85, 0.35, 0.85), []);
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.7, metalness: 0.05, flatShading: true }), []);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ roughness: 0.7, metalness: 0.05, flatShading: true, vertexColors: true }), []);
 
   useEffect(() => {
     const m = ref.current; if (!m) return;
