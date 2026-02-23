@@ -17,6 +17,11 @@
     0 8px 40px rgba(0, 0, 0, 0.35),
     inset 0 0 0 1px rgba(255, 250, 230, 0.3);
   user-select: none;
+  cursor: grab;
+}
+
+.mapWrapper:active {
+  cursor: grabbing;
 }
 
 /* Subtle warm vignette (lighter than before — parchment-style) */

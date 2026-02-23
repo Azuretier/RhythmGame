@@ -51,15 +51,15 @@ const BIOME: Record<string, Pal> = {
   grass:    { top: new THREE.Color('#7db044'), mid: new THREE.Color('#5e8a32'), deep: new THREE.Color('#4a6828') },
   dirt:     { top: new THREE.Color('#b89060'), mid: new THREE.Color('#956e42'), deep: new THREE.Color('#7a5530') },
   stone:    { top: new THREE.Color('#8a8480'), mid: new THREE.Color('#706860'), deep: new THREE.Color('#585048') },
-  water:    { top: new THREE.Color('#6a98b0'), mid: new THREE.Color('#507888'), deep: new THREE.Color('#405868') },
+  water:    { top: new THREE.Color('#4a7888'), mid: new THREE.Color('#3a6070'), deep: new THREE.Color('#2a4858') },
   sand:     { top: new THREE.Color('#d8c088'), mid: new THREE.Color('#bca068'), deep: new THREE.Color('#a08850') },
   snow:     { top: new THREE.Color('#eaecf0'), mid: new THREE.Color('#ccd0d8'), deep: new THREE.Color('#a8aab4') },
   path:     { top: new THREE.Color('#c8a868'), mid: new THREE.Color('#a88848'), deep: new THREE.Color('#886830') },
   bridge:   { top: new THREE.Color('#8a6030'), mid: new THREE.Color('#6a4820'), deep: new THREE.Color('#503818') },
-  tree:     { top: new THREE.Color('#3a7828'), mid: new THREE.Color('#2e6020'), deep: new THREE.Color('#4a6828') },
-  flower:   { top: new THREE.Color('#d06878'), mid: new THREE.Color('#5e8a32'), deep: new THREE.Color('#4a6828') },
-  rock:     { top: new THREE.Color('#6a6460'), mid: new THREE.Color('#585250'), deep: new THREE.Color('#484440') },
-  mushroom: { top: new THREE.Color('#c04030'), mid: new THREE.Color('#5e8a32'), deep: new THREE.Color('#4a6828') },
+  tree:     { top: new THREE.Color('#2a6818'), mid: new THREE.Color('#1e5010'), deep: new THREE.Color('#3a5820') },
+  flower:   { top: new THREE.Color('#e87830'), mid: new THREE.Color('#5e8a32'), deep: new THREE.Color('#4a6828') },
+  rock:     { top: new THREE.Color('#5a5450'), mid: new THREE.Color('#484240'), deep: new THREE.Color('#383430') },
+  mushroom: { top: new THREE.Color('#c04030'), mid: new THREE.Color('#6a4838'), deep: new THREE.Color('#4a3828') },
   lava:     { top: new THREE.Color('#e86830'), mid: new THREE.Color('#c04018'), deep: new THREE.Color('#703020') },
   void:     { top: new THREE.Color('#181418'), mid: new THREE.Color('#100e12'), deep: new THREE.Color('#080608') },
 };
@@ -121,11 +121,16 @@ type TT = 'oak' | 'spruce' | 'autumn' | 'dead';
 function treeType(x: number, y: number): TT {
   const nx = (x - GAMEMODE_MAP_WIDTH / 2) / (GAMEMODE_MAP_WIDTH / 2);
   const ny = (y - GAMEMODE_MAP_HEIGHT / 2) / (GAMEMODE_MAP_HEIGHT / 2);
-  if (ny < -0.15) return 'spruce';
-  if (nx < -0.1 && ny > 0.3) return 'dead';
-  if (Math.abs(nx) < 0.25 && ny > 0.05) {
-    return noise2D(x * 5, y * 5, SEED + 2222) > 0.45 ? 'autumn' : 'oak';
+  // Creeper Woods (NW): dark spruce forest
+  if (nx < -0.1 && ny < 0.1 && ny > -0.55) return 'spruce';
+  // Soggy Swamp (SW): dead trees
+  if (nx < 0.05 && ny > 0.25) return 'dead';
+  // Pumpkin Pastures (center): autumn/oak mix
+  if (ny > 0.0 && ny < 0.35 && nx > -0.2 && nx < 0.3) {
+    return noise2D(x * 5, y * 5, SEED + 2222) > 0.4 ? 'autumn' : 'oak';
   }
+  // Highblock Halls / cold areas: spruce
+  if (ny < -0.15) return 'spruce';
   return 'oak';
 }
 
@@ -376,30 +381,46 @@ function generateTerrainVoxels() {
     const by = heightAt(loc.mapX, loc.mapY);
     switch (loc.action) {
       case 'hub':
+        // Pumpkin Pastures camp village
         blocks.push(...mkCampfire(bx, by, bz));
         blocks.push(...mkHut(bx - 3, by, bz - 2));
         blocks.push(...mkHut(bx + 3, by, bz + 1));
         blocks.push(...mkHut(bx - 2, by, bz + 3));
         break;
       case 'vanilla':
+        // Creeper Woods crypt entrance
         blocks.push(...mkHut(bx, by, bz));
+        blocks.push(...mkTower(bx + 3, by, bz - 2, 4));
         break;
       case 'multiplayer':
+        // Highblock Halls castle
         blocks.push(...mkCastle(bx, by, bz));
         break;
       case 'arena':
+        // Cacti Canyon colosseum
         blocks.push(...mkColosseum(bx, by, bz));
         break;
       case 'stories':
+        // Soggy Swamp ruins
         blocks.push(...mkRuins(bx, by, bz));
         break;
     }
   }
 
-  // Scattered extra buildings for visual richness
+  // Biome-themed scattered structures
   const extraBuildings: [number, number, string][] = [
-    [14, 20, 'hut'], [28, 28, 'hut'], [16, 26, 'hut'],
-    [34, 20, 'tower'], [40, 16, 'tower'],
+    // Creeper Woods area: forest huts
+    [8, 10, 'hut'], [12, 16, 'hut'],
+    // Pumpkin Pastures: village buildings
+    [20, 26, 'hut'], [25, 22, 'hut'],
+    // Highblock Halls: castle towers
+    [36, 8, 'tower'], [40, 12, 'tower'],
+    // Desert Temple: pillars
+    [34, 18, 'tower'], [38, 16, 'tower'],
+    // Soggy Swamp: ruined outposts
+    [8, 30, 'hut'], [14, 26, 'hut'],
+    // Redstone Mines entrance
+    [24, 18, 'tower'],
   ];
   for (const [ex, ey, type] of extraBuildings) {
     const t = tileMap.get(`${ex},${ey}`);
@@ -458,6 +479,7 @@ function VoxelTerrain({ data }: { data: { positions: Float32Array; colors: Float
 
   useEffect(() => {
     const m = ref.current; if (!m) return;
+    m.raycast = () => {};
     const d = new THREE.Object3D();
     const c = new THREE.Color();
     for (let i = 0; i < data.count; i++) {
@@ -480,6 +502,7 @@ function TrackBlocks({ data }: { data: { positions: Float32Array; colors: Float3
 
   useEffect(() => {
     const m = ref.current; if (!m) return;
+    m.raycast = () => {};
     const d = new THREE.Object3D();
     const c = new THREE.Color();
     for (let i = 0; i < data.count; i++) {
@@ -574,12 +597,50 @@ function LocationBeacon({
   );
 }
 
-function CameraSetup() {
-  const { camera } = useThree();
+function CameraPan({ isDraggingRef }: { isDraggingRef: React.MutableRefObject<boolean> }) {
+  const { camera, gl } = useThree();
+  const pan = useRef({ x: 0, z: 0 });
+  const drag = useRef({ active: false, sx: 0, sy: 0, px: 0, pz: 0 });
+
   useEffect(() => {
-    camera.position.set(30, 38, 30);
-    camera.lookAt(0, 6, 0);
-  }, [camera]);
+    const el = gl.domElement;
+    const getZoom = () => (camera as THREE.OrthographicCamera).zoom || 13;
+
+    const onDown = (e: PointerEvent) => {
+      drag.current = { active: true, sx: e.clientX, sy: e.clientY, px: pan.current.x, pz: pan.current.z };
+      isDraggingRef.current = false;
+    };
+    const onMove = (e: PointerEvent) => {
+      const d = drag.current;
+      if (!d.active) return;
+      const dx = e.clientX - d.sx;
+      const dy = e.clientY - d.sy;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) isDraggingRef.current = true;
+      const s = 0.075 / (getZoom() / 13);
+      pan.current.x = d.px + (dx * 0.7 + dy * 0.4) * s;
+      pan.current.z = d.pz + (-dx * 0.7 + dy * 0.4) * s;
+    };
+    const onUp = () => {
+      drag.current.active = false;
+      setTimeout(() => { isDraggingRef.current = false; }, 80);
+    };
+
+    el.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    return () => {
+      el.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+  }, [camera, gl, isDraggingRef]);
+
+  useFrame(() => {
+    const p = pan.current;
+    camera.position.set(30 + p.x, 38, 30 + p.z);
+    camera.lookAt(0 + p.x, 6, 0 + p.z);
+  });
+
   return null;
 }
 
@@ -601,6 +662,7 @@ export default function GameModeMap({
 }: GameModeMapProps) {
   const t = useTranslations();
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
+  const isDraggingRef = useRef(false);
 
   const locationStatuses = useMemo(() => {
     const s: Record<string, GameModeStatus> = {};
@@ -617,7 +679,7 @@ export default function GameModeMap({
       <Canvas shadows gl={{ antialias: true, alpha: false }} style={{ position: 'absolute', inset: 0 }}>
         {/* Warm parchment background */}
         <color attach="background" args={['#d5c4a8']} />
-        <CameraSetup />
+        <CameraPan isDraggingRef={isDraggingRef} />
         <OrthographicCamera makeDefault position={[30, 38, 30]} zoom={13} near={0.1} far={250} />
 
         {/* Warm golden lighting */}
@@ -664,7 +726,7 @@ export default function GameModeMap({
             isHovered={hoveredLocation === loc.id}
             locale={locale}
             onlineCount={onlineCount}
-            onClick={() => { if (locationStatuses[loc.id] !== 'locked' && loc.action !== 'hub') onSelectMode(loc.action); }}
+            onClick={() => { if (!isDraggingRef.current && locationStatuses[loc.id] !== 'locked' && loc.action !== 'hub') onSelectMode(loc.action); }}
             onHoverIn={() => { if (loc.action !== 'hub') setHoveredLocation(loc.id); }}
             onHoverOut={() => setHoveredLocation(null)}
           />
