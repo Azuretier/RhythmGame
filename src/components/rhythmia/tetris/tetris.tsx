@@ -1196,8 +1196,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           triggerBoardShakeRef.current();
         }
 
-        // Corruption: mature cells may spawn additional enemies
-        spawnFromCorruptionRef.current();
+        // Corruption: mature cells may spawn additional enemies (only while wave active)
+        if (tdBeatsRemainingRef.current > 0) {
+          spawnFromCorruptionRef.current();
+        }
 
         // Check wave complete: no more spawning and all enemies dead
         if (!gameOverRef.current && tdBeatsRemainingRef.current <= 0 && gamePhaseRef.current === 'PLAYING') {
