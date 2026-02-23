@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useSkillTree } from '@/lib/skill-tree/context';
 import { SKILL_NODES, ARCHETYPES, getNodesForArchetype } from '@/lib/skill-tree/definitions';
-import type { SkillNode, Archetype, ArchetypeMeta } from '@/lib/skill-tree/types';
+import type { SkillNode, Archetype } from '@/lib/skill-tree/types';
 import styles from './SkillTree.module.css';
 
+/** Pixel-art style icons via Unicode — rendered in pixel font */
 const NODE_ICONS: Record<string, string> = {
   bolt: '\u26A1',
   'arrow-down': '\u2B07',
@@ -26,10 +27,11 @@ const NODE_ICONS: Record<string, string> = {
   crown: '\uD83D\uDC51',
 };
 
-/** Grid cell dimensions for SVG line calculations */
+/** Grid cell dimensions — pixel-aligned */
 const CELL_W = 110;
 const CELL_H = 100;
-const NODE_R = 35; // radius of node circle
+const NODE_SIZE = 60; // square side length
+const NODE_HALF = NODE_SIZE / 2;
 
 interface SkillTreeProps {
   onClose?: () => void;
@@ -68,15 +70,8 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     [archetypeNodes, currentPage]
   );
 
-  /** All nodes that *require* a node on the current page (i.e. on the next page) */
   const nextPageNodes = useMemo(
     () => archetypeNodes.filter((n) => n.page === currentPage + 1),
-    [archetypeNodes, currentPage]
-  );
-
-  /** All nodes on the previous page that are parents to nodes on current page */
-  const prevPageNodes = useMemo(
-    () => archetypeNodes.filter((n) => n.page === currentPage - 1),
     [archetypeNodes, currentPage]
   );
 
@@ -118,17 +113,19 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     setCurrentPage((p) => Math.max(0, Math.min(pageCount - 1, p + dir)));
   };
 
-  /** Calculate node center position within the SVG grid */
-  const nodeCenter = (node: SkillNode, pageOffset: number = 0) => {
-    const x = node.position.col * CELL_W + CELL_W / 2;
-    const y = (node.position.row + pageOffset) * CELL_H + CELL_H / 2;
-    return { x, y };
-  };
+  /** Node center position within the SVG grid */
+  const nodeCenter = (node: SkillNode) => ({
+    x: node.position.col * CELL_W + CELL_W / 2,
+    y: node.position.row * CELL_H + CELL_H / 2,
+  });
 
-  /** Build connection lines between nodes on the same page + cross-page stubs */
-  const connections = useMemo(() => {
-    const lines: { x1: number; y1: number; x2: number; y2: number; active: boolean }[] = [];
-    const color = archMeta?.color ?? '#888';
+  /**
+   * Build stepped (orthogonal) SVG paths between connected nodes.
+   * Paths go: down from parent → horizontal to align with child → down to child.
+   * This creates Minecraft-style grid-aligned connections.
+   */
+  const connectionPaths = useMemo(() => {
+    const paths: { d: string; active: boolean }[] = [];
 
     for (const node of nodesForPage) {
       for (const reqId of node.requires) {
@@ -136,25 +133,50 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
         if (!parent) continue;
 
         if (parent.page === node.page) {
-          // Same page — draw full line
+          // Same page — stepped path
           const from = nodeCenter(parent);
           const to = nodeCenter(node);
+          const startY = from.y + NODE_HALF;
+          const endY = to.y - NODE_HALF;
+          const midY = Math.round((startY + endY) / 2);
           const parentStatus = getNodeStatus(parent);
           const active = parentStatus === 'partial' || parentStatus === 'maxed';
-          lines.push({ x1: from.x, y1: from.y + NODE_R, x2: to.x, y2: to.y - NODE_R, active });
+
+          if (from.x === to.x) {
+            // Straight vertical
+            paths.push({
+              d: `M ${from.x} ${startY} L ${from.x} ${endY}`,
+              active,
+            });
+          } else {
+            // Stepped L-shape
+            paths.push({
+              d: `M ${from.x} ${startY} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
+              active,
+            });
+          }
         } else if (parent.page === node.page - 1) {
-          // Parent on previous page — draw stub from top edge down to node
+          // Cross-page: parent on previous page — stub from top edge
           const to = nodeCenter(node);
+          const stubX = parent.position.col * CELL_W + CELL_W / 2;
+          const endY = to.y - NODE_HALF;
+          const midY = Math.round(endY * 0.3);
           const parentStatus = getNodeStatus(parent);
           const active = parentStatus === 'partial' || parentStatus === 'maxed';
-          // Entry stub from parent column
-          const stubX = parent.position.col * CELL_W + CELL_W / 2;
-          lines.push({ x1: stubX, y1: 0, x2: to.x, y2: to.y - NODE_R, active });
+
+          if (stubX === to.x) {
+            paths.push({ d: `M ${stubX} 0 L ${stubX} ${endY}`, active });
+          } else {
+            paths.push({
+              d: `M ${stubX} 0 L ${stubX} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
+              active,
+            });
+          }
         }
       }
     }
 
-    // Bottom stubs: for nodes on current page that have children on the next page
+    // Bottom stubs to next page
     for (const nextNode of nextPageNodes) {
       for (const reqId of nextNode.requires) {
         const parent = nodesForPage.find((n) => n.id === reqId);
@@ -164,18 +186,20 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
         const active = parentStatus === 'partial' || parentStatus === 'maxed';
         const maxRow = Math.max(...nodesForPage.map((n) => n.position.row));
         const bottomY = (maxRow + 1) * CELL_H + 10;
-        lines.push({ x1: from.x, y1: from.y + NODE_R, x2: from.x, y2: bottomY, active });
+        paths.push({
+          d: `M ${from.x} ${from.y + NODE_HALF} L ${from.x} ${bottomY}`,
+          active,
+        });
       }
     }
 
-    return { lines, color };
-  }, [nodesForPage, nextPageNodes, archetypeNodes, archMeta, getNodeStatus]);
+    return paths;
+  }, [nodesForPage, nextPageNodes, archetypeNodes, getNodeStatus]);
 
   /** SVG viewBox dimensions */
   const svgHeight = useMemo(() => {
     if (nodesForPage.length === 0) return CELL_H;
     const maxRow = Math.max(...nodesForPage.map((n) => n.position.row));
-    // Extra space for bottom stubs
     const hasNextPage = nextPageNodes.some((nn) =>
       nn.requires.some((r) => nodesForPage.some((n) => n.id === r))
     );
@@ -184,7 +208,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
 
   const svgWidth = 3 * CELL_W;
 
-  // ───── Archetype picker (no archetype selected yet) ─────
+  // ───── Archetype picker ─────
   if (!state.archetype) {
     return (
       <div className={styles.overlay}>
@@ -193,7 +217,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.25 }}
+          transition={{ duration: 0.2 }}
         >
           <div className={styles.frameHeader}>
             <div className={styles.pageBanner}>
@@ -247,7 +271,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.2 }}
       >
         {/* Header — page navigation */}
         <div className={styles.frameHeader}>
@@ -256,7 +280,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
             onClick={() => goPage(-1)}
             disabled={currentPage === 0}
           >
-            {'\u25C0'}
+            {'<'}
           </button>
           <div className={styles.pageBanner}>
             <span className={styles.pageLabel}>
@@ -268,7 +292,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
             onClick={() => goPage(1)}
             disabled={currentPage >= pageCount - 1}
           >
-            {'\u25B6'}
+            {'>'}
           </button>
         </div>
 
@@ -281,39 +305,39 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
           <span>{t(`archetypes.${archMeta?.nameKey}`)}</span>
         </div>
 
-        {/* Tree area with SVG connections */}
+        {/* Tree area with stepped SVG connections */}
         <div className={styles.treeArea}>
           <AnimatePresence mode="wait">
             <motion.div
               key={`${state.archetype}-${currentPage}`}
               className={styles.treeCanvas}
               style={{ width: svgWidth, minHeight: svgHeight }}
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.15 }}
             >
-              {/* SVG connection lines */}
+              {/* SVG stepped connection paths */}
               <svg
                 className={styles.connectionsSvg}
                 viewBox={`0 0 ${svgWidth} ${svgHeight}`}
                 width={svgWidth}
                 height={svgHeight}
+                shapeRendering="crispEdges"
               >
-                {connections.lines.map((line, i) => (
-                  <line
+                {connectionPaths.map((conn, i) => (
+                  <path
                     key={i}
-                    x1={line.x1}
-                    y1={line.y1}
-                    x2={line.x2}
-                    y2={line.y2}
-                    stroke={line.active ? archMeta?.color ?? '#888' : '#2a2a3a'}
-                    strokeWidth={3}
-                    strokeLinecap="round"
+                    d={conn.d}
+                    fill="none"
+                    stroke={conn.active ? archMeta?.color ?? '#888' : '#2a2a2a'}
+                    strokeWidth={4}
+                    strokeLinejoin="miter"
+                    strokeLinecap="butt"
                     style={
-                      line.active
+                      conn.active
                         ? {
-                            filter: `drop-shadow(0 0 4px ${archMeta?.color ?? '#888'})`,
+                            filter: `drop-shadow(0 0 6px ${archMeta?.color ?? '#888'})`,
                           }
                         : undefined
                     }
@@ -321,7 +345,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
                 ))}
               </svg>
 
-              {/* Nodes */}
+              {/* Square nodes (inventory slots) */}
               {nodesForPage.map((node) => {
                 const status = getNodeStatus(node);
                 const level = getLevel(node.id);
@@ -336,10 +360,10 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
                     }`}
                     style={{
                       '--cat-color': archMeta?.color ?? '#888',
-                      left: pos.x - NODE_R,
-                      top: pos.y - NODE_R,
-                      width: NODE_R * 2,
-                      height: NODE_R * 2,
+                      left: pos.x - NODE_HALF,
+                      top: pos.y - NODE_HALF,
+                      width: NODE_SIZE,
+                      height: NODE_SIZE,
                     } as React.CSSProperties}
                     onClick={() =>
                       setSelectedNode(isSelected ? null : node)
@@ -365,21 +389,18 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
           </AnimatePresence>
         </div>
 
-        {/* Node detail panel */}
+        {/* Detail panel (Minecraft tooltip) */}
         <AnimatePresence>
           {selectedNode && (
             <motion.div
               className={styles.detailPanel}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.15 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.12 }}
             >
               <div className={styles.detailTop}>
-                <span
-                  className={styles.detailIcon}
-                  style={{ borderColor: archMeta?.color }}
-                >
+                <span className={styles.detailIcon}>
                   {NODE_ICONS[selectedNode.icon] || selectedNode.icon}
                 </span>
                 <div className={styles.detailInfo}>
@@ -425,7 +446,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
 
         {/* Bottom panel */}
         <div className={styles.bottomPanel}>
-          {/* Page dots */}
+          {/* Page dots (square) */}
           <div className={styles.pageDots}>
             {Array.from({ length: pageCount }).map((_, i) => (
               <button
@@ -435,7 +456,10 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
                 }`}
                 style={
                   i === currentPage
-                    ? { backgroundColor: archMeta?.color }
+                    ? {
+                        backgroundColor: archMeta?.color,
+                        '--cat-color': archMeta?.color,
+                      } as React.CSSProperties
                     : undefined
                 }
                 onClick={() => {
