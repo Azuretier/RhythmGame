@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION } from './constants';
 import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
@@ -58,6 +58,7 @@ import {
   HealthManaHUD,
   TutorialGuide,
   hasTutorialBeenSeen,
+  DragonGauge,
 
 } from './components';
 import type { JudgmentDisplayMode } from './components';
@@ -287,6 +288,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     // Terrain phase
     terrainPhase,
     tdBeatsRemaining,
+    // Dragon gauge
+    dragonGauge,
     // Tower defense
     enemies,
     bullets,
@@ -355,6 +358,13 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     finishAbsorption,
     consumeComboGuard,
     consumeShield,
+    // Dragon gauge actions
+    chargeDragonFury,
+    chargeDragonMight,
+    isDragonBreathReady,
+    triggerDragonBreath,
+    endDragonBreath,
+    dragonGaugeRef,
     // Terrain phase actions
     enterCheckpoint,
     completeWave,
@@ -377,7 +387,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
   const { keybinds, setKeybind, resetKeybinds, defaults: defaultKeybinds } = useKeybinds();
 
-  const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound } = audio;
+  const { initAudio, playTone, playDrum, playLineClear, playHardDropSound, playRotateSound, playShootSound, playKillSound, playDragonChargeTick, playDragonGaugeFull, playDragonRoar, playDragonFireStart, playDragonFireStop } = audio;
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -396,6 +406,16 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   playShootSoundRef.current = playShootSound;
   const playKillSoundRef = useRef(playKillSound);
   playKillSoundRef.current = playKillSound;
+  const playDragonChargeTickRef = useRef(playDragonChargeTick);
+  playDragonChargeTickRef.current = playDragonChargeTick;
+  const playDragonGaugeFullRef = useRef(playDragonGaugeFull);
+  playDragonGaugeFullRef.current = playDragonGaugeFull;
+  const playDragonRoarRef = useRef(playDragonRoar);
+  playDragonRoarRef.current = playDragonRoar;
+  const playDragonFireStartRef = useRef(playDragonFireStart);
+  playDragonFireStartRef.current = playDragonFireStart;
+  const playDragonFireStopRef = useRef(playDragonFireStop);
+  playDragonFireStopRef.current = playDragonFireStop;
   const destroyTerrainRef = useRef(destroyTerrain);
   destroyTerrainRef.current = destroyTerrain;
   const startNewStageRef = useRef(startNewStage);
@@ -786,6 +806,54 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       }
     }
 
+    // ===== Mandarin Fever Dragon Gauge Charging =====
+    if (dragonGaugeRef.current.enabled && !dragonGaugeRef.current.isBreathing) {
+      let gaugeChanged = false;
+
+      // Charge Fury from T-spins
+      if (tSpin !== 'none') {
+        const tSpinType = tSpin === 'mini' ? 'mini' : 'full';
+        const newFury = chargeDragonFury(tSpinType as 'mini' | 'full', clearedLines);
+        if (newFury > dragonGaugeRef.current.furyGauge - 1) {
+          vfxRef.current.emit({ type: 'dragonGaugeCharge', gauge: 'fury', amount: 1, newValue: newFury });
+          playDragonChargeTickRef.current(newFury);
+          gaugeChanged = true;
+        }
+      }
+
+      // Charge Might from Tetrises (4-line) and Triples (3-line)
+      if (clearedLines >= 3) {
+        const newMight = chargeDragonMight(clearedLines);
+        if (newMight > dragonGaugeRef.current.mightGauge - 1) {
+          vfxRef.current.emit({ type: 'dragonGaugeCharge', gauge: 'might', amount: 1, newValue: newMight });
+          playDragonChargeTickRef.current(newMight);
+          gaugeChanged = true;
+        }
+      }
+
+      // Check if Dragon Breath should trigger
+      if (gaugeChanged && isDragonBreathReady()) {
+        playDragonGaugeFullRef.current();
+
+        // Delay breath slightly for gauge-full chime to play
+        setTimeout(() => {
+          triggerDragonBreath();
+          triggerBoardShake();
+          playDragonRoarRef.current();
+          playDragonFireStartRef.current();
+          vfxRef.current.emit({ type: 'dragonBreathStart' });
+          showActionMessage(['DRAGON BREATH!', '龍のブレス！'], '#FFB300');
+
+          // End breath after duration
+          setTimeout(() => {
+            endDragonBreath();
+            playDragonFireStopRef.current();
+            vfxRef.current.emit({ type: 'dragonBreathEnd' });
+          }, DRAGON_BREATH_DURATION);
+        }, 500);
+      }
+    }
+
     // Reset rotation tracking for next piece
     lastMoveWasRotationRef.current = false;
 
@@ -856,6 +924,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     currentPieceRef, vfx, killEnemies, destroyTerrain, enterCheckpoint,
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
     consumeComboGuard, consumeShield, showActionMessage,
+    chargeDragonFury, chargeDragonMight, isDragonBreathReady, triggerDragonBreath, endDragonBreath,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -1597,6 +1666,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                 equippedCards={equippedCards}
                 activeEffects={activeEffects}
               />
+              {/* Mandarin Fever Dragon Gauge */}
+              <DragonGauge gauge={dragonGauge} />
             </div>
 
             {/* Center column: Board + Beat bar + Stats */}

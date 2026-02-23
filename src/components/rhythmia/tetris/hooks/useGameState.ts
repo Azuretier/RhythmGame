@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState } from '../types';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
@@ -12,6 +12,9 @@ import {
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
     DEFAULT_ACTIVE_EFFECTS, RARITY_OFFER_WEIGHTS, CARDS_OFFERED,
+    DEFAULT_DRAGON_GAUGE, DRAGON_FURY_MAX, DRAGON_MIGHT_MAX,
+    DRAGON_BREATH_DURATION, DRAGON_BREATH_SCORE_BONUS,
+    DRAGON_FURY_CHARGE, DRAGON_MIGHT_CHARGE,
 } from '../constants';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
@@ -109,6 +112,10 @@ export function useGameState() {
     const activeEffectsRef = useRef<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
     const [absorbingCardId, setAbsorbingCardId] = useState<string | null>(null);
 
+    // ===== Mandarin Fever Dragon Gauge =====
+    const [dragonGauge, setDragonGauge] = useState<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
+    const dragonGaugeRef = useRef<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
+
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
     const [bullets, setBullets] = useState<Bullet[]>([]);
@@ -189,6 +196,7 @@ export function useGameState() {
     useEffect(() => { gamePhaseRef.current = gamePhase; }, [gamePhase]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { equippedCardsRef.current = equippedCards; }, [equippedCards]);
+    useEffect(() => { dragonGaugeRef.current = dragonGauge; }, [dragonGauge]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -307,6 +315,10 @@ export function useGameState() {
                     break;
                 case 'combo_amplify':
                     effects.comboAmplifyFactor *= Math.pow(card.attributeValue, ec.stackCount);
+                    break;
+                case 'dragon_boost':
+                    effects.dragonBoostEnabled = true;
+                    effects.dragonBoostChargeMultiplier *= Math.pow(1 + card.attributeValue * 0.5, ec.stackCount);
                     break;
             }
         }
@@ -519,6 +531,97 @@ export function useGameState() {
             return true;
         }
         return false;
+    }, []);
+
+    // ===== Mandarin Fever Dragon Gauge Actions =====
+
+    // Update dragon gauge enabled state when active effects change
+    useEffect(() => {
+        setDragonGauge(prev => ({
+            ...prev,
+            enabled: activeEffects.dragonBoostEnabled,
+        }));
+    }, [activeEffects.dragonBoostEnabled]);
+
+    // Charge dragon fury gauge (from T-spins)
+    const chargeDragonFury = useCallback((tSpinType: 'mini' | 'full', lineCount: number): number => {
+        const gauge = dragonGaugeRef.current;
+        if (!gauge.enabled || gauge.isBreathing) return gauge.furyGauge;
+
+        const chargeMap = DRAGON_FURY_CHARGE[tSpinType];
+        const baseCharge = chargeMap?.[lineCount] ?? 0;
+        if (baseCharge === 0) return gauge.furyGauge;
+
+        const charge = Math.ceil(baseCharge * activeEffectsRef.current.dragonBoostChargeMultiplier);
+        const newValue = Math.min(DRAGON_FURY_MAX, gauge.furyGauge + charge);
+
+        setDragonGauge(prev => ({ ...prev, furyGauge: newValue }));
+        dragonGaugeRef.current = { ...dragonGaugeRef.current, furyGauge: newValue };
+        return newValue;
+    }, []);
+
+    // Charge dragon might gauge (from Tetrises and triples)
+    const chargeDragonMight = useCallback((lineCount: number): number => {
+        const gauge = dragonGaugeRef.current;
+        if (!gauge.enabled || gauge.isBreathing) return gauge.mightGauge;
+
+        const baseCharge = DRAGON_MIGHT_CHARGE[lineCount] ?? 0;
+        if (baseCharge === 0) return gauge.mightGauge;
+
+        const charge = Math.ceil(baseCharge * activeEffectsRef.current.dragonBoostChargeMultiplier);
+        const newValue = Math.min(DRAGON_MIGHT_MAX, gauge.mightGauge + charge);
+
+        setDragonGauge(prev => ({ ...prev, mightGauge: newValue }));
+        dragonGaugeRef.current = { ...dragonGaugeRef.current, mightGauge: newValue };
+        return newValue;
+    }, []);
+
+    // Check if both gauges are full and ready for Dragon Breath
+    const isDragonBreathReady = useCallback((): boolean => {
+        const gauge = dragonGaugeRef.current;
+        return gauge.enabled && !gauge.isBreathing
+            && gauge.furyGauge >= DRAGON_FURY_MAX
+            && gauge.mightGauge >= DRAGON_MIGHT_MAX;
+    }, []);
+
+    // Trigger Dragon Breath — destroys all terrain, awards bonus score
+    const triggerDragonBreath = useCallback((): number => {
+        const gauge = dragonGaugeRef.current;
+        if (!gauge.enabled || gauge.isBreathing) return 0;
+
+        const now = Date.now();
+        setDragonGauge(prev => ({ ...prev, isBreathing: true, breathStartTime: now }));
+        dragonGaugeRef.current = { ...dragonGaugeRef.current, isBreathing: true, breathStartTime: now };
+
+        // Destroy ALL remaining terrain
+        const remaining = terrainTotalRef.current - terrainDestroyedCountRef.current;
+        if (remaining > 0) {
+            destroyTerrain(remaining);
+        }
+
+        // Award bonus score
+        const bonus = DRAGON_BREATH_SCORE_BONUS * levelRef.current;
+        updateScore(scoreRef.current + bonus);
+
+        return remaining;
+    }, [destroyTerrain, updateScore]);
+
+    // End Dragon Breath — reset gauges
+    const endDragonBreath = useCallback(() => {
+        setDragonGauge({
+            furyGauge: 0,
+            mightGauge: 0,
+            isBreathing: false,
+            breathStartTime: 0,
+            enabled: dragonGaugeRef.current.enabled,
+        });
+        dragonGaugeRef.current = {
+            furyGauge: 0,
+            mightGauge: 0,
+            isBreathing: false,
+            breathStartTime: 0,
+            enabled: dragonGaugeRef.current.enabled,
+        };
     }, []);
 
     // ===== Item System Actions =====
@@ -1010,6 +1113,10 @@ export function useGameState() {
         setOfferedCards([]);
         setActiveEffects(DEFAULT_ACTIVE_EFFECTS);
 
+        // Reset dragon gauge
+        setDragonGauge(DEFAULT_DRAGON_GAUGE);
+        dragonGaugeRef.current = { ...DEFAULT_DRAGON_GAUGE };
+
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
         enemiesRef.current = [];
@@ -1101,6 +1208,9 @@ export function useGameState() {
         terrainPhase,
         tdBeatsRemaining,
 
+        // Dragon gauge
+        dragonGauge,
+
         // Tower defense
         enemies,
         bullets,
@@ -1190,6 +1300,13 @@ export function useGameState() {
         enterCheckpoint,
         completeWave,
         setTdBeatsRemaining,
+        // Dragon gauge actions
+        chargeDragonFury,
+        chargeDragonMight,
+        isDragonBreathReady,
+        triggerDragonBreath,
+        endDragonBreath,
+        dragonGaugeRef,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,
