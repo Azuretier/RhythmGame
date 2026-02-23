@@ -98,7 +98,7 @@ function spawnAbsorptionParticles(color: string, glowColor: string, rarity: stri
                 document.body.appendChild(particle);
 
                 requestAnimationFrame(() => {
-                    particle.style.transform = `translate(${Math.cos(angle) * distance - particleSize / 2}px, ${Math.sin(angle) * distance - particleSize / 2}px) scale(0)`;
+                    particle.style.transform = `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${Math.sin(angle) * distance}px)) scale(0)`;
                     particle.style.opacity = '0';
                 });
 
