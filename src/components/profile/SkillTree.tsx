@@ -8,17 +8,19 @@ import { SKILL_NODES } from '@/lib/skill-tree/definitions';
 import type { SkillNode, SkillCategory } from '@/lib/skill-tree/types';
 import styles from './SkillTree.module.css';
 
+const CATEGORIES: SkillCategory[] = ['speed', 'power', 'technique', 'rhythm', 'survival'];
+
 const CATEGORY_COLORS: Record<SkillCategory, string> = {
-  speed: '#3B82F6',
-  power: '#EF4444',
-  technique: '#A855F7',
-  rhythm: '#F59E0B',
-  survival: '#10B981',
+  speed: '#4FC3F7',
+  power: '#EF5350',
+  technique: '#AB47BC',
+  rhythm: '#FFB74D',
+  survival: '#66BB6A',
 };
 
 const CATEGORY_ICONS: Record<SkillCategory, string> = {
   speed: '\u26A1',
-  power: '\uD83D\uDCA5',
+  power: '\uD83D\uDD25',
   technique: '\uD83C\uDFAF',
   rhythm: '\uD83C\uDFB5',
   survival: '\uD83D\uDEE1\uFE0F',
@@ -57,31 +59,17 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     totalSpent,
   } = useSkillTree();
 
+  const [activePage, setActivePage] = useState(0);
   const [selectedNode, setSelectedNode] = useState<SkillNode | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const categories = useMemo(
-    () => ['speed', 'power', 'technique', 'rhythm', 'survival'] as SkillCategory[],
-    []
-  );
+  const activeCategory = CATEGORIES[activePage];
 
-  const nodesByCategory = useMemo(() => {
-    const map: Record<SkillCategory, SkillNode[]> = {
-      speed: [],
-      power: [],
-      technique: [],
-      rhythm: [],
-      survival: [],
-    };
-    for (const node of SKILL_NODES) {
-      map[node.category].push(node);
-    }
-    // Sort by row within each category
-    for (const cat of categories) {
-      map[cat].sort((a, b) => a.position.row - b.position.row);
-    }
-    return map;
-  }, [categories]);
+  const nodesForPage = useMemo(() => {
+    return SKILL_NODES
+      .filter((n) => n.category === activeCategory)
+      .sort((a, b) => a.position.row - b.position.row);
+  }, [activeCategory]);
 
   const handleUnlock = useCallback(
     (skillId: string) => {
@@ -107,26 +95,219 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     [getLevel, canUnlock]
   );
 
+  const goPage = (dir: -1 | 1) => {
+    setSelectedNode(null);
+    setActivePage((p) => (p + dir + CATEGORIES.length) % CATEGORIES.length);
+  };
+
   return (
     <div className={styles.overlay}>
       <motion.div
-        className={styles.container}
+        className={styles.frame}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.2 }}
+        transition={{ duration: 0.25 }}
       >
-        {/* Header */}
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
-            <h2 className={styles.title}>{t('title')}</h2>
-            <div className={styles.points}>
-              <span className={styles.pointsIcon}>{'\u2B50'}</span>
-              <span className={styles.pointsValue}>{state.skillPoints}</span>
-              <span className={styles.pointsLabel}>{t('pointsAvailable')}</span>
-            </div>
+        {/* Stone frame header with page navigation */}
+        <div className={styles.frameHeader}>
+          <button className={styles.pageArrow} onClick={() => goPage(-1)}>
+            {'\u25C0'}
+          </button>
+          <div className={styles.pageBanner}>
+            <span className={styles.pageLabel}>
+              PAGE {activePage + 1}
+            </span>
           </div>
-          <div className={styles.headerRight}>
+          <button className={styles.pageArrow} onClick={() => goPage(1)}>
+            {'\u25B6'}
+          </button>
+        </div>
+
+        {/* Category title */}
+        <div
+          className={styles.categoryTitle}
+          style={{ color: CATEGORY_COLORS[activeCategory] }}
+        >
+          <span>{CATEGORY_ICONS[activeCategory]}</span>
+          <span>{t(`categories.${activeCategory}`)}</span>
+        </div>
+
+        {/* Tree area */}
+        <div className={styles.treeArea}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCategory}
+              className={styles.treeColumn}
+              style={
+                {
+                  '--cat-color': CATEGORY_COLORS[activeCategory],
+                } as React.CSSProperties
+              }
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {nodesForPage.map((node, idx) => {
+                const status = getNodeStatus(node);
+                const level = getLevel(node.id);
+                const isSelected = selectedNode?.id === node.id;
+                const prevNode = idx > 0 ? nodesForPage[idx - 1] : null;
+                const prevStatus = prevNode
+                  ? getNodeStatus(prevNode)
+                  : null;
+                const connectorActive =
+                  prevStatus === 'partial' || prevStatus === 'maxed';
+
+                return (
+                  <div key={node.id} className={styles.nodeGroup}>
+                    {/* Connector line to parent node */}
+                    {idx > 0 && (
+                      <div
+                        className={`${styles.connector} ${
+                          connectorActive ? styles.connectorActive : ''
+                        }`}
+                      />
+                    )}
+                    <button
+                      className={`${styles.node} ${styles[`node_${status}`]} ${
+                        isSelected ? styles.nodeSelected : ''
+                      }`}
+                      onClick={() =>
+                        setSelectedNode(isSelected ? null : node)
+                      }
+                    >
+                      <span className={styles.nodeIcon}>
+                        {NODE_ICONS[node.icon] || node.icon}
+                      </span>
+                      <div className={styles.levelPips}>
+                        {Array.from({ length: node.maxLevel }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`${styles.pip} ${
+                              i < level ? styles.pipFilled : ''
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </button>
+                    <span className={styles.nodeName}>
+                      {t(`nodes.${node.nameKey}`)}
+                    </span>
+                  </div>
+                );
+              })}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Node detail panel */}
+        <AnimatePresence>
+          {selectedNode && (
+            <motion.div
+              className={styles.detailPanel}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className={styles.detailTop}>
+                <span
+                  className={styles.detailIcon}
+                  style={{
+                    borderColor: CATEGORY_COLORS[selectedNode.category],
+                  }}
+                >
+                  {NODE_ICONS[selectedNode.icon] || selectedNode.icon}
+                </span>
+                <div className={styles.detailInfo}>
+                  <div className={styles.detailName}>
+                    {t(`nodes.${selectedNode.nameKey}`)}
+                  </div>
+                  <div className={styles.detailDesc}>
+                    {t(`nodes.${selectedNode.descKey}`)}
+                  </div>
+                </div>
+              </div>
+              <div className={styles.detailBottom}>
+                <span className={styles.detailStat}>
+                  {t('level')}: {getLevel(selectedNode.id)}/
+                  {selectedNode.maxLevel}
+                </span>
+                <span className={styles.detailStat}>
+                  {t('cost')}: {selectedNode.cost} {t('pointsUnit')}
+                </span>
+                {canUnlock(selectedNode.id) && (
+                  <button
+                    className={styles.unlockBtn}
+                    style={{
+                      backgroundColor:
+                        CATEGORY_COLORS[selectedNode.category],
+                    }}
+                    onClick={() => handleUnlock(selectedNode.id)}
+                  >
+                    {getLevel(selectedNode.id) > 0
+                      ? t('upgrade')
+                      : t('unlock')}
+                  </button>
+                )}
+                {getNodeStatus(selectedNode) === 'maxed' && (
+                  <span className={styles.maxedBadge}>{t('maxed')}</span>
+                )}
+                {getNodeStatus(selectedNode) === 'locked' && (
+                  <span className={styles.lockedHint}>
+                    {t('lockedHint')}
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bottom panel — category tabs + toolbar */}
+        <div className={styles.bottomPanel}>
+          <div className={styles.categoryTabs}>
+            {CATEGORIES.map((cat, i) => {
+              const isActive = i === activePage;
+              const catNodes = SKILL_NODES.filter(
+                (n) => n.category === cat
+              );
+              const hasProgress = catNodes.some(
+                (n) => getLevel(n.id) > 0
+              );
+              return (
+                <button
+                  key={cat}
+                  className={`${styles.catTab} ${
+                    isActive ? styles.catTabActive : ''
+                  } ${hasProgress ? styles.catTabProgress : ''}`}
+                  style={
+                    {
+                      '--tab-color': CATEGORY_COLORS[cat],
+                    } as React.CSSProperties
+                  }
+                  onClick={() => {
+                    setSelectedNode(null);
+                    setActivePage(i);
+                  }}
+                >
+                  <span className={styles.catTabIcon}>
+                    {CATEGORY_ICONS[cat]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className={styles.toolbar}>
+            <div className={styles.pointsDisplay}>
+              <span className={styles.pointsStar}>{'\u2B50'}</span>
+              <span className={styles.pointsNum}>{state.skillPoints}</span>
+              <span className={styles.pointsLabel}>
+                {t('pointsAvailable')}
+              </span>
+            </div>
             <button
               className={styles.resetBtn}
               onClick={() => setShowResetConfirm(true)}
@@ -142,130 +323,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
           </div>
         </div>
 
-        {/* Tree Grid */}
-        <div className={styles.treeGrid}>
-          {categories.map((category) => (
-            <div key={category} className={styles.branch}>
-              <div
-                className={styles.branchHeader}
-                style={{ borderColor: CATEGORY_COLORS[category] }}
-              >
-                <span className={styles.branchIcon}>{CATEGORY_ICONS[category]}</span>
-                <span className={styles.branchName}>{t(`categories.${category}`)}</span>
-              </div>
-              <div className={styles.branchNodes}>
-                {nodesByCategory[category].map((node, idx) => {
-                  const status = getNodeStatus(node);
-                  const level = getLevel(node.id);
-                  const isSelected = selectedNode?.id === node.id;
-
-                  return (
-                    <div key={node.id} className={styles.nodeWrapper}>
-                      {/* Connector line to parent */}
-                      {idx > 0 && (
-                        <div
-                          className={styles.connector}
-                          style={{
-                            borderColor:
-                              status === 'locked'
-                                ? 'var(--border)'
-                                : CATEGORY_COLORS[category],
-                          }}
-                        />
-                      )}
-                      <button
-                        className={`${styles.node} ${styles[`node_${status}`]} ${
-                          isSelected ? styles.nodeSelected : ''
-                        }`}
-                        style={{
-                          '--node-color': CATEGORY_COLORS[category],
-                        } as React.CSSProperties}
-                        onClick={() => setSelectedNode(isSelected ? null : node)}
-                      >
-                        <span className={styles.nodeIcon}>
-                          {NODE_ICONS[node.icon] || node.icon}
-                        </span>
-                        <div className={styles.levelPips}>
-                          {Array.from({ length: node.maxLevel }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`${styles.pip} ${
-                                i < level ? styles.pipFilled : ''
-                              }`}
-                              style={
-                                i < level
-                                  ? { backgroundColor: CATEGORY_COLORS[category] }
-                                  : undefined
-                              }
-                            />
-                          ))}
-                        </div>
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Node Detail Panel */}
-        <AnimatePresence>
-          {selectedNode && (
-            <motion.div
-              className={styles.detailPanel}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className={styles.detailHeader}>
-                <span
-                  className={styles.detailIcon}
-                  style={{ backgroundColor: CATEGORY_COLORS[selectedNode.category] }}
-                >
-                  {NODE_ICONS[selectedNode.icon] || selectedNode.icon}
-                </span>
-                <div>
-                  <div className={styles.detailName}>
-                    {t(`nodes.${selectedNode.nameKey}`)}
-                  </div>
-                  <div className={styles.detailCategory}>
-                    {t(`categories.${selectedNode.category}`)}
-                  </div>
-                </div>
-              </div>
-              <p className={styles.detailDesc}>
-                {t(`nodes.${selectedNode.descKey}`)}
-              </p>
-              <div className={styles.detailStats}>
-                <span>
-                  {t('level')}: {getLevel(selectedNode.id)}/{selectedNode.maxLevel}
-                </span>
-                <span>
-                  {t('cost')}: {selectedNode.cost} {t('pointsUnit')}
-                </span>
-              </div>
-              {canUnlock(selectedNode.id) && (
-                <button
-                  className={styles.unlockBtn}
-                  style={{ backgroundColor: CATEGORY_COLORS[selectedNode.category] }}
-                  onClick={() => handleUnlock(selectedNode.id)}
-                >
-                  {getLevel(selectedNode.id) > 0 ? t('upgrade') : t('unlock')}
-                </button>
-              )}
-              {getNodeStatus(selectedNode) === 'maxed' && (
-                <div className={styles.maxedBadge}>{t('maxed')}</div>
-              )}
-              {getNodeStatus(selectedNode) === 'locked' && (
-                <div className={styles.lockedHint}>{t('lockedHint')}</div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Reset Confirmation */}
+        {/* Reset confirmation dialog */}
         <AnimatePresence>
           {showResetConfirm && (
             <motion.div
@@ -283,7 +341,10 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
                   >
                     {t('cancel')}
                   </button>
-                  <button className={styles.resetConfirmBtn} onClick={handleReset}>
+                  <button
+                    className={styles.resetConfirmBtn}
+                    onClick={handleReset}
+                  >
                     {t('resetConfirmBtn')}
                   </button>
                 </div>
