@@ -12,6 +12,7 @@ import {
   buildScoreRankingState,
   recordDailyVisit,
   syncGameplayStats,
+  SCORE_RANK_TIERS,
   initAuth,
   fetchActivePoll,
   getUserVote,
@@ -22,15 +23,13 @@ import type { ScoreRankingState, Poll } from '@/lib/loyalty';
 import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
 import type { AdvancementState } from '@/lib/advancements';
 import { PixelIcon } from '@/components/rhythmia/PixelIcon';
-import { useProfile } from '@/lib/profile/context';
-import { getIconById } from '@/lib/profile/types';
 import styles from './loyalty.module.css';
 
 export default function LoyaltyDashboard() {
   const t = useTranslations('loyalty');
   const tAdv = useTranslations('advancements');
   const locale = useLocale();
-  const { profile } = useProfile();
+
   const [state, setState] = useState<ScoreRankingState | null>(null);
   const [advState, setAdvState] = useState<AdvancementState | null>(null);
 
@@ -107,10 +106,11 @@ export default function LoyaltyDashboard() {
 
   if (!state) return null;
 
-  const profileIcon = profile ? getIconById(profile.icon) : undefined;
   const { totalScore, bestScorePerGame, totalGamesPlayed, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
+  const currentTierIndex = SCORE_RANK_TIERS.indexOf(currentTier);
+  const nextTier = currentTierIndex < SCORE_RANK_TIERS.length - 1 ? SCORE_RANK_TIERS[currentTierIndex + 1] : null;
   const progress = scoreProgress(combinedScore);
   const nextTierScore = scoreToNextTier(combinedScore);
 
@@ -140,44 +140,74 @@ export default function LoyaltyDashboard() {
       </motion.header>
 
       <div className={styles.container}>
-        {/* Profile Display */}
+        {/* Rank Emblem Hero */}
         <motion.div
-          className={styles.tierDisplay}
+          className={styles.rankHero}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.1 }}
         >
-          <span
-            className={styles.tierIcon}
-            style={profileIcon ? { background: profileIcon.bgColor, color: profileIcon.color, borderRadius: '50%', width: '56px', height: '56px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } : undefined}
+          <div
+            className={styles.rankEmblem}
+            style={{
+              borderColor: currentTier.color,
+              boxShadow: `0 0 60px ${currentTier.color}30, 0 0 120px ${currentTier.color}10`,
+            }}
           >
-            {profileIcon?.emoji ?? currentTier.icon}
-          </span>
-          <div className={styles.heroScore}>{profile?.name ?? '—'}</div>
-          <p className={styles.tierLabel}>{profile?.friendCode ?? ''}</p>
-          <h1 className={styles.tierName} style={{ color: currentTier.color }}>
-            {currentTier.icon} {t(`tiers.${currentTier.id}`)}
+            <span className={styles.rankEmblemIcon}>{currentTier.icon}</span>
+          </div>
+          <h1 className={styles.rankTitle} style={{ color: currentTier.color }}>
+            {t(`tiers.${currentTier.id}`)}
           </h1>
+          <div className={styles.rankScore}>
+            {formatScoreCompact(combinedScore)} SP
+          </div>
+        </motion.div>
 
-          <div className={styles.progressContainer}>
-            <p className={styles.tierLabel} style={{ marginBottom: 8 }}>{t('totalScore')}</p>
-            <div className={styles.progressBar}>
-              <div
-                className={styles.progressFill}
-                style={{
-                  width: `${progress}%`,
-                  background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})`,
-                }}
-              />
+        {/* Score Gauge Section — 4 rows */}
+        <motion.div
+          className={styles.gaugeSection}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+        >
+          {/* Row 1: TOTAL SCORE + big number + next rank req */}
+          <div className={styles.gaugeRow1}>
+            <div className={styles.gaugeHeaderLeft}>
+              <span className={styles.gaugeLabel}>{t('totalScore')}</span>
+              <span className={styles.gaugeBigScore}>{formatScoreCompact(combinedScore)}</span>
             </div>
-            <div className={styles.progressLabels}>
-              <span>{formatScoreCompact(combinedScore)}</span>
-              <span>
-                {nextTierScore !== null
-                  ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
-                  : t('maxTier')}
-              </span>
-            </div>
+            <span className={styles.gaugeNextReq}>
+              {nextTierScore !== null
+                ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
+                : t('maxTier')}
+            </span>
+          </div>
+
+          {/* Row 2: Current rank (left) — Next rank (right) */}
+          <div className={styles.gaugeRow2}>
+            <span className={styles.gaugeRankCurrent} style={{ color: currentTier.color }}>
+              {currentTier.icon} {t(`tiers.${currentTier.id}`)}
+            </span>
+            <span className={styles.gaugeRankNext} style={nextTier ? { color: nextTier.color } : undefined}>
+              {nextTier ? `${nextTier.icon} ${t(`tiers.${nextTier.id}`)}` : '—'}
+            </span>
+          </div>
+
+          {/* Row 3: Gauge bar */}
+          <div className={styles.progressBar}>
+            <div
+              className={styles.progressFill}
+              style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})` }}
+            />
+          </div>
+
+          {/* Row 4: Score markers */}
+          <div className={styles.gaugeRow4}>
+            <span className={styles.gaugeScore}>{formatScoreCompact(currentTier.minScore)}</span>
+            <span className={styles.gaugeScore}>
+              {nextTier ? formatScoreCompact(nextTier.minScore) : '∞'}
+            </span>
           </div>
         </motion.div>
 
