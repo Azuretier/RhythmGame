@@ -4,8 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { useProfile } from '@/lib/profile/context';
-import { getIconById } from '@/lib/profile/types';
 import {
   getTierByScore,
   scoreProgress,
@@ -25,7 +23,6 @@ const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
   const router = useRouter();
-  const { profile } = useProfile();
   const [state, setState] = useState<ScoreRankingState | null>(null);
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
   const rankGroups = useMemo(() => getRankGroups(), []);
@@ -49,8 +46,7 @@ export default function LoyaltyWidget() {
 
   if (!state) return null;
 
-  const profileIcon = profile ? getIconById(profile.icon) : undefined;
-  const { totalScore, bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
+  const { bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
   const currentTierIndex = SCORE_RANK_TIERS.indexOf(currentTier);
@@ -65,24 +61,24 @@ export default function LoyaltyWidget() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.7 }}
+      style={{ background: `radial-gradient(ellipse at 50% 0%, ${currentTier.color}08 0%, transparent 60%), rgba(255, 255, 255, 0.03)` }}
     >
-      {/* Profile Hero */}
-      <div className={styles.scoreHero}>
+      {/* Rank Emblem Hero */}
+      <div className={styles.rankHero}>
         <div
-          className={styles.tierBadge}
+          className={styles.rankEmblem}
           style={{
-            borderColor: profileIcon?.bgColor ?? currentTier.color,
-            background: profileIcon?.bgColor ?? 'rgba(255, 255, 255, 0.04)',
+            borderColor: currentTier.color,
+            boxShadow: `0 0 40px ${currentTier.color}30, 0 0 80px ${currentTier.color}10`,
           }}
         >
-          <span className={styles.tierIconLarge}>{profileIcon?.emoji ?? '?'}</span>
+          <span className={styles.rankEmblemIcon}>{currentTier.icon}</span>
         </div>
-        <div className={styles.scoreInfo}>
-          <div className={styles.scoreValue}>{profile?.name ?? '—'}</div>
-          <div className={styles.scoreLabel}>{profile?.friendCode ?? ''}</div>
-          <div className={styles.tierName} style={{ color: currentTier.color }}>
-            <span>{currentTier.icon}</span> {t(`tiers.${currentTier.id}`)}
-          </div>
+        <div className={styles.rankTitle} style={{ color: currentTier.color }}>
+          {t(`tiers.${currentTier.id}`)}
+        </div>
+        <div className={styles.rankScore}>
+          {formatScoreCompact(combinedScore)} SP
         </div>
       </div>
 
