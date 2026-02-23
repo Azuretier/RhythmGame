@@ -8,6 +8,7 @@ import styles from './VanillaGame.module.css';
 import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES } from './constants';
 import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
+import { getModifiers } from './protocol';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 
 // Advancements
@@ -284,6 +285,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     absorbingCardId,
     // Game mode
     gameMode,
+    // Protocol modifiers
+    protocolMods,
+    protocolModsRef,
     // Terrain phase
     terrainPhase,
     tdBeatsRemaining,
@@ -609,16 +613,18 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
     // Apply beat_extend bonus from cards (widens timing windows)
     const beatExtend = activeEffectsRef.current.beatExtendBonus || 0;
+    // Protocol beat window modifier (< 1.0 = harder, shrinks windows)
+    const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
 
     let mult = 1;
     let timing: 'perfect' | 'great' | 'good' | 'miss';
 
-    if (distFromBeat < (0.06 + beatExtend)) {
-      timing = 'perfect';  // ~12% of beat window (tightest) + card bonus
-    } else if (distFromBeat < (0.12 + beatExtend)) {
-      timing = 'great';    // ~12% more + card bonus
-    } else if (distFromBeat < (0.20 + beatExtend)) {
-      timing = 'good';     // ~16% more + card bonus
+    if (distFromBeat < ((0.06 + beatExtend) * beatWindowMod)) {
+      timing = 'perfect';  // ~12% of beat window (tightest) + card bonus + protocol mod
+    } else if (distFromBeat < ((0.12 + beatExtend) * beatWindowMod)) {
+      timing = 'great';    // ~12% more + card bonus + protocol mod
+    } else if (distFromBeat < ((0.20 + beatExtend) * beatWindowMod)) {
+      timing = 'good';     // ~16% more + card bonus + protocol mod
     } else {
       timing = 'miss';     // everything else
     }
@@ -693,10 +699,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     setBoard(clearedBoard);
     boardRef.current = clearedBoard;
 
-    // Calculate score with rhythm multiplier and combo_amplify
+    // Calculate score with rhythm multiplier, combo_amplify, and protocol score bonus
     const amplifiedCombo = Math.max(1, Math.floor(comboRef.current * activeEffectsRef.current.comboAmplifyFactor));
     const baseScore = dropDistance * 2 + [0, 100, 300, 500, 800][clearedLines] * levelRef.current;
-    const finalScore = baseScore * mult * amplifiedCombo;
+    const finalScore = Math.round(baseScore * mult * amplifiedCombo * protocolModsRef.current.scoreMultiplier);
     updateScore(scoreRef.current + finalScore);
 
     // Show judgment with earned score — called after score calc so score display mode works
@@ -961,10 +967,14 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   // Tutorial state — shows on first play
   const [showTutorial, setShowTutorial] = useState(false);
 
+  // Pending protocol ID for tutorial flow (stores selection until tutorial completes)
+  const pendingProtocolIdRef = useRef(0);
+
   // Actually start the game (after tutorial or directly)
-  const launchGame = useCallback(() => {
+  const launchGame = useCallback((protocolId: number = 0) => {
     initAudio();
-    initGame('vanilla');
+    const mods = getModifiers(protocolId);
+    initGame('vanilla', mods);
 
     // Reset per-game advancement tracking
     gamePerfectBeatsRef.current = 0;
@@ -989,18 +999,19 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   }, [initAudio, initGame]);
 
   // Start game — intercept for tutorial on first play
-  const startGame = useCallback(() => {
+  const startGame = useCallback((protocolId: number = 0) => {
     if (!hasTutorialBeenSeen()) {
+      pendingProtocolIdRef.current = protocolId;
       setShowTutorial(true);
       return;
     }
-    launchGame();
+    launchGame(protocolId);
   }, [launchGame]);
 
-  // Tutorial completion — proceed with game launch
+  // Tutorial completion — proceed with game launch using stored protocol
   const handleTutorialComplete = useCallback(() => {
     setShowTutorial(false);
-    launchGame();
+    launchGame(pendingProtocolIdRef.current);
   }, [launchGame]);
 
   // Record advancement stats when game ends
@@ -1050,7 +1061,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     if (!isPlaying || gameOver) return;
 
     const world = WORLDS[worldIdx];
-    const interval = 60000 / world.bpm;
+    const effectiveBpm = world.bpm * protocolModsRef.current.bpmMultiplier;
+    const interval = 60000 / effectiveBpm;
 
     lastBeatRef.current = Date.now();
 
@@ -1106,8 +1118,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       // Dig phase: no enemy/bullet/tower logic — just rhythm VFX below
 
       // VFX: beat pulse ring — intensity scales with BPM (both modes)
-      const intensity = Math.min(1, (world.bpm - 80) / 100);
-      vfxRef.current.emit({ type: 'beat', bpm: world.bpm, intensity });
+      const intensity = Math.min(1, (effectiveBpm - 80) / 100);
+      vfxRef.current.emit({ type: 'beat', bpm: effectiveBpm, intensity });
 
       setTimeout(() => setBoardBeat(false), 100);
     }, interval);
@@ -1151,7 +1163,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         }
 
         const world = WORLDS[worldIdxRef.current];
-        const interval = 60000 / world.bpm;
+        const effectiveBpm = world.bpm * protocolModsRef.current.bpmMultiplier;
+        const interval = 60000 / effectiveBpm;
         const now = Date.now();
         const elapsed = now - lastBeatRef.current;
         const phase = (elapsed % interval) / interval;
@@ -1163,12 +1176,13 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           // Distance from beat center for timing zone display
           const dist = phase <= 0.5 ? phase : 1 - phase;
           const beatExtend = activeEffectsRef.current?.beatExtendBonus || 0;
+          const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
 
-          if (dist < (0.06 + beatExtend)) {
+          if (dist < ((0.06 + beatExtend) * beatWindowMod)) {
             beatBarRef.current.setAttribute('data-onbeat', 'perfect');
-          } else if (dist < (0.12 + beatExtend)) {
+          } else if (dist < ((0.12 + beatExtend) * beatWindowMod)) {
             beatBarRef.current.setAttribute('data-onbeat', 'great');
-          } else if (dist < (0.20 + beatExtend)) {
+          } else if (dist < ((0.20 + beatExtend) * beatWindowMod)) {
             beatBarRef.current.setAttribute('data-onbeat', 'good');
           } else {
             beatBarRef.current.removeAttribute('data-onbeat');
@@ -1201,7 +1215,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         processMouseSoftDrop(currentTime);
 
         const baseSpeed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
-        const speed = baseSpeed / (activeEffectsRef.current?.gravitySlowFactor || 1);
+        const speed = baseSpeed / ((activeEffectsRef.current?.gravitySlowFactor || 1) * protocolModsRef.current.gravityMultiplier);
         if (currentTime - lastGravityRef.current >= speed) {
           tick();
           lastGravityRef.current = currentTime;
@@ -1655,7 +1669,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             <div className={styles.sidePanelRight}>
               <div className={styles.nextWrap}>
                 <div className={styles.nextLabel}>NEXT</div>
-                {nextPiece && <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />}
+                {nextPiece && !protocolMods.advancedRules.includes('invisible_preview') && (
+                  <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />
+                )}
               </div>
               {terrainPhase === 'td' && <HealthManaHUD health={towerHealth} />}
             </div>

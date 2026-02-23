@@ -13,6 +13,8 @@ import {
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
     DEFAULT_ACTIVE_EFFECTS, RARITY_OFFER_WEIGHTS, CARDS_OFFERED,
 } from '../constants';
+import type { ProtocolModifiers } from '../protocol';
+import { DEFAULT_PROTOCOL_MODIFIERS } from '../protocol';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
 
 let nextFloatingId = 0;
@@ -64,6 +66,10 @@ export function useGameState() {
 
     // Game mode
     const [gameMode, setGameMode] = useState<GameMode>('vanilla');
+
+    // Protocol modifiers — difficulty scaling applied across all worlds
+    const [protocolMods, setProtocolMods] = useState<ProtocolModifiers>(DEFAULT_PROTOCOL_MODIFIERS);
+    const protocolModsRef = useRef<ProtocolModifiers>(DEFAULT_PROTOCOL_MODIFIERS);
 
     // Terrain phase — vanilla mode alternates between dig and td phases
     const [terrainPhase, setTerrainPhase] = useState<TerrainPhase>('dig');
@@ -968,7 +974,11 @@ export function useGameState() {
     }, [enterCardSelect]);
 
     // Initialize/reset game
-    const initGame = useCallback((mode: GameMode = 'vanilla') => {
+    const initGame = useCallback((mode: GameMode = 'vanilla', protocolModifiers?: ProtocolModifiers) => {
+        const mods = protocolModifiers ?? DEFAULT_PROTOCOL_MODIFIERS;
+        setProtocolMods(mods);
+        protocolModsRef.current = mods;
+
         setGameMode(mode);
         gameModeRef.current = mode;
 
@@ -1097,6 +1107,9 @@ export function useGameState() {
         absorbingCardId,
         // Game mode
         gameMode,
+        // Protocol modifiers
+        protocolMods,
+        protocolModsRef,
         // Terrain phase
         terrainPhase,
         tdBeatsRemaining,
