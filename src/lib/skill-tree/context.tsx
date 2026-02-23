@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import type { SkillTreeState, Archetype } from './types';
 import {
   loadSkillTreeState,
@@ -43,16 +43,23 @@ interface SkillTreeContextType {
 const SkillTreeContext = createContext<SkillTreeContextType | undefined>(undefined);
 
 export function SkillTreeProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<SkillTreeState>(() => loadSkillTreeState());
+  // stateRef always holds the latest committed state, updated eagerly
+  // before React re-renders. This prevents stale reads when multiple
+  // mutations fire in the same tick (e.g. awardGamePoints + awardMultiplayerWinPoints).
+  const stateRef = useRef<SkillTreeState>(loadSkillTreeState());
+  const [state, setState] = useState<SkillTreeState>(() => stateRef.current);
 
   // Load from localStorage on mount
   useEffect(() => {
-    setState(loadSkillTreeState());
+    const loaded = loadSkillTreeState();
+    stateRef.current = loaded;
+    setState(loaded);
   }, []);
 
   // Listen for skill-tree-restored events from GoogleSyncProvider
   useEffect(() => {
     const handleRestored = (event: CustomEvent<SkillTreeState>) => {
+      stateRef.current = event.detail;
       setState(event.detail);
       saveSkillTreeState(event.detail);
     };
@@ -69,54 +76,45 @@ export function SkillTreeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const selectArchetype = useCallback(
-    (archetype: Archetype) => {
-      const current = loadSkillTreeState();
-      const updated = selectArchetypeFn(current, archetype);
+  /** Eagerly commit an updated state to ref, React, localStorage, and cloud. */
+  const commitUpdate = useCallback(
+    (updated: SkillTreeState) => {
+      stateRef.current = updated;
       setState(updated);
       saveSkillTreeState(updated);
       syncToCloud(updated);
     },
     [syncToCloud]
+  );
+
+  const selectArchetype = useCallback(
+    (archetype: Archetype) => {
+      commitUpdate(selectArchetypeFn(stateRef.current, archetype));
+    },
+    [commitUpdate]
   );
 
   const unlockSkill = useCallback(
     (skillId: string): boolean => {
-      const current = loadSkillTreeState();
+      const current = stateRef.current;
       if (!canUnlockSkillFn(current, skillId)) return false;
-
-      const updated = unlockSkillFn(current, skillId);
-      setState(updated);
-      saveSkillTreeState(updated);
-      syncToCloud(updated);
+      commitUpdate(unlockSkillFn(current, skillId));
       return true;
     },
-    [syncToCloud]
+    [commitUpdate]
   );
 
   const resetAllSkills = useCallback(() => {
-    const current = loadSkillTreeState();
-    const updated = resetSkillsFn(current);
-    setState(updated);
-    saveSkillTreeState(updated);
-    syncToCloud(updated);
-  }, [syncToCloud]);
+    commitUpdate(resetSkillsFn(stateRef.current));
+  }, [commitUpdate]);
 
   const awardGamePoints = useCallback(() => {
-    const current = loadSkillTreeState();
-    const updated = awardGamePointsFn(current);
-    setState(updated);
-    saveSkillTreeState(updated);
-    syncToCloud(updated);
-  }, [syncToCloud]);
+    commitUpdate(awardGamePointsFn(stateRef.current));
+  }, [commitUpdate]);
 
   const awardMultiplayerWinPoints = useCallback(() => {
-    const current = loadSkillTreeState();
-    const updated = awardMultiplayerWinPointsFn(current);
-    setState(updated);
-    saveSkillTreeState(updated);
-    syncToCloud(updated);
-  }, [syncToCloud]);
+    commitUpdate(awardMultiplayerWinPointsFn(stateRef.current));
+  }, [commitUpdate]);
 
   const canUnlock = useCallback(
     (skillId: string) => {
@@ -135,6 +133,7 @@ export function SkillTreeProvider({ children }: { children: ReactNode }) {
   const totalSpent = getTotalSpentPoints(state);
 
   const restoreSkillTree = useCallback((restored: SkillTreeState) => {
+    stateRef.current = restored;
     setState(restored);
     saveSkillTreeState(restored);
   }, []);

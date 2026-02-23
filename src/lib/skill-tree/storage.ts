@@ -168,3 +168,57 @@ export function getTotalSpentPoints(state: SkillTreeState): number {
   }
   return spent;
 }
+
+/**
+ * Merge two skill tree states from different devices.
+ *
+ * When archetypes match (or one is null), merges unlockedSkills by taking
+ * the higher level for each skill. When archetypes differ, keeps the state
+ * with more totalPointsEarned (different archetype trees can't be merged).
+ * Recalculates skillPoints to stay consistent.
+ */
+export function mergeSkillTreeStates(
+  local: SkillTreeState,
+  remote: SkillTreeState
+): SkillTreeState {
+  const sameArchetype =
+    local.archetype === remote.archetype ||
+    local.archetype === null ||
+    remote.archetype === null;
+
+  if (!sameArchetype) {
+    // Different archetypes — can't merge skill trees, take the more-progressed one
+    return local.totalPointsEarned >= remote.totalPointsEarned ? local : remote;
+  }
+
+  // Resolve archetype (pick the non-null one, or the shared value)
+  const archetype = local.archetype ?? remote.archetype;
+
+  // Merge unlocked skills — take the higher level for each
+  const allSkillIds = new Set([
+    ...Object.keys(local.unlockedSkills),
+    ...Object.keys(remote.unlockedSkills),
+  ]);
+  const mergedSkills: Record<string, number> = {};
+  for (const id of allSkillIds) {
+    const max = Math.max(
+      local.unlockedSkills[id] || 0,
+      remote.unlockedSkills[id] || 0
+    );
+    if (max > 0) mergedSkills[id] = max;
+  }
+
+  const totalPointsEarned = Math.max(
+    local.totalPointsEarned,
+    remote.totalPointsEarned
+  );
+
+  // Recalculate available points: total earned minus what's spent on merged skills
+  let spent = 0;
+  for (const node of SKILL_NODES) {
+    spent += (mergedSkills[node.id] || 0) * node.cost;
+  }
+  const skillPoints = Math.max(0, totalPointsEarned - spent);
+
+  return { archetype, skillPoints, totalPointsEarned, unlockedSkills: mergedSkills };
+}

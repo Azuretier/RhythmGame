@@ -35,6 +35,7 @@ import { loadLoyaltyState, saveLoyaltyState } from '@/lib/loyalty/storage';
 import {
   loadSkillTreeState,
   saveSkillTreeState,
+  mergeSkillTreeStates,
 } from '@/lib/skill-tree/storage';
 
 interface GoogleSyncContextType {
@@ -188,16 +189,14 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
         saveLoyaltyState(merged);
       }
 
-      // Restore skill tree
+      // Restore skill tree — merge local and remote to preserve skills from both devices
       if (remoteUserData?.skillTree) {
         const localSkillTree = loadSkillTreeState();
-        // Take whichever has more total points earned (more progress)
-        if (remoteUserData.skillTree.totalPointsEarned > localSkillTree.totalPointsEarned) {
-          saveSkillTreeState(remoteUserData.skillTree);
-          window.dispatchEvent(new CustomEvent('skill-tree-restored', {
-            detail: remoteUserData.skillTree,
-          }));
-        }
+        const merged = mergeSkillTreeStates(localSkillTree, remoteUserData.skillTree);
+        saveSkillTreeState(merged);
+        window.dispatchEvent(new CustomEvent('skill-tree-restored', {
+          detail: merged,
+        }));
       }
 
       setStatus('done');
