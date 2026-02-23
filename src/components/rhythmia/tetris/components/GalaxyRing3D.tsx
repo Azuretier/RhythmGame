@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { GalaxyRingEnemy, GalaxyTower, GalaxyGate } from '../galaxy-types';
@@ -588,17 +589,23 @@ export interface GalaxyRing3DProps {
 }
 
 export function GalaxyRing3D({ enemies, towers, gates, waveNumber }: GalaxyRing3DProps) {
-    return (
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
+    if (!mounted) return null;
+
+    // Portal to document.body so no parent container can clip/overflow the ring
+    return createPortal(
         <Canvas
             gl={{ antialias: true, alpha: true }}
-            camera={{ position: [0, 6, 9], fov: 45, near: 0.1, far: 100 }}
+            camera={{ position: [0, 5, 8], fov: 50, near: 0.1, far: 100 }}
             style={{
-                position: 'absolute',
-                inset: '-40%',
-                width: '180%',
-                height: '180%',
+                position: 'fixed',
+                inset: 0,
+                width: '100vw',
+                height: '100vh',
                 pointerEvents: 'none',
-                zIndex: 1,
+                zIndex: 5,
             }}
         >
             <GalaxyRingScene
@@ -607,7 +614,8 @@ export function GalaxyRing3D({ enemies, towers, gates, waveNumber }: GalaxyRing3
                 gates={gates}
                 waveNumber={waveNumber}
             />
-        </Canvas>
+        </Canvas>,
+        document.body
     );
 }
 
