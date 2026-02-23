@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User } from 'firebase/auth';
-import { auth } from '@/lib/rhythmia/firebase';
+import { auth, appCheckAvailable } from '@/lib/rhythmia/firebase';
 import {
   isGoogleLinked,
   linkGoogleAccount,
@@ -108,6 +108,15 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
     // Initialize auth (will create anonymous user if needed)
     const initAuthAsync = async () => {
       if (!auth) return;
+
+      // Wait for App Check validation — skip auth if App Check is broken
+      // to avoid 401 errors and noisy console output
+      const isAppCheckOk = await appCheckAvailable;
+      if (!isAppCheckOk) {
+        console.warn('[GoogleSync] Cloud sync unavailable — App Check verification failed.');
+        return;
+      }
+
       const currentUser = auth.currentUser;
       if (!currentUser) {
         try {
