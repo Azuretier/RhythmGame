@@ -414,4 +414,9 @@
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .tierGraphPopup {
+    width: 280px;
+    padding: 14px 16px 10px;
+  }
 }
