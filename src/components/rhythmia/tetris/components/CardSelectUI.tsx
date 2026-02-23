@@ -36,19 +36,18 @@ export function CardSelectUI({
         setFocusedIdx(firstAffordable >= 0 ? firstAffordable : -1);
     }, [offers]);
 
-    // Navigate to next/previous affordable card, wrapping through skip button
+    // Navigate to next/previous affordable card, cycling only through affordable cards
+    const affordableIndices = offers.map((o, i) => o.affordable ? i : -1).filter(i => i !== -1);
     const findNextAffordable = useCallback((from: number, direction: 1 | -1): number => {
-        const total = offers.length;
-        let next = from + direction;
-        for (let i = 0; i <= total; i++) {
-            if (next > total - 1) next = -1;
-            if (next < -1) next = total - 1;
-            if (next === -1) return -1; // skip is always reachable
-            if (offers[next]?.affordable) return next;
-            next += direction;
+        if (affordableIndices.length === 0) return from; // no affordable cards, stay put
+        const currentPos = affordableIndices.indexOf(from);
+        if (currentPos === -1) {
+            // Not on an affordable card; jump to first or last
+            return direction === 1 ? affordableIndices[0] : affordableIndices[affordableIndices.length - 1];
         }
-        return -1;
-    }, [offers]);
+        const nextPos = (currentPos + direction + affordableIndices.length) % affordableIndices.length;
+        return affordableIndices[nextPos];
+    }, [affordableIndices]);
 
     // Keyboard navigation: arrows to move, Enter/Space to confirm, 1/2/3 direct select, Escape to skip
     useEffect(() => {
