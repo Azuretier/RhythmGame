@@ -118,20 +118,34 @@ function heightAt(x: number, y: number): number {
 
 type TT = 'oak' | 'spruce' | 'autumn' | 'dead';
 
-function treeType(x: number, y: number): TT {
-  const nx = (x - GAMEMODE_MAP_WIDTH / 2) / (GAMEMODE_MAP_WIDTH / 2);
-  const ny = (y - GAMEMODE_MAP_HEIGHT / 2) / (GAMEMODE_MAP_HEIGHT / 2);
-  // Creeper Woods (NW): dark spruce forest
-  if (nx < -0.1 && ny < 0.1 && ny > -0.55) return 'spruce';
-  // Soggy Swamp (SW): dead trees
-  if (nx < 0.05 && ny > 0.25) return 'dead';
-  // Pumpkin Pastures (center): autumn/oak mix
-  if (ny > 0.0 && ny < 0.35 && nx > -0.2 && nx < 0.3) {
-    return noise2D(x * 5, y * 5, SEED + 2222) > 0.4 ? 'autumn' : 'oak';
+// Voronoi biome anchor matching (mirrors gamemode-map.ts logic)
+function nearestFlatBiome(x: number, y: number): string {
+  const anchors = [
+    { z: 'creeper_woods', x: 9, y: 12 },
+    { z: 'soggy_swamp', x: 9, y: 30 },
+    { z: 'pumpkin_pastures', x: 22, y: 25 },
+    { z: 'cacti_canyon', x: 40, y: 28 },
+    { z: 'desert_temple', x: 38, y: 18 },
+    { z: 'highblock_halls', x: 40, y: 7 },
+  ];
+  let best = anchors[0].z, bestD = Infinity;
+  for (const a of anchors) {
+    const d = (x - a.x) ** 2 + (y - a.y) ** 2;
+    if (d < bestD) { bestD = d; best = a.z; }
   }
-  // Highblock Halls / cold areas: spruce
-  if (ny < -0.15) return 'spruce';
-  return 'oak';
+  return best;
+}
+
+function treeType(x: number, y: number): TT {
+  const biome = nearestFlatBiome(x, y);
+  switch (biome) {
+    case 'creeper_woods': return 'spruce';   // Dark dense spruce forest
+    case 'soggy_swamp': return 'dead';       // Dead swamp trees
+    case 'pumpkin_pastures':                 // Autumn/oak mix
+      return noise2D(x * 5, y * 5, SEED + 2222) > 0.4 ? 'autumn' : 'oak';
+    case 'highblock_halls': return 'spruce'; // Cold northern area
+    default: return 'oak';
+  }
 }
 
 // ────────────────────────────────────────────
@@ -577,6 +591,11 @@ function LocationBeacon({
       onPointerLeave={(e) => { e.stopPropagation(); onHoverOut(); }}
     >
       <group ref={groupRef} scale={[scale, scale, scale]}>
+        {/* Large invisible hit area for easy clicking */}
+        <mesh position={[0, 2, 0]}>
+          <boxGeometry args={[5, 8, 5]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
         <mesh castShadow>
           <boxGeometry args={[0.9, 0.9, 0.9]} />
           <meshStandardMaterial color={markerColor} emissive={emissive} emissiveIntensity={emissiveIntensity} roughness={0.3} metalness={0.2} flatShading />

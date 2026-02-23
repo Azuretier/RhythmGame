@@ -1,7 +1,8 @@
 // =============================================================
 // Game Mode Map — Data & Types
 // Minecraft Dungeons–style floating island diorama.
-// 48×38 grid with 10 distinct biome zones matching Dungeons missions.
+// 48×38 grid with 10 distinct biome zones (Voronoi tessellation).
+// Each biome faithfully represents a Dungeons mission environment.
 // =============================================================
 
 import type { TerrainType, MapTile, MapPath } from './stories/dungeons';
@@ -30,16 +31,6 @@ export type GameModeStatus = 'locked' | 'available' | 'completed';
 
 export const GAMEMODE_MAP_WIDTH = 48;
 export const GAMEMODE_MAP_HEIGHT = 38;
-
-// === Seeded PRNG ===
-
-function seededRandom(seed: number) {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 0) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
 
 // === Noise ===
 
@@ -95,13 +86,13 @@ function distToPolyline(px: number, py: number, points: [number, number][]): num
 interface Peak { x: number; y: number; height: number; radius: number }
 
 const PEAKS: Peak[] = [
-  { x: 26, y: 13, height: 7, radius: 7 },   // Central (Fiery Forge interior)
-  { x: 20, y: 9, height: 6, radius: 6 },    // Left (Obsidian Pinnacle approach)
-  { x: 34, y: 11, height: 6, radius: 6.5 }, // Right (Highblock Halls ridge)
-  { x: 16, y: 5, height: 5, radius: 5.5 },  // NW (Obsidian Pinnacle summit)
-  { x: 30, y: 7, height: 5, radius: 5 },    // NE
-  { x: 22, y: 17, height: 4, radius: 4.5 }, // South foothills (Redstone Mines entrance)
-  { x: 36, y: 16, height: 4, radius: 4 },   // East foothills
+  { x: 26, y: 12, height: 7, radius: 7 },   // Central (Fiery Forge interior)
+  { x: 20, y: 8, height: 6, radius: 6 },     // Left (Obsidian Pinnacle approach)
+  { x: 35, y: 10, height: 6, radius: 6.5 },  // Right (Highblock Halls ridge)
+  { x: 15, y: 5, height: 5, radius: 5.5 },   // NW (Obsidian Pinnacle summit)
+  { x: 30, y: 6, height: 5, radius: 5 },     // NE
+  { x: 22, y: 17, height: 4, radius: 4.5 },  // South foothills (Redstone Mines)
+  { x: 37, y: 15, height: 3.5, radius: 4 },  // East foothills
 ];
 
 function mountainElevation(x: number, y: number): number {
@@ -117,64 +108,62 @@ function mountainElevation(x: number, y: number): number {
   return maxElev;
 }
 
-// === Biome zone detection ===
-// 10 Minecraft Dungeons mission biomes mapped to the 48×38 grid
+// === Biome zone detection (Voronoi tessellation) ===
+// Each biome has an anchor point. Every tile is assigned to its nearest anchor.
 
 type BiomeZone =
-  | 'creeper_woods'     // NW forest - dense dark trees, spiders, Creepy Crypt
-  | 'soggy_swamp'       // SW - witches, slimes, corrupted water
-  | 'pumpkin_pastures'  // Center-south - autumn fields, orange palette
-  | 'cacti_canyon'      // SE - desert/mesa, cacti, Western theme
-  | 'redstone_mines'    // Central mountain base - dark caves, redstone ore
-  | 'fiery_forge'       // N central mountains - lava factory inside snow mountain
-  | 'desert_temple'     // E - Egyptian architecture, sand, undead
-  | 'highblock_halls'   // NE - stone castles, lavish halls
-  | 'obsidian_pinnacle' // N/NW peaks - highest altitude, floating structures
-  | 'mushroom_fields';  // Secret island off SE coast
+  | 'creeper_woods'     // Dense dark forest, spiders, Creepy Crypt
+  | 'soggy_swamp'       // Witches, slimes, corrupted water
+  | 'pumpkin_pastures'  // Open autumn fields, orange palette
+  | 'cacti_canyon'      // Desert/mesa, cacti, Western theme
+  | 'redstone_mines'    // Dark caves, redstone ore, minecarts
+  | 'fiery_forge'       // Lava factory inside snowy mountain
+  | 'desert_temple'     // Egyptian architecture, sand, undead
+  | 'highblock_halls'   // Stone brick castles, lavish halls
+  | 'obsidian_pinnacle' // Highest peaks, floating structures
+  | 'mushroom_fields';  // Secret island, Mooshrooms, mycelium
 
-function getBiomeZone(x: number, y: number, nx: number, ny: number, mtElev: number): BiomeZone {
-  // Mushroom Fields: small island off SE coast
-  if (distPt(x, y, 44, 34) < 4) return 'mushroom_fields';
+// Flat biome anchors (used when tile is NOT on a mountain)
+const FLAT_ANCHORS: { zone: BiomeZone; x: number; y: number }[] = [
+  { zone: 'creeper_woods', x: 9, y: 12 },
+  { zone: 'soggy_swamp', x: 9, y: 30 },
+  { zone: 'pumpkin_pastures', x: 22, y: 25 },
+  { zone: 'cacti_canyon', x: 40, y: 28 },
+  { zone: 'desert_temple', x: 38, y: 18 },
+  { zone: 'highblock_halls', x: 40, y: 7 },
+];
 
-  // Mountain biomes (elevation-based)
-  if (mtElev > 0.5) {
-    // Obsidian Pinnacle: highest NW peaks
-    if (ny < -0.2 && nx < 0.0 && mtElev > 3) return 'obsidian_pinnacle';
-    // Fiery Forge: central mountain interior with lava
-    if (nx > -0.15 && nx < 0.35 && ny < 0.0 && mtElev > 1.5) return 'fiery_forge';
-    // Highblock Halls: NE mountain with castle structures
-    if (nx > 0.2 && ny < 0.0) return 'highblock_halls';
-    // Redstone Mines: south mountain base, caves
-    if (ny > -0.1 && mtElev < 3.5) return 'redstone_mines';
-    // Default mountain
-    if (ny < -0.2) return 'obsidian_pinnacle';
-    return 'fiery_forge';
+// Mountain biome anchors (used when tile IS on a mountain, mtElev > 0.5)
+const MTN_ANCHORS: { zone: BiomeZone; x: number; y: number }[] = [
+  { zone: 'obsidian_pinnacle', x: 17, y: 6 },
+  { zone: 'fiery_forge', x: 26, y: 11 },
+  { zone: 'redstone_mines', x: 22, y: 17 },
+  { zone: 'highblock_halls', x: 36, y: 10 },
+];
+
+function nearestBiome(x: number, y: number, anchors: { zone: BiomeZone; x: number; y: number }[]): BiomeZone {
+  let best = anchors[0].zone;
+  let bestDist = Infinity;
+  for (const a of anchors) {
+    const d = distPt(x, y, a.x, a.y);
+    if (d < bestDist) { bestDist = d; best = a.zone; }
   }
+  return best;
+}
 
-  // Flat/low biomes (position-based)
-  // Creeper Woods: NW forest
-  if (nx < -0.1 && ny < 0.1 && ny > -0.55) return 'creeper_woods';
-  // Soggy Swamp: SW
-  if (nx < 0.05 && ny > 0.25) return 'soggy_swamp';
-  // Cacti Canyon: SE
-  if (nx > 0.3 && ny > 0.15) return 'cacti_canyon';
-  // Desert Temple: E
-  if (nx > 0.25 && ny > -0.15 && ny <= 0.15) return 'desert_temple';
-  // Highblock Halls: NE lowlands
-  if (nx > 0.15 && ny < -0.15) return 'highblock_halls';
-  // Pumpkin Pastures: center/south
-  if (ny > 0.0 && ny < 0.35 && nx > -0.2 && nx < 0.3) return 'pumpkin_pastures';
-  // Snow tundra near Obsidian Pinnacle
-  if (ny < -0.4) return 'obsidian_pinnacle';
-  // Default: Pumpkin Pastures
-  return 'pumpkin_pastures';
+// Mushroom Fields: separate small island off SE coast
+const MUSH_CX = 44, MUSH_CY = 34;
+
+function getBiome(x: number, y: number, mtElev: number): BiomeZone {
+  if (distPt(x, y, MUSH_CX, MUSH_CY) < 5) return 'mushroom_fields';
+  if (mtElev > 0.5) return nearestBiome(x, y, MTN_ANCHORS);
+  return nearestBiome(x, y, FLAT_ANCHORS);
 }
 
 // === Terrain generation ===
 
 function generateGameModeTerrain(): MapTile[] {
   const tiles: MapTile[] = [];
-  const rand = seededRandom(12345);
   const W = GAMEMODE_MAP_WIDTH;
   const H = GAMEMODE_MAP_HEIGHT;
   const cx = W / 2;
@@ -183,13 +172,15 @@ function generateGameModeTerrain(): MapTile[] {
   // River from mountains through center to south coast
   const riverPts: [number, number][] = [[24, 10], [22, 16], [20, 22], [18, 30]];
 
-  // Mushroom Fields island center
-  const mushIslandCx = 44, mushIslandCy = 34;
-
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const nx = (x - cx) / cx;
       const ny = (y - cy) / cy;
+      // Tile-specific random (position-based, not sequential)
+      const r0 = hash2D(x, y, 10001);
+      const r1 = hash2D(x, y, 20002);
+      const r2 = hash2D(x, y, 30003);
+      const bn = fractalNoise(x * 0.05, y * 0.05, 77777, 3);
 
       // === Island shape ===
       const baseDist = Math.sqrt(nx * nx * 0.75 + ny * ny * 1.0);
@@ -203,9 +194,9 @@ function generateGameModeTerrain(): MapTile[] {
 
       const islandEdge = 0.80 + coastNoise + sePen + nwPen;
 
-      // Mushroom Fields: separate small island
-      const mushDist = distPt(x, y, mushIslandCx, mushIslandCy);
-      const mushEdge = 3.5 + smoothNoise(x * 0.2, y * 0.2, 99999) * 0.8;
+      // Mushroom Fields: separate island
+      const mushDist = distPt(x, y, MUSH_CX, MUSH_CY);
+      const mushEdge = 4.5 + smoothNoise(x * 0.2, y * 0.2, 99999) * 1.0;
       const onMushroomIsland = mushDist < mushEdge;
 
       // Ocean
@@ -214,14 +205,14 @@ function generateGameModeTerrain(): MapTile[] {
         continue;
       }
 
-      // Mushroom Fields island
+      // Mushroom Fields island (separate landmass)
       if (onMushroomIsland && baseDist > islandEdge) {
-        if (mushDist > mushEdge - 0.5) {
+        if (mushDist > mushEdge - 0.6) {
           tiles.push({ x, y, terrain: 'sand' as TerrainType, elevation: 0 });
         } else {
-          const mr = rand();
-          const terrain: TerrainType = mr > 0.5 ? 'mushroom' : mr > 0.2 ? 'dirt' : 'grass';
-          tiles.push({ x, y, terrain, elevation: 0 });
+          // Dense mushroom island with mycelium (dirt) base
+          const t: TerrainType = r0 > 0.55 ? 'mushroom' : r0 > 0.25 ? 'dirt' : r0 > 0.1 ? 'flower' : 'grass';
+          tiles.push({ x, y, terrain: t, elevation: 0 });
         }
         continue;
       }
@@ -246,19 +237,18 @@ function generateGameModeTerrain(): MapTile[] {
         continue;
       }
 
-      // Biome noise
-      const bn = fractalNoise(x * 0.05, y * 0.05, 77777, 3);
       const mtElev = mountainElevation(x, y);
-      const biome = getBiomeZone(x, y, nx, ny, mtElev);
+      const biome = getBiome(x, y, mtElev);
 
-      // === Mountain tiles ===
+      // === Mountain tiles (mtElev > 0.5) ===
       if (mtElev > 0.5) {
         const elevation = Math.min(7, Math.round(mtElev));
 
         switch (biome) {
           case 'fiery_forge': {
             // Lava-filled factory inside snowy mountain
-            if (mtElev > 1.5 && mtElev < 4 && rand() > 0.5) {
+            // Mid-elevation = lava/forge. High = snow cap. Low = stone.
+            if (mtElev > 1.8 && mtElev < 4.5 && r0 > 0.45) {
               tiles.push({ x, y, terrain: 'lava' as TerrainType, elevation: Math.min(elevation, 4) });
             } else if (elevation >= 5) {
               tiles.push({ x, y, terrain: 'snow' as TerrainType, elevation });
@@ -268,37 +258,39 @@ function generateGameModeTerrain(): MapTile[] {
             break;
           }
           case 'obsidian_pinnacle': {
-            // Highest peaks with dark stone and snow caps
+            // Highest peaks: dark obsidian stone + snow caps + void patches
             if (elevation >= 5) {
               tiles.push({ x, y, terrain: 'snow' as TerrainType, elevation });
-            } else if (elevation >= 3) {
-              // Dark obsidian-like stone
-              tiles.push({ x, y, terrain: rand() > 0.3 ? 'stone' : 'rock' as TerrainType, elevation });
+            } else if (r0 > 0.85) {
+              // Void patches — floating/ominous feel
+              tiles.push({ x, y, terrain: 'void' as TerrainType, elevation });
             } else {
-              tiles.push({ x, y, terrain: 'stone' as TerrainType, elevation });
+              tiles.push({ x, y, terrain: r0 > 0.4 ? 'rock' as TerrainType : 'stone' as TerrainType, elevation });
             }
             break;
           }
           case 'highblock_halls': {
-            // Stone brick mountains for castle zone
-            tiles.push({ x, y, terrain: rand() > 0.4 ? 'stone' : 'path' as TerrainType, elevation });
+            // Stone brick mountains — castle foundations
+            if (elevation >= 5) {
+              tiles.push({ x, y, terrain: 'snow' as TerrainType, elevation });
+            } else {
+              const t: TerrainType = r0 > 0.5 ? 'stone' : 'path';
+              tiles.push({ x, y, terrain: t, elevation });
+            }
             break;
           }
           case 'redstone_mines': {
-            // Dark tunnels with redstone ore glow
-            if (rand() > 0.8) {
+            // Dark tunnels with scattered redstone ore (lava glow)
+            if (r0 > 0.78) {
               tiles.push({ x, y, terrain: 'lava' as TerrainType, elevation: Math.min(elevation, 3) });
             } else {
-              tiles.push({ x, y, terrain: rand() > 0.5 ? 'stone' : 'rock' as TerrainType, elevation });
+              const t: TerrainType = r0 > 0.4 ? 'rock' : 'stone';
+              tiles.push({ x, y, terrain: t, elevation });
             }
             break;
           }
           default: {
-            if (elevation >= 5 && y < 16) {
-              tiles.push({ x, y, terrain: 'snow' as TerrainType, elevation });
-            } else {
-              tiles.push({ x, y, terrain: 'stone' as TerrainType, elevation });
-            }
+            tiles.push({ x, y, terrain: elevation >= 5 ? 'snow' as TerrainType : 'stone' as TerrainType, elevation });
             break;
           }
         }
@@ -310,98 +302,148 @@ function generateGameModeTerrain(): MapTile[] {
       let elevation = 0;
 
       switch (biome) {
+        // ── Creeper Woods ──
+        // Dense dark forest. ~75% tree coverage. Mossy rocks, rare flowers.
         case 'creeper_woods': {
-          // Dense dark forest with spiders and cobwebs
-          terrain = rand() > 0.28 ? 'tree' : 'grass';
+          if (r0 > 0.25) {
+            terrain = 'tree';
+          } else if (r0 > 0.15) {
+            terrain = 'grass';
+          } else if (r0 > 0.08) {
+            terrain = 'rock'; // mossy boulders
+          } else {
+            terrain = 'flower'; // rare forest flowers
+          }
           elevation = Math.floor(bn * 2);
-          if (rand() > 0.97) terrain = 'flower'; // rare flowers
-          if (rand() > 0.95) terrain = 'rock'; // mossy rocks
           break;
         }
+
+        // ── Soggy Swamp ──
+        // Waterlogged. Mushrooms, dead trees, stagnant pools, mud.
         case 'soggy_swamp': {
-          // Swamp with mushrooms, dead trees, toxic pools
-          if (rand() > 0.85) {
-            terrain = 'water'; // stagnant pools
-          } else if (rand() > 0.55) {
-            terrain = 'mushroom';
-          } else if (rand() > 0.35) {
-            terrain = 'tree'; // swamp trees (will render as dead)
+          if (r0 > 0.82) {
+            terrain = 'water'; // stagnant toxic pools
+          } else if (r0 > 0.55) {
+            terrain = 'mushroom'; // witch hut mushrooms
+          } else if (r0 > 0.38) {
+            terrain = 'tree'; // dead swamp trees
+          } else if (r0 > 0.15) {
+            terrain = 'dirt'; // mud
           } else {
-            terrain = 'dirt';
+            terrain = 'grass';
           }
-          elevation = 0;
+          elevation = 0; // flat, waterlogged
           break;
         }
+
+        // ── Pumpkin Pastures ──
+        // Open autumn fields. Orange/gold palette. Farm paths, harvest flowers.
         case 'pumpkin_pastures': {
-          // Autumn fields with orange trees, pumpkins, paths
-          terrain = 'grass';
-          elevation = Math.floor(bn * 1.5);
-          if (rand() > 0.72) terrain = 'tree'; // autumn trees
-          if (rand() > 0.94) terrain = 'flower'; // pumpkin-colored flowers
-          if (rand() > 0.96) terrain = 'path'; // farm paths
-          break;
-        }
-        case 'cacti_canyon': {
-          // Desert/mesa with cacti and rocky outcrops
-          if (rand() > 0.65) {
-            terrain = 'sand';
-          } else if (rand() > 0.4) {
-            terrain = 'dirt'; // mesa red dirt
+          if (r0 > 0.72) {
+            terrain = 'tree'; // autumn trees (orange/gold canopy)
+          } else if (r0 > 0.52) {
+            terrain = 'grass';
+          } else if (r0 > 0.40) {
+            terrain = 'flower'; // pumpkin-orange flowers
+          } else if (r0 > 0.30) {
+            terrain = 'path'; // harvest paths
           } else {
-            terrain = 'rock'; // canyon walls
+            terrain = 'dirt'; // tilled earth
           }
           elevation = Math.floor(bn * 1.5);
           break;
         }
-        case 'redstone_mines': {
-          // Cave entrance area with dark stone
-          terrain = rand() > 0.5 ? 'stone' : 'rock';
-          elevation = Math.floor(bn * 2) + 1;
-          if (rand() > 0.9) terrain = 'lava'; // redstone ore glow
+
+        // ── Cacti Canyon ──
+        // Dry desert/mesa. Sand, red dirt, rocky mesas, no trees.
+        case 'cacti_canyon': {
+          if (r0 > 0.60) {
+            terrain = 'sand';
+          } else if (r0 > 0.35) {
+            terrain = 'dirt'; // mesa red earth
+          } else if (r0 > 0.15) {
+            terrain = 'rock'; // canyon walls/mesas
+          } else {
+            terrain = 'stone'; // exposed canyon bedrock
+          }
+          // Mesa plateaus at varying heights
+          elevation = r1 > 0.7 ? 2 : r1 > 0.4 ? 1 : 0;
           break;
         }
-        case 'desert_temple': {
-          // Sandy desert with stone pillars
-          if (rand() > 0.6) {
-            terrain = 'sand';
-          } else if (rand() > 0.3) {
-            terrain = 'path'; // temple pathways
+
+        // ── Redstone Mines ──
+        // Dark cave entrances. Stone, rock, scattered ore veins.
+        case 'redstone_mines': {
+          if (r0 > 0.88) {
+            terrain = 'lava'; // glowing redstone ore veins
+          } else if (r0 > 0.55) {
+            terrain = 'rock'; // dark cave rock
+          } else if (r0 > 0.25) {
+            terrain = 'stone'; // mine walls
           } else {
+            terrain = 'dirt'; // mine floor
+          }
+          elevation = Math.floor(bn * 2) + 1;
+          break;
+        }
+
+        // ── Desert Temple ──
+        // Sandy desert with Egyptian stone foundations. Paths between pillars.
+        case 'desert_temple': {
+          if (r0 > 0.58) {
+            terrain = 'sand'; // open desert
+          } else if (r0 > 0.35) {
+            terrain = 'path'; // temple walkways
+          } else if (r0 > 0.15) {
             terrain = 'stone'; // temple foundations
+          } else {
+            terrain = 'rock'; // fallen pillar rubble
           }
           elevation = Math.floor(bn * 1);
           break;
         }
+
+        // ── Highblock Halls ──
+        // Castle grounds. Stone courtyard, paved paths, manicured grass.
         case 'highblock_halls': {
-          // Stone and paths for castle grounds
-          if (rand() > 0.55) {
-            terrain = 'stone';
-          } else if (rand() > 0.3) {
-            terrain = 'path';
+          if (r0 > 0.55) {
+            terrain = 'stone'; // castle stone
+          } else if (r0 > 0.30) {
+            terrain = 'path'; // paved courtyard
           } else {
-            terrain = 'grass';
+            terrain = 'grass'; // castle gardens
           }
           elevation = Math.floor(bn * 2) + 1;
           break;
         }
+
+        // ── Obsidian Pinnacle ──
+        // Snow tundra at mountain base. Cold, barren.
         case 'obsidian_pinnacle': {
-          // Snow tundra at mountain base
-          terrain = rand() > 0.5 ? 'snow' : 'stone';
+          if (r0 > 0.55) {
+            terrain = 'snow';
+          } else if (r0 > 0.30) {
+            terrain = 'stone';
+          } else {
+            terrain = 'rock'; // dark obsidian chunks
+          }
           elevation = Math.floor(bn * 2) + 1;
           break;
         }
+
+        // ── Mushroom Fields ──
+        // (Handled above for separate island, but just in case overlaps main island)
         case 'mushroom_fields': {
-          // Already handled above for separate island
-          const mr = rand();
-          terrain = mr > 0.5 ? 'mushroom' : mr > 0.2 ? 'dirt' : 'grass';
+          terrain = r0 > 0.55 ? 'mushroom' : r0 > 0.25 ? 'dirt' : 'flower';
           elevation = 0;
           break;
         }
+
         default: {
           terrain = 'grass';
           elevation = Math.floor(bn * 2);
-          if (rand() > 0.82) terrain = 'tree';
-          if (rand() > 0.97) terrain = 'flower';
+          if (r0 > 0.82) terrain = 'tree';
+          if (r1 > 0.97) terrain = 'flower';
           break;
         }
       }
