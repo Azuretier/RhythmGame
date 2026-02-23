@@ -54,6 +54,15 @@ export type RhythmState = {
     scorePop: boolean;
 };
 
+// ===== Dragon Gauge (Mandarin Fever) =====
+export type DragonGaugeState = {
+    furyGauge: number;       // 0-10, charges from T-spins
+    mightGauge: number;      // 0-10, charges from Tetrises
+    isBreathing: boolean;    // true during dragon breath animation
+    breathStartTime: number; // timestamp when breath started
+    enabled: boolean;        // true when Mandarin Dragon card equipped
+};
+
 // ===== VFX Event Types =====
 
 export type VFXEvent =
@@ -64,7 +73,10 @@ export type VFXEvent =
     | { type: 'comboChange'; combo: number; onBeat: boolean }
     | { type: 'comboBreak'; lostCombo: number }
     | { type: 'feverStart'; combo: number }
-    | { type: 'feverEnd' };
+    | { type: 'feverEnd' }
+    | { type: 'dragonGaugeCharge'; gauge: 'fury' | 'might'; amount: number; newValue: number }
+    | { type: 'dragonBreathStart' }
+    | { type: 'dragonBreathEnd' };
 
 export type VFXEmitter = (event: VFXEvent) => void;
 
@@ -119,7 +131,8 @@ export type CardAttribute =
     | 'gravity_slow'    // -% piece gravity speed
     | 'lucky_drops'     // Higher rarity material drop rates
     | 'combo_amplify'   // Combo multiplier grows faster
-    | 'shield';         // First miss per stage doesn't break combo
+    | 'shield'          // First miss per stage doesn't break combo
+    | 'dragon_boost';   // Enables Mandarin Fever dragon gauge system
 
 // ===== Rogue-Like Card =====
 export type RogueCard = {
@@ -155,6 +168,8 @@ export type ActiveEffects = {
     gravitySlowFactor: number;
     luckyDropsBonus: number;
     comboAmplifyFactor: number;
+    dragonBoostEnabled: boolean;
+    dragonBoostChargeMultiplier: number;
 };
 
 // ===== Card Selection Offer =====

@@ -27,3 +27,4 @@ export { TutorialGuide, hasTutorialBeenSeen } from './TutorialGuide';
 export { KeyBindSettings } from './KeyBindSettings';
 export { FeatureCustomizer } from './FeatureCustomizer';
 export { PauseMenu } from './PauseMenu';
+export { DragonGauge } from './DragonGauge';

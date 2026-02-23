@@ -150,7 +150,7 @@ export const TERRAINS_PER_WORLD = 4;
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 
 // ===== Item Definitions =====
-import type { ItemType, RogueCard, ActiveEffects } from './types';
+import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState } from './types';
 
 export const ITEMS: ItemType[] = [
     { id: 'stone',    name: 'Stone Fragment',  nameJa: '石片',     icon: '🪨', color: '#8B8B8B', glowColor: '#A0A0A0', rarity: 'common',    dropWeight: 40 },
@@ -293,6 +293,14 @@ export const ROGUE_CARDS: RogueCard[] = [
         rarity: 'legendary', baseCost: [{ itemId: 'star', count: 1 }, { itemId: 'obsidian', count: 1 }],
         attribute: 'combo_guard', attributeValue: 3,
     },
+    {
+        id: 'mandarin_dragon', name: 'Mandarin Dragon', nameJa: '蜜柑龍', icon: '🐉',
+        color: '#FF8C00', glowColor: '#FFB300',
+        description: 'Enables Dragon Gauge — T-spins charge Fury, Tetrises charge Might. When both full, Dragon Breath destroys all terrain!',
+        descriptionJa: '龍ゲージ解放 — Tスピンで怒り、テトリスで力をチャージ。両方満タンで龍のブレスが全地形を破壊！',
+        rarity: 'legendary', baseCost: [{ itemId: 'star', count: 1 }, { itemId: 'gold', count: 2 }],
+        attribute: 'dragon_boost', attributeValue: 1.0,
+    },
 ];
 
 export const ROGUE_CARD_MAP: Record<string, RogueCard> = Object.fromEntries(
@@ -318,6 +326,8 @@ export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
     gravitySlowFactor: 1,
     luckyDropsBonus: 0,
     comboAmplifyFactor: 1,
+    dragonBoostEnabled: false,
+    dragonBoostChargeMultiplier: 1,
 };
 
 // Max cards to offer per selection
@@ -335,6 +345,32 @@ export const FLOAT_DURATION = 800;
 // Terrain particle settings
 export const TERRAIN_PARTICLES_PER_LINE = 15;
 export const TERRAIN_PARTICLE_LIFETIME = 600;
+
+// ===== Mandarin Fever Dragon Boost =====
+export const DRAGON_FURY_MAX = 10;
+export const DRAGON_MIGHT_MAX = 10;
+export const DRAGON_BREATH_DURATION = 3000; // ms
+export const DRAGON_BREATH_SCORE_BONUS = 10000;
+
+// Fury gauge charge amounts by T-spin type and line count
+export const DRAGON_FURY_CHARGE: Record<string, Record<number, number>> = {
+    mini:  { 0: 1, 1: 1, 2: 2 },
+    full:  { 0: 2, 1: 2, 2: 3, 3: 5 },
+};
+
+// Might gauge charge amounts by line count
+export const DRAGON_MIGHT_CHARGE: Record<number, number> = {
+    3: 1,  // Triple
+    4: 4,  // Tetris
+};
+
+export const DEFAULT_DRAGON_GAUGE: DragonGaugeState = {
+    furyGauge: 0,
+    mightGauge: 0,
+    isBreathing: false,
+    breathStartTime: 0,
+    enabled: false,
+};
 
 // ===== Tower Defense Settings =====
 export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn (world units)
