@@ -1,311 +1,38 @@
-/* ===== Galaxy Board Wrapper ===== */
-.galaxyWrapper {
-    display: grid;
-    grid-template-areas:
-        "top    top    top"
-        "left   board  right"
-        "bottom bottom bottom";
-    grid-template-columns: auto 1fr auto;
-    grid-template-rows: auto 1fr auto;
-    gap: 0;
-    transition: opacity 0.3s ease;
-}
-
-.galaxyWrapperInactive {
-    composes: galaxyWrapper;
-}
-
-/* ===== Strip Containers ===== */
-.stripTop {
-    grid-area: top;
-}
-
-.stripBottom {
-    grid-area: bottom;
-}
-
-.stripLeft {
-    grid-area: left;
-}
-
-.stripRight {
-    grid-area: right;
-}
-
-.boardArea {
-    grid-area: board;
-}
-
-/* ===== Strip Grid ===== */
-.stripGrid {
-    display: grid;
-    gap: 1px;
-    background: rgba(10, 0, 20, 0.6);
-    border: 1px solid rgba(80, 0, 160, 0.25);
-}
-
-.stripTop .stripGrid {
-    border-bottom: none;
-    border-radius: 4px 4px 0 0;
-}
-
-.stripBottom .stripGrid {
-    border-top: none;
-    border-radius: 0 0 4px 4px;
-}
-
-.stripLeft .stripGrid {
-    border-right: none;
-    border-radius: 4px 0 0 4px;
-}
-
-.stripRight .stripGrid {
-    border-left: none;
-    border-radius: 0 4px 4px 0;
-}
-
-/* ===== Ring Cells ===== */
-.ringCell {
+/* ===== Galaxy Board Container =====
+ * The board ("planet") sits at the center.
+ * The 3D ring (Three.js Canvas) overlays around it as a floating torus.
+ */
+.galaxyContainer {
     position: relative;
-    width: var(--galaxy-cell-size, 28px);
-    height: var(--galaxy-cell-size, 28px);
+    display: inline-block;
 }
 
-/* Path layer (outermost) — dark track for enemies */
-.pathCell {
-    composes: ringCell;
-    background: #080010;
-    border: 1px solid rgba(60, 0, 120, 0.15);
-}
-
-.pathCellWithTrack {
-    composes: pathCell;
-    background: linear-gradient(
-        var(--track-angle, 90deg),
-        #080010 30%,
-        rgba(60, 0, 120, 0.12) 50%,
-        #080010 70%
-    );
-}
-
-/* Tower layer (middle) — slightly brighter */
-.towerCell {
-    composes: ringCell;
-    background: #0a0014;
-    border: 1px solid rgba(80, 0, 160, 0.1);
-}
-
-/* Buffer layer (innermost) — gradient toward board background */
-.bufferCell {
-    composes: ringCell;
-    background: linear-gradient(
-        var(--buffer-angle, 180deg),
-        #0a0014 0%,
-        rgba(0, 0, 0, 0.25) 100%
-    );
-    border: none;
-}
-
-/* ===== Enemy Indicator on Path ===== */
-.galaxyEnemy {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 60%;
-    height: 60%;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: radial-gradient(circle, #ff4444 30%, #ff2222 70%, transparent 100%);
-    box-shadow: 0 0 6px rgba(255, 50, 50, 0.8), 0 0 12px rgba(255, 30, 30, 0.4);
-    z-index: 3;
-    pointer-events: none;
-    animation: enemyPulse 1s ease-in-out infinite;
-}
-
-@keyframes enemyPulse {
-    0%, 100% {
-        box-shadow: 0 0 4px rgba(255, 50, 50, 0.6);
-        transform: translate(-50%, -50%) scale(0.9);
-    }
-    50% {
-        box-shadow: 0 0 10px rgba(255, 50, 50, 1);
-        transform: translate(-50%, -50%) scale(1.1);
-    }
-}
-
-/* ===== Tower Icon ===== */
-.galaxyTower {
-    position: absolute;
-    inset: 15%;
-    border-radius: 3px;
-    background: rgba(40, 0, 80, 0.6);
-    border: 1px solid rgba(100, 0, 200, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6em;
-    color: rgba(180, 140, 255, 0.6);
+/* Board sits in the center — the "planet" */
+.boardCenter {
+    position: relative;
     z-index: 2;
-    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-}
-
-.galaxyTowerCharged {
-    composes: galaxyTower;
-    background: rgba(60, 0, 120, 0.8);
-    border-color: rgba(140, 60, 255, 0.6);
-    color: rgba(220, 180, 255, 0.9);
-    box-shadow: 0 0 8px rgba(140, 60, 255, 0.3);
-}
-
-.galaxyTowerFiring {
-    composes: galaxyTowerCharged;
-    animation: towerFire 0.3s ease-out;
-    box-shadow: 0 0 16px rgba(0, 200, 255, 0.6), 0 0 30px rgba(0, 200, 255, 0.3);
-    border-color: rgba(0, 200, 255, 0.7);
-}
-
-@keyframes towerFire {
-    0% {
-        background: rgba(0, 200, 255, 0.9);
-        box-shadow: 0 0 20px rgba(0, 200, 255, 0.8);
-    }
-    100% {
-        background: rgba(60, 0, 120, 0.8);
-        box-shadow: 0 0 8px rgba(140, 60, 255, 0.3);
-    }
-}
-
-/* Tower charge bar (below tower icon) */
-.towerChargeBar {
-    position: absolute;
-    bottom: 2px;
-    left: 15%;
-    right: 15%;
-    height: 2px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 1px;
-    overflow: hidden;
-    z-index: 4;
-}
-
-.towerChargeFill {
-    height: 100%;
-    background: linear-gradient(90deg, rgba(140, 60, 255, 0.8), rgba(0, 200, 255, 0.9));
-    border-radius: 1px;
-    transition: width 0.2s ease;
-}
-
-/* ===== Gate Indicator ===== */
-.galaxyGate {
-    position: absolute;
-    z-index: 5;
-    pointer-events: none;
-}
-
-.galaxyGateTop,
-.galaxyGateBottom {
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(var(--galaxy-cell-size, 28px) * 2);
-    height: 3px;
-}
-
-.galaxyGateTop {
-    composes: galaxyGate;
-    composes: galaxyGateTop;
-    bottom: -1px;
-}
-
-.galaxyGateBottom {
-    composes: galaxyGate;
-    composes: galaxyGateBottom;
-    top: -1px;
-}
-
-.galaxyGateLeft,
-.galaxyGateRight {
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: calc(var(--galaxy-cell-size, 28px) * 2);
-}
-
-.galaxyGateLeft {
-    composes: galaxyGate;
-    composes: galaxyGateLeft;
-    right: -1px;
-}
-
-.galaxyGateRight {
-    composes: galaxyGate;
-    composes: galaxyGateRight;
-    left: -1px;
-}
-
-.gateHealth {
-    width: 100%;
-    height: 100%;
-    border-radius: 2px;
-    background: rgba(0, 255, 100, 0.6);
-    box-shadow: 0 0 6px rgba(0, 255, 100, 0.4);
-    transition: background 0.3s, box-shadow 0.3s;
-}
-
-.gateHealthLow {
-    background: rgba(255, 100, 0, 0.7);
-    box-shadow: 0 0 8px rgba(255, 100, 0, 0.5);
-}
-
-.gateHealthCritical {
-    background: rgba(255, 30, 30, 0.8);
-    box-shadow: 0 0 10px rgba(255, 30, 30, 0.6);
-    animation: gateCritical 0.8s ease-in-out infinite;
-}
-
-@keyframes gateCritical {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
 }
 
 /* ===== Wave Label ===== */
 .waveLabel {
     position: absolute;
-    top: -20px;
+    top: -22px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.65rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.15em;
     color: rgba(180, 140, 255, 0.7);
     text-transform: uppercase;
     white-space: nowrap;
     pointer-events: none;
     z-index: 10;
+    text-shadow: 0 0 8px rgba(140, 60, 255, 0.4);
 }
 
-/* ===== Mobile: Hide galaxy ring ===== */
+/* ===== Mobile: Hide ring and label ===== */
 @media (max-width: 768px) {
-    .galaxyWrapper {
-        display: block;
-    }
-
-    .stripTop,
-    .stripBottom,
-    .stripLeft,
-    .stripRight {
-        display: none;
-    }
-
     .waveLabel {
         display: none;
-    }
-}
-
-/* ===== Reduced motion ===== */
-@media (prefers-reduced-motion: reduce) {
-    .galaxyEnemy,
-    .galaxyTowerFiring,
-    .gateHealthCritical {
-        animation: none;
     }
 }

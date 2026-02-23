@@ -1,13 +1,19 @@
 'use client';
 
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { Board } from './Board';
-import { GalaxyRingStrip } from './GalaxyRingStrip';
 import type { GalaxyRingEnemy, GalaxyTower, GalaxyGate } from '../galaxy-types';
 import type { Piece, Board as BoardType, FeatureSettings } from '../types';
 import type { ColorTheme } from '../constants';
 import type { GameKeybinds } from '../hooks/useKeybinds';
 import galaxyStyles from '../Galaxy.module.css';
+
+// Dynamically import the 3D ring (Three.js requires client-side only)
+const GalaxyRing3D = dynamic(
+    () => import('./GalaxyRing3D').then(mod => ({ default: mod.GalaxyRing3D })),
+    { ssr: false }
+);
 
 interface GalaxyBoardProps {
     // Galaxy TD state
@@ -50,9 +56,9 @@ interface GalaxyBoardProps {
 }
 
 /**
- * Galaxy Board — wraps the Tetris Board with a square TD ring.
- * During the dig phase, four ring strips (top, bottom, left, right) surround
- * the board, showing enemies on the outer path and towers on the inner ring.
+ * Galaxy Board — wraps the Tetris Board with a 3D floating ring.
+ * During the dig phase, a planetary ring orbits around the board showing
+ * pixelated Minecraft-style enemies and towers in 3D space.
  * When galaxy TD is inactive, renders the board without the ring.
  */
 export function GalaxyBoard({
@@ -61,7 +67,6 @@ export function GalaxyBoard({
     galaxyGates,
     galaxyActive,
     waveNumber,
-    // Destructure board props
     board,
     currentPiece,
     boardBeat,
@@ -92,14 +97,6 @@ export function GalaxyBoard({
     onFeatureSettingsUpdate,
     activeAnomaly,
 }: GalaxyBoardProps) {
-    // Helper to find gate for a side
-    const getGate = (side: 'top' | 'bottom' | 'left' | 'right') =>
-        galaxyGates.find(g => g.side === side) || { side, health: 50, maxHealth: 50 };
-
-    // Filter towers for each side
-    const sideTowers = (side: 'top' | 'bottom' | 'left' | 'right') =>
-        galaxyTowers.filter(t => t.side === side);
-
     const boardElement = (
         <Board
             board={board}
@@ -139,41 +136,23 @@ export function GalaxyBoard({
     }
 
     return (
-        <div className={galaxyStyles.galaxyWrapper}>
+        <div className={galaxyStyles.galaxyContainer}>
+            {/* Wave label */}
             {waveNumber > 0 && (
                 <div className={galaxyStyles.waveLabel}>WAVE {waveNumber}</div>
             )}
 
-            <GalaxyRingStrip
-                side="top"
-                enemies={galaxyEnemies}
-                towers={sideTowers('top')}
-                gate={getGate('top')}
-            />
-
-            <GalaxyRingStrip
-                side="left"
-                enemies={galaxyEnemies}
-                towers={sideTowers('left')}
-                gate={getGate('left')}
-            />
-
-            <div className={galaxyStyles.boardArea}>
+            {/* Board sits at the center — the "planet" */}
+            <div className={galaxyStyles.boardCenter}>
                 {boardElement}
             </div>
 
-            <GalaxyRingStrip
-                side="right"
+            {/* 3D ring overlays around the board — transparent background, no pointer events */}
+            <GalaxyRing3D
                 enemies={galaxyEnemies}
-                towers={sideTowers('right')}
-                gate={getGate('right')}
-            />
-
-            <GalaxyRingStrip
-                side="bottom"
-                enemies={galaxyEnemies}
-                towers={sideTowers('bottom')}
-                gate={getGate('bottom')}
+                towers={galaxyTowers}
+                gates={galaxyGates}
+                waveNumber={waveNumber}
             />
         </div>
     );
