@@ -37,6 +37,7 @@ interface BoardProps {
     defaultKeybinds?: GameKeybinds;
     featureSettings?: FeatureSettings;
     onFeatureSettingsUpdate?: (settings: FeatureSettings) => void;
+    activeAnomaly?: boolean;
 }
 
 /**
@@ -72,6 +73,7 @@ export function Board({
     defaultKeybinds,
     featureSettings,
     onFeatureSettingsUpdate,
+    activeAnomaly = false,
 }: BoardProps) {
     const isFever = combo >= 10;
 
@@ -133,6 +135,7 @@ export function Board({
         boardBeat ? styles.beat : '',
         boardShake ? styles.shake : '',
         isFever ? styles.fever : '',
+        activeAnomaly ? styles.anomaly : '',
     ].filter(Boolean).join(' ');
 
     // Default keybinds fallback

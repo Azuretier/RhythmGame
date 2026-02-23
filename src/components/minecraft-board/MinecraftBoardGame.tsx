@@ -21,6 +21,7 @@ export default function MinecraftBoardGame() {
     exploredTilesRef, visibleTiles, visiblePlayers, visibleMobs,
     selfState, dayPhase, timeOfDay,
     chatMessages, gameMessage, winner,
+    anomalyAlerts,
     createRoom, joinRoom, getRooms, leaveRoom,
     setReady, startGame,
     move, mine, cancelMine, craft, attack, placeBlock, eat, selectSlot, sendChat,
@@ -389,7 +390,7 @@ export default function MinecraftBoardGame() {
     return (
       <div className={styles.page}>
         <div className={styles.gameLayout}>
-          {/* Board */}
+          {/* Main Board */}
           <div className={styles.boardArea}>
             <BoardRenderer
               visibleTiles={visibleTiles}
@@ -403,6 +404,7 @@ export default function MinecraftBoardGame() {
               onMobClick={handleMobClick}
               onPlayerClick={handlePlayerClick}
               onMove={handleMove}
+              activeAnomaly={anomalyAlerts.length > 0}
             />
           </div>
 

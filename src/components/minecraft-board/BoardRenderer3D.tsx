@@ -60,6 +60,7 @@ interface BoardRendererProps {
   onMobClick: (mobId: string) => void;
   onPlayerClick: (targetPlayerId: string) => void;
   onMove: (direction: Direction) => void;
+  activeAnomaly?: boolean;
 }
 
 const TERRAIN_SEED = 42069;

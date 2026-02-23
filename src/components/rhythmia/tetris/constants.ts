@@ -85,6 +85,7 @@ export const COLORS: Record<string, string> = {
     Z: '#f00000',
     J: '#0000f0',
     L: '#f0a000',
+    garbage: '#666666',
 };
 
 // Standard Tetris colors for each piece type
@@ -399,6 +400,22 @@ export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
 export const BULLET_DAMAGE = 1;         // Damage per bullet hit
 export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
 export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
+
+// ===== Corruption & Anomaly Settings =====
+// Side board minimap dimensions
+export const SIDE_BOARD_COLS = 9;
+export const SIDE_BOARD_ROWS = 18;
+export const SIDE_BOARD_CELL_SIZE = 8;   // Small minimap cells
+
+// Terrain corruption (runs during TD phase only)
+export const CORRUPTION_CHANCE_PER_SECOND = 0.15;   // 15% chance per second to infect a block
+export const CORRUPTION_GROWTH_INTERVAL = 10000;     // 10s per growth tick (ms)
+export const CORRUPTION_MAX_LEVEL = 5;
+export const CORRUPTION_MAX_TERRAIN_NODES = 20;      // Max corrupted cells on terrain
+export const CORRUPTION_SPREAD_CHANCE = 0.25;
+export const CORRUPTION_ENEMY_SPAWN_CHANCE = 0.3;    // 30% chance per beat for mature cell to spawn enemy
+export const CORRUPTION_ANOMALY_THRESHOLD = 12;      // Cells needed to trigger anomaly state
+export const TERRAIN_RADIUS = 18;                    // Matches GRID_HALF
 
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];

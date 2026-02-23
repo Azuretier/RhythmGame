@@ -8,6 +8,8 @@ import type {
   MCPlayerState, MCMobState, MCRoomState, MCLobbyPlayer, MCPublicRoom,
   MCVisiblePlayer, MCTileUpdate, MCGameStateUpdate, MCServerMessage,
   InventoryItem,
+  SideBoardSide, SideBoardState, CorruptionNode, RaidMob, AnomalyEvent,
+  SideBoardVisibleState, AnomalyAlert,
 } from '@/types/minecraft-board';
 import {
   MC_BOARD_CONFIG, BLOCK_PROPERTIES, ITEM_PROPERTIES,
@@ -33,6 +35,12 @@ interface MCRoom {
   dayPhase: DayPhase;
   mobIdCounter: number;
   createdAt: number;
+  // Side boards & anomaly system
+  sideBoards: { left: SideBoardState; right: SideBoardState };
+  anomalies: Map<string, AnomalyEvent>;
+  raidMobs: Map<string, RaidMob>;
+  raidMobIdCounter: number;
+  anomalyIdCounter: number;
 }
 
 interface ManagerCallbacks {
@@ -89,6 +97,14 @@ export class MinecraftBoardManager {
       dayPhase: 'day',
       mobIdCounter: 0,
       createdAt: Date.now(),
+      sideBoards: {
+        left: { side: 'left', width: MC_BOARD_CONFIG.SIDE_BOARD_WIDTH, height: MC_BOARD_CONFIG.SIDE_BOARD_HEIGHT, corruption: [] },
+        right: { side: 'right', width: MC_BOARD_CONFIG.SIDE_BOARD_WIDTH, height: MC_BOARD_CONFIG.SIDE_BOARD_HEIGHT, corruption: [] },
+      },
+      anomalies: new Map(),
+      raidMobs: new Map(),
+      raidMobIdCounter: 0,
+      anomalyIdCounter: 0,
     };
 
     this.rooms.set(code, room);
@@ -242,6 +258,16 @@ export class MinecraftBoardManager {
       player.inventory = new Array(MC_BOARD_CONFIG.INVENTORY_SIZE).fill(null);
     });
 
+    // Initialize side boards
+    room.sideBoards = {
+      left: { side: 'left', width: MC_BOARD_CONFIG.SIDE_BOARD_WIDTH, height: MC_BOARD_CONFIG.SIDE_BOARD_HEIGHT, corruption: [] },
+      right: { side: 'right', width: MC_BOARD_CONFIG.SIDE_BOARD_WIDTH, height: MC_BOARD_CONFIG.SIDE_BOARD_HEIGHT, corruption: [] },
+    };
+    room.anomalies = new Map();
+    room.raidMobs = new Map();
+    room.raidMobIdCounter = 0;
+    room.anomalyIdCounter = 0;
+
     // Spawn passive mobs
     this.spawnInitialMobs(room);
 
@@ -307,6 +333,24 @@ export class MinecraftBoardManager {
 
     // Respawn dead players
     this.processRespawns(room);
+
+    // Corruption seeding
+    if (room.tick % MC_BOARD_CONFIG.CORRUPTION_SEED_INTERVAL === 0 && room.tick > 0) {
+      this.seedCorruption(room);
+    }
+
+    // Corruption growth
+    if (room.tick % MC_BOARD_CONFIG.CORRUPTION_GROWTH_INTERVAL === 0 && room.tick > 0) {
+      this.growCorruption(room);
+    }
+
+    // Process active anomalies (wave spawning)
+    this.processAnomalies(room);
+
+    // Raid mob AI
+    if (room.tick % 5 === 0) {
+      this.updateRaidMobs(room);
+    }
 
     // Broadcast state updates
     if (room.tick % MC_BOARD_CONFIG.STATE_UPDATE_INTERVAL === 0) {
@@ -546,6 +590,27 @@ export class MinecraftBoardManager {
       } else {
         // Aggro the mob
         mob.targetPlayerId = playerId;
+      }
+      return;
+    }
+
+    // Check if attacking a raid mob on the main board
+    const raidMob = room.raidMobs.get(targetId);
+    if (raidMob && raidMob.boardSide === 'main') {
+      const dist = Math.abs(player.x - raidMob.x) + Math.abs(player.y - raidMob.y);
+      if (dist > 1) return;
+
+      raidMob.health -= damage;
+      this.broadcastToRoom(room.code, {
+        type: 'mc_damage',
+        targetId,
+        damage,
+        sourceId: playerId,
+        targetHp: Math.max(0, raidMob.health),
+      });
+
+      if (raidMob.health <= 0) {
+        this.killRaidMob(room, targetId, player);
       }
       return;
     }
@@ -932,6 +997,341 @@ export class MinecraftBoardManager {
     });
   }
 
+  // === Corruption & Anomaly System ===
+
+  private seedCorruption(room: MCRoom): void {
+    const rng = new SeededRandom(room.tick + 7777);
+
+    for (const side of ['left', 'right'] as SideBoardSide[]) {
+      const board = room.sideBoards[side];
+      if (board.corruption.length >= MC_BOARD_CONFIG.MAX_CORRUPTION_NODES_PER_BOARD) continue;
+
+      const x = rng.nextInt(0, board.width - 1);
+      const y = rng.nextInt(0, board.height - 1);
+
+      // Don't place on existing corruption
+      const exists = board.corruption.some(c => c.x === x && c.y === y);
+      if (exists) continue;
+
+      const node: CorruptionNode = {
+        x, y,
+        level: 0,
+        maxLevel: MC_BOARD_CONFIG.CORRUPTION_MAX_LEVEL,
+        spawnTick: room.tick,
+        lastGrowTick: room.tick,
+      };
+      board.corruption.push(node);
+
+      this.broadcastToRoom(room.code, {
+        type: 'mc_corruption_spread',
+        side,
+        node,
+      });
+    }
+  }
+
+  private growCorruption(room: MCRoom): void {
+    const rng = new SeededRandom(room.tick + 8888);
+
+    for (const side of ['left', 'right'] as SideBoardSide[]) {
+      const board = room.sideBoards[side];
+      const maturedNodes: CorruptionNode[] = [];
+
+      for (const node of board.corruption) {
+        if (node.level >= node.maxLevel) continue;
+
+        node.level++;
+        node.lastGrowTick = room.tick;
+
+        // Spread: chance to create adjacent corruption
+        if (rng.chance(MC_BOARD_CONFIG.CORRUPTION_SPREAD_CHANCE) &&
+            board.corruption.length < MC_BOARD_CONFIG.MAX_CORRUPTION_NODES_PER_BOARD) {
+          const dirs = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+          const [dx, dy] = dirs[rng.nextInt(0, 3)];
+          const nx = node.x + dx;
+          const ny = node.y + dy;
+          if (nx >= 0 && nx < board.width && ny >= 0 && ny < board.height) {
+            const exists = board.corruption.some(c => c.x === nx && c.y === ny);
+            if (!exists) {
+              board.corruption.push({
+                x: nx, y: ny,
+                level: 0,
+                maxLevel: MC_BOARD_CONFIG.CORRUPTION_MAX_LEVEL,
+                spawnTick: room.tick,
+                lastGrowTick: room.tick,
+              });
+            }
+          }
+        }
+
+        // Check if matured
+        if (node.level >= node.maxLevel) {
+          maturedNodes.push(node);
+        }
+      }
+
+      // Trigger anomaly for matured nodes
+      for (const matured of maturedNodes) {
+        this.triggerAnomaly(room, side);
+        // Remove the matured corruption node (it has "burst")
+        board.corruption = board.corruption.filter(c => c !== matured);
+      }
+    }
+  }
+
+  private triggerAnomaly(room: MCRoom, side: SideBoardSide): void {
+    const anomalyId = `anomaly_${room.anomalyIdCounter++}`;
+
+    const anomaly: AnomalyEvent = {
+      id: anomalyId,
+      side,
+      triggerTick: room.tick,
+      raidMobs: [],
+      waveCount: 0,
+      maxWaves: MC_BOARD_CONFIG.RAID_MAX_WAVES,
+      nextWaveTick: room.tick,  // First wave spawns immediately
+      active: true,
+    };
+
+    room.anomalies.set(anomalyId, anomaly);
+
+    this.broadcastToRoom(room.code, {
+      type: 'mc_anomaly_start',
+      side,
+      message: `Anomaly detected on the ${side}! A raid is incoming!`,
+    });
+  }
+
+  private processAnomalies(room: MCRoom): void {
+    for (const [anomalyId, anomaly] of room.anomalies) {
+      if (!anomaly.active) continue;
+
+      if (room.tick >= anomaly.nextWaveTick && anomaly.waveCount < anomaly.maxWaves) {
+        this.spawnRaidWave(room, anomaly);
+        anomaly.waveCount++;
+        anomaly.nextWaveTick = room.tick + MC_BOARD_CONFIG.RAID_WAVE_INTERVAL;
+      }
+
+      // Check if anomaly is finished (all waves spawned and all raid mobs dead)
+      if (anomaly.waveCount >= anomaly.maxWaves) {
+        const aliveRaidMobs = anomaly.raidMobs.filter(id => room.raidMobs.has(id));
+        if (aliveRaidMobs.length === 0) {
+          anomaly.active = false;
+          this.broadcastToRoom(room.code, {
+            type: 'mc_anomaly_end',
+            side: anomaly.side,
+          });
+          room.anomalies.delete(anomalyId);
+        }
+      }
+    }
+  }
+
+  private spawnRaidWave(room: MCRoom, anomaly: AnomalyEvent): void {
+    if (room.raidMobs.size >= MC_BOARD_CONFIG.MAX_RAID_MOBS) return;
+
+    const rng = new SeededRandom(room.tick + anomaly.waveCount * 1000);
+    const hostileTypes: MobType[] = ['zombie', 'skeleton', 'spider', 'creeper'];
+    const board = room.sideBoards[anomaly.side];
+
+    // Spawn at the outer edge of the side board
+    const spawnEdgeX = anomaly.side === 'left' ? 0 : board.width - 1;
+    const centerY = Math.floor(MC_BOARD_CONFIG.WORLD_SIZE / 2);
+
+    for (let i = 0; i < MC_BOARD_CONFIG.RAID_WAVE_SIZE; i++) {
+      if (room.raidMobs.size >= MC_BOARD_CONFIG.MAX_RAID_MOBS) break;
+
+      const id = `raid_${room.raidMobIdCounter++}`;
+      const type = hostileTypes[rng.nextInt(0, hostileTypes.length - 1)];
+      const spawnY = rng.nextInt(
+        Math.max(0, centerY - 8),
+        Math.min(MC_BOARD_CONFIG.WORLD_SIZE - 1, centerY + 8)
+      );
+
+      // Target: the connection point where the side board meets the main board
+      const targetX = anomaly.side === 'left' ? 0 : MC_BOARD_CONFIG.WORLD_SIZE - 1;
+
+      const raidMob: RaidMob = {
+        id,
+        type,
+        x: spawnEdgeX,
+        y: spawnY,
+        health: MC_BOARD_CONFIG.RAID_MOB_HEALTH,
+        maxHealth: MC_BOARD_CONFIG.RAID_MOB_HEALTH,
+        boardSide: anomaly.side,
+        originSide: anomaly.side,
+        targetX,
+        targetY: spawnY,
+        speed: MC_BOARD_CONFIG.RAID_MOB_SPEED,
+        damage: MC_BOARD_CONFIG.RAID_MOB_DAMAGE,
+        lastMoveTick: room.tick,
+      };
+
+      room.raidMobs.set(id, raidMob);
+      anomaly.raidMobs.push(id);
+    }
+  }
+
+  private updateRaidMobs(room: MCRoom): void {
+    if (!room.world) return;
+
+    for (const raidMob of room.raidMobs.values()) {
+      if (room.tick - raidMob.lastMoveTick < raidMob.speed) continue;
+      raidMob.lastMoveTick = room.tick;
+
+      if (raidMob.boardSide !== 'main') {
+        this.moveRaidMobOnSideBoard(room, raidMob);
+      } else {
+        this.moveRaidMobOnMainBoard(room, raidMob);
+      }
+    }
+  }
+
+  private moveRaidMobOnSideBoard(room: MCRoom, mob: RaidMob): void {
+    const board = room.sideBoards[mob.boardSide as SideBoardSide];
+    const originSide = mob.originSide;
+
+    // Move toward the main board edge
+    const connectionEdgeX = originSide === 'left' ? board.width - 1 : 0;
+    const dx = Math.sign(connectionEdgeX - mob.x);
+
+    if (dx !== 0) {
+      mob.x += dx;
+    }
+
+    // Check if mob has reached the connection edge
+    const reachedEdge = (originSide === 'left' && mob.x >= board.width - 1) ||
+                         (originSide === 'right' && mob.x <= 0);
+
+    if (reachedEdge) {
+      // Transition to main board
+      mob.boardSide = 'main';
+      mob.x = originSide === 'left' ? 1 : MC_BOARD_CONFIG.WORLD_SIZE - 2;
+
+      // Find a walkable tile near the entry point
+      if (room.world) {
+        let placed = false;
+        for (let dy = 0; dy <= 3; dy++) {
+          for (const offset of dy === 0 ? [0] : [-dy, dy]) {
+            const ny = mob.y + offset;
+            if (ny >= 0 && ny < MC_BOARD_CONFIG.WORLD_SIZE) {
+              const tile = room.world[ny]?.[mob.x];
+              if (tile && BLOCK_PROPERTIES[tile.block].walkable) {
+                mob.y = ny;
+                placed = true;
+                break;
+              }
+            }
+          }
+          if (placed) break;
+        }
+        // If no walkable tile found, despawn
+        if (!placed) {
+          room.raidMobs.delete(mob.id);
+          return;
+        }
+      }
+
+      this.broadcastToRoom(room.code, {
+        type: 'mc_raid_mob_entered_main',
+        mobId: mob.id,
+        x: mob.x,
+        y: mob.y,
+      });
+    }
+  }
+
+  private moveRaidMobOnMainBoard(room: MCRoom, mob: RaidMob): void {
+    if (!room.world) return;
+
+    // Find nearest player
+    let nearestPlayer: MCPlayerState | null = null;
+    let nearestDist = Infinity;
+    for (const player of room.players.values()) {
+      if (player.dead || !player.connected) continue;
+      const dist = Math.abs(player.x - mob.x) + Math.abs(player.y - mob.y);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestPlayer = player;
+      }
+    }
+
+    if (!nearestPlayer) return;
+
+    // Attack if adjacent
+    if (nearestDist <= 1) {
+      let actualDamage = mob.damage;
+      if (nearestPlayer.armor) {
+        const armorDef = ITEM_PROPERTIES[nearestPlayer.armor].defense;
+        actualDamage = Math.max(1, mob.damage - Math.floor(armorDef / 2));
+      }
+      nearestPlayer.health -= actualDamage;
+      this.broadcastToRoom(room.code, {
+        type: 'mc_damage',
+        targetId: nearestPlayer.id,
+        damage: actualDamage,
+        sourceId: mob.id,
+        targetHp: Math.max(0, nearestPlayer.health),
+      });
+      if (nearestPlayer.health <= 0) {
+        this.killPlayer(room, nearestPlayer, mob.id);
+      }
+      return;
+    }
+
+    // Chase player (extended detection range for raid mobs)
+    if (nearestDist <= 20) {
+      // Use a RaidMob-compatible move: reuse moveMobToward logic inline
+      const dx = Math.sign(nearestPlayer.x - mob.x);
+      const dy = Math.sign(nearestPlayer.y - mob.y);
+
+      const options: [number, number][] = [];
+      if (dx !== 0) options.push([dx, 0]);
+      if (dy !== 0) options.push([0, dy]);
+
+      for (const [mx, my] of options) {
+        const nx = mob.x + mx;
+        const ny = mob.y + my;
+        if (nx < 1 || nx >= MC_BOARD_CONFIG.WORLD_SIZE - 1 || ny < 1 || ny >= MC_BOARD_CONFIG.WORLD_SIZE - 1) continue;
+        if (!BLOCK_PROPERTIES[room.world[ny][nx].block].walkable) continue;
+
+        mob.x = nx;
+        mob.y = ny;
+        return;
+      }
+    }
+  }
+
+  private killRaidMob(room: MCRoom, mobId: string, killer: MCPlayerState): void {
+    const mob = room.raidMobs.get(mobId);
+    if (!mob) return;
+
+    // Enhanced loot drops from raid mobs
+    const rng = new SeededRandom(room.tick + mob.x);
+    if (rng.chance(0.5)) {
+      this.addToInventory(killer, 'iron_ingot', 1);
+      this.sendToPlayer(killer.id, { type: 'mc_item_gained', playerId: killer.id, item: 'iron_ingot', quantity: 1 });
+    }
+    if (rng.chance(0.2)) {
+      this.addToInventory(killer, 'diamond', 1);
+      this.sendToPlayer(killer.id, { type: 'mc_item_gained', playerId: killer.id, item: 'diamond', quantity: 1 });
+    }
+    if (rng.chance(0.3)) {
+      this.addToInventory(killer, 'ender_pearl', 1);
+      this.sendToPlayer(killer.id, { type: 'mc_item_gained', playerId: killer.id, item: 'ender_pearl', quantity: 1 });
+    }
+
+    killer.kills++;
+    killer.experience += 10;
+    room.raidMobs.delete(mobId);
+
+    this.broadcastToRoom(room.code, {
+      type: 'mc_mob_died',
+      mobId,
+      killerName: killer.name,
+    });
+  }
+
   // === Player Death & Respawn ===
 
   private killPlayer(room: MCRoom, player: MCPlayerState, killerId: string): void {
@@ -1068,6 +1468,53 @@ export class MinecraftBoardManager {
       }
     }
 
+    // Include raid mobs on the main board as visible mobs
+    for (const raidMob of room.raidMobs.values()) {
+      if (raidMob.boardSide === 'main') {
+        const dist = Math.abs(raidMob.x - player.x) + Math.abs(raidMob.y - player.y);
+        if (dist <= vr + 2) {
+          visibleMobs.push({
+            id: raidMob.id,
+            type: raidMob.type,
+            x: raidMob.x,
+            y: raidMob.y,
+            health: raidMob.health,
+            maxHealth: raidMob.maxHealth,
+            targetPlayerId: null,
+            lastMoveTick: raidMob.lastMoveTick,
+            hostile: true,
+          });
+        }
+      }
+    }
+
+    // Build side board visible states
+    const sideBoards: SideBoardVisibleState[] = [
+      {
+        side: 'left',
+        width: room.sideBoards.left.width,
+        height: room.sideBoards.left.height,
+        corruption: [...room.sideBoards.left.corruption],
+        raidMobs: Array.from(room.raidMobs.values()).filter(m => m.boardSide === 'left'),
+      },
+      {
+        side: 'right',
+        width: room.sideBoards.right.width,
+        height: room.sideBoards.right.height,
+        corruption: [...room.sideBoards.right.corruption],
+        raidMobs: Array.from(room.raidMobs.values()).filter(m => m.boardSide === 'right'),
+      },
+    ];
+
+    // Build anomaly alerts
+    const anomalyAlerts: AnomalyAlert[] = Array.from(room.anomalies.values())
+      .filter(a => a.active)
+      .map(a => ({
+        side: a.side,
+        message: `Raid wave ${a.waveCount}/${a.maxWaves}`,
+        active: true,
+      }));
+
     const totalCycle = MC_BOARD_CONFIG.DAY_TICKS + MC_BOARD_CONFIG.DUSK_TICKS +
       MC_BOARD_CONFIG.NIGHT_TICKS + MC_BOARD_CONFIG.DAWN_TICKS;
     const normalizedTime = (room.timeOfDay % totalCycle) / totalCycle;
@@ -1080,6 +1527,8 @@ export class MinecraftBoardManager {
       timeOfDay: normalizedTime,
       dayPhase: room.dayPhase,
       tick: room.tick,
+      sideBoards,
+      anomalyAlerts: anomalyAlerts.length > 0 ? anomalyAlerts : undefined,
     };
 
     this.sendToPlayer(playerId, { type: 'mc_state_update', state: update });
