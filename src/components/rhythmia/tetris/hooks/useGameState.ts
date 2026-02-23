@@ -107,6 +107,7 @@ export function useGameState() {
     const [offeredCards, setOfferedCards] = useState<CardOffer[]>([]);
     const [activeEffects, setActiveEffects] = useState<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
     const activeEffectsRef = useRef<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
+    const [absorbingCardId, setAbsorbingCardId] = useState<string | null>(null);
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -481,9 +482,18 @@ export function useGameState() {
             return updated;
         });
 
-        finishCardSelect();
+        // Enter absorbing phase — animation plays before finishing
+        setAbsorbingCardId(cardId);
+        setGamePhase('CARD_ABSORBING');
+        gamePhaseRef.current = 'CARD_ABSORBING';
         return true;
-    }, [offeredCards, computeActiveEffects, finishCardSelect]);
+    }, [offeredCards, computeActiveEffects]);
+
+    // Called by CardSelectUI after absorption animation completes
+    const finishAbsorption = useCallback(() => {
+        setAbsorbingCardId(null);
+        finishCardSelect();
+    }, [finishCardSelect]);
 
     // Skip card selection (take nothing)
     const skipCardSelect = useCallback(() => {
@@ -1084,6 +1094,7 @@ export function useGameState() {
         showCardSelect,
         offeredCards,
         activeEffects,
+        absorbingCardId,
         // Game mode
         gameMode,
         // Terrain phase
@@ -1168,6 +1179,7 @@ export function useGameState() {
         enterCardSelect,
         selectCard,
         skipCardSelect,
+        finishAbsorption,
         consumeComboGuard,
         consumeShield,
         enterPlayPhase,
