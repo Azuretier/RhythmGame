@@ -12,6 +12,7 @@ import { ProfileProvider } from '@/lib/profile/context';
 import { SkinProvider } from '@/lib/skin/context';
 import { UiThemeProvider } from '@/lib/theme/context';
 import { GoogleSyncProvider } from '@/lib/google-sync/context';
+import { SkillTreeProvider } from '@/lib/skill-tree/context';
 
 // Vercel Analytics
 import { Analytics } from "@vercel/analytics/next"
@@ -131,11 +132,13 @@ export default async function LocaleLayout({ children, params }: Props) {
                         <GoogleSyncProvider>
                             <ProfileProvider>
                                 <SkinProvider>
-                                    <VersionProvider>
-                                        <Provider>
-                                            {children}
-                                        </Provider>
-                                    </VersionProvider>
+                                    <SkillTreeProvider>
+                                        <VersionProvider>
+                                            <Provider>
+                                                {children}
+                                            </Provider>
+                                        </VersionProvider>
+                                    </SkillTreeProvider>
                                 </SkinProvider>
                             </ProfileProvider>
                         </GoogleSyncProvider>

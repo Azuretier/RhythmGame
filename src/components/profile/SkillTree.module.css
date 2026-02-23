@@ -1,0 +1,456 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--background, #0a0a0a);
+  border: 1px solid var(--border, #222);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title {
+  font-family: var(--font-theme-heading, 'Orbitron', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--foreground, #fff);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.points {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border, #333);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.pointsIcon {
+  font-size: 0.9rem;
+}
+
+.pointsValue {
+  font-family: var(--font-theme-mono, 'Geist Mono', monospace);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.pointsLabel {
+  font-size: 0.7rem;
+  color: var(--subtext, #888);
+  text-transform: uppercase;
+}
+
+.resetBtn {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--subtext, #888);
+  background: transparent;
+  border: 1px solid var(--border, #333);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.resetBtn:hover:not(:disabled) {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.resetBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--subtext, #888);
+  background: transparent;
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.closeBtn:hover {
+  color: var(--foreground, #fff);
+  border-color: var(--foreground, #fff);
+}
+
+/* Tree Grid */
+.treeGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.branch {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.branchHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 2px solid;
+  margin-bottom: 12px;
+}
+
+.branchIcon {
+  font-size: 1rem;
+}
+
+.branchName {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--foreground, #fff);
+}
+
+.branchNodes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* Node */
+.nodeWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.connector {
+  width: 2px;
+  height: 16px;
+  border-left: 2px dashed var(--border, #333);
+}
+
+.node {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid var(--border, #333);
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 4px;
+}
+
+.node:hover {
+  transform: scale(1.08);
+}
+
+.node_locked {
+  opacity: 0.4;
+  filter: grayscale(0.8);
+}
+
+.node_available {
+  border-color: var(--node-color);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--node-color) 30%, transparent);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.node_partial {
+  border-color: var(--node-color);
+  background: color-mix(in srgb, var(--node-color) 10%, transparent);
+}
+
+.node_maxed {
+  border-color: var(--node-color);
+  background: color-mix(in srgb, var(--node-color) 20%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--node-color) 25%, transparent);
+}
+
+.nodeSelected {
+  outline: 2px solid var(--node-color);
+  outline-offset: 2px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px color-mix(in srgb, var(--node-color) 20%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 18px color-mix(in srgb, var(--node-color) 40%, transparent);
+  }
+}
+
+.nodeIcon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.levelPips {
+  display: flex;
+  gap: 3px;
+}
+
+.pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border, #333);
+  transition: background 0.2s;
+}
+
+.pipFilled {
+  /* color set inline */
+}
+
+/* Detail Panel */
+.detailPanel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, #222);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detailIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.detailName {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--foreground, #fff);
+}
+
+.detailCategory {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--subtext, #888);
+  letter-spacing: 0.04em;
+}
+
+.detailDesc {
+  font-size: 0.8rem;
+  color: var(--subtext, #aaa);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.detailStats {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: var(--subtext, #888);
+  font-family: var(--font-theme-mono, 'Geist Mono', monospace);
+}
+
+.unlockBtn {
+  align-self: flex-start;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.unlockBtn:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.maxedBadge {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.lockedHint {
+  font-size: 0.75rem;
+  color: var(--subtext, #666);
+  font-style: italic;
+}
+
+/* Reset Confirmation */
+.resetOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 16px;
+  z-index: 10;
+}
+
+.resetDialog {
+  background: var(--background, #0a0a0a);
+  border: 1px solid var(--border, #333);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  max-width: 300px;
+}
+
+.resetDialog p {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  color: var(--foreground, #fff);
+}
+
+.resetActions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.resetCancel,
+.resetConfirmBtn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border, #333);
+  transition: all 0.15s;
+}
+
+.resetCancel {
+  background: transparent;
+  color: var(--subtext, #888);
+}
+
+.resetCancel:hover {
+  border-color: var(--foreground, #fff);
+  color: var(--foreground, #fff);
+}
+
+.resetConfirmBtn {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+.resetConfirmBtn:hover {
+  background: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+    max-height: 95vh;
+  }
+
+  .treeGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .node {
+    width: 48px;
+    height: 48px;
+  }
+
+  .title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .treeGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .headerRight {
+    align-self: flex-end;
+  }
+}
