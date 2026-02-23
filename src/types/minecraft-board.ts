@@ -559,7 +559,8 @@ export type MCClientMessage =
   | { type: 'mc_place_block'; x: number; y: number; itemIndex: number }
   | { type: 'mc_eat'; itemIndex: number }
   | { type: 'mc_select_slot'; slot: number }
-  | { type: 'mc_chat'; message: string };
+  | { type: 'mc_chat'; message: string }
+  | { type: 'mc_request_state' };
 
 export type MCServerMessage =
   | { type: 'mc_room_created'; roomCode: string; playerId: string; reconnectToken: string }

@@ -1630,6 +1630,17 @@ export class MinecraftBoardManager {
     return false;
   }
 
+  // === State Resync ===
+
+  /** Send current game state to a specific player (used for reconnect/resync) */
+  sendStateToPlayer(playerId: string): void {
+    const room = this.getRoomByPlayerId(playerId);
+    if (!room || room.status !== 'playing' || !room.world) return;
+    const player = room.players.get(playerId);
+    if (!player) return;
+    this.sendStateUpdate(room, playerId);
+  }
+
   // === Accessors ===
 
   getRoomByPlayerId(playerId: string): MCRoom | undefined {

@@ -741,6 +741,12 @@ function handleMessage(playerId: string, raw: string): void {
         } as unknown as ServerMessage);
 
         sendMCBoardRoomState(mcRoom.code);
+
+        // If the game is in progress, immediately send the current game state
+        if (mcRoom.status === 'playing') {
+          mcBoardManager.sendStateToPlayer(playerId);
+        }
+
         console.log(`[MC_BOARD] Player reconnected to room ${mcRoom.code}`);
         break;
       }
@@ -1307,6 +1313,12 @@ function handleMessage(playerId: string, raw: string): void {
 
     case 'mc_chat': {
       mcBoardManager.handleChat(playerId, message.message);
+      break;
+    }
+
+    case 'mc_request_state': {
+      // Client is requesting a state resync (e.g. after reconnection or missed initial state)
+      mcBoardManager.sendStateToPlayer(playerId);
       break;
     }
 

@@ -380,6 +380,13 @@ export default function MinecraftBoardGame() {
         <div className={styles.centerBox}>
           <div className={styles.spinner} />
           <p>Loading world...</p>
+          <button
+            className={styles.btn}
+            style={{ marginTop: '1rem', opacity: 0.7 }}
+            onClick={leaveRoom}
+          >
+            Back to Menu
+          </button>
         </div>
       </div>
     );

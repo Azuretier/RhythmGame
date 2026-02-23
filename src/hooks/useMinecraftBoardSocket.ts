@@ -58,6 +58,11 @@ export function useMinecraftBoardSocket() {
   const [gameMessage, setGameMessage] = useState<string | null>(null);
   const [winner, setWinner] = useState<{ id: string; name: string } | null>(null);
 
+  // State resync timer: requests state if mc_state_update doesn't arrive after entering 'playing'
+  const stateResyncTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Tracks whether we've received at least one state update for the current game
+  const hasReceivedStateRef = useRef(false);
+
   // Side board & anomaly state
   const [leftSideBoard, setLeftSideBoard] = useState<SideBoardVisibleState | null>(null);
   const [rightSideBoard, setRightSideBoard] = useState<SideBoardVisibleState | null>(null);
@@ -218,6 +223,7 @@ export function useMinecraftBoardSocket() {
           setSelfState(null);
           setChatMessages([]);
           setWinner(null);
+          hasReceivedStateRef.current = false;
         }
         setPhase('countdown');
         setCountdownCount(msg.count);
@@ -226,11 +232,25 @@ export function useMinecraftBoardSocket() {
 
       case 'mc_game_started': {
         setPhase('playing');
+        // Start a resync timer — if no mc_state_update arrives within 3s, request state from server
+        if (stateResyncTimerRef.current) clearTimeout(stateResyncTimerRef.current);
+        stateResyncTimerRef.current = setTimeout(() => {
+          if (phaseRef.current === 'playing') {
+            send({ type: 'mc_request_state' });
+          }
+          stateResyncTimerRef.current = null;
+        }, 3000);
         break;
       }
 
       case 'mc_state_update': {
         const state = msg.state;
+        // Clear resync timer — state arrived successfully
+        if (stateResyncTimerRef.current) {
+          clearTimeout(stateResyncTimerRef.current);
+          stateResyncTimerRef.current = null;
+        }
+        hasReceivedStateRef.current = true;
         // Update explored tiles cache
         for (const tu of state.visibleTiles) {
           exploredTilesRef.current.set(`${tu.x},${tu.y}`, tu.tile);
@@ -344,6 +364,16 @@ export function useMinecraftBoardSocket() {
         setRoomState(rcMsg.roomState);
         if (rcMsg.status === 'playing') {
           setPhase('playing');
+          // Request state immediately since reconnect doesn't include game state
+          send({ type: 'mc_request_state' });
+          // Also set a fallback resync timer
+          if (stateResyncTimerRef.current) clearTimeout(stateResyncTimerRef.current);
+          stateResyncTimerRef.current = setTimeout(() => {
+            if (phaseRef.current === 'playing') {
+              send({ type: 'mc_request_state' });
+            }
+            stateResyncTimerRef.current = null;
+          }, 3000);
         } else {
           setPhase('lobby');
         }
@@ -354,6 +384,14 @@ export function useMinecraftBoardSocket() {
         const errorCode = (msg as unknown as { code?: string }).code;
         if (errorCode === 'RECONNECT_FAILED' || errorCode === 'ROOM_GONE') {
           // Stale reconnect token — clear it and reset to menu
+          reconnectTokenRef.current = null;
+          sessionStorage.removeItem('mc_reconnectToken');
+          setPhase('menu');
+          setRoomState(null);
+        }
+        // If we're in 'playing' phase but never received game state, the game
+        // failed to start (e.g. world generation error) — reset to menu
+        if (phaseRef.current === 'playing' && !hasReceivedStateRef.current) {
           reconnectTokenRef.current = null;
           sessionStorage.removeItem('mc_reconnectToken');
           setPhase('menu');
