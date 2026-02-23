@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { CardOffer, InventoryItem, EquippedCard } from '../types';
 import { ITEM_MAP, ROGUE_CARD_MAP, WORLDS } from '../constants';
 import { ItemIcon } from './ItemIcon';
@@ -25,20 +25,66 @@ const RARITY_COLORS: Record<string, string> = {
 export function CardSelectUI({
     offers, inventory, equippedCards, onSelect, onSkip, worldIdx, stageNumber,
 }: CardSelectUIProps) {
-    const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+    // -1 = skip button focused, 0-2 = card index focused
+    const [focusedIdx, setFocusedIdx] = useState<number>(-1);
+    const focusedIdxRef = useRef(focusedIdx);
+    focusedIdxRef.current = focusedIdx;
 
-    // Keyboard support: 1/2/3 to select, Escape to skip
+    // Auto-focus first affordable card on mount
+    useEffect(() => {
+        const firstAffordable = offers.findIndex(o => o.affordable);
+        setFocusedIdx(firstAffordable >= 0 ? firstAffordable : -1);
+    }, [offers]);
+
+    // Navigate to next/previous affordable card, wrapping through skip button
+    const findNextAffordable = useCallback((from: number, direction: 1 | -1): number => {
+        const total = offers.length;
+        let next = from + direction;
+        for (let i = 0; i <= total; i++) {
+            if (next > total - 1) next = -1;
+            if (next < -1) next = total - 1;
+            if (next === -1) return -1; // skip is always reachable
+            if (offers[next]?.affordable) return next;
+            next += direction;
+        }
+        return -1;
+    }, [offers]);
+
+    // Keyboard navigation: arrows to move, Enter/Space to confirm, 1/2/3 direct select, Escape to skip
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                setFocusedIdx(prev => findNextAffordable(prev, 1));
+                return;
+            }
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                setFocusedIdx(prev => findNextAffordable(prev, -1));
+                return;
+            }
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                const idx = focusedIdxRef.current;
+                if (idx >= 0 && idx < offers.length && offers[idx]?.affordable) {
+                    onSelect(offers[idx].card.id);
+                } else if (idx === -1) {
+                    onSkip();
+                }
+                return;
+            }
             if (e.key === '1' && offers[0]?.affordable) {
+                setFocusedIdx(0);
                 onSelect(offers[0].card.id);
                 return;
             }
             if (e.key === '2' && offers[1]?.affordable) {
+                setFocusedIdx(1);
                 onSelect(offers[1].card.id);
                 return;
             }
             if (e.key === '3' && offers[2]?.affordable) {
+                setFocusedIdx(2);
                 onSelect(offers[2].card.id);
                 return;
             }
@@ -48,7 +94,7 @@ export function CardSelectUI({
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
-    }, [offers, onSelect, onSkip]);
+    }, [offers, onSelect, onSkip, findNextAffordable]);
 
     const world = WORLDS[worldIdx];
 
@@ -90,17 +136,16 @@ export function CardSelectUI({
                                 className={[
                                     styles.cardSelectCard,
                                     styles[`cardRarity_${offer.card.rarity}`],
-                                    selectedIdx === idx ? styles.cardSelectCardSelected : '',
+                                    focusedIdx === idx ? styles.cardSelectCardFocused : '',
                                     !offer.affordable ? styles.cardSelectCardDisabled : '',
                                 ].filter(Boolean).join(' ')}
                                 onClick={() => {
                                     if (offer.affordable) {
-                                        setSelectedIdx(idx);
+                                        setFocusedIdx(idx);
                                         onSelect(offer.card.id);
                                     }
                                 }}
-                                onMouseEnter={() => offer.affordable && setSelectedIdx(idx)}
-                                onMouseLeave={() => setSelectedIdx(null)}
+                                onMouseEnter={() => offer.affordable && setFocusedIdx(idx)}
                                 style={{
                                     '--card-color': offer.card.color,
                                     '--card-glow': offer.card.glowColor,
@@ -173,7 +218,11 @@ export function CardSelectUI({
                 )}
 
                 {/* Skip button */}
-                <button className={styles.cardSelectSkip} onClick={onSkip}>
+                <button
+                    className={`${styles.cardSelectSkip} ${focusedIdx === -1 ? styles.cardSelectSkipFocused : ''}`}
+                    onClick={onSkip}
+                    onMouseEnter={() => setFocusedIdx(-1)}
+                >
                     SKIP (ESC)
                 </button>
             </div>
