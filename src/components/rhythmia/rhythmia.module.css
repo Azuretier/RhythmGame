@@ -98,6 +98,7 @@
   .slideContainer {
     transition-duration: 0ms;
   }
+
   .scrollHint {
     animation: none;
   }
@@ -142,8 +143,15 @@
 }
 
 @keyframes scrollBounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(6px); }
+
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(6px);
+  }
 }
 
 /* Main container */
@@ -207,10 +215,12 @@
 }
 
 @keyframes statusPulse {
+
   0%,
   100% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 0.2;
   }
@@ -304,11 +314,9 @@
   right: 0;
   bottom: 0;
   border-radius: 12px;
-  background: linear-gradient(
-    135deg,
-    var(--skin-accent-dim, rgba(255, 255, 255, 0.02)) 0%,
-    transparent 100%
-  );
+  background: linear-gradient(135deg,
+      var(--skin-accent-dim, rgba(255, 255, 255, 0.02)) 0%,
+      transparent 100%);
   opacity: 0;
   transition: opacity 0.35s;
   pointer-events: none;
@@ -526,10 +534,12 @@
 }
 
 @keyframes onlinePulse {
+
   0%,
   100% {
     opacity: 0.5;
   }
+
   50% {
     opacity: 0.2;
   }
@@ -577,7 +587,7 @@
   position: relative;
 }
 
-.lockedCard > *:not(.lockOverlay) {
+.lockedCard>*:not(.lockOverlay) {
   filter: blur(2px);
   opacity: 0.3;
   pointer-events: none;
