@@ -1,8 +1,6 @@
 /* ============================================
-   Minecraft-style Pixelized Skill Tree
-   Modern enchanting table aesthetic with
-   sharp pixel borders, inventory slots,
-   stepped SVG paths, and obsidian frame
+   RPG Skill Tree — Minecraft-pixel × dark-fantasy
+   Continuous tree, class picker, no bottom panel
    ============================================ */
 
 /* ---- Overlay ---- */
@@ -60,13 +58,12 @@
   right: 6px;
 }
 
-/* ---- Frame Header (PAGE indicator) ---- */
+/* ---- Frame Header ---- */
 .frameHeader {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px 16px 10px;
+  gap: 8px;
+  padding: 10px 14px;
   background:
     repeating-linear-gradient(
       0deg,
@@ -77,48 +74,147 @@
     ),
     linear-gradient(180deg, #252525 0%, #1e1e1e 100%);
   border-bottom: 4px solid #0a0a0a;
-  border-bottom-color: #0a0a0a;
   box-shadow: inset 0 -2px 0 #3b3b3b;
 }
 
-/* Archetype icon in header */
-.archIcon {
+/* Class switch button in header */
+.classSwitch {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.1rem;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
-}
-
-/* Page indicator (1/3) */
-.pageIndicator {
-  font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.65rem;
-  color: #555555;
-  text-shadow: 1px 1px 0 #000;
-  letter-spacing: 0.1em;
-}
-
-/* Page banner — dark obsidian inset */
-.pageBanner {
-  background: #0a0a0a;
+  background: #2a2a2a;
   border: 3px solid;
-  border-color: #1a1a1a #3b3b3b #3b3b3b #1a1a1a;
-  padding: 5px 28px;
+  border-color: #1a1a1a #4a4a4a #4a4a4a #1a1a1a;
+  cursor: pointer;
+  transition: background 0.08s, box-shadow 0.15s;
+  flex-shrink: 0;
 }
 
-.pageLabel {
+.classSwitch:hover {
+  background: #353535;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--class-color) 40%, transparent);
+}
+
+.classSwitch:active {
+  border-color: #4a4a4a #1a1a1a #1a1a1a #4a4a4a;
+}
+
+/* Header title area */
+.headerTitle {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerTitleText {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.8rem;
-  letter-spacing: 0.2em;
-  color: #aaaaaa;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   text-shadow: 2px 2px 0 #000;
+  color: #aaaaaa;
 }
 
-/* ---- Tree Area (enchanting table background, scroll viewport) ---- */
+/* Right side of header (SP + reset + close) */
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* SP badge */
+.spBadge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: #0a0a0a;
+  border: 2px solid;
+  border-color: #1a1a1a #3b3b3b #3b3b3b #1a1a1a;
+  padding: 3px 8px;
+}
+
+.spIcon {
+  font-size: 0.65rem;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.8));
+}
+
+.spNum {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #80ff20;
+  text-shadow:
+    2px 2px 0 #1a3a00,
+    0 0 6px rgba(128, 255, 32, 0.3);
+}
+
+.spLabel {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.45rem;
+  color: #4a6a30;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* Reset link */
+.resetLink {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  color: #555;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  text-shadow: 1px 1px 0 #000;
+  letter-spacing: 0.05em;
+  transition: color 0.1s;
+}
+
+.resetLink:hover {
+  color: #ff5555;
+}
+
+/* Close X button */
+.closeX {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.75rem;
+  color: #666;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #1a1a1a #4a4a4a #4a4a4a #1a1a1a;
+  cursor: pointer;
+  transition: color 0.08s, background 0.08s;
+}
+
+.closeX:hover {
+  color: #ff5555;
+  background: #3a2020;
+}
+
+.closeX:active {
+  border-color: #4a4a4a #1a1a1a #1a1a1a #4a4a4a;
+}
+
+/* ---- Tree Area (continuous scroll) ---- */
 .treeArea {
   flex: 1;
   min-height: 240px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 20px 16px 24px;
   background:
     /* Subtle pixel grid */
     repeating-linear-gradient(
@@ -135,7 +231,7 @@
       rgba(255, 255, 255, 0.008) 7px,
       rgba(255, 255, 255, 0.008) 8px
     ),
-    /* Subtle purple enchant vignette */
+    /* Enchant vignette */
     radial-gradient(ellipse at center, rgba(60, 20, 100, 0.12) 0%, transparent 70%),
     #111111;
 }
@@ -162,26 +258,10 @@
   100% { transform: translateY(-20px); }
 }
 
-/* Slide container — translateY to show current page */
-.treeSlider {
-  height: 100%;
-  transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1);
-  will-change: transform;
-  position: relative;
-  z-index: 1;
-}
-
-/* Each page fills the tree area viewport */
-.treePage {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
+/* Tree canvas — single continuous area */
 .treeCanvas {
   position: relative;
+  z-index: 1;
 }
 
 .connectionsSvg {
@@ -191,36 +271,7 @@
   pointer-events: none;
 }
 
-/* Scroll hint arrow (bounces on first page) */
-.scrollHint {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  animation: scrollBounce 2s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.scrollArrow {
-  font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.7rem;
-  color: #4a4a4a;
-  text-shadow: 1px 1px 0 #000;
-}
-
-@keyframes scrollBounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(6px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .treeSlider {
-    transition-duration: 0ms;
-  }
-}
-
-/* ---- Skill Nodes (Minecraft inventory slot style, square) ---- */
+/* ---- Skill Nodes (Minecraft inventory slot) ---- */
 .node {
   position: absolute;
   display: flex;
@@ -228,7 +279,6 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  /* Minecraft slot: dark top-left inset, light bottom-right */
   background: #555555;
   border: 3px solid;
   border-color: #2a2a2a #8b8b8b #8b8b8b #2a2a2a;
@@ -315,7 +365,7 @@
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.6));
 }
 
-/* Level pips — square Minecraft segments */
+/* Level pips — square segments */
 .levelPips {
   display: flex;
   gap: 2px;
@@ -335,65 +385,97 @@
   box-shadow: 0 0 3px var(--cat-color, #4FC3F7);
 }
 
-/* ---- Archetype Picker Grid ---- */
-.archetypeGrid {
+/* ---- RPG Class Picker ---- */
+.classList {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 12px;
   overflow-y: auto;
 }
 
-/* Archetype card — Minecraft item frame style */
-.archetypeCard {
+/* Class card — full-width horizontal RPG entry */
+.classCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #1e1e1e;
+  border: 3px solid;
+  border-color: #141414 #333 #333 #141414;
+  border-left: 4px solid var(--class-color);
+  cursor: pointer;
+  transition: background 0.1s, box-shadow 0.15s;
+  text-align: left;
+}
+
+.classCard:hover {
+  background: #262626;
+  box-shadow:
+    inset 0 0 20px color-mix(in srgb, var(--class-color) 8%, transparent),
+    0 0 20px color-mix(in srgb, var(--class-color) 20%, transparent);
+}
+
+.classCard:active {
+  border-color: #333 #141414 #141414 #333;
+  border-left-color: var(--class-color);
+}
+
+.classCardActive {
+  background: #252525;
+  box-shadow:
+    inset 0 0 30px color-mix(in srgb, var(--class-color) 10%, transparent),
+    0 0 12px color-mix(in srgb, var(--class-color) 25%, transparent);
+}
+
+.classIcon {
+  font-size: 2rem;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.6));
+  flex-shrink: 0;
+  width: 44px;
+  text-align: center;
+}
+
+.classInfo {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 16px 10px;
-  background: #2a2a2a;
-  border: 3px solid;
-  border-color: #1a1a1a #4a4a4a #4a4a4a #1a1a1a;
-  cursor: pointer;
-  transition: background 0.08s;
+  gap: 2px;
 }
 
-.archetypeCard:hover {
-  background: #353535;
-  box-shadow:
-    0 0 20px color-mix(in srgb, var(--arch-color) 30%, transparent);
-}
-
-.archetypeCard:active {
-  border-color: #4a4a4a #1a1a1a #1a1a1a #4a4a4a;
-}
-
-.archetypeIcon {
-  font-size: 2rem;
-  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
-}
-
-.archetypeName {
+.className {
   font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   color: #e0e0e0;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
   text-shadow: 2px 2px 0 #000;
 }
 
-.archetypeDesc {
+.classDesc {
   font-family: var(--font-pixel, 'Courier New', monospace);
   font-size: 0.55rem;
-  color: #707070;
-  text-align: center;
+  color: #606060;
   line-height: 1.4;
   text-shadow: 1px 1px 0 #000;
 }
 
-/* ---- Detail Panel (Minecraft tooltip style) ---- */
+.classArrow {
+  font-size: 0.6rem;
+  color: #333;
+  flex-shrink: 0;
+  transition: color 0.1s, transform 0.15s;
+}
+
+.classCard:hover .classArrow {
+  color: var(--class-color);
+  transform: translateX(3px);
+}
+
+/* ---- Detail Panel (Minecraft tooltip) ---- */
 .detailPanel {
   margin: 0 10px;
   padding: 10px 12px;
@@ -414,7 +496,6 @@
   align-items: center;
 }
 
-/* Icon in detail — inventory slot mini */
 .detailIcon {
   width: 36px;
   height: 36px;
@@ -465,6 +546,14 @@
   text-shadow: 1px 1px 0 #000;
 }
 
+.detailTier {
+  font-family: var(--font-pixel, 'Courier New', monospace);
+  font-size: 0.55rem;
+  color: #444;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #000;
+}
+
 /* Minecraft raised button */
 .unlockBtn {
   margin-left: auto;
@@ -510,174 +599,6 @@
   text-shadow: 1px 1px 0 #000;
 }
 
-/* ---- Bottom Panel ---- */
-.bottomPanel {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      rgba(255, 255, 255, 0.008) 3px,
-      rgba(255, 255, 255, 0.008) 4px
-    ),
-    linear-gradient(0deg, #1a1a1a 0%, #222222 100%);
-  border-top: 4px solid #0a0a0a;
-  box-shadow: inset 0 2px 0 #3b3b3b;
-  padding: 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Page dots — square pixel dots */
-.pageDots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.pageDot {
-  width: 10px;
-  height: 10px;
-  background: #333333;
-  border: 2px solid;
-  border-color: #1a1a1a #4a4a4a #4a4a4a #1a1a1a;
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.pageDot:hover {
-  background: #4a4a4a;
-}
-
-.pageDotActive {
-  transform: scale(1.2);
-  box-shadow: 0 0 8px var(--cat-color, currentColor);
-}
-
-/* Toolbar (SP bar, archetype switch, reset, close) */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* XP-bar style points display */
-.pointsDisplay {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex: 1;
-  background: #0a0a0a;
-  border: 2px solid;
-  border-color: #1a1a1a #3b3b3b #3b3b3b #1a1a1a;
-  padding: 4px 8px;
-}
-
-.pointsStar {
-  font-size: 0.75rem;
-  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.8));
-}
-
-.pointsNum {
-  font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #80ff20;
-  text-shadow:
-    2px 2px 0 #1a3a00,
-    0 0 6px rgba(128, 255, 32, 0.3);
-}
-
-.pointsLabel {
-  font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.5rem;
-  color: #4a6a30;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-shadow: 1px 1px 0 #000;
-}
-
-/* Minecraft raised button — small */
-.switchArchBtn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  background: #555555;
-  border: 3px solid;
-  border-color: #7a7a7a #2a2a2a #2a2a2a #7a7a7a;
-  cursor: pointer;
-  transition: background 0.08s;
-}
-
-.switchArchBtn:hover {
-  background: #666666;
-}
-
-.switchArchBtn:active {
-  border-color: #2a2a2a #7a7a7a #7a7a7a #2a2a2a;
-}
-
-.resetBtn {
-  font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #c8c8c8;
-  background: #555555;
-  border: 3px solid;
-  border-color: #7a7a7a #2a2a2a #2a2a2a #7a7a7a;
-  padding: 4px 10px;
-  cursor: pointer;
-  transition: background 0.08s;
-  text-shadow: 2px 2px 0 #2a2a2a;
-}
-
-.resetBtn:hover:not(:disabled) {
-  color: #ff5555;
-  background: #5a3333;
-  text-shadow: 2px 2px 0 #2a0a0a;
-}
-
-.resetBtn:active:not(:disabled) {
-  border-color: #2a2a2a #7a7a7a #7a7a7a #2a2a2a;
-}
-
-.resetBtn:disabled {
-  opacity: 0.2;
-  cursor: not-allowed;
-  filter: grayscale(1);
-}
-
-.closeBtn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-pixel, 'Courier New', monospace);
-  font-size: 0.85rem;
-  color: #c8c8c8;
-  background: #555555;
-  border: 3px solid;
-  border-color: #7a7a7a #2a2a2a #2a2a2a #7a7a7a;
-  cursor: pointer;
-  transition: background 0.08s;
-  text-shadow: 2px 2px 0 #2a2a2a;
-}
-
-.closeBtn:hover {
-  color: #ff5555;
-  background: #5a3333;
-}
-
-.closeBtn:active {
-  border-color: #2a2a2a #7a7a7a #7a7a7a #2a2a2a;
-}
-
 /* ---- Reset Confirmation Dialog ---- */
 .resetOverlay {
   position: absolute;
@@ -717,7 +638,6 @@
   justify-content: center;
 }
 
-/* Minecraft buttons in dialog */
 .resetCancel,
 .resetConfirmBtn {
   font-family: var(--font-pixel, 'Courier New', monospace);
@@ -767,11 +687,26 @@
 
   .treeArea {
     min-height: 200px;
-    padding: 12px 6px;
+    padding: 16px 8px 20px;
   }
 
-  .archetypeGrid {
-    gap: 6px;
-    padding: 14px 10px;
+  .classList {
+    padding: 12px 8px;
+  }
+
+  .classCard {
+    padding: 12px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node_available {
+    animation: none;
+  }
+  .node_maxed::after {
+    animation: none;
+  }
+  .treeArea::after {
+    animation: none;
   }
 }

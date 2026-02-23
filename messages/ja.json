@@ -1296,6 +1296,7 @@
         "pointsAvailable": "SP",
         "reset": "リセット",
         "level": "レベル",
+        "tier": "TIER",
         "cost": "コスト",
         "pointsUnit": "SP",
         "unlock": "解放",
@@ -1305,7 +1306,7 @@
         "resetConfirm": "全スキルをリセットしますか？使用したポイントは返還されます。",
         "cancel": "キャンセル",
         "resetConfirmBtn": "リセット",
-        "chooseArchetype": "クラス選択",
+        "chooseArchetype": "クラスを選択せよ",
         "switchArchetype": "クラス変更",
         "archetypes": {
             "striker": "ストライカー",

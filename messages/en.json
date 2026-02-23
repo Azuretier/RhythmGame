@@ -1296,6 +1296,7 @@
     "pointsAvailable": "SP",
     "reset": "Reset",
     "level": "Level",
+    "tier": "TIER",
     "cost": "Cost",
     "pointsUnit": "SP",
     "unlock": "UNLOCK",
@@ -1305,7 +1306,7 @@
     "resetConfirm": "Reset all skills? All spent points will be refunded.",
     "cancel": "Cancel",
     "resetConfirmBtn": "Reset All",
-    "chooseArchetype": "CHOOSE CLASS",
+    "chooseArchetype": "CHOOSE YOUR CLASS",
     "switchArchetype": "Switch class",
     "archetypes": {
       "striker": "Striker",

@@ -18,9 +18,9 @@ export interface SkillNode {
   maxLevel: number;
   /** IDs of prerequisite skill nodes (must be fully unlocked) */
   requires: string[];
-  /** Which page this node appears on (0-indexed) */
-  page: number;
-  /** Position within the page grid (row, col — 3 columns: 0, 1, 2) */
+  /** Power tier (1 = basic, 2 = advanced, 3 = ultimate) */
+  tier: number;
+  /** Position within the global tree grid (row 0-3, col 0-2) */
   position: { row: number; col: number };
 }
 
@@ -34,8 +34,6 @@ export interface ArchetypeMeta {
   color: string;
   /** Icon/emoji */
   icon: string;
-  /** Number of pages in this archetype's tree */
-  pageCount: number;
 }
 
 export interface SkillTreeState {

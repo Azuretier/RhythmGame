@@ -16,7 +16,6 @@ export const ARCHETYPES: ArchetypeMeta[] = [
     descKey: 'strikerDesc',
     color: '#EF5350',
     icon: '\uD83D\uDD25',
-    pageCount: 3,
   },
   {
     id: 'guardian',
@@ -24,7 +23,6 @@ export const ARCHETYPES: ArchetypeMeta[] = [
     descKey: 'guardianDesc',
     color: '#66BB6A',
     icon: '\uD83D\uDEE1\uFE0F',
-    pageCount: 3,
   },
   {
     id: 'virtuoso',
@@ -32,7 +30,6 @@ export const ARCHETYPES: ArchetypeMeta[] = [
     descKey: 'virtuosoDesc',
     color: '#AB47BC',
     icon: '\uD83C\uDFAF',
-    pageCount: 3,
   },
   {
     id: 'trickster',
@@ -40,14 +37,14 @@ export const ARCHETYPES: ArchetypeMeta[] = [
     descKey: 'tricksterDesc',
     color: '#4FC3F7',
     icon: '\u26A1',
-    pageCount: 3,
   },
 ];
 
 // =========================================================
 //  Skill nodes — unique trees per archetype
 //
-//  Grid layout per page: 3 columns (0-2), rows top-down.
+//  Global grid: 3 columns (0-2), 4 rows (0-3) top-down.
+//  Tier 1 = rows 0-1, Tier 2 = row 2, Tier 3 = row 3.
 //  Connection lines are drawn between requires → child.
 // =========================================================
 
@@ -55,13 +52,13 @@ export const SKILL_NODES: SkillNode[] = [
   // =====================================================
   //  STRIKER — aggressive V-shape branching
   //
-  //  Page 0:         [score_amp]
+  //  Row 0:         [score_amp]
   //                  /         \
-  //          [line_surge]   [combo_ignite]
-  //
-  //  Page 1:   [tetris_force]  [chain_fire]  [fever_spark]
-  //                      \        |       /
-  //  Page 2:           [devastator]  [overdrive]
+  //  Row 1:  [line_surge]   [combo_ignite]
+  //                |      \   |   /    |
+  //  Row 2:  [tetris_force]  [chain_fire]  [fever_spark]
+  //                    \        |       /
+  //  Row 3:        [devastator]     [overdrive]
   // =====================================================
   {
     id: 'stk_score_amp',
@@ -72,7 +69,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: [],
-    page: 0,
+    tier: 1,
     position: { row: 0, col: 1 },
   },
   {
@@ -84,7 +81,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: ['stk_score_amp'],
-    page: 0,
+    tier: 1,
     position: { row: 1, col: 0 },
   },
   {
@@ -96,7 +93,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: ['stk_score_amp'],
-    page: 0,
+    tier: 1,
     position: { row: 1, col: 2 },
   },
   {
@@ -108,8 +105,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['stk_line_surge'],
-    page: 1,
-    position: { row: 0, col: 0 },
+    tier: 2,
+    position: { row: 2, col: 0 },
   },
   {
     id: 'stk_chain_fire',
@@ -120,8 +117,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['stk_line_surge', 'stk_combo_ignite'],
-    page: 1,
-    position: { row: 0, col: 1 },
+    tier: 2,
+    position: { row: 2, col: 1 },
   },
   {
     id: 'stk_fever_spark',
@@ -132,8 +129,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['stk_combo_ignite'],
-    page: 1,
-    position: { row: 0, col: 2 },
+    tier: 2,
+    position: { row: 2, col: 2 },
   },
   {
     id: 'stk_devastator',
@@ -144,8 +141,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['stk_tetris_force', 'stk_chain_fire'],
-    page: 2,
-    position: { row: 0, col: 0 },
+    tier: 3,
+    position: { row: 3, col: 0 },
   },
   {
     id: 'stk_overdrive',
@@ -156,20 +153,20 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['stk_chain_fire', 'stk_fever_spark'],
-    page: 2,
-    position: { row: 0, col: 2 },
+    tier: 3,
+    position: { row: 3, col: 2 },
   },
 
   // =====================================================
   //  GUARDIAN — defensive funnel pattern
   //
-  //  Page 0:           [fortify]
+  //  Row 0:           [fortify]
   //                       |
-  //                 [board_shield]
-  //
-  //  Page 1:   [last_stand]  [recovery]  [steady_hand]
-  //                    \        |       /
-  //  Page 2:            [sanctuary]
+  //  Row 1:         [board_shield]
+  //                 /      |      \
+  //  Row 2:  [last_stand] [recovery] [steady_hand]
+  //                  \      |      /
+  //  Row 3:          [sanctuary]
   // =====================================================
   {
     id: 'grd_fortify',
@@ -180,7 +177,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: [],
-    page: 0,
+    tier: 1,
     position: { row: 0, col: 1 },
   },
   {
@@ -192,7 +189,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: ['grd_fortify'],
-    page: 0,
+    tier: 1,
     position: { row: 1, col: 1 },
   },
   {
@@ -204,8 +201,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['grd_board_shield'],
-    page: 1,
-    position: { row: 0, col: 0 },
+    tier: 2,
+    position: { row: 2, col: 0 },
   },
   {
     id: 'grd_recovery',
@@ -216,8 +213,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['grd_board_shield'],
-    page: 1,
-    position: { row: 0, col: 1 },
+    tier: 2,
+    position: { row: 2, col: 1 },
   },
   {
     id: 'grd_steady_hand',
@@ -228,8 +225,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['grd_board_shield'],
-    page: 1,
-    position: { row: 0, col: 2 },
+    tier: 2,
+    position: { row: 2, col: 2 },
   },
   {
     id: 'grd_sanctuary',
@@ -240,20 +237,20 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['grd_last_stand', 'grd_recovery', 'grd_steady_hand'],
-    page: 2,
-    position: { row: 0, col: 1 },
+    tier: 3,
+    position: { row: 3, col: 1 },
   },
 
   // =====================================================
   //  VIRTUOSO — wide diamond shape
   //
-  //  Page 0:       [precision]
+  //  Row 0:       [precision]
   //                /         \
-  //       [tspin_adept]   [beat_sync]
-  //
-  //  Page 1:  [tspin_master]  [harmonic]  [perfect_rhythm]
-  //
-  //  Page 2:      [grand_master]  [crescendo]
+  //  Row 1:  [tspin_adept]   [beat_sync]
+  //               |    \    /   |
+  //  Row 2:  [tspin_master] [harmonic] [perfect_rhythm]
+  //                  \       |       /
+  //  Row 3:     [grand_master]  [crescendo]
   // =====================================================
   {
     id: 'vrt_precision',
@@ -264,7 +261,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: [],
-    page: 0,
+    tier: 1,
     position: { row: 0, col: 1 },
   },
   {
@@ -276,7 +273,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: ['vrt_precision'],
-    page: 0,
+    tier: 1,
     position: { row: 1, col: 0 },
   },
   {
@@ -288,7 +285,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: ['vrt_precision'],
-    page: 0,
+    tier: 1,
     position: { row: 1, col: 2 },
   },
   {
@@ -300,8 +297,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['vrt_tspin_adept'],
-    page: 1,
-    position: { row: 0, col: 0 },
+    tier: 2,
+    position: { row: 2, col: 0 },
   },
   {
     id: 'vrt_harmonic',
@@ -312,8 +309,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['vrt_tspin_adept', 'vrt_beat_sync'],
-    page: 1,
-    position: { row: 0, col: 1 },
+    tier: 2,
+    position: { row: 2, col: 1 },
   },
   {
     id: 'vrt_perfect_rhythm',
@@ -324,8 +321,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['vrt_beat_sync'],
-    page: 1,
-    position: { row: 0, col: 2 },
+    tier: 2,
+    position: { row: 2, col: 2 },
   },
   {
     id: 'vrt_grand_master',
@@ -336,8 +333,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['vrt_tspin_master', 'vrt_harmonic'],
-    page: 2,
-    position: { row: 0, col: 0 },
+    tier: 3,
+    position: { row: 3, col: 0 },
   },
   {
     id: 'vrt_crescendo',
@@ -348,20 +345,20 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['vrt_harmonic', 'vrt_perfect_rhythm'],
-    page: 2,
-    position: { row: 0, col: 2 },
+    tier: 3,
+    position: { row: 3, col: 2 },
   },
 
   // =====================================================
   //  TRICKSTER — parallel double-path
   //
-  //  Page 0:        [quick_hands]
+  //  Row 0:        [quick_hands]
   //                 /           \
-  //         [das_boost]     [soft_rush]
-  //
-  //  Page 1:  [hyper_speed]        [ghost_step]
-  //                |                    |
-  //  Page 2:  [time_warp]    [chaos_master]   [phantom]
+  //  Row 1:   [das_boost]     [soft_rush]
+  //                |                |
+  //  Row 2:  [hyper_speed]     [ghost_step]
+  //                |      \   /      |
+  //  Row 3:  [time_warp]  [chaos_master]  [phantom]
   // =====================================================
   {
     id: 'trk_quick_hands',
@@ -372,7 +369,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: [],
-    page: 0,
+    tier: 1,
     position: { row: 0, col: 1 },
   },
   {
@@ -384,7 +381,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: ['trk_quick_hands'],
-    page: 0,
+    tier: 1,
     position: { row: 1, col: 0 },
   },
   {
@@ -396,7 +393,7 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 1,
     maxLevel: 3,
     requires: ['trk_quick_hands'],
-    page: 0,
+    tier: 1,
     position: { row: 1, col: 2 },
   },
   {
@@ -408,8 +405,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['trk_das_boost'],
-    page: 1,
-    position: { row: 0, col: 0 },
+    tier: 2,
+    position: { row: 2, col: 0 },
   },
   {
     id: 'trk_ghost_step',
@@ -420,8 +417,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 2,
     maxLevel: 2,
     requires: ['trk_soft_rush'],
-    page: 1,
-    position: { row: 0, col: 2 },
+    tier: 2,
+    position: { row: 2, col: 2 },
   },
   {
     id: 'trk_time_warp',
@@ -432,8 +429,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['trk_hyper_speed'],
-    page: 2,
-    position: { row: 0, col: 0 },
+    tier: 3,
+    position: { row: 3, col: 0 },
   },
   {
     id: 'trk_chaos_master',
@@ -444,8 +441,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['trk_hyper_speed', 'trk_ghost_step'],
-    page: 2,
-    position: { row: 0, col: 1 },
+    tier: 3,
+    position: { row: 3, col: 1 },
   },
   {
     id: 'trk_phantom',
@@ -456,8 +453,8 @@ export const SKILL_NODES: SkillNode[] = [
     cost: 3,
     maxLevel: 1,
     requires: ['trk_ghost_step'],
-    page: 2,
-    position: { row: 0, col: 2 },
+    tier: 3,
+    position: { row: 3, col: 2 },
   },
 ];
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useSkillTree } from '@/lib/skill-tree/context';
@@ -8,7 +8,7 @@ import { ARCHETYPES, getNodesForArchetype } from '@/lib/skill-tree/definitions';
 import type { SkillNode, Archetype } from '@/lib/skill-tree/types';
 import styles from './SkillTree.module.css';
 
-/** Pixel-art style icons via Unicode — rendered in pixel font */
+/** Pixel-art style icons via Unicode */
 const NODE_ICONS: Record<string, string> = {
   bolt: '\u26A1',
   'arrow-down': '\u2B07',
@@ -27,16 +27,14 @@ const NODE_ICONS: Record<string, string> = {
   crown: '\uD83D\uDC51',
 };
 
-/** Grid cell dimensions — pixel-aligned */
+/** Grid cell dimensions */
 const CELL_W = 110;
-const CELL_H = 100;
+const CELL_H = 120;
 const NODE_SIZE = 60;
 const NODE_HALF = NODE_SIZE / 2;
 
-/** Scroll behaviour constants (matching main page useSlideScroll) */
-const SCROLL_DEBOUNCE = 600;
-const DELTA_THRESHOLD = 50;
-const TOUCH_THRESHOLD = 50;
+/** Tier divider labels */
+const TIER_LABELS = ['I', 'II', 'III'];
 
 interface SkillTreeProps {
   onClose?: () => void;
@@ -54,16 +52,9 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     totalSpent,
   } = useSkillTree();
 
-  const [currentPage, setCurrentPage] = useState(0);
+  const [pickingClass, setPickingClass] = useState(false);
   const [selectedNode, setSelectedNode] = useState<SkillNode | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-
-  // ── Scroll refs ──
-  const treeAreaRef = useRef<HTMLDivElement>(null);
-  const isTransitioning = useRef(false);
-  const accumulatedDelta = useRef(0);
-  const deltaTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchStartY = useRef(0);
 
   const archMeta = useMemo(
     () => ARCHETYPES.find((a) => a.id === state.archetype) ?? null,
@@ -74,8 +65,6 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     () => (state.archetype ? getNodesForArchetype(state.archetype) : []),
     [state.archetype]
   );
-
-  const pageCount = archMeta?.pageCount ?? 1;
 
   const getNodeStatus = useCallback(
     (node: SkillNode): 'locked' | 'available' | 'partial' | 'maxed' => {
@@ -88,7 +77,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
     [getLevel, canUnlock]
   );
 
-  /** Node center position within the per-page SVG grid */
+  /** Node center position in the global grid */
   const nodeCenter = (node: SkillNode) => ({
     x: node.position.col * CELL_W + CELL_W / 2,
     y: node.position.row * CELL_H + CELL_H / 2,
@@ -96,178 +85,61 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
 
   const svgWidth = 3 * CELL_W;
 
-  // ── Pre-compute every page's nodes, SVG height and connections ──
-  const allPages = useMemo(() => {
-    return Array.from({ length: pageCount }).map((_, pageIdx) => {
-      const nodes = archetypeNodes.filter((n) => n.page === pageIdx);
-      const nextNodes = archetypeNodes.filter((n) => n.page === pageIdx + 1);
+  // Compute max row for SVG height
+  const maxRow = useMemo(
+    () =>
+      archetypeNodes.length > 0
+        ? Math.max(...archetypeNodes.map((n) => n.position.row))
+        : 0,
+    [archetypeNodes]
+  );
 
-      const maxRow =
-        nodes.length > 0 ? Math.max(...nodes.map((n) => n.position.row)) : 0;
-      const hasNext = nextNodes.some((nn) =>
-        nn.requires.some((r) => nodes.some((n) => n.id === r))
-      );
-      const svgH = (maxRow + 1) * CELL_H + (hasNext ? 20 : 0);
+  const svgHeight = (maxRow + 1) * CELL_H;
 
-      // Stepped connection paths
-      const paths: { d: string; active: boolean }[] = [];
+  // Pre-compute all connection paths (single SVG, no page breaks)
+  const connectionPaths = useMemo(() => {
+    const paths: { d: string; active: boolean }[] = [];
 
-      for (const node of nodes) {
-        for (const reqId of node.requires) {
-          const parent = archetypeNodes.find((n) => n.id === reqId);
-          if (!parent) continue;
+    for (const node of archetypeNodes) {
+      for (const reqId of node.requires) {
+        const parent = archetypeNodes.find((n) => n.id === reqId);
+        if (!parent) continue;
 
-          if (parent.page === pageIdx) {
-            const from = nodeCenter(parent);
-            const to = nodeCenter(node);
-            const startY = from.y + NODE_HALF;
-            const endY = to.y - NODE_HALF;
-            const midY = Math.round((startY + endY) / 2);
-            const pStatus = getNodeStatus(parent);
-            const active = pStatus === 'partial' || pStatus === 'maxed';
+        const from = nodeCenter(parent);
+        const to = nodeCenter(node);
+        const startY = from.y + NODE_HALF;
+        const endY = to.y - NODE_HALF;
+        const midY = Math.round((startY + endY) / 2);
+        const pStatus = getNodeStatus(parent);
+        const active = pStatus === 'partial' || pStatus === 'maxed';
 
-            if (from.x === to.x) {
-              paths.push({ d: `M ${from.x} ${startY} L ${from.x} ${endY}`, active });
-            } else {
-              paths.push({
-                d: `M ${from.x} ${startY} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
-                active,
-              });
-            }
-          } else if (parent.page === pageIdx - 1) {
-            const to = nodeCenter(node);
-            const stubX = parent.position.col * CELL_W + CELL_W / 2;
-            const endY = to.y - NODE_HALF;
-            const midY = Math.round(endY * 0.3);
-            const pStatus = getNodeStatus(parent);
-            const active = pStatus === 'partial' || pStatus === 'maxed';
-
-            if (stubX === to.x) {
-              paths.push({ d: `M ${stubX} 0 L ${stubX} ${endY}`, active });
-            } else {
-              paths.push({
-                d: `M ${stubX} 0 L ${stubX} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
-                active,
-              });
-            }
-          }
-        }
-      }
-
-      // Bottom stubs to next page
-      for (const nextNode of nextNodes) {
-        for (const reqId of nextNode.requires) {
-          const parent = nodes.find((n) => n.id === reqId);
-          if (!parent) continue;
-          const from = nodeCenter(parent);
-          const pStatus = getNodeStatus(parent);
-          const active = pStatus === 'partial' || pStatus === 'maxed';
-          const bottomY = (maxRow + 1) * CELL_H + 10;
+        if (from.x === to.x) {
+          paths.push({ d: `M ${from.x} ${startY} L ${from.x} ${endY}`, active });
+        } else {
           paths.push({
-            d: `M ${from.x} ${from.y + NODE_HALF} L ${from.x} ${bottomY}`,
+            d: `M ${from.x} ${startY} L ${from.x} ${midY} L ${to.x} ${midY} L ${to.x} ${endY}`,
             active,
           });
         }
       }
+    }
 
-      return { nodes, svgH, paths };
-    });
-  }, [archetypeNodes, pageCount, getNodeStatus]);
+    return paths;
+  }, [archetypeNodes, getNodeStatus]);
 
-  // ── Navigate to a page (debounced) ──
-  const goToPage = useCallback(
-    (index: number) => {
-      const clamped = Math.max(0, Math.min(pageCount - 1, index));
-      if (clamped === currentPage || isTransitioning.current) return;
-
-      isTransitioning.current = true;
-      setSelectedNode(null);
-      setCurrentPage(clamped);
-
-      setTimeout(() => {
-        isTransitioning.current = false;
-      }, SCROLL_DEBOUNCE);
-    },
-    [currentPage, pageCount]
-  );
-
-  // ── Wheel scroll handler (delta accumulation, same as main page) ──
-  useEffect(() => {
-    if (!state.archetype) return;
-    const el = treeAreaRef.current;
-    if (!el) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (isTransitioning.current) return;
-
-      accumulatedDelta.current += e.deltaY;
-      if (deltaTimer.current) clearTimeout(deltaTimer.current);
-      deltaTimer.current = setTimeout(() => {
-        accumulatedDelta.current = 0;
-      }, 100);
-
-      if (Math.abs(accumulatedDelta.current) < DELTA_THRESHOLD) return;
-
-      const direction = accumulatedDelta.current > 0 ? 1 : -1;
-      accumulatedDelta.current = 0;
-      goToPage(currentPage + direction);
-    };
-
-    el.addEventListener('wheel', handleWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheel);
-  }, [state.archetype, currentPage, goToPage]);
-
-  // ── Touch swipe handler ──
-  useEffect(() => {
-    if (!state.archetype) return;
-    const el = treeAreaRef.current;
-    if (!el) return;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (isTransitioning.current) return;
-      const deltaY = touchStartY.current - e.changedTouches[0].clientY;
-      if (Math.abs(deltaY) < TOUCH_THRESHOLD) return;
-      const direction = deltaY > 0 ? 1 : -1;
-      goToPage(currentPage + direction);
-    };
-
-    el.addEventListener('touchstart', handleTouchStart, { passive: true });
-    el.addEventListener('touchend', handleTouchEnd, { passive: true });
-    return () => {
-      el.removeEventListener('touchstart', handleTouchStart);
-      el.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [state.archetype, currentPage, goToPage]);
-
-  // ── Keyboard handler (ArrowUp/Down, PageUp/Down) ──
-  useEffect(() => {
-    if (!state.archetype) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isTransitioning.current) return;
-      let direction = 0;
-      if (e.key === 'ArrowDown' || e.key === 'PageDown') direction = 1;
-      else if (e.key === 'ArrowUp' || e.key === 'PageUp') direction = -1;
-      else return;
-      e.preventDefault();
-      goToPage(currentPage + direction);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [state.archetype, currentPage, goToPage]);
-
-  // ── Cleanup delta timer ──
-  useEffect(() => {
-    return () => {
-      if (deltaTimer.current) clearTimeout(deltaTimer.current);
-    };
-  }, []);
+  // Tier divider Y positions (between rows)
+  const tierDividers = useMemo(() => {
+    const dividers: { y: number; label: string }[] = [];
+    // Divider between row 1 and row 2 → Tier II
+    if (maxRow >= 2) {
+      dividers.push({ y: 1.5 * CELL_H, label: TIER_LABELS[1] });
+    }
+    // Divider between row 2 and row 3 → Tier III
+    if (maxRow >= 3) {
+      dividers.push({ y: 2.5 * CELL_H, label: TIER_LABELS[2] });
+    }
+    return dividers;
+  }, [maxRow]);
 
   const handleUnlock = useCallback(
     (skillId: string) => {
@@ -285,181 +157,223 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
   const handleSelectArchetype = useCallback(
     (arch: Archetype) => {
       selectArchetype(arch);
-      setCurrentPage(0);
       setSelectedNode(null);
+      setPickingClass(false);
     },
     [selectArchetype]
   );
 
-  // ───── Archetype picker ─────
-  if (!state.archetype) {
+  // ───── Class Picker (initial or switching) ─────
+  if (!state.archetype || pickingClass) {
     return (
-      <div className={styles.overlay}>
+      <div className={styles.overlay} onClick={pickingClass ? onClose : undefined}>
         <motion.div
           className={styles.frame}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
+          onClick={(e) => e.stopPropagation()}
         >
+          {/* Header */}
           <div className={styles.frameHeader}>
-            <div className={styles.pageBanner}>
-              <span className={styles.pageLabel}>{t('chooseArchetype')}</span>
+            <div className={styles.headerTitle}>
+              <span className={styles.headerTitleText}>{t('chooseArchetype')}</span>
             </div>
-          </div>
-
-          <div className={styles.archetypeGrid}>
-            {ARCHETYPES.map((arch) => (
-              <button
-                key={arch.id}
-                className={styles.archetypeCard}
-                style={{ '--arch-color': arch.color } as React.CSSProperties}
-                onClick={() => handleSelectArchetype(arch.id)}
-              >
-                <span className={styles.archetypeIcon}>{arch.icon}</span>
-                <span className={styles.archetypeName}>
-                  {t(`archetypes.${arch.nameKey}`)}
-                </span>
-                <span className={styles.archetypeDesc}>
-                  {t(`archetypes.${arch.descKey}`)}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className={styles.bottomPanel}>
-            <div className={styles.toolbar}>
-              <div className={styles.pointsDisplay}>
-                <span className={styles.pointsStar}>{'\u2B50'}</span>
-                <span className={styles.pointsNum}>{state.skillPoints}</span>
-                <span className={styles.pointsLabel}>{t('pointsAvailable')}</span>
+            <div className={styles.headerRight}>
+              <div className={styles.spBadge}>
+                <span className={styles.spIcon}>{'\u2B50'}</span>
+                <span className={styles.spNum}>{state.skillPoints}</span>
+                <span className={styles.spLabel}>SP</span>
               </div>
               {onClose && (
-                <button className={styles.closeBtn} onClick={onClose}>
+                <button
+                  className={styles.closeX}
+                  onClick={pickingClass ? () => setPickingClass(false) : onClose}
+                >
                   {'\u2715'}
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Class cards — vertical RPG list */}
+          <div className={styles.classList}>
+            {ARCHETYPES.map((arch) => (
+              <button
+                key={arch.id}
+                className={`${styles.classCard} ${
+                  state.archetype === arch.id ? styles.classCardActive : ''
+                }`}
+                style={{ '--class-color': arch.color } as React.CSSProperties}
+                onClick={() => handleSelectArchetype(arch.id)}
+              >
+                <span className={styles.classIcon}>{arch.icon}</span>
+                <div className={styles.classInfo}>
+                  <span className={styles.className}>
+                    {t(`archetypes.${arch.nameKey}`)}
+                  </span>
+                  <span className={styles.classDesc}>
+                    {t(`archetypes.${arch.descKey}`)}
+                  </span>
+                </div>
+                <span className={styles.classArrow}>{'\u25B6'}</span>
+              </button>
+            ))}
           </div>
         </motion.div>
       </div>
     );
   }
 
-  // ───── Main tree view ─────
+  // ───── Main Tree View ─────
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} onClick={onClose}>
       <motion.div
         className={styles.frame}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.2 }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header — archetype + page indicator */}
+        {/* Header — class icon, name, SP, close */}
         <div className={styles.frameHeader}>
-          <span className={styles.archIcon} style={{ color: archMeta?.color }}>
-            {archMeta?.icon}
-          </span>
-          <div className={styles.pageBanner}>
-            <span className={styles.pageLabel}>
+          <button
+            className={styles.classSwitch}
+            style={{ '--class-color': archMeta?.color } as React.CSSProperties}
+            onClick={() => setPickingClass(true)}
+            title={t('switchArchetype')}
+          >
+            <span>{archMeta?.icon}</span>
+          </button>
+          <div className={styles.headerTitle}>
+            <span
+              className={styles.headerTitleText}
+              style={{ color: archMeta?.color }}
+            >
               {t(`archetypes.${archMeta?.nameKey}`)}
             </span>
           </div>
-          <span className={styles.pageIndicator}>
-            {currentPage + 1}/{pageCount}
-          </span>
+          <div className={styles.headerRight}>
+            <div className={styles.spBadge}>
+              <span className={styles.spIcon}>{'\u2B50'}</span>
+              <span className={styles.spNum}>{state.skillPoints}</span>
+              <span className={styles.spLabel}>SP</span>
+            </div>
+            {totalSpent > 0 && (
+              <button
+                className={styles.resetLink}
+                onClick={() => setShowResetConfirm(true)}
+              >
+                {t('reset')}
+              </button>
+            )}
+            {onClose && (
+              <button className={styles.closeX} onClick={onClose}>
+                {'\u2715'}
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Scrollable tree area — wheel / touch / keyboard to navigate */}
-        <div className={styles.treeArea} ref={treeAreaRef}>
+        {/* Continuous tree area — native scroll */}
+        <div className={styles.treeArea}>
           <div
-            className={styles.treeSlider}
-            style={{ transform: `translateY(-${currentPage * 100}%)` }}
+            className={styles.treeCanvas}
+            style={{ width: svgWidth, minHeight: svgHeight }}
           >
-            {allPages.map((page, pageIdx) => (
-              <div key={pageIdx} className={styles.treePage}>
-                <div
-                  className={styles.treeCanvas}
-                  style={{ width: svgWidth, minHeight: page.svgH }}
-                >
-                  {/* SVG stepped connection paths */}
-                  <svg
-                    className={styles.connectionsSvg}
-                    viewBox={`0 0 ${svgWidth} ${page.svgH}`}
-                    width={svgWidth}
-                    height={page.svgH}
-                    shapeRendering="crispEdges"
+            {/* Single SVG for all connections — no page breaks */}
+            <svg
+              className={styles.connectionsSvg}
+              viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+              width={svgWidth}
+              height={svgHeight}
+              shapeRendering="crispEdges"
+            >
+              {/* Tier divider lines */}
+              {tierDividers.map((div, i) => (
+                <g key={i}>
+                  <line
+                    x1={16}
+                    y1={div.y}
+                    x2={svgWidth - 16}
+                    y2={div.y}
+                    stroke="#2a2a2a"
+                    strokeWidth={2}
+                    strokeDasharray="6 4"
+                  />
+                  <text
+                    x={svgWidth - 10}
+                    y={div.y - 6}
+                    fill="#3a3a3a"
+                    fontSize="10"
+                    fontFamily="var(--font-pixel, 'Courier New', monospace)"
+                    textAnchor="end"
                   >
-                    {page.paths.map((conn, i) => (
-                      <path
+                    {t('tier')} {div.label}
+                  </text>
+                </g>
+              ))}
+
+              {/* Connection paths */}
+              {connectionPaths.map((conn, i) => (
+                <path
+                  key={i}
+                  d={conn.d}
+                  fill="none"
+                  stroke={conn.active ? archMeta?.color ?? '#888' : '#2a2a2a'}
+                  strokeWidth={4}
+                  strokeLinejoin="miter"
+                  strokeLinecap="butt"
+                  style={
+                    conn.active
+                      ? { filter: `drop-shadow(0 0 6px ${archMeta?.color ?? '#888'})` }
+                      : undefined
+                  }
+                />
+              ))}
+            </svg>
+
+            {/* Skill nodes */}
+            {archetypeNodes.map((node) => {
+              const status = getNodeStatus(node);
+              const level = getLevel(node.id);
+              const isSelected = selectedNode?.id === node.id;
+              const pos = nodeCenter(node);
+
+              return (
+                <button
+                  key={node.id}
+                  className={`${styles.node} ${styles[`node_${status}`]} ${
+                    isSelected ? styles.nodeSelected : ''
+                  }`}
+                  style={{
+                    '--cat-color': archMeta?.color ?? '#888',
+                    left: pos.x - NODE_HALF,
+                    top: pos.y - NODE_HALF,
+                    width: NODE_SIZE,
+                    height: NODE_SIZE,
+                  } as React.CSSProperties}
+                  onClick={() => setSelectedNode(isSelected ? null : node)}
+                >
+                  <span className={styles.nodeIcon}>
+                    {NODE_ICONS[node.icon] || node.icon}
+                  </span>
+                  <div className={styles.levelPips}>
+                    {Array.from({ length: node.maxLevel }).map((_, i) => (
+                      <div
                         key={i}
-                        d={conn.d}
-                        fill="none"
-                        stroke={conn.active ? archMeta?.color ?? '#888' : '#2a2a2a'}
-                        strokeWidth={4}
-                        strokeLinejoin="miter"
-                        strokeLinecap="butt"
-                        style={
-                          conn.active
-                            ? { filter: `drop-shadow(0 0 6px ${archMeta?.color ?? '#888'})` }
-                            : undefined
-                        }
+                        className={`${styles.pip} ${
+                          i < level ? styles.pipFilled : ''
+                        }`}
                       />
                     ))}
-                  </svg>
-
-                  {/* Square nodes (inventory slots) */}
-                  {page.nodes.map((node) => {
-                    const status = getNodeStatus(node);
-                    const level = getLevel(node.id);
-                    const isSelected = selectedNode?.id === node.id;
-                    const pos = nodeCenter(node);
-
-                    return (
-                      <button
-                        key={node.id}
-                        className={`${styles.node} ${styles[`node_${status}`]} ${
-                          isSelected ? styles.nodeSelected : ''
-                        }`}
-                        style={{
-                          '--cat-color': archMeta?.color ?? '#888',
-                          left: pos.x - NODE_HALF,
-                          top: pos.y - NODE_HALF,
-                          width: NODE_SIZE,
-                          height: NODE_SIZE,
-                        } as React.CSSProperties}
-                        onClick={() =>
-                          setSelectedNode(isSelected ? null : node)
-                        }
-                      >
-                        <span className={styles.nodeIcon}>
-                          {NODE_ICONS[node.icon] || node.icon}
-                        </span>
-                        <div className={styles.levelPips}>
-                          {Array.from({ length: node.maxLevel }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={`${styles.pip} ${
-                                i < level ? styles.pipFilled : ''
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+                  </div>
+                </button>
+              );
+            })}
           </div>
-
-          {/* Scroll hint on first page */}
-          {currentPage === 0 && pageCount > 1 && (
-            <div className={styles.scrollHint}>
-              <span className={styles.scrollArrow}>{'\u25BC'}</span>
-            </div>
-          )}
         </div>
 
         {/* Detail panel (Minecraft tooltip) */}
@@ -493,6 +407,9 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
                 <span className={styles.detailStat}>
                   {t('cost')}: {selectedNode.cost} {t('pointsUnit')}
                 </span>
+                <span className={styles.detailTier}>
+                  {t('tier')} {TIER_LABELS[selectedNode.tier - 1]}
+                </span>
                 {canUnlock(selectedNode.id) && (
                   <button
                     className={styles.unlockBtn}
@@ -517,58 +434,7 @@ export default function SkillTree({ onClose }: SkillTreeProps) {
           )}
         </AnimatePresence>
 
-        {/* Bottom panel */}
-        <div className={styles.bottomPanel}>
-          {/* Page dots (square, clickable) */}
-          <div className={styles.pageDots}>
-            {Array.from({ length: pageCount }).map((_, i) => (
-              <button
-                key={i}
-                className={`${styles.pageDot} ${
-                  i === currentPage ? styles.pageDotActive : ''
-                }`}
-                style={
-                  i === currentPage
-                    ? {
-                        backgroundColor: archMeta?.color,
-                        '--cat-color': archMeta?.color,
-                      } as React.CSSProperties
-                    : undefined
-                }
-                onClick={() => goToPage(i)}
-              />
-            ))}
-          </div>
-
-          <div className={styles.toolbar}>
-            <div className={styles.pointsDisplay}>
-              <span className={styles.pointsStar}>{'\u2B50'}</span>
-              <span className={styles.pointsNum}>{state.skillPoints}</span>
-              <span className={styles.pointsLabel}>{t('pointsAvailable')}</span>
-            </div>
-            <button
-              className={styles.switchArchBtn}
-              onClick={() => handleSelectArchetype(state.archetype!)}
-              title={t('switchArchetype')}
-            >
-              {archMeta?.icon}
-            </button>
-            <button
-              className={styles.resetBtn}
-              onClick={() => setShowResetConfirm(true)}
-              disabled={totalSpent === 0}
-            >
-              {t('reset')}
-            </button>
-            {onClose && (
-              <button className={styles.closeBtn} onClick={onClose}>
-                {'\u2715'}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Reset confirmation */}
+        {/* Reset confirmation dialog */}
         <AnimatePresence>
           {showResetConfirm && (
             <motion.div
