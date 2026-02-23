@@ -18,8 +18,8 @@ const RULE_LABELS: Record<AdvancedRule, string> = {
 };
 
 /**
- * Protocol Select screen — HSR-inspired difficulty selection.
- * Top: 5 world preview cards. Bottom: 5 protocol buttons with modifiers.
+ * Protocol Select screen — HSR-inspired left-panel difficulty selection.
+ * Left: vertical protocol list. Right: world preview + details + enter.
  */
 export function TitleScreen({ onStart }: TitleScreenProps) {
     const [selectedProtocol, setSelectedProtocol] = useState(0);
@@ -35,88 +35,74 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
 
     return (
         <div className={styles.titleScreen}>
-            <div
-                className={styles.protocolWrapper}
-                style={{ '--protocol-accent': protocol.accentColor } as React.CSSProperties}
-            >
-                <div className={styles.circuitGrid} />
-                <div className={styles.scanlineOverlay} />
-
-                {/* Section: World Preview */}
-                <div className={styles.protocolSectionTitle}>
-                    <span className={styles.protocolSectionLabel}>PROTOCOL SELECT</span>
-                    <div className={styles.protocolHeaderLine} />
-                </div>
-
-                <div className={styles.worldRow}>
-                    {WORLDS.map((world, idx) => (
-                        <div key={idx} className={styles.worldCard}>
-                            <div className={styles.worldCardEmoji}>
-                                {world.name.split(' ')[0]}
-                            </div>
-                            <div className={styles.worldCardName}>
-                                {world.name.split(' ').slice(1).join(' ')}
-                            </div>
-                            <div className={`${styles.worldCardBpm} ${isModified ? styles.worldCardBpmModified : ''}`}>
-                                {modifiedBpms[idx]} BPM
-                            </div>
-                            <div className={styles.worldCardStars}>
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className={`${styles.worldCardStar} ${i <= idx ? styles.worldCardStarFilled : styles.worldCardStarEmpty}`}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Section: Protocol Selector */}
-                <div className={styles.protocolSectionTitle}>
-                    <span className={styles.protocolSectionLabel}>PROTOCOL</span>
-                    <div className={styles.protocolHeaderLine} />
-                </div>
-
-                <div className={styles.protocolGrid}>
-                    {PROTOCOLS.map((p) => {
-                        const isSelected = p.id === selectedProtocol;
-                        return (
-                            <button
-                                key={p.id}
-                                className={`${styles.protocolBtn} ${isSelected ? styles.protocolBtnSelected : ''}`}
-                                style={{ '--protocol-accent': p.accentColor } as React.CSSProperties}
-                                onClick={() => setSelectedProtocol(p.id)}
-                            >
-                                {isSelected && (
-                                    <>
-                                        <div className={`${styles.cornerDecor} ${styles.cornerTL}`} />
-                                        <div className={`${styles.cornerDecor} ${styles.cornerTR}`} />
-                                        <div className={`${styles.cornerDecor} ${styles.cornerBL}`} />
-                                        <div className={`${styles.cornerDecor} ${styles.cornerBR}`} />
-                                    </>
-                                )}
-                                <div className={styles.romanBadge}>{p.numeral}</div>
-                                <div className={styles.protocolBtnInfo}>
-                                    <div className={styles.protocolBtnName}>{p.name}</div>
-                                    <div className={styles.protocolBtnSub}>{p.nameJa}</div>
-                                </div>
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* Detail Panel */}
+            <div className={styles.protocolLayout}>
+                {/* ===== Left Panel: Protocol List ===== */}
                 <div
-                    className={styles.protocolDetail}
+                    className={styles.protocolLeftPanel}
                     style={{ '--protocol-accent': protocol.accentColor } as React.CSSProperties}
                 >
-                    <div className={styles.protocolDetailName}>
-                        Protocol {protocol.numeral} — {protocol.name}
+                    <div className={styles.circuitGrid} />
+                    <div className={styles.scanlineOverlay} />
+
+                    <div className={styles.protocolSectionTitle}>
+                        <span className={styles.protocolSectionLabel}>PROTOCOL</span>
+                        <div className={styles.protocolHeaderLine} />
                     </div>
+
+                    <div className={styles.protocolList}>
+                        {PROTOCOLS.map((p) => {
+                            const isSelected = p.id === selectedProtocol;
+                            return (
+                                <button
+                                    key={p.id}
+                                    className={`${styles.protocolBtn} ${isSelected ? styles.protocolBtnSelected : ''}`}
+                                    style={{ '--protocol-accent': p.accentColor } as React.CSSProperties}
+                                    onClick={() => setSelectedProtocol(p.id)}
+                                >
+                                    {isSelected && (
+                                        <>
+                                            <div className={`${styles.cornerDecor} ${styles.cornerTL}`} />
+                                            <div className={`${styles.cornerDecor} ${styles.cornerTR}`} />
+                                            <div className={`${styles.cornerDecor} ${styles.cornerBL}`} />
+                                            <div className={`${styles.cornerDecor} ${styles.cornerBR}`} />
+                                        </>
+                                    )}
+                                    <div className={styles.romanBadge}>{p.numeral}</div>
+                                    <div className={styles.protocolBtnInfo}>
+                                        <div className={styles.protocolBtnName}>{p.name}</div>
+                                        <div className={styles.protocolBtnSub}>{p.nameJa}</div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* ===== Right Panel: Details + Worlds + Enter ===== */}
+                <div
+                    className={styles.protocolRightPanel}
+                    style={{ '--protocol-accent': protocol.accentColor } as React.CSSProperties}
+                >
+                    <div className={styles.circuitGrid} />
+
+                    {/* Protocol detail header */}
+                    <div className={styles.protocolDetailHeader}>
+                        <div className={styles.protocolDetailNumeral}>{protocol.numeral}</div>
+                        <div>
+                            <div className={styles.protocolDetailName}>
+                                {protocol.name}
+                            </div>
+                            <div className={styles.protocolDetailNameJa}>
+                                {protocol.nameJa}
+                            </div>
+                        </div>
+                    </div>
+
                     <div className={styles.protocolDetailDesc}>
                         {protocol.description}
                     </div>
+
+                    {/* Modifier stats row */}
                     <div className={styles.protocolDetailStats}>
                         <span className={styles.protocolStat}>
                             BPM <span className={styles.protocolStatValue}>&times;{protocol.bpmMultiplier}</span>
@@ -131,6 +117,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                             Score <span className={styles.protocolStatValue}>&times;{protocol.scoreMultiplier}</span>
                         </span>
                     </div>
+
                     {protocol.advancedRules.length > 0 && (
                         <div className={styles.protocolRules}>
                             {protocol.advancedRules.map(rule => (
@@ -140,17 +127,49 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                             ))}
                         </div>
                     )}
-                </div>
 
-                {/* Enter Button */}
-                <button
-                    className={styles.protocolEnterBtn}
-                    style={{ '--protocol-accent': protocol.accentColor } as React.CSSProperties}
-                    onClick={() => onStart(selectedProtocol)}
-                >
-                    <span>&#9654; ENTER</span>
-                    <span className={styles.protocolEnterBtnSub}>突入</span>
-                </button>
+                    {/* Divider */}
+                    <div className={styles.protocolDivider} />
+
+                    {/* World preview */}
+                    <div className={styles.protocolSectionTitle}>
+                        <span className={styles.protocolSectionLabel}>WORLDS</span>
+                        <div className={styles.protocolHeaderLine} />
+                    </div>
+
+                    <div className={styles.worldRow}>
+                        {WORLDS.map((world, idx) => (
+                            <div key={idx} className={styles.worldCard}>
+                                <div className={styles.worldCardEmoji}>
+                                    {world.name.split(' ')[0]}
+                                </div>
+                                <div className={styles.worldCardName}>
+                                    {world.name.split(' ').slice(1).join(' ')}
+                                </div>
+                                <div className={`${styles.worldCardBpm} ${isModified ? styles.worldCardBpmModified : ''}`}>
+                                    {modifiedBpms[idx]} BPM
+                                </div>
+                                <div className={styles.worldCardStars}>
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className={`${styles.worldCardStar} ${i <= idx ? styles.worldCardStarFilled : styles.worldCardStarEmpty}`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Enter Button */}
+                    <button
+                        className={styles.protocolEnterBtn}
+                        onClick={() => onStart(selectedProtocol)}
+                    >
+                        <span>&#9654; ENTER</span>
+                        <span className={styles.protocolEnterBtnSub}>突入</span>
+                    </button>
+                </div>
             </div>
         </div>
     );
