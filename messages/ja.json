@@ -175,6 +175,16 @@
             "gravity_3": "グラヴィティ Ⅲ",
             "flow": "フロー"
         },
+        "tierGroups": {
+            "unranked": "ランクなし",
+            "beat": "ビート",
+            "rhythm": "リズム",
+            "melody": "メロディ",
+            "harmony": "ハーモニー",
+            "maestro": "マエストロ",
+            "gravity": "グラヴィティ",
+            "flow": "フロー"
+        },
         "stats": {
             "bestScore": "ベストスコア",
             "games": "ゲーム",
