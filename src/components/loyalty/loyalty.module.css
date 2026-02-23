@@ -248,6 +248,10 @@
   opacity: 0.5;
 }
 
+.tierStep.completed:hover {
+  opacity: 1;
+}
+
 .tierStepIcon {
   font-size: 1.5rem;
   margin-bottom: 8px;
@@ -332,8 +336,6 @@
   font-weight: 500;
   letter-spacing: 0.04em;
   opacity: 0.45;
-  flex: 1;
-  text-align: center;
 }
 
 .tierBarTrack {
@@ -361,8 +363,6 @@
   opacity: 0.3;
   letter-spacing: 0.03em;
   font-variant-numeric: tabular-nums;
-  flex: 1;
-  text-align: center;
 }
 
 /* Streak Display */
