@@ -1,68 +1,184 @@
 // ===== Score Ranking System Constants =====
 // Tiers based on cumulative game score from rhythm gameplay
+// 20 tiers with sub-divisions (I, II, III) — progressively harder to climb
 
 import type { ScoreRankTier } from './types';
 
 export const SCORE_RANK_TIERS: ScoreRankTier[] = [
+  // --- Unranked ---
   {
-    id: 'rank1',
-    name: 'Unranked',
-    nameJa: 'ランクなし',
+    id: 'unranked',
     level: 0,
     minScore: 0,
-    maxScore: 9999,
+    maxScore: 4999,
     color: '#6B7280',
     icon: '—',
   },
+
+  // --- Beat (Silver) ---
   {
-    id: 'rank2',
-    name: 'Beat I',
-    nameJa: 'ビート I',
+    id: 'beat_1',
     level: 1,
-    minScore: 10000,
-    maxScore: 99999,
+    minScore: 5000,
+    maxScore: 14999,
     color: '#8B8B8B',
     icon: '\u2669', // ♩
   },
   {
-    id: 'rank3',
-    name: 'Beat II',
-    nameJa: 'ビート II',
+    id: 'beat_2',
     level: 2,
-    minScore: 100000,
-    maxScore: 499999,
+    minScore: 15000,
+    maxScore: 29999,
+    color: '#9E9E9E',
+    icon: '\u2669',
+  },
+  {
+    id: 'beat_3',
+    level: 3,
+    minScore: 30000,
+    maxScore: 59999,
+    color: '#B0B0B0',
+    icon: '\u2669',
+  },
+
+  // --- Rhythm (Teal) ---
+  {
+    id: 'rhythm_1',
+    level: 4,
+    minScore: 60000,
+    maxScore: 119999,
     color: '#4ECDC4',
     icon: '\u266A', // ♪
   },
   {
-    id: 'rank4',
-    name: 'Rhythm',
-    nameJa: 'リズム',
-    level: 3,
+    id: 'rhythm_2',
+    level: 5,
+    minScore: 120000,
+    maxScore: 249999,
+    color: '#3AB8B0',
+    icon: '\u266A',
+  },
+  {
+    id: 'rhythm_3',
+    level: 6,
+    minScore: 250000,
+    maxScore: 499999,
+    color: '#28A39C',
+    icon: '\u266A',
+  },
+
+  // --- Melody (Gold) ---
+  {
+    id: 'melody_1',
+    level: 7,
     minScore: 500000,
     maxScore: 999999,
     color: '#FFD700',
     icon: '\u266B', // ♫
   },
   {
-    id: 'rank5',
-    name: 'Maestro',
-    nameJa: 'マエストロ',
-    level: 4,
+    id: 'melody_2',
+    level: 8,
     minScore: 1000000,
-    maxScore: 9999999,
+    maxScore: 1999999,
+    color: '#FFC200',
+    icon: '\u266B',
+  },
+  {
+    id: 'melody_3',
+    level: 9,
+    minScore: 2000000,
+    maxScore: 3999999,
+    color: '#FFAD00',
+    icon: '\u266B',
+  },
+
+  // --- Harmony (Orange) ---
+  {
+    id: 'harmony_1',
+    level: 10,
+    minScore: 4000000,
+    maxScore: 6999999,
     color: '#FF8C00',
     icon: '\u266C', // ♬
   },
   {
-    id: 'rank6',
-    name: 'Antigravity',
-    nameJa: 'アンチグラビティ',
-    level: 5,
-    minScore: 10000000,
-    maxScore: Infinity,
+    id: 'harmony_2',
+    level: 11,
+    minScore: 7000000,
+    maxScore: 11999999,
+    color: '#FF7400',
+    icon: '\u266C',
+  },
+  {
+    id: 'harmony_3',
+    level: 12,
+    minScore: 12000000,
+    maxScore: 19999999,
+    color: '#FF5C00',
+    icon: '\u266C',
+  },
+
+  // --- Maestro (Purple) ---
+  {
+    id: 'maestro_1',
+    level: 13,
+    minScore: 20000000,
+    maxScore: 34999999,
+    color: '#E040FB',
+    icon: '\uD83C\uDFB5', // 🎵
+  },
+  {
+    id: 'maestro_2',
+    level: 14,
+    minScore: 35000000,
+    maxScore: 59999999,
+    color: '#D500F9',
+    icon: '\uD83C\uDFB5',
+  },
+  {
+    id: 'maestro_3',
+    level: 15,
+    minScore: 60000000,
+    maxScore: 99999999,
+    color: '#AA00FF',
+    icon: '\uD83C\uDFB5',
+  },
+
+  // --- Gravity (Crimson) ---
+  {
+    id: 'gravity_1',
+    level: 16,
+    minScore: 100000000,
+    maxScore: 174999999,
     color: '#FF4500',
     icon: '\u2605', // ★
+  },
+  {
+    id: 'gravity_2',
+    level: 17,
+    minScore: 175000000,
+    maxScore: 299999999,
+    color: '#FF2D00',
+    icon: '\u2605',
+  },
+  {
+    id: 'gravity_3',
+    level: 18,
+    minScore: 300000000,
+    maxScore: 499999999,
+    color: '#E50000',
+    icon: '\u2605',
+  },
+
+  // --- Flow (The Pinnacle) ---
+  {
+    id: 'flow',
+    level: 19,
+    minScore: 500000000,
+    maxScore: Infinity,
+    color: '#00E5FF',
+    icon: '\u2726', // ✦
   },
 ];
 
@@ -115,6 +231,7 @@ export function formatScore(score: number): string {
 
 /** Format score in compact form (10K, 1.2M, etc.) */
 export function formatScoreCompact(score: number): string {
+  if (score >= 1000000000) return `${(score / 1000000000).toFixed(1)}B`;
   if (score >= 10000000) return `${(score / 1000000).toFixed(1)}M`;
   if (score >= 1000000) return `${(score / 1000000).toFixed(2)}M`;
   if (score >= 100000) return `${(score / 1000).toFixed(0)}K`;

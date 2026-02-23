@@ -2,8 +2,6 @@
 
 export interface ScoreRankTier {
   id: string;
-  name: string;
-  nameJa: string;
   level: number;
   minScore: number;
   maxScore: number; // Infinity for top tier
