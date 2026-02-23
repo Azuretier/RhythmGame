@@ -275,6 +275,8 @@ interface VoxelData {
   positions: Float32Array;
   colors: Float32Array;
   count: number;
+  /** TD mode only: map from "gx,gz" → instance index for color updates */
+  gridIndexMap?: Map<string, number>;
 }
 
 // Vanilla terrain dimensions
@@ -323,6 +325,9 @@ function generateVoxelWorld(seed: number, size: number, mode: TerrainPhase = 'td
   const positions = new Float32Array(count * 3);
   const colors = new Float32Array(count * 3);
 
+  // Build grid-to-index map for TD mode (top block per column)
+  const gridIndexMap = mode === 'td' ? new Map<string, number>() : undefined;
+
   blocks.forEach((block, i) => {
     positions[i * 3] = block.x;
     positions[i * 3 + 1] = block.y;
@@ -330,9 +335,14 @@ function generateVoxelWorld(seed: number, size: number, mode: TerrainPhase = 'td
     colors[i * 3] = block.color.r;
     colors[i * 3 + 1] = block.color.g;
     colors[i * 3 + 2] = block.color.b;
+
+    // For TD mode, map each (x,z) to its instance index (flat terrain = 1 block high)
+    if (gridIndexMap) {
+      gridIndexMap.set(`${block.x},${block.z}`, i);
+    }
   });
 
-  return { positions, colors, count };
+  return { positions, colors, count, gridIndexMap };
 }
 
 function createGridLines(): THREE.LineSegments {
@@ -580,6 +590,14 @@ export default function VoxelWorldBackground({
   const totalBlockCountRef = useRef(0);
   const aliveIndicesRef = useRef<number[]>([]);
   const lastDestroyedCountRef = useRef(0);
+  /** TD mode: map "gx,gz" → instance index for corruption color updates */
+  const terrainGridMapRef = useRef<Map<string, number> | null>(null);
+  /** Original terrain colors (RGB float triplets) for restoring after corruption clears */
+  const originalColorsRef = useRef<Float32Array | null>(null);
+  /** Track which indices are currently tinted so we can restore them */
+  const corruptedIndicesRef = useRef<Set<number>>(new Set());
+  /** Enemy position interpolation state: id → {fromX, fromZ, toX, toZ, t} */
+  const enemyLerpRef = useRef<Map<number, { fromX: number; fromZ: number; toX: number; toZ: number; t: number }>>(new Map());
 
   // Build terrain mesh into the scene (called once)
   const buildTerrain = useCallback((terrainSeed: number, mode: TerrainPhase, wIdx: number = 0) => {
@@ -636,6 +654,14 @@ export default function VoxelWorldBackground({
     ss.scene.add(mesh);
     ss.instancedMesh = mesh;
     totalBlockCountRef.current = voxelData.count;
+
+    // Store grid map and original colors for corruption color tinting
+    terrainGridMapRef.current = voxelData.gridIndexMap ?? null;
+    originalColorsRef.current = new Float32Array(voxelData.colors);
+    corruptedIndicesRef.current.clear();
+
+    // Reset enemy interpolation state on terrain rebuild
+    enemyLerpRef.current.clear();
 
     // TD phase: place tower at terrain center
     if (mode === 'td') {
@@ -836,38 +862,76 @@ export default function VoxelWorldBackground({
 
       if (delta < 0.1) {
         const ss = sceneStateRef.current;
-        if (ss?.instancedMesh) {
+        // Only rotate terrain during dig (terrain destruction) phase, not during TD phase
+        const currentPhase = terrainPhaseLocalRef.current;
+        if (ss?.instancedMesh && currentPhase === 'dig') {
           ss.instancedMesh.rotation.y += delta * 0.03;
         }
-        gridLines.rotation.y += delta * 0.02;
+        if (currentPhase === 'dig') {
+          gridLines.rotation.y += delta * 0.02;
+        }
 
         // Rotate tower with terrain
         if (ss?.towerGroup && ss.instancedMesh) {
           ss.towerGroup.rotation.y = ss.instancedMesh.rotation.y;
         }
 
-        // Update enemy instances
+        // Update enemy instances — grounded on terrain, smooth block-by-block walk
         if (ss?.enemyMesh) {
           const currentEnemies = enemiesRef.current.filter(e => e.alive);
           ss.enemyMesh.count = currentEnemies.length;
 
           const terrainRotY = ss.instancedMesh?.rotation.y ?? 0;
+          const cosR = Math.cos(terrainRotY);
+          const sinR = Math.sin(terrainRotY);
+
+          // Enemy ground Y: top of terrain block (0.95 box at y=0, top surface = 0.475)
+          // Enemy geometry is 2.2 tall, center at 0.475 + 1.1 = 1.575
+          const groundY = 1.575;
+
+          const lerpMap = enemyLerpRef.current;
+          const currentIds = new Set<number>();
+          const LERP_SPEED = 6.0; // units per second — completes ~1 tile move in ~0.17s
 
           for (let i = 0; i < currentEnemies.length; i++) {
             const e = currentEnemies[i];
-            // Rotate enemy position with terrain
-            const cosR = Math.cos(terrainRotY);
-            const sinR = Math.sin(terrainRotY);
-            const rx = e.x * cosR - e.z * sinR;
-            const rz = e.x * sinR + e.z * cosR;
+            currentIds.add(e.id);
 
-            // Place on flat terrain surface with bobbing
-            const bobY = 1.5 + Math.sin(time * 0.005 + e.id) * 0.3;
-            dummy.position.set(rx, bobY, rz);
+            // Smooth interpolation between grid positions
+            let lerp = lerpMap.get(e.id);
+            if (!lerp) {
+              // New enemy — start at current position
+              lerp = { fromX: e.x, fromZ: e.z, toX: e.x, toZ: e.z, t: 1 };
+              lerpMap.set(e.id, lerp);
+            }
+
+            // Detect new target position
+            if (lerp.toX !== e.x || lerp.toZ !== e.z) {
+              lerp.fromX = lerp.fromX + (lerp.toX - lerp.fromX) * lerp.t;
+              lerp.fromZ = lerp.fromZ + (lerp.toZ - lerp.fromZ) * lerp.t;
+              lerp.toX = e.x;
+              lerp.toZ = e.z;
+              lerp.t = 0;
+            }
+
+            // Advance interpolation
+            if (lerp.t < 1) {
+              lerp.t = Math.min(1, lerp.t + delta * LERP_SPEED);
+            }
+
+            // Smooth step easing
+            const st = lerp.t * lerp.t * (3 - 2 * lerp.t);
+            const lerpX = lerp.fromX + (lerp.toX - lerp.fromX) * st;
+            const lerpZ = lerp.fromZ + (lerp.toZ - lerp.fromZ) * st;
+
+            // Rotate with terrain
+            const rx = lerpX * cosR - lerpZ * sinR;
+            const rz = lerpX * sinR + lerpZ * cosR;
+
+            dummy.position.set(rx, groundY, rz);
             dummy.scale.set(1, 1, 1);
-            // Reset rotation then face center
             dummy.rotation.set(0, 0, 0);
-            dummy.lookAt(new THREE.Vector3(0, bobY, 0));
+            dummy.lookAt(new THREE.Vector3(0, groundY, 0));
             dummy.updateMatrix();
             ss.enemyMesh.setMatrixAt(i, dummy.matrix);
 
@@ -875,6 +939,11 @@ export default function VoxelWorldBackground({
             const hue = (e.id * 0.07) % 1;
             enemyColor.setHSL(hue * 0.08 + 0.0, 0.95, 0.5);
             ss.enemyMesh.setColorAt(i, enemyColor);
+          }
+
+          // Clean up stale lerp entries for dead enemies
+          for (const id of lerpMap.keys()) {
+            if (!currentIds.has(id)) lerpMap.delete(id);
           }
 
           if (currentEnemies.length > 0) {
@@ -1016,38 +1085,66 @@ export default function VoxelWorldBackground({
         }
       }
 
-      // === Corruption overlay — purple glow on corrupted terrain cells ===
+      // === Corruption — tint terrain block colors instead of floating overlay ===
       {
         const scState = sceneStateRef.current;
+        const gridMap = terrainGridMapRef.current;
+        const origColors = originalColorsRef.current;
+        const prevCorrupted = corruptedIndicesRef.current;
+
+        // Hide the legacy corruptMesh (no longer used)
         if (scState?.corruptMesh) {
+          scState.corruptMesh.count = 0;
+        }
+
+        if (scState?.instancedMesh && gridMap && origColors) {
           const cells = corruptedCellsRef.current;
-          const terrainRotY = scState.instancedMesh?.rotation.y ?? 0;
-          const cosR = Math.cos(terrainRotY);
-          const sinR = Math.sin(terrainRotY);
+          const tintColor = new THREE.Color();
+          const newCorrupted = new Set<number>();
+          let needsUpdate = false;
 
           if (cells && cells.size > 0) {
-            let ci = 0;
+            // Purple corruption color
+            const corruptPurple = new THREE.Color(0.55, 0.0, 1.0);
+
             for (const [, node] of cells) {
-              const rx = node.gx * cosR - node.gz * sinR;
-              const rz = node.gx * sinR + node.gz * cosR;
-              const pulse = 0.8 + 0.2 * Math.sin(time * 0.003 + node.gx * 0.5 + node.gz * 0.7);
-              dummy.position.set(rx, 0.6 + node.level * 0.05, rz);
-              dummy.scale.set(pulse, 0.3 + node.level * 0.1, pulse);
-              dummy.rotation.set(0, 0, 0);
-              dummy.updateMatrix();
-              scState.corruptMesh.setMatrixAt(ci++, dummy.matrix);
+              const key = `${node.gx},${node.gz}`;
+              const idx = gridMap.get(key);
+              if (idx === undefined) continue;
+
+              newCorrupted.add(idx);
+
+              // Blend original color toward purple based on corruption level (0-5)
+              const blend = Math.min(1, (node.level + 1) / 6);
+              const pulse = 0.85 + 0.15 * Math.sin(time * 0.004 + node.gx * 0.5 + node.gz * 0.7);
+              tintColor.setRGB(
+                origColors[idx * 3],
+                origColors[idx * 3 + 1],
+                origColors[idx * 3 + 2],
+              );
+              tintColor.lerp(corruptPurple, blend * pulse);
+              scState.instancedMesh.setColorAt(idx, tintColor);
+              needsUpdate = true;
             }
-            // Hide remaining instances
-            for (; ci < CORRUPTION_MAX_TERRAIN_NODES; ci++) {
-              dummy.position.set(0, -1000, 0);
-              dummy.scale.set(0, 0, 0);
-              dummy.updateMatrix();
-              scState.corruptMesh.setMatrixAt(ci, dummy.matrix);
+          }
+
+          // Restore original colors for cells that are no longer corrupted
+          for (const idx of prevCorrupted) {
+            if (!newCorrupted.has(idx)) {
+              tintColor.setRGB(
+                origColors[idx * 3],
+                origColors[idx * 3 + 1],
+                origColors[idx * 3 + 2],
+              );
+              scState.instancedMesh.setColorAt(idx, tintColor);
+              needsUpdate = true;
             }
-            scState.corruptMesh.count = cells.size;
-            scState.corruptMesh.instanceMatrix.needsUpdate = true;
-          } else {
-            scState.corruptMesh.count = 0;
+          }
+
+          corruptedIndicesRef.current = newCorrupted;
+
+          if (needsUpdate && scState.instancedMesh.instanceColor) {
+            scState.instancedMesh.instanceColor.needsUpdate = true;
           }
         }
       }
@@ -1068,11 +1165,16 @@ export default function VoxelWorldBackground({
           // Only show HP bar if enemy has taken damage
           if (e.health >= e.maxHealth) continue;
 
+          // Use interpolated position for smooth HP bar tracking
+          const lerpState = enemyLerpRef.current.get(e.id);
+          const dispX = lerpState ? lerpState.fromX + (lerpState.toX - lerpState.fromX) * (lerpState.t * lerpState.t * (3 - 2 * lerpState.t)) : e.x;
+          const dispZ = lerpState ? lerpState.fromZ + (lerpState.toZ - lerpState.fromZ) * (lerpState.t * lerpState.t * (3 - 2 * lerpState.t)) : e.z;
+
           // Project enemy position to screen (with terrain rotation)
-          const rx = e.x * cosR - e.z * sinR;
-          const rz = e.x * sinR + e.z * cosR;
-          const bobY = 1.5 + Math.sin(time * 0.005 + e.id) * 0.3;
-          projVec.set(rx, bobY + 2.0, rz);
+          const rx = dispX * cosR - dispZ * sinR;
+          const rz = dispX * sinR + dispZ * cosR;
+          // Grounded enemy top: 1.575 (center) + 1.1 (half height) = 2.675
+          projVec.set(rx, 2.675 + 0.3, rz);
           projVec.project(camera);
 
           // Convert NDC to canvas pixels
