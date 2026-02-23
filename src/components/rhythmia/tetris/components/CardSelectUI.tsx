@@ -89,6 +89,7 @@ export function CardSelectUI({
                 return;
             }
             if (e.key === 'Escape') {
+                setFocusedIdx(-1);
                 onSkip();
             }
         };
