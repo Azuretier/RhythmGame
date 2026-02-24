@@ -130,13 +130,13 @@ export function Board({
         return display.slice(BUFFER_ZONE);
     }, [board, currentPiece]);
 
-    const boardWrapClasses = [
+    const boardWrapClasses = React.useMemo(() => [
         styles.boardWrap,
         boardBeat ? styles.beat : '',
         boardShake ? styles.shake : '',
         isFever ? styles.fever : '',
         activeAnomaly ? styles.anomaly : '',
-    ].filter(Boolean).join(' ');
+    ].filter(Boolean).join(' '), [boardBeat, boardShake, isFever, activeAnomaly]);
 
     // Default keybinds fallback
     const fallbackKeybinds: GameKeybinds = { inventory: 'e', shop: 'l' };
@@ -148,32 +148,34 @@ export function Board({
                 className={styles.board}
                 style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}
             >
-                {displayBoard.flat().map((cell, i) => {
-                    const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
-                    const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
-                    const color = pieceType ? getColor(pieceType as string) : '';
+                {displayBoard.map((row, rowIdx) =>
+                    row.map((cell, colIdx) => {
+                        const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
+                        const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
+                        const color = pieceType ? getColor(pieceType as string) : '';
 
-                    const ghostStyle = isGhost ? {
-                        borderColor: boardBeat ? `${color}CC` : `${color}60`,
-                        boxShadow: boardBeat ? `0 0 12px ${color}80, inset 0 0 6px ${color}40` : 'none',
-                        transition: 'border-color 0.1s, box-shadow 0.1s',
-                    } : {};
+                        const ghostStyle = isGhost ? {
+                            borderColor: boardBeat ? `${color}CC` : `${color}60`,
+                            boxShadow: boardBeat ? `0 0 12px ${color}80, inset 0 0 6px ${color}40` : 'none',
+                            transition: 'border-color 0.1s, box-shadow 0.1s',
+                        } : {};
 
-                    const filledStyle = cell && !isGhost ? {
-                        backgroundColor: color,
-                        boxShadow: isFever
-                            ? `0 0 12px ${color}, 0 0 4px ${color}`
-                            : `0 0 8px ${color}`,
-                    } : {};
+                        const filledStyle = cell && !isGhost ? {
+                            backgroundColor: color,
+                            boxShadow: isFever
+                                ? `0 0 12px ${color}, 0 0 4px ${color}`
+                                : `0 0 8px ${color}`,
+                        } : {};
 
-                    return (
-                        <div
-                            key={i}
-                            className={`${styles.cell} ${cell && !isGhost ? styles.filled : ''} ${isGhost ? styles.ghost : ''} ${isGhost && boardBeat ? styles.ghostBeat : ''}`}
-                            style={{ ...filledStyle, ...ghostStyle }}
-                        />
-                    );
-                })}
+                        return (
+                            <div
+                                key={`${rowIdx}-${colIdx}`}
+                                className={`${styles.cell} ${cell && !isGhost ? styles.filled : ''} ${isGhost ? styles.ghost : ''} ${isGhost && boardBeat ? styles.ghostBeat : ''}`}
+                                style={{ ...filledStyle, ...ghostStyle }}
+                            />
+                        );
+                    })
+                )}
             </div>
 
             {/* Overlay for Game Over */}

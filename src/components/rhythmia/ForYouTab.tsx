@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
@@ -137,16 +137,20 @@ export default function ForYouTab({ locale, unlockedAdvancements, totalAdvanceme
         fetchContent();
     }, [fetchContent]);
 
-    const filteredTutorials = tutorialSearch.trim() === ''
-        ? SORTED_TUTORIALS
-        : SORTED_TUTORIALS.filter((tut) => {
-            const query = tutorialSearch.toLowerCase();
-            const title = tw(tut.titleKey).toLowerCase();
-            return (
-                title.includes(query) ||
-                tut.tags.some((tag) => tag.toLowerCase().includes(query))
-            );
-        });
+    const filteredTutorials = useMemo(
+        () =>
+            tutorialSearch.trim() === ''
+                ? SORTED_TUTORIALS
+                : SORTED_TUTORIALS.filter((tut) => {
+                      const query = tutorialSearch.toLowerCase();
+                      const title = tw(tut.titleKey).toLowerCase();
+                      return (
+                          title.includes(query) ||
+                          tut.tags.some((tag) => tag.toLowerCase().includes(query))
+                      );
+                  }),
+        [tutorialSearch, tw]
+    );
 
     const CARD_HEIGHT = 90; // ~80px card + 10px gap
     const VISIBLE_COUNT = 3;

@@ -1629,6 +1629,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     return 'idle';
   }, [isPlaying, gamePhase]);
 
+  // Memoize alive enemy count to avoid re-filtering enemies on every render
+  const aliveEnemyCount = useMemo(
+    () => enemies.filter(e => e.alive).length,
+    [enemies]
+  );
+
   return (
     <div
       className={`${responsiveClassName} ${styles[`w${worldIdx}`]}`}
@@ -1697,7 +1703,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             stageNumber={stageNumber}
             terrainPhase={terrainPhase}
             tdBeatsRemaining={tdBeatsRemaining}
-            enemyCount={enemies.filter(e => e.alive).length}
+            enemyCount={aliveEnemyCount}
           />
           <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
 
