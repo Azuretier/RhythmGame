@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { CardOffer, InventoryItem, EquippedCard } from '../types';
 import { ITEM_MAP, ROGUE_CARD_MAP, WORLDS } from '../constants';
-import { ItemIcon } from './ItemIcon';
+import { ItemTexture } from '@/components/items/ItemTexture';
 import styles from '../VanillaGame.module.css';
 
 interface CardSelectUIProps {
@@ -319,7 +319,7 @@ export function CardSelectUI({
                                     if (!item) return null;
                                     return (
                                         <div key={inv.itemId} className={styles.cardSelectMaterialChip}>
-                                            <ItemIcon itemId={inv.itemId} size={14} />
+                                            <ItemTexture itemId={inv.itemId} size={14} />
                                             <span>{inv.count}</span>
                                         </div>
                                     );
@@ -397,7 +397,7 @@ export function CardSelectUI({
                                         const enough = owned >= c.count;
                                         return (
                                             <span key={i} className={`${styles.cardCostChip} ${enough ? styles.cardCostEnough : ''}`}>
-                                                <ItemIcon itemId={c.itemId} size={12} />
+                                                <ItemTexture itemId={c.itemId} size={12} />
                                                 <span>{owned}/{c.count}</span>
                                             </span>
                                         );

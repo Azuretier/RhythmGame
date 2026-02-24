@@ -150,21 +150,29 @@ export const TERRAINS_PER_WORLD = 4;
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 
 // ===== Item Definitions =====
+// Items are now defined in the shared registry at @/lib/items/registry.
+// These re-exports maintain backward compatibility for game-specific code.
 import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState } from './types';
+import { MATERIAL_ITEMS, ITEM_REGISTRY, TOTAL_DROP_WEIGHT as _TOTAL_DROP_WEIGHT } from '@/lib/items/registry';
 
-export const ITEMS: ItemType[] = [
-    { id: 'stone',    name: 'Stone Fragment',  nameJa: '石片',     icon: '🪨', color: '#8B8B8B', glowColor: '#A0A0A0', rarity: 'common',    dropWeight: 40 },
-    { id: 'iron',     name: 'Iron Ore',        nameJa: '鉄鉱石',   icon: '⛏️', color: '#B87333', glowColor: '#D4956B', rarity: 'common',    dropWeight: 30 },
-    { id: 'crystal',  name: 'Crystal Shard',   nameJa: '水晶片',   icon: '💎', color: '#4FC3F7', glowColor: '#81D4FA', rarity: 'uncommon',  dropWeight: 15 },
-    { id: 'gold',     name: 'Gold Nugget',     nameJa: '金塊',     icon: '✨', color: '#FFD700', glowColor: '#FFECB3', rarity: 'rare',      dropWeight: 8 },
-    { id: 'obsidian', name: 'Obsidian Core',   nameJa: '黒曜核',   icon: '🔮', color: '#9C27B0', glowColor: '#CE93D8', rarity: 'epic',      dropWeight: 5 },
-    { id: 'star',     name: 'Star Fragment',   nameJa: '星の欠片', icon: '⭐', color: '#E0E0E0', glowColor: '#FFFFFF', rarity: 'legendary', dropWeight: 2 },
-];
+export const ITEMS: ItemType[] = MATERIAL_ITEMS.map(item => ({
+    id: item.id,
+    name: item.name,
+    nameJa: item.nameJa,
+    icon: ({ stone: '🪨', iron: '⛏️', crystal: '💎', gold: '✨', obsidian: '🔮', star: '⭐' }[item.id]) || '❓',
+    color: item.color,
+    glowColor: item.glowColor,
+    rarity: item.rarity,
+    dropWeight: item.dropWeight ?? 0,
+}));
 
 export const ITEM_MAP: Record<string, ItemType> = Object.fromEntries(ITEMS.map(i => [i.id, i]));
 
 // Total drop weight for probability calculation
-export const TOTAL_DROP_WEIGHT = ITEMS.reduce((sum, item) => sum + item.dropWeight, 0);
+export const TOTAL_DROP_WEIGHT = _TOTAL_DROP_WEIGHT;
+
+// Re-export shared registry for direct access
+export { ITEM_REGISTRY } from '@/lib/items/registry';
 
 // ===== Rogue-Like Card Definitions =====
 export const ROGUE_CARDS: RogueCard[] = [
