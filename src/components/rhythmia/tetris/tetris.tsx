@@ -1403,8 +1403,8 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
-      // Don't process game inputs while card select is showing
-      if (showCardSelect) return;
+      // Don't process game inputs while card select or TD setup is showing
+      if (showCardSelect || tdSetupActive) return;
 
       const currentTime = performance.now();
 
@@ -1511,7 +1511,7 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
+  }, [isPlaying, isPaused, gameOver, showCardSelect, tdSetupActive, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
   // Mouse input handlers — move piece by hovering over board columns,
   // hold left/right button to soft drop (driven by game loop via mouseHeldRef),

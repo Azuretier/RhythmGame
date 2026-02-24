@@ -465,11 +465,13 @@ function createTowerModel(): THREE.Group {
   const orbGeo = new THREE.SphereGeometry(0.45, 8, 6);
   const orb = new THREE.Mesh(orbGeo, glowMat);
   orb.position.y = 14.2;
+  orb.name = 'towerOrb';
   tower.add(orb);
 
   // Point light emanating from the orb
   const orbLight = new THREE.PointLight(0x00AAFF, 0.6, 15);
   orbLight.position.y = 14.2;
+  orbLight.name = 'towerOrbLight';
   tower.add(orbLight);
 
   // Window slits (dark indents) on the body
@@ -568,6 +570,8 @@ interface SceneState {
   miniTowerMesh: THREE.InstancedMesh | null;
   miniTowerGeo: THREE.BoxGeometry;
   miniTowerMat: THREE.MeshStandardMaterial;
+  towerOrb: THREE.Mesh | null;
+  towerOrbLight: THREE.PointLight | null;
 }
 
 interface VoxelWorldBackgroundProps {
@@ -699,13 +703,17 @@ export default function VoxelWorldBackground({
     // TD phase: place tower at terrain center
     if (mode === 'td') {
       const towerGroup = createTowerModel();
-      towerGroup.position.set(0, 0.5, 0);
+      towerGroup.position.set(0, 0, 0);
       ss.scene.add(towerGroup);
       ss.towerGroup = towerGroup;
 
       // Cache turret and muzzle references for animation
       ss.turret = towerGroup.getObjectByName('turret') as THREE.Group || null;
       ss.muzzleFlash = ss.turret?.getObjectByName('muzzle') as THREE.Mesh || null;
+
+      // Cache orb references for aura glow animation
+      ss.towerOrb = towerGroup.getObjectByName('towerOrb') as THREE.Mesh || null;
+      ss.towerOrbLight = towerGroup.getObjectByName('towerOrbLight') as THREE.PointLight || null;
 
       // Show enemy, bullet, and impact meshes
       if (ss.enemyMesh) ss.enemyMesh.visible = true;
@@ -849,6 +857,8 @@ export default function VoxelWorldBackground({
       impactMesh, impactGeo, impactMat,
       corruptMesh, corruptGeo, corruptMat,
       miniTowerMesh, miniTowerGeo, miniTowerMat,
+      towerOrb: null,
+      towerOrbLight: null,
     };
 
     // Handle resize
@@ -922,6 +932,31 @@ export default function VoxelWorldBackground({
         // Rotate tower with terrain
         if (ss?.towerGroup && ss.instancedMesh) {
           ss.towerGroup.rotation.y = ss.instancedMesh.rotation.y;
+        }
+
+        // Tower aura glow — pulse orb and light when line-clear auras are active
+        if (ss?.towerOrb && ss.towerOrbLight) {
+          const activeAuras = lineClearAurasRef.current;
+          if (activeAuras.length > 0) {
+            let maxIntensity = 0;
+            const nowAura = Date.now();
+            for (const a of activeAuras) {
+              const progress = Math.min(1, (nowAura - a.startTime) / a.duration);
+              const intensity = 1 - progress;
+              if (intensity > maxIntensity) maxIntensity = intensity;
+            }
+            const orbMat = ss.towerOrb.material as THREE.MeshStandardMaterial;
+            orbMat.emissiveIntensity = 0.8 + maxIntensity * 4.0;
+            orbMat.emissive.setHex(0x00CCFF);
+            ss.towerOrbLight.intensity = 0.6 + maxIntensity * 3.0;
+            ss.towerOrbLight.distance = 15 + maxIntensity * 25;
+          } else {
+            const orbMat = ss.towerOrb.material as THREE.MeshStandardMaterial;
+            orbMat.emissiveIntensity = 0.8;
+            orbMat.emissive.setHex(0x0066CC);
+            ss.towerOrbLight.intensity = 0.6;
+            ss.towerOrbLight.distance = 15;
+          }
         }
 
         // Update enemy instances — grounded on terrain, smooth block-by-block walk

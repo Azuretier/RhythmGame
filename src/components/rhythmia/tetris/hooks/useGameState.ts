@@ -1271,6 +1271,8 @@ export function useGameState() {
         if (gamePhaseRef.current !== 'CHECKPOINT') return;
         setTdSetupActive(false);
         tdSetupActiveRef.current = false;
+        setIsPaused(false);
+        isPausedRef.current = false;
         setGamePhase('PLAYING');
         gamePhaseRef.current = 'PLAYING';
     }, []);
@@ -1327,12 +1329,18 @@ export function useGameState() {
             setTdSetupActive(true);
             tdSetupActiveRef.current = true;
 
+            // Pause the game so pieces don't fall and enemies don't spawn during setup
+            setIsPaused(true);
+            isPausedRef.current = true;
+
             // Auto-start after 15s if player doesn't confirm
             setTimeout(() => {
                 if (gameOverRef.current) return;
                 if (gamePhaseRef.current === 'CHECKPOINT') {
                     setTdSetupActive(false);
                     tdSetupActiveRef.current = false;
+                    setIsPaused(false);
+                    isPausedRef.current = false;
                     setGamePhase('PLAYING');
                     gamePhaseRef.current = 'PLAYING';
                 }
