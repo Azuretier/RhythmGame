@@ -65,7 +65,7 @@ export default function CreateJoinRoom({
       {/* Create or Join */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Create Room */}
-        <GlassCard variant="gradient" from="from-yellow-500/20" to="to-pink-500/20" borderColor="border-yellow-500/30">
+        <GlassCard variant="gradient" gradient="yellow-pink">
           <h2 className="text-2xl font-bold mb-4 text-center">Create Room</h2>
           <p className="text-gray-300 text-center mb-6">
             Start a new game and invite friends
@@ -80,7 +80,7 @@ export default function CreateJoinRoom({
         </GlassCard>
 
         {/* Join Room */}
-        <GlassCard variant="gradient" from="from-blue-500/20" to="to-purple-500/20" borderColor="border-blue-500/30">
+        <GlassCard variant="gradient" gradient="blue-purple">
           <h2 className="text-2xl font-bold mb-4 text-center">Join Room</h2>
           <p className="text-gray-300 text-center mb-4">
             Enter a room code to join

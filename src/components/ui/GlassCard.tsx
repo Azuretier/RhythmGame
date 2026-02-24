@@ -4,12 +4,12 @@ import { cn } from '@/lib/utils';
 
 type GlassVariant = 'default' | 'subtle' | 'gradient';
 
+type GradientPreset = 'yellow-pink' | 'blue-purple';
+
 interface GlassCardProps {
   children: React.ReactNode;
   variant?: GlassVariant;
-  from?: string;
-  to?: string;
-  borderColor?: string;
+  gradient?: GradientPreset;
   className?: string;
 }
 
@@ -19,18 +19,18 @@ const variantClasses: Record<GlassVariant, string> = {
   gradient: 'backdrop-blur-lg rounded-2xl p-8 shadow-2xl',
 };
 
+const gradientPresets: Record<GradientPreset, string> = {
+  'yellow-pink': 'bg-gradient-to-br from-yellow-500/20 to-pink-500/20 border border-yellow-500/30',
+  'blue-purple': 'bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30',
+};
+
 export default function GlassCard({
   children,
   variant = 'default',
-  from,
-  to,
-  borderColor,
+  gradient,
   className,
 }: GlassCardProps) {
-  const gradientStyle =
-    variant === 'gradient' && from && to
-      ? `bg-gradient-to-br ${from} ${to} border ${borderColor ?? 'border-white/20'}`
-      : '';
+  const gradientStyle = variant === 'gradient' && gradient ? gradientPresets[gradient] : '';
 
   return (
     <div className={cn(variantClasses[variant], gradientStyle, className)}>
