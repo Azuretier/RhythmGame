@@ -796,7 +796,7 @@ export default function BoardRenderer3D({
   const facingRef = useRef<Direction>('up');
 
   // Continuous key polling — eliminates browser keyboard repeat delay
-  const pressedInputs = useRef(new Set<string>());
+  const pressedInputs = useRef(new Set<'forward' | 'backward' | 'left' | 'right'>());
   const lastMoveTimeRef = useRef(0);
   const MOVE_POLL_MS = 100;
 
@@ -863,7 +863,7 @@ export default function BoardRenderer3D({
       const now = performance.now();
       if (now - lastMoveTimeRef.current < MOVE_POLL_MS) return;
       let input: 'forward' | 'backward' | 'left' | 'right' | null = null;
-      for (const i of pressedInputs.current) input = i as typeof input;
+      for (const i of pressedInputs.current) input = i;
       if (input) fireMove(input);
     }, 16);
 
