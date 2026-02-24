@@ -1176,8 +1176,6 @@ export default function VoxelWorldBackground({
         const sinR = Math.sin(terrainRotY);
 
         for (const e of currentEnemies) {
-          // Only show HP bar if enemy has taken damage
-          if (e.health >= e.maxHealth) continue;
 
           // Use interpolated position for smooth HP bar tracking
           const lerpState = enemyLerpRef.current.get(e.id);
@@ -1217,6 +1215,17 @@ export default function VoxelWorldBackground({
           hpCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
           hpCtx.lineWidth = 0.5;
           hpCtx.strokeRect(sx - barW / 2, sy - barH / 2, barW, barH);
+
+          // HP number text
+          hpCtx.font = 'bold 9px monospace';
+          hpCtx.textAlign = 'center';
+          hpCtx.textBaseline = 'bottom';
+          hpCtx.fillStyle = '#ffffff';
+          hpCtx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+          hpCtx.lineWidth = 2;
+          const hpText = `${e.health}/${e.maxHealth}`;
+          hpCtx.strokeText(hpText, sx, sy - barH / 2 - 1);
+          hpCtx.fillText(hpText, sx, sy - barH / 2 - 1);
         }
       }
     };
