@@ -226,6 +226,28 @@
   font-size: 0.8rem;
 }
 
+/* === Menu Map Background (preview behind the menu form) === */
+
+.menuMapBg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Vignette gradient to keep the menu form readable over the map */
+.menuMapOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 62% 78% at 50% 50%,
+    transparent 10%,
+    rgba(14, 10, 5, 0.68) 58%,
+    rgba(10, 7, 4, 0.94) 100%
+  );
+}
+
 /* === How to Play === */
 
 .howToPlay {

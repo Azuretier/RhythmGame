@@ -61,13 +61,13 @@ export function fractalNoise(x: number, z: number, seed: number, octaves = 3): n
 type BiomePalette = { top: THREE.Color; mid: THREE.Color; deep: THREE.Color };
 
 export const BIOME_3D_PALETTES: Record<Biome, BiomePalette> = {
-  plains:    { top: new THREE.Color('#7db044'), mid: new THREE.Color('#8b6b47'), deep: new THREE.Color('#6a6870') },
-  forest:    { top: new THREE.Color('#5e8a32'), mid: new THREE.Color('#7a5530'), deep: new THREE.Color('#504e56') },
-  desert:    { top: new THREE.Color('#d8c088'), mid: new THREE.Color('#bca068'), deep: new THREE.Color('#8a8890') },
-  mountains: { top: new THREE.Color('#8a8890'), mid: new THREE.Color('#6a6870'), deep: new THREE.Color('#504e56') },
-  snowy:     { top: new THREE.Color('#e8eaf0'), mid: new THREE.Color('#c8ccd8'), deep: new THREE.Color('#a0a4b0') },
-  swamp:     { top: new THREE.Color('#4a6828'), mid: new THREE.Color('#5a4a30'), deep: new THREE.Color('#3a3828') },
-  ocean:     { top: new THREE.Color('#4a90c8'), mid: new THREE.Color('#3570a0'), deep: new THREE.Color('#2a5580') },
+  plains:    { top: new THREE.Color('#6db833'), mid: new THREE.Color('#7a5535'), deep: new THREE.Color('#5a5560') },
+  forest:    { top: new THREE.Color('#3d7b1a'), mid: new THREE.Color('#6a4525'), deep: new THREE.Color('#3a3848') },
+  desert:    { top: new THREE.Color('#dbb86a'), mid: new THREE.Color('#b88a40'), deep: new THREE.Color('#8c7858') },
+  mountains: { top: new THREE.Color('#8090a0'), mid: new THREE.Color('#606878'), deep: new THREE.Color('#404858') },
+  snowy:     { top: new THREE.Color('#dce8f4'), mid: new THREE.Color('#98b8d0'), deep: new THREE.Color('#708090') },
+  swamp:     { top: new THREE.Color('#3d5e22'), mid: new THREE.Color('#4a3a1e'), deep: new THREE.Color('#2a2820') },
+  ocean:     { top: new THREE.Color('#3a7ab8'), mid: new THREE.Color('#286090'), deep: new THREE.Color('#1a4870') },
 };
 
 // Blocks that override biome palette (ores, special blocks)
@@ -104,24 +104,26 @@ function blockColor(y: number, maxY: number, palette: BiomePalette): THREE.Color
   return palette.deep.clone();
 }
 
-// Compute height for a tile based on its elevation and biome
-export function computeTileHeight(tile: WorldTile): number {
+// Compute height for a tile based on its elevation, biome, and spatial position.
+// Using x/z coords produces smooth, natural height transitions between neighbours.
+export function computeTileHeight(tile: WorldTile, x = 0, z = 0): number {
   // elevation is 0-10 from world generator (Math.round(elev * 10))
-  const noiseH = fractalNoise(tile.elevation * 0.3, tile.elevation * 0.5, 42069, 2);
+  // Mix spatial position with elevation so nearby tiles vary smoothly
+  const noiseH = fractalNoise(x * 0.18 + tile.elevation * 0.04, z * 0.18 + tile.elevation * 0.04, 42069, 3);
 
   switch (tile.biome) {
     case 'ocean':
       return tile.block === 'deep_water' ? 1 : 2;
     case 'mountains':
-      return Math.max(2, Math.floor(tile.elevation / 1.5) + 2 + Math.floor(noiseH * 2));
+      return Math.max(3, Math.floor(tile.elevation / 1.5) + 3 + Math.floor(noiseH * 3));
     case 'desert':
-      return Math.max(1, Math.floor(tile.elevation / 3) + 2);
+      return Math.max(1, Math.floor(tile.elevation / 3) + 1 + Math.floor(noiseH * 0.8));
     case 'snowy':
-      return Math.max(1, Math.floor(tile.elevation / 2.5) + 2 + Math.floor(noiseH));
+      return Math.max(2, Math.floor(tile.elevation / 2) + 2 + Math.floor(noiseH * 2));
     case 'swamp':
-      return Math.max(1, Math.floor(tile.elevation / 3) + 2);
+      return Math.max(1, Math.floor(tile.elevation / 4) + 1 + Math.floor(noiseH * 0.5));
     default:
-      return Math.max(1, Math.floor(tile.elevation / 2.5) + 2 + Math.floor(noiseH));
+      return Math.max(1, Math.floor(tile.elevation / 2.5) + 1 + Math.floor(noiseH * 2));
   }
 }
 
@@ -144,7 +146,7 @@ export function buildTerrainBlocks(
   for (const tu of tiles) {
     const { x, y: tileY, tile } = tu;
     const palette = BIOME_3D_PALETTES[tile.biome];
-    const baseHeight = computeTileHeight(tile);
+    const baseHeight = computeTileHeight(tile, x, tileY);
     heightMap.set(`${x},${tileY}`, baseHeight);
 
     // Check if this block has a special override color (ores, crafting table, etc.)
@@ -167,11 +169,13 @@ export function buildTerrainBlocks(
         col = blockColor(ly, baseHeight, palette);
       }
 
-      // Add per-block color noise
-      const colorNoise = (noise2D(x + ly * 7, tileY + ly * 13, seed + 500) - 0.5) * 0.06;
-      col.r = Math.max(0, Math.min(1, col.r + colorNoise));
-      col.g = Math.max(0, Math.min(1, col.g + colorNoise));
-      col.b = Math.max(0, Math.min(1, col.b + colorNoise));
+      // Add per-block color noise (stronger variation on top face, subtle on sides)
+      const colorNoise = (noise2D(x + ly * 7, tileY + ly * 13, seed + 500) - 0.5) * 0.09;
+      const sideNoise  = (noise2D(x * 3 + ly, tileY * 3 + ly, seed + 501) - 0.5) * 0.04;
+      const cn = ly === baseHeight - 1 ? colorNoise : sideNoise;
+      col.r = Math.max(0, Math.min(1, col.r + cn));
+      col.g = Math.max(0, Math.min(1, col.g + cn));
+      col.b = Math.max(0, Math.min(1, col.b + cn));
 
       // Dim colors for explored-but-not-visible tiles
       if (isDimmed) {
@@ -205,39 +209,54 @@ export function buildSurfaceFeatures(
         // Tree trunk
         const trunkColor = new THREE.Color('#6a4820');
         const detailNoise = smoothNoise(x * 0.4, tileY * 0.4, seed + 300);
-        const trunkHeight = 2 + Math.floor(detailNoise * 2);
+        // Trunk height: 3 base + 0-1 noise variation → range 3-4 blocks
+        const trunkHeight = 3 + Math.floor(detailNoise * 2);
 
         for (let ty = 0; ty < trunkHeight; ty++) {
           const tc = trunkColor.clone();
+          const tn = (noise2D(x + ty * 3, tileY + ty * 5, seed + 400) - 0.5) * 0.06;
+          tc.r = Math.max(0, Math.min(1, tc.r + tn));
+          tc.g = Math.max(0, Math.min(1, tc.g + tn));
           if (isDimmed) tc.multiplyScalar(0.35);
           blocks.push({ x, y: topY + ty, z: tileY, color: tc });
         }
 
-        // Leaf canopy
+        // Leaf canopy — layered diamond shape for a fuller Dungeons-style tree
         const canopyBase = topY + trunkHeight;
-        const leafBase = new THREE.Color('#2e7a20');
-        const leafVar = noise2D(x * 3, tileY * 3, seed + 999) * 0.08;
+        const leafBase = new THREE.Color('#2c7818');
 
-        // Lower canopy: cross shape
-        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) {
-          const lc = leafBase.clone();
-          lc.g += leafVar + (noise2D(x + dx, tileY + dz, seed + 888) - 0.5) * 0.05;
-          if (isDimmed) lc.multiplyScalar(0.35);
-          blocks.push({ x: x + dx, y: canopyBase, z: tileY + dz, color: lc });
-        }
-
-        // Upper canopy
-        const ucol = leafBase.clone();
-        if (isDimmed) ucol.multiplyScalar(0.35);
-        blocks.push({ x, y: canopyBase + 1, z: tileY, color: ucol });
-        for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-          if (noise2D(x + dx * 2, tileY + dz * 2, seed + 777) > 0.4) {
+        // Bottom canopy ring (wide: radius 2)
+        for (let dz = -2; dz <= 2; dz++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            // Manhattan distance > 3 clips the 5×5 grid into a diamond shape with radius 2
+            if (Math.abs(dx) + Math.abs(dz) > 3) continue;
             const lc = leafBase.clone();
-            lc.g += (noise2D(x + dx, tileY + dz, seed + 666) - 0.5) * 0.06;
+            lc.g += (noise2D(x + dx * 2, tileY + dz * 2, seed + 888) - 0.5) * 0.08;
             if (isDimmed) lc.multiplyScalar(0.35);
-            blocks.push({ x: x + dx, y: canopyBase + 1, z: tileY + dz, color: lc });
+            blocks.push({ x: x + dx, y: canopyBase, z: tileY + dz, color: lc });
           }
         }
+
+        // Mid canopy ring (radius 1.5)
+        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          const lc = leafBase.clone();
+          lc.g += (noise2D(x + dx, tileY + dz, seed + 777) - 0.5) * 0.07;
+          if (isDimmed) lc.multiplyScalar(0.35);
+          blocks.push({ x: x + dx, y: canopyBase + 1, z: tileY + dz, color: lc });
+        }
+
+        // Top canopy peak
+        for (const [dx, dz] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          const lc = leafBase.clone();
+          lc.g += (noise2D(x + dx * 3, tileY + dz * 3, seed + 666) - 0.5) * 0.06;
+          if (isDimmed) lc.multiplyScalar(0.35);
+          blocks.push({ x: x + dx, y: canopyBase + 2, z: tileY + dz, color: lc });
+        }
+
+        // Crown tip
+        const crown = leafBase.clone().lerp(new THREE.Color('#4aaa28'), 0.25);
+        if (isDimmed) crown.multiplyScalar(0.35);
+        blocks.push({ x, y: canopyBase + 3, z: tileY, color: crown });
         break;
       }
 

@@ -8,6 +8,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMinecraftBoardSocket } from '@/hooks/useMinecraftBoardSocket';
 import BoardRenderer from './BoardRenderer3D';
+import MenuMapPreview from './MenuMapPreview';
 import PlayerHUD, { InventoryPanel } from './PlayerHUD';
 import CraftingPanel from './CraftingPanel';
 import type { Direction, MCPublicRoom } from '@/types/minecraft-board';
@@ -173,7 +174,14 @@ export default function MinecraftBoardGame() {
   if (phase === 'menu') {
     return (
       <div className={styles.page}>
-        <div className={styles.menuContainer}>
+        {/* Isometric terrain preview in background */}
+        <div className={styles.menuMapBg}>
+          <MenuMapPreview />
+        </div>
+        {/* Vignette overlay to keep form readable */}
+        <div className={styles.menuMapOverlay} />
+
+        <div className={styles.menuContainer} style={{ position: 'relative', zIndex: 2 }}>
           <h1 className={styles.title}>Minecraft Board Game</h1>
           <p className={styles.subtitle}>Explore, Mine, Craft, Survive!</p>
 

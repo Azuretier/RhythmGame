@@ -159,8 +159,8 @@ export class WorldGenerator {
 
     // Generate noise maps
     const temperature = octaveNoise(new SeededRandom(this.seed), w, h, 2, 0.08);
-    const moisture = octaveNoise(new SeededRandom(this.seed + 1000), w, h, 2, 0.06);
-    const elevation = octaveNoise(new SeededRandom(this.seed + 2000), w, h, 3, 0.07);
+    const moisture = octaveNoise(new SeededRandom(this.seed + 1000), w, h, 3, 0.06);
+    const elevation = octaveNoise(new SeededRandom(this.seed + 2000), w, h, 4, 0.06);
     const oreNoise = octaveNoise(new SeededRandom(this.seed + 3000), w, h, 2, 0.15);
 
     // Build base world
