@@ -55,9 +55,9 @@ class ValueNoise {
     return a * (1 - ct) + b * ct;
   }
 
-  sample(x: number, y: number): number {
-    const gx = (x / this.gridSize) * (this.grid[0].length - 1);
-    const gy = (y / this.gridSize) * (this.grid.length - 1);
+  sample(nx: number, ny: number): number {
+    const gx = nx * this.gridSize;
+    const gy = ny * this.gridSize;
 
     const x0 = Math.floor(gx);
     const y0 = Math.floor(gy);
@@ -96,7 +96,7 @@ function octaveNoise(
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        result[y][x] += noise.sample(x, y) * amplitude;
+        result[y][x] += noise.sample(x / width, y / height) * amplitude;
       }
     }
 
