@@ -1139,6 +1139,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Para Toplayıcısı",
+      "desc": "Toplamda 100 altın kazan"
+    },
+    "gold_1000": {
+      "name": "Para Biriktirici",
+      "desc": "Toplamda 1.000 altın kazan"
+    },
+    "gold_5000": {
+      "name": "Hazine Avcısı",
+      "desc": "Toplamda 5.000 altın kazan"
+    },
+    "gold_25000": {
+      "name": "Altın Kral",
+      "desc": "Toplamda 25.000 altın kazan"
+    },
+    "gold_100000": {
+      "name": "Efsanevi Varlıklı",
+      "desc": "Toplamda 100.000 altın kazan"
+    },
+    "treasure_10": {
+      "name": "Hazine Bulundu",
+      "desc": "10 hazine topla"
+    },
+    "treasure_50": {
+      "name": "Hazine Arayıcısı",
+      "desc": "50 hazine topla"
+    },
+    "treasure_200": {
+      "name": "Hazine Ustası",
+      "desc": "200 hazine topla"
+    },
+    "treasure_500": {
+      "name": "Hazine Bekçisi",
+      "desc": "500 hazine topla"
+    },
+    "treasure_1000": {
+      "name": "Zenginliklerin Efendisi",
+      "desc": "1.000 hazine topla"
     }
   },
   "updates": {
@@ -1293,8 +1333,16 @@
     "gameTitle": "Savaş Arenası",
     "subtitle": "Gerçek zamanlı 1v1 savaşlar",
     "description": "WebSocket üzerinden gerçek zamanlı 1v1 savaşlar.",
-    "features": "Gerçek Zamanlı|Çöp Satır Sistemi|Dereceli",
-    "stats": "1v1 Savaş|8s Eşleşme|AI Yedek"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Dereceli"
+    },
+    "stats": {
+      "mode": "Mod",
+      "battle": "Savaş",
+      "status": "Durum"
+    }
   },
   "uiTheme": {
     "selectTheme": "Tema Seç",
