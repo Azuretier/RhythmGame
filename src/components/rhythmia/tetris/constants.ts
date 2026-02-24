@@ -143,6 +143,14 @@ export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 export const LOCK_DELAY = 500;     // Grace period (ms) after piece lands before locking
 export const MAX_LOCK_MOVES = 15;  // Max moves/rotations on ground before forced lock
 
+// ===== Beat Timing Windows =====
+// Half-window distance from the beat centre (distFromBeat = phase <= 0.5 ? phase : 1 - phase).
+// 0.0 = exactly on the beat, 0.5 = furthest from the beat.
+// card beat_extend bonus and the protocol beatWindowMultiplier are applied on top.
+export const BEAT_PERFECT_WINDOW = 0.06; // ±6%  → 12% total  → "PERFECT!"
+export const BEAT_GREAT_WINDOW   = 0.12; // ±12% → 24% total  → "GREAT!"
+export const BEAT_GOOD_WINDOW    = 0.20; // ±20% → 40% total  → "GOOD"
+
 // ===== Terrain Settings =====
 // Number of terrains (stages) to clear before advancing to the next world
 export const TERRAINS_PER_WORLD = 4;
