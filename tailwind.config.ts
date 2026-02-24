@@ -35,6 +35,11 @@ const config: Config = {
           '100%': { backgroundPosition: '200% 0' },
         },
       },
+      borderRadius: {
+        'theme': "var(--theme-radius)",
+        'theme-sm': "var(--theme-radius-sm)",
+        'theme-lg': "var(--theme-radius-lg)",
+      },
     },
     fontFamily: {
       pixel: ["var(--font-pixel)"],
@@ -42,11 +47,6 @@ const config: Config = {
       'theme-heading': ["var(--theme-font-heading)"],
       'theme-body': ["var(--theme-font-body)"],
       'theme-mono': ["var(--theme-font-mono)"],
-    },
-    borderRadius: {
-      'theme': "var(--theme-radius)",
-      'theme-sm': "var(--theme-radius-sm)",
-      'theme-lg': "var(--theme-radius-lg)",
     },
   },
   plugins: [],
