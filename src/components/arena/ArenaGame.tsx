@@ -15,6 +15,7 @@ import {
 import {
   isValidPosition, lockPiece, clearLines, getShape,
   createSpawnPiece, tryRotation, getGhostY,
+  getBeatJudgment, getBeatMultiplier,
 } from '@/components/rhythmia/tetris/utils/boardUtils';
 import type { Piece } from '@/components/rhythmia/tetris/types';
 
@@ -292,7 +293,8 @@ export default function ArenaGame() {
   const gameInitRef = useRef(false);
 
   // Beat indicator
-  const onBeat = beatPhase > 0.75 || beatPhase < 0.15;
+  const beatZone = getBeatJudgment(beatPhase);
+  const onBeat = beatZone !== 'miss';
   const mySync = syncMap[playerId] ?? 1.0;
   const chaosClass = chaosLevel >= 75 ? styles.chaosHigh
     : chaosLevel >= 40 ? styles.chaosMedium : styles.chaosLow;
@@ -459,9 +461,9 @@ export default function ArenaGame() {
 
     // Beat judgment
     const bp = beatPhaseRef.current;
-    const beatHit = bp > 0.75 || bp < 0.15;
-    const mult = beatHit ? 2 : 1;
-    if (beatHit) {
+    const timing = getBeatJudgment(bp);
+    const mult = getBeatMultiplier(timing);
+    if (timing !== 'miss') {
       setCombo(prev => prev + 1);
     } else {
       setCombo(0);

@@ -67,6 +67,11 @@ interface BoardRendererProps {
 
 const TERRAIN_SEED = 42069;
 
+// Direction lookup tables for FPS relative movement
+const TURN_RIGHT: Record<Direction, Direction> = { up: 'right', right: 'down', down: 'left', left: 'up' };
+const TURN_LEFT: Record<Direction, Direction> = { up: 'left', left: 'down', down: 'right', right: 'up' };
+const OPPOSITE: Record<Direction, Direction> = { up: 'down', down: 'up', left: 'right', right: 'left' };
+
 // =============================================================
 // VoxelTerrain — InstancedMesh for terrain + feature blocks
 // =============================================================
@@ -176,15 +181,16 @@ function PlayerEntity({
     posRef.current.set(player.x, 0, player.y);
   }, [player.x, player.y]);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (!groupRef.current) return;
     const t = clock.elapsedTime;
     const bob = Math.sin(t * 2 + player.x) * 0.08;
-    // Lerp to new tile position for smooth movement
+    // Framerate-independent lerp to new tile position
+    const alpha = 1 - Math.exp(-12 * delta);
     const prevX = groupRef.current.position.x;
     const prevZ = groupRef.current.position.z;
-    groupRef.current.position.x = THREE.MathUtils.lerp(prevX, posRef.current.x, 0.35);
-    groupRef.current.position.z = THREE.MathUtils.lerp(prevZ, posRef.current.z, 0.35);
+    groupRef.current.position.x = THREE.MathUtils.lerp(prevX, posRef.current.x, alpha);
+    groupRef.current.position.z = THREE.MathUtils.lerp(prevZ, posRef.current.z, alpha);
     groupRef.current.position.y = topY + bob;
     // Swing limbs only when the entity is visibly moving
     const isMoving = Math.abs(groupRef.current.position.x - posRef.current.x) > 0.01 ||
@@ -288,10 +294,11 @@ function MobEntity({ mob, heightMap }: { mob: MCMobState; heightMap: Map<string,
     posRef.current.set(mob.x, 0, mob.y);
   }, [mob.x, mob.y]);
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (!groupRef.current) return;
-    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, posRef.current.x, 0.22);
-    groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, posRef.current.z, 0.22);
+    const alpha = 1 - Math.exp(-12 * delta);
+    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, posRef.current.x, alpha);
+    groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, posRef.current.z, alpha);
     if (mob.hostile) {
       groupRef.current.position.y = topY + Math.sin(clock.elapsedTime * 3 + mob.x * 7) * 0.06;
     } else {
@@ -511,10 +518,11 @@ function BoardCameraController({ targetX, targetZ }: { targetX: number; targetZ:
     }
   }, [camera]);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const target = targetRef.current;
     const desiredPos = new THREE.Vector3(target.x + 20, 28, target.z + 20);
-    camera.position.lerp(desiredPos, 0.18);
+    const alpha = 1 - Math.exp(-6 * delta);
+    camera.position.lerp(desiredPos, alpha);
     camera.lookAt(target.x, 0, target.z);
     camera.updateProjectionMatrix();
   });
@@ -537,6 +545,7 @@ function FPSCameraController({
   const { camera } = useThree();
   const targetPos = useRef(new THREE.Vector3(targetX, 3, targetZ));
   const targetLookOffset = useRef(new THREE.Vector3(0, 0, -1));
+  const currentLookOffset = useRef(new THREE.Vector3(0, 0, -1));
   const initialized = useRef(false);
 
   // Sync target position from grid coords
@@ -549,25 +558,32 @@ function FPSCameraController({
     if (!initialized.current) {
       const p = targetPos.current;
       camera.position.copy(p);
-      const fv = targetLookOffset.current;
+      const fv = currentLookOffset.current;
       camera.lookAt(p.x + fv.x * 6, p.y, p.z + fv.z * 6);
       camera.updateProjectionMatrix();
       initialized.current = true;
     }
   }, [camera]);
 
-  useFrame(() => {
-    // Update look direction from latest facing
+  useFrame((_, delta) => {
+    // Update target look direction from latest facing
     switch (facingRef.current) {
       case 'up':    targetLookOffset.current.set(0, 0, -1); break;
       case 'down':  targetLookOffset.current.set(0, 0, 1);  break;
       case 'left':  targetLookOffset.current.set(-1, 0, 0); break;
       case 'right': targetLookOffset.current.set(1, 0, 0);  break;
     }
-    // Smooth camera position to player eye level
-    camera.position.lerp(targetPos.current, 0.22);
-    // Smooth look target
-    const fv = targetLookOffset.current;
+
+    // Smoothly interpolate look direction (prevents jarring camera snaps when turning)
+    const lookAlpha = 1 - Math.exp(-10 * delta);
+    currentLookOffset.current.lerp(targetLookOffset.current, lookAlpha);
+
+    // Smooth camera position with delta-time
+    const posAlpha = 1 - Math.exp(-8 * delta);
+    camera.position.lerp(targetPos.current, posAlpha);
+
+    // Look at smoothly interpolated direction
+    const fv = currentLookOffset.current;
     const lookTarget = new THREE.Vector3(
       camera.position.x + fv.x * 6,
       camera.position.y + fv.y * 6,
@@ -780,63 +796,75 @@ export default function BoardRenderer3D({
   const facingRef = useRef<Direction>('up');
 
   // Continuous key polling — eliminates browser keyboard repeat delay
-  const pressedDirs = useRef(new Set<Direction>());
-  const lastMoveDirRef = useRef<Direction | null>(null);
+  const pressedInputs = useRef(new Set<string>());
   const lastMoveTimeRef = useRef(0);
-  const MOVE_POLL_MS = 100; // match server cooldown (1 tick = 100ms)
+  const MOVE_POLL_MS = 100;
 
   useEffect(() => {
-    const keyToDir = (key: string): Direction | null => {
+    const fireMove = (rawInput: 'forward' | 'backward' | 'left' | 'right') => {
+      if (cameraMode === 'fps') {
+        const facing = facingRef.current;
+        let worldDir: Direction;
+        switch (rawInput) {
+          case 'forward':  worldDir = facing; break;
+          case 'backward': worldDir = OPPOSITE[facing]; break;
+          case 'left':     worldDir = TURN_LEFT[facing]; break;
+          case 'right':    worldDir = TURN_RIGHT[facing]; break;
+        }
+        if (rawInput !== 'backward') {
+          facingRef.current = worldDir;
+        }
+        onMove(worldDir);
+      } else {
+        const dirMap: Record<string, Direction> = { forward: 'up', backward: 'down', left: 'left', right: 'right' };
+        const dir = dirMap[rawInput];
+        facingRef.current = dir;
+        onMove(dir);
+      }
+      lastMoveTimeRef.current = performance.now();
+    };
+
+    const keyToInput = (key: string): 'forward' | 'backward' | 'left' | 'right' | null => {
       switch (key) {
-        case 'ArrowUp': case 'w': case 'W': return 'up';
-        case 'ArrowDown': case 's': case 'S': return 'down';
+        case 'ArrowUp': case 'w': case 'W': return 'forward';
+        case 'ArrowDown': case 's': case 'S': return 'backward';
         case 'ArrowLeft': case 'a': case 'A': return 'left';
         case 'ArrowRight': case 'd': case 'D': return 'right';
         default: return null;
       }
     };
 
-    const fireMove = (dir: Direction) => {
-      facingRef.current = dir;
-      lastMoveDirRef.current = dir;
-      onMove(dir);
-      lastMoveTimeRef.current = performance.now();
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      const dir = keyToDir(e.key);
-      if (!dir) return;
+      const rawInput = keyToInput(e.key);
+      if (!rawInput) return;
       e.preventDefault();
-      const wasEmpty = pressedDirs.current.size === 0;
-      pressedDirs.current.add(dir);
-      // Fire immediately on fresh press (no waiting for poll interval)
-      if (wasEmpty || dir !== lastMoveDirRef.current) {
+      const wasEmpty = pressedInputs.current.size === 0;
+      pressedInputs.current.add(rawInput);
+      if (wasEmpty) {
         const now = performance.now();
         if (now - lastMoveTimeRef.current >= MOVE_POLL_MS) {
-          fireMove(dir);
+          fireMove(rawInput);
         }
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      const dir = keyToDir(e.key);
-      if (dir) pressedDirs.current.delete(dir);
+      const rawInput = keyToInput(e.key);
+      if (rawInput) pressedInputs.current.delete(rawInput);
     };
 
     const handleBlur = () => {
-      pressedDirs.current.clear();
+      pressedInputs.current.clear();
     };
 
-    // Poll pressed keys at ~60fps, send move when cooldown allows
     const pollInterval = setInterval(() => {
-      if (pressedDirs.current.size === 0) return;
+      if (pressedInputs.current.size === 0) return;
       const now = performance.now();
       if (now - lastMoveTimeRef.current < MOVE_POLL_MS) return;
-      // Use the most recently pressed direction (last in set)
-      let dir: Direction | null = null;
-      for (const d of pressedDirs.current) dir = d;
-      if (dir) fireMove(dir);
+      let input: 'forward' | 'backward' | 'left' | 'right' | null = null;
+      for (const i of pressedInputs.current) input = i as typeof input;
+      if (input) fireMove(input);
     }, 16);
 
     window.addEventListener('keydown', handleKeyDown);
@@ -848,14 +876,34 @@ export default function BoardRenderer3D({
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [onMove]);
+  }, [onMove, cameraMode]);
 
-  const handleTouchMove = useCallback((dir: Direction) => {
-    facingRef.current = dir;
-    onMove(dir);
-  }, [onMove]);
+  const handleTouchMove = useCallback((rawDir: Direction) => {
+    if (cameraMode === 'fps') {
+      // FPS mode: translate D-pad input relative to current facing
+      // D-pad "up" = forward, "down" = backward, "left" = turn left, "right" = turn right
+      const facing = facingRef.current;
+      const inputMap: Record<Direction, 'forward' | 'backward' | 'left' | 'right'> = {
+        up: 'forward', down: 'backward', left: 'left', right: 'right',
+      };
+      const rawInput = inputMap[rawDir];
+      let worldDir: Direction;
+      switch (rawInput) {
+        case 'forward':  worldDir = facing; break;
+        case 'backward': worldDir = OPPOSITE[facing]; break;
+        case 'left':     worldDir = TURN_LEFT[facing]; break;
+        case 'right':    worldDir = TURN_RIGHT[facing]; break;
+      }
+      if (rawInput !== 'backward') {
+        facingRef.current = worldDir;
+      }
+      onMove(worldDir);
+    } else {
+      facingRef.current = rawDir;
+      onMove(rawDir);
+    }
+  }, [onMove, cameraMode]);
 
-  // D-pad hold-to-move refs
   const dpadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const clearDpadInterval = useCallback(() => {
     if (dpadIntervalRef.current) { clearInterval(dpadIntervalRef.current); dpadIntervalRef.current = null; }
