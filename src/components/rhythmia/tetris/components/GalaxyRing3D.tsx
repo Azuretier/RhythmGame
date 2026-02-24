@@ -533,11 +533,6 @@ function GalaxyRingScene({
     gates: GalaxyGate[];
     waveNumber: number;
 }) {
-    // Show every 3rd tower to avoid clutter but keep it populated
-    const visibleTowers = useMemo(() => {
-        return towers.filter((_, i) => i % 3 === 0);
-    }, [towers]);
-
     return (
         <>
             {/* Lighting */}
@@ -564,7 +559,7 @@ function GalaxyRingScene({
                         />
                     ))}
 
-                    {visibleTowers.map(tower => (
+                    {towers.map(tower => (
                         <RingTower
                             key={tower.id}
                             side={tower.side}

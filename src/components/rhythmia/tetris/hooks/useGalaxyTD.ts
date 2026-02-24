@@ -309,13 +309,12 @@ export function useGalaxyTD({
             );
         }
 
-        // Triple (3 lines) triggers burst fire from all charged towers
+        // Triple (3 lines) triggers burst fire — reset cooldowns so all charged towers fire
         if (lineCount >= 3) {
-            const now = Date.now();
+            // Clear cooldowns first so fireTowers won't skip them
             setTowers(prev => prev.map(t =>
-                t.charge > 0 ? { ...t, lastFireTime: now } : t
+                t.charge > 0 ? { ...t, lastFireTime: 0 } : t
             ));
-            // Burst damage: each charged tower hits nearest enemy
             fireTowers();
         }
     }, [fireTowers]);
