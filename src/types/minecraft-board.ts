@@ -11,7 +11,8 @@ export type BlockType =
   | 'obsidian' | 'bedrock' | 'gravel' | 'clay'
   | 'tall_grass' | 'flower_red' | 'flower_yellow'
   | 'mushroom_red' | 'mushroom_brown' | 'cactus' | 'sugar_cane'
-  | 'crafting_table' | 'furnace' | 'chest' | 'torch' | 'planks';
+  | 'crafting_table' | 'furnace' | 'chest' | 'torch' | 'planks'
+  | 'sandstone' | 'red_sand' | 'dead_bush' | 'terracotta';
 
 export type Biome =
   | 'plains' | 'forest' | 'desert' | 'mountains' | 'snowy' | 'swamp' | 'ocean';
@@ -268,6 +269,10 @@ export const BLOCK_PROPERTIES: Record<BlockType, BlockProperties> = {
   chest:          blk({ hardness: 10, preferredTool: 'axe', drops: [{ item: 'chest_item', quantity: 1, chance: 1 }], walkable: true }),
   torch:          blk({ solid: false, hardness: 0, walkable: true, transparent: true, drops: [{ item: 'torch_item', quantity: 1, chance: 1 }] }),
   planks:         blk({ hardness: 10, preferredTool: 'axe', drops: [{ item: 'planks', quantity: 1, chance: 1 }], walkable: true }),
+  sandstone:      blk({ hardness: 8, drops: [{ item: 'sand_item', quantity: 1, chance: 1 }] }),
+  red_sand:       blk({ hardness: 5, preferredTool: 'shovel', drops: [{ item: 'sand_item', quantity: 1, chance: 1 }], walkable: true }),
+  dead_bush:      blk({ solid: false, hardness: 0, walkable: true, transparent: true, drops: [{ item: 'stick', quantity: 1, chance: 0.5 }] }),
+  terracotta:     blk({ hardness: 12, drops: [{ item: 'clay_ball', quantity: 2, chance: 1 }] }),
 };
 
 // === Item Properties ===
@@ -385,6 +390,10 @@ export const BLOCK_COLORS: Record<BlockType, string> = {
   chest: '#A0782C',
   torch: '#5D8C3E',
   planks: '#B8935A',
+  sandstone: '#D4B86A',
+  red_sand: '#C2713A',
+  dead_bush: '#8B7355',
+  terracotta: '#9E5B3C',
 };
 
 export const BLOCK_ICONS: Partial<Record<BlockType, string>> = {
@@ -408,6 +417,10 @@ export const BLOCK_ICONS: Partial<Record<BlockType, string>> = {
   water: '~',
   deep_water: '~',
   tall_grass: ',',
+  sandstone: '=',
+  red_sand: '.',
+  dead_bush: 'x',
+  terracotta: '%',
 };
 
 export const ITEM_ICONS: Partial<Record<ItemType, string>> = {
