@@ -213,6 +213,9 @@ export default function RhythmiaLobby() {
             case 'stories':
                 router.push('/stories');
                 break;
+            case 'td':
+                router.push('/td');
+                break;
         }
     };
 
