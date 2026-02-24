@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import type { Enemy, Bullet, TerrainPhase, CorruptionNode, MiniTower, TDLineClearAura, TDGarbageArc } from './tetris/types';
-import { BULLET_GRAVITY, BULLET_GROUND_Y, CORRUPTION_MAX_TERRAIN_NODES, GRID_TILE_SIZE } from './tetris/constants';
+import { BULLET_GRAVITY, BULLET_GROUND_Y, CORRUPTION_MAX_TERRAIN_NODES, GRID_TILE_SIZE, TOWER_DEFS } from './tetris/constants';
 
 // Simple seeded random for deterministic terrain
 function seededRandom(seed: number) {
@@ -1110,6 +1110,7 @@ export default function VoxelWorldBackground({
           const sinR2 = Math.sin(terrainRotY2);
           ss.miniTowerMesh.count = towers.length;
           const pulse2 = 0.9 + 0.1 * Math.sin(time * 0.004);
+          const towerColor = new THREE.Color();
           for (let i = 0; i < towers.length; i++) {
             const t2 = towers[i];
             const wx = t2.gridX * GRID_TILE_SIZE;
@@ -1121,8 +1122,15 @@ export default function VoxelWorldBackground({
             dummy.rotation.set(0, time * 0.002 + i * 0.8, 0);
             dummy.updateMatrix();
             ss.miniTowerMesh.setMatrixAt(i, dummy.matrix);
+            // Per-type color
+            const def = TOWER_DEFS[t2.towerType ?? 'mini_tower'];
+            towerColor.set(def.color);
+            ss.miniTowerMesh.setColorAt(i, towerColor);
           }
-          if (towers.length > 0) ss.miniTowerMesh.instanceMatrix.needsUpdate = true;
+          if (towers.length > 0) {
+            ss.miniTowerMesh.instanceMatrix.needsUpdate = true;
+            if (ss.miniTowerMesh.instanceColor) ss.miniTowerMesh.instanceColor.needsUpdate = true;
+          }
         }
 
         // === Impact particles ===

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, MiniTower, TDLineClearAura, TDGarbageArc, TDEnemyType } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, MiniTower, TDLineClearAura, TDGarbageArc, TDEnemyType, MiniTowerType } from '../types';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
@@ -12,6 +12,7 @@ import {
     WALKER_HP, RUNNER_HP, TANK_HP, GARBAGE_THROWER_HP, BOSS_HP,
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     MINI_TOWER_HP, MINI_TOWER_RANGE, MINI_TOWER_FIRE_INTERVAL, MINI_TOWER_MAX_COUNT, MINI_TOWER_BULLET_DAMAGE,
+    TOWER_DEFS,
     LINE_CLEAR_AURA_BASE_DAMAGE, LINE_CLEAR_AURA_DURATION, LINE_CLEAR_AURA_RADIUS,
     GARBAGE_THROW_INTERVAL, GARBAGE_ARC_DURATION, GARBAGE_THROW_LINES,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
@@ -979,7 +980,7 @@ export function useGameState() {
                     e => e.id === b.targetEnemyId && e.alive
                 );
                 if (targetEnemy && !damagedEnemyIds.has(targetEnemy.id)) {
-                    targetEnemy.health -= BULLET_DAMAGE;
+                    targetEnemy.health -= b.damage ?? BULLET_DAMAGE;
                     damagedEnemyIds.add(targetEnemy.id);
                     if (targetEnemy.health <= 0) {
                         targetEnemy.alive = false;
@@ -997,7 +998,7 @@ export function useGameState() {
                     (targetEnemy.x - newX) ** 2 + (targetEnemy.y - newY) ** 2 + (targetEnemy.z - newZ) ** 2
                 );
                 if (targetDist < BULLET_KILL_RADIUS) {
-                    targetEnemy.health -= BULLET_DAMAGE;
+                    targetEnemy.health -= b.damage ?? BULLET_DAMAGE;
                     damagedEnemyIds.add(targetEnemy.id);
                     if (targetEnemy.health <= 0) {
                         targetEnemy.alive = false;
@@ -1023,7 +1024,7 @@ export function useGameState() {
                     }
                 }
                 if (hitEnemy && bestDist < BULLET_KILL_RADIUS) {
-                    hitEnemy.health -= BULLET_DAMAGE;
+                    hitEnemy.health -= b.damage ?? BULLET_DAMAGE;
                     damagedEnemyIds.add(hitEnemy.id);
                     if (hitEnemy.health <= 0) {
                         hitEnemy.alive = false;
@@ -1102,7 +1103,7 @@ export function useGameState() {
     // ===== Mini-Tower Actions =====
 
     // Place a mini-tower at a grid cell
-    const placeMiniTower = useCallback((gx: number, gz: number) => {
+    const placeMiniTower = useCallback((gx: number, gz: number, towerType: MiniTowerType = 'mini_tower') => {
         // Don't allow placement at the main tower origin or if at max count
         if (Math.abs(gx) + Math.abs(gz) <= GRID_TOWER_RADIUS) return;
         if (miniTowersRef.current.length >= MINI_TOWER_MAX_COUNT) return;
@@ -1116,6 +1117,7 @@ export function useGameState() {
             hp: MINI_TOWER_HP,
             maxHp: MINI_TOWER_HP,
             lastShotAt: 0,
+            towerType,
         };
         const next = [...miniTowersRef.current, tower];
         setMiniTowers(next);
@@ -1144,16 +1146,36 @@ export function useGameState() {
         const newBullets: Bullet[] = [];
         let fired = 0;
 
+        // Collect aura-tower grid positions for adjacent-boost logic
+        const auraCells = new Set<string>(
+            miniTowersRef.current
+                .filter(t => t.towerType === 'aura' && t.hp > 0)
+                .map(t => `${t.gridX},${t.gridZ}`)
+        );
+        const isAuraAdjacent = (gx: number, gz: number): boolean =>
+            auraCells.has(`${gx - 1},${gz}`) || auraCells.has(`${gx + 1},${gz}`) ||
+            auraCells.has(`${gx},${gz - 1}`) || auraCells.has(`${gx},${gz + 1}`);
+
         for (const tower of miniTowersRef.current) {
             if (tower.hp <= 0) continue;
-            if (now - tower.lastShotAt < MINI_TOWER_FIRE_INTERVAL) continue;
+
+            // Per-type stats
+            const def = TOWER_DEFS[tower.towerType];
+            const effectiveInterval = isAuraAdjacent(tower.gridX, tower.gridZ)
+                ? def.fireInterval * 0.65   // 35% shorter interval = faster fire rate when adjacent to aura
+                : def.fireInterval;
+            const effectiveDamage = isAuraAdjacent(tower.gridX, tower.gridZ)
+                ? def.damage * 1.5          // +50% damage when adjacent to aura tower
+                : def.damage;
+
+            if (now - tower.lastShotAt < effectiveInterval) continue;
 
             // Find nearest enemy in range
             let target: Enemy | null = null;
             let bestDist = Infinity;
             for (const e of alive) {
                 const gDist = Math.abs(e.gridX - tower.gridX) + Math.abs(e.gridZ - tower.gridZ);
-                if (gDist <= MINI_TOWER_RANGE && gDist < bestDist) {
+                if (gDist <= def.range && gDist < bestDist) {
                     bestDist = gDist;
                     target = e;
                 }
@@ -1163,9 +1185,28 @@ export function useGameState() {
             tower.lastShotAt = now;
             fired++;
 
+            // Freeze towers deal AoE damage to all enemies in range
+            // Applied directly (not via bullet system) since this is AoE, not single-target
+            if (tower.towerType === 'freeze') {
+                const damagedIds = new Set<number>();
+                setEnemies(prev => {
+                    const next = prev.map(e => {
+                        if (!e.alive) return e;
+                        const gDist = Math.abs(e.gridX - tower.gridX) + Math.abs(e.gridZ - tower.gridZ);
+                        if (gDist > def.range || damagedIds.has(e.id)) return e;
+                        damagedIds.add(e.id);
+                        const newHp = e.health - effectiveDamage;
+                        return { ...e, health: newHp, alive: newHp > 0 };
+                    }).filter(e => e.alive);
+                    enemiesRef.current = next;
+                    return next;
+                });
+                continue;
+            }
+
             const startX = tower.gridX * GRID_TILE_SIZE;
             const startZ = tower.gridZ * GRID_TILE_SIZE;
-            const startY = 5; // mini-tower height
+            const startY = 5;
             const targetY = 1.5;
             const dx = target.x - startX;
             const dz = target.z - startZ;
@@ -1182,6 +1223,7 @@ export function useGameState() {
                 targetEnemyId: target.id,
                 alive: true,
                 fromMiniTower: true,
+                damage: effectiveDamage,
             });
         }
 

@@ -219,9 +219,14 @@ export type Bullet = {
     alive: boolean;
     /** Whether this bullet was fired from a mini-tower (for rendering tint) */
     fromMiniTower?: boolean;
+    /** Per-bullet damage override (used by tower-type variants) */
+    damage?: number;
 };
 
 // ===== Mini-Tower =====
+/** Tower variant types for the TD grid setup */
+export type MiniTowerType = 'mini_tower' | 'archer' | 'cannon' | 'freeze' | 'aura';
+
 export type MiniTower = {
     id: number;
     gridX: number;
@@ -229,6 +234,7 @@ export type MiniTower = {
     hp: number;
     maxHp: number;
     lastShotAt: number; // timestamp (ms)
+    towerType: MiniTowerType;
 };
 
 // ===== Line-Clear Aura Burst =====
