@@ -483,28 +483,29 @@ export function useGameState() {
         }
         setInventory(invCopy.filter(i => i.count > 0));
 
-        // Compute updated equipped cards
-        const prev = equippedCardsRef.current;
-        const existing = prev.find(ec => ec.cardId === cardId);
-        let updatedCards: EquippedCard[];
-        if (existing && existing.stackCount < 3) {
-            updatedCards = prev.map(ec =>
-                ec.cardId === cardId
-                    ? { ...ec, stackCount: ec.stackCount + 1 }
-                    : ec
-            );
-        } else if (existing) {
-            updatedCards = prev;
-        } else {
-            updatedCards = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
-        }
-
-        // Update cards, effects, and refs synchronously
-        equippedCardsRef.current = updatedCards;
-        setEquippedCards(updatedCards);
-        const effects = computeActiveEffects(updatedCards);
-        activeEffectsRef.current = effects;
-        setActiveEffects(effects);
+        // Add or stack equipped card
+        setEquippedCards(prev => {
+            const existing = prev.find(ec => ec.cardId === cardId);
+            let updated: EquippedCard[];
+            if (existing && existing.stackCount < 3) {
+                // Stack: increment count
+                updated = prev.map(ec =>
+                    ec.cardId === cardId
+                        ? { ...ec, stackCount: ec.stackCount + 1 }
+                        : ec
+                );
+            } else if (existing) {
+                // Already at max stack — still allow (re-equip)
+                updated = prev;
+            } else {
+                updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+            }
+            // Recompute active effects
+            const effects = computeActiveEffects(updated);
+            setActiveEffects(effects);
+            equippedCardsRef.current = updated;
+            return updated;
+        });
 
         // Enter absorbing phase — animation plays before finishing
         setAbsorbingCardId(cardId);
