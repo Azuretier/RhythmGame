@@ -443,7 +443,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   completeWaveRef.current = completeWave;
   const addGarbageRowsRef = useRef(gameState.addGarbageRows);
   addGarbageRowsRef.current = gameState.addGarbageRows;
-  const pendingGarbageRef = gameState.pendingGarbageRef;
   const triggerBoardShakeRef = useRef(triggerBoardShake);
   triggerBoardShakeRef.current = triggerBoardShake;
   const spawnFromCorruptionRef = useRef(corruption.spawnFromCorruption);
@@ -715,21 +714,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
     const { newBoard: clearedBoard, clearedLines } = clearLines(newBoard);
 
-    // Apply pending garbage AFTER clearing lines (avoids state race with beat timer)
-    let finalBoard = clearedBoard;
-    const pendingGarbage = pendingGarbageRef.current;
-    if (pendingGarbage > 0) {
-      pendingGarbageRef.current = 0;
-      const garbageRows: (string | null)[][] = [];
-      for (let g = 0; g < pendingGarbage; g++) {
-        const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
-        garbageRows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
-      }
-      finalBoard = [...clearedBoard.slice(pendingGarbage), ...garbageRows];
-    }
-
-    setBoard(finalBoard);
-    boardRef.current = finalBoard;
+    setBoard(clearedBoard);
+    boardRef.current = clearedBoard;
 
     // Calculate score with rhythm multiplier, combo_amplify, and protocol score bonus
     const amplifiedCombo = Math.max(1, Math.floor(comboRef.current * activeEffectsRef.current.comboAmplifyFactor));

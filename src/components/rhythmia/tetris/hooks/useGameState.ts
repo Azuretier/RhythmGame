@@ -162,7 +162,6 @@ export function useGameState() {
     const tdBeatsRemainingRef = useRef(tdBeatsRemaining);
     const gamePhaseRef = useRef<GamePhase>(gamePhase);
     const inventoryRef = useRef<InventoryItem[]>(inventory);
-    const pendingGarbageRef = useRef(0);
     const equippedCardsRef = useRef<EquippedCard[]>(equippedCards);
 
     // Key states for DAS/ARR
@@ -995,9 +994,17 @@ export function useGameState() {
         return totalKills;
     }, []);
 
-    // Queue garbage rows (applied atomically during next piece lock to avoid state race conditions)
+    // Add garbage rows to the bottom of the board (used by TD: enemy reach + corruption raids)
+    // boardRef is updated SYNCHRONOUSLY so handlePieceLock always sees the latest board.
     const addGarbageRows = useCallback((count: number) => {
-        pendingGarbageRef.current += count;
+        const rows: (string | null)[][] = [];
+        for (let g = 0; g < count; g++) {
+            const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+            rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
+        }
+        const newBoard = [...boardRef.current.slice(count), ...rows];
+        boardRef.current = newBoard;
+        setBoard(newBoard);
     }, []);
 
     // Spawn an enemy at a specific grid cell (used by corruption system)
@@ -1359,7 +1366,6 @@ export function useGameState() {
         setTowerHealth,
         towerHealthRef,
         addGarbageRows,
-        pendingGarbageRef,
         spawnEnemyAtCell,
     };
 }
