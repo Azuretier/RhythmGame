@@ -6,6 +6,54 @@ import type { GameKeybinds } from '../hooks/useKeybinds';
 import type { Piece, Board as BoardType, FeatureSettings } from '../types';
 import styles from '../VanillaGame.module.css';
 
+// ===== Memoized Cell Component =====
+// Each cell only re-renders when its own visual state changes, not on every board render.
+interface CellProps {
+    cell: string | null;
+    boardBeat: boolean;
+    isFever: boolean;
+    colorTheme: ColorTheme;
+    worldIdx: number;
+    beatPhase: number;
+}
+
+const Cell = React.memo(function Cell({ cell, boardBeat, isFever, colorTheme, worldIdx, beatPhase }: CellProps) {
+    if (!cell) {
+        return <div className={styles.cell} />;
+    }
+
+    const isGhost = cell.startsWith('ghost-');
+    const pieceType = isGhost ? cell.slice(6) : cell;
+
+    // Compute color
+    let color: string;
+    if (isFever) {
+        const baseHue = beatPhase * 360;
+        const offset = 'IOTSzjl'.indexOf(pieceType.toUpperCase()) * 51;
+        color = `hsl(${(baseHue + offset) % 360}, 90%, 60%)`;
+    } else {
+        color = getThemedColor(pieceType, colorTheme, worldIdx);
+    }
+
+    if (isGhost) {
+        const className = `${styles.cell} ${styles.ghost}${boardBeat ? ` ${styles.ghostBeat}` : ''}`;
+        const style = {
+            borderColor: boardBeat ? `${color}CC` : `${color}60`,
+            boxShadow: boardBeat ? `0 0 12px ${color}80, inset 0 0 6px ${color}40` : 'none',
+            transition: 'border-color 0.1s, box-shadow 0.1s',
+        };
+        return <div className={className} style={style} />;
+    }
+
+    const style = {
+        backgroundColor: color,
+        boxShadow: isFever
+            ? `0 0 12px ${color}, 0 0 4px ${color}`
+            : `0 0 8px ${color}`,
+    };
+    return <div className={`${styles.cell} ${styles.filled}`} style={style} />;
+});
+
 interface BoardProps {
     board: BoardType;
     currentPiece: Piece | null;
@@ -43,8 +91,10 @@ interface BoardProps {
 /**
  * Renders the game board with pieces, ghost piece, and overlays.
  * Enhanced with rhythm-reactive VFX: beat ghost glow, fever chroma shift.
+ * Wrapped in React.memo to prevent re-renders from parent state changes
+ * that don't affect the board (e.g., score updates, inventory changes).
  */
-export function Board({
+export const Board = React.memo(function Board({
     board,
     currentPiece,
     boardBeat,
@@ -76,16 +126,6 @@ export function Board({
     activeAnomaly = false,
 }: BoardProps) {
     const isFever = combo >= 10;
-
-    // Helper to get color for a piece type, with fever chroma shift
-    const getColor = (pieceType: string) => {
-        if (isFever) {
-            const baseHue = beatPhase * 360;
-            const offset = 'IOTSzjl'.indexOf(pieceType.toUpperCase()) * 51;
-            return `hsl(${(baseHue + offset) % 360}, 90%, 60%)`;
-        }
-        return getThemedColor(pieceType, colorTheme, worldIdx);
-    };
 
     // Create display board with current piece and ghost.
     // Only the visible rows (below BUFFER_ZONE) are rendered.
@@ -128,15 +168,15 @@ export function Board({
 
         // Only return visible rows (skip buffer zone)
         return display.slice(BUFFER_ZONE);
-    }, [board, currentPiece]);
+    }, [board, currentPiece, featureSettings?.ghostPiece]);
 
-    const boardWrapClasses = [
+    const boardWrapClasses = React.useMemo(() => [
         styles.boardWrap,
         boardBeat ? styles.beat : '',
         boardShake ? styles.shake : '',
         isFever ? styles.fever : '',
         activeAnomaly ? styles.anomaly : '',
-    ].filter(Boolean).join(' ');
+    ].filter(Boolean).join(' '), [boardBeat, boardShake, isFever, activeAnomaly]);
 
     // Default keybinds fallback
     const fallbackKeybinds: GameKeybinds = { inventory: 'e', shop: 'l' };
@@ -148,32 +188,19 @@ export function Board({
                 className={styles.board}
                 style={{ gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)` }}
             >
-                {displayBoard.flat().map((cell, i) => {
-                    const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
-                    const pieceType = isGhost ? cell.replace('ghost-', '') : cell;
-                    const color = pieceType ? getColor(pieceType as string) : '';
-
-                    const ghostStyle = isGhost ? {
-                        borderColor: boardBeat ? `${color}CC` : `${color}60`,
-                        boxShadow: boardBeat ? `0 0 12px ${color}80, inset 0 0 6px ${color}40` : 'none',
-                        transition: 'border-color 0.1s, box-shadow 0.1s',
-                    } : {};
-
-                    const filledStyle = cell && !isGhost ? {
-                        backgroundColor: color,
-                        boxShadow: isFever
-                            ? `0 0 12px ${color}, 0 0 4px ${color}`
-                            : `0 0 8px ${color}`,
-                    } : {};
-
-                    return (
-                        <div
-                            key={i}
-                            className={`${styles.cell} ${cell && !isGhost ? styles.filled : ''} ${isGhost ? styles.ghost : ''} ${isGhost && boardBeat ? styles.ghostBeat : ''}`}
-                            style={{ ...filledStyle, ...ghostStyle }}
+                {displayBoard.map((row, rowIdx) =>
+                    row.map((cell, colIdx) => (
+                        <Cell
+                            key={`${rowIdx}-${colIdx}`}
+                            cell={cell}
+                            boardBeat={boardBeat}
+                            isFever={isFever}
+                            colorTheme={colorTheme}
+                            worldIdx={worldIdx}
+                            beatPhase={beatPhase}
                         />
-                    );
-                })}
+                    ))
+                )}
             </div>
 
             {/* Overlay for Game Over */}
@@ -221,4 +248,4 @@ export function Board({
             )}
         </div>
     );
-}
+});

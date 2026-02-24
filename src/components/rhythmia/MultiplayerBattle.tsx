@@ -8,6 +8,7 @@ import type { FeatureSettings } from './tetris/types';
 import { DEFAULT_FEATURE_SETTINGS } from './tetris/types';
 import { FeatureCustomizer } from './tetris/components/FeatureCustomizer';
 import { recordMultiplayerGameEnd, checkLiveMultiplayerAdvancements, saveLiveUnlocks } from '@/lib/advancements/storage';
+import { useSkillTree } from '@/lib/skill-tree/context';
 import AdvancementToast from './AdvancementToast';
 import { useRhythmVFX } from './tetris/hooks/useRhythmVFX';
 import { RhythmVFX } from './tetris/components/RhythmVFX';
@@ -16,6 +17,7 @@ import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSoun
 import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
+import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
 const VoxelWorldBackground = dynamic(() => import('./VoxelWorldBackground'), {
@@ -299,6 +301,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
     onBackToLobby,
 }) => {
     const opponent = opponents[0];
+    const { awardGamePoints, awardMultiplayerWinPoints } = useSkillTree();
 
     // Game state
     const boardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
@@ -621,6 +624,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                     bestTetrisIn60s: bestTetrisIn60sRef.current,
                 });
                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
+                awardGamePoints();
             }
             onGameEnd(opponent?.id || '');
             render();
@@ -638,7 +642,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         }
         render();
         return true;
-    }, [fillQueue, sendGameOver, onGameEnd, opponent, render]);
+    }, [fillQueue, sendGameOver, onGameEnd, opponent, render, awardGamePoints]);
 
     // ===== Lock Delay =====
     const startLockTimer = useCallback(() => {
@@ -728,14 +732,20 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
         // Beat judgment
         const phase = beatPhaseRef.current;
-        const onBeat = phase > 0.8 || phase < 0.12;
-        let mult = 1;
+        const timing = getBeatJudgment(phase);
+        const mult = getBeatMultiplier(timing);
 
-        if (onBeat) {
-            mult = 2;
+        if (timing !== 'miss') {
             comboRef.current++;
-            playPerfectSound();
-            showJudgmentText('PERFECT', '#00FFFF');
+            const judgmentConfig = {
+                perfect: { text: 'PERFECT', color: '#00FFFF' },
+                great:   { text: 'GREAT',   color: '#76FF03' },
+                good:    { text: 'GOOD',    color: '#FFD700' },
+            } as const;
+            showJudgmentText(judgmentConfig[timing].text, judgmentConfig[timing].color);
+            if (timing === 'perfect') playPerfectSound();
+            else if (timing === 'great') playTone(880, 0.15, 'triangle');
+            else playTone(660, 0.1, 'triangle');
 
             // VFX: combo change
             vfx.emit({ type: 'comboChange', combo: comboRef.current, onBeat: true });
@@ -858,7 +868,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 type: 'lineClear',
                 rows: clearedRows.map(r => r + BUFFER_ZONE),
                 count: cleared,
-                onBeat,
+                onBeat: timing !== 'miss',
                 combo: comboRef.current,
             });
         }
@@ -1050,6 +1060,8 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                     bestTetrisIn60s: bestTetrisIn60sRef.current,
                                 });
                                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
+                                awardGamePoints();
+                                awardMultiplayerWinPoints();
                             }
                             onGameEnd(playerId);
                             render();
@@ -1063,7 +1075,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
         ws.addEventListener('message', handler);
         return () => ws.removeEventListener('message', handler);
-    }, [ws, playerId, onGameEnd, render]);
+    }, [ws, playerId, onGameEnd, render, awardGamePoints, awardMultiplayerWinPoints]);
 
     // ===== Initialize Game =====
     useEffect(() => {
@@ -1350,7 +1362,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     // Beat phase indicator position (0 = start of beat, 1 = end)
     const beatIndicatorPos = beatPhaseDisplay;
-    const isInPerfectWindow = beatIndicatorPos > 0.8 || beatIndicatorPos < 0.12;
+    const beatZone = getBeatJudgment(beatIndicatorPos);
 
     // Build display board with ghost + active piece
     const displayBoard = board.map(row => row.map(cell => cell ? { ...cell, ghost: false } : null));
@@ -1568,12 +1580,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 <div className={styles.beatPerfectZoneLeft} />
                                 <div className={styles.beatPerfectZoneRight} />
                                 <div
-                                    className={`${styles.beatCursor} ${isInPerfectWindow ? styles.beatCursorPerfect : ''}`}
+                                    className={`${styles.beatCursor} ${beatZone === 'perfect' ? styles.beatCursorPerfect : beatZone === 'great' ? styles.beatCursorGreat : beatZone === 'good' ? styles.beatCursorGood : ''}`}
                                     style={{ left: `${beatIndicatorPos * 100}%` }}
                                 />
                             </div>
                             <div className={styles.beatLabel}>
-                                {isInPerfectWindow ? 'PERFECT' : 'BEAT'}
+                                {beatZone !== 'miss' ? beatZone.toUpperCase() : 'BEAT'}
                             </div>
                         </div>
 

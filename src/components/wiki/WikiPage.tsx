@@ -215,8 +215,8 @@ const SORTED_TUTORIALS = TUTORIAL_ORDER
   .filter(Boolean) as { id: string; titleKey: string; tags: string[]; accent: string; wikiTarget?: SubSection; thumb: string }[];
 
 const UPDATE_VIDEOS = [
-  { version: 'v0.0.2', title: 'azuretier.net v0.0.2 Update Overview', embedId: 'bcwz2j6N_kA', date: '2025-05' },
-  { version: 'v0.0.1', title: 'azuretier.net v0.0.1 Launch Trailer', embedId: '', date: '2025-03' },
+  { version: 'v0.0.2', titleKey: 'updateV002Title', embedId: 'bcwz2j6N_kA', date: '2025-05' },
+  { version: 'v0.0.1', titleKey: 'updateV001Title', embedId: '', date: '2025-03' },
 ] as const;
 
 export default function WikiPage() {
@@ -1044,11 +1044,11 @@ export default function WikiPage() {
                     {UPDATE_VIDEOS.map((vid) => (
                       <div key={vid.version} className={styles.updateSlide}>
                         <div className={styles.updateSlideThumb}>
-                          {vid.embedId ? <iframe src={`https://www.youtube-nocookie.com/embed/${vid.embedId}`} title={vid.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen className={styles.updateSlideIframe} loading="lazy" />
+                          {vid.embedId ? <iframe src={`https://www.youtube-nocookie.com/embed/${vid.embedId}`} title={t(vid.titleKey)} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen className={styles.updateSlideIframe} loading="lazy" />
                             : <div className={styles.updateSlidePlaceholder}><span className={styles.videoCardPlayIcon}>&#9654;</span><span className={styles.videoCardSoon}>{t('videoComingSoon')}</span></div>}
                         </div>
                         <div className={styles.updateSlideInfo}><span className={styles.updateSlideVersion}>{vid.version}</span><span className={styles.updateSlideDate}>{vid.date}</span></div>
-                        <h3 className={styles.updateSlideTitle}>{vid.title}</h3>
+                        <h3 className={styles.updateSlideTitle}>{t(vid.titleKey)}</h3>
                       </div>
                     ))}
                   </div></div>

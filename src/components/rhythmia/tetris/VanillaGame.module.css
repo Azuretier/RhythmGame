@@ -66,6 +66,12 @@
   z-index: 1;
 }
 
+/* All game UI children render above the Galaxy TD 3D ring (position: fixed, z-index: 2) */
+.game > * {
+  position: relative;
+  z-index: 3;
+}
+
 /* Score display */
 .scoreDisplay {
   font-size: clamp(2rem, 8vw, 4rem);
@@ -144,6 +150,7 @@
   background: rgba(0, 0, 0, 0.25);
   transition: box-shadow 0.1s, transform 0.1s, border-color 0.1s;
   overflow: visible;
+  will-change: transform, box-shadow;
 }
 
 .boardWrap.beat {
@@ -231,6 +238,7 @@
   position: relative;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  will-change: transform;
 }
 
 .cell {
@@ -238,9 +246,10 @@
   height: clamp(16px, 4vw, 28px);
   background: rgba(255, 255, 255, 0.01);
   border-radius: 0;
-  transition: all 0.1s;
+  transition: background-color 0.1s, box-shadow 0.1s;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  contain: strict;
 }
 
 .cell.filled {
@@ -510,34 +519,775 @@
   transform: scale(0.95);
 }
 
-/* Title screen */
+/* ===== Protocol Select Screen — Honkai: Star Rail Themed ===== */
+
+/* Title screen root — deep space navy background */
 .titleScreen {
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
+  background: #06090E;
+  z-index: 200;
+  overflow: hidden;
+}
+
+/* Nebula-like atmospheric glow blobs */
+.hsrNebula {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 45%, rgba(28, 10, 72, 0.45) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 45% at 85% 25%, rgba(0, 25, 80, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 40% at 55% 85%, rgba(15, 5, 55, 0.3) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Star field texture */
+.hsrStarfield {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.55) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+    radial-gradient(circle, rgba(200, 210, 255, 0.2) 1px, transparent 1px);
+  background-size: 200px 180px, 130px 110px, 80px 70px;
+  background-position: 12px 18px, 55px 40px, 22px 65px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.18;
+}
+
+/* HSR-style top navigation bar */
+.hsrTopBar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 52px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, rgba(10, 16, 32, 0.98) 0%, rgba(8, 12, 24, 0.95) 100%);
+  border-bottom: 1px solid rgba(200, 151, 63, 0.2);
+}
+
+.hsrTopBar::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(200, 151, 63, 0.6) 0%, rgba(200, 151, 63, 0.1) 40%, transparent 100%);
+}
+
+.hsrTopBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hsrTopBarDeco {
+  width: 4px;
+  height: 22px;
+  background: linear-gradient(180deg, #E2B96D 0%, #C8973F 100%);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.hsrTopBarTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: #E2B96D;
+  text-transform: uppercase;
+}
+
+.hsrTopBarTitleJa {
+  font-size: 0.65rem;
+  color: rgba(200, 151, 63, 0.55);
+  letter-spacing: 0.08em;
+}
+
+.hsrTopBarRight {
+  display: flex;
+  align-items: center;
+}
+
+.hsrTopBarGame {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: rgba(180, 190, 220, 0.35);
+  text-transform: uppercase;
+}
+
+/* Full-screen two-column layout below top bar */
+.protocolLayout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Left Panel: Protocol List ---- */
+.protocolLeftPanel {
+  position: relative;
+  width: 290px;
+  flex-shrink: 0;
+  padding: 28px 18px;
+  background: linear-gradient(180deg, rgba(8, 11, 24, 0.99) 0%, rgba(5, 8, 18, 1) 100%);
+  border-right: 1px solid rgba(200, 151, 63, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.protocolLeftPanel::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Right Panel: Details + Worlds ---- */
+.protocolRightPanel {
+  position: relative;
+  flex: 1;
+  padding: 36px 48px 28px;
+  background: linear-gradient(135deg, rgba(10, 14, 28, 0.92) 0%, rgba(6, 9, 20, 0.97) 100%);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.protocolRightPanel::-webkit-scrollbar {
+  display: none;
+}
+
+/* HSR panel header — gold left bar + label text */
+.hsrPanelHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.hsrPanelHeaderBar {
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(180deg, #E2B96D 0%, #C8973F 100%);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.hsrPanelHeaderText {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #C8973F;
+}
+
+.hsrPanelHeaderTextJa {
+  font-size: 0.55rem;
+  color: rgba(200, 151, 63, 0.45);
+  letter-spacing: 0.06em;
+}
+
+/* ---- Protocol List (vertical stack in left panel) ---- */
+.protocolList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+
+.protocolBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 0;
+  border: 1px solid rgba(180, 190, 220, 0.06);
+  border-left: 3px solid rgba(180, 190, 220, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  overflow: hidden;
+  color: rgba(215, 210, 200, 0.7);
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.protocolBtn:hover {
+  background: rgba(200, 151, 63, 0.04);
+  border-left-color: rgba(200, 151, 63, 0.4);
+  color: rgba(230, 225, 215, 0.9);
+}
+
+/* Selected protocol button */
+.protocolBtnSelected {
+  border-color: rgba(200, 151, 63, 0.25);
+  border-left: 3px solid var(--protocol-accent, #C8973F);
+  background: color-mix(in srgb, var(--protocol-accent, #C8973F) 6%, rgba(12, 16, 32, 0.8));
+  color: rgba(235, 230, 218, 1);
+}
+
+/* Shimmer effect on selected protocol */
+.protocolBtnSelected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--protocol-accent, #C8973F) 7%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: protocolShimmer 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes protocolShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Corner decorations for selected state */
+.cornerDecor {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: var(--protocol-accent, #C8973F);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.cornerTL { top: 3px; left: 3px; border-top: 1px solid; border-left: 1px solid; }
+.cornerTR { top: 3px; right: 3px; border-top: 1px solid; border-right: 1px solid; }
+.cornerBL { bottom: 3px; left: 3px; border-bottom: 1px solid; border-left: 1px solid; }
+.cornerBR { bottom: 3px; right: 3px; border-bottom: 1px solid; border-right: 1px solid; }
+
+/* Roman numeral badge — square with accent border */
+.romanBadge {
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: #000000;
-  z-index: 200;
-  gap: 24px;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid var(--protocol-accent, #4CAF50);
+  border-radius: 3px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--protocol-accent, #4CAF50);
+  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 10%, transparent);
+  text-shadow: 0 0 12px var(--protocol-accent, #4CAF50);
 }
 
-.titleScreen h1 {
-  font-size: clamp(3rem, 12vw, 6rem);
-  font-weight: 200;
-  color: white;
-  letter-spacing: 0.3em;
+/* Protocol button text */
+.protocolBtnInfo {
+  flex: 1;
+  min-width: 0;
 }
 
-.titleScreen p {
-  color: rgba(255, 255, 255, 0.4);
+.protocolBtnName {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin-bottom: 1px;
+}
+
+.protocolBtnSub {
+  font-size: 0.54rem;
+  color: rgba(180, 175, 165, 0.45);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+/* Difficulty star dots in list buttons */
+.hsrDiffStars {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.hsrDiffStar {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hsrDiffStarFilled {
+  background: var(--protocol-accent, #C8973F);
+  box-shadow: 0 0 4px var(--protocol-accent, #C8973F);
+}
+
+.hsrDiffStarEmpty {
+  background: rgba(180, 175, 165, 0.15);
+}
+
+/* ---- Right Panel: Detail Header ---- */
+.protocolDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.protocolDetailNumeral {
+  font-size: 4rem;
+  font-weight: 100;
+  letter-spacing: 0.05em;
+  color: var(--protocol-accent, #4CAF50);
+  text-shadow: 0 0 40px var(--protocol-accent, #4CAF50), 0 0 80px color-mix(in srgb, var(--protocol-accent, #4CAF50) 30%, transparent);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.hsrDetailTitleGroup {
+  flex: 1;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.protocolDetailName {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: rgba(230, 225, 210, 0.95);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.protocolDetailNameJa {
+  font-size: 0.72rem;
+  color: rgba(180, 175, 162, 0.5);
+  letter-spacing: 0.08em;
+  margin-bottom: 7px;
+}
+
+/* Difficulty stars in right panel header */
+.hsrDetailStars {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.protocolDetailDesc {
+  font-size: 0.78rem;
+  color: rgba(190, 185, 172, 0.6);
+  line-height: 1.75;
+  margin-bottom: 16px;
+  max-width: 580px;
+}
+
+/* HSR-style stats grid — 2×2 layout */
+.hsrStatsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(100, 110, 150, 0.08);
+  border: 1px solid rgba(100, 110, 150, 0.1);
+  border-radius: 4px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.hsrStatItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: rgba(8, 11, 24, 0.7);
+}
+
+.hsrStatLabel {
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(150, 160, 200, 0.55);
+}
+
+.hsrStatValue {
   font-size: 1rem;
-  font-weight: 300;
-  letter-spacing: 0.15em;
+  font-weight: 600;
+  color: var(--protocol-accent, #4CAF50);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 
-/* Mode selection */
+.protocolRules {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.protocolRuleTag {
+  padding: 3px 9px;
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid color-mix(in srgb, var(--protocol-accent, #4CAF50) 35%, transparent);
+  border-radius: 2px;
+  color: var(--protocol-accent, #4CAF50);
+  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 6%, transparent);
+}
+
+/* HSR-style diamond divider */
+.hsrDivider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.hsrDividerLine {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(200, 151, 63, 0.25) 0%, rgba(200, 151, 63, 0.05) 100%);
+}
+
+.hsrDividerLine:last-child {
+  background: linear-gradient(270deg, rgba(200, 151, 63, 0.25) 0%, rgba(200, 151, 63, 0.05) 100%);
+}
+
+.hsrDividerDiamond {
+  width: 6px;
+  height: 6px;
+  background: #C8973F;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(200, 151, 63, 0.6);
+}
+
+/* HSR-style section header (for Worlds section) */
+.hsrSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.hsrSectionHeaderBar {
+  width: 3px;
+  height: 14px;
+  background: linear-gradient(180deg, #52B8DD 0%, rgba(82, 184, 221, 0.5) 100%);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.hsrSectionHeaderText {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(82, 184, 221, 0.8);
+}
+
+/* ---- World preview row (in right panel) ---- */
+.worldRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.worldRow::-webkit-scrollbar {
+  display: none;
+}
+
+.worldCard {
+  flex: 1;
+  min-width: 100px;
+  padding: 14px 10px;
+  border-radius: 3px;
+  border: 1px solid rgba(100, 110, 150, 0.1);
+  background: rgba(10, 14, 28, 0.7);
+  text-align: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.worldCard:hover {
+  border-color: rgba(200, 151, 63, 0.2);
+  background: rgba(200, 151, 63, 0.04);
+}
+
+.worldCardEmoji {
+  font-size: 1.6rem;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.worldCardName {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: rgba(190, 185, 172, 0.65);
+  letter-spacing: 0.06em;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.worldCardBpm {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(220, 215, 205, 0.88);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+  transition: color 0.25s ease;
+}
+
+.worldCardBpmModified {
+  color: var(--protocol-accent, #C8973F);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--protocol-accent, #C8973F) 40%, transparent);
+}
+
+.worldCardStars {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+}
+
+.worldCardStar {
+  width: 7px;
+  height: 7px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+.worldCardStarFilled {
+  background: rgba(200, 151, 63, 0.7);
+  box-shadow: 0 0 4px rgba(200, 151, 63, 0.4);
+}
+
+.worldCardStarEmpty {
+  background: rgba(180, 175, 165, 0.08);
+  border: 1px solid rgba(180, 175, 165, 0.12);
+}
+
+/* HSR-style Enter / Start button with cut corners */
+.protocolEnterBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 420px;
+  width: 100%;
+  padding: 15px 32px;
+  border: 1px solid var(--protocol-accent, #C8973F);
+  background: color-mix(in srgb, var(--protocol-accent, #C8973F) 12%, rgba(8, 11, 24, 0.9));
+  color: var(--protocol-accent, #C8973F);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: auto;
+  flex-shrink: 0;
+  clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+  border-radius: 0;
+  overflow: visible;
+}
+
+.protocolEnterBtn:hover {
+  background: color-mix(in srgb, var(--protocol-accent, #C8973F) 22%, rgba(8, 11, 24, 0.9));
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--protocol-accent, #C8973F) 30%, transparent),
+    0 0 40px color-mix(in srgb, var(--protocol-accent, #C8973F) 12%, transparent);
+}
+
+.protocolEnterBtn:active {
+  transform: scale(0.98);
+}
+
+.protocolEnterBtnSub {
+  font-size: 0.62rem;
+  font-weight: 400;
+  opacity: 0.55;
+  letter-spacing: 0.06em;
+}
+
+/* Corner accent elements on the Enter button */
+.hsrEnterCornerTL {
+  position: absolute;
+  top: 0px;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  border-top: 2px solid var(--protocol-accent, #C8973F);
+  border-left: 2px solid var(--protocol-accent, #C8973F);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.hsrEnterCornerBR {
+  position: absolute;
+  bottom: 0px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-bottom: 2px solid var(--protocol-accent, #C8973F);
+  border-right: 2px solid var(--protocol-accent, #C8973F);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* ---- Responsive ---- */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .hsrTopBar {
+    padding: 0 20px;
+    height: 46px;
+  }
+
+  .protocolLeftPanel {
+    width: 230px;
+    padding: 22px 14px;
+  }
+
+  .protocolRightPanel {
+    padding: 26px 22px 22px;
+  }
+
+  .protocolDetailNumeral {
+    font-size: 3rem;
+  }
+
+  .protocolDetailName {
+    font-size: 1.15rem;
+  }
+
+  .worldCard {
+    min-width: 80px;
+    padding: 12px 8px;
+  }
+
+  .worldCardEmoji {
+    font-size: 1.4rem;
+  }
+
+  .worldCardName {
+    font-size: 0.55rem;
+  }
+
+  .romanBadge {
+    width: 30px;
+    height: 30px;
+    font-size: 0.7rem;
+  }
+
+  .protocolBtn {
+    padding: 9px 10px;
+    gap: 8px;
+  }
+
+  .hsrStatsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 580px) {
+  .hsrTopBar {
+    padding: 0 14px;
+    height: 42px;
+  }
+
+  .hsrTopBarTitleJa {
+    display: none;
+  }
+
+  .protocolLayout {
+    flex-direction: column;
+  }
+
+  .protocolLeftPanel {
+    width: 100%;
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(200, 151, 63, 0.1);
+    padding: 14px 12px;
+    max-height: 175px;
+  }
+
+  .hsrPanelHeader {
+    margin-bottom: 12px;
+  }
+
+  .protocolList {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 5px;
+  }
+
+  .protocolBtn {
+    min-width: 130px;
+    flex-shrink: 0;
+    border-left-width: 3px;
+  }
+
+  .protocolRightPanel {
+    padding: 18px 14px;
+  }
+
+  .protocolDetailNumeral {
+    font-size: 2.2rem;
+  }
+
+  .protocolDetailName {
+    font-size: 0.95rem;
+  }
+
+  .protocolDetailDesc {
+    font-size: 0.7rem;
+  }
+
+  .hsrStatsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .worldRow {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 7px;
+  }
+
+  .worldCard {
+    flex: 0 0 calc(33.33% - 5px);
+    min-width: 68px;
+    padding: 10px 6px;
+  }
+
+  .worldCardEmoji {
+    font-size: 1.2rem;
+  }
+
+  .protocolEnterBtn {
+    max-width: 100%;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+}
+
+/* Mode selection (kept for legacy use) */
 .modeSelect {
   display: flex;
   gap: 16px;
@@ -608,563 +1358,6 @@
 .startBtn:hover {
   background: rgba(255, 255, 255, 0.85);
   transform: translateY(-2px);
-}
-
-/* ===== Protocol Select Screen (HSR left-panel layout) ===== */
-
-/* Full-screen two-column layout: left protocol list + right details */
-.protocolLayout {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* ---- Left Panel: Protocol List ---- */
-.protocolLeftPanel {
-  position: relative;
-  width: 280px;
-  flex-shrink: 0;
-  padding: 32px 20px;
-  background:
-    linear-gradient(180deg, rgba(6, 10, 22, 0.98) 0%, rgba(3, 5, 14, 0.99) 100%);
-  border-right: 1px solid rgba(255, 255, 255, 0.04);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.protocolLeftPanel::-webkit-scrollbar {
-  display: none;
-}
-
-/* ---- Right Panel: Details + Worlds ---- */
-.protocolRightPanel {
-  position: relative;
-  flex: 1;
-  padding: 40px 48px 32px;
-  background:
-    linear-gradient(180deg, rgba(8, 12, 24, 0.95) 0%, rgba(4, 6, 16, 0.98) 100%);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.protocolRightPanel::-webkit-scrollbar {
-  display: none;
-}
-
-/* Circuit grid background overlay */
-.circuitGrid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 127, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 127, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Scanline overlay (left panel only) */
-.scanlineOverlay {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg, transparent, transparent 2px,
-    rgba(0, 127, 255, 0.012) 2px, rgba(0, 127, 255, 0.012) 4px
-  );
-  pointer-events: none;
-  z-index: 1;
-  animation: scanlineScroll 8s linear infinite;
-}
-
-@keyframes scanlineScroll {
-  from { background-position: 0 0; }
-  to { background-position: 0 40px; }
-}
-
-/* Section headers */
-.protocolSectionTitle {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  position: relative;
-  z-index: 2;
-}
-
-.protocolSectionLabel {
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: rgba(0, 127, 255, 0.7);
-  white-space: nowrap;
-}
-
-.protocolHeaderLine {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(0, 127, 255, 0.3) 0%, transparent 100%);
-}
-
-/* ---- Protocol List (vertical stack in left panel) ---- */
-.protocolList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  position: relative;
-  z-index: 2;
-}
-
-.protocolBtn {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  overflow: hidden;
-  color: white;
-  text-align: left;
-  flex-shrink: 0;
-}
-
-.protocolBtn::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: var(--protocol-accent, #4CAF50);
-  opacity: 0.4;
-  transition: opacity 0.2s ease;
-}
-
-.protocolBtn:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.protocolBtn:hover::before {
-  opacity: 0.8;
-}
-
-/* Selected protocol button */
-.protocolBtnSelected {
-  border-color: var(--protocol-accent, #4CAF50);
-  box-shadow:
-    0 0 20px color-mix(in srgb, var(--protocol-accent, #4CAF50) 15%, transparent),
-    inset 0 0 30px color-mix(in srgb, var(--protocol-accent, #4CAF50) 5%, transparent);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.protocolBtnSelected::before {
-  opacity: 1;
-  width: 4px;
-}
-
-/* Shimmer effect on selected protocol */
-.protocolBtnSelected::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--protocol-accent, #4CAF50) 6%, transparent) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: protocolShimmer 3s ease-in-out infinite;
-  pointer-events: none;
-  border-radius: inherit;
-}
-
-@keyframes protocolShimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-/* Corner decorations for selected state */
-.cornerDecor {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-color: var(--protocol-accent, #4CAF50);
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.cornerTL { top: 3px; left: 3px; border-top: 1px solid; border-left: 1px solid; }
-.cornerTR { top: 3px; right: 3px; border-top: 1px solid; border-right: 1px solid; }
-.cornerBL { bottom: 3px; left: 3px; border-bottom: 1px solid; border-left: 1px solid; }
-.cornerBR { bottom: 3px; right: 3px; border-bottom: 1px solid; border-right: 1px solid; }
-
-/* Roman numeral badge */
-.romanBadge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border: 1px solid var(--protocol-accent, #4CAF50);
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--protocol-accent, #4CAF50);
-  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 8%, transparent);
-  text-shadow: 0 0 10px var(--protocol-accent, #4CAF50);
-}
-
-/* Protocol button text */
-.protocolBtnInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.protocolBtnName {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  margin-bottom: 2px;
-}
-
-.protocolBtnSub {
-  font-size: 0.55rem;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ---- Right Panel: Detail Header ---- */
-.protocolDetailHeader {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 16px;
-  position: relative;
-  z-index: 2;
-}
-
-.protocolDetailNumeral {
-  font-size: 3.5rem;
-  font-weight: 200;
-  letter-spacing: 0.1em;
-  color: var(--protocol-accent, #4CAF50);
-  text-shadow: 0 0 30px var(--protocol-accent, #4CAF50);
-  line-height: 1;
-}
-
-.protocolDetailName {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.protocolDetailNameJa {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.08em;
-  margin-top: 4px;
-}
-
-.protocolDetailDesc {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 1.7;
-  margin-bottom: 18px;
-  max-width: 600px;
-  position: relative;
-  z-index: 2;
-}
-
-.protocolDetailStats {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  position: relative;
-  z-index: 2;
-}
-
-.protocolStat {
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.protocolStatValue {
-  color: var(--protocol-accent, #4CAF50);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.protocolRules {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-  position: relative;
-  z-index: 2;
-}
-
-.protocolRuleTag {
-  padding: 2px 8px;
-  font-size: 0.5rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border: 1px solid color-mix(in srgb, var(--protocol-accent, #4CAF50) 30%, transparent);
-  border-radius: 4px;
-  color: var(--protocol-accent, #4CAF50);
-  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 5%, transparent);
-}
-
-/* Divider between detail and worlds */
-.protocolDivider {
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, transparent 80%);
-  margin: 18px 0;
-  position: relative;
-  z-index: 2;
-}
-
-/* ---- World preview row (in right panel) ---- */
-.worldRow {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  position: relative;
-  z-index: 2;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.worldRow::-webkit-scrollbar {
-  display: none;
-}
-
-.worldCard {
-  flex: 1;
-  min-width: 110px;
-  padding: 18px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
-  text-align: center;
-  transition: border-color 0.2s ease;
-}
-
-.worldCardEmoji {
-  font-size: 1.8rem;
-  line-height: 1;
-  margin-bottom: 8px;
-}
-
-.worldCardName {
-  font-size: 0.65rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.06em;
-  margin-bottom: 6px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.worldCardBpm {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 6px;
-  transition: color 0.25s ease;
-}
-
-.worldCardBpmModified {
-  color: var(--protocol-accent, rgba(0, 127, 255, 0.9));
-}
-
-.worldCardStars {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-}
-
-.worldCardStar {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-}
-
-.worldCardStarFilled {
-  background: rgba(255, 255, 255, 0.6);
-}
-
-.worldCardStarEmpty {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* Enter button */
-.protocolEnterBtn {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  max-width: 400px;
-  width: 100%;
-  padding: 16px 32px;
-  border-radius: 10px;
-  border: 1px solid var(--protocol-accent, #4CAF50);
-  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 10%, transparent);
-  color: var(--protocol-accent, #4CAF50);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: auto;
-  flex-shrink: 0;
-}
-
-.protocolEnterBtn:hover {
-  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 20%, transparent);
-  box-shadow: 0 0 24px color-mix(in srgb, var(--protocol-accent, #4CAF50) 25%, transparent);
-}
-
-.protocolEnterBtn:active {
-  transform: scale(0.98);
-}
-
-.protocolEnterBtnSub {
-  font-size: 0.65rem;
-  font-weight: 400;
-  opacity: 0.6;
-}
-
-/* ---- Responsive ---- */
-
-/* Tablet */
-@media (max-width: 768px) {
-  .protocolLeftPanel {
-    width: 220px;
-    padding: 24px 14px;
-  }
-
-  .protocolRightPanel {
-    padding: 28px 24px 24px;
-  }
-
-  .protocolDetailNumeral {
-    font-size: 2.5rem;
-  }
-
-  .protocolDetailName {
-    font-size: 1.1rem;
-  }
-
-  .worldCard {
-    min-width: 80px;
-    padding: 12px 8px;
-  }
-
-  .worldCardEmoji {
-    font-size: 1.4rem;
-  }
-
-  .worldCardName {
-    font-size: 0.55rem;
-  }
-
-  .romanBadge {
-    width: 30px;
-    height: 30px;
-    font-size: 0.7rem;
-  }
-
-  .protocolBtn {
-    padding: 10px 10px;
-    gap: 8px;
-  }
-}
-
-/* Mobile: stack vertically */
-@media (max-width: 580px) {
-  .protocolLayout {
-    flex-direction: column;
-  }
-
-  .protocolLeftPanel {
-    width: 100%;
-    flex-shrink: 0;
-    border-right: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    padding: 16px 14px;
-    max-height: 180px;
-  }
-
-  .protocolList {
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 6px;
-  }
-
-  .protocolBtn {
-    min-width: 140px;
-    flex-shrink: 0;
-  }
-
-  .protocolRightPanel {
-    padding: 20px 16px;
-  }
-
-  .protocolDetailNumeral {
-    font-size: 1.8rem;
-  }
-
-  .protocolDetailName {
-    font-size: 0.9rem;
-  }
-
-  .protocolDetailDesc {
-    font-size: 0.7rem;
-  }
-
-  .worldRow {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .worldCard {
-    flex: 0 0 calc(33.33% - 6px);
-    min-width: 70px;
-    padding: 10px 6px;
-  }
-
-  .worldCardEmoji {
-    font-size: 1.2rem;
-  }
-
-  .protocolEnterBtn {
-    max-width: 100%;
-  }
 }
 
 /* World display */
@@ -3994,7 +4187,7 @@
 /* The payoff: card bursts, particles, "OBTAINED!" slams in. */
 /* 0.2-0.5s of acute visual "juice." */
 .cardAbsorbBurst {
-  animation: cardBurst 350ms ease-out forwards;
+  animation: cardBurst 280ms ease-out forwards;
   z-index: 10;
   pointer-events: none;
 }
@@ -4021,7 +4214,7 @@
 
 /* Flash effect on overlay during impact */
 .cardAbsorbFlash {
-  animation: overlayFlash 350ms ease-out;
+  animation: overlayFlash 280ms ease-out;
 }
 
 @keyframes overlayFlash {
@@ -4050,7 +4243,7 @@
 /* --- Phase 5: DONE --- */
 /* Overlay fade-out when player dismisses */
 .cardAbsorbDone {
-  animation: overlayFadeOut 200ms ease-out forwards;
+  animation: overlayFadeOut 150ms ease-out forwards;
 }
 
 @keyframes overlayFadeOut {
@@ -4073,7 +4266,7 @@
   align-items: center;
   gap: 8px;
   z-index: 20;
-  animation: obtainedSlam 350ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: obtainedSlam 280ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   text-align: center;
 }
 

@@ -12,6 +12,8 @@ import { ProfileProvider } from '@/lib/profile/context';
 import { SkinProvider } from '@/lib/skin/context';
 import { UiThemeProvider } from '@/lib/theme/context';
 import { GoogleSyncProvider } from '@/lib/google-sync/context';
+import { SkillTreeProvider } from '@/lib/skill-tree/context';
+import { ShapeProvider } from '@/lib/shape/context';
 
 // Vercel Analytics
 import { Analytics } from "@vercel/analytics/next"
@@ -128,17 +130,21 @@ export default async function LocaleLayout({ children, params }: Props) {
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }}>
                 <NextIntlClientProvider messages={messages}>
                     <UiThemeProvider>
+                        <ShapeProvider>
                         <GoogleSyncProvider>
                             <ProfileProvider>
                                 <SkinProvider>
-                                    <VersionProvider>
-                                        <Provider>
-                                            {children}
-                                        </Provider>
-                                    </VersionProvider>
+                                    <SkillTreeProvider>
+                                        <VersionProvider>
+                                            <Provider>
+                                                {children}
+                                            </Provider>
+                                        </VersionProvider>
+                                    </SkillTreeProvider>
                                 </SkinProvider>
                             </ProfileProvider>
                         </GoogleSyncProvider>
+                        </ShapeProvider>
                     </UiThemeProvider>
                 </NextIntlClientProvider>
                 {gaId && <GoogleAnalytics gaId={gaId} />}

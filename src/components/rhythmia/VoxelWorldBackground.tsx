@@ -243,6 +243,78 @@ function createBlockBumpMap(): THREE.CanvasTexture {
   return texture;
 }
 
+// Procedural enemy armor texture — dark panels with glowing energy veins
+function createEnemyArmorTexture(): THREE.CanvasTexture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const rng = seededRandom(77777);
+
+  // Dark base with slight variation
+  const imgData = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      let v = 0.12 + (smoothNoise(x * 0.07, y * 0.07, 3300) - 0.5) * 0.08;
+      v += (rng() - 0.5) * 0.03;
+      v = Math.max(0, Math.min(1, v));
+      imgData.data[idx]     = Math.round(v * 60);  // R — slightly purple-tinted
+      imgData.data[idx + 1] = Math.round(v * 30);  // G
+      imgData.data[idx + 2] = Math.round(v * 90);  // B
+      imgData.data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Armor plate grid lines
+  ctx.strokeStyle = 'rgba(80, 20, 140, 0.7)';
+  ctx.lineWidth = 1.5;
+  const plateSize = 32;
+  for (let y = 0; y < size; y += plateSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+  }
+  for (let x = 0; x < size; x += plateSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
+  }
+
+  // Glowing energy vein lines (purple/magenta)
+  const veinRng = seededRandom(88888);
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const alpha = 0.5 + veinRng() * 0.4;
+    ctx.strokeStyle = `rgba(180, 60, 255, ${alpha})`;
+    ctx.beginPath();
+    let px = veinRng() * size;
+    let py = veinRng() * size;
+    ctx.moveTo(px, py);
+    const segs = 3 + Math.floor(veinRng() * 4);
+    for (let j = 0; j < segs; j++) {
+      px += (veinRng() - 0.5) * 40;
+      py += (veinRng() - 0.5) * 40;
+      ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  // Subtle rivets/bolts at plate corners
+  ctx.fillStyle = 'rgba(140, 80, 200, 0.5)';
+  for (let y = plateSize; y < size; y += plateSize) {
+    for (let x = plateSize; x < size; x += plateSize) {
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 // Procedural roughness map
 function createBlockRoughnessMap(): THREE.CanvasTexture {
   const size = 64;
@@ -951,7 +1023,7 @@ export default function VoxelWorldBackground({
             const lerpX = lerp.fromX + (lerp.toX - lerp.fromX) * st;
             const lerpZ = lerp.fromZ + (lerp.toZ - lerp.fromZ) * st;
 
-            // Rotate with terrain
+            // Apply terrain rotation
             const rx = lerpX * cosR - lerpZ * sinR;
             const rz = lerpX * sinR + lerpZ * cosR;
 

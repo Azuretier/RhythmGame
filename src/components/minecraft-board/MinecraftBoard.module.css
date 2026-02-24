@@ -427,7 +427,6 @@
 
 .board {
   display: grid;
-  gap: 1px;
   background: #111;
   border: 3px solid #444;
   position: relative;
@@ -1113,6 +1112,28 @@
   color: #FF4444;
 }
 
+/* === View Toggle Button === */
+
+.viewToggleBtn {
+  position: fixed;
+  top: 0.5rem;
+  right: 5rem;
+  padding: 0.3rem 0.7rem;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid #4aedd9;
+  color: #4aedd9;
+  font-family: inherit;
+  font-size: 0.65rem;
+  cursor: pointer;
+  z-index: 40;
+  letter-spacing: 0.5px;
+  transition: background 0.15s;
+}
+
+.viewToggleBtn:hover {
+  background: rgba(74, 237, 217, 0.15);
+}
+
 /* === End Screen === */
 
 .endTitle {
@@ -1222,7 +1243,6 @@
 
 .sideBoardGrid {
   display: grid;
-  gap: 1px;
   background: #0a000f;
 }
 

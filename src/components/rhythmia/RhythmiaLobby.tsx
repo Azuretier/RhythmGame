@@ -13,6 +13,7 @@ import ForYouTab from '@/components/rhythmia/ForYouTab';
 import ProfileSetup from '@/components/profile/ProfileSetup';
 import OnlineUsers from '@/components/profile/OnlineUsers';
 import SkinCustomizer from '@/components/profile/SkinCustomizer';
+import SkillTree from '@/components/profile/SkillTree';
 import rhythmiaConfig from '../../../rhythmia.config.json';
 import styles from '@/components/rhythmia/rhythmia.module.css';
 import onlineStyles from '@/components/profile/OnlineUsers.module.css';
@@ -37,6 +38,7 @@ export default function RhythmiaLobby() {
     const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
     const [unlockedCount, setUnlockedCount] = useState(0);
     const [showSkinCustomizer, setShowSkinCustomizer] = useState(false);
+    const [showSkillTree, setShowSkillTree] = useState(false);
     const [showLogoAnimation, setShowLogoAnimation] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
     const profileSentRef = useRef(false);
@@ -57,7 +59,7 @@ export default function RhythmiaLobby() {
     const TOTAL_SLIDES = 3;
     const { currentSlide, goToSlide, containerRef, slideStyle } = useSlideScroll({
         totalSlides: TOTAL_SLIDES,
-        enabled: gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showOnlineUsers && !showLogoAnimation,
+        enabled: gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showSkillTree && !showOnlineUsers && !showLogoAnimation,
     });
 
     useEffect(() => {
@@ -242,7 +244,7 @@ export default function RhythmiaLobby() {
         );
     }
 
-    const slidesEnabled = gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showOnlineUsers && !showLogoAnimation;
+    const slidesEnabled = gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showSkillTree && !showOnlineUsers && !showLogoAnimation;
 
     return (
         <>
@@ -310,6 +312,21 @@ export default function RhythmiaLobby() {
                         )}
                     </AnimatePresence>
 
+                    {/* Skill tree panel */}
+                    <AnimatePresence>
+                        {showSkillTree && (
+                            <motion.div
+                                className={styles.advOverlay}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.25 }}
+                            >
+                                <SkillTree onClose={() => setShowSkillTree(false)} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     {/* Slide container */}
                     <div
                         className={styles.slideContainer}
@@ -331,6 +348,12 @@ export default function RhythmiaLobby() {
                                         onClick={() => setShowAdvancements(true)}
                                     >
                                         {t('advancements.button', { count: unlockedCount, total: ADVANCEMENTS.length })}
+                                    </button>
+                                    <button
+                                        className={styles.advButton}
+                                        onClick={() => setShowSkillTree(true)}
+                                    >
+                                        {t('skillTree.title')}
                                     </button>
                                     <button
                                         className={onlineStyles.onlineButton}

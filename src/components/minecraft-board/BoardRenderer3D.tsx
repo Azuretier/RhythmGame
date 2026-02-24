@@ -1,9 +1,9 @@
 'use client';
 
 // =============================================================
-// Minecraft Board Game - 3D Isometric Voxel Board Renderer
-// Minecraft Dungeons-style terrain with stacked blocks, trees,
-// biome-specific colors, fog of war, and interactive raycasting
+// Minecraft Board Game - 3D Voxel Board Renderer
+// Supports board (isometric-perspective) and FPS (first-person) camera modes.
+// Characters have detailed limbs; textures use rich per-block color variation.
 // =============================================================
 
 import { Component, Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
@@ -61,9 +61,16 @@ interface BoardRendererProps {
   onPlayerClick: (targetPlayerId: string) => void;
   onMove: (direction: Direction) => void;
   activeAnomaly?: boolean;
+  /** 'board' = isometric-perspective overhead; 'fps' = first-person */
+  cameraMode?: 'board' | 'fps';
 }
 
 const TERRAIN_SEED = 42069;
+
+// Direction lookup tables for FPS relative movement
+const TURN_RIGHT: Record<Direction, Direction> = { up: 'right', right: 'down', down: 'left', left: 'up' };
+const TURN_LEFT: Record<Direction, Direction> = { up: 'left', left: 'down', down: 'right', right: 'up' };
+const OPPOSITE: Record<Direction, Direction> = { up: 'down', down: 'up', left: 'right', right: 'left' };
 
 // =============================================================
 // VoxelTerrain — InstancedMesh for terrain + feature blocks
@@ -152,7 +159,7 @@ function FeatureBlocks({ data }: { data: { positions: Float32Array; colors: Floa
 }
 
 // =============================================================
-// Entity (player/mob) as voxel figures
+// Entity (player/mob) as voxel figures — detailed limb geometry
 // =============================================================
 
 function PlayerEntity({
@@ -165,12 +172,37 @@ function PlayerEntity({
   isSelf: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const posRef = useRef(new THREE.Vector3(player.x, 0, player.y));
   const baseHeight = heightMap.get(`${player.x},${player.y}`) ?? 2;
   const topY = baseHeight;
 
-  useFrame(({ clock }) => {
+  // Smooth entity position interpolation
+  useEffect(() => {
+    posRef.current.set(player.x, 0, player.y);
+  }, [player.x, player.y]);
+
+  useFrame(({ clock }, delta) => {
     if (!groupRef.current) return;
-    groupRef.current.position.y = topY + Math.sin(clock.elapsedTime * 2 + player.x) * 0.08;
+    const t = clock.elapsedTime;
+    const bob = Math.sin(t * 2 + player.x) * 0.08;
+    // Framerate-independent lerp to new tile position
+    const alpha = 1 - Math.exp(-12 * delta);
+    const prevX = groupRef.current.position.x;
+    const prevZ = groupRef.current.position.z;
+    groupRef.current.position.x = THREE.MathUtils.lerp(prevX, posRef.current.x, alpha);
+    groupRef.current.position.z = THREE.MathUtils.lerp(prevZ, posRef.current.z, alpha);
+    groupRef.current.position.y = topY + bob;
+    // Swing limbs only when the entity is visibly moving
+    const isMoving = Math.abs(groupRef.current.position.x - posRef.current.x) > 0.01 ||
+                     Math.abs(groupRef.current.position.z - posRef.current.z) > 0.01;
+    const swingL = isMoving ? Math.sin(t * 8) * 0.2 : 0;
+    const swingR = -swingL;
+    const childMeshes = groupRef.current.children;
+    // children order: body(0), head(1), leftArm(2), rightArm(3), leftLeg(4), rightLeg(5)
+    if (childMeshes[2]) childMeshes[2].rotation.x = swingL;
+    if (childMeshes[3]) childMeshes[3].rotation.x = swingR;
+    if (childMeshes[4]) childMeshes[4].rotation.x = swingR;
+    if (childMeshes[5]) childMeshes[5].rotation.x = swingL;
   });
 
   if (player.dead) {
@@ -185,29 +217,52 @@ function PlayerEntity({
   }
 
   const bodyColor = new THREE.Color(player.color);
-  const headColor = bodyColor.clone().lerp(new THREE.Color('#ffffff'), 0.3);
+  const headColor = bodyColor.clone().lerp(new THREE.Color('#f5cba7'), 0.55);
+  const legColor = bodyColor.clone().lerp(new THREE.Color('#2c3e50'), 0.5);
 
   return (
     <group ref={groupRef} position={[player.x, topY, player.y]}>
-      <mesh position={[0, 0.3, 0]} castShadow>
-        <boxGeometry args={[0.55, 0.6, 0.55]} />
+      {/* Body */}
+      <mesh position={[0, 0.35, 0]} castShadow>
+        <boxGeometry args={[0.5, 0.6, 0.28]} />
         <meshStandardMaterial
           color={bodyColor}
           emissive={isSelf ? bodyColor : undefined}
-          emissiveIntensity={isSelf ? 0.3 : 0}
-          roughness={0.5}
+          emissiveIntensity={isSelf ? 0.25 : 0}
+          roughness={0.55}
           flatShading
         />
       </mesh>
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <boxGeometry args={[0.45, 0.45, 0.45]} />
-        <meshStandardMaterial color={headColor} roughness={0.5} flatShading />
+      {/* Head */}
+      <mesh position={[0, 0.82, 0]} castShadow>
+        <boxGeometry args={[0.42, 0.42, 0.42]} />
+        <meshStandardMaterial color={headColor} roughness={0.45} flatShading />
+      </mesh>
+      {/* Left arm */}
+      <mesh position={[-0.33, 0.32, 0]} castShadow>
+        <boxGeometry args={[0.18, 0.52, 0.2]} />
+        <meshStandardMaterial color={bodyColor.clone().lerp(new THREE.Color('#000'), 0.1)} roughness={0.6} flatShading />
+      </mesh>
+      {/* Right arm */}
+      <mesh position={[0.33, 0.32, 0]} castShadow>
+        <boxGeometry args={[0.18, 0.52, 0.2]} />
+        <meshStandardMaterial color={bodyColor.clone().lerp(new THREE.Color('#000'), 0.1)} roughness={0.6} flatShading />
+      </mesh>
+      {/* Left leg */}
+      <mesh position={[-0.13, -0.14, 0]} castShadow>
+        <boxGeometry args={[0.2, 0.46, 0.22]} />
+        <meshStandardMaterial color={legColor} roughness={0.65} flatShading />
+      </mesh>
+      {/* Right leg */}
+      <mesh position={[0.13, -0.14, 0]} castShadow>
+        <boxGeometry args={[0.2, 0.46, 0.22]} />
+        <meshStandardMaterial color={legColor} roughness={0.65} flatShading />
       </mesh>
       {isSelf && (
         <pointLight position={[0, 1.5, 0]} color={player.color} intensity={2} distance={4} />
       )}
       {!isSelf && (
-        <Html position={[0, 1.5, 0]} center style={{ pointerEvents: 'none' }}>
+        <Html position={[0, 1.6, 0]} center style={{ pointerEvents: 'none' }}>
           <div className={styles.entityHp3d}>
             <span className={styles.entityName3d}>{player.name.slice(0, 6)}</span>
             <div className={styles.hpBar3d}>
@@ -228,35 +283,112 @@ function PlayerEntity({
 
 function MobEntity({ mob, heightMap }: { mob: MCMobState; heightMap: Map<string, number> }) {
   const groupRef = useRef<THREE.Group>(null);
+  const posRef = useRef(new THREE.Vector3(mob.x, 0, mob.y));
   const baseHeight = heightMap.get(`${mob.x},${mob.y}`) ?? 2;
   const topY = baseHeight;
   const mobColor = new THREE.Color(MOB_COLORS[mob.type] || '#888');
   const isTall = mob.type !== 'chicken';
+  const isQuadruped = mob.type === 'cow' || mob.type === 'pig' || mob.type === 'spider';
 
-  useFrame(({ clock }) => {
-    if (!groupRef.current || !mob.hostile) return;
-    groupRef.current.position.y = topY + Math.sin(clock.elapsedTime * 3 + mob.x * 7) * 0.06;
+  useEffect(() => {
+    posRef.current.set(mob.x, 0, mob.y);
+  }, [mob.x, mob.y]);
+
+  useFrame(({ clock }, delta) => {
+    if (!groupRef.current) return;
+    const alpha = 1 - Math.exp(-12 * delta);
+    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, posRef.current.x, alpha);
+    groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, posRef.current.z, alpha);
+    if (mob.hostile) {
+      groupRef.current.position.y = topY + Math.sin(clock.elapsedTime * 3 + mob.x * 7) * 0.06;
+    } else {
+      groupRef.current.position.y = topY;
+    }
   });
+
+  if (isQuadruped) {
+    const bodyCol = mobColor.clone();
+    const legCol = bodyCol.clone().lerp(new THREE.Color('#2c2c2c'), 0.3);
+    return (
+      <group ref={groupRef} position={[mob.x, topY, mob.y]}>
+        {/* Quadruped body */}
+        <mesh position={[0, 0.28, 0]} castShadow>
+          <boxGeometry args={[0.6, 0.38, 0.95]} />
+          <meshStandardMaterial color={bodyCol} roughness={0.65} flatShading />
+        </mesh>
+        {/* Head */}
+        <mesh position={[0, 0.5, 0.5]} castShadow>
+          <boxGeometry args={[0.38, 0.32, 0.34]} />
+          <meshStandardMaterial color={bodyCol.clone().lerp(new THREE.Color('#fff'), 0.1)} roughness={0.6} flatShading />
+        </mesh>
+        {/* 4 legs — explicit positions: front-left, front-right, back-left, back-right */}
+        {([
+          [-0.2, -0.32], [0.2, -0.32],  // front legs
+          [-0.2, 0.32],  [0.2, 0.32],   // back legs
+        ] as [number, number][]).map(([lx, lz], idx) => (
+          <mesh key={idx} position={[lx, -0.1, lz]} castShadow>
+            <boxGeometry args={[0.18, 0.36, 0.18]} />
+            <meshStandardMaterial color={legCol} roughness={0.7} flatShading />
+          </mesh>
+        ))}
+        <Html position={[0, 0.9, 0]} center style={{ pointerEvents: 'none' }}>
+          <div className={styles.entityHp3d}>
+            <div className={styles.hpBar3d}>
+              <div className={styles.hpFill3d} style={{ width: `${(mob.health / mob.maxHealth) * 100}%`, backgroundColor: mob.hostile ? '#ff4444' : '#44dd44' }} />
+            </div>
+          </div>
+        </Html>
+      </group>
+    );
+  }
 
   return (
     <group ref={groupRef} position={[mob.x, topY, mob.y]}>
-      <mesh position={[0, isTall ? 0.3 : 0.15, 0]} castShadow>
-        <boxGeometry args={isTall ? [0.5, 0.6, 0.5] : [0.4, 0.3, 0.4]} />
+      {/* Body */}
+      <mesh position={[0, isTall ? 0.3 : 0.12, 0]} castShadow>
+        <boxGeometry args={isTall ? [0.46, 0.56, 0.26] : [0.38, 0.28, 0.28]} />
         <meshStandardMaterial
           color={mobColor}
           emissive={mob.hostile ? new THREE.Color('#330000') : undefined}
-          emissiveIntensity={mob.hostile ? 0.3 : 0}
+          emissiveIntensity={mob.hostile ? 0.25 : 0}
           roughness={0.6}
           flatShading
         />
       </mesh>
+      {/* Head */}
       {isTall && (
-        <mesh position={[0, 0.75, 0]} castShadow>
-          <boxGeometry args={[0.4, 0.35, 0.4]} />
+        <mesh position={[0, 0.76, 0]} castShadow>
+          <boxGeometry args={[0.38, 0.36, 0.36]} />
           <meshStandardMaterial color={mobColor.clone().lerp(new THREE.Color('#ffffff'), 0.15)} roughness={0.6} flatShading />
         </mesh>
       )}
-      <Html position={[0, isTall ? 1.3 : 0.8, 0]} center style={{ pointerEvents: 'none' }}>
+      {/* Arms (biped) */}
+      {isTall && (
+        <>
+          <mesh position={[-0.3, 0.28, 0]} castShadow>
+            <boxGeometry args={[0.16, 0.48, 0.18]} />
+            <meshStandardMaterial color={mobColor.clone().lerp(new THREE.Color('#000'), 0.15)} roughness={0.65} flatShading />
+          </mesh>
+          <mesh position={[0.3, 0.28, 0]} castShadow>
+            <boxGeometry args={[0.16, 0.48, 0.18]} />
+            <meshStandardMaterial color={mobColor.clone().lerp(new THREE.Color('#000'), 0.15)} roughness={0.65} flatShading />
+          </mesh>
+        </>
+      )}
+      {/* Legs (biped) */}
+      {isTall && (
+        <>
+          <mesh position={[-0.12, -0.12, 0]} castShadow>
+            <boxGeometry args={[0.18, 0.42, 0.2]} />
+            <meshStandardMaterial color={mobColor.clone().lerp(new THREE.Color('#1a1a1a'), 0.4)} roughness={0.7} flatShading />
+          </mesh>
+          <mesh position={[0.12, -0.12, 0]} castShadow>
+            <boxGeometry args={[0.18, 0.42, 0.2]} />
+            <meshStandardMaterial color={mobColor.clone().lerp(new THREE.Color('#1a1a1a'), 0.4)} roughness={0.7} flatShading />
+          </mesh>
+        </>
+      )}
+      <Html position={[0, isTall ? 1.3 : 0.7, 0]} center style={{ pointerEvents: 'none' }}>
         <div className={styles.entityHp3d}>
           <div className={styles.hpBar3d}>
             <div
@@ -364,11 +496,10 @@ function DayNightLighting({ dayPhase }: { dayPhase: DayPhase }) {
 }
 
 // =============================================================
-// Camera controller — smoothly tracks player position
-// Sets correct lookAt on mount via useEffect, then tracks via useFrame
+// Board camera — smooth perspective from above (isometric feel)
 // =============================================================
 
-function CameraController({ targetX, targetZ }: { targetX: number; targetZ: number }) {
+function BoardCameraController({ targetX, targetZ }: { targetX: number; targetZ: number }) {
   const { camera } = useThree();
   const targetRef = useRef(new THREE.Vector3(targetX, 3, targetZ));
   const initialized = useRef(false);
@@ -377,22 +508,88 @@ function CameraController({ targetX, targetZ }: { targetX: number; targetZ: numb
     targetRef.current.set(targetX, 3, targetZ);
   }, [targetX, targetZ]);
 
-  // Set initial camera orientation immediately (not waiting for useFrame)
   useEffect(() => {
     if (!initialized.current) {
       const target = targetRef.current;
-      camera.position.set(target.x + 20, 22, target.z + 20);
-      camera.lookAt(target.x, target.y, target.z);
+      camera.position.set(target.x + 20, 28, target.z + 20);
+      camera.lookAt(target.x, 0, target.z);
       camera.updateProjectionMatrix();
       initialized.current = true;
     }
   }, [camera]);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const target = targetRef.current;
-    const desiredPos = new THREE.Vector3(target.x + 20, 22, target.z + 20);
-    camera.position.lerp(desiredPos, 0.08);
-    camera.lookAt(target.x, target.y, target.z);
+    const desiredPos = new THREE.Vector3(target.x + 20, 28, target.z + 20);
+    const alpha = 1 - Math.exp(-6 * delta);
+    camera.position.lerp(desiredPos, alpha);
+    camera.lookAt(target.x, 0, target.z);
+    camera.updateProjectionMatrix();
+  });
+
+  return null;
+}
+
+// =============================================================
+// FPS camera — first-person perspective, tracks movement direction
+// =============================================================
+
+function FPSCameraController({
+  targetX, targetZ, facingRef, heightMap,
+}: {
+  targetX: number;
+  targetZ: number;
+  facingRef: React.MutableRefObject<Direction>;
+  heightMap: Map<string, number>;
+}) {
+  const { camera } = useThree();
+  const targetPos = useRef(new THREE.Vector3(targetX, 3, targetZ));
+  const targetLookOffset = useRef(new THREE.Vector3(0, 0, -1));
+  const currentLookOffset = useRef(new THREE.Vector3(0, 0, -1));
+  const initialized = useRef(false);
+
+  // Sync target position from grid coords
+  useEffect(() => {
+    const eyeY = (heightMap.get(`${targetX},${targetZ}`) ?? 2) + 1.45;
+    targetPos.current.set(targetX, eyeY, targetZ);
+  }, [targetX, targetZ, heightMap]);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      const p = targetPos.current;
+      camera.position.copy(p);
+      const fv = currentLookOffset.current;
+      camera.lookAt(p.x + fv.x * 6, p.y, p.z + fv.z * 6);
+      camera.updateProjectionMatrix();
+      initialized.current = true;
+    }
+  }, [camera]);
+
+  useFrame((_, delta) => {
+    // Update target look direction from latest facing
+    switch (facingRef.current) {
+      case 'up':    targetLookOffset.current.set(0, 0, -1); break;
+      case 'down':  targetLookOffset.current.set(0, 0, 1);  break;
+      case 'left':  targetLookOffset.current.set(-1, 0, 0); break;
+      case 'right': targetLookOffset.current.set(1, 0, 0);  break;
+    }
+
+    // Smoothly interpolate look direction (prevents jarring camera snaps when turning)
+    const lookAlpha = 1 - Math.exp(-10 * delta);
+    currentLookOffset.current.lerp(targetLookOffset.current, lookAlpha);
+
+    // Smooth camera position with delta-time
+    const posAlpha = 1 - Math.exp(-8 * delta);
+    camera.position.lerp(targetPos.current, posAlpha);
+
+    // Look at smoothly interpolated direction
+    const fv = currentLookOffset.current;
+    const lookTarget = new THREE.Vector3(
+      camera.position.x + fv.x * 6,
+      camera.position.y + fv.y * 6,
+      camera.position.z + fv.z * 6,
+    );
+    camera.lookAt(lookTarget.x, lookTarget.y, lookTarget.z);
     camera.updateProjectionMatrix();
   });
 
@@ -478,7 +675,11 @@ function TorchLights({ tiles, heightMap, dayPhase }: { tiles: MCTileUpdate[]; he
 function SceneContent({
   visibleTiles, exploredTilesRef, visiblePlayers, visibleMobs,
   selfState, dayPhase, playerId, onTileClick, onMobClick, onPlayerClick,
-}: Omit<BoardRendererProps, 'onMove'>) {
+  cameraMode, facingRef,
+}: Omit<BoardRendererProps, 'onMove' | 'activeAnomaly'> & {
+  cameraMode: 'board' | 'fps';
+  facingRef: React.MutableRefObject<Direction>;
+}) {
   const visibleKeys = useMemo(() => {
     const set = new Set<string>();
     for (const tu of visibleTiles) set.add(`${tu.x},${tu.y}`);
@@ -526,7 +727,16 @@ function SceneContent({
   return (
     <>
       <DayNightLighting dayPhase={dayPhase} />
-      <CameraController targetX={selfState.x} targetZ={selfState.y} />
+      {cameraMode === 'fps' ? (
+        <FPSCameraController
+          targetX={selfState.x}
+          targetZ={selfState.y}
+          facingRef={facingRef}
+          heightMap={heightMap}
+        />
+      ) : (
+        <BoardCameraController targetX={selfState.x} targetZ={selfState.y} />
+      )}
 
       {/* Ground plane */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[selfState.x, -0.5, selfState.y]} receiveShadow>
@@ -546,7 +756,10 @@ function SceneContent({
       <TorchLights tiles={visibleTiles} heightMap={heightMap} dayPhase={dayPhase} />
 
       {visiblePlayers.map(p => (
-        <PlayerEntity key={p.id} player={p} heightMap={heightMap} isSelf={p.id === playerId} />
+        // In FPS mode, hide self (camera is the self perspective)
+        (cameraMode === 'fps' && p.id === playerId) ? null : (
+          <PlayerEntity key={p.id} player={p} heightMap={heightMap} isSelf={p.id === playerId} />
+        )
       ))}
 
       {visibleMobs.map(m => (
@@ -577,24 +790,86 @@ export default function BoardRenderer3D({
   visibleTiles, exploredTilesRef, visiblePlayers, visibleMobs,
   selfState, dayPhase, playerId,
   onTileClick, onMobClick, onPlayerClick, onMove,
+  cameraMode = 'board',
 }: BoardRendererProps) {
+  // Track last movement direction for FPS camera
+  const facingRef = useRef<Direction>('up');
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      // Determine raw input
+      let rawInput: 'forward' | 'backward' | 'left' | 'right' | null = null;
       switch (e.key) {
-        case 'ArrowUp': case 'w': case 'W': e.preventDefault(); onMove('up'); break;
-        case 'ArrowDown': case 's': case 'S': e.preventDefault(); onMove('down'); break;
-        case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); onMove('left'); break;
-        case 'ArrowRight': case 'd': case 'D': e.preventDefault(); onMove('right'); break;
+        case 'ArrowUp': case 'w': case 'W': rawInput = 'forward'; break;
+        case 'ArrowDown': case 's': case 'S': rawInput = 'backward'; break;
+        case 'ArrowLeft': case 'a': case 'A': rawInput = 'left'; break;
+        case 'ArrowRight': case 'd': case 'D': rawInput = 'right'; break;
+      }
+      if (!rawInput) return;
+      e.preventDefault();
+
+      if (cameraMode === 'fps') {
+        // FPS mode: translate input relative to current facing direction
+        const facing = facingRef.current;
+        let worldDir: Direction;
+        switch (rawInput) {
+          case 'forward':  worldDir = facing; break;
+          case 'backward': worldDir = OPPOSITE[facing]; break;
+          case 'left':     worldDir = TURN_LEFT[facing]; break;
+          case 'right':    worldDir = TURN_RIGHT[facing]; break;
+        }
+        // Update facing for forward/left/right (not backward — keep looking forward when backing up)
+        if (rawInput !== 'backward') {
+          facingRef.current = worldDir;
+        }
+        onMove(worldDir);
+      } else {
+        // Board mode: absolute direction mapping
+        const dirMap: Record<string, Direction> = { forward: 'up', backward: 'down', left: 'left', right: 'right' };
+        const dir = dirMap[rawInput];
+        facingRef.current = dir;
+        onMove(dir);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onMove]);
+  }, [onMove, cameraMode]);
 
-  const handleTouchMove = useCallback((dir: Direction) => { onMove(dir); }, [onMove]);
+  const handleTouchMove = useCallback((rawDir: Direction) => {
+    if (cameraMode === 'fps') {
+      // FPS mode: translate D-pad input relative to current facing
+      // D-pad "up" = forward, "down" = backward, "left" = turn left, "right" = turn right
+      const facing = facingRef.current;
+      const inputMap: Record<Direction, 'forward' | 'backward' | 'left' | 'right'> = {
+        up: 'forward', down: 'backward', left: 'left', right: 'right',
+      };
+      const rawInput = inputMap[rawDir];
+      let worldDir: Direction;
+      switch (rawInput) {
+        case 'forward':  worldDir = facing; break;
+        case 'backward': worldDir = OPPOSITE[facing]; break;
+        case 'left':     worldDir = TURN_LEFT[facing]; break;
+        case 'right':    worldDir = TURN_RIGHT[facing]; break;
+      }
+      if (rawInput !== 'backward') {
+        facingRef.current = worldDir;
+      }
+      onMove(worldDir);
+    } else {
+      facingRef.current = rawDir;
+      onMove(rawDir);
+    }
+  }, [onMove, cameraMode]);
 
   const bgColor = DAY_NIGHT_PRESETS[dayPhase]?.bgColor || '#1e1812';
+
+  // FPS mode: wider FOV, eye-level initial camera
+  // Board mode: narrow FOV, elevated isometric-style camera
+  const initialCamera = cameraMode === 'fps'
+    ? { fov: 75, position: [selfState.x, 4, selfState.y] as [number, number, number], near: 0.05, far: 200 }
+    : { fov: 22, position: [selfState.x + 20, 28, selfState.y + 20] as [number, number, number], near: 0.1, far: 300 };
 
   const canvasFallback = (
     <div className={styles.boardWrapper3d} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a2e' }}>
@@ -608,21 +883,19 @@ export default function BoardRenderer3D({
     <div className={styles.boardWrapper3d}>
       <Canvas3DErrorBoundary fallback={canvasFallback}>
         <Canvas
+          key={cameraMode}
           shadows
           gl={{ antialias: true, alpha: false }}
           style={{ position: 'absolute', inset: 0 }}
-          camera={{
-            type: 'OrthographicCamera',
-            position: [selfState.x + 20, 22, selfState.y + 20],
-            zoom: 22,
-            near: 0.1,
-            far: 200,
-          } as never}
-          orthographic
+          camera={initialCamera}
           onCreated={({ gl, camera }) => {
             gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            // Set correct initial lookAt so camera points at terrain from frame 0
-            camera.lookAt(selfState.x, 3, selfState.y);
+            if (cameraMode === 'fps') {
+              // Default facing 'up' matches FPSCameraController default (z: -1 direction)
+              camera.lookAt(selfState.x, 4, selfState.y - 1);
+            } else {
+              camera.lookAt(selfState.x, 0, selfState.y);
+            }
             camera.updateProjectionMatrix();
           }}
         >
@@ -640,14 +913,16 @@ export default function BoardRenderer3D({
               onTileClick={onTileClick}
               onMobClick={onMobClick}
               onPlayerClick={onPlayerClick}
+              cameraMode={cameraMode}
+              facingRef={facingRef}
             />
           </Suspense>
         </Canvas>
       </Canvas3DErrorBoundary>
 
-      {/* Coordinates display */}
+      {/* Coordinates + mode display */}
       <div className={styles.coordsDisplay3d}>
-        X: {selfState.x} Y: {selfState.y} | {dayPhase.toUpperCase()}
+        X: {selfState.x} Y: {selfState.y} | {dayPhase.toUpperCase()} | {cameraMode === 'fps' ? 'FPS' : 'BOARD'}
       </div>
 
       {/* Mobile D-pad */}

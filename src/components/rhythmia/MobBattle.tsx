@@ -5,6 +5,8 @@ import styles from './MobBattle.module.css';
 import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
 import type { Player, ServerMessage, BoardCell } from '@/types/multiplayer';
 import type { ActiveMob, MobBattleRelayPayload } from '@/lib/mob-battle/types';
+import { useSkillTree } from '@/lib/skill-tree/context';
+import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
 import {
   MOB_DEFINITIONS,
   MOB_MAP,
@@ -14,7 +16,6 @@ import {
   PASSIVE_INCOME_INTERVAL,
   GOLD_PER_LINE,
   LINE_CLEAR_DAMAGE,
-  BEAT_DAMAGE_MULTIPLIER,
   COMBO_DAMAGE_BONUS,
   BOARD_RELAY_INTERVAL,
 } from '@/lib/mob-battle/constants';
@@ -220,6 +221,7 @@ export const MobBattle: React.FC<Props> = ({
   onBackToLobby,
 }) => {
   const opponent = opponents[0];
+  const { awardGamePoints, awardMultiplayerWinPoints } = useSkillTree();
 
   // ===== Game State Refs =====
   const boardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
@@ -399,12 +401,12 @@ export const MobBattle: React.FC<Props> = ({
     render();
   }, [sendMobSpawn, playSummon, render]);
 
-  const damageMobs = useCallback((linesCleared: number, onBeat: boolean, combo: number) => {
+  const damageMobs = useCallback((linesCleared: number, beatMult: number, combo: number) => {
     const dmgConfig = LINE_CLEAR_DAMAGE[linesCleared];
     if (!dmgConfig) return;
 
     let damage = dmgConfig.baseDamage;
-    if (onBeat) damage *= BEAT_DAMAGE_MULTIPLIER;
+    if (beatMult > 1) damage *= beatMult;
     damage += combo * COMBO_DAMAGE_BONUS;
     damage = Math.floor(damage);
 
@@ -473,6 +475,7 @@ export const MobBattle: React.FC<Props> = ({
       if (baseHpRef.current <= 0) {
         gameOverRef.current = true;
         sendGameOver();
+        awardGamePoints();
         onGameEnd(opponent?.id || '');
       }
     }
@@ -480,7 +483,7 @@ export const MobBattle: React.FC<Props> = ({
     // Remove dead mobs
     incomingMobsRef.current = mobs.filter(m => m.alive);
     render();
-  }, [playBaseDamage, sendGameOver, onGameEnd, opponent, render]);
+  }, [playBaseDamage, sendGameOver, onGameEnd, opponent, render, awardGamePoints]);
 
   // ===== Piece Queue =====
   const fillQueue = useCallback(() => {
@@ -505,6 +508,7 @@ export const MobBattle: React.FC<Props> = ({
     if (!isValid(piece, boardRef.current)) {
       gameOverRef.current = true;
       sendGameOver();
+      awardGamePoints();
       onGameEnd(opponent?.id || '');
       render();
       return false;
@@ -520,7 +524,7 @@ export const MobBattle: React.FC<Props> = ({
     }
     render();
     return true;
-  }, [fillQueue, sendGameOver, onGameEnd, opponent, render]);
+  }, [fillQueue, sendGameOver, onGameEnd, opponent, render, awardGamePoints]);
 
   // ===== Lock Delay =====
   const startLockTimer = useCallback(() => {
@@ -574,13 +578,14 @@ export const MobBattle: React.FC<Props> = ({
 
     // Beat judgment
     const phase = beatPhaseRef.current;
-    const onBeat = phase > 0.8 || phase < 0.12;
-    let mult = 1;
+    const timing = getBeatJudgment(phase);
+    const mult = getBeatMultiplier(timing);
 
-    if (onBeat) {
-      mult = 2;
+    if (timing !== 'miss') {
       comboRef.current++;
-      playTone(1047, 0.15, 'triangle');
+      if (timing === 'perfect') playTone(1047, 0.15, 'triangle');
+      else if (timing === 'great') playTone(880, 0.12, 'triangle');
+      else playTone(660, 0.1, 'triangle');
     } else {
       comboRef.current = 0;
     }
@@ -604,7 +609,7 @@ export const MobBattle: React.FC<Props> = ({
       totalGoldEarnedRef.current += lineGold;
 
       // Damage incoming mobs
-      damageMobs(cleared, onBeat, comboRef.current);
+      damageMobs(cleared, mult, comboRef.current);
 
       playLineClear(cleared);
     }
@@ -748,6 +753,8 @@ export const MobBattle: React.FC<Props> = ({
           } else if (payload.event === 'game_over') {
             if (!gameOverRef.current) {
               gameOverRef.current = true;
+              awardGamePoints();
+              awardMultiplayerWinPoints();
               onGameEnd(playerId);
               render();
             }
@@ -760,7 +767,7 @@ export const MobBattle: React.FC<Props> = ({
 
     ws.addEventListener('message', handler);
     return () => ws.removeEventListener('message', handler);
-  }, [ws, playerId, onGameEnd, spawnIncomingMob, render]);
+  }, [ws, playerId, onGameEnd, spawnIncomingMob, render, awardGamePoints, awardMultiplayerWinPoints]);
 
   // ===== Initialize Game =====
   useEffect(() => {

@@ -8,6 +8,11 @@ import type {
   WorldTile, MCTileUpdate, BlockType, Biome,
 } from '@/types/minecraft-board';
 import { BLOCK_COLORS } from '@/types/minecraft-board';
+import {
+  BLOCK_REGISTRY,
+  BIOME_TERRAIN_STACKS,
+  getStackLayerColor,
+} from '@/lib/minecraft-board/blocks';
 
 // === Noise functions (from DungeonMapVoxel) ===
 
@@ -56,37 +61,37 @@ export function fractalNoise(x: number, z: number, seed: number, octaves = 3): n
   return value / maxAmp;
 }
 
-// === Biome palettes (Minecraft Dungeons warm style) ===
+// === Biome palettes (derived from block registry terrain stacks) ===
 
 type BiomePalette = { top: THREE.Color; mid: THREE.Color; deep: THREE.Color };
 
-export const BIOME_3D_PALETTES: Record<Biome, BiomePalette> = {
-  plains:    { top: new THREE.Color('#7db044'), mid: new THREE.Color('#8b6b47'), deep: new THREE.Color('#6a6870') },
-  forest:    { top: new THREE.Color('#5e8a32'), mid: new THREE.Color('#7a5530'), deep: new THREE.Color('#504e56') },
-  desert:    { top: new THREE.Color('#d8c088'), mid: new THREE.Color('#bca068'), deep: new THREE.Color('#8a8890') },
-  mountains: { top: new THREE.Color('#8a8890'), mid: new THREE.Color('#6a6870'), deep: new THREE.Color('#504e56') },
-  snowy:     { top: new THREE.Color('#e8eaf0'), mid: new THREE.Color('#c8ccd8'), deep: new THREE.Color('#a0a4b0') },
-  swamp:     { top: new THREE.Color('#4a6828'), mid: new THREE.Color('#5a4a30'), deep: new THREE.Color('#3a3828') },
-  ocean:     { top: new THREE.Color('#4a90c8'), mid: new THREE.Color('#3570a0'), deep: new THREE.Color('#2a5580') },
-};
+// Build palettes from the BIOME_TERRAIN_STACKS registry
+function buildPalettes(): Record<Biome, BiomePalette> {
+  const result = {} as Record<Biome, BiomePalette>;
+  for (const [biome, stack] of Object.entries(BIOME_TERRAIN_STACKS)) {
+    result[biome as Biome] = {
+      top: new THREE.Color(stack.palette.top),
+      mid: new THREE.Color(stack.palette.mid),
+      deep: new THREE.Color(stack.palette.deep),
+    };
+  }
+  return result;
+}
 
-// Blocks that override biome palette (ores, special blocks)
-const BLOCK_3D_OVERRIDES: Partial<Record<BlockType, THREE.Color>> = {
-  coal_ore:       new THREE.Color('#4A4A4A'),
-  iron_ore:       new THREE.Color('#B8A590'),
-  gold_ore:       new THREE.Color('#C4A43A'),
-  diamond_ore:    new THREE.Color('#4AEDD9'),
-  obsidian:       new THREE.Color('#1A0A2E'),
-  bedrock:        new THREE.Color('#333333'),
-  crafting_table: new THREE.Color('#8B6914'),
-  furnace:        new THREE.Color('#6B6B6B'),
-  chest:          new THREE.Color('#A0782C'),
-  planks:         new THREE.Color('#B8935A'),
-  cobblestone:    new THREE.Color('#6B6B6B'),
-  ice:            new THREE.Color('#A5D6F7'),
-  clay:           new THREE.Color('#9EAAB4'),
-  gravel:         new THREE.Color('#9A9A9A'),
-};
+export const BIOME_3D_PALETTES: Record<Biome, BiomePalette> = buildPalettes();
+
+// Build override map from blocks that have overrideBiomePalette set in the registry
+function buildOverrides(): Map<BlockType, THREE.Color> {
+  const map = new Map<BlockType, THREE.Color>();
+  for (const [block, def] of Object.entries(BLOCK_REGISTRY)) {
+    if (def.overrideBiomePalette) {
+      map.set(block as BlockType, new THREE.Color(def.voxelColor));
+    }
+  }
+  return map;
+}
+
+const BLOCK_3D_OVERRIDES = buildOverrides();
 
 // === Voxel block data ===
 
@@ -99,8 +104,14 @@ export interface VoxelBlock {
 
 function blockColor(y: number, maxY: number, palette: BiomePalette): THREE.Color {
   const t = maxY > 1 ? y / (maxY - 1) : 1;
-  if (t > 0.7) return palette.top.clone();
-  if (t > 0.3) return palette.mid.clone();
+  if (t > 0.7) {
+    // Top layer: gradient blend toward mid color — fades as elevation increases toward max
+    return palette.top.clone().lerp(palette.mid, 0.12 * (1 - t));
+  }
+  if (t > 0.3) {
+    // Mid layer: gradient blend toward deep color — increases as elevation decreases
+    return palette.mid.clone().lerp(palette.deep, 0.18 * (0.7 - t));
+  }
   return palette.deep.clone();
 }
 
@@ -108,6 +119,7 @@ function blockColor(y: number, maxY: number, palette: BiomePalette): THREE.Color
 export function computeTileHeight(tile: WorldTile): number {
   // elevation is 0-10 from world generator (Math.round(elev * 10))
   const noiseH = fractalNoise(tile.elevation * 0.3, tile.elevation * 0.5, 42069, 2);
+  const stack = BIOME_TERRAIN_STACKS[tile.biome];
 
   switch (tile.biome) {
     case 'ocean':
@@ -115,7 +127,11 @@ export function computeTileHeight(tile: WorldTile): number {
     case 'mountains':
       return Math.max(2, Math.floor(tile.elevation / 1.5) + 2 + Math.floor(noiseH * 2));
     case 'desert':
-      return Math.max(1, Math.floor(tile.elevation / 3) + 2);
+      // Desert uses dune-like height variation: base + elevation + noise
+      return Math.max(
+        stack.baseHeight,
+        stack.baseHeight + Math.floor(tile.elevation / 3) + Math.floor(noiseH * stack.heightVariation),
+      );
     case 'snowy':
       return Math.max(1, Math.floor(tile.elevation / 2.5) + 2 + Math.floor(noiseH));
     case 'swamp':
@@ -126,10 +142,12 @@ export function computeTileHeight(tile: WorldTile): number {
 }
 
 // Surface blocks that generate 3D features (trees, flowers, etc.)
-const FEATURE_BLOCKS = new Set<BlockType>([
-  'wood', 'leaves', 'flower_red', 'flower_yellow',
-  'mushroom_red', 'mushroom_brown', 'cactus', 'sugar_cane', 'torch',
-]);
+// Built from the block registry — any block with isFeature: true
+const FEATURE_BLOCKS = new Set<BlockType>(
+  (Object.entries(BLOCK_REGISTRY) as [BlockType, typeof BLOCK_REGISTRY[BlockType]][])
+    .filter(([, def]) => def.isFeature)
+    .map(([block]) => block)
+);
 
 // === Build terrain voxel data from tile updates ===
 
@@ -144,11 +162,12 @@ export function buildTerrainBlocks(
   for (const tu of tiles) {
     const { x, y: tileY, tile } = tu;
     const palette = BIOME_3D_PALETTES[tile.biome];
+    const stack = BIOME_TERRAIN_STACKS[tile.biome];
     const baseHeight = computeTileHeight(tile);
     heightMap.set(`${x},${tileY}`, baseHeight);
 
     // Check if this block has a special override color (ores, crafting table, etc.)
-    const overrideColor = BLOCK_3D_OVERRIDES[tile.block];
+    const overrideColor = BLOCK_3D_OVERRIDES.get(tile.block);
     const isFeature = FEATURE_BLOCKS.has(tile.block);
 
     // Stack terrain blocks vertically
@@ -158,20 +177,30 @@ export function buildTerrainBlocks(
       if (ly === baseHeight - 1 && overrideColor && !isFeature) {
         // Top block uses override color for special blocks
         col = overrideColor.clone();
+        // Add slight variation even for special blocks
+        const ov = (noise2D(x * 3 + ly, tileY * 3 + ly, seed + 900) - 0.5) * 0.04;
+        col.r = Math.max(0, Math.min(1, col.r + ov));
+        col.g = Math.max(0, Math.min(1, col.g + ov));
+        col.b = Math.max(0, Math.min(1, col.b + ov));
       } else if (ly === baseHeight - 1 && !isFeature) {
         // Top block uses biome top color but tinted toward actual block color
         const biomeCol = blockColor(ly, baseHeight, palette);
         const actualCol = new THREE.Color(BLOCK_COLORS[tile.block] || '#808080');
-        col = biomeCol.clone().lerp(actualCol, 0.4);
+        col = biomeCol.clone().lerp(actualCol, 0.45);
       } else {
-        col = blockColor(ly, baseHeight, palette);
+        // Use the terrain stack to determine layer colors for sub-surface blocks
+        // yFromTop: distance from the top of the column (0 = top)
+        const yFromTop = baseHeight - 1 - ly;
+        const layerColor = getStackLayerColor(stack, yFromTop);
+        col = new THREE.Color(layerColor);
       }
 
-      // Add per-block color noise
-      const colorNoise = (noise2D(x + ly * 7, tileY + ly * 13, seed + 500) - 0.5) * 0.06;
-      col.r = Math.max(0, Math.min(1, col.r + colorNoise));
-      col.g = Math.max(0, Math.min(1, col.g + colorNoise));
-      col.b = Math.max(0, Math.min(1, col.b + colorNoise));
+      // Add per-block color noise — secondary noise for richer texture
+      const colorNoise = (noise2D(x + ly * 7, tileY + ly * 13, seed + 500) - 0.5) * 0.09;
+      const colorNoise2 = (noise2D(x * 2 + ly, tileY * 2 + ly, seed + 701) - 0.5) * 0.04;
+      col.r = Math.max(0, Math.min(1, col.r + colorNoise + colorNoise2));
+      col.g = Math.max(0, Math.min(1, col.g + colorNoise + colorNoise2));
+      col.b = Math.max(0, Math.min(1, col.b + colorNoise + colorNoise2));
 
       // Dim colors for explored-but-not-visible tiles
       if (isDimmed) {
@@ -295,6 +324,14 @@ export function buildSurfaceFeatures(
         if (isDimmed) sc.multiplyScalar(0.35);
         blocks.push({ x, y: topY, z: tileY, color: sc });
         blocks.push({ x, y: topY + 1, z: tileY, color: sc.clone() });
+        break;
+      }
+
+      case 'dead_bush': {
+        // Small dry shrub – single block with brownish color
+        const db = new THREE.Color(BLOCK_REGISTRY.dead_bush.voxelColor);
+        if (isDimmed) db.multiplyScalar(0.35);
+        blocks.push({ x, y: topY, z: tileY, color: db });
         break;
       }
 

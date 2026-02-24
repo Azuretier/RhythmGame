@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import type { ThreeEvent } from '@react-three/fiber';
 import { OrthographicCamera, Html } from '@react-three/drei';
 import { useTranslations } from 'next-intl';
 import * as THREE from 'three';
@@ -12,6 +13,46 @@ import {
   getGameModeStatus,
 } from '@/data/gamemode-map';
 import styles from './gameModeMap.module.css';
+
+// ────────────────────────────────────────────
+// Terrain overrides — localStorage persistence
+// ────────────────────────────────────────────
+
+type TerrainOverrides = Record<string, string>; // key: "x,y"
+
+const OVERRIDES_KEY = 'rhythmia_terrain_overrides';
+
+function loadOverrides(): TerrainOverrides {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(OVERRIDES_KEY);
+    return raw ? (JSON.parse(raw) as TerrainOverrides) : {};
+  } catch (_err) { return {}; /* Silently ignore — terrain edits are optional and non-critical */ }
+}
+
+function saveOverrides(o: TerrainOverrides): void {
+  try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(o)); } catch (_err) { /* Silently ignore — terrain edits are optional and non-critical */ }
+}
+
+// ────────────────────────────────────────────
+// Edit palette — available terrain brushes
+// ────────────────────────────────────────────
+
+const EDIT_BRUSHES: { type: string; label: string; color: string }[] = [
+  { type: 'grass',    label: '🌿', color: '#7db044' },
+  { type: 'dirt',     label: '🟫', color: '#b89060' },
+  { type: 'stone',    label: '🪨', color: '#8a8480' },
+  { type: 'sand',     label: '🏜️', color: '#d8c088' },
+  { type: 'snow',     label: '❄️',  color: '#eaecf0' },
+  { type: 'water',    label: '💧', color: '#4a7888' },
+  { type: 'lava',     label: '🌋', color: '#e86830' },
+  { type: 'tree',     label: '🌲', color: '#2a6818' },
+  { type: 'flower',   label: '🌸', color: '#e87830' },
+  { type: 'mushroom', label: '🍄', color: '#c04030' },
+  { type: 'rock',     label: '⬛', color: '#5a5450' },
+  { type: 'path',     label: '🛤️', color: '#c8a868' },
+  { type: 'void',     label: '🌑', color: '#181418' },
+];
 
 // ────────────────────────────────────────────
 // Noise helpers (deterministic)
@@ -268,12 +309,14 @@ function mkCampfire(bx: number, by: number, bz: number): VB[] {
 // Voxel generation
 // ────────────────────────────────────────────
 
-function generateTerrainVoxels() {
+function generateTerrainVoxels(overrides: TerrainOverrides = {}) {
   const blocks: VB[] = [];
   const hx = GAMEMODE_MAP_WIDTH / 2;
   const hz = GAMEMODE_MAP_HEIGHT / 2;
 
-  for (const tile of GAMEMODE_TERRAIN) {
+  for (const rawTile of GAMEMODE_TERRAIN) {
+    const key = `${rawTile.x},${rawTile.y}`;
+    const tile = overrides[key] ? { ...rawTile, terrain: overrides[key] } : rawTile;
     if (tile.terrain === 'water') continue;
     const wx = tile.x - hx;
     const wz = tile.y - hz;
@@ -563,7 +606,50 @@ function IslandShadow() {
   );
 }
 
-// Location beacon
+// ────────────────────────────────────────────
+// Ground picker — click-to-paint terrain tiles
+// ────────────────────────────────────────────
+// The orthographic camera sits at (55,65,55) looking at (0,10,0), giving a
+// view direction of (-1/√3, -1/√3, -1/√3).  A tile at world position
+// (wx, h, wz) projects onto the y=0 ground plane at (wx-h, 0, wz-h).
+// To recover tile coords from a ground-plane hit point (px, pz):
+//   tile.x ≈ round(px + hx + h)   tile.y ≈ round(pz + hz + h)
+// We use one correction step with the approximate tile's height.
+
+function GroundPicker({ onPick }: { onPick: (tx: number, ty: number) => void }) {
+  const paintRef = useRef(false);
+  const hx = GAMEMODE_MAP_WIDTH / 2;
+  const hz = GAMEMODE_MAP_HEIGHT / 2;
+
+  const pick = useCallback((e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    const px = e.point.x, pz = e.point.z;
+    // First pass: approximate tile (height correction = 0)
+    const tx0 = Math.round(px + hx);
+    const ty0 = Math.round(pz + hz);
+    // Height correction for the orthographic view angle
+    const h = heightAt(tx0, ty0);
+    const tx = Math.round(px + hx + h);
+    const ty = Math.round(pz + hz + h);
+    if (tx >= 0 && tx < GAMEMODE_MAP_WIDTH && ty >= 0 && ty < GAMEMODE_MAP_HEIGHT) {
+      onPick(tx, ty);
+    }
+  }, [hx, hz, onPick]);
+
+  return (
+    <mesh
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, -0.1, 0]}
+      onPointerDown={(e) => { paintRef.current = true; pick(e); }}
+      onPointerMove={(e) => { if (paintRef.current) pick(e); }}
+      onPointerUp={() => { paintRef.current = false; }}
+    >
+      <planeGeometry args={[200, 200]} />
+      <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+    </mesh>
+  );
+}
+
 function LocationBeacon({
   location, status, isHovered, locale,
   onClick, onHoverIn, onHoverOut, onlineCount,
@@ -622,7 +708,7 @@ function LocationBeacon({
   );
 }
 
-function CameraPan({ isDraggingRef }: { isDraggingRef: React.MutableRefObject<boolean> }) {
+function CameraPan({ isDraggingRef, isEditingRef }: { isDraggingRef: React.MutableRefObject<boolean>; isEditingRef: React.MutableRefObject<boolean> }) {
   const { camera, gl } = useThree();
   const pan = useRef({ x: 0, z: 0 });
   const drag = useRef({ active: false, sx: 0, sy: 0, px: 0, pz: 0 });
@@ -632,6 +718,7 @@ function CameraPan({ isDraggingRef }: { isDraggingRef: React.MutableRefObject<bo
     const getZoom = () => (camera as THREE.OrthographicCamera).zoom || 8;
 
     const onDown = (e: PointerEvent) => {
+      if (isEditingRef.current) return; // disable pan while editing terrain
       drag.current = { active: true, sx: e.clientX, sy: e.clientY, px: pan.current.x, pz: pan.current.z };
       isDraggingRef.current = false;
     };
@@ -658,7 +745,7 @@ function CameraPan({ isDraggingRef }: { isDraggingRef: React.MutableRefObject<bo
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-  }, [camera, gl, isDraggingRef]);
+  }, [camera, gl, isDraggingRef, isEditingRef]);
 
   useFrame(() => {
     const p = pan.current;
@@ -689,22 +776,49 @@ export default function GameModeMap({
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
   const isDraggingRef = useRef(false);
 
+  // Terrain editing state
+  const [editMode, setEditMode] = useState(false);
+  const isEditingRef = useRef(false);
+  const [selectedBrush, setSelectedBrush] = useState('grass');
+  const [overrides, setOverrides] = useState<TerrainOverrides>({});
+
+  // Load persisted overrides on mount
+  useEffect(() => { setOverrides(loadOverrides()); }, []);
+
+  // Keep isEditingRef in sync with editMode for use in CameraPan
+  useEffect(() => { isEditingRef.current = editMode; }, [editMode]);
+
   const locationStatuses = useMemo(() => {
     const s: Record<string, GameModeStatus> = {};
     for (const loc of GAMEMODE_LOCATIONS) s[loc.id] = getGameModeStatus(loc.id, unlockedCount);
     return s;
   }, [unlockedCount]);
 
-  const terrainData = useMemo(() => generateTerrainVoxels(), []);
+  const terrainData = useMemo(() => generateTerrainVoxels(overrides), [overrides]);
   const trackData = useMemo(() => generateTrackVoxels(locationStatuses), [locationStatuses]);
   const hoveredLoc = hoveredLocation ? GAMEMODE_LOCATIONS.find(l => l.id === hoveredLocation) : null;
 
+  const handlePaint = useCallback((tx: number, ty: number) => {
+    setOverrides(prev => {
+      const next = { ...prev, [`${tx},${ty}`]: selectedBrush };
+      saveOverrides(next);
+      return next;
+    });
+  }, [selectedBrush]);
+
+  const handleResetTerrain = useCallback(() => {
+    setOverrides({});
+    saveOverrides({});
+  }, []);
+
+  const overrideCount = Object.keys(overrides).length;
+
   return (
-    <div className={styles.mapWrapper}>
+    <div className={`${styles.mapWrapper} ${editMode ? styles.mapWrapperEditing : ''}`}>
       <Canvas shadows gl={{ antialias: true, alpha: false }} style={{ position: 'absolute', inset: 0 }}>
         {/* Warm parchment background */}
         <color attach="background" args={['#d5c4a8']} />
-        <CameraPan isDraggingRef={isDraggingRef} />
+        <CameraPan isDraggingRef={isDraggingRef} isEditingRef={isEditingRef} />
         <OrthographicCamera makeDefault position={[55, 65, 55]} zoom={8} near={0.1} far={400} />
 
         {/* Warm golden lighting */}
@@ -742,6 +856,9 @@ export default function GameModeMap({
         <VoxelTerrain data={terrainData} />
         <TrackBlocks data={trackData} />
 
+        {/* Ground picker (only active in edit mode) */}
+        {editMode && <GroundPicker onPick={handlePaint} />}
+
         {/* Location beacons */}
         {GAMEMODE_LOCATIONS.map((loc) => (
           <LocationBeacon
@@ -752,14 +869,50 @@ export default function GameModeMap({
             locale={locale}
             onlineCount={onlineCount}
             onClick={() => { if (!isDraggingRef.current && locationStatuses[loc.id] !== 'locked' && loc.action !== 'hub') onSelectMode(loc.action); }}
-            onHoverIn={() => { if (loc.action !== 'hub') setHoveredLocation(loc.id); }}
+            onHoverIn={() => { if (loc.action !== 'hub' && !editMode) setHoveredLocation(loc.id); }}
             onHoverOut={() => setHoveredLocation(null)}
           />
         ))}
       </Canvas>
 
-      {/* Info panel */}
-      {hoveredLoc && (() => {
+      {/* Edit terrain toggle button */}
+      <button
+        className={`${styles.editBtn} ${editMode ? styles.editBtnActive : ''}`}
+        onClick={() => { setEditMode(v => !v); setHoveredLocation(null); }}
+        title={editMode ? (locale === 'en' ? 'Exit Edit Mode' : '編集を終了') : (locale === 'en' ? 'Edit Terrain' : 'テレイン編集')}
+      >
+        ✏️
+      </button>
+
+      {/* Terrain edit toolbar */}
+      {editMode && (
+        <div className={styles.editToolbar}>
+          <div className={styles.editToolbarLabel}>
+            {locale === 'en' ? 'Terrain Brush' : 'テレインブラシ'}
+          </div>
+          <div className={styles.brushPalette}>
+            {EDIT_BRUSHES.map(b => (
+              <button
+                key={b.type}
+                className={`${styles.brushBtn} ${selectedBrush === b.type ? styles.brushBtnSelected : ''}`}
+                style={{ '--brush-color': b.color } as React.CSSProperties}
+                onClick={() => setSelectedBrush(b.type)}
+                title={b.type}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+          {overrideCount > 0 && (
+            <button className={styles.resetBtn} onClick={handleResetTerrain}>
+              {locale === 'en' ? `Reset (${overrideCount})` : `リセット (${overrideCount})`}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Info panel (hidden in edit mode) */}
+      {!editMode && hoveredLoc && (() => {
         const status = locationStatuses[hoveredLoc.id];
         const name = locale === 'en' ? hoveredLoc.nameEn : hoveredLoc.name;
         const desc = locale === 'en' ? hoveredLoc.descriptionEn : hoveredLoc.description;

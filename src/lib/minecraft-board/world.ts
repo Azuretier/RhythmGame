@@ -55,9 +55,9 @@ class ValueNoise {
     return a * (1 - ct) + b * ct;
   }
 
-  sample(x: number, y: number): number {
-    const gx = (x / this.gridSize) * (this.grid[0].length - 1);
-    const gy = (y / this.gridSize) * (this.grid.length - 1);
+  sample(nx: number, ny: number): number {
+    const gx = nx * this.gridSize;
+    const gy = ny * this.gridSize;
 
     const x0 = Math.floor(gx);
     const y0 = Math.floor(gy);
@@ -96,7 +96,7 @@ function octaveNoise(
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        result[y][x] += noise.sample(x, y) * amplitude;
+        result[y][x] += noise.sample(x / width, y / height) * amplitude;
       }
     }
 
@@ -162,6 +162,7 @@ export class WorldGenerator {
     const moisture = octaveNoise(new SeededRandom(this.seed + 1000), w, h, 2, 0.06);
     const elevation = octaveNoise(new SeededRandom(this.seed + 2000), w, h, 3, 0.07);
     const oreNoise = octaveNoise(new SeededRandom(this.seed + 3000), w, h, 2, 0.15);
+    const duneNoise = octaveNoise(new SeededRandom(this.seed + 4000), w, h, 3, 0.12);
 
     // Build base world
     const world: WorldTile[][] = [];
@@ -174,16 +175,25 @@ export class WorldGenerator {
         const biome = determineBiome(temp, moist, elev);
         const block = getBaseBlock(biome, elev);
 
+        // Desert gets dune-modulated elevation for varied terrain
+        let tileElevation = Math.round(elev * 10);
+        if (biome === 'desert') {
+          const duneHeight = duneNoise[y][x];
+          tileElevation = Math.round((elev * 0.6 + duneHeight * 0.4) * 10);
+          // Clamp to valid range
+          tileElevation = Math.max(2, Math.min(8, tileElevation));
+        }
+
         world[y][x] = {
           block,
           biome,
-          elevation: Math.round(elev * 10),
+          elevation: tileElevation,
         };
       }
     }
 
     // Place features
-    this.placeFeatures(world, oreNoise);
+    this.placeFeatures(world, oreNoise, duneNoise);
 
     // Create spawn clearing
     this.createSpawnClearing(world);
@@ -194,20 +204,43 @@ export class WorldGenerator {
     return world;
   }
 
-  private placeFeatures(world: WorldTile[][], oreNoise: number[][]): void {
+  private placeFeatures(world: WorldTile[][], oreNoise: number[][], duneNoise: number[][]): void {
     const rng = new SeededRandom(this.seed + 5000);
+
+    // First pass: place desert wells (rare structures)
+    this.placeDesertWells(world, rng);
 
     for (let y = 1; y < this.height - 1; y++) {
       for (let x = 1; x < this.width - 1; x++) {
         const tile = world[y][x];
-        
+
         // Ice in snowy biome - must be placed BEFORE skipping water tiles
         if (tile.biome === 'snowy' && (tile.block === 'water' || tile.block === 'deep_water')) {
           world[y][x] = { ...tile, block: 'ice' };
           continue;
         }
-        
+
         if (tile.block === 'water' || tile.block === 'deep_water') continue;
+
+        // === Desert-specific terrain variation ===
+        if (tile.biome === 'desert' && tile.block === 'sand') {
+          const dune = duneNoise[y][x];
+
+          // Red sand patches in low dune areas
+          if (dune < 0.3 && rng.chance(0.35)) {
+            world[y][x] = { ...tile, block: 'red_sand' };
+          }
+
+          // Exposed sandstone where dunes are eroded (high dune noise = deep valleys)
+          if (dune > 0.75 && rng.chance(0.25)) {
+            world[y][x] = { ...tile, block: 'sandstone' };
+          }
+
+          // Terracotta outcrops in high-elevation desert
+          if (tile.elevation >= 6 && rng.chance(0.12)) {
+            world[y][x] = { ...tile, block: 'terracotta' };
+          }
+        }
 
         // Trees
         if (tile.biome === 'forest' && rng.chance(0.2)) {
@@ -246,9 +279,13 @@ export class WorldGenerator {
           world[y][x] = { ...tile, block: rng.chance(0.5) ? 'mushroom_red' : 'mushroom_brown' };
         }
 
-        // Cactus in desert
-        if (tile.biome === 'desert' && rng.chance(0.04)) {
-          world[y][x] = { ...tile, block: 'cactus' };
+        // Desert vegetation: cactus and dead bushes
+        if (tile.biome === 'desert') {
+          if ((tile.block === 'sand' || tile.block === 'red_sand') && rng.chance(0.04)) {
+            world[y][x] = { ...tile, block: 'cactus' };
+          } else if ((tile.block === 'sand' || tile.block === 'red_sand') && rng.chance(0.06)) {
+            world[y][x] = { ...tile, block: 'dead_bush' };
+          }
         }
 
         // Sugar cane near water
@@ -307,6 +344,46 @@ export class WorldGenerator {
           world[y][x] = { ...tile, block: 'obsidian' };
         }
       }
+    }
+  }
+
+  /** Place rare desert well structures (sandstone ring with water center) */
+  private placeDesertWells(world: WorldTile[][], rng: SeededRandom): void {
+    const maxWells = 2;
+    let wellsPlaced = 0;
+
+    for (let attempt = 0; attempt < 50 && wellsPlaced < maxWells; attempt++) {
+      const wx = rng.nextInt(5, this.width - 6);
+      const wy = rng.nextInt(5, this.height - 6);
+
+      // Check that the 3x3 area is all desert sand
+      let valid = true;
+      for (let dy = -1; dy <= 1 && valid; dy++) {
+        for (let dx = -1; dx <= 1 && valid; dx++) {
+          const t = world[wy + dy][wx + dx];
+          if (t.biome !== 'desert' || t.block !== 'sand') {
+            valid = false;
+          }
+        }
+      }
+      if (!valid) continue;
+
+      // Place sandstone ring around a water center
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) {
+            // Water in the center
+            world[wy][wx] = { ...world[wy][wx], block: 'water' };
+          } else {
+            // Sandstone border
+            world[wy + dy][wx + dx] = {
+              ...world[wy + dy][wx + dx],
+              block: 'sandstone',
+            };
+          }
+        }
+      }
+      wellsPlaced++;
     }
   }
 

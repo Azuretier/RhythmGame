@@ -1,0 +1,32 @@
+/* ===== Galaxy Board Container =====
+ * Wraps the board with a wave label during dig phase.
+ * The 3D grid terrain ring is rendered separately in GalaxyRing3D.tsx.
+ */
+.galaxyContainer {
+    position: relative;
+    display: inline-block;
+}
+
+/* ===== Wave Label ===== */
+.waveLabel {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: rgba(180, 140, 255, 0.7);
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+    text-shadow: 0 0 8px rgba(140, 60, 255, 0.4);
+}
+
+/* ===== Mobile: Hide wave label ===== */
+@media (max-width: 768px) {
+    .waveLabel {
+        display: none;
+    }
+}

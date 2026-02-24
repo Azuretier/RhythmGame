@@ -11,7 +11,8 @@ export type BlockType =
   | 'obsidian' | 'bedrock' | 'gravel' | 'clay'
   | 'tall_grass' | 'flower_red' | 'flower_yellow'
   | 'mushroom_red' | 'mushroom_brown' | 'cactus' | 'sugar_cane'
-  | 'crafting_table' | 'furnace' | 'chest' | 'torch' | 'planks';
+  | 'crafting_table' | 'furnace' | 'chest' | 'torch' | 'planks'
+  | 'sandstone' | 'red_sand' | 'dead_bush' | 'terracotta';
 
 export type Biome =
   | 'plains' | 'forest' | 'desert' | 'mountains' | 'snowy' | 'swamp' | 'ocean';
@@ -268,6 +269,10 @@ export const BLOCK_PROPERTIES: Record<BlockType, BlockProperties> = {
   chest:          blk({ hardness: 10, preferredTool: 'axe', drops: [{ item: 'chest_item', quantity: 1, chance: 1 }], walkable: true }),
   torch:          blk({ solid: false, hardness: 0, walkable: true, transparent: true, drops: [{ item: 'torch_item', quantity: 1, chance: 1 }] }),
   planks:         blk({ hardness: 10, preferredTool: 'axe', drops: [{ item: 'planks', quantity: 1, chance: 1 }], walkable: true }),
+  sandstone:      blk({ hardness: 8, drops: [{ item: 'sand_item', quantity: 1, chance: 1 }] }),
+  red_sand:       blk({ hardness: 5, preferredTool: 'shovel', drops: [{ item: 'sand_item', quantity: 1, chance: 1 }], walkable: true }),
+  dead_bush:      blk({ solid: false, hardness: 0, walkable: true, transparent: true, drops: [{ item: 'stick', quantity: 1, chance: 0.5 }] }),
+  terracotta:     blk({ hardness: 12, drops: [{ item: 'clay_ball', quantity: 2, chance: 1 }] }),
 };
 
 // === Item Properties ===
@@ -385,16 +390,59 @@ export const BLOCK_COLORS: Record<BlockType, string> = {
   chest: '#A0782C',
   torch: '#5D8C3E',
   planks: '#B8935A',
+  sandstone: '#D4B86A',
+  red_sand: '#C2713A',
+  dead_bush: '#8B7355',
+  terracotta: '#9E5B3C',
+};
+
+export const BLOCK_TEXTURES: Partial<Record<BlockType, string>> = {
+  grass: 'linear-gradient(180deg, rgba(158, 215, 112, 0.35) 0 25%, transparent 25% 100%), repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.1) 0 2px, transparent 2px 4px)',
+  dirt: 'repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.08) 0 3px, transparent 3px 6px)',
+  stone: 'repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0 2px, rgba(0, 0, 0, 0.08) 2px 4px)',
+  cobblestone: 'repeating-radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.14) 0 2px, transparent 2px 6px)',
+  sand: 'repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 1px, rgba(0, 0, 0, 0.06) 1px 2px)',
+  sandstone: 'repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0 3px, rgba(0, 0, 0, 0.08) 3px 6px)',
+  red_sand: 'repeating-linear-gradient(90deg, rgba(255, 220, 190, 0.12) 0 2px, rgba(0, 0, 0, 0.08) 2px 4px)',
+  terracotta: 'repeating-linear-gradient(45deg, rgba(255, 220, 200, 0.15) 0 2px, rgba(0, 0, 0, 0.1) 2px 5px)',
+  water: 'linear-gradient(180deg, rgba(255, 255, 255, 0.24) 0 35%, transparent 35% 100%), repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.12) 0 2px, transparent 2px 4px)',
+  deep_water: 'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0 20%, transparent 20% 100%), repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 5px)',
+  snow_block: 'repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0 2px, rgba(220, 230, 255, 0.15) 2px 4px)',
+  ice: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(200, 230, 255, 0.05)), repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0 2px, transparent 2px 5px)',
+  wood: 'repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.14) 0 3px, rgba(255, 255, 255, 0.08) 3px 6px)',
+  leaves: 'repeating-radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.12) 0 2px, transparent 2px 5px)',
+  gravel: 'repeating-radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.12) 0 1px, rgba(0, 0, 0, 0.08) 1px 3px)',
+  clay: 'repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0 2px, rgba(0, 0, 0, 0.05) 2px 4px)',
+  planks: 'repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0 2px, rgba(0, 0, 0, 0.12) 2px 4px)',
+  coal_ore: 'repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08) 0 1px, rgba(0, 0, 0, 0.2) 1px 4px)',
+  iron_ore: 'repeating-radial-gradient(circle at 35% 35%, rgba(240, 200, 150, 0.4) 0 1px, transparent 1px 4px)',
+  gold_ore: 'repeating-radial-gradient(circle at 40% 35%, rgba(255, 220, 120, 0.45) 0 1px, transparent 1px 4px)',
+  diamond_ore: 'repeating-radial-gradient(circle at 55% 45%, rgba(130, 255, 240, 0.45) 0 1px, transparent 1px 4px)',
+  obsidian: 'repeating-linear-gradient(135deg, rgba(210, 140, 255, 0.12) 0 2px, rgba(0, 0, 0, 0.14) 2px 4px)',
+  bedrock: 'repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.09) 0 2px, rgba(0, 0, 0, 0.18) 2px 4px)',
+  crafting_table: 'linear-gradient(180deg, rgba(255, 210, 140, 0.2) 0 40%, transparent 40% 100%), repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 4px)',
+  furnace: 'repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0 2px, rgba(0, 0, 0, 0.12) 2px 4px)',
+  chest: 'repeating-linear-gradient(180deg, rgba(255, 220, 140, 0.18) 0 2px, rgba(0, 0, 0, 0.14) 2px 4px)',
 };
 
 export const BLOCK_ICONS: Partial<Record<BlockType, string>> = {
+  grass: ',',
+  dirt: '.',
+  stone: '·',
+  cobblestone: '¤',
+  sand: ':',
+  snow_block: '❄',
+  ice: '◇',
   wood: '|',
-  leaves: '*',
+  leaves: '✿',
   coal_ore: 'c',
   iron_ore: 'i',
   gold_ore: 'g',
   diamond_ore: 'd',
   obsidian: 'O',
+  bedrock: '▓',
+  gravel: '•',
+  clay: '○',
   flower_red: 'r',
   flower_yellow: 'y',
   mushroom_red: 'm',
@@ -405,9 +453,14 @@ export const BLOCK_ICONS: Partial<Record<BlockType, string>> = {
   furnace: 'F',
   chest: 'C',
   torch: 't',
+  planks: '=',
   water: '~',
   deep_water: '~',
   tall_grass: ',',
+  sandstone: '=',
+  red_sand: '.',
+  dead_bush: 'x',
+  terracotta: '%',
 };
 
 export const ITEM_ICONS: Partial<Record<ItemType, string>> = {
