@@ -661,6 +661,8 @@ export default function VoxelWorldBackground({
         }
       });
       ss.towerGroup = null;
+      ss.towerOrb = null;
+      ss.towerOrbLight = null;
     }
 
     // Generate terrain based on mode
