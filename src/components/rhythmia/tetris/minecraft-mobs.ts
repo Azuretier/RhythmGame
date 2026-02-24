@@ -144,10 +144,16 @@ export async function loadMobGltfModels(): Promise<void> {
         // Apply flat shading to all meshes for pixelized look
         model.traverse((child: THREE.Object3D) => {
           if (child instanceof THREE.Mesh && child.material) {
-            const mat = child.material as THREE.MeshStandardMaterial;
-            if (mat.flatShading !== undefined) {
-              mat.flatShading = true;
-              mat.needsUpdate = true;
+            const materials = Array.isArray(child.material)
+              ? child.material
+              : [child.material];
+            for (const mat of materials) {
+              if (mat instanceof THREE.MeshStandardMaterial ||
+                  mat instanceof THREE.MeshPhongMaterial ||
+                  mat instanceof THREE.MeshLambertMaterial) {
+                mat.flatShading = true;
+                mat.needsUpdate = true;
+              }
             }
           }
         });
@@ -453,6 +459,7 @@ export function createMobMesh(type: TDEnemyType): MobMeshData {
     case 'creeper': return createCreeper();
     case 'spider': return createSpider();
     case 'enderman': return createEnderman();
+    default: return createZombie();
   }
 }
 
@@ -520,6 +527,42 @@ export function animateMob(mob: MobMeshData, time: number, isMoving: boolean): v
 /** Get the height of a mob type. */
 export function getMobHeight(type: TDEnemyType): number {
   return MOB_HEIGHTS[type];
+}
+
+/**
+ * Reset all limb rotations to their neutral pose.
+ * Must be called when reusing a pooled mob to avoid carrying over
+ * the previous enemy's mid-animation limb positions.
+ */
+export function resetMobPose(mob: MobMeshData): void {
+  if (mob.isGltf) return;
+
+  switch (mob.type) {
+    case 'zombie':
+      if (mob.leftArm) mob.leftArm.rotation.x = -Math.PI / 3;
+      if (mob.rightArm) mob.rightArm.rotation.x = -Math.PI / 3;
+      if (mob.leftLeg) mob.leftLeg.rotation.x = 0;
+      if (mob.rightLeg) mob.rightLeg.rotation.x = 0;
+      break;
+    case 'skeleton':
+    case 'enderman':
+      if (mob.leftArm) mob.leftArm.rotation.x = 0;
+      if (mob.rightArm) mob.rightArm.rotation.x = 0;
+      if (mob.leftLeg) mob.leftLeg.rotation.x = 0;
+      if (mob.rightLeg) mob.rightLeg.rotation.x = 0;
+      break;
+    case 'creeper':
+      if (mob.frontLeftLeg) mob.frontLeftLeg.rotation.x = 0;
+      if (mob.frontRightLeg) mob.frontRightLeg.rotation.x = 0;
+      if (mob.backLeftLeg) mob.backLeftLeg.rotation.x = 0;
+      if (mob.backRightLeg) mob.backRightLeg.rotation.x = 0;
+      break;
+    case 'spider':
+      if (mob.spiderLegs) {
+        for (const leg of mob.spiderLegs) leg.rotation.x = 0;
+      }
+      break;
+  }
 }
 
 /**

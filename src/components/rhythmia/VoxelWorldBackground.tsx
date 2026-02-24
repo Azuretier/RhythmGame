@@ -5,8 +5,8 @@ import * as THREE from 'three';
 import type { Enemy, Bullet, TerrainPhase, CorruptionNode } from './tetris/types';
 import { BULLET_GRAVITY, BULLET_GROUND_Y, CORRUPTION_MAX_TERRAIN_NODES } from './tetris/constants';
 import {
-  createMobMesh, animateMob, disposeMobGroup, disposeSharedMobResources,
-  loadMobGltfModels, getMobHeight,
+  createMobMesh, animateMob, resetMobPose, disposeMobGroup,
+  disposeSharedMobResources, loadMobGltfModels, getMobHeight,
   type MobMeshData,
 } from './tetris/minecraft-mobs';
 
@@ -899,6 +899,7 @@ export default function VoxelWorldBackground({
               let mob: MobMeshData;
               if (freeIdx >= 0) {
                 mob = freeMobs.splice(freeIdx, 1)[0];
+                resetMobPose(mob);
               } else {
                 mob = createMobMesh(e.enemyType);
                 ss.scene.add(mob.group);
