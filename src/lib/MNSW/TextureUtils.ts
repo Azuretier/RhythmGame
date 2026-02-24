@@ -51,7 +51,7 @@ export const TOTAL_BLOCKS = TOTAL_TEXTURES;
  * Returns a Promise that resolves to the atlas CanvasTexture.
  */
 export const createTextureAtlas = (): Promise<THREE.CanvasTexture> => {
-    const resolution = 16; // Native texture resolution
+    const resolution = 32; // Native texture resolution
     const atlasWidth = resolution * TOTAL_TEXTURES;
     const atlasHeight = resolution;
 
