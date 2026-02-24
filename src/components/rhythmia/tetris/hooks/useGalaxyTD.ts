@@ -156,7 +156,8 @@ export function useGalaxyTD({
     }, []);
 
     // ===== Fire towers at nearby enemies =====
-    const fireTowers = useCallback(() => {
+    // burst: if true, skip cooldown check (used for triple/tetris burst fire)
+    const fireTowers = useCallback((burst = false) => {
         const now = Date.now();
         const currentEnemies = enemiesRef.current;
         const aliveEnemies = currentEnemies.filter(e => e.alive);
@@ -165,7 +166,7 @@ export function useGalaxyTD({
         setTowers(prev => {
             const updatedTowers = prev.map(tower => {
                 if (tower.charge <= 0) return tower;
-                if (now - tower.lastFireTime < 500) return tower; // Minimum fire cooldown
+                if (!burst && now - tower.lastFireTime < 500) return tower; // Minimum fire cooldown
 
                 const towerPos = getTowerPathPosition(tower);
 
@@ -309,13 +310,9 @@ export function useGalaxyTD({
             );
         }
 
-        // Triple (3 lines) triggers burst fire — reset cooldowns so all charged towers fire
+        // Triple (3 lines) triggers burst fire — all charged towers fire, bypassing cooldown
         if (lineCount >= 3) {
-            // Clear cooldowns first so fireTowers won't skip them
-            setTowers(prev => prev.map(t =>
-                t.charge > 0 ? { ...t, lastFireTime: 0 } : t
-            ));
-            fireTowers();
+            fireTowers(true);
         }
     }, [fireTowers]);
 
