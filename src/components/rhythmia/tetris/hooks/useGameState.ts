@@ -483,29 +483,29 @@ export function useGameState() {
         }
         setInventory(invCopy.filter(i => i.count > 0));
 
-        // Use functional updater for safe sequential state derivation;
-        // capture result via closure for effect computation
-        let newCards: EquippedCard[] = [];
+        // Add or stack equipped card
         setEquippedCards(prev => {
             const existing = prev.find(ec => ec.cardId === cardId);
+            let updated: EquippedCard[];
             if (existing && existing.stackCount < 3) {
-                newCards = prev.map(ec =>
+                // Stack: increment count
+                updated = prev.map(ec =>
                     ec.cardId === cardId
                         ? { ...ec, stackCount: ec.stackCount + 1 }
                         : ec
                 );
             } else if (existing) {
-                newCards = prev;
+                // Already at max stack — still allow (re-equip)
+                updated = prev;
             } else {
-                newCards = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+                updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
             }
-            return newCards;
+            // Recompute active effects
+            const effects = computeActiveEffects(updated);
+            setActiveEffects(effects);
+            equippedCardsRef.current = updated;
+            return updated;
         });
-
-        // Recompute effects from the updated cards (updater ran synchronously)
-        // Ref sync is handled by existing useEffect hooks
-        const effects = computeActiveEffects(newCards);
-        setActiveEffects(effects);
 
         // Enter absorbing phase — animation plays before finishing
         setAbsorbingCardId(cardId);

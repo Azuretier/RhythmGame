@@ -35,6 +35,8 @@ import {
   clearLines,
   createSpawnPiece,
   getShape,
+  getBeatJudgment,
+  getBeatMultiplier,
 } from './utils';
 
 // Components
@@ -650,28 +652,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
     const phase = terrainPhaseRef.current;
 
-    // Beat judgment — granular timing windows with beat_extend card effect
+    // Beat judgment — centralised via getBeatJudgment() utility
     const currentBeatPhase = beatPhaseRef.current;
-    // Distance from beat center (0.0 = exactly on beat, 0.5 = furthest away)
-    const distFromBeat = currentBeatPhase <= 0.5 ? currentBeatPhase : 1 - currentBeatPhase;
-
-    // Apply beat_extend bonus from cards (widens timing windows)
     const beatExtend = activeEffectsRef.current.beatExtendBonus || 0;
-    // Protocol beat window modifier (< 1.0 = harder, shrinks windows)
     const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
-
-    let mult = 1;
-    let timing: 'perfect' | 'great' | 'good' | 'miss';
-
-    if (distFromBeat < ((0.06 + beatExtend) * beatWindowMod)) {
-      timing = 'perfect';  // ~12% of beat window (tightest) + card bonus + protocol mod
-    } else if (distFromBeat < ((0.12 + beatExtend) * beatWindowMod)) {
-      timing = 'great';    // ~12% more + card bonus + protocol mod
-    } else if (distFromBeat < ((0.20 + beatExtend) * beatWindowMod)) {
-      timing = 'good';     // ~16% more + card bonus + protocol mod
-    } else {
-      timing = 'miss';     // everything else
-    }
+    const timing = getBeatJudgment(currentBeatPhase, beatExtend, beatWindowMod);
+    let mult = getBeatMultiplier(timing);
 
     // Track pieces placed for advancements
     gamePiecesPlacedRef.current++;
@@ -682,12 +668,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     const onBeat = timing !== 'miss';
 
     if (timing !== 'miss') {
-      // On-beat — determine multiplier by timing quality
-      switch (timing) {
-        case 'perfect': mult = 2; break;
-        case 'great': mult = 1.5; break;
-        case 'good': mult = 1.2; break;
-      }
+      // On-beat — multiplier already set by getBeatMultiplier above
       newCombo = prevCombo + 1;
       setCombo(newCombo);
     } else {
@@ -1274,17 +1255,11 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         // Direct DOM update — bypasses React for smooth cross-browser animation
         if (beatBarRef.current) {
           beatBarRef.current.style.setProperty('--beat-phase', String(phase));
-          // Distance from beat center for timing zone display
-          const dist = phase <= 0.5 ? phase : 1 - phase;
           const beatExtend = activeEffectsRef.current?.beatExtendBonus || 0;
           const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
-
-          if (dist < ((0.06 + beatExtend) * beatWindowMod)) {
-            beatBarRef.current.setAttribute('data-onbeat', 'perfect');
-          } else if (dist < ((0.12 + beatExtend) * beatWindowMod)) {
-            beatBarRef.current.setAttribute('data-onbeat', 'great');
-          } else if (dist < ((0.20 + beatExtend) * beatWindowMod)) {
-            beatBarRef.current.setAttribute('data-onbeat', 'good');
+          const zone = getBeatJudgment(phase, beatExtend, beatWindowMod);
+          if (zone !== 'miss') {
+            beatBarRef.current.setAttribute('data-onbeat', zone);
           } else {
             beatBarRef.current.removeAttribute('data-onbeat');
           }

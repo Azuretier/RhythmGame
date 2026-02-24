@@ -3994,7 +3994,7 @@
 /* The payoff: card bursts, particles, "OBTAINED!" slams in. */
 /* 0.2-0.5s of acute visual "juice." */
 .cardAbsorbBurst {
-  animation: cardBurst 350ms ease-out forwards;
+  animation: cardBurst 280ms ease-out forwards;
   z-index: 10;
   pointer-events: none;
 }
@@ -4021,7 +4021,7 @@
 
 /* Flash effect on overlay during impact */
 .cardAbsorbFlash {
-  animation: overlayFlash 350ms ease-out;
+  animation: overlayFlash 280ms ease-out;
 }
 
 @keyframes overlayFlash {
@@ -4050,7 +4050,7 @@
 /* --- Phase 5: DONE --- */
 /* Overlay fade-out when player dismisses */
 .cardAbsorbDone {
-  animation: overlayFadeOut 200ms ease-out forwards;
+  animation: overlayFadeOut 150ms ease-out forwards;
 }
 
 @keyframes overlayFadeOut {
@@ -4073,7 +4073,7 @@
   align-items: center;
   gap: 8px;
   z-index: 20;
-  animation: obtainedSlam 350ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: obtainedSlam 280ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   text-align: center;
 }
 
@@ -4322,7 +4322,325 @@
   letter-spacing: 0.05em;
 }
 
-/* Mobile responsive for card select */
+/* ===== Treasure Box Overlay ===== */
+
+@keyframes treasureFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes treasureFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes treasureFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes treasureShake {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  15% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  30% {
+    transform: rotate(8deg) scale(1.1);
+  }
+  45% {
+    transform: rotate(-6deg) scale(1.15);
+  }
+  60% {
+    transform: rotate(6deg) scale(1.2);
+  }
+  75% {
+    transform: rotate(-3deg) scale(1.15);
+  }
+  90% {
+    transform: rotate(0deg) scale(1.3);
+  }
+}
+
+@keyframes treasureFlash {
+  0% {
+    background: rgba(0, 0, 0, 0.92);
+  }
+  50% {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  100% {
+    background: rgba(0, 0, 0, 0.92);
+  }
+}
+
+@keyframes treasureRewardsSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes treasurePromptPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.treasureBoxOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: treasureFadeIn 0.5s ease forwards;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.treasureBoxAppear {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.treasureBoxDone {
+  animation: treasureFadeOut 0.3s ease forwards;
+}
+
+.treasureBoxFlash {
+  animation: treasureFlash 0.4s ease;
+}
+
+.treasureBoxPanel {
+  max-width: 500px;
+  width: 90vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 32px 24px;
+}
+
+/* Header */
+.treasureBoxHeader {
+  text-align: center;
+}
+
+.treasureBoxTitle {
+  font-size: 2rem;
+  font-weight: 200;
+  color: white;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.treasureBoxSubtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.15em;
+  margin-top: 4px;
+}
+
+/* Chest */
+.treasureBoxChest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  position: relative;
+}
+
+.treasureBoxChestIdle {
+  animation: treasureFloat 2s ease-in-out infinite;
+  cursor: pointer;
+}
+
+.treasureBoxChestOpening {
+  animation: treasureShake 0.8s ease forwards;
+}
+
+.treasureBoxChestRevealed {
+  transform: scale(1.3);
+  filter: drop-shadow(0 0 24px var(--chest-glow));
+  transition: all 0.4s ease;
+}
+
+.treasureBoxIcon {
+  font-size: 4rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px var(--chest-glow, rgba(255, 255, 255, 0.3)));
+}
+
+.treasureBoxTierName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.treasureBoxTierNameJa {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+
+/* Interaction prompts */
+.treasureBoxPrompt {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  animation: treasurePromptPulse 1.5s ease-in-out infinite;
+}
+
+.treasureBoxContinue {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  animation: treasurePromptPulse 1.5s ease-in-out infinite;
+}
+
+/* Rewards */
+.treasureBoxRewards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  animation: treasureRewardsSlideUp 0.4s ease forwards;
+}
+
+.treasureBoxRewardsTitle {
+  font-size: 1.3rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 16px currentColor;
+}
+
+.treasureBoxRewardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Individual reward items */
+.treasureRewardItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.treasureRewardVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.treasureRewardLabel {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.treasureRewardMaterials {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.treasureRewardMaterialChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.treasureRewardScore {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #FFD54F;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 12px rgba(255, 213, 79, 0.3);
+}
+
+.treasureRewardCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.treasureRewardCardIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.treasureRewardCardName {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.05em;
+}
+
+.treasureRewardCardNameJa {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+}
+
+.treasureRewardEffect {
+  font-size: 0.9rem;
+  color: #80CBC4;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 8px rgba(128, 203, 196, 0.3);
+}
+
+/* Mobile responsive for card select & treasure box */
 @media (max-width: 768px) {
   .cardSelectCards {
     flex-direction: column;
@@ -4337,284 +4655,26 @@
   .cardSelectTitle {
     font-size: 1.5rem;
   }
-}
 
-/* ===== Treasure Box System ===== */
+  .treasureBoxTitle {
+    font-size: 1.4rem;
+    letter-spacing: 0.2em;
+  }
 
-.treasureBoxOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
-  animation: treasureOverlayFadeIn 0.4s ease-out;
-}
-
-@keyframes treasureOverlayFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.treasureBoxAppear {
-  animation: treasureOverlayFadeIn 0.6s ease-out;
-}
-
-.treasureBoxDone {
-  animation: treasureOverlayFadeOut 0.3s ease-in forwards;
-}
-
-@keyframes treasureOverlayFadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-.treasureBoxFlash {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.treasureBoxPanel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  max-width: 460px;
-  width: 90vw;
-}
-
-/* Header */
-.treasureBoxHeader {
-  text-align: center;
-  animation: treasureHeaderSlideIn 0.5s ease-out;
-}
-
-@keyframes treasureHeaderSlideIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.treasureBoxTitle {
-  font-size: clamp(1.8rem, 5vw, 2.4rem);
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: #FFD700;
-  text-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
-}
-
-.treasureBoxSubtitle {
-  font-size: clamp(0.8rem, 2vw, 1rem);
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.3em;
-  margin-top: 4px;
-}
-
-/* Chest */
-.treasureBoxChest {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  animation: treasureChestAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes treasureChestAppear {
-  from { opacity: 0; transform: scale(0.3) translateY(40px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.treasureBoxChestIdle {
-  animation: treasureChestBreathe 2s ease-in-out infinite;
-  cursor: pointer;
-}
-
-@keyframes treasureChestBreathe {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px var(--chest-glow)); }
-  50% { transform: scale(1.05); filter: drop-shadow(0 0 24px var(--chest-glow)); }
-}
-
-.treasureBoxChestOpening {
-  animation: treasureChestShake 0.8s ease-in-out;
-}
-
-@keyframes treasureChestShake {
-  0% { transform: rotate(0deg) scale(1); }
-  10% { transform: rotate(-5deg) scale(1.05); }
-  20% { transform: rotate(5deg) scale(1.08); }
-  30% { transform: rotate(-8deg) scale(1.1); }
-  40% { transform: rotate(8deg) scale(1.12); }
-  50% { transform: rotate(-10deg) scale(1.15); }
-  60% { transform: rotate(10deg) scale(1.12); }
-  70% { transform: rotate(-5deg) scale(1.1); }
-  80% { transform: rotate(3deg) scale(1.05); }
-  90% { transform: rotate(-1deg) scale(1.02); }
-  100% { transform: rotate(0deg) scale(1.2); }
-}
-
-.treasureBoxChestRevealed {
-  animation: treasureChestBurst 0.4s ease-out forwards;
-}
-
-@keyframes treasureChestBurst {
-  from { transform: scale(1.2); opacity: 1; filter: brightness(3); }
-  to { transform: scale(2); opacity: 0; filter: brightness(5); }
-}
-
-.treasureBoxIcon {
-  font-size: clamp(4rem, 12vw, 6rem);
-  line-height: 1;
-  filter: drop-shadow(0 0 20px var(--chest-glow));
-}
-
-.treasureBoxTierName {
-  font-size: clamp(1rem, 3vw, 1.2rem);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.treasureBoxTierNameJa {
-  font-size: clamp(0.7rem, 2vw, 0.85rem);
-  opacity: 0.7;
-}
-
-/* Open prompt */
-.treasureBoxPrompt {
-  font-size: clamp(0.7rem, 2vw, 0.85rem);
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.15em;
-  animation: treasurePromptPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes treasurePromptPulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.9; }
-}
-
-/* Rewards display */
-.treasureBoxRewards {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  animation: treasureRewardsAppear 0.5s ease-out;
-  width: 100%;
-}
-
-@keyframes treasureRewardsAppear {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.treasureBoxRewardsTitle {
-  font-size: clamp(1.2rem, 3.5vw, 1.6rem);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-}
-
-.treasureBoxRewardsList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-.treasureRewardItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.treasureRewardVisible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.treasureRewardLabel {
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  color: rgba(255, 255, 255, 0.4);
-  font-weight: 600;
-}
-
-.treasureRewardMaterials {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-}
-
-.treasureRewardMaterialChip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.treasureRewardScore {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #FFD700;
-  text-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
-}
-
-.treasureRewardCard {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border: 1px solid;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.treasureRewardCardIcon {
-  font-size: 1.4rem;
-}
-
-.treasureRewardCardName {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.treasureRewardCardNameJa {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.treasureRewardEffect {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #4FC3F7;
-  letter-spacing: 0.05em;
-}
-
-.treasureBoxContinue {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.35);
-  letter-spacing: 0.2em;
-  animation: treasurePromptPulse 1.5s ease-in-out infinite;
-  margin-top: 8px;
-}
-
-/* Mobile responsive for treasure box */
-@media (max-width: 768px) {
-  .treasureBoxPanel {
-    gap: 16px;
+  .treasureBoxSubtitle {
+    font-size: 0.75rem;
   }
 
   .treasureBoxIcon {
-    font-size: 4rem;
+    font-size: 3rem;
+  }
+
+  .treasureBoxPanel {
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  .treasureRewardItem {
+    padding: 10px 12px;
   }
 }
