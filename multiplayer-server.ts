@@ -348,7 +348,7 @@ const eoeManager = new EoEManager({
 });
 
 function broadcastToEoE(roomCode: string, message: EoEServerMessage): void {
-  const room = eoeManager.getRoomByPlayerId(roomCode);
+  const room = eoeManager.getRoomByCode(roomCode);
   if (!room) return;
   for (const playerId of room.players.keys()) {
     sendToPlayer(playerId, message as unknown as ServerMessage);
