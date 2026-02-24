@@ -23,6 +23,7 @@ import {
 import type { ProtocolModifiers } from '../protocol';
 import { DEFAULT_PROTOCOL_MODIFIERS } from '../protocol';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
+import { computeActiveEffects as computeActiveEffectsImpl, rollItem } from '../utils/cardEffects';
 
 let nextFloatingId = 0;
 let nextParticleId = 0;
@@ -31,29 +32,6 @@ let nextBulletId = 0;
 let nextMiniTowerId = 0;
 let nextAuraId = 0;
 let nextArcId = 0;
-
-/**
- * Roll a random item based on drop weights.
- * luckyBonus shifts probability toward rarer items.
- */
-function rollItem(luckyBonus: number = 0): string {
-    const adjustedWeights = ITEMS.map(item => {
-        let w = item.dropWeight;
-        if (item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary') {
-            w *= (1 + luckyBonus * 3);
-        } else if (item.rarity === 'common') {
-            w *= Math.max(0.5, 1 - luckyBonus);
-        }
-        return w;
-    });
-    const total = adjustedWeights.reduce((s, w) => s + w, 0);
-    let roll = Math.random() * total;
-    for (let i = 0; i < ITEMS.length; i++) {
-        roll -= adjustedWeights[i];
-        if (roll <= 0) return ITEMS[i].id;
-    }
-    return ITEMS[0].id;
-}
 
 /**
  * Custom hook for managing game state with synchronized refs
@@ -314,49 +292,9 @@ export function useGameState() {
 
     // ===== Rogue-Like Card System =====
 
-    // Compute active effects from all equipped cards
+    // Compute active effects from all equipped cards (delegated to pure utility)
     const computeActiveEffects = useCallback((cards: EquippedCard[]): ActiveEffects => {
-        const effects = { ...DEFAULT_ACTIVE_EFFECTS };
-
-        for (const ec of cards) {
-            const card = ROGUE_CARD_MAP[ec.cardId];
-            if (!card) continue;
-
-            const totalValue = card.attributeValue * ec.stackCount;
-
-            switch (card.attribute) {
-                case 'combo_guard':
-                    effects.comboGuardUsesRemaining += totalValue;
-                    break;
-                case 'shield':
-                    effects.shieldActive = true;
-                    break;
-                case 'terrain_surge':
-                    effects.terrainSurgeBonus += totalValue;
-                    break;
-                case 'beat_extend':
-                    effects.beatExtendBonus += totalValue;
-                    break;
-                case 'score_boost':
-                    effects.scoreBoostMultiplier += totalValue;
-                    break;
-                case 'gravity_slow':
-                    effects.gravitySlowFactor = Math.max(0.1, effects.gravitySlowFactor - totalValue);
-                    break;
-                case 'lucky_drops':
-                    effects.luckyDropsBonus += totalValue;
-                    break;
-                case 'combo_amplify':
-                    effects.comboAmplifyFactor *= Math.pow(card.attributeValue, ec.stackCount);
-                    break;
-                case 'dragon_boost':
-                    effects.dragonBoostEnabled = true;
-                    effects.dragonBoostChargeMultiplier *= Math.pow(1 + card.attributeValue * 0.5, ec.stackCount);
-                    break;
-            }
-        }
-
-        return effects;
+        return computeActiveEffectsImpl(cards);
     }, []);
 
     // Generate card offers for CARD_SELECT phase
@@ -557,10 +495,13 @@ export function useGameState() {
         return false;
     }, []);
 
-    // Consume shield (one-time per stage)
+    // Consume a shield use
     const consumeShield = useCallback((): boolean => {
-        if (activeEffectsRef.current.shieldActive) {
-            setActiveEffects(prev => ({ ...prev, shieldActive: false }));
+        if (activeEffectsRef.current.shieldUsesRemaining > 0) {
+            setActiveEffects(prev => ({
+                ...prev,
+                shieldUsesRemaining: prev.shieldUsesRemaining - 1,
+            }));
             return true;
         }
         return false;
