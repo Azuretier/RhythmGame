@@ -1,258 +1,398 @@
-/* Score Ranking Widget — Bigger, score-focused widget for lobby */
+/* Score Ranking Widget — persistent profile + inline text tabs */
 .widget {
+  position: relative;
   width: 100%;
   max-width: 1080px;
   margin-top: 24px;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 36px 40px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
-/* Score Hero — prominent score display */
-.scoreHero {
+/* ========== Persistent profile row ========== */
+.profileRow {
   display: flex;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 28px;
+  gap: 14px;
+  padding: 18px 24px 14px;
 }
 
-.tierBadge {
-  width: 80px;
-  height: 80px;
-  border-radius: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
+.profileAvatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.04);
+  font-size: 1.3rem;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
-.tierIconLarge {
-  font-size: 2.2rem;
-  line-height: 1;
-}
-
-.scoreInfo {
+.profileMeta {
   display: flex;
   flex-direction: column;
+  gap: 1px;
 }
 
-.scoreValue {
-  font-size: 2.4rem;
-  font-weight: 300;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-  color: #ffffff;
-  opacity: 0.9;
-}
-
-.scoreLabel {
-  font-size: 0.65rem;
-  opacity: 0.3;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  margin-top: 4px;
-}
-
-.tierName {
-  font-size: 1rem;
-  font-weight: 500;
-  letter-spacing: 0.15em;
-  margin-top: 8px;
-}
-
-/* Daily Streak Section */
-.streakSection {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  margin-bottom: 24px;
-}
-
-.streakDays {
-  display: flex;
-  gap: 8px;
-}
-
-.streakDot {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.3);
-  transition: all 0.3s;
-}
-
-.streakDot.filled {
-  background: rgba(76, 175, 80, 0.15);
-  border-color: rgba(76, 175, 80, 0.4);
-  color: rgba(76, 175, 80, 0.9);
-}
-
-.streakDot.today {
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
-}
-
-.streakInfo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.streakLabel {
-  font-size: 0.75rem;
-  font-weight: 500;
-  opacity: 0.6;
-  letter-spacing: 0.05em;
-}
-
-.bonusXP {
-  font-size: 0.85rem;
+.profileName {
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #4CAF50;
-  opacity: 0.9;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.3;
+}
+
+.profileCode {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.2);
   letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
 }
 
-/* Progress bar */
-.progressRow {
-  margin-bottom: 24px;
+.profileTier {
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  margin-top: 1px;
 }
 
-.progressBar {
+/* ========== Inline text tab bar ========== */
+.tabBar {
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.tab {
+  padding: 8px 14px;
+  font-size: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.tab.tabActive {
+  color: rgba(255, 255, 255, 0.85);
+  border-bottom-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ========== Tab body — stable height ========== */
+.tabBody {
+  min-height: 120px;
+}
+
+.tabPane {
+  padding: 16px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ========== Score gauge ========== */
+.gaugeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.gaugeHeaderLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.gaugeLabel {
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.gaugeValue {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.92);
+  font-variant-numeric: tabular-nums;
+}
+
+.gaugeHeaderRight {
+  font-size: 0.5rem;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.02em;
+}
+
+.gaugeRanks {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.gaugeRankCurrent {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.gaugeRankNext {
+  font-size: 0.5rem;
+  opacity: 0.3;
+  letter-spacing: 0.04em;
+}
+
+.gaugeBar {
   width: 100%;
   height: 6px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-top: 2px;
 }
 
-.progressFill {
+.gaugeBarFill {
   height: 100%;
   border-radius: 3px;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.progressLabels {
+.gaugeThresholds {
   display: flex;
   justify-content: space-between;
-  font-size: 0.7rem;
-  opacity: 0.3;
-  letter-spacing: 0.04em;
-}
-
-/* Mini roadmap */
-.miniRoadmap {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.miniStep {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 0;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.3s;
-}
-
-.miniStep.active {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.miniStep.completed {
-  opacity: 0.4;
-}
-
-.miniStepIcon {
-  font-size: 1rem;
-}
-
-.miniStepName {
-  font-size: 0.65rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  opacity: 0.6;
-}
-
-.miniStep.active .miniStepName {
-  opacity: 1;
-}
-
-/* Stats grid */
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.statCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 16px 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
-  transition: border-color 0.3s;
-}
-
-.statCard:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.statValue {
-  font-size: 1.1rem;
-  font-weight: 500;
-  opacity: 0.85;
+  font-size: 0.45rem;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.03em;
   font-variant-numeric: tabular-nums;
 }
 
-.statLabel {
-  font-size: 0.55rem;
+.gaugeThresholdNext {
+  opacity: 0.5;
+}
+
+/* ========== Streak ========== */
+.streakRow {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.streakDots {
+  display: flex;
+  gap: 10px;
+}
+
+.streakDotWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.streakDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s;
+}
+
+.streakDot.filled {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: rgba(76, 175, 80, 0.5);
+}
+
+.streakDot.today {
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.2);
+}
+
+.streakDayLabel {
+  font-size: 0.4rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+}
+
+/* ========== Shared detail styles ========== */
+.detailGrid4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.detailStat {
+  text-align: center;
+  padding: 10px 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.detailStatVal {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ffffff;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 2px;
+}
+
+.detailStatLbl {
+  font-size: 0.4rem;
   opacity: 0.3;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
-/* View all button */
+/* Tier roadmap */
+.detailRoadmap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.detailTierStep {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s;
+}
+
+.detailTierStep.active {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.detailTierStep.completed {
+  opacity: 0.4;
+}
+
+.detailTierCheck {
+  position: absolute;
+  top: 3px;
+  right: 6px;
+  font-size: 0.45rem;
+  opacity: 0.5;
+}
+
+.detailTierIcon {
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.detailTierMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.detailTierName {
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detailTierStep.active .detailTierName {
+  opacity: 1;
+}
+
+.detailTierXP {
+  font-size: 0.4rem;
+  opacity: 0.2;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Badges */
+.detailBadges {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.detailBadge {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.detailBadge:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.detailBadgeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.detailBadgeName {
+  font-size: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+  opacity: 0.7;
+}
+
+.detailBadgeDesc {
+  font-size: 0.4rem;
+  opacity: 0.25;
+  line-height: 1.4;
+}
+
+.detailEmpty {
+  text-align: center;
+  font-size: 0.6rem;
+  opacity: 0.15;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 16px 0;
+}
+
+/* View all */
 .viewAll {
   width: 100%;
-  padding: 14px;
-  font-size: 0.7rem;
+  padding: 12px;
+  font-size: 0.6rem;
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.4);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.25s;
@@ -260,65 +400,55 @@
 
 .viewAll:hover {
   color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.04);
 }
 
-/* Responsive */
+/* ========== Responsive ========== */
 @media (max-width: 768px) {
   .widget {
-    margin-top: 20px;
-    padding: 24px 20px;
+    margin-top: 16px;
   }
 
-  .scoreHero {
-    flex-direction: column;
-    text-align: center;
-    gap: 16px;
+  .profileRow {
+    padding: 14px 18px 10px;
   }
 
-  .scoreInfo {
-    align-items: center;
+  .profileAvatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    font-size: 1.1rem;
   }
 
-  .scoreValue {
-    font-size: 1.8rem;
+  .tabBar {
+    padding: 0 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
-  .tierBadge {
-    width: 64px;
-    height: 64px;
-    border-radius: 16px;
+  .tabBar::-webkit-scrollbar {
+    display: none;
   }
 
-  .tierIconLarge {
-    font-size: 1.8rem;
+  .tab {
+    padding: 6px 10px;
+    font-size: 0.45rem;
   }
 
-  .streakSection {
-    flex-direction: column;
-    text-align: center;
+  .tabPane {
+    padding: 14px 18px 18px;
   }
 
-  .streakInfo {
-    align-items: center;
+  .detailGrid4 {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .streakDot {
-    width: 28px;
-    height: 28px;
-    font-size: 0.55rem;
+  .detailRoadmap {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .miniRoadmap {
-    flex-wrap: wrap;
-  }
-
-  .miniStep {
-    min-width: calc(33.33% - 6px);
-  }
-
-  .statsGrid {
+  .detailBadges {
     grid-template-columns: repeat(2, 1fr);
   }
 }

@@ -3,6 +3,7 @@ import {
     initializeAppCheck,
     ReCaptchaV3Provider,
     AppCheck,
+    getToken,
 } from "firebase/app-check";
 
 /**
@@ -29,10 +30,28 @@ export function initAppCheck(app: FirebaseApp): AppCheck | null {
     try {
         return initializeAppCheck(app, {
             provider: new ReCaptchaV3Provider(siteKey),
-            isTokenAutoRefreshEnabled: true,
+            isTokenAutoRefreshEnabled: false,
         });
     } catch (error) {
         console.error("[App Check] Failed to initialize:", error);
         return null;
+    }
+}
+
+/**
+ * Validate that App Check can successfully retrieve a token.
+ * Returns true if a valid token is obtained, false otherwise.
+ * Used to gate auth calls — if App Check is broken, auth will fail too.
+ */
+export async function validateAppCheckToken(appCheck: AppCheck): Promise<boolean> {
+    try {
+        await getToken(appCheck, /* forceRefresh */ false);
+        return true;
+    } catch {
+        console.warn(
+            "[App Check] Token verification failed — anonymous auth and cloud sync will be unavailable. " +
+            "This may happen if ReCAPTCHA is blocked by a browser extension or the site key is misconfigured."
+        );
+        return false;
     }
 }

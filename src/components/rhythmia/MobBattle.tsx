@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './MobBattle.module.css';
+import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
 import type { Player, ServerMessage, BoardCell } from '@/types/multiplayer';
 import type { ActiveMob, MobBattleRelayPayload } from '@/lib/mob-battle/types';
+import { useSkillTree } from '@/lib/skill-tree/context';
 import {
   MOB_DEFINITIONS,
   MOB_MAP,
@@ -219,6 +221,7 @@ export const MobBattle: React.FC<Props> = ({
   onBackToLobby,
 }) => {
   const opponent = opponents[0];
+  const { awardGamePoints, awardMultiplayerWinPoints } = useSkillTree();
 
   // ===== Game State Refs =====
   const boardRef = useRef<(BoardCell | null)[][]>(createEmptyBoard());
@@ -306,27 +309,20 @@ export const MobBattle: React.FC<Props> = ({
     } catch {}
   }, []);
 
-  const playDrum = useCallback(() => {
+  const playDrum = useCallback((wIdx = 2) => {
     const ctx = audioCtxRef.current;
     if (!ctx) return;
     try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(150, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.1);
-      gain.gain.setValueAtTime(0.4, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.1);
+      if (ctx.state === 'suspended') ctx.resume();
+      playWorldDrum(ctx, wIdx);
     } catch {}
   }, []);
 
-  const playLineClear = useCallback((count: number) => {
-    const freqs = [523, 659, 784, 1047];
-    freqs.slice(0, count).forEach((f, i) => setTimeout(() => playTone(f, 0.15, 'triangle'), i * 60));
+  const playLineClear = useCallback((count: number, wIdx = 2) => {
+    const chime = WORLD_LINE_CLEAR_CHIMES[wIdx] || WORLD_LINE_CLEAR_CHIMES[0];
+    chime.freqs.slice(0, count).forEach((f, i) =>
+      setTimeout(() => playTone(f, chime.dur, chime.type), i * chime.delay)
+    );
   }, [playTone]);
 
   const playMobKill = useCallback(() => {
@@ -479,6 +475,7 @@ export const MobBattle: React.FC<Props> = ({
       if (baseHpRef.current <= 0) {
         gameOverRef.current = true;
         sendGameOver();
+        awardGamePoints();
         onGameEnd(opponent?.id || '');
       }
     }
@@ -486,7 +483,7 @@ export const MobBattle: React.FC<Props> = ({
     // Remove dead mobs
     incomingMobsRef.current = mobs.filter(m => m.alive);
     render();
-  }, [playBaseDamage, sendGameOver, onGameEnd, opponent, render]);
+  }, [playBaseDamage, sendGameOver, onGameEnd, opponent, render, awardGamePoints]);
 
   // ===== Piece Queue =====
   const fillQueue = useCallback(() => {
@@ -511,6 +508,7 @@ export const MobBattle: React.FC<Props> = ({
     if (!isValid(piece, boardRef.current)) {
       gameOverRef.current = true;
       sendGameOver();
+      awardGamePoints();
       onGameEnd(opponent?.id || '');
       render();
       return false;
@@ -526,7 +524,7 @@ export const MobBattle: React.FC<Props> = ({
     }
     render();
     return true;
-  }, [fillQueue, sendGameOver, onGameEnd, opponent, render]);
+  }, [fillQueue, sendGameOver, onGameEnd, opponent, render, awardGamePoints]);
 
   // ===== Lock Delay =====
   const startLockTimer = useCallback(() => {
@@ -754,6 +752,8 @@ export const MobBattle: React.FC<Props> = ({
           } else if (payload.event === 'game_over') {
             if (!gameOverRef.current) {
               gameOverRef.current = true;
+              awardGamePoints();
+              awardMultiplayerWinPoints();
               onGameEnd(playerId);
               render();
             }
@@ -766,7 +766,7 @@ export const MobBattle: React.FC<Props> = ({
 
     ws.addEventListener('message', handler);
     return () => ws.removeEventListener('message', handler);
-  }, [ws, playerId, onGameEnd, spawnIncomingMob, render]);
+  }, [ws, playerId, onGameEnd, spawnIncomingMob, render, awardGamePoints, awardMultiplayerWinPoints]);
 
   // ===== Initialize Game =====
   useEffect(() => {

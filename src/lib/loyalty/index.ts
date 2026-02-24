@@ -25,7 +25,10 @@ export {
   xpToNextTier,
   formatScore,
   formatScoreCompact,
+  getRankGroups,
+  getCurrentRankGroup,
 } from './constants';
+export type { RankGroup } from './constants';
 export {
   buildScoreRankingState,
   loadDailyBonusState,

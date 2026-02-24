@@ -1,24 +1,175 @@
-import React from 'react';
-import { WORLDS, TERRAINS_PER_WORLD, ColorTheme, MAX_HEALTH } from '../constants';
+import React, { useState, useMemo } from 'react';
+import { WORLDS, TERRAINS_PER_WORLD, ColorTheme } from '../constants';
+import { PROTOCOLS } from '../protocol';
+import type { AdvancedRule } from '../protocol';
 import type { TerrainPhase } from '../types';
 import styles from '../VanillaGame.module.css';
 
 interface TitleScreenProps {
-    onStart: () => void;
+    onStart: (protocolId: number) => void;
 }
 
+const RULE_LABELS: Record<AdvancedRule, string> = {
+    enemy_hp_boost: 'Enemy HP+',
+    garbage_rows: 'Garbage',
+    phase_swap: 'Phase Swap',
+    invisible_preview: 'Blind Next',
+    shrunk_beat_window: 'Shrunk Beat',
+};
+
 /**
- * Title screen component (single start button — vanilla mode with alternating phases)
+ * Protocol Select screen — HSR-inspired left-panel difficulty selection.
+ * Left: vertical protocol list. Right: world preview + details + enter.
  */
 export function TitleScreen({ onStart }: TitleScreenProps) {
+    const [selectedProtocol, setSelectedProtocol] = useState(0);
+
+    const protocol = PROTOCOLS[selectedProtocol];
+
+    const modifiedBpms = useMemo(() =>
+        WORLDS.map(w => Math.round(w.bpm * protocol.bpmMultiplier)),
+        [protocol.bpmMultiplier]
+    );
+
+    const isModified = protocol.bpmMultiplier !== 1;
+
     return (
         <div className={styles.titleScreen}>
-            <div className={styles.modeSelect}>
-                <button className={styles.modeBtn} onClick={onStart}>
-                    <span className={styles.modeBtnIcon}>🎵</span>
-                    <span className={styles.modeBtnTitle}>START</span>
-                    <span className={styles.modeBtnDesc}>地形破壊 × タワーディフェンス</span>
-                </button>
+            <div className={styles.protocolLayout}>
+                {/* ===== Left Panel: Protocol List ===== */}
+                <div
+                    className={styles.protocolLeftPanel}
+                    style={{ '--protocol-accent': protocol.accentColor } as React.CSSProperties}
+                >
+                    <div className={styles.circuitGrid} />
+                    <div className={styles.scanlineOverlay} />
+
+                    <div className={styles.protocolSectionTitle}>
+                        <span className={styles.protocolSectionLabel}>PROTOCOL</span>
+                        <div className={styles.protocolHeaderLine} />
+                    </div>
+
+                    <div className={styles.protocolList}>
+                        {PROTOCOLS.map((p) => {
+                            const isSelected = p.id === selectedProtocol;
+                            return (
+                                <button
+                                    key={p.id}
+                                    className={`${styles.protocolBtn} ${isSelected ? styles.protocolBtnSelected : ''}`}
+                                    style={{ '--protocol-accent': p.accentColor } as React.CSSProperties}
+                                    onClick={() => setSelectedProtocol(p.id)}
+                                >
+                                    {isSelected && (
+                                        <>
+                                            <div className={`${styles.cornerDecor} ${styles.cornerTL}`} />
+                                            <div className={`${styles.cornerDecor} ${styles.cornerTR}`} />
+                                            <div className={`${styles.cornerDecor} ${styles.cornerBL}`} />
+                                            <div className={`${styles.cornerDecor} ${styles.cornerBR}`} />
+                                        </>
+                                    )}
+                                    <div className={styles.romanBadge}>{p.numeral}</div>
+                                    <div className={styles.protocolBtnInfo}>
+                                        <div className={styles.protocolBtnName}>{p.name}</div>
+                                        <div className={styles.protocolBtnSub}>{p.nameJa}</div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* ===== Right Panel: Details + Worlds + Enter ===== */}
+                <div
+                    className={styles.protocolRightPanel}
+                    style={{ '--protocol-accent': protocol.accentColor } as React.CSSProperties}
+                >
+                    <div className={styles.circuitGrid} />
+
+                    {/* Protocol detail header */}
+                    <div className={styles.protocolDetailHeader}>
+                        <div className={styles.protocolDetailNumeral}>{protocol.numeral}</div>
+                        <div>
+                            <div className={styles.protocolDetailName}>
+                                {protocol.name}
+                            </div>
+                            <div className={styles.protocolDetailNameJa}>
+                                {protocol.nameJa}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={styles.protocolDetailDesc}>
+                        {protocol.description}
+                    </div>
+
+                    {/* Modifier stats row */}
+                    <div className={styles.protocolDetailStats}>
+                        <span className={styles.protocolStat}>
+                            BPM <span className={styles.protocolStatValue}>&times;{protocol.bpmMultiplier}</span>
+                        </span>
+                        <span className={styles.protocolStat}>
+                            Gravity <span className={styles.protocolStatValue}>&times;{protocol.gravityMultiplier}</span>
+                        </span>
+                        <span className={styles.protocolStat}>
+                            Beat <span className={styles.protocolStatValue}>&times;{protocol.beatWindowMultiplier}</span>
+                        </span>
+                        <span className={styles.protocolStat}>
+                            Score <span className={styles.protocolStatValue}>&times;{protocol.scoreMultiplier}</span>
+                        </span>
+                    </div>
+
+                    {protocol.advancedRules.length > 0 && (
+                        <div className={styles.protocolRules}>
+                            {protocol.advancedRules.map(rule => (
+                                <span key={rule} className={styles.protocolRuleTag}>
+                                    {RULE_LABELS[rule]}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Divider */}
+                    <div className={styles.protocolDivider} />
+
+                    {/* World preview */}
+                    <div className={styles.protocolSectionTitle}>
+                        <span className={styles.protocolSectionLabel}>WORLDS</span>
+                        <div className={styles.protocolHeaderLine} />
+                    </div>
+
+                    <div className={styles.worldRow}>
+                        {WORLDS.map((world, idx) => (
+                            <div key={idx} className={styles.worldCard}>
+                                <div className={styles.worldCardEmoji}>
+                                    {world.name.split(' ')[0]}
+                                </div>
+                                <div className={styles.worldCardName}>
+                                    {world.name.split(' ').slice(1).join(' ')}
+                                </div>
+                                <div className={`${styles.worldCardBpm} ${isModified ? styles.worldCardBpmModified : ''}`}>
+                                    {modifiedBpms[idx]} BPM
+                                </div>
+                                <div className={styles.worldCardStars}>
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className={`${styles.worldCardStar} ${i <= idx ? styles.worldCardStarFilled : styles.worldCardStarEmpty}`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Enter Button */}
+                    <button
+                        className={styles.protocolEnterBtn}
+                        onClick={() => onStart(selectedProtocol)}
+                    >
+                        <span>&#9654; ENTER</span>
+                        <span className={styles.protocolEnterBtnSub}>突入</span>
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -106,28 +257,23 @@ interface TerrainProgressProps {
     terrainTotal: number;
     stageNumber: number;
     terrainPhase: TerrainPhase;
-    towerHealth?: number;
     tdBeatsRemaining?: number;
+    enemyCount?: number;
 }
 
 /**
  * Progress display — phase-aware
- * Dig phase: terrain destruction progress
- * TD phase: tower HP bar + wave countdown
+ * Dig phase: terrain destruction progress ("READY" label)
+ * TD phase: enemy count + wave countdown (no HP bar)
  */
-export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, terrainPhase, towerHealth, tdBeatsRemaining }: TerrainProgressProps) {
+export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, terrainPhase, tdBeatsRemaining, enemyCount }: TerrainProgressProps) {
     if (terrainPhase === 'td') {
-        const hp = towerHealth ?? 0;
-        const hpPct = Math.max(0, Math.min(100, (hp / MAX_HEALTH) * 100));
-        const hpColor = hpPct > 50 ? '#44ff44' : hpPct > 25 ? '#ffaa00' : '#ff4444';
+        const alive = enemyCount ?? 0;
         return (
             <>
                 <div className={styles.terrainLabel}>STAGE {stageNumber} — DEFEND</div>
-                <div className={styles.terrainBar}>
-                    <div className={styles.terrainFill} style={{ width: `${hpPct}%`, background: hpColor }} />
-                </div>
                 <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
-                    HP: {Math.ceil(hp)} / {MAX_HEALTH}
+                    ENEMIES: {alive}
                     {tdBeatsRemaining != null && tdBeatsRemaining > 0 && (
                         <span style={{ marginLeft: '8px', color: '#ff8888' }}>WAVE {tdBeatsRemaining}</span>
                     )}
@@ -140,7 +286,7 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, t
     const remainingPct = terrainTotal > 0 ? Math.max(0, (terrainRemaining / terrainTotal) * 100) : 100;
     return (
         <>
-            <div className={styles.terrainLabel}>STAGE {stageNumber} — DIG</div>
+            <div className={styles.terrainLabel}>STAGE {stageNumber} — READY</div>
             <div className={styles.terrainBar}>
                 <div className={styles.terrainFill} style={{ width: `${remainingPct}%` }} />
             </div>

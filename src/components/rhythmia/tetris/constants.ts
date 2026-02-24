@@ -85,6 +85,7 @@ export const COLORS: Record<string, string> = {
     Z: '#f00000',
     J: '#0000f0',
     L: '#f0a000',
+    garbage: '#666666',
 };
 
 // Standard Tetris colors for each piece type
@@ -149,7 +150,7 @@ export const TERRAINS_PER_WORLD = 4;
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 
 // ===== Item Definitions =====
-import type { ItemType, WeaponCard } from './types';
+import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState } from './types';
 
 export const ITEMS: ItemType[] = [
     { id: 'stone',    name: 'Stone Fragment',  nameJa: '石片',     icon: '🪨', color: '#8B8B8B', glowColor: '#A0A0A0', rarity: 'common',    dropWeight: 40 },
@@ -165,139 +166,172 @@ export const ITEM_MAP: Record<string, ItemType> = Object.fromEntries(ITEMS.map(i
 // Total drop weight for probability calculation
 export const TOTAL_DROP_WEIGHT = ITEMS.reduce((sum, item) => sum + item.dropWeight, 0);
 
-// ===== Weapon Card Definitions =====
-export const WEAPON_CARDS: WeaponCard[] = [
+// ===== Rogue-Like Card Definitions =====
+export const ROGUE_CARDS: RogueCard[] = [
+    // --- COMMON ---
     {
-        id: 'stone_blade',
-        name: 'Stone Blade',
-        nameJa: '石の刃',
-        icon: '🗡️',
-        color: '#9E9E9E',
-        glowColor: '#BDBDBD',
-        description: '+10% terrain damage',
-        descriptionJa: '地形ダメージ+10%',
-        damageMultiplier: 1.1,
-        recipe: [{ itemId: 'stone', count: 3 }],
+        id: 'stone_shield', name: 'Stone Shield', nameJa: '石の盾', icon: '🛡️',
+        color: '#9E9E9E', glowColor: '#BDBDBD',
+        description: 'First miss per stage doesn\'t break combo',
+        descriptionJa: 'ステージ毎の最初のミスでコンボが途切れない',
+        rarity: 'common', baseCost: [{ itemId: 'stone', count: 3 }],
+        attribute: 'shield', attributeValue: 1,
     },
     {
-        id: 'iron_pickaxe',
-        name: 'Iron Pickaxe',
-        nameJa: '鉄のピッケル',
-        icon: '⛏️',
-        color: '#B87333',
-        glowColor: '#D4956B',
-        description: '+20% terrain damage',
-        descriptionJa: '地形ダメージ+20%',
-        damageMultiplier: 1.2,
-        recipe: [{ itemId: 'iron', count: 3 }],
+        id: 'rhythm_cushion', name: 'Rhythm Cushion', nameJa: 'リズムクッション', icon: '🎵',
+        color: '#8BC34A', glowColor: '#AED581',
+        description: '+3% wider beat timing window',
+        descriptionJa: 'ビート判定範囲+3%',
+        rarity: 'common', baseCost: [{ itemId: 'stone', count: 2 }, { itemId: 'iron', count: 1 }],
+        attribute: 'beat_extend', attributeValue: 0.03,
     },
     {
-        id: 'crystal_wand',
-        name: 'Crystal Wand',
-        nameJa: '水晶の杖',
-        icon: '🪄',
-        color: '#4FC3F7',
-        glowColor: '#81D4FA',
-        description: '+30% damage, wider beat window',
-        descriptionJa: 'ダメージ+30%、ビート判定拡大',
-        damageMultiplier: 1.3,
-        specialEffect: 'wide_beat',
-        recipe: [{ itemId: 'crystal', count: 2 }, { itemId: 'stone', count: 2 }],
+        id: 'iron_pickaxe', name: 'Iron Pickaxe', nameJa: '鉄のピッケル', icon: '⛏️',
+        color: '#B87333', glowColor: '#D4956B',
+        description: '+15% terrain damage on perfect beats',
+        descriptionJa: 'パーフェクトビート時の地形ダメージ+15%',
+        rarity: 'common', baseCost: [{ itemId: 'iron', count: 3 }],
+        attribute: 'terrain_surge', attributeValue: 0.15,
     },
     {
-        id: 'gold_hammer',
-        name: 'Gold Hammer',
-        nameJa: '黄金のハンマー',
-        icon: '🔨',
-        color: '#FFD700',
-        glowColor: '#FFECB3',
-        description: '+40% terrain damage',
-        descriptionJa: '地形ダメージ+40%',
-        damageMultiplier: 1.4,
-        recipe: [{ itemId: 'gold', count: 2 }, { itemId: 'iron', count: 2 }],
+        id: 'score_coin', name: 'Score Coin', nameJa: 'スコアコイン', icon: '🪙',
+        color: '#FFC107', glowColor: '#FFE082',
+        description: '+10% score multiplier',
+        descriptionJa: 'スコア倍率+10%',
+        rarity: 'common', baseCost: [{ itemId: 'stone', count: 2 }],
+        attribute: 'score_boost', attributeValue: 0.10,
     },
     {
-        id: 'obsidian_edge',
-        name: 'Obsidian Edge',
-        nameJa: '黒曜の刃',
-        icon: '🌑',
-        color: '#9C27B0',
-        glowColor: '#CE93D8',
-        description: '+60% damage, shatter effect',
-        descriptionJa: 'ダメージ+60%、粉砕効果',
-        damageMultiplier: 1.6,
-        specialEffect: 'shatter',
-        recipe: [{ itemId: 'obsidian', count: 1 }, { itemId: 'iron', count: 2 }],
+        id: 'slow_feather', name: 'Slow Feather', nameJa: '減速の羽根', icon: '🪶',
+        color: '#90CAF9', glowColor: '#BBDEFB',
+        description: '-10% piece gravity speed',
+        descriptionJa: '落下速度-10%',
+        rarity: 'common', baseCost: [{ itemId: 'stone', count: 1 }, { itemId: 'iron', count: 2 }],
+        attribute: 'gravity_slow', attributeValue: 0.10,
+    },
+    // --- UNCOMMON ---
+    {
+        id: 'combo_guard', name: 'Combo Guard', nameJa: 'コンボガード', icon: '🔰',
+        color: '#4FC3F7', glowColor: '#81D4FA',
+        description: 'Missed beat continues combo (1 use per stage)',
+        descriptionJa: 'ミス時もコンボ継続（ステージ毎1回）',
+        rarity: 'uncommon', baseCost: [{ itemId: 'crystal', count: 2 }, { itemId: 'stone', count: 2 }],
+        attribute: 'combo_guard', attributeValue: 1,
     },
     {
-        id: 'star_cannon',
-        name: 'Star Cannon',
-        nameJa: '星砲',
-        icon: '💫',
-        color: '#E0E0E0',
-        glowColor: '#FFFFFF',
-        description: '+80% damage, burst particles',
-        descriptionJa: 'ダメージ+80%、爆発効果',
-        damageMultiplier: 1.8,
-        specialEffect: 'burst',
-        recipe: [{ itemId: 'star', count: 1 }, { itemId: 'crystal', count: 2 }],
+        id: 'crystal_lens', name: 'Crystal Lens', nameJa: '水晶レンズ', icon: '🔮',
+        color: '#4FC3F7', glowColor: '#81D4FA',
+        description: '+5% wider beat timing window',
+        descriptionJa: 'ビート判定範囲+5%',
+        rarity: 'uncommon', baseCost: [{ itemId: 'crystal', count: 2 }],
+        attribute: 'beat_extend', attributeValue: 0.05,
+    },
+    {
+        id: 'combo_ring', name: 'Combo Ring', nameJa: 'コンボリング', icon: '💍',
+        color: '#AB47BC', glowColor: '#CE93D8',
+        description: 'Combo multiplier grows 50% faster',
+        descriptionJa: 'コンボ倍率の成長+50%',
+        rarity: 'uncommon', baseCost: [{ itemId: 'crystal', count: 1 }, { itemId: 'iron', count: 2 }],
+        attribute: 'combo_amplify', attributeValue: 1.5,
+    },
+    {
+        id: 'lucky_charm', name: 'Lucky Charm', nameJa: '幸運のお守り', icon: '🍀',
+        color: '#66BB6A', glowColor: '#A5D6A7',
+        description: '+15% higher rarity material drops',
+        descriptionJa: 'レアアイテムドロップ率+15%',
+        rarity: 'uncommon', baseCost: [{ itemId: 'iron', count: 2 }, { itemId: 'crystal', count: 1 }],
+        attribute: 'lucky_drops', attributeValue: 0.15,
+    },
+    // --- RARE ---
+    {
+        id: 'gold_surge', name: 'Gold Surge', nameJa: '黄金の波動', icon: '✨',
+        color: '#FFD700', glowColor: '#FFECB3',
+        description: '+30% terrain damage on perfect beats',
+        descriptionJa: 'パーフェクトビート時の地形ダメージ+30%',
+        rarity: 'rare', baseCost: [{ itemId: 'gold', count: 2 }, { itemId: 'iron', count: 2 }],
+        attribute: 'terrain_surge', attributeValue: 0.30,
+    },
+    {
+        id: 'gold_crown', name: 'Gold Crown', nameJa: '黄金の冠', icon: '👑',
+        color: '#FFD700', glowColor: '#FFECB3',
+        description: '+25% score multiplier',
+        descriptionJa: 'スコア倍率+25%',
+        rarity: 'rare', baseCost: [{ itemId: 'gold', count: 2 }, { itemId: 'crystal', count: 1 }],
+        attribute: 'score_boost', attributeValue: 0.25,
+    },
+    {
+        id: 'double_guard', name: 'Double Guard', nameJa: 'ダブルガード', icon: '🔰',
+        color: '#FFD700', glowColor: '#FFECB3',
+        description: 'Missed beat continues combo (2 uses per stage)',
+        descriptionJa: 'ミス時もコンボ継続（ステージ毎2回）',
+        rarity: 'rare', baseCost: [{ itemId: 'gold', count: 2 }, { itemId: 'crystal', count: 2 }],
+        attribute: 'combo_guard', attributeValue: 2,
+    },
+    // --- EPIC ---
+    {
+        id: 'obsidian_heart', name: 'Obsidian Heart', nameJa: '黒曜の心臓', icon: '🖤',
+        color: '#9C27B0', glowColor: '#CE93D8',
+        description: '-25% piece gravity speed',
+        descriptionJa: '落下速度-25%',
+        rarity: 'epic', baseCost: [{ itemId: 'obsidian', count: 1 }, { itemId: 'gold', count: 1 }],
+        attribute: 'gravity_slow', attributeValue: 0.25,
+    },
+    {
+        id: 'void_lens', name: 'Void Lens', nameJa: '虚空のレンズ', icon: '🌑',
+        color: '#9C27B0', glowColor: '#CE93D8',
+        description: '+8% wider beat timing window',
+        descriptionJa: 'ビート判定範囲+8%',
+        rarity: 'epic', baseCost: [{ itemId: 'obsidian', count: 1 }, { itemId: 'crystal', count: 2 }],
+        attribute: 'beat_extend', attributeValue: 0.08,
+    },
+    // --- LEGENDARY ---
+    {
+        id: 'star_heart', name: 'Star Heart', nameJa: '星の心臓', icon: '⭐',
+        color: '#E0E0E0', glowColor: '#FFFFFF',
+        description: 'Missed beat continues combo (3 uses per stage)',
+        descriptionJa: 'ミス時もコンボ継続（ステージ毎3回）',
+        rarity: 'legendary', baseCost: [{ itemId: 'star', count: 1 }, { itemId: 'obsidian', count: 1 }],
+        attribute: 'combo_guard', attributeValue: 3,
+    },
+    {
+        id: 'mandarin_dragon', name: 'Mandarin Dragon', nameJa: '蜜柑龍', icon: '🐉',
+        color: '#FF8C00', glowColor: '#FFB300',
+        description: 'Enables Dragon Gauge — T-spins charge Fury, Tetrises charge Might. When both full, Dragon Breath destroys all terrain!',
+        descriptionJa: '龍ゲージ解放 — Tスピンで怒り、テトリスで力をチャージ。両方満タンで龍のブレスが全地形を破壊！',
+        rarity: 'legendary', baseCost: [{ itemId: 'star', count: 1 }, { itemId: 'gold', count: 2 }],
+        attribute: 'dragon_boost', attributeValue: 1.0,
     },
 ];
 
-export const WEAPON_CARD_MAP: Record<string, WeaponCard> = Object.fromEntries(WEAPON_CARDS.map(c => [c.id, c]));
+export const ROGUE_CARD_MAP: Record<string, RogueCard> = Object.fromEntries(
+    ROGUE_CARDS.map(c => [c.id, c])
+);
 
-// ===== Shop Items — purchasable weapons using ore currency =====
-import type { ShopItem } from './types';
+// Rarity weights for card offer selection
+export const RARITY_OFFER_WEIGHTS: Record<string, number> = {
+    common: 40,
+    uncommon: 30,
+    rare: 18,
+    epic: 9,
+    legendary: 3,
+};
 
-export const SHOP_ITEMS: ShopItem[] = WEAPON_CARDS.map(card => ({
-    id: card.id,
-    name: card.name,
-    nameJa: card.nameJa,
-    icon: card.icon,
-    color: card.color,
-    glowColor: card.glowColor,
-    description: card.description,
-    descriptionJa: card.descriptionJa,
-    cost: card.recipe,
-    producesCardId: card.id,
-    stats: [
-        { label: 'Damage', value: `+${Math.round((card.damageMultiplier - 1) * 100)}%`, color: '#FF6B6B' },
-        ...(card.specialEffect === 'wide_beat' ? [{ label: 'Beat Window', value: 'Extended', color: '#4FC3F7' }] : []),
-        ...(card.specialEffect === 'shatter' ? [{ label: 'Special', value: 'Shatter', color: '#CE93D8' }] : []),
-        ...(card.specialEffect === 'burst' ? [{ label: 'Special', value: 'Burst', color: '#FFFFFF' }] : []),
-    ],
-    components: card.recipe.map(r => r.itemId),
-    rarity: card.damageMultiplier >= 1.8 ? 'legendary' :
-            card.damageMultiplier >= 1.5 ? 'epic' :
-            card.damageMultiplier >= 1.3 ? 'rare' :
-            card.damageMultiplier >= 1.2 ? 'uncommon' : 'common',
-}));
+// Default (zero) active effects
+export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
+    comboGuardUsesRemaining: 0,
+    shieldActive: false,
+    terrainSurgeBonus: 0,
+    beatExtendBonus: 0,
+    scoreBoostMultiplier: 1,
+    gravitySlowFactor: 1,
+    luckyDropsBonus: 0,
+    comboAmplifyFactor: 1,
+    dragonBoostEnabled: false,
+    dragonBoostChargeMultiplier: 1,
+};
 
-// ===== Treasure Definitions =====
-import type { TreasureType } from './types';
-
-export const TREASURES: TreasureType[] = [
-    { id: 'copper_coin',   name: 'Copper Coin',      nameJa: '銅貨',       icon: '🪙', color: '#B87333', glowColor: '#D4956B', rarity: 'common',    value: 1,    dropWeight: 40 },
-    { id: 'silver_coin',   name: 'Silver Coin',      nameJa: '銀貨',       icon: '🥈', color: '#C0C0C0', glowColor: '#E0E0E0', rarity: 'uncommon',  value: 5,    dropWeight: 25 },
-    { id: 'gold_coin',     name: 'Gold Coin',        nameJa: '金貨',       icon: '🥇', color: '#FFD700', glowColor: '#FFECB3', rarity: 'rare',      value: 25,   dropWeight: 15 },
-    { id: 'ruby',          name: 'Ruby',             nameJa: 'ルビー',     icon: '🔴', color: '#E53935', glowColor: '#EF9A9A', rarity: 'rare',      value: 50,   dropWeight: 8 },
-    { id: 'sapphire',      name: 'Sapphire',         nameJa: 'サファイア', icon: '🔵', color: '#1E88E5', glowColor: '#90CAF9', rarity: 'epic',      value: 100,  dropWeight: 5 },
-    { id: 'emerald',       name: 'Emerald',          nameJa: 'エメラルド', icon: '🟢', color: '#43A047', glowColor: '#A5D6A7', rarity: 'epic',      value: 150,  dropWeight: 4 },
-    { id: 'diamond',       name: 'Diamond',          nameJa: 'ダイヤモンド', icon: '💎', color: '#B3E5FC', glowColor: '#E1F5FE', rarity: 'legendary', value: 500,  dropWeight: 2 },
-    { id: 'treasure_chest', name: 'Treasure Chest',  nameJa: '宝箱',       icon: '🏆', color: '#FFB300', glowColor: '#FFE082', rarity: 'legendary', value: 1000, dropWeight: 1 },
-];
-
-export const TREASURE_MAP: Record<string, TreasureType> = Object.fromEntries(TREASURES.map(t => [t.id, t]));
-export const TOTAL_TREASURE_DROP_WEIGHT = TREASURES.reduce((sum, t) => sum + t.dropWeight, 0);
-
-// Treasure drop chance per terrain damage (separate from item drops)
-export const TREASURE_DROP_CHANCE = 0.25;
-// Max floating treasures on screen
-export const MAX_FLOATING_TREASURES = 8;
-// Floating treasure animation duration (ms)
-export const TREASURE_FLOAT_DURATION = 1000;
-// Gold-to-silver conversion rate (100 silver = 1 gold display unit)
-export const SILVER_PER_GOLD = 100;
+// Max cards to offer per selection
+export const CARDS_OFFERED = 3;
 
 // Items dropped per terrain damage unit
 export const ITEMS_PER_TERRAIN_DAMAGE = 0.3;
@@ -311,6 +345,32 @@ export const FLOAT_DURATION = 800;
 // Terrain particle settings
 export const TERRAIN_PARTICLES_PER_LINE = 15;
 export const TERRAIN_PARTICLE_LIFETIME = 600;
+
+// ===== Mandarin Fever Dragon Boost =====
+export const DRAGON_FURY_MAX = 10;
+export const DRAGON_MIGHT_MAX = 10;
+export const DRAGON_BREATH_DURATION = 3000; // ms
+export const DRAGON_BREATH_SCORE_BONUS = 10000;
+
+// Fury gauge charge amounts by T-spin type and line count
+export const DRAGON_FURY_CHARGE: Record<string, Record<number, number>> = {
+    mini:  { 0: 1, 1: 1, 2: 2 },
+    full:  { 0: 2, 1: 2, 2: 3, 3: 5 },
+};
+
+// Might gauge charge amounts by line count
+export const DRAGON_MIGHT_CHARGE: Record<number, number> = {
+    3: 1,  // Triple
+    4: 4,  // Tetris
+};
+
+export const DEFAULT_DRAGON_GAUGE: DragonGaugeState = {
+    furyGauge: 0,
+    mightGauge: 0,
+    isBreathing: false,
+    breathStartTime: 0,
+    enabled: false,
+};
 
 // ===== Tower Defense Settings =====
 export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn (world units)
@@ -335,11 +395,27 @@ export const MAX_HEALTH = 100;
 export const ENEMY_REACH_DAMAGE = 15;    // Damage when an enemy reaches the tower
 export const ENEMY_HP = 3;              // Default HP for each enemy
 export const BULLET_SPEED = 18;         // Horizontal launch speed (units/sec)
-export const BULLET_GRAVITY = 40;       // Gravity acceleration (units/sec²)
+export const BULLET_GRAVITY = 9.8;      // Gravity acceleration (units/sec²) — matches Earth gravity
 export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
 export const BULLET_DAMAGE = 1;         // Damage per bullet hit
 export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
 export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
+
+// ===== Corruption & Anomaly Settings =====
+// Side board minimap dimensions
+export const SIDE_BOARD_COLS = 9;
+export const SIDE_BOARD_ROWS = 18;
+export const SIDE_BOARD_CELL_SIZE = 8;   // Small minimap cells
+
+// Terrain corruption (runs during TD phase only)
+export const CORRUPTION_CHANCE_PER_SECOND = 0.15;   // 15% chance per second to infect a block
+export const CORRUPTION_GROWTH_INTERVAL = 10000;     // 10s per growth tick (ms)
+export const CORRUPTION_MAX_LEVEL = 5;
+export const CORRUPTION_MAX_TERRAIN_NODES = 20;      // Max corrupted cells on terrain
+export const CORRUPTION_SPREAD_CHANCE = 0.25;
+export const CORRUPTION_ENEMY_SPAWN_CHANCE = 0.3;    // 30% chance per beat for mature cell to spawn enemy
+export const CORRUPTION_ANOMALY_THRESHOLD = 12;      // Cells needed to trigger anomaly state
+export const TERRAIN_RADIUS = 18;                    // Matches GRID_HALF
 
 // ===== Helper Constants =====
 export const ROTATION_NAMES = ['0', 'R', '2', 'L'];

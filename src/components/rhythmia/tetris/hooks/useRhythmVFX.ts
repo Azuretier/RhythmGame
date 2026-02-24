@@ -109,6 +109,48 @@ interface ComboBreakRing {
     dashed: boolean;
 }
 
+// ===== Dragon Breath VFX Types =====
+
+interface DragonFireParticle extends BaseParticle {
+    scaleX: number;
+    heat: number; // 0-1, affects color gradient (0=outer crimson, 1=white core)
+}
+
+interface DragonEmber {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    life: number;
+    maxLife: number;
+    size: number;
+    color: string;
+    flicker: number;
+    flickerSpeed: number;
+}
+
+interface DragonEnergyTrail {
+    x: number;
+    y: number;
+    targetX: number;
+    targetY: number;
+    progress: number; // 0-1
+    speed: number;
+    life: number;
+    color: string;
+    width: number;
+    trail: { x: number; y: number }[];
+}
+
+interface DragonBreathWave {
+    x: number;
+    y: number;
+    radius: number;
+    maxRadius: number;
+    life: number;
+    maxLife: number;
+}
+
 // All active effects managed by the VFX system
 interface VFXState {
     beatRings: BeatRing[];
@@ -124,6 +166,14 @@ interface VFXState {
     isFever: boolean;
     feverHue: number;
     combo: number;
+    // Dragon Breath VFX
+    dragonFireParticles: DragonFireParticle[];
+    dragonEmbers: DragonEmber[];
+    dragonEnergyTrails: DragonEnergyTrail[];
+    dragonBreathWaves: DragonBreathWave[];
+    isDragonBreathing: boolean;
+    dragonBreathPhase: number; // 0-1 animation progress
+    dragonFlashAlpha: number;  // screen flash intensity
 }
 
 // Board geometry needed for coordinate conversion
@@ -154,6 +204,13 @@ export function useRhythmVFX() {
         isFever: false,
         feverHue: 0,
         combo: 0,
+        dragonFireParticles: [],
+        dragonEmbers: [],
+        dragonEnergyTrails: [],
+        dragonBreathWaves: [],
+        isDragonBreathing: false,
+        dragonBreathPhase: 0,
+        dragonFlashAlpha: 0,
     });
     const boardGeoRef = useRef<BoardGeometry>({ left: 0, top: 0, cellSize: 28, width: 280, height: 560 });
     const animFrameRef = useRef<number>(0);
@@ -450,6 +507,107 @@ export function useRhythmVFX() {
         }
     }, []);
 
+    // ===== Dragon Breath VFX Spawners =====
+
+    const spawnDragonEnergyTrail = useCallback((gauge: 'fury' | 'might', newValue: number) => {
+        const geo = boardGeoRef.current;
+        const state = stateRef.current;
+        const cx = geo.left + geo.width / 2;
+        const cy = geo.top + geo.height / 2;
+
+        // Trails converge toward left side of board (where gauge UI lives)
+        const targetX = geo.left - 30;
+        const targetY = gauge === 'fury'
+            ? geo.top + geo.height * 0.25
+            : geo.top + geo.height * 0.75;
+
+        const count = 3 + Math.floor(newValue * 0.5);
+        const colors = gauge === 'fury'
+            ? ['#FFB300', '#FF8C00', '#FFF8E1']  // Gold/orange
+            : ['#DC143C', '#C41E3A', '#FF6B6B'];  // Crimson/red
+
+        for (let i = 0; i < count; i++) {
+            state.dragonEnergyTrails.push({
+                x: cx + (Math.random() - 0.5) * geo.width * 0.6,
+                y: cy + (Math.random() - 0.5) * geo.height * 0.4,
+                targetX: targetX + (Math.random() - 0.5) * 20,
+                targetY: targetY + (Math.random() - 0.5) * 30,
+                progress: 0,
+                speed: 1.5 + Math.random() * 1.5,
+                life: 1,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                width: 1.5 + Math.random() * 2,
+                trail: [],
+            });
+        }
+    }, []);
+
+    const spawnDragonFireBurst = useCallback(() => {
+        const geo = boardGeoRef.current;
+        const state = stateRef.current;
+        const cx = geo.left + geo.width / 2;
+        const cy = geo.top + geo.height * 0.4;
+
+        // Large fire particle burst from board center
+        for (let i = 0; i < 60; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 2 + Math.random() * 8;
+            const heat = Math.random();
+
+            state.dragonFireParticles.push({
+                x: cx + (Math.random() - 0.5) * 40,
+                y: cy + (Math.random() - 0.5) * 30,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 3 - Math.random() * 4,
+                life: 1,
+                maxLife: 1,
+                color: heat > 0.7 ? '#FFF8E1' : heat > 0.4 ? '#FF8C00' : '#DC143C',
+                alpha: 0.8 + Math.random() * 0.2,
+                size: 4 + Math.random() * 8 + heat * 6,
+                scaleX: 0.8 + Math.random() * 0.4,
+                heat,
+            });
+        }
+
+        // Dragon breath shockwave
+        state.dragonBreathWaves.push({
+            x: cx,
+            y: cy,
+            radius: 0,
+            maxRadius: Math.max(geo.width, geo.height) * 1.2,
+            life: 1,
+            maxLife: 1,
+        });
+
+        // Screen flash
+        state.dragonFlashAlpha = 0.8;
+
+        // Mark breathing state
+        state.isDragonBreathing = true;
+        state.dragonBreathPhase = 0;
+    }, []);
+
+    const spawnDragonEmbers = useCallback((count: number) => {
+        const geo = boardGeoRef.current;
+        const state = stateRef.current;
+        const colors = ['#FFB300', '#FF8C00', '#DC143C', '#FFF8E1', '#C41E3A'];
+
+        for (let i = 0; i < count; i++) {
+            state.dragonEmbers.push({
+                x: geo.left + Math.random() * geo.width,
+                y: geo.top + geo.height + Math.random() * 10,
+                vx: (Math.random() - 0.5) * 2,
+                vy: -1 - Math.random() * 3,
+                life: 1,
+                maxLife: 1,
+                size: 1 + Math.random() * 3,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                flicker: Math.random() * Math.PI * 2,
+                flickerSpeed: 5 + Math.random() * 10,
+            });
+        }
+    }, []);
+
     // ===== Main VFX Event Handler =====
 
     const emit = useCallback((event: VFXEvent) => {
@@ -504,8 +662,20 @@ export function useRhythmVFX() {
             case 'feverEnd':
                 state.isFever = false;
                 break;
+
+            case 'dragonGaugeCharge':
+                spawnDragonEnergyTrail(event.gauge, event.newValue);
+                break;
+
+            case 'dragonBreathStart':
+                spawnDragonFireBurst();
+                break;
+
+            case 'dragonBreathEnd':
+                state.isDragonBreathing = false;
+                break;
         }
-    }, [spawnBeatRing, spawnEqualizerBars, spawnGlitchParticles, spawnRotationTrail, spawnHardDropParticles, spawnSpeedLines, spawnAscendingParticles, spawnComboBreakEffect]);
+    }, [spawnBeatRing, spawnEqualizerBars, spawnGlitchParticles, spawnRotationTrail, spawnHardDropParticles, spawnSpeedLines, spawnAscendingParticles, spawnComboBreakEffect, spawnDragonEnergyTrail, spawnDragonFireBurst]);
 
     // ===== Canvas Render Loop =====
 
@@ -846,6 +1016,186 @@ export function useRhythmVFX() {
             ctx.restore();
         }
 
+        // --- Dragon Energy Trails ---
+        for (let i = state.dragonEnergyTrails.length - 1; i >= 0; i--) {
+            const trail = state.dragonEnergyTrails[i];
+            trail.progress += trail.speed * dt;
+            trail.life -= dt * 1.2;
+
+            if (trail.life <= 0 || trail.progress >= 1) {
+                state.dragonEnergyTrails.splice(i, 1);
+                continue;
+            }
+
+            // Ease-in-out interpolation
+            const t = trail.progress;
+            const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            const cx = trail.x + (trail.targetX - trail.x) * ease;
+            const cy = trail.y + (trail.targetY - trail.y) * ease;
+
+            // Record trail points
+            trail.trail.push({ x: cx, y: cy });
+            if (trail.trail.length > 8) trail.trail.shift();
+
+            // Draw energy trail with glow
+            ctx.save();
+            ctx.globalAlpha = trail.life * 0.8;
+            ctx.strokeStyle = trail.color;
+            ctx.shadowColor = trail.color;
+            ctx.shadowBlur = 12;
+            ctx.lineWidth = trail.width;
+            ctx.lineCap = 'round';
+
+            if (trail.trail.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(trail.trail[0].x, trail.trail[0].y);
+                for (let j = 1; j < trail.trail.length; j++) {
+                    ctx.lineTo(trail.trail[j].x, trail.trail[j].y);
+                }
+                ctx.stroke();
+            }
+
+            // Bright head particle
+            ctx.fillStyle = '#FFF8E1';
+            ctx.shadowColor = '#FFB300';
+            ctx.shadowBlur = 16;
+            ctx.beginPath();
+            ctx.arc(cx, cy, trail.width * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // --- Dragon Fire Particles ---
+        for (let i = state.dragonFireParticles.length - 1; i >= 0; i--) {
+            const p = state.dragonFireParticles[i];
+            p.life -= dt * 1.2;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy -= 2 * dt; // Fire rises (anti-gravity)
+            p.vx *= 0.98;
+
+            if (p.life <= 0) {
+                state.dragonFireParticles.splice(i, 1);
+                continue;
+            }
+
+            ctx.save();
+            const radius = p.size * p.life;
+
+            // Radial gradient: white core → orange → crimson
+            const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius);
+            if (p.heat > 0.7) {
+                grad.addColorStop(0, 'rgba(255, 248, 225, 0.9)');
+                grad.addColorStop(0.4, 'rgba(255, 179, 0, 0.6)');
+                grad.addColorStop(1, 'rgba(220, 20, 60, 0)');
+            } else if (p.heat > 0.4) {
+                grad.addColorStop(0, 'rgba(255, 179, 0, 0.8)');
+                grad.addColorStop(0.5, 'rgba(255, 140, 0, 0.4)');
+                grad.addColorStop(1, 'rgba(196, 30, 58, 0)');
+            } else {
+                grad.addColorStop(0, 'rgba(220, 20, 60, 0.7)');
+                grad.addColorStop(0.6, 'rgba(196, 30, 58, 0.3)');
+                grad.addColorStop(1, 'rgba(139, 0, 0, 0)');
+            }
+
+            ctx.globalAlpha = p.life * p.alpha;
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y, radius * p.scaleX, radius, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // --- Dragon Embers ---
+        for (let i = state.dragonEmbers.length - 1; i >= 0; i--) {
+            const ember = state.dragonEmbers[i];
+            ember.life -= dt * 0.5;
+            ember.x += ember.vx;
+            ember.y += ember.vy;
+            ember.vx += (Math.random() - 0.5) * 0.3; // Wind wobble
+            ember.flicker += ember.flickerSpeed * dt;
+
+            if (ember.life <= 0 || ember.y < geo.top - 30) {
+                state.dragonEmbers.splice(i, 1);
+                continue;
+            }
+
+            const flickerAlpha = 0.5 + 0.5 * Math.sin(ember.flicker);
+
+            ctx.save();
+            ctx.globalAlpha = ember.life * flickerAlpha;
+            ctx.fillStyle = ember.color;
+            ctx.shadowColor = ember.color;
+            ctx.shadowBlur = ember.size * 4;
+
+            // Small glowing square
+            const s = ember.size * ember.life;
+            ctx.fillRect(ember.x - s / 2, ember.y - s / 2, s, s);
+            ctx.restore();
+        }
+
+        // --- Dragon Breath Waves ---
+        for (let i = state.dragonBreathWaves.length - 1; i >= 0; i--) {
+            const wave = state.dragonBreathWaves[i];
+            wave.life -= dt * 1.5;
+            wave.radius += (wave.maxRadius - wave.radius) * dt * 4;
+
+            if (wave.life <= 0) {
+                state.dragonBreathWaves.splice(i, 1);
+                continue;
+            }
+
+            ctx.save();
+            ctx.globalAlpha = wave.life * 0.4;
+            // Gold-orange gradient ring
+            ctx.strokeStyle = `rgba(255, 179, 0, ${wave.life})`;
+            ctx.lineWidth = 4 * wave.life;
+            ctx.shadowColor = '#FFB300';
+            ctx.shadowBlur = 20 * wave.life;
+            ctx.beginPath();
+            ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Inner crimson ring
+            ctx.strokeStyle = `rgba(220, 20, 60, ${wave.life * 0.5})`;
+            ctx.lineWidth = 2 * wave.life;
+            ctx.beginPath();
+            ctx.arc(wave.x, wave.y, wave.radius * 0.7, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // --- Dragon Breath Screen Flash ---
+        if (state.dragonFlashAlpha > 0) {
+            state.dragonFlashAlpha = Math.max(0, state.dragonFlashAlpha - dt * 2);
+            ctx.save();
+            ctx.globalAlpha = state.dragonFlashAlpha;
+            ctx.fillStyle = '#FFB300';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
+        // --- Dragon Breath Board Glow (during breathing) ---
+        if (state.isDragonBreathing) {
+            state.dragonBreathPhase = Math.min(1, state.dragonBreathPhase + dt * 0.33);
+
+            // Gold border glow around board
+            ctx.save();
+            const pulseGlow = 0.3 + 0.3 * Math.sin(time * 0.006);
+            ctx.globalAlpha = pulseGlow;
+            ctx.strokeStyle = '#FFB300';
+            ctx.shadowColor = '#FF8C00';
+            ctx.shadowBlur = 25;
+            ctx.lineWidth = 3;
+            ctx.strokeRect(geo.left - 4, geo.top - 4, geo.width + 8, geo.height + 8);
+            ctx.restore();
+
+            // Continuous embers during breath
+            if (Math.random() > 0.4) {
+                spawnDragonEmbers(2);
+            }
+        }
+
         // --- Fever continuous effects ---
         if (state.isFever && state.combo >= 10) {
             // Continuous ascending particles
@@ -857,7 +1207,7 @@ export function useRhythmVFX() {
         if (activeRef.current) {
             animFrameRef.current = requestAnimationFrame(render);
         }
-    }, [spawnAscendingParticles]);
+    }, [spawnAscendingParticles, spawnDragonEmbers]);
 
     // Update board geometry for coordinate mapping
     const updateBoardGeometry = useCallback((geo: BoardGeometry) => {

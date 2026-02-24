@@ -50,71 +50,138 @@
   padding: 0 24px 60px;
 }
 
-/* Hero / Tier Display */
-.tierDisplay {
-  text-align: center;
-  padding: 48px 0 40px;
+/* Rank Emblem Hero — centered vertical layout */
+.rankHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 0 32px;
 }
 
-.tierIcon {
-  font-size: 2.5rem;
-  margin-bottom: 12px;
-  display: block;
-  opacity: 0.9;
+.rankEmblem {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+  margin-bottom: 8px;
 }
 
-.tierName {
+.rankEmblemIcon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.rankTitle {
   font-size: 1.6rem;
-  font-weight: 300;
-  letter-spacing: 0.3em;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.rankScore {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  opacity: 0.4;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Score Gauge Section — 4 rows */
+.gaugeSection {
+  max-width: 480px;
+  margin: 0 auto 32px;
+}
+
+/* Row 1: TOTAL SCORE + big number + next rank req */
+.gaugeRow1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.gaugeHeaderLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.gaugeLabel {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.4;
+}
+
+.gaugeBigScore {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.gaugeNextReq {
+  font-size: 0.65rem;
+  opacity: 0.3;
+  letter-spacing: 0.04em;
+}
+
+/* Row 2: Current rank ← → Next rank */
+.gaugeRow2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 6px;
 }
 
-.heroScore {
-  font-size: 2.8rem;
-  font-weight: 200;
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-  color: #ffffff;
-  opacity: 0.9;
-  margin-bottom: 8px;
-}
-
-.tierLabel {
+.gaugeRankCurrent {
   font-size: 0.7rem;
-  opacity: 0.3;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  margin-bottom: 32px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
 }
 
-/* XP Progress Bar */
-.progressContainer {
-  max-width: 400px;
-  margin: 0 auto;
+.gaugeRankNext {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  opacity: 0.4;
 }
 
+/* Row 3: Gauge bar */
 .progressBar {
   width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 8px;
 }
 
 .progressFill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 4px;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.progressLabels {
+/* Row 4: Score markers below gauge */
+.gaugeRow4 {
   display: flex;
   justify-content: space-between;
-  font-size: 0.65rem;
-  opacity: 0.3;
-  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.gaugeScore {
+  font-size: 0.6rem;
+  opacity: 0.25;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Daily Bonus Card */
@@ -217,20 +284,26 @@
 
 /* Tier Roadmap */
 .tierRoadmap {
-  display: flex;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
   margin-bottom: 40px;
 }
 
 .tierStep {
-  flex: 1;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 20px 16px;
   text-align: center;
   position: relative;
-  transition: all 0.3s;
+  transition: border-color 0.3s, background 0.3s;
+  cursor: default;
+}
+
+.tierStep:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .tierStep.active {
@@ -242,6 +315,10 @@
   opacity: 0.5;
 }
 
+.tierStep.completed:hover {
+  opacity: 1;
+}
+
 .tierStepIcon {
   font-size: 1.5rem;
   margin-bottom: 8px;
@@ -251,14 +328,14 @@
 .tierStepName {
   font-size: 0.8rem;
   font-weight: 500;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   margin-bottom: 4px;
 }
 
 .tierStepXP {
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   opacity: 0.3;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
 }
 
 .tierStepCheck {
@@ -267,6 +344,101 @@
   right: 10px;
   font-size: 0.7rem;
   opacity: 0.5;
+}
+
+/* Tier hover bar popup */
+.tierBarPopup {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  min-width: 300px;
+  padding: 18px 22px;
+  background: rgba(16, 16, 28, 0.96);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  animation: barPopIn 0.15s ease-out;
+}
+
+.tierBarPopup::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+
+@keyframes barPopIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.tierBarHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.85rem;
+}
+
+.tierBarTitle {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.tierBarLabels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.tierBarLabel {
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  opacity: 0.45;
+}
+
+.tierBarTrack {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.tierBarFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tierBarScores {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.tierBarScore {
+  font-size: 0.6rem;
+  opacity: 0.3;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Streak Display */
@@ -608,7 +780,7 @@
   }
 
   .tierRoadmap {
-    flex-direction: column;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .strategyGrid {
@@ -627,5 +799,9 @@
 
   .badgesGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tierBarPopup {
+    min-width: 180px;
   }
 }

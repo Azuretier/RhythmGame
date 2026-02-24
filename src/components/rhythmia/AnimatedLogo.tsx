@@ -249,8 +249,9 @@ export default function AnimatedLogo({ onComplete }: AnimatedLogoProps) {
       ref={containerRef}
       className={styles.container}
       initial={{ opacity: 1 }}
-      animate={{ opacity: phase >= 5 ? 0 : 1 }}
-      transition={{ duration: 0.6, ease: 'easeInOut' }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
       onClick={skipToEnd}
       onKeyDown={(e) => {
         if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') skipToEnd();
@@ -259,11 +260,15 @@ export default function AnimatedLogo({ onComplete }: AnimatedLogoProps) {
       role="button"
       aria-label="Skip animation"
     >
-      {/* Particle canvas */}
-      <canvas ref={canvasRef} className={styles.canvas} />
-
-      {/* Ambient vignette */}
-      <div className={styles.vignette} />
+      {/* Particle canvas & vignette — fade during phase 5, container stays black */}
+      <motion.div
+        animate={{ opacity: phase >= 5 ? 0 : 1 }}
+        transition={{ duration: 0.6, ease: 'easeInOut' }}
+        style={{ position: 'absolute', inset: 0 }}
+      >
+        <canvas ref={canvasRef} className={styles.canvas} />
+        <div className={styles.vignette} />
+      </motion.div>
 
       {/* Central content */}
       <div className={styles.content}>

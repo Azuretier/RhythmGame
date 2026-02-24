@@ -13,12 +13,14 @@ import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/profile/types';
 import type { AdvancementState } from '@/lib/advancements/types';
 import type { LoyaltyState } from '@/lib/loyalty/types';
+import type { SkillTreeState } from '@/lib/skill-tree/types';
 
 const USER_DATA_COLLECTION = 'user_sync';
 
 export interface SyncedUserData {
   profile: UserProfile | null;
   skinId: string | null;
+  skillTree: SkillTreeState | null;
   lastSyncedAt: Timestamp;
 }
 
@@ -27,7 +29,7 @@ export interface SyncedUserData {
  */
 export async function syncUserDataToFirestore(
   uid: string,
-  data: { profile?: UserProfile | null; skinId?: string | null }
+  data: { profile?: UserProfile | null; skinId?: string | null; skillTree?: SkillTreeState | null }
 ): Promise<void> {
   if (!db) return;
 
@@ -40,6 +42,9 @@ export async function syncUserDataToFirestore(
     }
     if (data.skinId !== undefined) {
       payload.skinId = data.skinId;
+    }
+    if (data.skillTree !== undefined) {
+      payload.skillTree = data.skillTree;
     }
 
     await setDoc(docRef, payload, { merge: true });
@@ -66,6 +71,7 @@ export async function loadUserDataFromFirestore(
     return {
       profile: data.profile ?? null,
       skinId: data.skinId ?? null,
+      skillTree: data.skillTree ?? null,
       lastSyncedAt: data.lastSyncedAt ?? Timestamp.now(),
     };
   } catch (error) {

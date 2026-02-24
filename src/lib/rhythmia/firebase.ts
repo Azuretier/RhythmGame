@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
-import { initAppCheck } from "@/lib/firebase/initAppCheck";
+import { initAppCheck, validateAppCheckToken } from "@/lib/firebase/initAppCheck";
 
 const firebaseConfig = {
   //apiKey: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_API_KEY,
@@ -11,7 +11,7 @@ const firebaseConfig = {
   //messagingSenderId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_MESSAGING_SENDER_ID,
   //appId: process.env.NEXT_PUBLIC_RHYTHMIA_FIREBASE_APP_ID,
   apiKey: "AIzaSyBPzQ0xqJYktU6GMp2tzM1nvZJZDz5PWUk",
-  authDomain: "azuret-website.firebaseapp.com",
+  authDomain: "azuretier.net",
   projectId: "azuret-website",
   storageBucket: "azuret-website.firebasestorage.app",
   messagingSenderId: "527106975022",
@@ -27,6 +27,10 @@ let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
 
+// Resolves to true if App Check is not blocking auth (either working or not initialized).
+// Resolves to false if App Check is initialized but broken (ReCAPTCHA failed).
+let appCheckAvailable: Promise<boolean> = Promise.resolve(true);
+
 if (typeof window !== 'undefined' && isConfigured) {
   try {
     app = getApp('rhythmia');
@@ -35,10 +39,13 @@ if (typeof window !== 'undefined' && isConfigured) {
   }
 
   if (app) {
-    initAppCheck(app);
+    const appCheckInstance = initAppCheck(app);
+    appCheckAvailable = appCheckInstance
+      ? validateAppCheckToken(appCheckInstance)
+      : Promise.resolve(true);
     db = getFirestore(app);
     auth = getAuth(app);
   }
 }
 
-export { db, auth, app, isConfigured };
+export { db, auth, app, isConfigured, appCheckAvailable };

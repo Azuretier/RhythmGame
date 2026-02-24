@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMinecraftBoardSocket } from '@/hooks/useMinecraftBoardSocket';
-import BoardRenderer from './BoardRenderer';
+import BoardRenderer from './BoardRenderer3D';
 import PlayerHUD, { InventoryPanel } from './PlayerHUD';
 import CraftingPanel from './CraftingPanel';
 import type { Direction, MCPublicRoom } from '@/types/minecraft-board';
@@ -21,6 +21,7 @@ export default function MinecraftBoardGame() {
     exploredTilesRef, visibleTiles, visiblePlayers, visibleMobs,
     selfState, dayPhase, timeOfDay,
     chatMessages, gameMessage, winner,
+    anomalyAlerts,
     createRoom, joinRoom, getRooms, leaveRoom,
     setReady, startGame,
     move, mine, cancelMine, craft, attack, placeBlock, eat, selectSlot, sendChat,
@@ -35,6 +36,7 @@ export default function MinecraftBoardGame() {
   const [showInventory, setShowInventory] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [showChat, setShowChat] = useState(false);
+  const [viewMode, setViewMode] = useState<'board' | 'fps'>('board');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const browseIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -68,6 +70,7 @@ export default function MinecraftBoardGame() {
       if (e.key === 'e' || e.key === 'E') { setShowCrafting(p => !p); setShowInventory(false); }
       if (e.key === 'i' || e.key === 'I') { setShowInventory(p => !p); setShowCrafting(false); }
       if (e.key === 't' || e.key === 'T') { e.preventDefault(); setShowChat(true); }
+      if (e.key === 'F5') { e.preventDefault(); setViewMode(m => m === 'board' ? 'fps' : 'board'); }
       if (e.key === 'Escape') { setShowCrafting(false); setShowInventory(false); setShowChat(false); }
       // Number keys for hotbar
       const num = parseInt(e.key);
@@ -286,6 +289,7 @@ export default function MinecraftBoardGame() {
               <li>E to open crafting, I for inventory</li>
               <li>Right-click food in hotbar to eat</li>
               <li>1-9 to select hotbar slot</li>
+              <li>F5 to toggle Board / FPS view</li>
               <li>Craft the Ender Portal Frame to win!</li>
             </ul>
           </div>
@@ -372,12 +376,24 @@ export default function MinecraftBoardGame() {
     );
   }
 
+  // === Playing Phase (waiting for initial state) ===
+  if (phase === 'playing' && (!selfState || !playerId)) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.centerBox}>
+          <div className={styles.spinner} />
+          <p>Loading world...</p>
+        </div>
+      </div>
+    );
+  }
+
   // === Playing Phase ===
   if (phase === 'playing' && selfState && playerId) {
     return (
       <div className={styles.page}>
         <div className={styles.gameLayout}>
-          {/* Board */}
+          {/* Main Board */}
           <div className={styles.boardArea}>
             <BoardRenderer
               visibleTiles={visibleTiles}
@@ -391,6 +407,8 @@ export default function MinecraftBoardGame() {
               onMobClick={handleMobClick}
               onPlayerClick={handlePlayerClick}
               onMove={handleMove}
+              activeAnomaly={anomalyAlerts.length > 0}
+              cameraMode={viewMode}
             />
           </div>
 
@@ -476,6 +494,15 @@ export default function MinecraftBoardGame() {
           {/* Leave button */}
           <button className={styles.leaveBtn} onClick={leaveRoom}>
             Leave Game
+          </button>
+
+          {/* View mode toggle */}
+          <button
+            className={styles.viewToggleBtn}
+            onClick={() => setViewMode(m => m === 'board' ? 'fps' : 'board')}
+            title="Toggle view mode (F5)"
+          >
+            {viewMode === 'board' ? '🎮 FPS' : '🗺 Board'}
           </button>
         </div>
       </div>

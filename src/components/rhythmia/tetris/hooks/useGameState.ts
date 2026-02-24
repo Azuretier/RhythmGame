@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, CraftedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState } from '../types';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
-    ITEMS, TOTAL_DROP_WEIGHT, WEAPON_CARDS, WEAPON_CARD_MAP, WORLDS,
+    ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
     ITEMS_PER_TERRAIN_DAMAGE, MAX_FLOATING_ITEMS, FLOAT_DURATION,
     TERRAIN_PARTICLES_PER_LINE, TERRAIN_PARTICLE_LIFETIME,
     TERRAINS_PER_WORLD, TD_WAVE_BEATS,
@@ -11,31 +11,14 @@ import {
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
+    DEFAULT_ACTIVE_EFFECTS, RARITY_OFFER_WEIGHTS, CARDS_OFFERED,
+    DEFAULT_DRAGON_GAUGE, DRAGON_FURY_MAX, DRAGON_MIGHT_MAX,
+    DRAGON_BREATH_DURATION, DRAGON_BREATH_SCORE_BONUS,
+    DRAGON_FURY_CHARGE, DRAGON_MIGHT_CHARGE,
 } from '../constants';
+import type { ProtocolModifiers } from '../protocol';
+import { DEFAULT_PROTOCOL_MODIFIERS } from '../protocol';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
-
-// Card offer constants (moved inline since they were removed from constants.ts)
-const CARDS_OFFERED = 3;
-const getWeaponWeight = (weapon: typeof WEAPON_CARDS[0]) => {
-    // Weight based on damage multiplier (lower multiplier = more common)
-    if (weapon.damageMultiplier <= 1.2) return 10; // common
-    if (weapon.damageMultiplier <= 1.4) return 6;  // uncommon
-    if (weapon.damageMultiplier <= 1.6) return 3;  // rare
-    if (weapon.damageMultiplier <= 1.8) return 2;  // epic
-    return 1; // legendary
-};
-
-// Default active effects (stub - the old card attribute system was removed)
-const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
-    comboGuardUsesRemaining: 0,
-    shieldActive: false,
-    terrainSurgeBonus: 0,
-    beatExtendBonus: 0,
-    scoreBoostMultiplier: 1,
-    gravitySlowFactor: 1,
-    luckyDropsBonus: 0,
-    comboAmplifyFactor: 1,
-};
 
 let nextFloatingId = 0;
 let nextParticleId = 0;
@@ -87,6 +70,10 @@ export function useGameState() {
     // Game mode
     const [gameMode, setGameMode] = useState<GameMode>('vanilla');
 
+    // Protocol modifiers — difficulty scaling applied across all worlds
+    const [protocolMods, setProtocolMods] = useState<ProtocolModifiers>(DEFAULT_PROTOCOL_MODIFIERS);
+    const protocolModsRef = useRef<ProtocolModifiers>(DEFAULT_PROTOCOL_MODIFIERS);
+
     // Terrain phase — vanilla mode alternates between dig and td phases
     const [terrainPhase, setTerrainPhase] = useState<TerrainPhase>('dig');
     const [tdBeatsRemaining, setTdBeatsRemaining] = useState(0);
@@ -124,11 +111,16 @@ export function useGameState() {
     const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
 
     // ===== Rogue-Like Card System =====
-    const [craftedCards, setCraftedCards] = useState<CraftedCard[]>([]);
+    const [equippedCards, setEquippedCards] = useState<EquippedCard[]>([]);
     const [showCardSelect, setShowCardSelect] = useState(false);
     const [offeredCards, setOfferedCards] = useState<CardOffer[]>([]);
     const [activeEffects, setActiveEffects] = useState<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
     const activeEffectsRef = useRef<ActiveEffects>(DEFAULT_ACTIVE_EFFECTS);
+    const [absorbingCardId, setAbsorbingCardId] = useState<string | null>(null);
+
+    // ===== Mandarin Fever Dragon Gauge =====
+    const [dragonGauge, setDragonGauge] = useState<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
+    const dragonGaugeRef = useRef<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -170,7 +162,7 @@ export function useGameState() {
     const tdBeatsRemainingRef = useRef(tdBeatsRemaining);
     const gamePhaseRef = useRef<GamePhase>(gamePhase);
     const inventoryRef = useRef<InventoryItem[]>(inventory);
-    const craftedCardsRef = useRef<CraftedCard[]>(craftedCards);
+    const equippedCardsRef = useRef<EquippedCard[]>(equippedCards);
 
     // Key states for DAS/ARR
     const keyStatesRef = useRef<Record<string, KeyState>>({
@@ -209,7 +201,8 @@ export function useGameState() {
     useEffect(() => { tdBeatsRemainingRef.current = tdBeatsRemaining; }, [tdBeatsRemaining]);
     useEffect(() => { gamePhaseRef.current = gamePhase; }, [gamePhase]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
-    useEffect(() => { craftedCardsRef.current = craftedCards; }, [craftedCards]);
+    useEffect(() => { equippedCardsRef.current = equippedCards; }, [equippedCards]);
+    useEffect(() => { dragonGaugeRef.current = dragonGauge; }, [dragonGauge]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -295,11 +288,48 @@ export function useGameState() {
     // ===== Rogue-Like Card System =====
 
     // Compute active effects from all equipped cards
-    const computeActiveEffects = useCallback((cards: CraftedCard[]): ActiveEffects => {
-        // Note: The old card attribute system was removed in the weapon card refactor
-        // This function now just returns the default effects as a stub
-        // TODO: Implement effects based on WeaponCard.specialEffect if needed
-        return { ...DEFAULT_ACTIVE_EFFECTS };
+    const computeActiveEffects = useCallback((cards: EquippedCard[]): ActiveEffects => {
+        const effects = { ...DEFAULT_ACTIVE_EFFECTS };
+
+        for (const ec of cards) {
+            const card = ROGUE_CARD_MAP[ec.cardId];
+            if (!card) continue;
+
+            const totalValue = card.attributeValue * ec.stackCount;
+
+            switch (card.attribute) {
+                case 'combo_guard':
+                    effects.comboGuardUsesRemaining += totalValue;
+                    break;
+                case 'shield':
+                    effects.shieldActive = true;
+                    break;
+                case 'terrain_surge':
+                    effects.terrainSurgeBonus += totalValue;
+                    break;
+                case 'beat_extend':
+                    effects.beatExtendBonus += totalValue;
+                    break;
+                case 'score_boost':
+                    effects.scoreBoostMultiplier += totalValue;
+                    break;
+                case 'gravity_slow':
+                    effects.gravitySlowFactor = Math.max(0.1, effects.gravitySlowFactor - totalValue);
+                    break;
+                case 'lucky_drops':
+                    effects.luckyDropsBonus += totalValue;
+                    break;
+                case 'combo_amplify':
+                    effects.comboAmplifyFactor *= Math.pow(card.attributeValue, ec.stackCount);
+                    break;
+                case 'dragon_boost':
+                    effects.dragonBoostEnabled = true;
+                    effects.dragonBoostChargeMultiplier *= Math.pow(1 + card.attributeValue * 0.5, ec.stackCount);
+                    break;
+            }
+        }
+
+        return effects;
     }, []);
 
     // Generate card offers for CARD_SELECT phase
@@ -307,24 +337,44 @@ export function useGameState() {
         const costMultiplier = 1 + currentWorldIdx * 0.25;
         const currentInventory = inventoryRef.current;
 
-        // Weighted random selection of CARDS_OFFERED cards (no duplicates)
-        const available = [...WEAPON_CARDS];
-        const selected: typeof WEAPON_CARDS = [];
+        // Group cards by rarity for weighted selection
+        const cardsByRarity: Record<string, typeof ROGUE_CARDS> = {};
+        for (const card of ROGUE_CARDS) {
+            if (!cardsByRarity[card.rarity]) cardsByRarity[card.rarity] = [];
+            cardsByRarity[card.rarity].push(card);
+        }
 
-        for (let i = 0; i < CARDS_OFFERED && available.length > 0; i++) {
-            const totalWeight = available.reduce((sum, c) => sum + getWeaponWeight(c), 0);
-            let roll = Math.random() * totalWeight;
-            let chosenIdx = 0;
-            for (let j = 0; j < available.length; j++) {
-                roll -= getWeaponWeight(available[j]);
-                if (roll <= 0) { chosenIdx = j; break; }
+        const totalRarityWeight = Object.values(RARITY_OFFER_WEIGHTS).reduce((s, w) => s + w, 0);
+        const selected: typeof ROGUE_CARDS[0][] = [];
+        const usedIds = new Set<string>();
+
+        for (let i = 0; i < CARDS_OFFERED; i++) {
+            // Roll for rarity
+            let rarityRoll = Math.random() * totalRarityWeight;
+            let chosenRarity = 'common';
+            for (const [rarity, weight] of Object.entries(RARITY_OFFER_WEIGHTS)) {
+                rarityRoll -= weight;
+                if (rarityRoll <= 0) { chosenRarity = rarity; break; }
             }
-            selected.push(available[chosenIdx]);
-            available.splice(chosenIdx, 1);
+
+            // Pick a random card of that rarity (avoid duplicates)
+            const available = (cardsByRarity[chosenRarity] || []).filter(c => !usedIds.has(c.id));
+            if (available.length === 0) {
+                // Fallback: pick from any rarity
+                const allAvailable = ROGUE_CARDS.filter(c => !usedIds.has(c.id));
+                if (allAvailable.length === 0) break;
+                const card = allAvailable[Math.floor(Math.random() * allAvailable.length)];
+                selected.push(card);
+                usedIds.add(card.id);
+            } else {
+                const card = available[Math.floor(Math.random() * available.length)];
+                selected.push(card);
+                usedIds.add(card.id);
+            }
         }
 
         return selected.map(card => {
-            const scaledCost = card.recipe.map(c => ({
+            const scaledCost = card.baseCost.map(c => ({
                 itemId: c.itemId,
                 count: Math.ceil(c.count * costMultiplier),
             }));
@@ -338,7 +388,7 @@ export function useGameState() {
 
     // Reset per-stage effects (combo_guard uses, shield) at stage start
     const resetStageEffects = useCallback(() => {
-        const freshEffects = computeActiveEffects(craftedCardsRef.current);
+        const freshEffects = computeActiveEffects(equippedCardsRef.current);
         setActiveEffects(freshEffects);
     }, [computeActiveEffects]);
 
@@ -364,20 +414,44 @@ export function useGameState() {
         resetStageEffects();
     }, [resetStageEffects]);
 
-    // Finish card select and proceed to next stage
+    // Finish card select and proceed to next stage (full transition)
     const finishCardSelect = useCallback(() => {
         setShowCardSelect(false);
         setIsPaused(false);
+
+        // Abort if player died during card select
+        if (gameOverRef.current) return;
+
+        // Advance to next stage
         const nextStage = stageNumberRef.current + 1;
         startNewStage(nextStage);
+
+        // Switch to dig phase
+        setTerrainPhase('dig');
+        terrainPhaseRef.current = 'dig';
+
+        // Reset tower health for next TD phase
+        setTowerHealth(MAX_HEALTH);
+        towerHealthRef.current = MAX_HEALTH;
+
+        setGamePhase('WORLD_CREATION');
+        gamePhaseRef.current = 'WORLD_CREATION';
+
+        setTimeout(() => {
+            if (gameOverRef.current) return;
+            setGamePhase('PLAYING');
+            gamePhaseRef.current = 'PLAYING';
+        }, 1500);
     }, [startNewStage]);
 
     // Enter card selection phase
+    // Called after TD wave collapse → transition, before advancing to next stage
     const enterCardSelect = useCallback(() => {
         const offers = generateCardOffers(worldIdxRef.current);
         setOfferedCards(offers);
         setShowCardSelect(true);
-        setGamePhase('CRAFTING');
+        setGamePhase('CARD_SELECT');
+        gamePhaseRef.current = 'CARD_SELECT';
         setIsPaused(true);
     }, [generateCardOffers]);
 
@@ -403,25 +477,41 @@ export function useGameState() {
         setInventory(invCopy.filter(i => i.count > 0));
 
         // Add or stack equipped card
-        setCraftedCards(prev => {
+        setEquippedCards(prev => {
             const existing = prev.find(ec => ec.cardId === cardId);
-            let updated: CraftedCard[];
-            if (existing) {
-                // Card already crafted, keep as is (no stacking in new system)
+            let updated: EquippedCard[];
+            if (existing && existing.stackCount < 3) {
+                // Stack: increment count
+                updated = prev.map(ec =>
+                    ec.cardId === cardId
+                        ? { ...ec, stackCount: ec.stackCount + 1 }
+                        : ec
+                );
+            } else if (existing) {
+                // Already at max stack — still allow (re-equip)
                 updated = prev;
             } else {
-                updated = [...prev, { cardId, craftedAt: Date.now() }];
+                updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
             }
             // Recompute active effects
             const effects = computeActiveEffects(updated);
             setActiveEffects(effects);
-            craftedCardsRef.current = updated;
+            equippedCardsRef.current = updated;
             return updated;
         });
 
-        finishCardSelect();
+        // Enter absorbing phase — animation plays before finishing
+        setAbsorbingCardId(cardId);
+        setGamePhase('CARD_ABSORBING');
+        gamePhaseRef.current = 'CARD_ABSORBING';
         return true;
-    }, [offeredCards, computeActiveEffects, finishCardSelect]);
+    }, [offeredCards, computeActiveEffects]);
+
+    // Called by CardSelectUI after absorption animation completes
+    const finishAbsorption = useCallback(() => {
+        setAbsorbingCardId(null);
+        finishCardSelect();
+    }, [finishCardSelect]);
 
     // Skip card selection (take nothing)
     const skipCardSelect = useCallback(() => {
@@ -447,6 +537,97 @@ export function useGameState() {
             return true;
         }
         return false;
+    }, []);
+
+    // ===== Mandarin Fever Dragon Gauge Actions =====
+
+    // Update dragon gauge enabled state when active effects change
+    useEffect(() => {
+        setDragonGauge(prev => ({
+            ...prev,
+            enabled: activeEffects.dragonBoostEnabled,
+        }));
+    }, [activeEffects.dragonBoostEnabled]);
+
+    // Charge dragon fury gauge (from T-spins)
+    const chargeDragonFury = useCallback((tSpinType: 'mini' | 'full', lineCount: number): number => {
+        const gauge = dragonGaugeRef.current;
+        if (!gauge.enabled || gauge.isBreathing) return gauge.furyGauge;
+
+        const chargeMap = DRAGON_FURY_CHARGE[tSpinType];
+        const baseCharge = chargeMap?.[lineCount] ?? 0;
+        if (baseCharge === 0) return gauge.furyGauge;
+
+        const charge = Math.ceil(baseCharge * activeEffectsRef.current.dragonBoostChargeMultiplier);
+        const newValue = Math.min(DRAGON_FURY_MAX, gauge.furyGauge + charge);
+
+        setDragonGauge(prev => ({ ...prev, furyGauge: newValue }));
+        dragonGaugeRef.current = { ...dragonGaugeRef.current, furyGauge: newValue };
+        return newValue;
+    }, []);
+
+    // Charge dragon might gauge (from Tetrises and triples)
+    const chargeDragonMight = useCallback((lineCount: number): number => {
+        const gauge = dragonGaugeRef.current;
+        if (!gauge.enabled || gauge.isBreathing) return gauge.mightGauge;
+
+        const baseCharge = DRAGON_MIGHT_CHARGE[lineCount] ?? 0;
+        if (baseCharge === 0) return gauge.mightGauge;
+
+        const charge = Math.ceil(baseCharge * activeEffectsRef.current.dragonBoostChargeMultiplier);
+        const newValue = Math.min(DRAGON_MIGHT_MAX, gauge.mightGauge + charge);
+
+        setDragonGauge(prev => ({ ...prev, mightGauge: newValue }));
+        dragonGaugeRef.current = { ...dragonGaugeRef.current, mightGauge: newValue };
+        return newValue;
+    }, []);
+
+    // Check if both gauges are full and ready for Dragon Breath
+    const isDragonBreathReady = useCallback((): boolean => {
+        const gauge = dragonGaugeRef.current;
+        return gauge.enabled && !gauge.isBreathing
+            && gauge.furyGauge >= DRAGON_FURY_MAX
+            && gauge.mightGauge >= DRAGON_MIGHT_MAX;
+    }, []);
+
+    // Trigger Dragon Breath — destroys all terrain, awards bonus score
+    const triggerDragonBreath = useCallback((): number => {
+        const gauge = dragonGaugeRef.current;
+        if (!gauge.enabled || gauge.isBreathing) return 0;
+
+        const now = Date.now();
+        setDragonGauge(prev => ({ ...prev, isBreathing: true, breathStartTime: now }));
+        dragonGaugeRef.current = { ...dragonGaugeRef.current, isBreathing: true, breathStartTime: now };
+
+        // Destroy ALL remaining terrain
+        const remaining = terrainTotalRef.current - terrainDestroyedCountRef.current;
+        if (remaining > 0) {
+            destroyTerrain(remaining);
+        }
+
+        // Award bonus score
+        const bonus = DRAGON_BREATH_SCORE_BONUS * levelRef.current;
+        updateScore(scoreRef.current + bonus);
+
+        return remaining;
+    }, [destroyTerrain, updateScore]);
+
+    // End Dragon Breath — reset gauges
+    const endDragonBreath = useCallback(() => {
+        setDragonGauge({
+            furyGauge: 0,
+            mightGauge: 0,
+            isBreathing: false,
+            breathStartTime: 0,
+            enabled: dragonGaugeRef.current.enabled,
+        });
+        dragonGaugeRef.current = {
+            furyGauge: 0,
+            mightGauge: 0,
+            isBreathing: false,
+            breathStartTime: 0,
+            enabled: dragonGaugeRef.current.enabled,
+        };
     }, []);
 
     // ===== Item System Actions =====
@@ -813,6 +994,43 @@ export function useGameState() {
         return totalKills;
     }, []);
 
+    // Add garbage rows to the bottom of the board (used by TD: enemy reach + corruption raids)
+    const addGarbageRows = useCallback((count: number) => {
+        setBoard(prev => {
+            const rows: (string | null)[][] = [];
+            for (let g = 0; g < count; g++) {
+                const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+                rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
+            }
+            const newBoard = [...prev.slice(count), ...rows];
+            boardRef.current = newBoard;
+            return newBoard;
+        });
+    }, []);
+
+    // Spawn an enemy at a specific grid cell (used by corruption system)
+    const spawnEnemyAtCell = useCallback((gx: number, gz: number) => {
+        const occupied = getOccupiedCells();
+        const key = `${gx},${gz}`;
+        if (occupied.has(key)) return;
+
+        const worldX = gx * GRID_TILE_SIZE;
+        const worldZ = gz * GRID_TILE_SIZE;
+
+        const enemy: Enemy = {
+            id: nextEnemyId++,
+            x: worldX, y: 0.5, z: worldZ,
+            gridX: gx, gridZ: gz,
+            speed: 1,
+            health: ENEMY_HP,
+            maxHealth: ENEMY_HP,
+            alive: true,
+            spawnTime: Date.now(),
+        };
+        setEnemies(prev => [...prev, enemy]);
+        enemiesRef.current = [...enemiesRef.current, enemy];
+    }, [getOccupiedCells]);
+
     // Set phase to PLAYING (after world creation animation)
     const enterPlayPhase = useCallback(() => {
         setGamePhase('PLAYING');
@@ -890,41 +1108,17 @@ export function useGameState() {
             // Abort transition if player died during collapse
             if (gameOverRef.current) return;
 
-            setGamePhase('TRANSITION');
-            gamePhaseRef.current = 'TRANSITION';
-
-            setTimeout(() => {
-                // Abort transition if player died during transition
-                if (gameOverRef.current) return;
-
-                // Advance to next stage
-                const nextStage = stageNumberRef.current + 1;
-                startNewStage(nextStage);
-
-                // Switch to dig phase
-                setTerrainPhase('dig');
-                terrainPhaseRef.current = 'dig';
-
-                // Reset tower health for next TD phase
-                setTowerHealth(MAX_HEALTH);
-                towerHealthRef.current = MAX_HEALTH;
-
-                setGamePhase('WORLD_CREATION');
-                gamePhaseRef.current = 'WORLD_CREATION';
-
-                setTimeout(() => {
-                    // Abort transition if player died during world creation
-                    if (gameOverRef.current) return;
-
-                    setGamePhase('PLAYING');
-                    gamePhaseRef.current = 'PLAYING';
-                }, 1500);
-            }, 1200);
+            // Enter card select directly — stage transition effects play after selection
+            enterCardSelect();
         }, 1200);
-    }, [startNewStage]);
+    }, [enterCardSelect]);
 
     // Initialize/reset game
-    const initGame = useCallback((mode: GameMode = 'vanilla') => {
+    const initGame = useCallback((mode: GameMode = 'vanilla', protocolModifiers?: ProtocolModifiers) => {
+        const mods = protocolModifiers ?? DEFAULT_PROTOCOL_MODIFIERS;
+        setProtocolMods(mods);
+        protocolModsRef.current = mods;
+
         setGameMode(mode);
         gameModeRef.current = mode;
 
@@ -960,11 +1154,15 @@ export function useGameState() {
         setTerrainParticles([]);
 
         // Reset rogue-like card state
-        setCraftedCards([]);
-        craftedCardsRef.current = [];
+        setEquippedCards([]);
+        equippedCardsRef.current = [];
         setShowCardSelect(false);
         setOfferedCards([]);
         setActiveEffects(DEFAULT_ACTIVE_EFFECTS);
+
+        // Reset dragon gauge
+        setDragonGauge(DEFAULT_DRAGON_GAUGE);
+        dragonGaugeRef.current = { ...DEFAULT_DRAGON_GAUGE };
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -1046,15 +1244,22 @@ export function useGameState() {
         floatingItems,
         terrainParticles,
         // Rogue-like cards
-        craftedCards,
+        equippedCards,
         showCardSelect,
         offeredCards,
         activeEffects,
+        absorbingCardId,
         // Game mode
         gameMode,
+        // Protocol modifiers
+        protocolMods,
+        protocolModsRef,
         // Terrain phase
         terrainPhase,
         tdBeatsRemaining,
+
+        // Dragon gauge
+        dragonGauge,
 
         // Tower defense
         enemies,
@@ -1134,6 +1339,7 @@ export function useGameState() {
         enterCardSelect,
         selectCard,
         skipCardSelect,
+        finishAbsorption,
         consumeComboGuard,
         consumeShield,
         enterPlayPhase,
@@ -1144,6 +1350,13 @@ export function useGameState() {
         enterCheckpoint,
         completeWave,
         setTdBeatsRemaining,
+        // Dragon gauge actions
+        chargeDragonFury,
+        chargeDragonMight,
+        isDragonBreathReady,
+        triggerDragonBreath,
+        endDragonBreath,
+        dragonGaugeRef,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,
@@ -1153,5 +1366,7 @@ export function useGameState() {
         setEnemies,
         setTowerHealth,
         towerHealthRef,
+        addGarbageRows,
+        spawnEnemyAtCell,
     };
 }

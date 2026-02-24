@@ -6,6 +6,14 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const nextConfig = {
   // Empty turbopack config to silence build warnings about webpack config
   turbopack: {},
+  async rewrites() {
+    return [
+      {
+        source: '/__/auth/:path*',
+        destination: 'https://azuret-website.firebaseapp.com/__/auth/:path*',
+      },
+    ];
+  },
   async headers() {
     return [
       {

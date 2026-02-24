@@ -3,7 +3,8 @@
  * Uses the Rhythmia Firebase project with anonymous auth for player identification.
  */
 
-import { db, auth } from '@/lib/rhythmia/firebase';
+import { db } from '@/lib/rhythmia/firebase';
+import { initAuth, getPlayerId } from '@/lib/rhythmia/anonymousAuth';
 import {
   doc,
   getDoc,
@@ -15,7 +16,6 @@ import {
   getDocs,
   Timestamp,
 } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
 import type { AdvancementState, PlayerStats } from './types';
 
 const COLLECTION = 'rhythmia_advancements';
@@ -34,46 +34,7 @@ export interface NotificationEntry {
   read: boolean;
 }
 
-let currentUser: User | null = null;
-let authReady: Promise<User | null> | null = null;
-
-/**
- * Initialize anonymous auth and return the user.
- * Resolves immediately on subsequent calls if auth is already established.
- */
-export function initAuth(): Promise<User | null> {
-  if (!auth) return Promise.resolve(null);
-
-  if (authReady) return authReady;
-
-  authReady = new Promise<User | null>((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth!, (user) => {
-      if (user) {
-        currentUser = user;
-        unsubscribe();
-        resolve(user);
-      }
-    });
-
-    // Trigger anonymous sign-in
-    signInAnonymously(auth!).catch(() => {
-      unsubscribe();
-      resolve(null);
-    });
-
-    // Timeout after 5 seconds
-    setTimeout(() => {
-      unsubscribe();
-      resolve(currentUser);
-    }, 5000);
-  });
-
-  return authReady;
-}
-
-function getPlayerId(): string | null {
-  return currentUser?.uid ?? null;
-}
+export { initAuth };
 
 /**
  * Sync local advancement state to Firestore.

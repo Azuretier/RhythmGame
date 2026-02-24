@@ -1,58 +1,83 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useProfile } from '@/lib/profile/context';
 import { getIconById } from '@/lib/profile/types';
 import {
-  SCORE_RANK_TIERS,
   getTierByScore,
   scoreProgress,
   scoreToNextTier,
   formatScoreCompact,
+  getRankGroups,
   recordDailyVisit,
   syncGameplayStats,
+  SCORE_RANK_TIERS,
 } from '@/lib/loyalty';
 import type { ScoreRankingState } from '@/lib/loyalty';
 import { ADVANCEMENTS, loadAdvancementState } from '@/lib/advancements';
+import type { AdvancementState } from '@/lib/advancements';
+import { PixelIcon } from '@/components/rhythmia/PixelIcon';
 import styles from './LoyaltyWidget.module.css';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
+type TabId = 'score' | 'streak' | 'stats' | 'roadmap' | 'badges';
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'score', label: 'Score' },
+  { id: 'streak', label: 'Streak' },
+  { id: 'stats', label: 'Stats' },
+  { id: 'roadmap', label: 'Roadmap' },
+  { id: 'badges', label: 'Badges' },
+];
+
 export default function LoyaltyWidget() {
   const t = useTranslations('loyalty');
+  const tAdv = useTranslations('advancements');
   const router = useRouter();
   const { profile } = useProfile();
+  const profileIcon = profile ? getIconById(profile.icon) : null;
+
+  const [tab, setTab] = useState<TabId>('score');
   const [state, setState] = useState<ScoreRankingState | null>(null);
+  const [advState, setAdvState] = useState<AdvancementState | null>(null);
+  const rankGroups = useMemo(() => getRankGroups(), []);
 
   useEffect(() => {
-    // Record daily visit first (awards XP for visits/streaks)
     let dailyState = recordDailyVisit();
-
-    // Sync with gameplay stats
-    const advState = loadAdvancementState();
+    const advancementState = loadAdvancementState();
     dailyState = syncGameplayStats(
-      advState.stats.totalScore,
-      advState.stats.bestScorePerGame,
-      advState.stats.totalGamesPlayed,
-      advState.unlockedIds.length,
-      advState.stats.totalLines,
+      advancementState.stats.totalScore,
+      advancementState.stats.bestScorePerGame,
+      advancementState.stats.totalGamesPlayed,
+      advancementState.unlockedIds.length,
+      advancementState.stats.totalLines,
     );
-
     setState(dailyState);
+    setAdvState(advancementState);
   }, []);
 
   if (!state) return null;
 
-  const profileIcon = profile ? getIconById(profile.icon) : undefined;
-  const { totalScore, bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, dailyBonusXP } = state.stats;
+  const { bestScorePerGame, totalGamesPlayed, advancementsUnlocked, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
+  const currentTierIndex = SCORE_RANK_TIERS.indexOf(currentTier);
+  const nextTier = currentTierIndex < SCORE_RANK_TIERS.length - 1 ? SCORE_RANK_TIERS[currentTierIndex + 1] : null;
   const progress = scoreProgress(combinedScore);
   const nextTierScore = scoreToNextTier(combinedScore);
-  const currentIndex = SCORE_RANK_TIERS.indexOf(currentTier);
+
+  // Recent advancements — last 4 unlocked, newest first
+  const recentAdvancements = advState
+    ? advState.unlockedIds
+      .slice(-4)
+      .reverse()
+      .map((id) => ADVANCEMENTS.find((a) => a.id === id))
+      .filter(Boolean)
+    : [];
 
   return (
     <motion.div
@@ -61,116 +86,207 @@ export default function LoyaltyWidget() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.7 }}
     >
-      {/* Profile Hero */}
-      <div className={styles.scoreHero}>
-        <div
-          className={styles.tierBadge}
-          style={{
-            borderColor: profileIcon?.bgColor ?? currentTier.color,
-            background: profileIcon?.bgColor ?? 'rgba(255, 255, 255, 0.04)',
-          }}
-        >
-          <span className={styles.tierIconLarge}>{profileIcon?.emoji ?? '?'}</span>
-        </div>
-        <div className={styles.scoreInfo}>
-          <div className={styles.scoreValue}>{profile?.name ?? '—'}</div>
-          <div className={styles.scoreLabel}>{profile?.friendCode ?? ''}</div>
-          <div className={styles.tierName} style={{ color: currentTier.color }}>
-            <span>{currentTier.icon}</span> {t(`tiers.${currentTier.id}`)}
-          </div>
-        </div>
-      </div>
-
-      {/* Daily Streak Section */}
-      <div className={styles.streakSection}>
-        <div className={styles.streakDays}>
-          {DAY_LABELS.map((label, i) => {
-            const isFilled = i < currentStreak % 7 || currentStreak >= 7;
-            const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
-            return (
-              <div
-                key={i}
-                className={`${styles.streakDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
-              >
-                {label}
-              </div>
-            );
-          })}
-        </div>
-        <div className={styles.streakInfo}>
-          <span className={styles.streakLabel}>
-            {currentStreak} {t('streakDays')}
-          </span>
-          <span className={styles.bonusXP}>
-            +{dailyBonusXP} {t('bonusXP')}
-          </span>
-        </div>
-      </div>
-
-      {/* Progress bar */}
-      <div className={styles.progressRow}>
-        <div className={styles.scoreLabel} style={{ marginBottom: 8 }}>{t('totalScore')}</div>
-        <div className={styles.progressBar}>
+      {/* ===== Persistent profile row — always visible ===== */}
+      <div className={styles.profileRow}>
+        {profile && profileIcon ? (
           <div
-            className={styles.progressFill}
-            style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}88, ${currentTier.color})` }}
-          />
-        </div>
-        <div className={styles.progressLabels}>
-          <span>{formatScoreCompact(combinedScore)}</span>
-          <span>
-            {nextTierScore !== null
-              ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
-              : t('maxTier')}
+            className={styles.profileAvatar}
+            style={{ backgroundColor: profileIcon.bgColor, color: profileIcon.color }}
+          >
+            {profileIcon.emoji}
+          </div>
+        ) : (
+          <div
+            className={styles.profileAvatar}
+            style={{ backgroundColor: currentTier.color + '20', color: currentTier.color }}
+          >
+            {currentTier.icon}
+          </div>
+        )}
+        <div className={styles.profileMeta}>
+          <span className={styles.profileName}>{profile?.name ?? 'Player'}</span>
+          {profile?.friendCode && (
+            <span className={styles.profileCode}>{profile.friendCode}</span>
+          )}
+          <span className={styles.profileTier} style={{ color: currentTier.color }}>
+            {currentTier.icon} {t(`tiers.${currentTier.id}`)}
           </span>
         </div>
       </div>
 
-      {/* Tier roadmap */}
-      <div className={styles.miniRoadmap}>
-        {SCORE_RANK_TIERS.map((tier, i) => {
-          const isActive = tier.id === currentTier.id;
-          const isCompleted = i < currentIndex;
-          return (
-            <div
-              key={tier.id}
-              className={`${styles.miniStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
-            >
-              <span className={styles.miniStepIcon} style={isActive || isCompleted ? { color: tier.color } : undefined}>
-                {tier.icon}
-              </span>
-              <span className={styles.miniStepName}>
-                {t(`tiers.${tier.id}`)}
+      {/* ===== Inline text tab bar ===== */}
+      <div className={styles.tabBar}>
+        {TABS.map((item) => (
+          <button
+            key={item.id}
+            className={`${styles.tab} ${tab === item.id ? styles.tabActive : ''}`}
+            onClick={() => setTab(item.id)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ===== Tab content — fixed height container ===== */}
+      <div className={styles.tabBody}>
+
+        {/* SCORE */}
+        {tab === 'score' && (
+          <div className={styles.tabPane}>
+            <div className={styles.gaugeHeader}>
+              <div className={styles.gaugeHeaderLeft}>
+                <span className={styles.gaugeLabel}>{t('totalScore')}</span>
+                <span className={styles.gaugeValue}>{formatScoreCompact(combinedScore)}</span>
+              </div>
+              <span className={styles.gaugeHeaderRight}>
+                {nextTierScore !== null
+                  ? t('scoreToNext', { score: formatScoreCompact(nextTierScore) })
+                  : t('maxTier')}
               </span>
             </div>
-          );
-        })}
-      </div>
+            <div className={styles.gaugeRanks}>
+              <span className={styles.gaugeRankCurrent} style={{ color: currentTier.color }}>
+                {currentTier.icon} {t(`tiers.${currentTier.id}`)}
+              </span>
+              <span className={styles.gaugeRankNext}>
+                {nextTier
+                  ? <span style={{ color: nextTier.color }}>{nextTier.icon} {t(`tiers.${nextTier.id}`)}</span>
+                  : '—'}
+              </span>
+            </div>
+            <div className={styles.gaugeBar}>
+              <div
+                className={styles.gaugeBarFill}
+                style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${currentTier.color}66, ${currentTier.color})` }}
+              />
+            </div>
+            <div className={styles.gaugeThresholds}>
+              <span>{formatScoreCompact(currentTier.minScore)}</span>
+              <span className={styles.gaugeThresholdNext}>
+                {nextTier ? formatScoreCompact(nextTier.minScore) : '—'}
+              </span>
+            </div>
+          </div>
+        )}
 
-      {/* Stats grid */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{formatScoreCompact(bestScorePerGame)}</span>
-          <span className={styles.statLabel}>{t('stats.bestScore')}</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalGamesPlayed}</span>
-          <span className={styles.statLabel}>{t('stats.games')}</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{totalLines.toLocaleString()}</span>
-          <span className={styles.statLabel}>{t('stats.lines')}</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{advancementsUnlocked}/{ADVANCEMENTS.length}</span>
-          <span className={styles.statLabel}>{t('stats.badges')}</span>
-        </div>
-      </div>
+        {/* STREAK */}
+        {tab === 'streak' && (
+          <div className={styles.tabPane}>
+            <div className={styles.streakRow}>
+              <div className={styles.streakDots}>
+                {DAY_LABELS.map((label, i) => {
+                  const isFilled = i < currentStreak % 7 || currentStreak >= 7;
+                  const isToday = i === new Date().getDay() - 1 || (new Date().getDay() === 0 && i === 6);
+                  return (
+                    <div key={i} className={styles.streakDotWrap}>
+                      <div
+                        className={`${styles.streakDot} ${isFilled ? styles.filled : ''} ${isToday ? styles.today : ''}`}
+                      />
+                      <span className={styles.streakDayLabel}>{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className={styles.detailGrid4}>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{totalVisits}</div>
+                <div className={styles.detailStatLbl}>{t('stats.totalVisits')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{currentStreak}</div>
+                <div className={styles.detailStatLbl}>{t('stats.currentStreak')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{bestStreak}</div>
+                <div className={styles.detailStatLbl}>{t('stats.bestStreak')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal} style={{ color: '#4CAF50' }}>+{dailyBonusXP}</div>
+                <div className={styles.detailStatLbl}>{t('stats.bonusXP')}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* View all link */}
-      <button className={styles.viewAll} onClick={() => router.push('/loyalty')}>
-        {t('viewAll')}
-      </button>
+        {/* STATS */}
+        {tab === 'stats' && (
+          <div className={styles.tabPane}>
+            <div className={styles.detailGrid4}>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{formatScoreCompact(bestScorePerGame)}</div>
+                <div className={styles.detailStatLbl}>{t('stats.bestScore')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{totalGamesPlayed}</div>
+                <div className={styles.detailStatLbl}>{t('stats.games')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{totalLines.toLocaleString()}</div>
+                <div className={styles.detailStatLbl}>{t('stats.lines')}</div>
+              </div>
+              <div className={styles.detailStat}>
+                <div className={styles.detailStatVal}>{advancementsUnlocked}/{ADVANCEMENTS.length}</div>
+                <div className={styles.detailStatLbl}>{t('stats.badges')}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ROADMAP */}
+        {tab === 'roadmap' && (
+          <div className={styles.tabPane}>
+            <div className={styles.detailRoadmap}>
+              {rankGroups.map((group) => {
+                const isActive = group.tiers.some(t => t.id === currentTier.id);
+                const isCompleted = combinedScore >= group.maxScore && group.maxScore !== Infinity;
+                return (
+                  <div
+                    key={group.groupId}
+                    className={`${styles.detailTierStep} ${isActive ? styles.active : ''} ${isCompleted ? styles.completed : ''}`}
+                  >
+                    {isCompleted && <span className={styles.detailTierCheck}>✓</span>}
+                    <span className={styles.detailTierIcon} style={isActive || isCompleted ? { color: group.color } : undefined}>
+                      {group.icon}
+                    </span>
+                    <div className={styles.detailTierMeta}>
+                      <span className={styles.detailTierName}>{t(`tierGroups.${group.groupId}`)}</span>
+                      <span className={styles.detailTierXP}>
+                        {group.maxScore === Infinity
+                          ? `${formatScoreCompact(group.minScore)}+`
+                          : `${formatScoreCompact(group.minScore)} – ${formatScoreCompact(group.maxScore)}`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* BADGES */}
+        {tab === 'badges' && (
+          <div className={styles.tabPane}>
+            {recentAdvancements.length > 0 ? (
+              <div className={styles.detailBadges}>
+                {recentAdvancements.map((adv) => adv && (
+                  <div key={adv.id} className={styles.detailBadge}>
+                    <span className={styles.detailBadgeIcon}><PixelIcon name={adv.icon} size={16} /></span>
+                    <div className={styles.detailBadgeName}>{tAdv(`${adv.id}.name`)}</div>
+                    <div className={styles.detailBadgeDesc}>{tAdv(`${adv.id}.desc`)}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={styles.detailEmpty}>{tAdv('locked')}</div>
+            )}
+
+            <button className={styles.viewAll} onClick={() => router.push('/loyalty')}>
+              {t('viewAll')}
+            </button>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }

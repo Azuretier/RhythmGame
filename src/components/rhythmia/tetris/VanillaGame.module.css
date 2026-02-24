@@ -100,9 +100,7 @@
   color: #ffffff;
 }
 
-/* Game area — three-column grid: sidebar | board+beatbar | sidebar
-   1fr auto 1fr ensures the board stays perfectly centered regardless
-   of how wide the sidebars are. */
+/* Game area — three-column grid: sidebar | board+beatbar | sidebar */
 .gameArea {
   position: relative;
   display: grid;
@@ -165,6 +163,32 @@
 
 .boardWrap.beat.fever {
   box-shadow: 0 0 30px rgba(255, 100, 255, 0.3), 0 0 60px rgba(255, 50, 200, 0.15);
+}
+
+/* Anomaly state — corruption tint on blocks */
+.boardWrap.anomaly {
+  border-color: rgba(180, 0, 255, 0.5);
+  animation: anomalyPulse 2s ease-in-out infinite;
+}
+
+.boardWrap.anomaly .cell.filled {
+  filter: hue-rotate(-30deg) saturate(1.4) brightness(0.9);
+  box-shadow: inset 0 0 4px rgba(180, 0, 255, 0.4), 0 0 6px rgba(180, 0, 255, 0.25);
+}
+
+.boardWrap.anomaly .cell.ghost {
+  filter: hue-rotate(-30deg) saturate(1.4);
+}
+
+@keyframes anomalyPulse {
+  0%, 100% {
+    border-color: rgba(180, 0, 255, 0.4);
+    box-shadow: 0 0 12px rgba(120, 0, 200, 0.15);
+  }
+  50% {
+    border-color: rgba(220, 0, 255, 0.6);
+    box-shadow: 0 0 24px rgba(180, 0, 255, 0.3);
+  }
 }
 
 @keyframes feverBorder {
@@ -584,6 +608,563 @@
 .startBtn:hover {
   background: rgba(255, 255, 255, 0.85);
   transform: translateY(-2px);
+}
+
+/* ===== Protocol Select Screen (HSR left-panel layout) ===== */
+
+/* Full-screen two-column layout: left protocol list + right details */
+.protocolLayout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---- Left Panel: Protocol List ---- */
+.protocolLeftPanel {
+  position: relative;
+  width: 280px;
+  flex-shrink: 0;
+  padding: 32px 20px;
+  background:
+    linear-gradient(180deg, rgba(6, 10, 22, 0.98) 0%, rgba(3, 5, 14, 0.99) 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.protocolLeftPanel::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Right Panel: Details + Worlds ---- */
+.protocolRightPanel {
+  position: relative;
+  flex: 1;
+  padding: 40px 48px 32px;
+  background:
+    linear-gradient(180deg, rgba(8, 12, 24, 0.95) 0%, rgba(4, 6, 16, 0.98) 100%);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.protocolRightPanel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Circuit grid background overlay */
+.circuitGrid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 127, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 127, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Scanline overlay (left panel only) */
+.scanlineOverlay {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0, 127, 255, 0.012) 2px, rgba(0, 127, 255, 0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+  animation: scanlineScroll 8s linear infinite;
+}
+
+@keyframes scanlineScroll {
+  from { background-position: 0 0; }
+  to { background-position: 0 40px; }
+}
+
+/* Section headers */
+.protocolSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 2;
+}
+
+.protocolSectionLabel {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(0, 127, 255, 0.7);
+  white-space: nowrap;
+}
+
+.protocolHeaderLine {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 127, 255, 0.3) 0%, transparent 100%);
+}
+
+/* ---- Protocol List (vertical stack in left panel) ---- */
+.protocolList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.protocolBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  color: white;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.protocolBtn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--protocol-accent, #4CAF50);
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+}
+
+.protocolBtn:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.protocolBtn:hover::before {
+  opacity: 0.8;
+}
+
+/* Selected protocol button */
+.protocolBtnSelected {
+  border-color: var(--protocol-accent, #4CAF50);
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--protocol-accent, #4CAF50) 15%, transparent),
+    inset 0 0 30px color-mix(in srgb, var(--protocol-accent, #4CAF50) 5%, transparent);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.protocolBtnSelected::before {
+  opacity: 1;
+  width: 4px;
+}
+
+/* Shimmer effect on selected protocol */
+.protocolBtnSelected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--protocol-accent, #4CAF50) 6%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: protocolShimmer 3s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+@keyframes protocolShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Corner decorations for selected state */
+.cornerDecor {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-color: var(--protocol-accent, #4CAF50);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.cornerTL { top: 3px; left: 3px; border-top: 1px solid; border-left: 1px solid; }
+.cornerTR { top: 3px; right: 3px; border-top: 1px solid; border-right: 1px solid; }
+.cornerBL { bottom: 3px; left: 3px; border-bottom: 1px solid; border-left: 1px solid; }
+.cornerBR { bottom: 3px; right: 3px; border-bottom: 1px solid; border-right: 1px solid; }
+
+/* Roman numeral badge */
+.romanBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: 1px solid var(--protocol-accent, #4CAF50);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--protocol-accent, #4CAF50);
+  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 8%, transparent);
+  text-shadow: 0 0 10px var(--protocol-accent, #4CAF50);
+}
+
+/* Protocol button text */
+.protocolBtnInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.protocolBtnName {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.protocolBtnSub {
+  font-size: 0.55rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Right Panel: Detail Header ---- */
+.protocolDetailHeader {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.protocolDetailNumeral {
+  font-size: 3.5rem;
+  font-weight: 200;
+  letter-spacing: 0.1em;
+  color: var(--protocol-accent, #4CAF50);
+  text-shadow: 0 0 30px var(--protocol-accent, #4CAF50);
+  line-height: 1;
+}
+
+.protocolDetailName {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.protocolDetailNameJa {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+.protocolDetailDesc {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.7;
+  margin-bottom: 18px;
+  max-width: 600px;
+  position: relative;
+  z-index: 2;
+}
+
+.protocolDetailStats {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.protocolStat {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.protocolStatValue {
+  color: var(--protocol-accent, #4CAF50);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.protocolRules {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.protocolRuleTag {
+  padding: 2px 8px;
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid color-mix(in srgb, var(--protocol-accent, #4CAF50) 30%, transparent);
+  border-radius: 4px;
+  color: var(--protocol-accent, #4CAF50);
+  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 5%, transparent);
+}
+
+/* Divider between detail and worlds */
+.protocolDivider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0%, transparent 80%);
+  margin: 18px 0;
+  position: relative;
+  z-index: 2;
+}
+
+/* ---- World preview row (in right panel) ---- */
+.worldRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 2;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.worldRow::-webkit-scrollbar {
+  display: none;
+}
+
+.worldCard {
+  flex: 1;
+  min-width: 110px;
+  padding: 18px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+  transition: border-color 0.2s ease;
+}
+
+.worldCardEmoji {
+  font-size: 1.8rem;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.worldCardName {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.worldCardBpm {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+  transition: color 0.25s ease;
+}
+
+.worldCardBpmModified {
+  color: var(--protocol-accent, rgba(0, 127, 255, 0.9));
+}
+
+.worldCardStars {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.worldCardStar {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.worldCardStarFilled {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.worldCardStarEmpty {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Enter button */
+.protocolEnterBtn {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 400px;
+  width: 100%;
+  padding: 16px 32px;
+  border-radius: 10px;
+  border: 1px solid var(--protocol-accent, #4CAF50);
+  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 10%, transparent);
+  color: var(--protocol-accent, #4CAF50);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.protocolEnterBtn:hover {
+  background: color-mix(in srgb, var(--protocol-accent, #4CAF50) 20%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--protocol-accent, #4CAF50) 25%, transparent);
+}
+
+.protocolEnterBtn:active {
+  transform: scale(0.98);
+}
+
+.protocolEnterBtnSub {
+  font-size: 0.65rem;
+  font-weight: 400;
+  opacity: 0.6;
+}
+
+/* ---- Responsive ---- */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .protocolLeftPanel {
+    width: 220px;
+    padding: 24px 14px;
+  }
+
+  .protocolRightPanel {
+    padding: 28px 24px 24px;
+  }
+
+  .protocolDetailNumeral {
+    font-size: 2.5rem;
+  }
+
+  .protocolDetailName {
+    font-size: 1.1rem;
+  }
+
+  .worldCard {
+    min-width: 80px;
+    padding: 12px 8px;
+  }
+
+  .worldCardEmoji {
+    font-size: 1.4rem;
+  }
+
+  .worldCardName {
+    font-size: 0.55rem;
+  }
+
+  .romanBadge {
+    width: 30px;
+    height: 30px;
+    font-size: 0.7rem;
+  }
+
+  .protocolBtn {
+    padding: 10px 10px;
+    gap: 8px;
+  }
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 580px) {
+  .protocolLayout {
+    flex-direction: column;
+  }
+
+  .protocolLeftPanel {
+    width: 100%;
+    flex-shrink: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 16px 14px;
+    max-height: 180px;
+  }
+
+  .protocolList {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+  }
+
+  .protocolBtn {
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+
+  .protocolRightPanel {
+    padding: 20px 16px;
+  }
+
+  .protocolDetailNumeral {
+    font-size: 1.8rem;
+  }
+
+  .protocolDetailName {
+    font-size: 0.9rem;
+  }
+
+  .protocolDetailDesc {
+    font-size: 0.7rem;
+  }
+
+  .worldRow {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .worldCard {
+    flex: 0 0 calc(33.33% - 6px);
+    min-width: 70px;
+    padding: 10px 6px;
+  }
+
+  .worldCardEmoji {
+    font-size: 1.2rem;
+  }
+
+  .protocolEnterBtn {
+    max-width: 100%;
+  }
 }
 
 /* World display */
@@ -1886,7 +2467,7 @@
   box-shadow: 0 0 6px rgba(76, 175, 80, 0.5);
 }
 
-.phaseDot[data-phase="CRAFTING"] {
+.phaseDot[data-phase="CARD_SELECT"] {
   background: #ff9800;
   box-shadow: 0 0 6px rgba(255, 152, 0, 0.5);
 }
@@ -3013,927 +3594,6 @@
   }
 }
 
-/* ===================================================================
-   INVENTORY UI — Minecraft Dungeons Style
-   =================================================================== */
-.inventoryOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 300;
-  background: rgba(10, 5, 20, 0.92);
-  backdrop-filter: blur(16px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  animation: invFadeIn 0.25s ease;
-}
-
-@keyframes invFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-.invPanel {
-  width: 90vw;
-  max-width: 960px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.invHeader {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: relative;
-}
-
-.invTitle {
-  font-size: 1.4rem;
-  font-weight: 200;
-  color: white;
-  letter-spacing: 0.25em;
-}
-
-.invTabs {
-  display: flex;
-  gap: 4px;
-  margin-left: 16px;
-}
-
-.invTab {
-  padding: 5px 14px;
-  font-size: 0.65rem;
-  font-weight: 500;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  color: rgba(255, 255, 255, 0.4);
-  cursor: pointer;
-  letter-spacing: 0.1em;
-  transition: all 0.2s;
-}
-
-.invTab:hover {
-  color: rgba(255, 255, 255, 0.7);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.invTabActive {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: white;
-}
-
-.invClose {
-  position: absolute;
-  right: 0;
-  top: 0;
-  padding: 6px 14px;
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  cursor: pointer;
-  letter-spacing: 0.1em;
-  transition: all 0.15s;
-}
-
-.invClose:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.invBody {
-  display: grid;
-  grid-template-columns: 200px 1fr 260px;
-  gap: 16px;
-  flex: 1;
-  min-height: 0;
-}
-
-/* Left panel — character & equipment */
-.invLeft {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-
-.invEquipSlots {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-}
-
-.invEquipRow {
-  display: flex;
-  gap: 6px;
-}
-
-.invEquipSlot {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.invEquipSlot:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.invEquipSlotSelected {
-  border-color: rgba(0, 127, 255, 0.6) !important;
-  box-shadow: 0 0 12px rgba(0, 127, 255, 0.2);
-}
-
-.invEquipSlotEmpty {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  border: 2px dashed rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.invEquipSlotPlus {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.12);
-}
-
-/* Character display */
-.invCharacter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 20px 0;
-}
-
-.invCharIcon {
-  font-size: 3rem;
-  color: rgba(255, 255, 255, 0.6);
-  line-height: 1;
-}
-
-.invCharLevelBadge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 4px 12px;
-  background: rgba(128, 0, 255, 0.15);
-  border: 1px solid rgba(128, 0, 255, 0.3);
-  border-radius: 12px;
-}
-
-.invCharLevelLabel {
-  font-size: 0.45rem;
-  color: rgba(128, 0, 255, 0.7);
-  letter-spacing: 0.15em;
-  font-weight: 600;
-}
-
-.invCharLevelNum {
-  font-size: 1.1rem;
-  color: white;
-  font-weight: 300;
-}
-
-.invCharPower {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.invCharPowerLabel {
-  font-size: 0.5rem;
-  color: rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.15em;
-  font-weight: 600;
-}
-
-.invCharPowerNum {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 300;
-}
-
-/* Center — item grid */
-.invCenter {
-  overflow-y: auto;
-  padding: 4px;
-}
-
-.invGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.invSlot {
-  aspect-ratio: 1;
-  border-radius: 6px;
-  border: 2px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.02);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-}
-
-.invSlot:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.04);
-  transform: scale(1.02);
-}
-
-.invSlotSelected {
-  border-width: 2px;
-  box-shadow: 0 0 16px rgba(0, 127, 255, 0.15);
-}
-
-.invSlotRarityBar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  opacity: 0.6;
-}
-
-.invSlotIcon {
-  margin-top: 4px;
-}
-
-.invSlotCount {
-  position: absolute;
-  bottom: 4px;
-  right: 6px;
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.invSlotEmpty {
-  aspect-ratio: 1;
-  border-radius: 6px;
-  border: 2px solid rgba(255, 255, 255, 0.03);
-  background: rgba(255, 255, 255, 0.01);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.invSlotEmptyX {
-  font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.06);
-}
-
-/* Right panel — item detail */
-.invRight {
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-}
-
-.invDetailHeader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.invDetailIcon {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-.invDetailRarityBadge {
-  font-size: 0.55rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-}
-
-.invDetailName {
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: white;
-  letter-spacing: 0.05em;
-  margin-top: 2px;
-}
-
-.invDetailNameJa {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.invDetailDivider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.invDetailStats {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.invDetailStat {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.invDetailStatLabel {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.05em;
-}
-
-.invDetailStatValue {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.invDetailStatBar {
-  flex: 1;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 2px;
-  overflow: hidden;
-  max-width: 100px;
-}
-
-.invDetailStatBarFill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-.invDetailDesc {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.3);
-  line-height: 1.5;
-  font-style: italic;
-}
-
-.invDetailDescJa {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.2);
-  margin-top: 2px;
-}
-
-.invDetailEmpty {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.15);
-  text-align: center;
-  padding: 40px 0;
-  letter-spacing: 0.1em;
-}
-
-/* Bottom bar */
-.invBottomBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.invBottomAction {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.invBottomKey {
-  padding: 3px 10px;
-  font-size: 0.6rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
-  color: rgba(255, 255, 255, 0.6);
-  letter-spacing: 0.1em;
-}
-
-.invBottomLabel {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 0.1em;
-}
-
-.invBottomDmg {
-  font-size: 0.65rem;
-  color: #FFD700;
-  letter-spacing: 0.1em;
-}
-
-/* ===== Shop UI ===== */
-.shopOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 310;
-  background: rgba(0, 0, 0, 0.92);
-  backdrop-filter: blur(16px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: invFadeIn 0.25s ease;
-}
-
-.shopPanel {
-  width: 90vw;
-  max-width: 800px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.shopHeader {
-  text-align: center;
-  position: relative;
-}
-
-.shopTitle {
-  font-size: 1.4rem;
-  font-weight: 200;
-  color: white;
-  letter-spacing: 0.25em;
-}
-
-.shopSubtitle {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.1em;
-  margin-top: 2px;
-}
-
-.shopClose {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 6px 14px;
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  cursor: pointer;
-  letter-spacing: 0.1em;
-  transition: all 0.15s;
-}
-
-.shopClose:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.shopBody {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 16px;
-  flex: 1;
-  min-height: 0;
-}
-
-/* Left — item list */
-.shopLeft {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 0;
-}
-
-.shopMaterials {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-}
-
-.shopMaterialChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-}
-
-.shopMaterialCount {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.shopMaterialEmpty {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.2);
-  letter-spacing: 0.1em;
-}
-
-/* Scrollable item list */
-.shopItemList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
-  flex: 1;
-  padding-right: 4px;
-}
-
-.shopItemList::-webkit-scrollbar {
-  width: 4px;
-}
-
-.shopItemList::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 2px;
-}
-
-.shopItemList::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-
-.shopItemRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  gap: 10px;
-}
-
-.shopItemRow:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.shopItemRowSelected {
-  background: rgba(0, 127, 255, 0.08);
-  border-color: rgba(0, 127, 255, 0.3);
-}
-
-.shopItemRowOwned {
-  opacity: 0.5;
-}
-
-.shopItemRowLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.shopItemRowIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.shopItemRowInfo {
-  min-width: 0;
-}
-
-.shopItemRowName {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-  letter-spacing: 0.05em;
-}
-
-.shopItemRowNameJa {
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.shopItemRowRight {
-  flex-shrink: 0;
-}
-
-.shopItemRowCost {
-  display: flex;
-  gap: 4px;
-}
-
-.shopCostChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 6px;
-  font-size: 0.55rem;
-  color: rgba(255, 100, 100, 0.7);
-  background: rgba(255, 100, 100, 0.06);
-  border-radius: 3px;
-}
-
-.shopCostEnough {
-  color: rgba(100, 255, 100, 0.7);
-  background: rgba(100, 255, 100, 0.06);
-}
-
-.shopOwnedBadge {
-  font-size: 0.55rem;
-  color: rgba(100, 255, 100, 0.5);
-  letter-spacing: 0.1em;
-}
-
-/* Right — detail panel */
-.shopRight {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-}
-
-/* Build tree */
-.shopBuildTree {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-
-.shopTreeResult {
-  display: flex;
-  justify-content: center;
-}
-
-.shopTreeNode {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.03);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.shopTreeNodeEnough {
-  background: rgba(100, 255, 100, 0.05);
-}
-
-.shopTreeConnector {
-  width: 2px;
-  height: 16px;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.shopTreeComponents {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-.shopTreeComponentWrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.shopTreeCost {
-  font-size: 0.6rem;
-  color: rgba(255, 100, 100, 0.6);
-}
-
-.shopTreeCostEnough {
-  color: rgba(100, 255, 100, 0.6);
-}
-
-/* Purchase button */
-.shopPurchaseBtn {
-  width: 100%;
-  padding: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.04);
-  border: 2px solid rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.25);
-  cursor: not-allowed;
-  letter-spacing: 0.2em;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  text-transform: uppercase;
-}
-
-.shopPurchaseBtnActive {
-  cursor: pointer;
-  background: rgba(0, 127, 255, 0.12);
-  border-color: rgba(0, 127, 255, 0.4);
-  color: white;
-}
-
-.shopPurchaseBtnActive:hover {
-  background: rgba(0, 127, 255, 0.2);
-  border-color: rgba(0, 127, 255, 0.6);
-  box-shadow: 0 0 16px rgba(0, 127, 255, 0.15);
-}
-
-/* Item detail card (LoL style) */
-.shopDetailCard {
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.shopDetailTop {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.shopDetailIcon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.shopDetailName {
-  font-size: 1rem;
-  font-weight: 500;
-  color: white;
-  letter-spacing: 0.05em;
-}
-
-.shopDetailNameJa {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.shopDetailDivider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.shopDetailStats {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.shopDetailStat {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.shopDetailStatIcon {
-  font-size: 0.5rem;
-}
-
-.shopDetailStatValue {
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.shopDetailStatLabel {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.shopDetailDesc {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.shopDetailDescTitle {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  font-style: italic;
-}
-
-.shopDetailDescBody {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.3);
-  line-height: 1.4;
-}
-
-/* ===== Responsive: Inventory & Shop ===== */
-@media screen and (max-width: 768px) {
-  .invBody {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-  }
-
-  .invLeft {
-    flex-direction: row;
-    padding: 8px;
-  }
-
-  .invCharacter {
-    padding: 8px 0;
-  }
-
-  .invCharIcon {
-    font-size: 2rem;
-  }
-
-  .invGrid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .invRight {
-    max-height: 200px;
-  }
-
-  .shopBody {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
-  }
-
-  .shopRight {
-    max-height: 300px;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .invPanel {
-    width: 100vw;
-    max-width: 100%;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .invGrid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .shopPanel {
-    width: 100vw;
-    max-width: 100%;
-    max-height: 100vh;
-  }
-}
-
 /* ===== Card Select Overlay ===== */
 .cardSelectOverlay {
   position: fixed;
@@ -4048,6 +3708,13 @@
   border-color: rgba(255, 255, 255, 0.5);
   background: rgba(255, 255, 255, 0.08);
   box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+}
+
+.cardSelectCardFocused {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .cardSelectCardDisabled {
@@ -4236,6 +3903,374 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+.cardSelectSkipFocused {
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+}
+
+/* ===== Card Absorption Animation (Dopamine-Optimized) ===== */
+/* Multi-phase sequence: Anticipation → Hitstop → Impact → Display → Done */
+/* Timing follows Reward Prediction Error theory with variable ratio scheduling */
+
+/* --- Phase 1: ANTICIPATION --- */
+/* Selected card hovers with building glow pulse. Duration scales by rarity */
+/* via --anticipation-duration CSS variable (500ms common → 1400ms legendary). */
+/* The glow intensifies over time, building dopamine through anticipation. */
+.cardAnticipation {
+  animation: cardAnticipate var(--anticipation-duration, 500ms) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes cardAnticipate {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: brightness(1);
+    box-shadow: 0 0 0px var(--card-glow, rgba(255, 255, 255, 0));
+  }
+  /* Lift — card begins to hover */
+  20% {
+    transform: translateY(-8px) scale(1.03);
+    filter: brightness(1.1);
+    box-shadow: 0 0 15px var(--card-glow, rgba(255, 255, 255, 0.15));
+  }
+  /* Pulse — glow builds, slight "breathing" */
+  50% {
+    transform: translateY(-14px) scale(1.06);
+    filter: brightness(1.3);
+    box-shadow: 0 0 35px var(--card-glow, rgba(255, 255, 255, 0.3));
+  }
+  /* Peak — maximum glow, ready to burst */
+  80% {
+    transform: translateY(-18px) scale(1.08);
+    filter: brightness(1.6);
+    box-shadow: 0 0 55px var(--card-glow, rgba(255, 255, 255, 0.5));
+  }
+  100% {
+    transform: translateY(-20px) scale(1.1);
+    filter: brightness(2);
+    box-shadow: 0 0 80px var(--card-glow, rgba(255, 255, 255, 0.6));
+  }
+}
+
+/* Unselected cards: fade out downward with blur during anticipation */
+.cardDismissed {
+  animation: cardDismiss 400ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes cardDismiss {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(30px) scale(0.9);
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+/* --- Phase 2: HITSTOP --- */
+/* Micro-freeze for rare+ cards. Everything holds still. */
+/* The brain processes "something big is about to happen." */
+.cardHitstop {
+  transform: translateY(-20px) scale(1.1);
+  filter: brightness(2.2);
+  box-shadow: 0 0 90px var(--card-glow, rgba(255, 255, 255, 0.7));
+  z-index: 10;
+  pointer-events: none;
+  /* Held state — no animation, just frozen at peak */
+}
+
+.cardHitstopOverlay {
+  background: rgba(0, 0, 0, 0.95) !important;
+  transition: background 60ms ease-in;
+}
+
+/* --- Phase 3: IMPACT --- */
+/* The payoff: card bursts, particles, "OBTAINED!" slams in. */
+/* 0.2-0.5s of acute visual "juice." */
+.cardAbsorbBurst {
+  animation: cardBurst 350ms ease-out forwards;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes cardBurst {
+  0% {
+    transform: translateY(-20px) scale(1.1);
+    opacity: 1;
+    filter: brightness(2);
+  }
+  30% {
+    transform: translateY(-20px) scale(1.3);
+    opacity: 1;
+    filter: brightness(3);
+    box-shadow: 0 0 120px var(--card-glow, rgba(255, 255, 255, 0.9));
+  }
+  100% {
+    transform: translateY(-20px) scale(0);
+    opacity: 0;
+    filter: brightness(4);
+    box-shadow: 0 0 0px var(--card-glow, rgba(255, 255, 255, 0));
+  }
+}
+
+/* Flash effect on overlay during impact */
+.cardAbsorbFlash {
+  animation: overlayFlash 350ms ease-out;
+}
+
+@keyframes overlayFlash {
+  0% {
+    background: rgba(0, 0, 0, 0.92);
+  }
+  25% {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  100% {
+    background: rgba(0, 0, 0, 0.92);
+  }
+}
+
+/* Selected card hidden after burst (during display/done phases) */
+.cardAbsorbHidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0);
+}
+
+/* --- Phase 4: DISPLAY --- */
+/* Wait for player input. Cognitive processing reward: */
+/* player reads stats, visualizes synergies, feels mastery. */
+
+/* --- Phase 5: DONE --- */
+/* Overlay fade-out when player dismisses */
+.cardAbsorbDone {
+  animation: overlayFadeOut 200ms ease-out forwards;
+}
+
+@keyframes overlayFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* --- "OBTAINED!" text --- */
+.cardObtainedText {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+  animation: obtainedSlam 350ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  text-align: center;
+}
+
+.cardObtainedText span {
+  font-size: 1.5rem;
+  font-weight: 200;
+  color: white;
+  letter-spacing: 0.4em;
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+}
+
+.cardObtainedIcon {
+  font-size: 3rem !important;
+  letter-spacing: 0 !important;
+}
+
+.cardObtainedName {
+  font-size: 0.8rem !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  letter-spacing: 0.15em !important;
+}
+
+/* Card description shown during display phase for cognitive processing */
+.cardObtainedDesc {
+  font-size: 0.75rem !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  letter-spacing: 0.05em !important;
+  max-width: 280px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+/* "CLICK OR PRESS ANY KEY" continue prompt */
+.cardObtainedContinue {
+  font-size: 0.6rem !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  letter-spacing: 0.3em !important;
+  margin-top: 16px;
+  animation: continuePulse 1.5s ease-in-out infinite;
+}
+
+/* Display phase: "OBTAINED!" text transitions to relaxed state for reading */
+.cardObtainedDisplay {
+  animation: obtainedSettle 400ms ease-out forwards;
+}
+
+@keyframes obtainedSlam {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+    filter: brightness(3);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes obtainedSettle {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes continuePulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* --- Rarity-specific anticipation enhancements --- */
+
+/* Rare: golden shimmer during anticipation */
+.cardRarity_rare.cardAnticipation {
+  animation-name: cardAnticipateShimmer;
+}
+
+@keyframes cardAnticipateShimmer {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+    box-shadow: 0 0 0px var(--card-glow, rgba(255, 215, 0, 0));
+  }
+  20% {
+    transform: translateY(-8px) scale(1.03);
+    filter: brightness(1.15) saturate(1.2);
+    box-shadow: 0 0 20px var(--card-glow, rgba(255, 215, 0, 0.2));
+  }
+  50% {
+    transform: translateY(-14px) scale(1.06);
+    filter: brightness(1.4) saturate(1.4);
+    box-shadow: 0 0 40px var(--card-glow, rgba(255, 215, 0, 0.35));
+  }
+  80% {
+    transform: translateY(-18px) scale(1.08);
+    filter: brightness(1.8) saturate(1.6);
+    box-shadow: 0 0 65px var(--card-glow, rgba(255, 215, 0, 0.55));
+  }
+  100% {
+    transform: translateY(-20px) scale(1.1);
+    filter: brightness(2.2) saturate(1.8);
+    box-shadow: 0 0 90px var(--card-glow, rgba(255, 215, 0, 0.7));
+  }
+}
+
+/* Epic: purple surge with subtle rotation */
+.cardRarity_epic.cardAnticipation {
+  animation-name: cardAnticipateEpic;
+}
+
+@keyframes cardAnticipateEpic {
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+    box-shadow: 0 0 0px var(--card-glow, rgba(206, 147, 216, 0));
+  }
+  25% {
+    transform: translateY(-10px) scale(1.04) rotate(-0.5deg);
+    filter: brightness(1.2) saturate(1.3);
+    box-shadow: 0 0 25px var(--card-glow, rgba(206, 147, 216, 0.25));
+  }
+  50% {
+    transform: translateY(-14px) scale(1.07) rotate(0.5deg);
+    filter: brightness(1.5) saturate(1.5);
+    box-shadow: 0 0 45px var(--card-glow, rgba(206, 147, 216, 0.4));
+  }
+  75% {
+    transform: translateY(-18px) scale(1.09) rotate(-0.3deg);
+    filter: brightness(1.8) saturate(1.7);
+    box-shadow: 0 0 70px var(--card-glow, rgba(206, 147, 216, 0.6));
+  }
+  100% {
+    transform: translateY(-20px) scale(1.1) rotate(0deg);
+    filter: brightness(2.2) saturate(2);
+    box-shadow: 0 0 100px var(--card-glow, rgba(206, 147, 216, 0.75));
+  }
+}
+
+/* Legendary: maximum spectacle — pulsing aura with chromatic shift */
+.cardRarity_legendary.cardAnticipation {
+  animation-name: cardAnticipateLegendary;
+}
+
+@keyframes cardAnticipateLegendary {
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1) saturate(1) hue-rotate(0deg);
+    box-shadow: 0 0 0px var(--card-glow, rgba(255, 255, 255, 0));
+  }
+  15% {
+    transform: translateY(-6px) scale(1.02) rotate(-0.3deg);
+    filter: brightness(1.15) saturate(1.2) hue-rotate(5deg);
+    box-shadow: 0 0 20px var(--card-glow, rgba(255, 255, 255, 0.15));
+  }
+  35% {
+    transform: translateY(-12px) scale(1.05) rotate(0.5deg);
+    filter: brightness(1.4) saturate(1.5) hue-rotate(-5deg);
+    box-shadow: 0 0 40px var(--card-glow, rgba(255, 255, 255, 0.3));
+  }
+  55% {
+    transform: translateY(-16px) scale(1.08) rotate(-0.4deg);
+    filter: brightness(1.7) saturate(1.8) hue-rotate(10deg);
+    box-shadow: 0 0 65px var(--card-glow, rgba(255, 255, 255, 0.5));
+  }
+  75% {
+    transform: translateY(-19px) scale(1.1) rotate(0.3deg);
+    filter: brightness(2) saturate(2) hue-rotate(-8deg);
+    box-shadow: 0 0 90px var(--card-glow, rgba(255, 255, 255, 0.65));
+  }
+  100% {
+    transform: translateY(-20px) scale(1.12) rotate(0deg);
+    filter: brightness(2.5) saturate(2.2) hue-rotate(0deg);
+    box-shadow: 0 0 120px var(--card-glow, rgba(255, 255, 255, 0.8));
+  }
+}
+
+/* Legendary burst: extended duration for maximum payoff */
+.cardRarity_legendary.cardAbsorbBurst {
+  animation-duration: 450ms;
+}
+
 /* Equipped cards in sidebar */
 .equippedCardSlots {
   display: flex;
@@ -4255,6 +4290,11 @@
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.04);
   position: relative;
+}
+
+.equippedCardIcon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .equippedCardStack {

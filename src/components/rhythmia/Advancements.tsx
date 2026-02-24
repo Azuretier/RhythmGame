@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
@@ -55,16 +55,33 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
     setState(loadAdvancementState());
   }, []);
 
+  // Get locale from next-intl — must be called before any conditional return
+  const locale = useLocale();
+
+  // Build a Set of unlocked IDs for O(1) lookups instead of O(n) Array.includes
+  const unlockedSet = useMemo(
+    () => new Set(state?.unlockedIds ?? []),
+    [state]
+  );
+
+  // Pre-group advancements by category so tabs never re-filter the full array
+  const advancementsByCategory = useMemo(
+    () =>
+      ADVANCEMENTS.reduce<Record<string, typeof ADVANCEMENTS>>((acc, adv) => {
+        (acc[adv.category] ??= []).push(adv);
+        return acc;
+      }, {}),
+    []
+  );
+
   if (!state) return null;
 
   const unlockedCount = state.unlockedIds.length;
   const totalCount = ADVANCEMENTS.length;
   const progressPercent = Math.round((unlockedCount / totalCount) * 100);
 
-  const filteredAdvancements = ADVANCEMENTS.filter(a => a.category === selectedCategory);
+  const filteredAdvancements = advancementsByCategory[selectedCategory] ?? [];
 
-  // Get locale from next-intl
-  const locale = useLocale();
   const categoryLabels = CATEGORY_LABELS[locale] || CATEGORY_LABELS.en;
 
   return (
@@ -90,8 +107,8 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
       {/* Category tabs */}
       <div className={styles.tabs}>
         {CATEGORY_ORDER.map(cat => {
-          const catAdvancements = ADVANCEMENTS.filter(a => a.category === cat);
-          const catUnlocked = catAdvancements.filter(a => state.unlockedIds.includes(a.id)).length;
+          const catAdvancements = advancementsByCategory[cat] ?? [];
+          const catUnlocked = catAdvancements.filter(a => unlockedSet.has(a.id)).length;
           return (
             <button
               key={cat}
@@ -116,7 +133,7 @@ export const Advancements: React.FC<Props> = ({ onClose }) => {
             transition={{ duration: 0.15 }}
           >
             {filteredAdvancements.map(adv => {
-              const unlocked = state.unlockedIds.includes(adv.id);
+              const unlocked = unlockedSet.has(adv.id);
               const currentValue = state.stats[adv.statKey];
               const progress = Math.min(1, currentValue / adv.threshold);
               const displayName = t(`advancements.${adv.id}.name`);

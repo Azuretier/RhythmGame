@@ -54,6 +54,15 @@ export type RhythmState = {
     scorePop: boolean;
 };
 
+// ===== Dragon Gauge (Mandarin Fever) =====
+export type DragonGaugeState = {
+    furyGauge: number;       // 0-10, charges from T-spins
+    mightGauge: number;      // 0-10, charges from Tetrises
+    isBreathing: boolean;    // true during dragon breath animation
+    breathStartTime: number; // timestamp when breath started
+    enabled: boolean;        // true when Mandarin Dragon card equipped
+};
+
 // ===== VFX Event Types =====
 
 export type VFXEvent =
@@ -64,14 +73,19 @@ export type VFXEvent =
     | { type: 'comboChange'; combo: number; onBeat: boolean }
     | { type: 'comboBreak'; lostCombo: number }
     | { type: 'feverStart'; combo: number }
-    | { type: 'feverEnd' };
+    | { type: 'feverEnd' }
+    | { type: 'dragonGaugeCharge'; gauge: 'fury' | 'might'; amount: number; newValue: number }
+    | { type: 'dragonBreathStart' }
+    | { type: 'dragonBreathEnd' };
 
 export type VFXEmitter = (event: VFXEvent) => void;
+
 // ===== Game Loop Phase =====
 export type GamePhase =
     | 'WORLD_CREATION'
     | 'PLAYING'
-    | 'CRAFTING'
+    | 'CARD_SELECT'
+    | 'CARD_ABSORBING'
     | 'COLLAPSE'
     | 'TRANSITION'
     | 'CHECKPOINT';
@@ -108,8 +122,20 @@ export type FloatingItem = {
     collected: boolean;
 };
 
-// ===== Weapon Cards =====
-export type WeaponCard = {
+// ===== Card Attribute System =====
+export type CardAttribute =
+    | 'combo_guard'     // Missed beat doesn't break combo (limited uses per stage)
+    | 'terrain_surge'   // +% terrain damage on perfect beats
+    | 'beat_extend'     // Wider beat timing window
+    | 'score_boost'     // +% score multiplier
+    | 'gravity_slow'    // -% piece gravity speed
+    | 'lucky_drops'     // Higher rarity material drop rates
+    | 'combo_amplify'   // Combo multiplier grows faster
+    | 'shield'          // First miss per stage doesn't break combo
+    | 'dragon_boost';   // Enables Mandarin Fever dragon gauge system
+
+// ===== Rogue-Like Card =====
+export type RogueCard = {
     id: string;
     name: string;
     nameJa: string;
@@ -118,16 +144,21 @@ export type WeaponCard = {
     glowColor: string;
     description: string;
     descriptionJa: string;
-    damageMultiplier: number;
-    specialEffect?: string;
-    recipe: { itemId: string; count: number }[];
+    rarity: ItemRarity;
+    baseCost: { itemId: string; count: number }[];
+    attribute: CardAttribute;
+    /** Per-attribute numeric value (uses for combo_guard, % for terrain_surge, etc.) */
+    attributeValue: number;
 };
 
-export type CraftedCard = {
+// ===== Equipped Card (player's deck) =====
+export type EquippedCard = {
     cardId: string;
-    craftedAt: number;
+    equippedAt: number;
+    stackCount: number;
 };
 
+// ===== Active Attribute Effects (runtime tracking) =====
 export type ActiveEffects = {
     comboGuardUsesRemaining: number;
     shieldActive: boolean;
@@ -137,10 +168,13 @@ export type ActiveEffects = {
     gravitySlowFactor: number;
     luckyDropsBonus: number;
     comboAmplifyFactor: number;
+    dragonBoostEnabled: boolean;
+    dragonBoostChargeMultiplier: number;
 };
 
+// ===== Card Selection Offer =====
 export type CardOffer = {
-    card: WeaponCard;
+    card: RogueCard;
     scaledCost: { itemId: string; count: number }[];
     affordable: boolean;
 };
@@ -176,74 +210,6 @@ export type Bullet = {
     vz: number;
     targetEnemyId: number;
     alive: boolean;
-};
-
-// ===== Treasure System =====
-export type TreasureRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-
-export type TreasureType = {
-    id: string;
-    name: string;
-    nameJa: string;
-    icon: string;
-    color: string;
-    glowColor: string;
-    rarity: TreasureRarity;
-    /** Gold value of this treasure */
-    value: number;
-    /** Drop weight (probability) */
-    dropWeight: number;
-};
-
-export type TreasureWallet = {
-    gold: number;
-    silver: number;
-    totalGoldEarned: number;
-    totalTreasuresCollected: number;
-};
-
-export type FloatingTreasure = {
-    id: number;
-    treasureId: string;
-    x: number;
-    y: number;
-    targetX: number;
-    targetY: number;
-    startTime: number;
-    duration: number;
-    collected: boolean;
-};
-
-// ===== Keybindings =====
-export type KeybindAction = 'inventory' | 'shop';
-
-export type Keybindings = {
-    [K in KeybindAction]: string;
-};
-
-export const DEFAULT_KEYBINDINGS: Keybindings = {
-    inventory: 'e',
-    shop: 'l',
-};
-
-// ===== Shop Item (buyable in shop) =====
-export type ShopItem = {
-    id: string;
-    name: string;
-    nameJa: string;
-    icon: string;
-    color: string;
-    glowColor: string;
-    description: string;
-    descriptionJa: string;
-    cost: { itemId: string; count: number }[];
-    /** Weapon card ID produced if this is a weapon purchase */
-    producesCardId?: string;
-    /** Stats to display */
-    stats: { label: string; value: string; color?: string }[];
-    /** Component items shown in build tree */
-    components?: string[];
-    rarity: ItemRarity;
 };
 
 // ===== Terrain Particle =====
@@ -284,3 +250,23 @@ export const DEFAULT_FEATURE_SETTINGS: FeatureSettings = {
     garbageMeter: true,
     mouseControls: false,
 };
+
+// ===== Corruption & Anomaly System =====
+
+export type SideBoardSide = 'left' | 'right';
+
+export interface CorruptionNode {
+    id: number;
+    gx: number;          // Terrain grid X coordinate
+    gz: number;          // Terrain grid Z coordinate
+    level: number;       // 0=seed → 5=mature (enemy spawn point)
+    maxLevel: number;
+    spawnTime: number;
+    lastGrowTime: number;
+}
+
+export interface AnomalyEvent {
+    id: number;
+    triggerTime: number;
+    active: boolean;
+}

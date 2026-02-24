@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User } from 'firebase/auth';
-import { auth } from '@/lib/rhythmia/firebase';
+import { auth, appCheckAvailable } from '@/lib/rhythmia/firebase';
 import {
   isGoogleLinked,
   linkGoogleAccount,
@@ -32,6 +32,11 @@ import {
 } from '@/lib/advancements/storage';
 import { mergeStates } from '@/lib/advancements/firestore';
 import { loadLoyaltyState, saveLoyaltyState } from '@/lib/loyalty/storage';
+import {
+  loadSkillTreeState,
+  saveSkillTreeState,
+  mergeSkillTreeStates,
+} from '@/lib/skill-tree/storage';
 
 interface GoogleSyncContextType {
   /** Current Firebase user (may be anonymous or Google-linked) */
@@ -108,6 +113,15 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
     // Initialize auth (will create anonymous user if needed)
     const initAuthAsync = async () => {
       if (!auth) return;
+
+      // Wait for App Check validation — skip auth if App Check is broken
+      // to avoid 401 errors and noisy console output
+      const isAppCheckOk = await appCheckAvailable;
+      if (!isAppCheckOk) {
+        console.warn('[GoogleSync] Cloud sync unavailable — App Check verification failed.');
+        return;
+      }
+
       const currentUser = auth.currentUser;
       if (!currentUser) {
         try {
@@ -184,6 +198,16 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
         saveLoyaltyState(merged);
       }
 
+      // Restore skill tree — merge local and remote to preserve skills from both devices
+      if (remoteUserData?.skillTree) {
+        const localSkillTree = loadSkillTreeState();
+        const merged = mergeSkillTreeStates(localSkillTree, remoteUserData.skillTree);
+        saveSkillTreeState(merged);
+        window.dispatchEvent(new CustomEvent('skill-tree-restored', {
+          detail: merged,
+        }));
+      }
+
       setStatus('done');
     } catch (error) {
       console.error('[GoogleSync] Restore from cloud failed:', error);
@@ -201,8 +225,9 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
     try {
       const profile = getStoredProfile();
       const skinId = getStoredSkinId();
+      const skillTree = loadSkillTreeState();
 
-      await syncUserDataToFirestore(user.uid, { profile, skinId });
+      await syncUserDataToFirestore(user.uid, { profile, skinId, skillTree });
       setStatus('done');
     } catch (error) {
       console.error('[GoogleSync] Sync failed:', error);
@@ -223,7 +248,8 @@ export function GoogleSyncProvider({ children }: { children: ReactNode }) {
       // Push local data to cloud, then restore any remote data
       const profile = getStoredProfile();
       const skinId = getStoredSkinId();
-      await syncUserDataToFirestore(linkedUser.uid, { profile, skinId });
+      const skillTree = loadSkillTreeState();
+      await syncUserDataToFirestore(linkedUser.uid, { profile, skinId, skillTree });
       await restoreFromCloud(linkedUser.uid);
 
       setStatus('done');
