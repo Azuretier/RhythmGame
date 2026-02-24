@@ -483,27 +483,28 @@ export function useGameState() {
         }
         setInventory(invCopy.filter(i => i.count > 0));
 
-        // Compute updated equipped cards
-        const prev = equippedCardsRef.current;
-        const existing = prev.find(ec => ec.cardId === cardId);
-        let updatedCards: EquippedCard[];
-        if (existing && existing.stackCount < 3) {
-            updatedCards = prev.map(ec =>
-                ec.cardId === cardId
-                    ? { ...ec, stackCount: ec.stackCount + 1 }
-                    : ec
-            );
-        } else if (existing) {
-            updatedCards = prev;
-        } else {
-            updatedCards = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
-        }
+        // Use functional updater for safe sequential state derivation;
+        // capture result via closure for effect computation
+        let newCards: EquippedCard[] = [];
+        setEquippedCards(prev => {
+            const existing = prev.find(ec => ec.cardId === cardId);
+            if (existing && existing.stackCount < 3) {
+                newCards = prev.map(ec =>
+                    ec.cardId === cardId
+                        ? { ...ec, stackCount: ec.stackCount + 1 }
+                        : ec
+                );
+            } else if (existing) {
+                newCards = prev;
+            } else {
+                newCards = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+            }
+            return newCards;
+        });
 
-        // Update cards, effects, and refs synchronously
-        equippedCardsRef.current = updatedCards;
-        setEquippedCards(updatedCards);
-        const effects = computeActiveEffects(updatedCards);
-        activeEffectsRef.current = effects;
+        // Recompute effects from the updated cards (updater ran synchronously)
+        // Ref sync is handled by existing useEffect hooks
+        const effects = computeActiveEffects(newCards);
         setActiveEffects(effects);
 
         // Enter absorbing phase — animation plays before finishing
@@ -736,105 +737,86 @@ export function useGameState() {
         // Mark as opened
         setCurrentTreasureBox(prev => prev ? { ...prev, opened: true } : null);
 
-        // Track whether cards/effects need updating
-        let updatedCards = equippedCardsRef.current;
-        let updatedEffects = activeEffectsRef.current;
-        let cardsChanged = false;
-        let effectsBoosted = false;
-
-        // Apply rewards
+        // Apply material and score rewards
         for (const reward of box.rewards) {
-            switch (reward.type) {
-                case 'materials':
-                    setInventory(prev => {
-                        const updated = [...prev];
-                        for (const item of reward.items) {
-                            const existing = updated.find(i => i.itemId === item.itemId);
-                            if (existing) {
-                                existing.count += item.count;
-                            } else {
-                                updated.push({ itemId: item.itemId, count: item.count });
-                            }
+            if (reward.type === 'materials') {
+                setInventory(prev => {
+                    const updated = [...prev];
+                    for (const item of reward.items) {
+                        const existing = updated.find(i => i.itemId === item.itemId);
+                        if (existing) {
+                            existing.count += item.count;
+                        } else {
+                            updated.push({ itemId: item.itemId, count: item.count });
                         }
-                        return updated;
-                    });
-                    break;
+                    }
+                    return updated;
+                });
+            } else if (reward.type === 'score_bonus') {
+                updateScore(scoreRef.current + reward.amount);
+            }
+        }
 
-                case 'score_bonus':
-                    updateScore(scoreRef.current + reward.amount);
-                    break;
+        // Process free card rewards via functional updater for safe state derivation
+        const freeCardRewards = box.rewards.filter(r => r.type === 'free_card');
+        let newCardsSnapshot: EquippedCard[] | null = null;
 
-                case 'free_card': {
+        if (freeCardRewards.length > 0) {
+            setEquippedCards(prev => {
+                let cards = prev;
+                for (const reward of freeCardRewards) {
+                    if (reward.type !== 'free_card') continue;
                     const cardId = reward.card.id;
-                    const existing = updatedCards.find(ec => ec.cardId === cardId);
+                    const existing = cards.find(ec => ec.cardId === cardId);
                     if (existing && existing.stackCount < 3) {
-                        updatedCards = updatedCards.map(ec =>
+                        cards = cards.map(ec =>
                             ec.cardId === cardId
                                 ? { ...ec, stackCount: ec.stackCount + 1 }
                                 : ec
                         );
-                        cardsChanged = true;
                     } else if (!existing) {
-                        updatedCards = [...updatedCards, { cardId, equippedAt: Date.now(), stackCount: 1 }];
-                        cardsChanged = true;
+                        cards = [...cards, { cardId, equippedAt: Date.now(), stackCount: 1 }];
                     }
-                    break;
                 }
-
-                case 'effect_boost': {
-                    // Apply temporary effect boost
-                    updatedEffects = { ...updatedEffects };
-                    switch (reward.effect) {
-                        case 'score_boost':
-                            updatedEffects.scoreBoostMultiplier += reward.value;
-                            break;
-                        case 'terrain_surge':
-                            updatedEffects.terrainSurgeBonus += reward.value;
-                            break;
-                        case 'lucky_drops':
-                            updatedEffects.luckyDropsBonus += reward.value;
-                            break;
-                        case 'gravity_slow':
-                            updatedEffects.gravitySlowFactor = Math.max(0.1, updatedEffects.gravitySlowFactor - reward.value);
-                            break;
-                    }
-                    effectsBoosted = true;
-                    break;
-                }
-            }
+                newCardsSnapshot = cards;
+                return cards;
+            });
         }
 
-        // Synchronize cards, effects, and refs outside of setter callbacks
-        if (cardsChanged) {
-            equippedCardsRef.current = updatedCards;
-            setEquippedCards(updatedCards);
-            // Recompute base effects from cards, then layer boosts on top
-            updatedEffects = computeActiveEffects(updatedCards);
-            // Re-apply any effect boosts from this box
+        // Helper to apply effect boosts to an effects object
+        const applyBoosts = (effects: ActiveEffects): ActiveEffects => {
+            const result = { ...effects };
             for (const reward of box.rewards) {
-                if (reward.type === 'effect_boost') {
-                    switch (reward.effect) {
-                        case 'score_boost':
-                            updatedEffects.scoreBoostMultiplier += reward.value;
-                            break;
-                        case 'terrain_surge':
-                            updatedEffects.terrainSurgeBonus += reward.value;
-                            break;
-                        case 'lucky_drops':
-                            updatedEffects.luckyDropsBonus += reward.value;
-                            break;
-                        case 'gravity_slow':
-                            updatedEffects.gravitySlowFactor = Math.max(0.1, updatedEffects.gravitySlowFactor - reward.value);
-                            break;
-                    }
+                if (reward.type !== 'effect_boost') continue;
+                switch (reward.effect) {
+                    case 'score_boost':
+                        result.scoreBoostMultiplier += reward.value;
+                        break;
+                    case 'terrain_surge':
+                        result.terrainSurgeBonus += reward.value;
+                        break;
+                    case 'lucky_drops':
+                        result.luckyDropsBonus += reward.value;
+                        break;
+                    case 'gravity_slow':
+                        result.gravitySlowFactor = Math.max(0.1, result.gravitySlowFactor - reward.value);
+                        break;
                 }
             }
-        }
+            return result;
+        };
 
-        if (cardsChanged || effectsBoosted) {
-            activeEffectsRef.current = updatedEffects;
-            setActiveEffects(updatedEffects);
+        const hasEffectBoosts = box.rewards.some(r => r.type === 'effect_boost');
+
+        if (newCardsSnapshot !== null) {
+            // Cards changed: recompute base effects from new cards, then layer boosts
+            const effects = applyBoosts(computeActiveEffects(newCardsSnapshot));
+            setActiveEffects(effects);
+        } else if (hasEffectBoosts) {
+            // Only boosts, no card changes: use functional updater for safe derivation
+            setActiveEffects(prev => applyBoosts(prev));
         }
+        // Ref sync handled by existing useEffect hooks
     }, [currentTreasureBox, computeActiveEffects, updateScore]);
 
     // Finish treasure box phase and proceed to card select
