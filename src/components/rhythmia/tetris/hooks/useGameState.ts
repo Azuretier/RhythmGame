@@ -188,6 +188,7 @@ export function useGameState() {
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { equippedCardsRef.current = equippedCards; }, [equippedCards]);
     useEffect(() => { dragonGaugeRef.current = dragonGauge; }, [dragonGauge]);
+    useEffect(() => { elementalStateRef.current = elementalState; }, [elementalState]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -1253,6 +1254,119 @@ export function useGameState() {
             }
         }, 1200);
     }, [enterCardSelect, shouldSpawnTreasureBox, enterTreasureBox]);
+
+    // ===== Elemental System Actions =====
+
+    /**
+     * Spawn elemental orbs from a line clear event.
+     * Returns VFX events to emit.
+     */
+    const spawnElementOrbs = useCallback((
+        pieceType: string,
+        lineCount: number,
+        onBeat: boolean,
+        originX: number,
+        originY: number,
+    ): { element: ElementType; boardX: number; boardY: number }[] => {
+        const orbCount = calculateOrbCount(lineCount, onBeat, comboRef.current);
+        const now = Date.now();
+        const vfxEvents: { element: ElementType; boardX: number; boardY: number }[] = [];
+        let currentOrbs = { ...elementalStateRef.current.orbs };
+
+        for (let i = 0; i < orbCount; i++) {
+            const element = rollElementOrb(pieceType, worldIdxRef.current);
+            currentOrbs = addOrbs(currentOrbs, element, 1);
+
+            // Create floating orb visual
+            const newOrb: ElementOrb = {
+                id: nextOrbId++,
+                element,
+                x: originX + (Math.random() - 0.5) * 150,
+                y: originY + (Math.random() - 0.5) * 80,
+                targetX: originX,
+                targetY: originY + 250,
+                startTime: now + i * 100,
+                duration: ELEMENT_ORB_FLOAT_DURATION + Math.random() * 150,
+                collected: false,
+            };
+
+            setFloatingOrbs(prev => [...prev, newOrb].slice(-MAX_FLOATING_ORBS * 2));
+            vfxEvents.push({ element, boardX: originX, boardY: originY });
+        }
+
+        // Update elemental state with new orb counts
+        setElementalState(prev => ({
+            ...prev,
+            orbs: currentOrbs,
+        }));
+        elementalStateRef.current = { ...elementalStateRef.current, orbs: currentOrbs };
+
+        // Schedule orb collection animation
+        setTimeout(() => {
+            setFloatingOrbs(prev => prev.filter(o => (now - o.startTime) < o.duration + 500));
+        }, ELEMENT_ORB_FLOAT_DURATION + 300);
+
+        return vfxEvents;
+    }, []);
+
+    /**
+     * Try to auto-trigger the best available reaction.
+     * Returns the ReactionResult if triggered, null otherwise.
+     */
+    const tryTriggerReaction = useCallback((): ReactionResult | null => {
+        const state = elementalStateRef.current;
+        const now = Date.now();
+
+        // Prune expired active reactions
+        const prunedReactions = pruneExpiredReactions(state.activeReactions, now);
+
+        const bestReaction = findBestReaction(
+            state.orbs,
+            reactionCooldownsRef.current,
+            now,
+        );
+
+        if (!bestReaction) return null;
+
+        // Consume orbs
+        const newOrbs = consumeOrbs(state.orbs, bestReaction);
+
+        // Apply reaction effect
+        const result = applyReactionEffect(bestReaction, {
+            currentDamage: 0,
+            terrainRemaining: terrainTotalRef.current - terrainDestroyedCountRef.current,
+            combo: comboRef.current,
+            worldIdx: worldIdxRef.current,
+            score: scoreRef.current,
+        });
+
+        // Create active reaction for duration-based effects
+        const activeReaction = createActiveReaction(bestReaction, 1.0);
+
+        // Update cooldowns
+        reactionCooldownsRef.current = [
+            ...reactionCooldownsRef.current.filter(r => r.type !== bestReaction),
+            { type: bestReaction, time: now },
+        ];
+
+        // Update state
+        const newReactionCounts = { ...state.reactionCounts };
+        newReactionCounts[bestReaction] = (newReactionCounts[bestReaction] || 0) + 1;
+
+        const newState: ElementalState = {
+            orbs: newOrbs,
+            activeReactions: activeReaction.duration > 0
+                ? [...prunedReactions, activeReaction]
+                : prunedReactions,
+            totalReactions: state.totalReactions + 1,
+            reactionCounts: newReactionCounts,
+        };
+
+        setElementalState(newState);
+        elementalStateRef.current = newState;
+
+        return result;
+    }, []);
 
     // Initialize/reset game
     const initGame = useCallback((mode: GameMode = 'vanilla', protocolModifiers?: ProtocolModifiers) => {

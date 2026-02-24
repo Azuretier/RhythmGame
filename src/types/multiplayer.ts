@@ -308,11 +308,19 @@ export interface KOPayload {
   loserId: string;
 }
 
+export interface ElementalGarbagePayload {
+  event: 'elemental_garbage';
+  lines: number;
+  element: string;
+  reaction?: string;
+}
+
 export type RelayPayload =
   | BoardUpdatePayload
   | GarbagePayload
   | GameOverPayload
-  | KOPayload;
+  | KOPayload
+  | ElementalGarbagePayload;
 
 // ===== Shared Game Types =====
 

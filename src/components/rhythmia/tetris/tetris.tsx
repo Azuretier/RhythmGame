@@ -951,6 +951,23 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       // Particle effects (both modes)
       spawnTerrainParticles(center.x, center.y, clearedLines * TERRAIN_PARTICLES_PER_LINE);
 
+      // ===== Elemental Orb Spawning =====
+      const orbVfxEvents = spawnElementOrbs(piece.type, clearedLines, onBeat, center.x, center.y);
+      for (const orbEvt of orbVfxEvents) {
+        vfxRef.current.emit({ type: 'elementOrbSpawn', element: orbEvt.element, boardX: orbEvt.boardX, boardY: orbEvt.boardY });
+      }
+
+      // Try to trigger an elemental reaction
+      const reactionResult = tryTriggerReaction();
+      if (reactionResult) {
+        vfxRef.current.emit({ type: 'reactionTrigger', reaction: reactionResult.reactionType, intensity: 1.0 });
+
+        if (!reactionResult.success) {
+          // Corruption backfire
+          vfxRef.current.emit({ type: 'corruptionBackfire' });
+        }
+      }
+
       playLineClear(clearedLines, worldIdxRef.current);
       triggerBoardShake();
     }
@@ -975,6 +992,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
     consumeComboGuard, consumeShield, showActionMessage,
     chargeDragonFury, chargeDragonMight, isDragonBreathReady, triggerDragonBreath, endDragonBreath,
+    spawnElementOrbs, tryTriggerReaction,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
