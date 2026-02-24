@@ -425,6 +425,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   const galaxyTDOnLineClearRef = useRef(galaxyTD.onLineClear);
   galaxyTDOnLineClearRef.current = galaxyTD.onLineClear;
 
+  // Line clear pulse for tower aura visual
+  const [galaxyLineClearPulse, setGalaxyLineClearPulse] = useState(false);
+  const galaxyPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
   spawnEnemiesRef.current = spawnEnemies;
@@ -925,6 +929,11 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
         // Galaxy TD: line clears power up towers on the ring
         galaxyTDOnLineClearRef.current(clearedLines);
+
+        // Flash tower aura pulse
+        setGalaxyLineClearPulse(true);
+        if (galaxyPulseTimerRef.current) clearTimeout(galaxyPulseTimerRef.current);
+        galaxyPulseTimerRef.current = setTimeout(() => setGalaxyLineClearPulse(false), 600);
 
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
@@ -1713,6 +1722,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
               towers={galaxyTD.towers}
               gates={galaxyTD.gates}
               waveNumber={galaxyTD.waveNumber}
+              lineClearPulse={galaxyLineClearPulse}
             />
           )}
 
