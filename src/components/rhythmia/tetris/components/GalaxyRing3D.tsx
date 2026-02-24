@@ -297,6 +297,44 @@ function TerrainDecorations() {
     );
 }
 
+// ===== HP Number Sprite =====
+// Renders a small canvas texture showing "HP/MaxHP" as a billboard sprite
+function HPNumberSprite({ health, maxHealth }: { health: number; maxHealth: number }) {
+    const texture = useMemo(() => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 24;
+        const ctx = canvas.getContext('2d')!;
+        ctx.clearRect(0, 0, 64, 24);
+        // Text with outline
+        ctx.font = 'bold 18px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(`${health}/${maxHealth}`, 32, 12);
+        const ratio = health / maxHealth;
+        ctx.fillStyle = ratio > 0.5 ? '#44dd66' : ratio > 0.25 ? '#ddaa33' : '#dd3333';
+        ctx.fillText(`${health}/${maxHealth}`, 32, 12);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.magFilter = THREE.NearestFilter;
+        tex.minFilter = THREE.NearestFilter;
+        tex.generateMipmaps = false;
+        return tex;
+    }, [health, maxHealth]);
+
+    // Dispose on unmount
+    useEffect(() => {
+        return () => { texture.dispose(); };
+    }, [texture]);
+
+    return (
+        <sprite position={[0, ENEMY_SIZE * 2.15, 0]} scale={[0.4, 0.15, 1]}>
+            <spriteMaterial map={texture} transparent depthTest={false} />
+        </sprite>
+    );
+}
+
 // ===== Enemy HP Bar =====
 function EnemyHPBar({ health, maxHealth }: { health: number; maxHealth: number }) {
     const ratio = Math.max(0, health / maxHealth);
@@ -306,6 +344,8 @@ function EnemyHPBar({ health, maxHealth }: { health: number; maxHealth: number }
 
     return (
         <group position={[0, ENEMY_SIZE * 1.85, 0]}>
+            {/* HP Number */}
+            <HPNumberSprite health={health} maxHealth={maxHealth} />
             {/* Background */}
             <mesh position={[0, 0, 0]}>
                 <planeGeometry args={[barWidth, barHeight]} />

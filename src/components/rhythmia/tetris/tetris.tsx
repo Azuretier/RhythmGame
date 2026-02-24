@@ -1769,6 +1769,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
               <GalaxyBoard
                 galaxyActive={terrainPhase === 'dig'}
                 waveNumber={galaxyTD.waveNumber}
+                enemies={galaxyTD.enemies}
+                towers={galaxyTD.towers}
+                gates={galaxyTD.gates}
                 board={board}
                 currentPiece={currentPiece}
                 boardBeat={boardBeat}
