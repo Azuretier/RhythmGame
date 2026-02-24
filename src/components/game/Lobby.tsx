@@ -41,7 +41,7 @@ export default function Lobby({ gameSocket }: LobbyProps) {
   return (
     <div className="space-y-6">
       {/* Room Code Display */}
-      <GlassCard variant="gradient" from="from-yellow-500/20" to="to-pink-500/20" borderColor="border-yellow-500/30" className="text-center">
+      <GlassCard variant="gradient" gradient="yellow-pink" className="text-center">
         <h2 className="text-2xl font-bold mb-4">Room Code</h2>
         <div className="flex items-center justify-center gap-4">
           <div className="text-5xl font-bold font-mono tracking-widest bg-white/10 px-8 py-4 rounded-xl">
