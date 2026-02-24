@@ -61,9 +61,14 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
   const wsRef = useRef<WebSocket | null>(ws);
   // Tracks last known good WebSocket — prevents MultiplayerBattle unmount on brief disconnects
   const [activeWs, setActiveWs] = useState<WebSocket | null>(ws);
+  // Ref version of activeWs so AI effect always has access to the last good connection
+  const activeWsRef = useRef<WebSocket | null>(ws);
   useEffect(() => {
     wsRef.current = ws;
-    if (ws) setActiveWs(ws);
+    if (ws) {
+      setActiveWs(ws);
+      activeWsRef.current = ws;
+    }
   }, [ws]);
 
   // Ranked state
@@ -105,10 +110,9 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
     const difficulty = getDifficultyForRank(rankedState.points);
 
     const dispatchFakeMessage = (fakeMessage: ServerMessage) => {
-      // Use wsRef.current so we always dispatch to the latest WebSocket,
-      // even after reconnection. dispatchEvent is an EventTarget method
-      // that works regardless of readyState.
-      const currentWs = wsRef.current;
+      // Use activeWsRef.current (last known good WS) so AI events continue to dispatch
+      // during brief disconnects when wsRef.current may be null.
+      const currentWs = activeWsRef.current;
       if (!currentWs) return;
       const event = new MessageEvent('message', {
         data: JSON.stringify(fakeMessage),
