@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, Suspense } from 'react';
+import { useRef, Suspense, Component, ReactNode, memo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -10,6 +10,57 @@ interface DragonModel3DProps {
     furyPercent: number;
     mightPercent: number;
 }
+
+// ---- Error boundary -------------------------------------------------------
+
+interface ErrorBoundaryState { hasError: boolean }
+
+class DragonCanvasErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+    constructor(props: { children: ReactNode }) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError(): ErrorBoundaryState {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: Error) {
+        console.error('[DragonModel3D] WebGL/Three.js initialization error:', error);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div
+                    style={{
+                        width: CANVAS_WIDTH,
+                        height: CANVAS_HEIGHT,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: FALLBACK_FONT_SIZE,
+                    }}
+                >
+                    🐉
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+// ---- Stable Canvas config (defined once, never recreated) ----------------
+
+const CANVAS_WIDTH = 52;
+const CANVAS_HEIGHT = 72;
+const FALLBACK_FONT_SIZE = 20;
+/** Clamped dpr range: minimum 1, maximum 2 — covers Retina / HiDPI screens. */
+const CANVAS_DPR: [number, number] = [1, 2];
+const CANVAS_CAMERA = { fov: 50, position: [0, 0, 3] as [number, number, number] };
+const CANVAS_GL = { alpha: true, antialias: true };
+
+// ---- 3-D dragon mesh ------------------------------------------------------
 
 function DragonMesh({ isBreathing, bothFull, furyPercent, mightPercent }: DragonModel3DProps) {
     const groupRef = useRef<THREE.Group>(null);
@@ -148,24 +199,34 @@ function DragonMesh({ isBreathing, bothFull, furyPercent, mightPercent }: Dragon
     );
 }
 
-const CANVAS_WIDTH = 52;
-const CANVAS_HEIGHT = 72;
+// ---- Public export ---------------------------------------------------------
+// Memoized so the Canvas (and its WebGL context) is only recreated when props
+// actually change, preventing context leaks on unrelated parent re-renders.
 
-export function DragonModel3D({ isBreathing, bothFull, furyPercent, mightPercent }: DragonModel3DProps) {
+export const DragonModel3D = memo(function DragonModel3D({
+    isBreathing,
+    bothFull,
+    furyPercent,
+    mightPercent,
+}: DragonModel3DProps) {
     return (
-        <Canvas
-            camera={{ fov: 50, position: [0, 0, 3] }}
-            style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
-            gl={{ alpha: true, antialias: true }}
-        >
-            <Suspense fallback={null}>
-                <DragonMesh
-                    isBreathing={isBreathing}
-                    bothFull={bothFull}
-                    furyPercent={furyPercent}
-                    mightPercent={mightPercent}
-                />
-            </Suspense>
-        </Canvas>
+        <DragonCanvasErrorBoundary>
+            <Canvas
+                camera={CANVAS_CAMERA}
+                style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
+                dpr={CANVAS_DPR}
+                gl={CANVAS_GL}
+            >
+                <Suspense fallback={null}>
+                    <DragonMesh
+                        isBreathing={isBreathing}
+                        bothFull={bothFull}
+                        furyPercent={furyPercent}
+                        mightPercent={mightPercent}
+                    />
+                </Suspense>
+            </Canvas>
+        </DragonCanvasErrorBoundary>
     );
-}
+});
+
