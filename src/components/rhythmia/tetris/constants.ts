@@ -344,6 +344,16 @@ export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
     comboAmplifyFactor: 1,
     dragonBoostEnabled: false,
     dragonBoostChargeMultiplier: 1,
+    // Equipment defaults (zeroed until gear equipped)
+    equipmentScoreBonus: 0,
+    equipmentComboDuration: 0,
+    equipmentBeatWindow: 0,
+    equipmentTerrainDamage: 0,
+    equipmentDropRate: 0,
+    equipmentGravityReduce: 0,
+    equipmentComboAmplify: 0,
+    equipmentReactionPower: 0,
+    equipmentEnchantments: [],
 };
 
 // Max cards to offer per selection
@@ -438,6 +448,10 @@ export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
 
 // ===== Piece Type Array =====
 export const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
+// ===== Elemental System Settings =====
+export const ELEMENT_ORB_FLOAT_DURATION = 600;   // ms for orb float animation
+export const MAX_FLOATING_ORBS = 8;              // Max orb particles on screen
 
 // ===== Color Theme Helper =====
 // Get color for a piece type based on theme and world

@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState } from '../types';
+import type { ElementType, ReactionType, ElementalState, ElementOrb, ActiveReaction, ReactionResult } from '@/lib/elements/types';
+import { DEFAULT_ELEMENTAL_STATE } from '@/lib/elements/types';
+import {
+    rollElementOrb, calculateOrbCount, findBestReaction,
+    consumeOrbs, applyReactionEffect, createActiveReaction,
+    pruneExpiredReactions, addOrbs, createFreshElementalState,
+} from '@/lib/elements/engine';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
@@ -15,6 +22,7 @@ import {
     DEFAULT_DRAGON_GAUGE, DRAGON_FURY_MAX, DRAGON_MIGHT_MAX,
     DRAGON_BREATH_DURATION, DRAGON_BREATH_SCORE_BONUS,
     DRAGON_FURY_CHARGE, DRAGON_MIGHT_CHARGE,
+    ELEMENT_ORB_FLOAT_DURATION, MAX_FLOATING_ORBS,
 } from '../constants';
 import type { ProtocolModifiers } from '../protocol';
 import { DEFAULT_PROTOCOL_MODIFIERS } from '../protocol';
@@ -25,6 +33,7 @@ let nextFloatingId = 0;
 let nextParticleId = 0;
 let nextEnemyId = 0;
 let nextBulletId = 0;
+let nextOrbId = 0;
 
 /**
  * Custom hook for managing game state with synchronized refs
@@ -99,6 +108,12 @@ export function useGameState() {
     // ===== Mandarin Fever Dragon Gauge =====
     const [dragonGauge, setDragonGauge] = useState<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
     const dragonGaugeRef = useRef<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
+
+    // ===== Elemental System =====
+    const [elementalState, setElementalState] = useState<ElementalState>(createFreshElementalState());
+    const elementalStateRef = useRef<ElementalState>(createFreshElementalState());
+    const [floatingOrbs, setFloatingOrbs] = useState<ElementOrb[]>([]);
+    const reactionCooldownsRef = useRef<{ type: ReactionType; time: number }[]>([]);
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -181,6 +196,7 @@ export function useGameState() {
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { equippedCardsRef.current = equippedCards; }, [equippedCards]);
     useEffect(() => { dragonGaugeRef.current = dragonGauge; }, [dragonGauge]);
+    useEffect(() => { elementalStateRef.current = elementalState; }, [elementalState]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -1053,6 +1069,119 @@ export function useGameState() {
         }, 1200);
     }, [enterCardSelect]);
 
+    // ===== Elemental System Actions =====
+
+    /**
+     * Spawn elemental orbs from a line clear event.
+     * Returns VFX events to emit.
+     */
+    const spawnElementOrbs = useCallback((
+        pieceType: string,
+        lineCount: number,
+        onBeat: boolean,
+        originX: number,
+        originY: number,
+    ): { element: ElementType; boardX: number; boardY: number }[] => {
+        const orbCount = calculateOrbCount(lineCount, onBeat, comboRef.current);
+        const now = Date.now();
+        const vfxEvents: { element: ElementType; boardX: number; boardY: number }[] = [];
+        let currentOrbs = { ...elementalStateRef.current.orbs };
+
+        for (let i = 0; i < orbCount; i++) {
+            const element = rollElementOrb(pieceType, worldIdxRef.current);
+            currentOrbs = addOrbs(currentOrbs, element, 1);
+
+            // Create floating orb visual
+            const newOrb: ElementOrb = {
+                id: nextOrbId++,
+                element,
+                x: originX + (Math.random() - 0.5) * 150,
+                y: originY + (Math.random() - 0.5) * 80,
+                targetX: originX,
+                targetY: originY + 250,
+                startTime: now + i * 100,
+                duration: ELEMENT_ORB_FLOAT_DURATION + Math.random() * 150,
+                collected: false,
+            };
+
+            setFloatingOrbs(prev => [...prev, newOrb].slice(-MAX_FLOATING_ORBS * 2));
+            vfxEvents.push({ element, boardX: originX, boardY: originY });
+        }
+
+        // Update elemental state with new orb counts
+        setElementalState(prev => ({
+            ...prev,
+            orbs: currentOrbs,
+        }));
+        elementalStateRef.current = { ...elementalStateRef.current, orbs: currentOrbs };
+
+        // Schedule orb collection animation
+        setTimeout(() => {
+            setFloatingOrbs(prev => prev.filter(o => (now - o.startTime) < o.duration + 500));
+        }, ELEMENT_ORB_FLOAT_DURATION + 300);
+
+        return vfxEvents;
+    }, []);
+
+    /**
+     * Try to auto-trigger the best available reaction.
+     * Returns the ReactionResult if triggered, null otherwise.
+     */
+    const tryTriggerReaction = useCallback((): ReactionResult | null => {
+        const state = elementalStateRef.current;
+        const now = Date.now();
+
+        // Prune expired active reactions
+        const prunedReactions = pruneExpiredReactions(state.activeReactions, now);
+
+        const bestReaction = findBestReaction(
+            state.orbs,
+            reactionCooldownsRef.current,
+            now,
+        );
+
+        if (!bestReaction) return null;
+
+        // Consume orbs
+        const newOrbs = consumeOrbs(state.orbs, bestReaction);
+
+        // Apply reaction effect
+        const result = applyReactionEffect(bestReaction, {
+            currentDamage: 0,
+            terrainRemaining: terrainTotalRef.current - terrainDestroyedCountRef.current,
+            combo: comboRef.current,
+            worldIdx: worldIdxRef.current,
+            score: scoreRef.current,
+        });
+
+        // Create active reaction for duration-based effects
+        const activeReaction = createActiveReaction(bestReaction, 1.0);
+
+        // Update cooldowns
+        reactionCooldownsRef.current = [
+            ...reactionCooldownsRef.current.filter(r => r.type !== bestReaction),
+            { type: bestReaction, time: now },
+        ];
+
+        // Update state
+        const newReactionCounts = { ...state.reactionCounts };
+        newReactionCounts[bestReaction] = (newReactionCounts[bestReaction] || 0) + 1;
+
+        const newState: ElementalState = {
+            orbs: newOrbs,
+            activeReactions: activeReaction.duration > 0
+                ? [...prunedReactions, activeReaction]
+                : prunedReactions,
+            totalReactions: state.totalReactions + 1,
+            reactionCounts: newReactionCounts,
+        };
+
+        setElementalState(newState);
+        elementalStateRef.current = newState;
+
+        return result;
+    }, []);
+
     // Initialize/reset game
     const initGame = useCallback((mode: GameMode = 'vanilla', protocolModifiers?: ProtocolModifiers) => {
         const mods = protocolModifiers ?? DEFAULT_PROTOCOL_MODIFIERS;
@@ -1103,6 +1232,14 @@ export function useGameState() {
         // Reset dragon gauge
         setDragonGauge(DEFAULT_DRAGON_GAUGE);
         dragonGaugeRef.current = { ...DEFAULT_DRAGON_GAUGE };
+
+        // Reset elemental state
+        const freshElemental = createFreshElementalState();
+        setElementalState(freshElemental);
+        elementalStateRef.current = freshElemental;
+        setFloatingOrbs([]);
+        reactionCooldownsRef.current = [];
+        nextOrbId = 0;
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -1201,6 +1338,10 @@ export function useGameState() {
         // Dragon gauge
         dragonGauge,
 
+        // Elemental system
+        elementalState,
+        floatingOrbs,
+
         // Tower defense
         enemies,
         bullets,
@@ -1297,6 +1438,10 @@ export function useGameState() {
         triggerDragonBreath,
         endDragonBreath,
         dragonGaugeRef,
+        // Elemental system actions
+        spawnElementOrbs,
+        tryTriggerReaction,
+        elementalStateRef,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,
