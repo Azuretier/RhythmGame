@@ -714,7 +714,7 @@ export function processEndOfTurn(state: BattleState): {
   while (attempts < updatedState.turnOrder.length) {
     const actorId = updatedState.turnOrder[nextIdx];
     const actor = [...updatedState.playerParty, ...updatedState.enemies].find(
-      (a) => ('definitionId' in a ? a.definitionId : a.id) === actorId
+      (a) => ('id' in a ? a.id : a.definitionId) === actorId
     );
     if (actor && actor.isAlive) break;
     nextIdx = (nextIdx + 1) % updatedState.turnOrder.length;
