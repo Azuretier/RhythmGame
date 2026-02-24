@@ -1139,6 +1139,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Coin Collector",
+      "desc": "Earn 100 gold in total"
+    },
+    "gold_1000": {
+      "name": "Coin Hoarder",
+      "desc": "Earn 1,000 gold in total"
+    },
+    "gold_5000": {
+      "name": "Treasure Hunter",
+      "desc": "Earn 5,000 gold in total"
+    },
+    "gold_25000": {
+      "name": "Gold King",
+      "desc": "Earn 25,000 gold in total"
+    },
+    "gold_100000": {
+      "name": "Legendary Magnate",
+      "desc": "Earn 100,000 gold in total"
+    },
+    "treasure_10": {
+      "name": "Treasure Found",
+      "desc": "Collect 10 treasures"
+    },
+    "treasure_50": {
+      "name": "Treasure Seeker",
+      "desc": "Collect 50 treasures"
+    },
+    "treasure_200": {
+      "name": "Treasure Master",
+      "desc": "Collect 200 treasures"
+    },
+    "treasure_500": {
+      "name": "Treasure Guardian",
+      "desc": "Collect 500 treasures"
+    },
+    "treasure_1000": {
+      "name": "Lord of Riches",
+      "desc": "Collect 1,000 treasures"
     }
   },
   "updates": {
