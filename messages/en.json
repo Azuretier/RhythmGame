@@ -1432,5 +1432,13 @@
       "cndEncore": "Encore",
       "cndEncoreDesc": "Once per game, revive from knockout with a beat burst"
     }
+  },
+  "shape": {
+    "selectShape": "UI Shape",
+    "default": "Default",
+    "rounded": "Rounded",
+    "pill": "Pill",
+    "soft": "Soft",
+    "sharp": "Sharp"
   }
 }

@@ -1,1436 +1,1444 @@
 {
-    "minecraft_board": {
-        "title": "マインクラフト ボードゲーム",
-        "subtitle": "探索して、採掘して、クラフトして、生き残れ！",
-        "playerName": "プレイヤー名",
-        "worldName": "ワールド名",
-        "create": "作成",
-        "join": "参加",
-        "browse": "一覧",
-        "createWorld": "ワールドを作成",
-        "joinWorld": "ワールドに参加",
-        "roomCode": "ルームコード",
-        "noRooms": "公開ワールドがありません",
-        "players": "プレイヤー",
-        "ready": "準備完了",
-        "notReady": "未準備",
-        "startGame": "ゲーム開始",
-        "leave": "退出",
-        "connecting": "接続中...",
-        "reconnecting": "再接続中...",
-        "disconnected": "サーバーから切断されました",
-        "reconnect": "再接続",
-        "howToPlay": "遊び方",
-        "controls": {
-            "move": "WASD / 矢印キーで移動",
-            "mine": "隣のブロックをクリックして採掘",
-            "craft": "Eでクラフト、Iでインベントリ",
-            "eat": "ホットバーの食料を右クリックで食べる",
-            "hotbar": "1-9でホットバースロット選択",
-            "win": "エンダーポータルフレームをクラフトして勝利！"
-        },
-        "hud": {
-            "equipped": "装備中",
-            "fist": "素手",
-            "armor": "防具",
-            "kills": "キル数",
-            "mined": "採掘数",
-            "craft": "クラフト",
-            "inventory": "インベントリ"
-        },
-        "crafting": {
-            "title": "クラフト",
-            "craftingTable": "作業台",
-            "furnace": "かまど",
-            "craft": "作成"
-        },
-        "game": {
-            "youDied": "死んでしまった！",
-            "respawning": "リスポーン中...",
-            "gameOver": "ゲームオーバー！",
-            "youWin": "勝利！",
-            "wins": "{name}の勝利！",
-            "enderPortal": "エンダーポータルフレームを作成しました！",
-            "backToMenu": "メニューに戻る",
-            "day": "昼",
-            "dusk": "夕暮れ",
-            "night": "夜",
-            "dawn": "夜明け"
-        }
+  "minecraft_board": {
+    "title": "マインクラフト ボードゲーム",
+    "subtitle": "探索して、採掘して、クラフトして、生き残れ！",
+    "playerName": "プレイヤー名",
+    "worldName": "ワールド名",
+    "create": "作成",
+    "join": "参加",
+    "browse": "一覧",
+    "createWorld": "ワールドを作成",
+    "joinWorld": "ワールドに参加",
+    "roomCode": "ルームコード",
+    "noRooms": "公開ワールドがありません",
+    "players": "プレイヤー",
+    "ready": "準備完了",
+    "notReady": "未準備",
+    "startGame": "ゲーム開始",
+    "leave": "退出",
+    "connecting": "接続中...",
+    "reconnecting": "再接続中...",
+    "disconnected": "サーバーから切断されました",
+    "reconnect": "再接続",
+    "howToPlay": "遊び方",
+    "controls": {
+      "move": "WASD / 矢印キーで移動",
+      "mine": "隣のブロックをクリックして採掘",
+      "craft": "Eでクラフト、Iでインベントリ",
+      "eat": "ホットバーの食料を右クリックで食べる",
+      "hotbar": "1-9でホットバースロット選択",
+      "win": "エンダーポータルフレームをクラフトして勝利！"
     },
-    "arena": {
-        "badge": "9P",
-        "title": "リズムアリーナ",
-        "subtitle": "9人バトルロイヤル",
-        "description": "9人で1つのリズム。共有カオス、同期テンポ、ランダムギミック。ビートを外せばテンポが崩壊する。",
-        "features": {
-            "players": "9人対戦",
-            "chaos": "カオス",
-            "sync": "リズム同期"
-        },
-        "stats": {
-            "players": "人数",
-            "bpm": "BPM",
-            "status": "状態"
-        },
-        "maxPlayers": "最大{count}人",
-        "quickMatch": "クイックマッチ",
-        "createArena": "アリーナ作成",
-        "joinByCode": "コードで参加",
-        "enterName": "名前を入力",
-        "namePlaceholder": "プレイヤー名",
-        "enterCode": "アリーナコード",
-        "join": "参加",
-        "next": "次へ",
-        "back": "戻る",
-        "online": "オンライン",
-        "connecting": "接続中...",
-        "connectionError": "接続エラー",
-        "offline": "オフライン",
-        "searching": "プレイヤー検索中",
-        "queueInfo": "アリーナを形成するプレイヤーを待っています...",
-        "playersInQueue": "待機中 {count}人",
-        "cancel": "キャンセル",
-        "arenaCode": "アリーナコード",
-        "copy": "コピー",
-        "reconnecting": "再接続中...",
-        "ready": "準備完了",
-        "notReady": "未準備",
-        "waiting": "待機中...",
-        "cancelReady": "準備解除",
-        "readyUp": "準備完了！",
-        "startArena": "アリーナ開始",
-        "waitingForPlayers": "プレイヤーを待っています...",
-        "leave": "退出",
-        "getReady": "準備せよ",
-        "chaos": "カオス",
-        "sync": "同期",
-        "eliminated": "脱落",
-        "resultLastStanding": "最後の一人",
-        "resultTempoCollapse": "テンポ崩壊",
-        "resultChaosOverload": "カオス暴走",
-        "victory": "勝利",
-        "wins": "勝利",
-        "noWinner": "勝者なし",
-        "duration": "時間",
-        "peakBpm": "最高BPM",
-        "gimmicks": "ギミック",
-        "peakChaos": "最大カオス",
-        "tempoCollapses": "崩壊回数",
-        "lowestBpm": "最低BPM",
-        "backToLobby": "ロビーに戻る"
+    "hud": {
+      "equipped": "装備中",
+      "fist": "素手",
+      "armor": "防具",
+      "kills": "キル数",
+      "mined": "採掘数",
+      "craft": "クラフト",
+      "inventory": "インベントリ"
     },
-    "forYou": {
-        "title": "おすすめ",
-        "subtitle": "あなたの進捗に合わせてセレクト",
-        "loading": "生成中",
-        "error": "おすすめを読み込めませんでした",
-        "retry": "再試行",
-        "refresh": "更新",
-        "watchOnYouTube": "YouTubeで見る",
-        "tutorialsTitle": "チュートリアル",
-        "tutorialsSubtitle": "テクニックと戦略を学ぼう",
-        "columnForYou": "おすすめ",
-        "columnTutorials": "チュートリアル",
-        "searchTutorials": "チュートリアルを検索...",
-        "noTutorialResults": "チュートリアルが見つかりません",
-        "moreBelow": "あと{count}件",
-        "endOfList": "リストの末尾",
-        "types": {
-            "tutorial": "チュートリアル",
-            "video": "動画",
-            "tip": "ヒント"
-        }
+    "crafting": {
+      "title": "クラフト",
+      "craftingTable": "作業台",
+      "furnace": "かまど",
+      "craft": "作成"
     },
-    "loyalty": {
-        "meta": {
-            "title": "スコアランキング | RHYTHMIA - Azuretier",
-            "description": "スコアランキングを追跡し、ランクを上げ、進捗を解除し、RHYTHMIAコミュニティで競おう。"
-        },
-        "backToLobby": "← 戻る",
-        "currentTier": "現在のランク",
-        "totalScore": "総合スコア",
-        "scoreToNext": "次のランクまで {score}",
-        "maxTier": "最高ランク到達",
-        "viewAll": "ランキング＆詳細を見る",
-        "tiers": {
-            "unranked": "ランクなし",
-            "beat_1": "ビート Ⅰ",
-            "beat_2": "ビート Ⅱ",
-            "beat_3": "ビート Ⅲ",
-            "rhythm_1": "リズム Ⅰ",
-            "rhythm_2": "リズム Ⅱ",
-            "rhythm_3": "リズム Ⅲ",
-            "melody_1": "メロディ Ⅰ",
-            "melody_2": "メロディ Ⅱ",
-            "melody_3": "メロディ Ⅲ",
-            "harmony_1": "ハーモニー Ⅰ",
-            "harmony_2": "ハーモニー Ⅱ",
-            "harmony_3": "ハーモニー Ⅲ",
-            "maestro_1": "マエストロ Ⅰ",
-            "maestro_2": "マエストロ Ⅱ",
-            "maestro_3": "マエストロ Ⅲ",
-            "gravity_1": "グラヴィティ Ⅰ",
-            "gravity_2": "グラヴィティ Ⅱ",
-            "gravity_3": "グラヴィティ Ⅲ",
-            "flow": "フロー"
-        },
-        "tierGroups": {
-            "unranked": "ランクなし",
-            "beat": "ビート",
-            "rhythm": "リズム",
-            "melody": "メロディ",
-            "harmony": "ハーモニー",
-            "maestro": "マエストロ",
-            "gravity": "グラヴィティ",
-            "flow": "フロー"
-        },
-        "stats": {
-            "bestScore": "ベストスコア",
-            "games": "ゲーム",
-            "lines": "ライン",
-            "badges": "進捗",
-            "totalVisits": "訪問回数",
-            "currentStreak": "現在の連続日数",
-            "bestStreak": "最高連続日数",
-            "bonusXP": "ボーナスXP"
-        },
-        "sections": {
-            "tierRoadmap": "ランクロードマップ",
-            "badges": "最近の進捗",
-            "community": "コミュニティの声",
-            "howItWorks": "仕組み",
-            "dailyBonus": "デイリーボーナス"
-        },
-        "poll": {
-            "question": "次のRHYTHMIAゲームモードは何がいい？",
-            "options": {
-                "0": "協力モード（2v2チームバトル）",
-                "1": "サバイバルモード（エンドレスウェーブ）",
-                "2": "トーナメントモード（トーナメント戦）",
-                "3": "禅モード（リラックス、プレッシャーなし）"
-            },
-            "vote": "投票する",
-            "voted": "投票ありがとう！",
-            "loading": "投票を読み込み中...",
-            "submitting": "送信中...",
-            "noPoll": "現在アクティブな投票はありません。",
-            "totalVotes": "{count} 票"
-        },
-        "strategy": {
-            "0": {
-                "step": "ステップ 01",
-                "title": "プレイ＆スコア獲得",
-                "desc": "ゲームをプレイしてスコアを稼ごう。ライン消去、コンボ、ハイスコアでランクを上げよう。"
-            },
-            "1": {
-                "step": "ステップ 02",
-                "title": "ランクを上げる",
-                "desc": "累計スコアがランクを決める。ランクなしからビート、リズム、メロディ、ハーモニー、マエストロ、グラヴィティを経て、最高位フローへ。"
-            },
-            "2": {
-                "step": "ステップ 03",
-                "title": "進捗を解除",
-                "desc": "マイルストーンを達成して進捗を解除しよう。各実績がRHYTHMIAでの旅の証。"
-            },
-            "3": {
-                "step": "ステップ 04",
-                "title": "未来を形づくる",
-                "desc": "コミュニティ投票に参加し、RHYTHMIAの次の展開を一緒に決めよう。"
-            }
-        },
-        "streakDays": "日連続",
-        "bonusXP": "ボーナスXP"
-    },
-    "nav": {
-        "wiki": "Wiki",
-        "updates": "アップデート",
-        "lobby": "ロビー"
-    },
-    "lobby": {
-        "loading": "読み込み中",
-        "selectServer": "モード選択",
-        "chooseMode": "ゲームモードを選択してください",
-        "tagline": "リズムで動くパズルゲーム。ビートに合わせてブロックを落とし、対戦や実績を楽しもう。",
-        "play": "プレイ",
-        "battle": "バトル",
-        "back": "← 戻る",
-        "online": "オンライン",
-        "onlineCount": "{count} オンライン",
-        "loyalty": "ランキング"
-    },
-    "googleSync": {
-        "sectionTitle": "Googleアカウント同期",
-        "description": "Googleでサインインすると、プロフィール、アドバンスメント、ロイヤリティ進捗、スキン設定をデバイス間で同期できます。",
-        "signIn": "Googleでサインイン",
-        "signOut": "サインアウト",
-        "linking": "接続中...",
-        "syncing": "同期中...",
-        "syncNow": "今すぐ同期",
-        "synced": "同期完了",
-        "error": "同期失敗"
-    },
-    "stories": {
-        "title": "STORIES",
-        "chapter": "CHAPTER",
-        "backToLobby": "← 戻る",
-        "log": "LOG",
-        "auto": "AUTO",
-        "skip": "SKIP",
-        "menu": "MENU",
-        "logTitle": "テキストログ",
-        "close": "閉じる",
-        "resume": "再開",
-        "chapterSelect": "チャプター選択"
-    },
-    "footer": {
-        "copyright": "azuretier.net © 2025"
-    },
-    "profile": {
-        "iconTitle": "アイコンを選択",
-        "iconSubtitle": "自分を表すアイコンを選んでください",
-        "nameTitle": "ニックネームを入力",
-        "nameSubtitle": "他のプレイヤーに表示される名前です",
-        "nameLabel": "ニックネーム",
-        "namePlaceholder": "なまえ",
-        "friendCodeLabel": "フレンドコード",
-        "langTitle": "言語設定",
-        "langSubtitle": "表示言語を選択してください",
-        "confirmTitle": "プロフィール確認",
-        "confirmSubtitle": "この内容でよろしいですか？",
-        "next": "つぎへ",
-        "back": "もどる",
-        "onlineTitle": "オンラインのプレイヤー",
-        "onlineCount": "{count}人がオンライン",
-        "noOnlineUsers": "現在オンラインのプレイヤーはいません",
-        "privateProfile": "非公開プロフィール",
-        "privateProfileDesc": "名前とアイコンがオンラインプレイヤー一覧に表示されません",
-        "publicProfile": "公開プロフィール",
-        "publicProfileDesc": "名前とアイコンが他のプレイヤーに表示されます"
-    },
-    "uiTheme": {
-        "selectTheme": "UIテーマ",
-        "neoFuturistic": "ネオフューチャリスティック",
-        "pixelNostalgia": "ピクセルノスタルジア",
-        "neoDesc": "フロストガラスエフェクトを備えた洗練されたモダンなデザイン",
-        "pixelDesc": "CRTエフェクトを備えたレトロ8ビット/16ビットピクセルアートスタイル"
-    },
-    "meta": {
-        "title": "RHYTHMIA | リズム×テトリスの新感覚パズルゲーム - Azuretier",
-        "description": "音楽とパズルが完全融合！RHYTHMIA（リズミア）は、リズムに合わせてブロックを消す新感覚の無料ブラウザゲームです。テトリスの戦略性と音ゲーの爽快感を今すぐ体験しよう。",
-        "ogTitle": "RHYTHMIA - 究極のリズムパズル体験をブラウザで",
-        "ogDescription": "【音ゲー×テトリス】音楽の鼓動でブロックを操れ。Azuretierが贈る全く新しい落ち物パズルゲーム、RHYTHMIAをプレイ。",
-        "ogType": "website",
-        "keywords": "RHYTHMIA,リズミア,テトリス,音ゲー,リズムゲーム,落ち物パズル,無料ゲーム,ブラウザゲーム,Azuretier"
-    },
-    "wiki": {
-        "meta": {
-            "title": "Wiki | RHYTHMIA - Azuretier",
-            "description": "RHYTHMIAの攻略Wiki。ゲームモード、ワールド、ランク戦、アイテム、クラフト、進捗など全システムを網羅。"
-        },
-        "backToLobby": "← ロビー",
-        "updatesLink": "アップデート",
-        "contents": "目次",
-        "sectionOverview": "概要",
-        "sectionModes": "ゲームモード",
-        "sectionWorlds": "ワールド",
-        "sectionControls": "操作方法",
-        "sectionRanked": "ランク戦",
-        "sectionAdvancements": "進捗",
-        "sectionCrafting": "アイテム&クラフト",
-        "sectionTowerDefense": "タワーディフェンス",
-        "overviewTitle": "RHYTHMIAとは",
-        "overviewDesc": "RHYTHMIA（リズミア）は、クラシックな落ちものパズルゲームとリズムアクションを融合させた新感覚のブラウザゲームです。ビートに合わせてブロックを操作し、ラインを消去しながらワールドを踏破していきます。",
-        "boardSize": "ボードサイズ",
-        "tetrominoes": "テトロミノ",
-        "worldsLabel": "ワールド",
-        "rotationSystem": "回転方式",
-        "advancementsLabel": "進捗",
-        "rankTiersLabel": "ランクティア",
-        "coreMechanics": "コアメカニクス",
-        "mechanic1": "SRS（スーパーローテーションシステム）による回転",
-        "mechanic2": "ピースホールド機能とネクストピースプレビュー",
-        "mechanic3": "リズムに同期したビジュアルエフェクト（VFX）",
-        "mechanic4": "ビートに合わせた操作でボーナスポイント獲得",
-        "mechanic5": "コンボシステムとFeverモード（10コンボ以上）",
-        "modesTitle": "ゲームモード",
-        "vanillaTitle": "シングルプレイヤー",
-        "vanillaDesc": "ソロでプレイ。5つのワールドを踏破し、ビートに乗ってスコアを伸ばそう。地形破壊、アイテムドロップ、クラフトシステムを活用して、より高いステージを目指せ。",
-        "terrainDestruction": "地形破壊",
-        "itemDrops": "アイテムドロップ",
-        "craftingFeat": "クラフト",
-        "worldProgression": "ワールド進行",
-        "battleTitle": "バトルアリーナ",
-        "battleDesc": "リアルタイム1v1対戦。ライン消去で相手にお邪魔ラインを送り込む。ランク戦対応で、勝利するとポイントを獲得し、ティアが昇格。8秒以内にマッチングしない場合はAI対戦にフォールバック。",
-        "rankedFeat": "ランク戦",
-        "aiFallback": "AI対戦",
-        "battleNote": "3つの進捗を解放するとアンロック",
-        "arenaTitle": "9人アリーナ",
-        "arenaDesc": "最大9人のプレイヤーがリズム同期バトルで激突。共有テンポ、ランダムギミック、カオスシステムにより、毎回異なる展開に。テンポ崩壊やカオス暴走など、複数の勝利条件が存在。",
-        "ninePlayers": "9人対戦",
-        "rhythmSync": "リズム同期",
-        "gimmicks": "ギミック",
-        "chaosLabel": "カオス",
-        "worldsSectionTitle": "ワールド",
-        "worldsDesc": "RHYTHMIAには5つのワールドが存在し、各ワールドには固有のBPMとカラーテーマがあります。ワールドはステージクリアごとに進行し、4ステージごとに次のワールドへ移行します。BPMが上がるにつれて難易度が上昇します。",
-        "melodia": "メロディア",
-        "harmonia": "ハーモニア",
-        "crescenda": "クレシェンダ",
-        "fortissimo": "フォルティッシモ",
-        "silenceChamber": "静寂の間",
-        "worldProgressionTitle": "ワールド進行",
-        "worldProg1": "各ワールドは4ステージで構成",
-        "worldProg2": "ライン消去で地形を破壊してステージクリア",
-        "worldProg3": "1ライン消去あたり4ブロックの地形ダメージ",
-        "worldProg4": "ビート倍率でダメージが増加",
-        "controlsTitle": "操作方法",
-        "controlsDesc": "キーバインドはゲーム内設定から変更可能です。DAS（Delayed Auto Shift）、ARR（Auto Repeat Rate）、SDF（Soft Drop Factor）のデフォルト値は以下の通りです。",
-        "actionHeader": "アクション",
-        "defaultKey": "デフォルトキー",
-        "moveLeft": "左移動",
-        "moveRight": "右移動",
-        "softDrop": "ソフトドロップ",
-        "hardDrop": "ハードドロップ",
-        "rotateCW": "右回転",
-        "rotateCCW": "左回転",
-        "hold": "ホールド",
-        "inventoryKey": "インベントリ",
-        "shopKey": "ショップ",
-        "forgeKey": "鍛造",
-        "timingSettings": "タイミング設定",
-        "dasDesc": "自動移動開始遅延",
-        "arrDesc": "自動移動間隔",
-        "sdfDesc": "ソフトドロップ速度",
-        "lockDelay": "ロック遅延",
-        "lockDelayDesc": "設置までの猶予",
-        "rankedTitle": "ランク戦",
-        "rankedDesc": "ランク戦はフォートナイトのアリーナ制を参考にしたポイント制システムです。試合に参加するとバスフェア（参加費）が差し引かれ、勝利すると勝利報酬を獲得します。連勝するとボーナスポイントが加算されます。",
-        "tierHeader": "ティア",
-        "pointsHeader": "ポイント",
-        "busFareHeader": "バスフェア",
-        "winRewardHeader": "勝利報酬",
-        "openI": "オープン I",
-        "openII": "オープン II",
-        "openIII": "オープン III",
-        "contenderI": "コンテンダー I",
-        "contenderII": "コンテンダー II",
-        "contenderIII": "コンテンダー III",
-        "championI": "チャンピオン I",
-        "championII": "チャンピオン II",
-        "championIII": "チャンピオン III",
-        "streakTitle": "連勝ボーナス",
-        "streakDesc": "連勝するとボーナスポイントが付与されます。ストリーク数に応じたボーナス: 2連勝=+5, 3連勝=+10, 4連勝=+15, 5連勝=+20, 6連勝以上=+25",
-        "matchmakingTitle": "マッチメイキング",
-        "matchmaking1": "ポイント差500以内のプレイヤーとマッチ",
-        "matchmaking2": "タイムアウト: 8秒",
-        "matchmaking3": "タイムアウト後はAI対戦にフォールバック",
-        "advancementsTitle": "進捗（アドバンスメント）",
-        "advancementsDesc": "RHYTHMIAには45以上の進捗（実績）が存在します。プレイ中に条件を満たすと自動的にアンロックされ、トースト通知で表示されます。進捗はローカルストレージとFirestoreの両方に保存されます。バトルアリーナは3つの進捗をアンロックすると解放されます。",
-        "catLines": "ライン",
-        "catScore": "スコア",
-        "catTSpin": "Tスピン",
-        "catMultiplayer": "マルチプレイヤー",
-        "lineBeginner": "ライン初心者",
-        "lineBeginnerDesc": "合計10ライン消去",
-        "lineApprentice": "ライン見習い",
-        "lineApprenticeDesc": "合計50ライン消去",
-        "lineExpert": "ラインエキスパート",
-        "lineExpertDesc": "合計200ライン消去",
-        "lineMaster": "ラインマスター",
-        "lineMasterDesc": "合計500ライン消去",
-        "lineLegend": "ラインレジェンド",
-        "lineLegendDesc": "合計1,000ライン消去",
-        "scoreRookie": "スコアルーキー",
-        "scoreRookieDesc": "累計スコア10,000達成",
-        "scoreHunter": "スコアハンター",
-        "scoreHunterDesc": "累計スコア100,000達成",
-        "scoreMaster": "スコアマスター",
-        "scoreMasterDesc": "累計スコア1,000,000達成",
-        "scoreLegend": "スコアレジェンド",
-        "scoreLegendDesc": "累計スコア10,000,000達成",
-        "firstTwist": "初回転",
-        "firstTwistDesc": "初めてのTスピンを決める",
-        "spinDoctor": "スピンドクター",
-        "spinDoctorDesc": "Tスピンを10回決める",
-        "tSpinExpert": "Tスピンエキスパート",
-        "tSpinExpertDesc": "Tスピンを50回決める",
-        "tSpinLegend": "Tスピンレジェンド",
-        "tSpinLegendDesc": "Tスピンを200回決める",
-        "firstVictory": "初勝利",
-        "firstVictoryDesc": "マルチプレイヤー初勝利",
-        "arenaFighter": "アリーナファイター",
-        "arenaFighterDesc": "マルチプレイヤー10勝",
-        "arenaChampion": "アリーナチャンピオン",
-        "arenaChampionDesc": "マルチプレイヤー50勝",
-        "hotStreak": "ホットストリーク",
-        "hotStreakDesc": "3連勝達成",
-        "unbreakable": "アンブレイカブル",
-        "unbreakableDesc": "10連勝達成",
-        "additionalCatTitle": "その他のカテゴリ",
-        "additionalCat1": "コンボ: 3, 10, 20コンボ達成",
-        "additionalCat2": "テトリス: 4ライン同時消去 (1, 10, 50回)",
-        "additionalCat3": "パーフェクトビート: 1ゲーム中10, 50回",
-        "additionalCat4": "ハードドロップ: 100, 1,000回",
-        "additionalCat5": "ピース設置: 100, 1,000, 10,000個",
-        "additionalCat6": "ゲームプレイ: 1, 10, 50, 100ゲーム",
-        "additionalCat7": "ワールド: 5つクリア",
-        "craftingTitle": "アイテム & クラフト",
-        "craftingDesc": "地形破壊時にアイテムがドロップします。収集したアイテムを使って武器をクラフトし、地形ダメージを強化できます。レアリティが高いアイテムほどドロップ率が低くなります。",
-        "materialsTitle": "素材",
-        "weaponsTitle": "武器",
-        "materialHeader": "素材",
-        "rarityHeader": "レアリティ",
-        "dropRateHeader": "ドロップ率",
-        "stoneFragment": "石片",
-        "ironOre": "鉄鉱石",
-        "crystalShard": "水晶片",
-        "goldNugget": "金塊",
-        "obsidianCore": "黒曜核",
-        "starFragment": "星の欠片",
-        "common": "コモン",
-        "uncommon": "アンコモン",
-        "rare": "レア",
-        "epic": "エピック",
-        "legendary": "レジェンダリー",
-        "weaponHeader": "武器",
-        "damageHeader": "ダメージ",
-        "specialHeader": "特殊効果",
-        "recipeHeader": "レシピ",
-        "stoneBlade": "石の刃",
-        "ironPickaxe": "鉄のピッケル",
-        "crystalWand": "水晶の杖",
-        "goldHammer": "黄金のハンマー",
-        "obsidianEdge": "黒曜の刃",
-        "starCannon": "星砲",
-        "wideBeat": "ビート判定拡大",
-        "shatter": "粉砕効果",
-        "burst": "爆発効果",
-        "stoneBladeRecipe": "石片x3",
-        "ironPickaxeRecipe": "鉄鉱石x3",
-        "crystalWandRecipe": "水晶片x2 + 石片x2",
-        "goldHammerRecipe": "金塊x2 + 鉄鉱石x2",
-        "obsidianEdgeRecipe": "黒曜核x1 + 鉄鉱石x2",
-        "starCannonRecipe": "星の欠片x1 + 水晶片x2",
-        "towerDefenseTitle": "タワーディフェンス",
-        "towerDefenseDesc": "Vanillaモードにはタワーディフェンス要素が組み込まれています。グリッドの中央にタワーが設置され、ビートに同期して四方から敵が出現します。ライン消去で敵を倒し、タレットは自動的に敵を攻撃します。敵がタワーに到達するとダメージを受けます。",
-        "towerHP": "タワーHP",
-        "enemyReachDMG": "敵到達ダメージ",
-        "enemyHP": "敵HP",
-        "killsPerLine": "ライン消去キル",
-        "gridSystem": "グリッドシステム",
-        "grid1": "離散グリッド上を敵が1ターンに1タイル移動（直行移動のみ）",
-        "grid2": "グリッド範囲: 中心から±18タイル",
-        "grid3": "敵はマンハッタン距離18のリングからスポーン",
-        "grid4": "タレット射撃間隔: 1,000ms、弾速: 18単位/秒",
-        "grid5": "弾丸は放物線軌道（重力加速度: 40単位/秒²）",
-        "sectionGameOverview": "ゲーム概要",
-        "sectionCommunityResources": "コミュニティリソース",
-        "sectionUpdates": "アップデート",
-        "gameOverviewTitle": "ゲーム概要",
-        "communityResourcesTitle": "コミュニティリソース",
-        "communityResourcesDesc": "RHYTHMIAコミュニティが厳選したチュートリアル、ガイド、動画でゲームプレイを向上させよう。",
-        "updatesTitle": "バージョンアップデート",
-        "updatesDesc": "最新バージョンの概要動画をチェックして、RHYTHMIAの新機能を確認しよう。",
-        "videoComingSoon": "近日公開",
-        "watchVideo": "視聴する",
-        "resourceVideosTitle": "動画",
-        "resourceTutorialsTitle": "チュートリアル",
-        "resourceTypeTutorial": "チュートリアル",
-        "resourceTypeVideo": "動画",
-        "visitChannel": "YouTubeチャンネルを見る",
-        "res_vid_beginner": "RHYTHMIA 初心者ガイド",
-        "res_vid_tspin_tutorial": "Tスピンチュートリアル - ゼロからヒーローへ",
-        "res_vid_ranked_guide": "ランク戦攻略法",
-        "res_vid_advanced_combos": "上級コンボテクニック",
-        "res_vid_update_showcase": "最新アップデート紹介",
-        "res_vid_music_showcase": "RHYTHMIA サウンドトラックプレビュー",
-        "res_vid_multiplayer_tips": "1v1バトル攻略",
-        "res_vid_world_tour": "ワールドツアー - 全ステージ",
-        "res_tut_tspin": "Tスピン",
-        "res_tut_stacking": "きれいな積み方",
-        "res_tut_combos": "コンボチェイン",
-        "res_tut_opener": "開幕テンプレ",
-        "res_tut_rhythm": "リズムタイミング",
-        "res_tut_downstack": "掘り下げ",
-        "res_tut_harddrop": "ハードドロップ速度",
-        "res_tut_garbage": "お邪魔ライン管理",
-        "res_tut_finesse": "フィネス",
-        "res_tut_back2back": "Back-to-Backチェイン",
-        "res_tut_crafting": "クラフトシステムガイド",
-        "res_tut_items": "アイテム戦略",
-        "res_tut_ranked": "ランク戦攻略",
-        "res_tut_worlds": "ワールド進行",
-        "sectionTutorials": "チュートリアル",
-        "sectionTutBeginner": "初級",
-        "sectionTutIntermediate": "中級",
-        "sectionTutAdvanced": "上級",
-        "tutBeginnerTitle": "初級チュートリアル",
-        "tutBeginnerIntro": "RHYTHMIAの基本から始めましょう。基本操作、積み方、リズムタイミングを学んで、しっかりとした土台を作りましょう。",
-        "tut1Title": "1. 基本操作と移動",
-        "tut1Desc": "ピースを効果的に移動、回転、落下させるための基本操作をマスターしましょう。",
-        "tut1Step1Title": "移動キー",
-        "tut1Step1Desc": "左矢印/Aでピースを左に、右矢印/Dで右に移動します。ボード上でスムーズにピースを動かす練習をしましょう。",
-        "tut1Step2Title": "回転",
-        "tut1Step2Desc": "上矢印/W/Xで時計回りに、Zで反時計回りに回転します。最適な配置を見つけるために、さまざまな回転オプションを試してみましょう。",
-        "tut1Step3Title": "ソフトドロップとハードドロップ",
-        "tut1Step3Desc": "下矢印/Sを押し続けるとソフトドロップ(ゆっくり落下、ポイント付与)。スペースでハードドロップ(即座に配置)。ピースを素早く配置するにはハードドロップを使用しましょう。",
-        "tut1Step4Title": "ホールド機能",
-        "tut1Step4Desc": "CまたはShiftを押して、現在のピースを後で使用するために保持できます。特定の状況で必要なピースを保存するために重要です。",
-        "tut2Title": "2. きれいな積み方",
-        "tut2Desc": "管理しやすく、ラインを消しやすい、きれいで平らなスタックを作る方法を学びましょう。",
-        "tut2Step1Title": "隙間を避ける",
-        "tut2Step1Desc": "空いた穴を残さないようにピースを配置しましょう。隙間があるとラインを消すのが難しくなり、ボードが乱雑になります。",
-        "tut2Step2Title": "平らに保つ",
-        "tut2Step2Desc": "ボード全体で均等な高さを維持しましょう。特定の戦略がない限り、高い塔や深い谷を作らないようにしましょう。",
-        "tut2Step3Title": "先を見越す",
-        "tut2Step3Desc": "ネクストピースのプレビューを見て、各ピースがどこに行くかを考えましょう。2〜3ピース先を計画することで、ミスを避けられます。",
-        "tut3Title": "3. リズムタイミングの基本",
-        "tut3Desc": "リズムシステムを理解し、ビートに合わせてドロップすることでボーナスポイントを獲得する方法を学びましょう。",
-        "tut3Step1Title": "ビートを聞く",
-        "tut3Step1Desc": "各ワールドには独自のBPM(1分あたりのビート数)があります。音楽とビートを示すビジュアルキューに注意を払いましょう。",
-        "tut3Step2Title": "ビートに合わせてドロップ",
-        "tut3Step2Desc": "ビートの正確なタイミングでハードドロップしてみましょう。タイミングが合うとビジュアルエフェクトが表示され、ボーナスポイントを獲得できます。",
-        "tut3Step3Title": "タイミングを練習",
-        "tut3Step3Desc": "最初は遅いワールド(100-110 BPM)でタイミングを練習しましょう。上達したら、より速いワールドに移動してより大きな挑戦と報酬を得ましょう。",
-        "tutIntermediateTitle": "中級チュートリアル",
-        "tutIntermediateIntro": "中級テクニックでスキルを次のレベルに引き上げましょう。コンボチェーン、回復戦略、高度なスコアリング方法を学びます。",
-        "tut4Title": "4. コンボチェーンの構築",
-        "tut4Desc": "連続してラインを消す(コンボ)方法を学び、スコアとバトルでの攻撃力を最大化しましょう。",
-        "tut4Step1Title": "コンボを理解する",
-        "tut4Step1Desc": "コンボは、中断せずに連続してピースを配置してラインを消すと発生します。各コンボはボーナスポイントを追加し、マルチプライヤーを増加させます。",
-        "tut4Step2Title": "スタックをセットアップ",
-        "tut4Step2Desc": "複数の消去可能なラインを準備してボードを構築しましょう。連続消去をトリガーできる戦略的な隙間を残します。",
-        "tut4Step3Title": "連鎖消去",
-        "tut4Step3Desc": "1ラインを消し、次のピースですぐに別のラインを消します。このパターンを続けて長いコンボチェーンを構築しましょう。",
-        "tut4Step4Title": "フィーバーモード",
-        "tut4Step4Desc": "10以上のコンボに到達するとフィーバーモードが発動し、大量のポイントボーナスと特殊なビジュアルエフェクトが得られます。",
-        "tut5Title": "5. ダウンスタッキング技術",
-        "tut5Desc": "お邪魔ラインからの圧力下で、スタックの高さを素早く減らす技術をマスターしましょう。",
-        "tut5Step1Title": "問題領域を特定",
-        "tut5Step1Desc": "スタック内の高い場所と閉じ込められた隙間を探しましょう。これらが消去の優先ターゲットです。",
-        "tut5Step2Title": "高速配置",
-        "tut5Step2Desc": "ハードドロップと素早い回転を使用して、ピースを迅速に配置します。プレッシャー下でのダウンスタッキングにはスピードが不可欠です。",
-        "tut5Step3Title": "効率的に消去",
-        "tut5Step3Desc": "可能な限り、一度に複数のラインを消すことに集中しましょう。ダブル、トリプル、テトリスは、シングルよりも速くスタックを減らします。",
-        "tut6Title": "6. バックトゥバック(B2B)チェーン",
-        "tut6Desc": "攻撃力とスコアリングを増加させるために、バックトゥバックチェーンを維持する方法を学びましょう。",
-        "tut6Step1Title": "B2Bとは?",
-        "tut6Step1Desc": "B2Bは、難しいライン消去(テトリス、Tスピン)を連続して行うと発生します。各B2B消去はボーナスポイントと、マルチプレイヤーでは追加のお邪魔ラインを追加します。",
-        "tut6Step2Title": "テトリスのセットアップ",
-        "tut6Step2Desc": "Iピース用に縦の列を開けておきます。一度に4ラインを消す(テトリス)ことで、B2Bチェーンを開始または継続します。",
-        "tut6Step3Title": "チェーンの維持",
-        "tut6Step3Desc": "テトリスの後、すぐに別のテトリスまたはTスピンをセットアップします。通常通り1〜3ラインを消すと、B2Bチェーンが切れ、最初からやり直す必要があります。",
-        "tutAdvancedTitle": "上級チュートリアル",
-        "tutAdvancedIntro": "RHYTHMIAで最も挑戦的な技術をマスターしましょう。これらの上級戦略は、ランク戦を支配し、トップスコアを達成するのに役立ちます。",
-        "tut7Title": "7. Tスピンマスタリー",
-        "tut7Desc": "Tスピン技術を学び、スコアリングの可能性を最大化し、マルチプレイヤーで壊滅的な攻撃を送りましょう。",
-        "tut7Step1Title": "Tスピンの基本",
-        "tut7Step1Desc": "Tスピンは、Tピースをスライドできない位置に回転させると発生します。これには3つの角がブロックされた特定のセットアップが必要です。",
-        "tut7Step2Title": "Tスピンシングルとダブル",
-        "tut7Step2Desc": "Tスピンシングルは1ライン、Tスピンダブルは2ラインを消します。ダブルはより強力で、競技プレイで好まれます。",
-        "tut7Step3Title": "一般的なセットアップ",
-        "tut7Step3Desc": "オーバーハングセットアップ、フィンセットアップ、階段などの標準的なTスピンパターンを学びましょう。バトルで使用する前にシングルプレイヤーで練習しましょう。",
-        "tut7Step4Title": "コンボとの統合",
-        "tut7Step4Desc": "Tスピンとコンボチェーンを組み合わせて最大の効果を得ましょう。コンボチェーン中のTスピンダブルは、対戦相手に大量のお邪魔を送ることができます。",
-        "tut8Title": "8. フィネスと効率",
-        "tut8Desc": "キープレスと移動効率を最適化して、最大のスピードと精度を達成しましょう。",
-        "tut8Step1Title": "入力を最小化",
-        "tut8Step1Desc": "フィネスとは、最小限のキープレスで各ピースを配置することを意味します。各ピースを各位置に配置するための最適なパスを学びましょう。",
-        "tut8Step2Title": "回転効率",
-        "tut8Step2Desc": "短い回転方向を選択します。ピースを時計回りに270°回転させる必要がある場合は、代わりに反時計回りに90°回転させます。",
-        "tut8Step3Title": "移動パターン",
-        "tut8Step3Desc": "効率的な移動パターンを練習しましょう:ピースが出現している間に移動し、DAS(遅延オートシフト)を効果的に使用し、無駄な動きを最小限に抑えます。",
-        "tut9Title": "9. 上級オープニング戦略",
-        "tut9Desc": "オープニングパターン(オープナー)をマスターして、各ゲームを強力な基盤と早期の攻撃力で開始しましょう。",
-        "tut9Step1Title": "一般的なオープナー",
-        "tut9Step1Desc": "TKI、DTキャノン、またはパーフェクトクリアオープナーなどの標準的なオープナーを学びましょう。これらは早期のB2Bチェーンと強力な攻撃力を提供します。",
-        "tut9Step2Title": "パーフェクトクリア(PC)",
-        "tut9Step2Desc": "パーフェクトクリアは、ボード全体を消去すると発生します。PCオープナーは、マルチプレイヤーマッチで大量のお邪魔(10ライン以上)を送ります。",
-        "tut9Step3Title": "ピースへの適応",
-        "tut9Step3Desc": "オープナーの選択は、ピースのシーケンスに依存します。開始ピースでどのオープナーが最適かを認識できるようになりましょう。",
-        "tut9Step4Title": "中盤への移行",
-        "tut9Step4Desc": "オープナーの後、スムーズに中盤戦略に移行します。B2Bチェーンを維持し、圧力をかけ続けましょう。",
-        "tut10Title": "10. ハードドロップスピード",
-        "tut10Desc": "ハードドロップを効果的に使い、全体のスピードとPPS(秒間ピース数)を向上させましょう。",
-        "tut10Step1Title": "ハードドロップの基本",
-        "tut10Step1Desc": "Spaceキーを押すとピースが一瞬で底に落ちます。ソフトドロップよりはるかに速く、高速プレイには不可欠です。",
-        "tut10Step2Title": "事前配置",
-        "tut10Step2Desc": "ハードドロップする前にピースを移動・回転させて位置を決めましょう。配置の判断が速いほど、PPSが上がります。",
-        "tut10Step3Title": "速さと正確さ",
-        "tut10Step3Desc": "まずは正確な配置に集中し、徐々にスピードを上げましょう。ミスドロップは慎重な配置よりも時間がかかります。",
-        "tut11Title": "11. クラフトシステムガイド",
-        "tut11Desc": "素材の収集から武器の鍛造まで、クラフトシステムの仕組みを理解しましょう。",
-        "tut11Step1Title": "素材の収集",
-        "tut11Step1Desc": "バニラモードでライン消去すると素材がドロップします。レアな素材ほどドロップ率が低く、多くのラインを消去して集めましょう。",
-        "tut11Step2Title": "鍛造の使い方",
-        "tut11Step2Desc": "Fキーで鍛造メニューを開きます。武器レシピを選び、必要な素材があることを確認して武器を作りましょう。",
-        "tut11Step3Title": "武器の効果",
-        "tut11Step3Desc": "各武器にはダメージボーナスがあり、一部には特殊能力もあります。上位の武器にはレア素材が必要ですが、大幅にダメージが上がります。",
-        "tut12Title": "12. ワールド攻略",
-        "tut12Desc": "BPMが上がる5つのワールドの進め方と、各ワールド固有のチャレンジを学びましょう。",
-        "tut12Step1Title": "ワールド構成",
-        "tut12Step1Desc": "5つのワールドがあります: メロディア(100 BPM)、ハーモニア(110 BPM)、クレシェンダ(120 BPM)、フォルティッシモ(140 BPM)、サイレンスチェンバー(160 BPM)。",
-        "tut12Step2Title": "ワールドの解放",
-        "tut12Step2Desc": "チャレンジを達成して進捗を獲得し、次のワールドを解放します。各ワールドは前のワールドのメカニクスの習得が必要です。",
-        "tut12Step3Title": "ワールド別のコツ",
-        "tut12Step3Desc": "BPMが高いワールドでは素早い判断が求められます。まず遅いワールドでリズムタイミングを練習し、そのスキルを上位ワールドに活かしましょう。",
-        "tut13Title": "13. お邪魔ライン対策",
-        "tut13Desc": "マルチプレイヤー対戦で対戦相手から送られるお邪魔ラインへの対処法をマスターしましょう。",
-        "tut13Step1Title": "お邪魔ラインとは",
-        "tut13Step1Desc": "対戦相手がラインを消去すると、ランダムな穴のあるお邪魔列がボードの下部に出現します。多いほどスタックが高く乱雑になります。",
-        "tut13Step2Title": "お邪魔のキャンセル",
-        "tut13Step2Desc": "ラインを消去して、お邪魔が出現する前にキャンセルしましょう。お邪魔が保留中にラインを消すと、削減または完全に相殺できます。",
-        "tut13Step3Title": "お邪魔の掘り起こし",
-        "tut13Step3Desc": "お邪魔がボードに着地したら、穴の列を見つけてそこに向かって消去しましょう。ボードの制御を取り戻すため、お邪魔の消去を優先します。",
-        "tut14Title": "14. アイテム戦略",
-        "tut14Desc": "バニラモードでアイテムを効果的に使うタイミングと方法を学びましょう。",
-        "tut14Step1Title": "アイテムの種類",
-        "tut14Step1Desc": "アイテムはライン消去からドロップし、コモンからレジェンダリーまでのレアリティがあります。各アイテムは追加ダメージや防御能力などのユニークな効果があります。",
-        "tut14Step2Title": "インベントリ管理",
-        "tut14Step2Desc": "Eキーでインベントリを開きます。スロットに限りがあるので、よりレアなドロップのためにアイテムを戦略的に使用・破棄しましょう。",
-        "tut14Step3Title": "アイテムの使用タイミング",
-        "tut14Step3Desc": "強力なアイテムはボス戦や難しいセクションなど重要な場面のために温存しましょう。適切なタイミングで適切なアイテムを使えば、状況を一変させられます。",
-        "tut15Title": "15. ランク戦攻略のコツ",
-        "tut15Desc": "マルチプレイヤーのランク戦で安定してランクを上げるための戦略とマインドセット。",
-        "tut15Step1Title": "ティアシステムを知る",
-        "tut15Step1Desc": "ランク戦にはオープンIからチャンピオンIIIまで9つのティアがあります。各試合にはバスフェアがかかり、勝利でポイントが付与されます。高いティアほどバスフェアが増えます。",
-        "tut15Step2Title": "速さより安定性",
-        "tut15Step2Desc": "リスクの高い一か八かの戦略より、安定した堅実なプレイに集中しましょう。ミスドロップを避け、スタックを維持して負けを最小限にします。",
-        "tut15Step3Title": "相手に適応する",
-        "tut15Step3Desc": "相手のプレイスタイルを観察しましょう — 積極的に攻めてくるなら防御とお邪魔のキャンセルに集中し、ゆっくりプレイするならコンボやTスピンで圧力をかけましょう。"
-    },
-    "advancements": {
-        "title": "進捗",
-        "button": "{count}/{total} 進捗",
-        "unlocked": "進捗達成",
-        "locked": "ロック中",
-        "lockMessage": "解放まで {current}/{required} 進捗",
-        "lines_10": {
-            "name": "ライン初心者",
-            "desc": "合計10ライン消去"
-        },
-        "lines_50": {
-            "name": "ライン見習い",
-            "desc": "合計50ライン消去"
-        },
-        "lines_200": {
-            "name": "ラインエキスパート",
-            "desc": "合計200ライン消去"
-        },
-        "lines_500": {
-            "name": "ラインマスター",
-            "desc": "合計500ライン消去"
-        },
-        "lines_1000": {
-            "name": "ラインレジェンド",
-            "desc": "合計1,000ライン消去"
-        },
-        "lines_2500": {
-            "name": "ライン征服者",
-            "desc": "合計2,500ライン消去"
-        },
-        "lines_5000": {
-            "name": "ラインイモータル",
-            "desc": "合計5,000ライン消去"
-        },
-        "best_lines_10": {
-            "name": "ウォームアップ",
-            "desc": "1ゲームで10ライン消去"
-        },
-        "best_lines_25": {
-            "name": "スタート",
-            "desc": "1ゲームで25ライン消去"
-        },
-        "best_lines_50": {
-            "name": "機械的な",
-            "desc": "1ゲームで50ライン消去"
-        },
-        "best_lines_100": {
-            "name": "止まらない",
-            "desc": "1ゲームで100ライン消去"
-        },
-        "best_lines_200": {
-            "name": "テトリスの神",
-            "desc": "1ゲームで200ライン消去"
-        },
-        "tspin_1": {
-            "name": "初回転",
-            "desc": "初めてのTスピンを決める"
-        },
-        "tspin_10": {
-            "name": "スピンドクター",
-            "desc": "Tスピンを10回決める"
-        },
-        "tspin_50": {
-            "name": "Tスピンエキスパート",
-            "desc": "Tスピンを50回決める"
-        },
-        "tspin_200": {
-            "name": "Tスピンレジェンド",
-            "desc": "Tスピンを200回決める"
-        },
-        "tspin_500": {
-            "name": "Tスピングランドマスター",
-            "desc": "Tスピンを500回決める"
-        },
-        "tspin_1000": {
-            "name": "Tスピンのイモータル",
-            "desc": "Tスピンを1,000回決める"
-        },
-        "best_tspin_1": {
-            "name": "スピン入門",
-            "desc": "1ゲームでTスピンを1回決める"
-        },
-        "best_tspin_5": {
-            "name": "スピンスペシャリスト",
-            "desc": "1ゲームでTスピンを5回決める"
-        },
-        "best_tspin_10": {
-            "name": "スピンヴィルトゥオーソ",
-            "desc": "1ゲームでTスピンを10回決める"
-        },
-        "best_tspin_25": {
-            "name": "スピンプロディジー",
-            "desc": "1ゲームでTスピンを25回決める"
-        },
-        "tspin_speed_2": {
-            "name": "クイックスピン",
-            "desc": "30秒以内にTスピンを2回決める"
-        },
-        "tspin_speed_3": {
-            "name": "Tスピンラッシュ",
-            "desc": "30秒以内にTスピンを3回決める"
-        },
-        "tspin_speed_5": {
-            "name": "Tスピンフレンジー",
-            "desc": "30秒以内にTスピンを5回決める"
-        },
-        "score_10k": {
-            "name": "スコアルーキー",
-            "desc": "累計スコア10,000達成"
-        },
-        "score_100k": {
-            "name": "スコアハンター",
-            "desc": "累計スコア100,000達成"
-        },
-        "score_1m": {
-            "name": "スコアマスター",
-            "desc": "累計スコア1,000,000達成"
-        },
-        "score_10m": {
-            "name": "スコアレジェンド",
-            "desc": "累計スコア10,000,000達成"
-        },
-        "score_50m": {
-            "name": "スコアオーバーロード",
-            "desc": "累計スコア50,000,000達成"
-        },
-        "score_100m": {
-            "name": "スコア不滅",
-            "desc": "累計スコア100,000,000達成"
-        },
-        "best_score_5k": {
-            "name": "ナイスゲーム",
-            "desc": "1ゲームでスコア5,000達成"
-        },
-        "best_score_25k": {
-            "name": "グレートゲーム",
-            "desc": "1ゲームでスコア25,000達成"
-        },
-        "best_score_100k": {
-            "name": "アメイジングゲーム",
-            "desc": "1ゲームでスコア100,000達成"
-        },
-        "best_score_500k": {
-            "name": "レジェンダリーゲーム",
-            "desc": "1ゲームでスコア500,000達成"
-        },
-        "best_score_1m": {
-            "name": "ミシカルゲーム",
-            "desc": "1ゲームでスコア1,000,000達成"
-        },
-        "combo_3": {
-            "name": "コンボスターター",
-            "desc": "3コンボ達成"
-        },
-        "combo_10": {
-            "name": "コンボキング",
-            "desc": "10コンボ達成"
-        },
-        "combo_20": {
-            "name": "コンボゴッド",
-            "desc": "20コンボ達成"
-        },
-        "combo_30": {
-            "name": "コンボオーバーロード",
-            "desc": "30コンボ達成"
-        },
-        "combo_50": {
-            "name": "コンボ不滅",
-            "desc": "50コンボ達成"
-        },
-        "combo_75": {
-            "name": "コンボ超越",
-            "desc": "75コンボ達成"
-        },
-        "combo_100": {
-            "name": "コンボ神域",
-            "desc": "100コンボ達成"
-        },
-        "combo_150": {
-            "name": "コンボ天界",
-            "desc": "150コンボ達成"
-        },
-        "combo_200": {
-            "name": "コンボ永遠",
-            "desc": "200コンボ達成"
-        },
-        "total_combo_50": {
-            "name": "コンボ収集家",
-            "desc": "累計コンボ50達成"
-        },
-        "total_combo_100": {
-            "name": "コンボ蓄積者",
-            "desc": "累計コンボ100達成"
-        },
-        "total_combo_250": {
-            "name": "コンボベテラン",
-            "desc": "累計コンボ250達成"
-        },
-        "total_combo_500": {
-            "name": "コンボマスター",
-            "desc": "累計コンボ500達成"
-        },
-        "total_combo_1000": {
-            "name": "コンボレジェンド",
-            "desc": "累計コンボ1,000達成"
-        },
-        "total_combo_2500": {
-            "name": "コンボ神話",
-            "desc": "累計コンボ2,500達成"
-        },
-        "total_combo_5000": {
-            "name": "コンボ無限",
-            "desc": "累計コンボ5,000達成"
-        },
-        "games_1": {
-            "name": "最初の一歩",
-            "desc": "初めてのゲームをプレイ"
-        },
-        "games_10": {
-            "name": "本気モード",
-            "desc": "10ゲームプレイ"
-        },
-        "games_50": {
-            "name": "献身的プレイヤー",
-            "desc": "50ゲームプレイ"
-        },
-        "games_100": {
-            "name": "ベテラン",
-            "desc": "100ゲームプレイ"
-        },
-        "games_250": {
-            "name": "ハードコアゲーマー",
-            "desc": "250ゲームプレイ"
-        },
-        "games_500": {
-            "name": "生涯プレイヤー",
-            "desc": "500ゲームプレイ"
-        },
-        "worlds_5": {
-            "name": "世界旅行者",
-            "desc": "5つの世界をクリア"
-        },
-        "tetris_1": {
-            "name": "テトリス！",
-            "desc": "4ライン同時消去"
-        },
-        "tetris_10": {
-            "name": "テトリス中毒",
-            "desc": "4ライン同時消去を10回"
-        },
-        "tetris_50": {
-            "name": "テトリスマスター",
-            "desc": "4ライン同時消去を50回"
-        },
-        "tetris_100": {
-            "name": "テトリスグランドマスター",
-            "desc": "4ライン同時消去を100回"
-        },
-        "tetris_200": {
-            "name": "テトリスゴッド",
-            "desc": "4ライン同時消去を200回"
-        },
-        "best_tetris_1": {
-            "name": "フォーライナー",
-            "desc": "1ゲームで4ライン同時消去"
-        },
-        "best_tetris_3": {
-            "name": "テトリスストリーク",
-            "desc": "1ゲームで4ライン同時消去を3回"
-        },
-        "best_tetris_5": {
-            "name": "テトリススペシャリスト",
-            "desc": "1ゲームで4ライン同時消去を5回"
-        },
-        "best_tetris_10": {
-            "name": "テトリスプロディジー",
-            "desc": "1ゲームで4ライン同時消去を10回"
-        },
-        "tetris_speed_2": {
-            "name": "クイッククリア",
-            "desc": "60秒以内にテトリスを2回決める"
-        },
-        "tetris_speed_3": {
-            "name": "テトリスラッシュ",
-            "desc": "60秒以内にテトリスを3回決める"
-        },
-        "tetris_speed_5": {
-            "name": "テトリスフレンジー",
-            "desc": "60秒以内にテトリスを5回決める"
-        },
-        "perfect_beats_10": {
-            "name": "リズムルーキー",
-            "desc": "1ゲームでパーフェクトビート10回"
-        },
-        "perfect_beats_50": {
-            "name": "リズムマスター",
-            "desc": "1ゲームでパーフェクトビート50回"
-        },
-        "perfect_beats_100": {
-            "name": "リズムレジェンド",
-            "desc": "1ゲームでパーフェクトビート100回"
-        },
-        "total_perfect_beats_50": {
-            "name": "ビートコレクター",
-            "desc": "累計パーフェクトビート50回"
-        },
-        "total_perfect_beats_200": {
-            "name": "ビートエンスージアスト",
-            "desc": "累計パーフェクトビート200回"
-        },
-        "total_perfect_beats_500": {
-            "name": "ビートヴィルトゥオーソ",
-            "desc": "累計パーフェクトビート500回"
-        },
-        "total_perfect_beats_1000": {
-            "name": "ビート不滅",
-            "desc": "累計パーフェクトビート1,000回"
-        },
-        "hard_drops_100": {
-            "name": "スピードドロッパー",
-            "desc": "ハードドロップ100回"
-        },
-        "hard_drops_1000": {
-            "name": "ターミナルベロシティ",
-            "desc": "ハードドロップ1,000回"
-        },
-        "hard_drops_5000": {
-            "name": "メテオストライク",
-            "desc": "ハードドロップ5,000回"
-        },
-        "best_hard_drops_50": {
-            "name": "クイックドロッパー",
-            "desc": "1ゲームでハードドロップ50回"
-        },
-        "best_hard_drops_100": {
-            "name": "スピードデーモン",
-            "desc": "1ゲームでハードドロップ100回"
-        },
-        "best_hard_drops_200": {
-            "name": "ドロップマシン",
-            "desc": "1ゲームでハードドロップ200回"
-        },
-        "best_hard_drops_500": {
-            "name": "グラビティマスター",
-            "desc": "1ゲームでハードドロップ500回"
-        },
-        "pieces_100": {
-            "name": "ブロックビルダー",
-            "desc": "100ピース設置"
-        },
-        "pieces_1000": {
-            "name": "ブロックアーキテクト",
-            "desc": "1,000ピース設置"
-        },
-        "pieces_10000": {
-            "name": "ブロックレジェンド",
-            "desc": "10,000ピース設置"
-        },
-        "pieces_50000": {
-            "name": "ブロックタイタン",
-            "desc": "50,000ピース設置"
-        },
-        "pieces_100000": {
-            "name": "ブロック不滅",
-            "desc": "100,000ピース設置"
-        },
-        "best_pieces_50": {
-            "name": "ピースプレイサー",
-            "desc": "1ゲームで50ピース設置"
-        },
-        "best_pieces_100": {
-            "name": "ピーススタッカー",
-            "desc": "1ゲームで100ピース設置"
-        },
-        "best_pieces_250": {
-            "name": "ピースマスター",
-            "desc": "1ゲームで250ピース設置"
-        },
-        "best_pieces_500": {
-            "name": "ピースタイタン",
-            "desc": "1ゲームで500ピース設置"
-        },
-        "mp_win_1": {
-            "name": "初勝利",
-            "desc": "マルチプレイヤー初勝利"
-        },
-        "mp_win_10": {
-            "name": "アリーナファイター",
-            "desc": "マルチプレイヤー10勝"
-        },
-        "mp_win_50": {
-            "name": "アリーナチャンピオン",
-            "desc": "マルチプレイヤー50勝"
-        },
-        "mp_win_100": {
-            "name": "アリーナレジェンド",
-            "desc": "マルチプレイヤー100勝"
-        },
-        "mp_win_200": {
-            "name": "アリーナゴッド",
-            "desc": "マルチプレイヤー200勝"
-        },
-        "mp_streak_3": {
-            "name": "ホットストリーク",
-            "desc": "3連勝達成"
-        },
-        "mp_streak_5": {
-            "name": "ドミネーション",
-            "desc": "5連勝達成"
-        },
-        "mp_streak_10": {
-            "name": "アンブレイカブル",
-            "desc": "10連勝達成"
-        },
-        "mp_streak_15": {
-            "name": "アンタッチャブル",
-            "desc": "15連勝達成"
-        },
-        "mp_streak_20": {
-            "name": "インビンシブル",
-            "desc": "20連勝達成"
-        },
-        "mp_games_10": {
-            "name": "アリーナ常連",
-            "desc": "マルチプレイヤー10戦"
-        },
-        "mp_games_50": {
-            "name": "アリーナベテラン",
-            "desc": "マルチプレイヤー50戦"
-        },
-        "mp_games_100": {
-            "name": "アリーナグラディエーター",
-            "desc": "マルチプレイヤー100戦"
-        },
-        "mp_games_200": {
-            "name": "アリーナウォーロード",
-            "desc": "マルチプレイヤー200戦"
-        },
-        "loyalty_streak_3": {
-            "name": "3日ストリーク",
-            "desc": "3日連続訪問"
-        },
-        "loyalty_streak_7": {
-            "name": "ウィークリーリズム",
-            "desc": "7日連続訪問"
-        },
-        "loyalty_streak_14": {
-            "name": "フォートナイトビート",
-            "desc": "14日連続訪問"
-        },
-        "loyalty_streak_30": {
-            "name": "マンスリーパルス",
-            "desc": "30日連続訪問"
-        },
-        "loyalty_streak_60": {
-            "name": "シーズナルビート",
-            "desc": "60日連続訪問"
-        },
-        "loyalty_streak_100": {
-            "name": "エターナルリズム",
-            "desc": "100日連続訪問"
-        },
-        "loyalty_visits_5": {
-            "name": "レギュラー",
-            "desc": "5回訪問"
-        },
-        "loyalty_visits_25": {
-            "name": "おなじみの顔",
-            "desc": "25回訪問"
-        },
-        "loyalty_visits_100": {
-            "name": "ファミリーの一員",
-            "desc": "100回訪問"
-        },
-        "loyalty_visits_250": {
-            "name": "リビングレジェンド",
-            "desc": "250回訪問"
-        },
-        "loyalty_visits_500": {
-            "name": "エターナルビジター",
-            "desc": "500回訪問"
-        },
-        "loyalty_games_10": {
-            "name": "プレイヤー",
-            "desc": "10ゲームプレイ"
-        },
-        "loyalty_games_50": {
-            "name": "エンスージアスト",
-            "desc": "50ゲームプレイ"
-        },
-        "loyalty_games_200": {
-            "name": "ディボーティー",
-            "desc": "200ゲームプレイ"
-        },
-        "loyalty_games_500": {
-            "name": "オブセッション",
-            "desc": "500ゲームプレイ"
-        },
-        "loyalty_games_1000": {
-            "name": "超越者",
-            "desc": "1,000ゲームプレイ"
-        },
-        "loyalty_polls_1": {
-            "name": "初投票",
-            "desc": "最初の投票に参加"
-        },
-        "loyalty_polls_5": {
-            "name": "アクティブ投票者",
-            "desc": "5回投票"
-        },
-        "loyalty_polls_10": {
-            "name": "コミュニティの声",
-            "desc": "10回投票"
-        },
-        "loyalty_polls_25": {
-            "name": "民主主義の王者",
-            "desc": "25回投票"
-        },
-        "loyalty_polls_50": {
-            "name": "民衆の声",
-            "desc": "50回投票"
-        }
-    },
-    "localeSwitcher": {
-        "label": "言語",
-        "en": "English",
-        "ja": "日本語",
-        "th": "ไทย",
-        "es": "Español",
-        "fr": "Français",
-        "ru": "Русский"
-    },
-    "vanilla": {
-        "badge": "ソロ",
-        "title": "RHYTHMIA",
-        "subtitle": "クラシック リズムパズル",
-        "description": "ビートに合わせてブロックを落とそう。ライン消去、コンボ、ハイスコアを目指すソロモード。",
-        "gameTitle": "RHYTHMIA"
-    },
-    "updates": {
-        "title": "最新アップデート",
-        "pageTitle": "開発アップデート",
-        "pageSubtitle": "RHYTHMIAの最新の変更と改善をご覧ください",
-        "recentUpdates": "最近の更新",
-        "prsMerged": "件のPR",
-        "merged": "マージ済",
-        "features": "新機能",
-        "enhancements": "改善",
-        "fixes": "修正",
-        "all": "すべて",
-        "viewPR": "PRを見る",
-        "viewAllPRs": "すべてのPRを見る",
-        "viewAllPRsGithub": "GitHubですべてのPRを見る",
-        "videoTitle": "アップデート概要",
-        "changes": "件",
-        "change": "件",
-        "categories": {
-            "feature": "新機能",
-            "enhancement": "改善",
-            "fix": "修正",
-            "refactor": "リファクタ",
-            "docs": "ドキュメント",
-            "i18n": "国際化"
-        }
-    },
-    "skin": {
-        "title": "プロフィール & スキン",
-        "selectSkin": "カラースキンを選択",
-        "currentSkin": "現在のスキン",
-        "selectLanguage": "言語設定",
-        "privacy": "プライバシー",
-        "profileButton": "プロフィール",
-        "changeName": "ニックネーム",
-        "saveNameButton": "保存"
-    },
-    "multiplayer": {
-        "badge": "1v1",
-        "title": "1v1 バトル",
-        "gameTitle": "1v1 バトル",
-        "subtitle": "ランクマッチ",
-        "description": "リアルタイム1v1バトル。相手にお邪魔ラインを送り込もう。最後まで立っていた者が勝利。",
-        "features": {
-            "vs": "1v1",
-            "websocket": "WebSocket",
-            "ranked": "ランク戦"
-        },
-        "stats": {
-            "mode": "モード",
-            "battle": "バトル",
-            "status": "状態"
-        }
-    },
-    "skillTree": {
-        "title": "スキルツリー",
-        "pointsAvailable": "SP",
-        "reset": "リセット",
-        "level": "レベル",
-        "tier": "TIER",
-        "cost": "コスト",
-        "pointsUnit": "SP",
-        "unlock": "解放",
-        "upgrade": "強化",
-        "maxed": "MAX",
-        "lockedHint": "前提スキルを先に解放してください",
-        "resetConfirm": "全スキルをリセットしますか？使用したポイントは返還されます。",
-        "cancel": "キャンセル",
-        "resetConfirmBtn": "リセット",
-        "chooseArchetype": "クラスを選択せよ",
-        "switchArchetype": "クラス変更",
-        "page": "ページ",
-        "classes": "クラス一覧",
-        "selectClassForTree": "クラスを選択してアビリティツリーを表示",
-        "difficulty": "難易度",
-        "subclassesTitle": "サブクラス",
-        "stats": {
-            "difficulty": "難易度",
-            "damage": "攻撃",
-            "defence": "防御",
-            "range": "射程",
-            "speed": "速度"
-        },
-        "archetypes": {
-            "striker": "ストライカー",
-            "strikerDesc": "攻撃型スコアラー — コンボと倍率特化",
-            "strikerAlt": "ナイト",
-            "guardian": "ガーディアン",
-            "guardianDesc": "堅牢な生存者 — シールドと回復特化",
-            "guardianAlt": "バスティオン",
-            "virtuoso": "ヴィルトゥオーソ",
-            "virtuosoDesc": "技巧派 — T-Spinとリズム特化",
-            "virtuosoAlt": "ダークメイジ",
-            "trickster": "トリックスター",
-            "tricksterDesc": "速度と撹乱 — 素早い操作と混沌特化",
-            "tricksterAlt": "ニンジャ",
-            "conductor": "コンダクター",
-            "conductorDesc": "リズムマスタリー — ビート同期とテンポ制御",
-            "conductorAlt": "スカイシーアー"
-        },
-        "subclasses": {
-            "brawler": "ブロウラー",
-            "berserker": "バーサーカー",
-            "paladin": "パラディン",
-            "sentinel": "センチネル",
-            "medic": "メディック",
-            "warden": "ウォーデン",
-            "arcanist": "アルカニスト",
-            "chronomancer": "クロノマンサー",
-            "enchanter": "エンチャンター",
-            "shadow": "シャドウ",
-            "phantom": "ファントム",
-            "saboteur": "サボトゥール",
-            "harmonist": "ハーモニスト",
-            "resonator": "レゾネーター",
-            "orchestrator": "オーケストレーター"
-        },
-        "nodes": {
-            "stkScoreAmp": "スコアアンプ",
-            "stkScoreAmpDesc": "基本スコア倍率がレベルごとに増加",
-            "stkLineSurge": "ラインサージ",
-            "stkLineSurgeDesc": "ライン消去ごとのボーナスポイントが増加",
-            "stkComboIgnite": "コンボイグナイト",
-            "stkComboIgniteDesc": "コンボ倍率がレベルごとに向上",
-            "stkTetrisForce": "テトリスフォース",
-            "stkTetrisForceDesc": "4ライン消去（テトリス）の追加ボーナス",
-            "stkChainFire": "チェインファイア",
-            "stkChainFireDesc": "連続スペシャルのBack-to-Backボーナスが強化",
-            "stkFeverSpark": "フィーバースパーク",
-            "stkFeverSparkDesc": "コンボ中のフィーバーモード発動が加速",
-            "stkDevastator": "デヴァステイター",
-            "stkDevastatorDesc": "コンボ中に4ライン以上消去で大量スコアバースト",
-            "stkOverdrive": "オーバードライブ",
-            "stkOverdriveDesc": "フィーバー後10秒間、全スコアボーナスが倍増",
-            "grdFortify": "フォーティファイ",
-            "grdFortifyDesc": "トップアウトまでのボード許容量がレベルごとに増加",
-            "grdBoardShield": "ボードシールド",
-            "grdBoardShieldDesc": "マルチプレイヤーでお邪魔ラインの初期数が減少",
-            "grdLastStand": "ラストスタンド",
-            "grdLastStandDesc": "ボードが危険ゾーンに達した時に短時間の無敵状態",
-            "grdRecovery": "リカバリー",
-            "grdRecoveryDesc": "お邪魔ラインの上昇速度がレベルごとに低下",
-            "grdSteadyHand": "ステディハンド",
-            "grdSteadyHandDesc": "ピース設置時のロックディレイ猶予が拡大",
-            "grdSanctuary": "サンクチュアリ",
-            "grdSanctuaryDesc": "1ゲームに1回、トップアウト寸前で全お邪魔ラインを消去",
-            "vrtPrecision": "プレシジョン",
-            "vrtPrecisionDesc": "パーフェクトビートの判定タイミングがレベルごとに拡大",
-            "vrtTSpinAdept": "T-Spinアデプト",
-            "vrtTSpinAdeptDesc": "T-Spinボーナスポイントがレベルごとに増加",
-            "vrtBeatSync": "ビートシンク",
-            "vrtBeatSyncDesc": "パーフェクトビートのボーナスポイントが増加",
-            "vrtTSpinMaster": "T-Spinマスター",
-            "vrtTSpinMasterDesc": "T-Spinトリプルがダブルスコアとして計算",
-            "vrtHarmonic": "ハーモニック",
-            "vrtHarmonicDesc": "コンボ中のパーフェクトビートで追加倍率を獲得",
-            "vrtPerfectRhythm": "パーフェクトリズム",
-            "vrtPerfectRhythmDesc": "連続パーフェクトビートでフィーバーモードが延長",
-            "vrtGrandMaster": "グランドマスター",
-            "vrtGrandMasterDesc": "フィーバーモード中のT-Spinがトリプルスコア",
-            "vrtCrescendo": "クレッシェンド",
-            "vrtCrescendoDesc": "連続パーフェクトビートごとにスコア倍率が上昇",
-            "trkQuickHands": "クイックハンド",
-            "trkQuickHandsDesc": "ハードドロップのボーナスポイントがレベルごとに増加",
-            "trkDasBoost": "DASブースト",
-            "trkDasBoostDesc": "横移動のオートシフト速度が向上",
-            "trkSoftRush": "ソフトラッシュ",
-            "trkSoftRushDesc": "ソフトドロップでボーナスポイントを獲得",
-            "trkHyperSpeed": "ハイパースピード",
-            "trkHyperSpeedDesc": "DASディレイが短縮され即座にピースが移動",
-            "trkGhostStep": "ゴーストステップ",
-            "trkGhostStepDesc": "プレビューピースに最適配置のヒントを表示",
-            "trkTimeWarp": "タイムワープ",
-            "trkTimeWarpDesc": "3ライン以上消去後に一時的に落下速度が低下",
-            "trkChaosMaster": "カオスマスター",
-            "trkChaosMasterDesc": "受信お邪魔ラインをランダムボーナスアイテムに変換",
-            "trkPhantom": "ファントム",
-            "trkPhantomDesc": "ピースが一瞬だけ1ブロックの隙間を通過可能",
-            "cndTempoSense": "テンポセンス",
-            "cndTempoSenseDesc": "リズム認識が深まり、ビート判定窓がレベルごとに拡大",
-            "cndSyncPulse": "シンクパルス",
-            "cndSyncPulseDesc": "ビートに合わせて防御パルスを生成",
-            "cndBeatWeave": "ビートウィーブ",
-            "cndBeatWeaveDesc": "コンボをリズムパターンに織り込みボーナスポイントを獲得",
-            "cndResonance": "レゾナンス",
-            "cndResonanceDesc": "ライン消去が反響し追加の遅延ダメージを与える",
-            "cndFlowState": "フロウステート",
-            "cndFlowStateDesc": "高集中ゾーンに入りドロップスピードボーナスが向上",
-            "cndHarmonicShield": "ハーモニックシールド",
-            "cndHarmonicShieldDesc": "リズム同期により受信お邪魔ラインを軽減",
-            "cndSymphony": "シンフォニー",
-            "cndSymphonyDesc": "究極のリズムマスタリー — 大規模コンボ倍率クレッシェンド",
-            "cndEncore": "アンコール",
-            "cndEncoreDesc": "1ゲームに1回、ノックアウトからビートバーストで復活"
-        }
+    "game": {
+      "youDied": "死んでしまった！",
+      "respawning": "リスポーン中...",
+      "gameOver": "ゲームオーバー！",
+      "youWin": "勝利！",
+      "wins": "{name}の勝利！",
+      "enderPortal": "エンダーポータルフレームを作成しました！",
+      "backToMenu": "メニューに戻る",
+      "day": "昼",
+      "dusk": "夕暮れ",
+      "night": "夜",
+      "dawn": "夜明け"
     }
+  },
+  "arena": {
+    "badge": "9P",
+    "title": "リズムアリーナ",
+    "subtitle": "9人バトルロイヤル",
+    "description": "9人で1つのリズム。共有カオス、同期テンポ、ランダムギミック。ビートを外せばテンポが崩壊する。",
+    "features": {
+      "players": "9人対戦",
+      "chaos": "カオス",
+      "sync": "リズム同期"
+    },
+    "stats": {
+      "players": "人数",
+      "bpm": "BPM",
+      "status": "状態"
+    },
+    "maxPlayers": "最大{count}人",
+    "quickMatch": "クイックマッチ",
+    "createArena": "アリーナ作成",
+    "joinByCode": "コードで参加",
+    "enterName": "名前を入力",
+    "namePlaceholder": "プレイヤー名",
+    "enterCode": "アリーナコード",
+    "join": "参加",
+    "next": "次へ",
+    "back": "戻る",
+    "online": "オンライン",
+    "connecting": "接続中...",
+    "connectionError": "接続エラー",
+    "offline": "オフライン",
+    "searching": "プレイヤー検索中",
+    "queueInfo": "アリーナを形成するプレイヤーを待っています...",
+    "playersInQueue": "待機中 {count}人",
+    "cancel": "キャンセル",
+    "arenaCode": "アリーナコード",
+    "copy": "コピー",
+    "reconnecting": "再接続中...",
+    "ready": "準備完了",
+    "notReady": "未準備",
+    "waiting": "待機中...",
+    "cancelReady": "準備解除",
+    "readyUp": "準備完了！",
+    "startArena": "アリーナ開始",
+    "waitingForPlayers": "プレイヤーを待っています...",
+    "leave": "退出",
+    "getReady": "準備せよ",
+    "chaos": "カオス",
+    "sync": "同期",
+    "eliminated": "脱落",
+    "resultLastStanding": "最後の一人",
+    "resultTempoCollapse": "テンポ崩壊",
+    "resultChaosOverload": "カオス暴走",
+    "victory": "勝利",
+    "wins": "勝利",
+    "noWinner": "勝者なし",
+    "duration": "時間",
+    "peakBpm": "最高BPM",
+    "gimmicks": "ギミック",
+    "peakChaos": "最大カオス",
+    "tempoCollapses": "崩壊回数",
+    "lowestBpm": "最低BPM",
+    "backToLobby": "ロビーに戻る"
+  },
+  "forYou": {
+    "title": "おすすめ",
+    "subtitle": "あなたの進捗に合わせてセレクト",
+    "loading": "生成中",
+    "error": "おすすめを読み込めませんでした",
+    "retry": "再試行",
+    "refresh": "更新",
+    "watchOnYouTube": "YouTubeで見る",
+    "tutorialsTitle": "チュートリアル",
+    "tutorialsSubtitle": "テクニックと戦略を学ぼう",
+    "columnForYou": "おすすめ",
+    "columnTutorials": "チュートリアル",
+    "searchTutorials": "チュートリアルを検索...",
+    "noTutorialResults": "チュートリアルが見つかりません",
+    "moreBelow": "あと{count}件",
+    "endOfList": "リストの末尾",
+    "types": {
+      "tutorial": "チュートリアル",
+      "video": "動画",
+      "tip": "ヒント"
+    }
+  },
+  "loyalty": {
+    "meta": {
+      "title": "スコアランキング | RHYTHMIA - Azuretier",
+      "description": "スコアランキングを追跡し、ランクを上げ、進捗を解除し、RHYTHMIAコミュニティで競おう。"
+    },
+    "backToLobby": "← 戻る",
+    "currentTier": "現在のランク",
+    "totalScore": "総合スコア",
+    "scoreToNext": "次のランクまで {score}",
+    "maxTier": "最高ランク到達",
+    "viewAll": "ランキング＆詳細を見る",
+    "tiers": {
+      "unranked": "ランクなし",
+      "beat_1": "ビート Ⅰ",
+      "beat_2": "ビート Ⅱ",
+      "beat_3": "ビート Ⅲ",
+      "rhythm_1": "リズム Ⅰ",
+      "rhythm_2": "リズム Ⅱ",
+      "rhythm_3": "リズム Ⅲ",
+      "melody_1": "メロディ Ⅰ",
+      "melody_2": "メロディ Ⅱ",
+      "melody_3": "メロディ Ⅲ",
+      "harmony_1": "ハーモニー Ⅰ",
+      "harmony_2": "ハーモニー Ⅱ",
+      "harmony_3": "ハーモニー Ⅲ",
+      "maestro_1": "マエストロ Ⅰ",
+      "maestro_2": "マエストロ Ⅱ",
+      "maestro_3": "マエストロ Ⅲ",
+      "gravity_1": "グラヴィティ Ⅰ",
+      "gravity_2": "グラヴィティ Ⅱ",
+      "gravity_3": "グラヴィティ Ⅲ",
+      "flow": "フロー"
+    },
+    "tierGroups": {
+      "unranked": "ランクなし",
+      "beat": "ビート",
+      "rhythm": "リズム",
+      "melody": "メロディ",
+      "harmony": "ハーモニー",
+      "maestro": "マエストロ",
+      "gravity": "グラヴィティ",
+      "flow": "フロー"
+    },
+    "stats": {
+      "bestScore": "ベストスコア",
+      "games": "ゲーム",
+      "lines": "ライン",
+      "badges": "進捗",
+      "totalVisits": "訪問回数",
+      "currentStreak": "現在の連続日数",
+      "bestStreak": "最高連続日数",
+      "bonusXP": "ボーナスXP"
+    },
+    "sections": {
+      "tierRoadmap": "ランクロードマップ",
+      "badges": "最近の進捗",
+      "community": "コミュニティの声",
+      "howItWorks": "仕組み",
+      "dailyBonus": "デイリーボーナス"
+    },
+    "poll": {
+      "question": "次のRHYTHMIAゲームモードは何がいい？",
+      "options": {
+        "0": "協力モード（2v2チームバトル）",
+        "1": "サバイバルモード（エンドレスウェーブ）",
+        "2": "トーナメントモード（トーナメント戦）",
+        "3": "禅モード（リラックス、プレッシャーなし）"
+      },
+      "vote": "投票する",
+      "voted": "投票ありがとう！",
+      "loading": "投票を読み込み中...",
+      "submitting": "送信中...",
+      "noPoll": "現在アクティブな投票はありません。",
+      "totalVotes": "{count} 票"
+    },
+    "strategy": {
+      "0": {
+        "step": "ステップ 01",
+        "title": "プレイ＆スコア獲得",
+        "desc": "ゲームをプレイしてスコアを稼ごう。ライン消去、コンボ、ハイスコアでランクを上げよう。"
+      },
+      "1": {
+        "step": "ステップ 02",
+        "title": "ランクを上げる",
+        "desc": "累計スコアがランクを決める。ランクなしからビート、リズム、メロディ、ハーモニー、マエストロ、グラヴィティを経て、最高位フローへ。"
+      },
+      "2": {
+        "step": "ステップ 03",
+        "title": "進捗を解除",
+        "desc": "マイルストーンを達成して進捗を解除しよう。各実績がRHYTHMIAでの旅の証。"
+      },
+      "3": {
+        "step": "ステップ 04",
+        "title": "未来を形づくる",
+        "desc": "コミュニティ投票に参加し、RHYTHMIAの次の展開を一緒に決めよう。"
+      }
+    },
+    "streakDays": "日連続",
+    "bonusXP": "ボーナスXP"
+  },
+  "nav": {
+    "wiki": "Wiki",
+    "updates": "アップデート",
+    "lobby": "ロビー"
+  },
+  "lobby": {
+    "loading": "読み込み中",
+    "selectServer": "モード選択",
+    "chooseMode": "ゲームモードを選択してください",
+    "tagline": "リズムで動くパズルゲーム。ビートに合わせてブロックを落とし、対戦や実績を楽しもう。",
+    "play": "プレイ",
+    "battle": "バトル",
+    "back": "← 戻る",
+    "online": "オンライン",
+    "onlineCount": "{count} オンライン",
+    "loyalty": "ランキング"
+  },
+  "googleSync": {
+    "sectionTitle": "Googleアカウント同期",
+    "description": "Googleでサインインすると、プロフィール、アドバンスメント、ロイヤリティ進捗、スキン設定をデバイス間で同期できます。",
+    "signIn": "Googleでサインイン",
+    "signOut": "サインアウト",
+    "linking": "接続中...",
+    "syncing": "同期中...",
+    "syncNow": "今すぐ同期",
+    "synced": "同期完了",
+    "error": "同期失敗"
+  },
+  "stories": {
+    "title": "STORIES",
+    "chapter": "CHAPTER",
+    "backToLobby": "← 戻る",
+    "log": "LOG",
+    "auto": "AUTO",
+    "skip": "SKIP",
+    "menu": "MENU",
+    "logTitle": "テキストログ",
+    "close": "閉じる",
+    "resume": "再開",
+    "chapterSelect": "チャプター選択"
+  },
+  "footer": {
+    "copyright": "azuretier.net © 2025"
+  },
+  "profile": {
+    "iconTitle": "アイコンを選択",
+    "iconSubtitle": "自分を表すアイコンを選んでください",
+    "nameTitle": "ニックネームを入力",
+    "nameSubtitle": "他のプレイヤーに表示される名前です",
+    "nameLabel": "ニックネーム",
+    "namePlaceholder": "なまえ",
+    "friendCodeLabel": "フレンドコード",
+    "langTitle": "言語設定",
+    "langSubtitle": "表示言語を選択してください",
+    "confirmTitle": "プロフィール確認",
+    "confirmSubtitle": "この内容でよろしいですか？",
+    "next": "つぎへ",
+    "back": "もどる",
+    "onlineTitle": "オンラインのプレイヤー",
+    "onlineCount": "{count}人がオンライン",
+    "noOnlineUsers": "現在オンラインのプレイヤーはいません",
+    "privateProfile": "非公開プロフィール",
+    "privateProfileDesc": "名前とアイコンがオンラインプレイヤー一覧に表示されません",
+    "publicProfile": "公開プロフィール",
+    "publicProfileDesc": "名前とアイコンが他のプレイヤーに表示されます"
+  },
+  "uiTheme": {
+    "selectTheme": "UIテーマ",
+    "neoFuturistic": "ネオフューチャリスティック",
+    "pixelNostalgia": "ピクセルノスタルジア",
+    "neoDesc": "フロストガラスエフェクトを備えた洗練されたモダンなデザイン",
+    "pixelDesc": "CRTエフェクトを備えたレトロ8ビット/16ビットピクセルアートスタイル"
+  },
+  "meta": {
+    "title": "RHYTHMIA | リズム×テトリスの新感覚パズルゲーム - Azuretier",
+    "description": "音楽とパズルが完全融合！RHYTHMIA（リズミア）は、リズムに合わせてブロックを消す新感覚の無料ブラウザゲームです。テトリスの戦略性と音ゲーの爽快感を今すぐ体験しよう。",
+    "ogTitle": "RHYTHMIA - 究極のリズムパズル体験をブラウザで",
+    "ogDescription": "【音ゲー×テトリス】音楽の鼓動でブロックを操れ。Azuretierが贈る全く新しい落ち物パズルゲーム、RHYTHMIAをプレイ。",
+    "ogType": "website",
+    "keywords": "RHYTHMIA,リズミア,テトリス,音ゲー,リズムゲーム,落ち物パズル,無料ゲーム,ブラウザゲーム,Azuretier"
+  },
+  "wiki": {
+    "meta": {
+      "title": "Wiki | RHYTHMIA - Azuretier",
+      "description": "RHYTHMIAの攻略Wiki。ゲームモード、ワールド、ランク戦、アイテム、クラフト、進捗など全システムを網羅。"
+    },
+    "backToLobby": "← ロビー",
+    "updatesLink": "アップデート",
+    "contents": "目次",
+    "sectionOverview": "概要",
+    "sectionModes": "ゲームモード",
+    "sectionWorlds": "ワールド",
+    "sectionControls": "操作方法",
+    "sectionRanked": "ランク戦",
+    "sectionAdvancements": "進捗",
+    "sectionCrafting": "アイテム&クラフト",
+    "sectionTowerDefense": "タワーディフェンス",
+    "overviewTitle": "RHYTHMIAとは",
+    "overviewDesc": "RHYTHMIA（リズミア）は、クラシックな落ちものパズルゲームとリズムアクションを融合させた新感覚のブラウザゲームです。ビートに合わせてブロックを操作し、ラインを消去しながらワールドを踏破していきます。",
+    "boardSize": "ボードサイズ",
+    "tetrominoes": "テトロミノ",
+    "worldsLabel": "ワールド",
+    "rotationSystem": "回転方式",
+    "advancementsLabel": "進捗",
+    "rankTiersLabel": "ランクティア",
+    "coreMechanics": "コアメカニクス",
+    "mechanic1": "SRS（スーパーローテーションシステム）による回転",
+    "mechanic2": "ピースホールド機能とネクストピースプレビュー",
+    "mechanic3": "リズムに同期したビジュアルエフェクト（VFX）",
+    "mechanic4": "ビートに合わせた操作でボーナスポイント獲得",
+    "mechanic5": "コンボシステムとFeverモード（10コンボ以上）",
+    "modesTitle": "ゲームモード",
+    "vanillaTitle": "シングルプレイヤー",
+    "vanillaDesc": "ソロでプレイ。5つのワールドを踏破し、ビートに乗ってスコアを伸ばそう。地形破壊、アイテムドロップ、クラフトシステムを活用して、より高いステージを目指せ。",
+    "terrainDestruction": "地形破壊",
+    "itemDrops": "アイテムドロップ",
+    "craftingFeat": "クラフト",
+    "worldProgression": "ワールド進行",
+    "battleTitle": "バトルアリーナ",
+    "battleDesc": "リアルタイム1v1対戦。ライン消去で相手にお邪魔ラインを送り込む。ランク戦対応で、勝利するとポイントを獲得し、ティアが昇格。8秒以内にマッチングしない場合はAI対戦にフォールバック。",
+    "rankedFeat": "ランク戦",
+    "aiFallback": "AI対戦",
+    "battleNote": "3つの進捗を解放するとアンロック",
+    "arenaTitle": "9人アリーナ",
+    "arenaDesc": "最大9人のプレイヤーがリズム同期バトルで激突。共有テンポ、ランダムギミック、カオスシステムにより、毎回異なる展開に。テンポ崩壊やカオス暴走など、複数の勝利条件が存在。",
+    "ninePlayers": "9人対戦",
+    "rhythmSync": "リズム同期",
+    "gimmicks": "ギミック",
+    "chaosLabel": "カオス",
+    "worldsSectionTitle": "ワールド",
+    "worldsDesc": "RHYTHMIAには5つのワールドが存在し、各ワールドには固有のBPMとカラーテーマがあります。ワールドはステージクリアごとに進行し、4ステージごとに次のワールドへ移行します。BPMが上がるにつれて難易度が上昇します。",
+    "melodia": "メロディア",
+    "harmonia": "ハーモニア",
+    "crescenda": "クレシェンダ",
+    "fortissimo": "フォルティッシモ",
+    "silenceChamber": "静寂の間",
+    "worldProgressionTitle": "ワールド進行",
+    "worldProg1": "各ワールドは4ステージで構成",
+    "worldProg2": "ライン消去で地形を破壊してステージクリア",
+    "worldProg3": "1ライン消去あたり4ブロックの地形ダメージ",
+    "worldProg4": "ビート倍率でダメージが増加",
+    "controlsTitle": "操作方法",
+    "controlsDesc": "キーバインドはゲーム内設定から変更可能です。DAS（Delayed Auto Shift）、ARR（Auto Repeat Rate）、SDF（Soft Drop Factor）のデフォルト値は以下の通りです。",
+    "actionHeader": "アクション",
+    "defaultKey": "デフォルトキー",
+    "moveLeft": "左移動",
+    "moveRight": "右移動",
+    "softDrop": "ソフトドロップ",
+    "hardDrop": "ハードドロップ",
+    "rotateCW": "右回転",
+    "rotateCCW": "左回転",
+    "hold": "ホールド",
+    "inventoryKey": "インベントリ",
+    "shopKey": "ショップ",
+    "forgeKey": "鍛造",
+    "timingSettings": "タイミング設定",
+    "dasDesc": "自動移動開始遅延",
+    "arrDesc": "自動移動間隔",
+    "sdfDesc": "ソフトドロップ速度",
+    "lockDelay": "ロック遅延",
+    "lockDelayDesc": "設置までの猶予",
+    "rankedTitle": "ランク戦",
+    "rankedDesc": "ランク戦はフォートナイトのアリーナ制を参考にしたポイント制システムです。試合に参加するとバスフェア（参加費）が差し引かれ、勝利すると勝利報酬を獲得します。連勝するとボーナスポイントが加算されます。",
+    "tierHeader": "ティア",
+    "pointsHeader": "ポイント",
+    "busFareHeader": "バスフェア",
+    "winRewardHeader": "勝利報酬",
+    "openI": "オープン I",
+    "openII": "オープン II",
+    "openIII": "オープン III",
+    "contenderI": "コンテンダー I",
+    "contenderII": "コンテンダー II",
+    "contenderIII": "コンテンダー III",
+    "championI": "チャンピオン I",
+    "championII": "チャンピオン II",
+    "championIII": "チャンピオン III",
+    "streakTitle": "連勝ボーナス",
+    "streakDesc": "連勝するとボーナスポイントが付与されます。ストリーク数に応じたボーナス: 2連勝=+5, 3連勝=+10, 4連勝=+15, 5連勝=+20, 6連勝以上=+25",
+    "matchmakingTitle": "マッチメイキング",
+    "matchmaking1": "ポイント差500以内のプレイヤーとマッチ",
+    "matchmaking2": "タイムアウト: 8秒",
+    "matchmaking3": "タイムアウト後はAI対戦にフォールバック",
+    "advancementsTitle": "進捗（アドバンスメント）",
+    "advancementsDesc": "RHYTHMIAには45以上の進捗（実績）が存在します。プレイ中に条件を満たすと自動的にアンロックされ、トースト通知で表示されます。進捗はローカルストレージとFirestoreの両方に保存されます。バトルアリーナは3つの進捗をアンロックすると解放されます。",
+    "catLines": "ライン",
+    "catScore": "スコア",
+    "catTSpin": "Tスピン",
+    "catMultiplayer": "マルチプレイヤー",
+    "lineBeginner": "ライン初心者",
+    "lineBeginnerDesc": "合計10ライン消去",
+    "lineApprentice": "ライン見習い",
+    "lineApprenticeDesc": "合計50ライン消去",
+    "lineExpert": "ラインエキスパート",
+    "lineExpertDesc": "合計200ライン消去",
+    "lineMaster": "ラインマスター",
+    "lineMasterDesc": "合計500ライン消去",
+    "lineLegend": "ラインレジェンド",
+    "lineLegendDesc": "合計1,000ライン消去",
+    "scoreRookie": "スコアルーキー",
+    "scoreRookieDesc": "累計スコア10,000達成",
+    "scoreHunter": "スコアハンター",
+    "scoreHunterDesc": "累計スコア100,000達成",
+    "scoreMaster": "スコアマスター",
+    "scoreMasterDesc": "累計スコア1,000,000達成",
+    "scoreLegend": "スコアレジェンド",
+    "scoreLegendDesc": "累計スコア10,000,000達成",
+    "firstTwist": "初回転",
+    "firstTwistDesc": "初めてのTスピンを決める",
+    "spinDoctor": "スピンドクター",
+    "spinDoctorDesc": "Tスピンを10回決める",
+    "tSpinExpert": "Tスピンエキスパート",
+    "tSpinExpertDesc": "Tスピンを50回決める",
+    "tSpinLegend": "Tスピンレジェンド",
+    "tSpinLegendDesc": "Tスピンを200回決める",
+    "firstVictory": "初勝利",
+    "firstVictoryDesc": "マルチプレイヤー初勝利",
+    "arenaFighter": "アリーナファイター",
+    "arenaFighterDesc": "マルチプレイヤー10勝",
+    "arenaChampion": "アリーナチャンピオン",
+    "arenaChampionDesc": "マルチプレイヤー50勝",
+    "hotStreak": "ホットストリーク",
+    "hotStreakDesc": "3連勝達成",
+    "unbreakable": "アンブレイカブル",
+    "unbreakableDesc": "10連勝達成",
+    "additionalCatTitle": "その他のカテゴリ",
+    "additionalCat1": "コンボ: 3, 10, 20コンボ達成",
+    "additionalCat2": "テトリス: 4ライン同時消去 (1, 10, 50回)",
+    "additionalCat3": "パーフェクトビート: 1ゲーム中10, 50回",
+    "additionalCat4": "ハードドロップ: 100, 1,000回",
+    "additionalCat5": "ピース設置: 100, 1,000, 10,000個",
+    "additionalCat6": "ゲームプレイ: 1, 10, 50, 100ゲーム",
+    "additionalCat7": "ワールド: 5つクリア",
+    "craftingTitle": "アイテム & クラフト",
+    "craftingDesc": "地形破壊時にアイテムがドロップします。収集したアイテムを使って武器をクラフトし、地形ダメージを強化できます。レアリティが高いアイテムほどドロップ率が低くなります。",
+    "materialsTitle": "素材",
+    "weaponsTitle": "武器",
+    "materialHeader": "素材",
+    "rarityHeader": "レアリティ",
+    "dropRateHeader": "ドロップ率",
+    "stoneFragment": "石片",
+    "ironOre": "鉄鉱石",
+    "crystalShard": "水晶片",
+    "goldNugget": "金塊",
+    "obsidianCore": "黒曜核",
+    "starFragment": "星の欠片",
+    "common": "コモン",
+    "uncommon": "アンコモン",
+    "rare": "レア",
+    "epic": "エピック",
+    "legendary": "レジェンダリー",
+    "weaponHeader": "武器",
+    "damageHeader": "ダメージ",
+    "specialHeader": "特殊効果",
+    "recipeHeader": "レシピ",
+    "stoneBlade": "石の刃",
+    "ironPickaxe": "鉄のピッケル",
+    "crystalWand": "水晶の杖",
+    "goldHammer": "黄金のハンマー",
+    "obsidianEdge": "黒曜の刃",
+    "starCannon": "星砲",
+    "wideBeat": "ビート判定拡大",
+    "shatter": "粉砕効果",
+    "burst": "爆発効果",
+    "stoneBladeRecipe": "石片x3",
+    "ironPickaxeRecipe": "鉄鉱石x3",
+    "crystalWandRecipe": "水晶片x2 + 石片x2",
+    "goldHammerRecipe": "金塊x2 + 鉄鉱石x2",
+    "obsidianEdgeRecipe": "黒曜核x1 + 鉄鉱石x2",
+    "starCannonRecipe": "星の欠片x1 + 水晶片x2",
+    "towerDefenseTitle": "タワーディフェンス",
+    "towerDefenseDesc": "Vanillaモードにはタワーディフェンス要素が組み込まれています。グリッドの中央にタワーが設置され、ビートに同期して四方から敵が出現します。ライン消去で敵を倒し、タレットは自動的に敵を攻撃します。敵がタワーに到達するとダメージを受けます。",
+    "towerHP": "タワーHP",
+    "enemyReachDMG": "敵到達ダメージ",
+    "enemyHP": "敵HP",
+    "killsPerLine": "ライン消去キル",
+    "gridSystem": "グリッドシステム",
+    "grid1": "離散グリッド上を敵が1ターンに1タイル移動（直行移動のみ）",
+    "grid2": "グリッド範囲: 中心から±18タイル",
+    "grid3": "敵はマンハッタン距離18のリングからスポーン",
+    "grid4": "タレット射撃間隔: 1,000ms、弾速: 18単位/秒",
+    "grid5": "弾丸は放物線軌道（重力加速度: 40単位/秒²）",
+    "sectionGameOverview": "ゲーム概要",
+    "sectionCommunityResources": "コミュニティリソース",
+    "sectionUpdates": "アップデート",
+    "gameOverviewTitle": "ゲーム概要",
+    "communityResourcesTitle": "コミュニティリソース",
+    "communityResourcesDesc": "RHYTHMIAコミュニティが厳選したチュートリアル、ガイド、動画でゲームプレイを向上させよう。",
+    "updatesTitle": "バージョンアップデート",
+    "updatesDesc": "最新バージョンの概要動画をチェックして、RHYTHMIAの新機能を確認しよう。",
+    "videoComingSoon": "近日公開",
+    "watchVideo": "視聴する",
+    "resourceVideosTitle": "動画",
+    "resourceTutorialsTitle": "チュートリアル",
+    "resourceTypeTutorial": "チュートリアル",
+    "resourceTypeVideo": "動画",
+    "visitChannel": "YouTubeチャンネルを見る",
+    "res_vid_beginner": "RHYTHMIA 初心者ガイド",
+    "res_vid_tspin_tutorial": "Tスピンチュートリアル - ゼロからヒーローへ",
+    "res_vid_ranked_guide": "ランク戦攻略法",
+    "res_vid_advanced_combos": "上級コンボテクニック",
+    "res_vid_update_showcase": "最新アップデート紹介",
+    "res_vid_music_showcase": "RHYTHMIA サウンドトラックプレビュー",
+    "res_vid_multiplayer_tips": "1v1バトル攻略",
+    "res_vid_world_tour": "ワールドツアー - 全ステージ",
+    "res_tut_tspin": "Tスピン",
+    "res_tut_stacking": "きれいな積み方",
+    "res_tut_combos": "コンボチェイン",
+    "res_tut_opener": "開幕テンプレ",
+    "res_tut_rhythm": "リズムタイミング",
+    "res_tut_downstack": "掘り下げ",
+    "res_tut_harddrop": "ハードドロップ速度",
+    "res_tut_garbage": "お邪魔ライン管理",
+    "res_tut_finesse": "フィネス",
+    "res_tut_back2back": "Back-to-Backチェイン",
+    "res_tut_crafting": "クラフトシステムガイド",
+    "res_tut_items": "アイテム戦略",
+    "res_tut_ranked": "ランク戦攻略",
+    "res_tut_worlds": "ワールド進行",
+    "sectionTutorials": "チュートリアル",
+    "sectionTutBeginner": "初級",
+    "sectionTutIntermediate": "中級",
+    "sectionTutAdvanced": "上級",
+    "tutBeginnerTitle": "初級チュートリアル",
+    "tutBeginnerIntro": "RHYTHMIAの基本から始めましょう。基本操作、積み方、リズムタイミングを学んで、しっかりとした土台を作りましょう。",
+    "tut1Title": "1. 基本操作と移動",
+    "tut1Desc": "ピースを効果的に移動、回転、落下させるための基本操作をマスターしましょう。",
+    "tut1Step1Title": "移動キー",
+    "tut1Step1Desc": "左矢印/Aでピースを左に、右矢印/Dで右に移動します。ボード上でスムーズにピースを動かす練習をしましょう。",
+    "tut1Step2Title": "回転",
+    "tut1Step2Desc": "上矢印/W/Xで時計回りに、Zで反時計回りに回転します。最適な配置を見つけるために、さまざまな回転オプションを試してみましょう。",
+    "tut1Step3Title": "ソフトドロップとハードドロップ",
+    "tut1Step3Desc": "下矢印/Sを押し続けるとソフトドロップ(ゆっくり落下、ポイント付与)。スペースでハードドロップ(即座に配置)。ピースを素早く配置するにはハードドロップを使用しましょう。",
+    "tut1Step4Title": "ホールド機能",
+    "tut1Step4Desc": "CまたはShiftを押して、現在のピースを後で使用するために保持できます。特定の状況で必要なピースを保存するために重要です。",
+    "tut2Title": "2. きれいな積み方",
+    "tut2Desc": "管理しやすく、ラインを消しやすい、きれいで平らなスタックを作る方法を学びましょう。",
+    "tut2Step1Title": "隙間を避ける",
+    "tut2Step1Desc": "空いた穴を残さないようにピースを配置しましょう。隙間があるとラインを消すのが難しくなり、ボードが乱雑になります。",
+    "tut2Step2Title": "平らに保つ",
+    "tut2Step2Desc": "ボード全体で均等な高さを維持しましょう。特定の戦略がない限り、高い塔や深い谷を作らないようにしましょう。",
+    "tut2Step3Title": "先を見越す",
+    "tut2Step3Desc": "ネクストピースのプレビューを見て、各ピースがどこに行くかを考えましょう。2〜3ピース先を計画することで、ミスを避けられます。",
+    "tut3Title": "3. リズムタイミングの基本",
+    "tut3Desc": "リズムシステムを理解し、ビートに合わせてドロップすることでボーナスポイントを獲得する方法を学びましょう。",
+    "tut3Step1Title": "ビートを聞く",
+    "tut3Step1Desc": "各ワールドには独自のBPM(1分あたりのビート数)があります。音楽とビートを示すビジュアルキューに注意を払いましょう。",
+    "tut3Step2Title": "ビートに合わせてドロップ",
+    "tut3Step2Desc": "ビートの正確なタイミングでハードドロップしてみましょう。タイミングが合うとビジュアルエフェクトが表示され、ボーナスポイントを獲得できます。",
+    "tut3Step3Title": "タイミングを練習",
+    "tut3Step3Desc": "最初は遅いワールド(100-110 BPM)でタイミングを練習しましょう。上達したら、より速いワールドに移動してより大きな挑戦と報酬を得ましょう。",
+    "tutIntermediateTitle": "中級チュートリアル",
+    "tutIntermediateIntro": "中級テクニックでスキルを次のレベルに引き上げましょう。コンボチェーン、回復戦略、高度なスコアリング方法を学びます。",
+    "tut4Title": "4. コンボチェーンの構築",
+    "tut4Desc": "連続してラインを消す(コンボ)方法を学び、スコアとバトルでの攻撃力を最大化しましょう。",
+    "tut4Step1Title": "コンボを理解する",
+    "tut4Step1Desc": "コンボは、中断せずに連続してピースを配置してラインを消すと発生します。各コンボはボーナスポイントを追加し、マルチプライヤーを増加させます。",
+    "tut4Step2Title": "スタックをセットアップ",
+    "tut4Step2Desc": "複数の消去可能なラインを準備してボードを構築しましょう。連続消去をトリガーできる戦略的な隙間を残します。",
+    "tut4Step3Title": "連鎖消去",
+    "tut4Step3Desc": "1ラインを消し、次のピースですぐに別のラインを消します。このパターンを続けて長いコンボチェーンを構築しましょう。",
+    "tut4Step4Title": "フィーバーモード",
+    "tut4Step4Desc": "10以上のコンボに到達するとフィーバーモードが発動し、大量のポイントボーナスと特殊なビジュアルエフェクトが得られます。",
+    "tut5Title": "5. ダウンスタッキング技術",
+    "tut5Desc": "お邪魔ラインからの圧力下で、スタックの高さを素早く減らす技術をマスターしましょう。",
+    "tut5Step1Title": "問題領域を特定",
+    "tut5Step1Desc": "スタック内の高い場所と閉じ込められた隙間を探しましょう。これらが消去の優先ターゲットです。",
+    "tut5Step2Title": "高速配置",
+    "tut5Step2Desc": "ハードドロップと素早い回転を使用して、ピースを迅速に配置します。プレッシャー下でのダウンスタッキングにはスピードが不可欠です。",
+    "tut5Step3Title": "効率的に消去",
+    "tut5Step3Desc": "可能な限り、一度に複数のラインを消すことに集中しましょう。ダブル、トリプル、テトリスは、シングルよりも速くスタックを減らします。",
+    "tut6Title": "6. バックトゥバック(B2B)チェーン",
+    "tut6Desc": "攻撃力とスコアリングを増加させるために、バックトゥバックチェーンを維持する方法を学びましょう。",
+    "tut6Step1Title": "B2Bとは?",
+    "tut6Step1Desc": "B2Bは、難しいライン消去(テトリス、Tスピン)を連続して行うと発生します。各B2B消去はボーナスポイントと、マルチプレイヤーでは追加のお邪魔ラインを追加します。",
+    "tut6Step2Title": "テトリスのセットアップ",
+    "tut6Step2Desc": "Iピース用に縦の列を開けておきます。一度に4ラインを消す(テトリス)ことで、B2Bチェーンを開始または継続します。",
+    "tut6Step3Title": "チェーンの維持",
+    "tut6Step3Desc": "テトリスの後、すぐに別のテトリスまたはTスピンをセットアップします。通常通り1〜3ラインを消すと、B2Bチェーンが切れ、最初からやり直す必要があります。",
+    "tutAdvancedTitle": "上級チュートリアル",
+    "tutAdvancedIntro": "RHYTHMIAで最も挑戦的な技術をマスターしましょう。これらの上級戦略は、ランク戦を支配し、トップスコアを達成するのに役立ちます。",
+    "tut7Title": "7. Tスピンマスタリー",
+    "tut7Desc": "Tスピン技術を学び、スコアリングの可能性を最大化し、マルチプレイヤーで壊滅的な攻撃を送りましょう。",
+    "tut7Step1Title": "Tスピンの基本",
+    "tut7Step1Desc": "Tスピンは、Tピースをスライドできない位置に回転させると発生します。これには3つの角がブロックされた特定のセットアップが必要です。",
+    "tut7Step2Title": "Tスピンシングルとダブル",
+    "tut7Step2Desc": "Tスピンシングルは1ライン、Tスピンダブルは2ラインを消します。ダブルはより強力で、競技プレイで好まれます。",
+    "tut7Step3Title": "一般的なセットアップ",
+    "tut7Step3Desc": "オーバーハングセットアップ、フィンセットアップ、階段などの標準的なTスピンパターンを学びましょう。バトルで使用する前にシングルプレイヤーで練習しましょう。",
+    "tut7Step4Title": "コンボとの統合",
+    "tut7Step4Desc": "Tスピンとコンボチェーンを組み合わせて最大の効果を得ましょう。コンボチェーン中のTスピンダブルは、対戦相手に大量のお邪魔を送ることができます。",
+    "tut8Title": "8. フィネスと効率",
+    "tut8Desc": "キープレスと移動効率を最適化して、最大のスピードと精度を達成しましょう。",
+    "tut8Step1Title": "入力を最小化",
+    "tut8Step1Desc": "フィネスとは、最小限のキープレスで各ピースを配置することを意味します。各ピースを各位置に配置するための最適なパスを学びましょう。",
+    "tut8Step2Title": "回転効率",
+    "tut8Step2Desc": "短い回転方向を選択します。ピースを時計回りに270°回転させる必要がある場合は、代わりに反時計回りに90°回転させます。",
+    "tut8Step3Title": "移動パターン",
+    "tut8Step3Desc": "効率的な移動パターンを練習しましょう:ピースが出現している間に移動し、DAS(遅延オートシフト)を効果的に使用し、無駄な動きを最小限に抑えます。",
+    "tut9Title": "9. 上級オープニング戦略",
+    "tut9Desc": "オープニングパターン(オープナー)をマスターして、各ゲームを強力な基盤と早期の攻撃力で開始しましょう。",
+    "tut9Step1Title": "一般的なオープナー",
+    "tut9Step1Desc": "TKI、DTキャノン、またはパーフェクトクリアオープナーなどの標準的なオープナーを学びましょう。これらは早期のB2Bチェーンと強力な攻撃力を提供します。",
+    "tut9Step2Title": "パーフェクトクリア(PC)",
+    "tut9Step2Desc": "パーフェクトクリアは、ボード全体を消去すると発生します。PCオープナーは、マルチプレイヤーマッチで大量のお邪魔(10ライン以上)を送ります。",
+    "tut9Step3Title": "ピースへの適応",
+    "tut9Step3Desc": "オープナーの選択は、ピースのシーケンスに依存します。開始ピースでどのオープナーが最適かを認識できるようになりましょう。",
+    "tut9Step4Title": "中盤への移行",
+    "tut9Step4Desc": "オープナーの後、スムーズに中盤戦略に移行します。B2Bチェーンを維持し、圧力をかけ続けましょう。",
+    "tut10Title": "10. ハードドロップスピード",
+    "tut10Desc": "ハードドロップを効果的に使い、全体のスピードとPPS(秒間ピース数)を向上させましょう。",
+    "tut10Step1Title": "ハードドロップの基本",
+    "tut10Step1Desc": "Spaceキーを押すとピースが一瞬で底に落ちます。ソフトドロップよりはるかに速く、高速プレイには不可欠です。",
+    "tut10Step2Title": "事前配置",
+    "tut10Step2Desc": "ハードドロップする前にピースを移動・回転させて位置を決めましょう。配置の判断が速いほど、PPSが上がります。",
+    "tut10Step3Title": "速さと正確さ",
+    "tut10Step3Desc": "まずは正確な配置に集中し、徐々にスピードを上げましょう。ミスドロップは慎重な配置よりも時間がかかります。",
+    "tut11Title": "11. クラフトシステムガイド",
+    "tut11Desc": "素材の収集から武器の鍛造まで、クラフトシステムの仕組みを理解しましょう。",
+    "tut11Step1Title": "素材の収集",
+    "tut11Step1Desc": "バニラモードでライン消去すると素材がドロップします。レアな素材ほどドロップ率が低く、多くのラインを消去して集めましょう。",
+    "tut11Step2Title": "鍛造の使い方",
+    "tut11Step2Desc": "Fキーで鍛造メニューを開きます。武器レシピを選び、必要な素材があることを確認して武器を作りましょう。",
+    "tut11Step3Title": "武器の効果",
+    "tut11Step3Desc": "各武器にはダメージボーナスがあり、一部には特殊能力もあります。上位の武器にはレア素材が必要ですが、大幅にダメージが上がります。",
+    "tut12Title": "12. ワールド攻略",
+    "tut12Desc": "BPMが上がる5つのワールドの進め方と、各ワールド固有のチャレンジを学びましょう。",
+    "tut12Step1Title": "ワールド構成",
+    "tut12Step1Desc": "5つのワールドがあります: メロディア(100 BPM)、ハーモニア(110 BPM)、クレシェンダ(120 BPM)、フォルティッシモ(140 BPM)、サイレンスチェンバー(160 BPM)。",
+    "tut12Step2Title": "ワールドの解放",
+    "tut12Step2Desc": "チャレンジを達成して進捗を獲得し、次のワールドを解放します。各ワールドは前のワールドのメカニクスの習得が必要です。",
+    "tut12Step3Title": "ワールド別のコツ",
+    "tut12Step3Desc": "BPMが高いワールドでは素早い判断が求められます。まず遅いワールドでリズムタイミングを練習し、そのスキルを上位ワールドに活かしましょう。",
+    "tut13Title": "13. お邪魔ライン対策",
+    "tut13Desc": "マルチプレイヤー対戦で対戦相手から送られるお邪魔ラインへの対処法をマスターしましょう。",
+    "tut13Step1Title": "お邪魔ラインとは",
+    "tut13Step1Desc": "対戦相手がラインを消去すると、ランダムな穴のあるお邪魔列がボードの下部に出現します。多いほどスタックが高く乱雑になります。",
+    "tut13Step2Title": "お邪魔のキャンセル",
+    "tut13Step2Desc": "ラインを消去して、お邪魔が出現する前にキャンセルしましょう。お邪魔が保留中にラインを消すと、削減または完全に相殺できます。",
+    "tut13Step3Title": "お邪魔の掘り起こし",
+    "tut13Step3Desc": "お邪魔がボードに着地したら、穴の列を見つけてそこに向かって消去しましょう。ボードの制御を取り戻すため、お邪魔の消去を優先します。",
+    "tut14Title": "14. アイテム戦略",
+    "tut14Desc": "バニラモードでアイテムを効果的に使うタイミングと方法を学びましょう。",
+    "tut14Step1Title": "アイテムの種類",
+    "tut14Step1Desc": "アイテムはライン消去からドロップし、コモンからレジェンダリーまでのレアリティがあります。各アイテムは追加ダメージや防御能力などのユニークな効果があります。",
+    "tut14Step2Title": "インベントリ管理",
+    "tut14Step2Desc": "Eキーでインベントリを開きます。スロットに限りがあるので、よりレアなドロップのためにアイテムを戦略的に使用・破棄しましょう。",
+    "tut14Step3Title": "アイテムの使用タイミング",
+    "tut14Step3Desc": "強力なアイテムはボス戦や難しいセクションなど重要な場面のために温存しましょう。適切なタイミングで適切なアイテムを使えば、状況を一変させられます。",
+    "tut15Title": "15. ランク戦攻略のコツ",
+    "tut15Desc": "マルチプレイヤーのランク戦で安定してランクを上げるための戦略とマインドセット。",
+    "tut15Step1Title": "ティアシステムを知る",
+    "tut15Step1Desc": "ランク戦にはオープンIからチャンピオンIIIまで9つのティアがあります。各試合にはバスフェアがかかり、勝利でポイントが付与されます。高いティアほどバスフェアが増えます。",
+    "tut15Step2Title": "速さより安定性",
+    "tut15Step2Desc": "リスクの高い一か八かの戦略より、安定した堅実なプレイに集中しましょう。ミスドロップを避け、スタックを維持して負けを最小限にします。",
+    "tut15Step3Title": "相手に適応する",
+    "tut15Step3Desc": "相手のプレイスタイルを観察しましょう — 積極的に攻めてくるなら防御とお邪魔のキャンセルに集中し、ゆっくりプレイするならコンボやTスピンで圧力をかけましょう。"
+  },
+  "advancements": {
+    "title": "進捗",
+    "button": "{count}/{total} 進捗",
+    "unlocked": "進捗達成",
+    "locked": "ロック中",
+    "lockMessage": "解放まで {current}/{required} 進捗",
+    "lines_10": {
+      "name": "ライン初心者",
+      "desc": "合計10ライン消去"
+    },
+    "lines_50": {
+      "name": "ライン見習い",
+      "desc": "合計50ライン消去"
+    },
+    "lines_200": {
+      "name": "ラインエキスパート",
+      "desc": "合計200ライン消去"
+    },
+    "lines_500": {
+      "name": "ラインマスター",
+      "desc": "合計500ライン消去"
+    },
+    "lines_1000": {
+      "name": "ラインレジェンド",
+      "desc": "合計1,000ライン消去"
+    },
+    "lines_2500": {
+      "name": "ライン征服者",
+      "desc": "合計2,500ライン消去"
+    },
+    "lines_5000": {
+      "name": "ラインイモータル",
+      "desc": "合計5,000ライン消去"
+    },
+    "best_lines_10": {
+      "name": "ウォームアップ",
+      "desc": "1ゲームで10ライン消去"
+    },
+    "best_lines_25": {
+      "name": "スタート",
+      "desc": "1ゲームで25ライン消去"
+    },
+    "best_lines_50": {
+      "name": "機械的な",
+      "desc": "1ゲームで50ライン消去"
+    },
+    "best_lines_100": {
+      "name": "止まらない",
+      "desc": "1ゲームで100ライン消去"
+    },
+    "best_lines_200": {
+      "name": "テトリスの神",
+      "desc": "1ゲームで200ライン消去"
+    },
+    "tspin_1": {
+      "name": "初回転",
+      "desc": "初めてのTスピンを決める"
+    },
+    "tspin_10": {
+      "name": "スピンドクター",
+      "desc": "Tスピンを10回決める"
+    },
+    "tspin_50": {
+      "name": "Tスピンエキスパート",
+      "desc": "Tスピンを50回決める"
+    },
+    "tspin_200": {
+      "name": "Tスピンレジェンド",
+      "desc": "Tスピンを200回決める"
+    },
+    "tspin_500": {
+      "name": "Tスピングランドマスター",
+      "desc": "Tスピンを500回決める"
+    },
+    "tspin_1000": {
+      "name": "Tスピンのイモータル",
+      "desc": "Tスピンを1,000回決める"
+    },
+    "best_tspin_1": {
+      "name": "スピン入門",
+      "desc": "1ゲームでTスピンを1回決める"
+    },
+    "best_tspin_5": {
+      "name": "スピンスペシャリスト",
+      "desc": "1ゲームでTスピンを5回決める"
+    },
+    "best_tspin_10": {
+      "name": "スピンヴィルトゥオーソ",
+      "desc": "1ゲームでTスピンを10回決める"
+    },
+    "best_tspin_25": {
+      "name": "スピンプロディジー",
+      "desc": "1ゲームでTスピンを25回決める"
+    },
+    "tspin_speed_2": {
+      "name": "クイックスピン",
+      "desc": "30秒以内にTスピンを2回決める"
+    },
+    "tspin_speed_3": {
+      "name": "Tスピンラッシュ",
+      "desc": "30秒以内にTスピンを3回決める"
+    },
+    "tspin_speed_5": {
+      "name": "Tスピンフレンジー",
+      "desc": "30秒以内にTスピンを5回決める"
+    },
+    "score_10k": {
+      "name": "スコアルーキー",
+      "desc": "累計スコア10,000達成"
+    },
+    "score_100k": {
+      "name": "スコアハンター",
+      "desc": "累計スコア100,000達成"
+    },
+    "score_1m": {
+      "name": "スコアマスター",
+      "desc": "累計スコア1,000,000達成"
+    },
+    "score_10m": {
+      "name": "スコアレジェンド",
+      "desc": "累計スコア10,000,000達成"
+    },
+    "score_50m": {
+      "name": "スコアオーバーロード",
+      "desc": "累計スコア50,000,000達成"
+    },
+    "score_100m": {
+      "name": "スコア不滅",
+      "desc": "累計スコア100,000,000達成"
+    },
+    "best_score_5k": {
+      "name": "ナイスゲーム",
+      "desc": "1ゲームでスコア5,000達成"
+    },
+    "best_score_25k": {
+      "name": "グレートゲーム",
+      "desc": "1ゲームでスコア25,000達成"
+    },
+    "best_score_100k": {
+      "name": "アメイジングゲーム",
+      "desc": "1ゲームでスコア100,000達成"
+    },
+    "best_score_500k": {
+      "name": "レジェンダリーゲーム",
+      "desc": "1ゲームでスコア500,000達成"
+    },
+    "best_score_1m": {
+      "name": "ミシカルゲーム",
+      "desc": "1ゲームでスコア1,000,000達成"
+    },
+    "combo_3": {
+      "name": "コンボスターター",
+      "desc": "3コンボ達成"
+    },
+    "combo_10": {
+      "name": "コンボキング",
+      "desc": "10コンボ達成"
+    },
+    "combo_20": {
+      "name": "コンボゴッド",
+      "desc": "20コンボ達成"
+    },
+    "combo_30": {
+      "name": "コンボオーバーロード",
+      "desc": "30コンボ達成"
+    },
+    "combo_50": {
+      "name": "コンボ不滅",
+      "desc": "50コンボ達成"
+    },
+    "combo_75": {
+      "name": "コンボ超越",
+      "desc": "75コンボ達成"
+    },
+    "combo_100": {
+      "name": "コンボ神域",
+      "desc": "100コンボ達成"
+    },
+    "combo_150": {
+      "name": "コンボ天界",
+      "desc": "150コンボ達成"
+    },
+    "combo_200": {
+      "name": "コンボ永遠",
+      "desc": "200コンボ達成"
+    },
+    "total_combo_50": {
+      "name": "コンボ収集家",
+      "desc": "累計コンボ50達成"
+    },
+    "total_combo_100": {
+      "name": "コンボ蓄積者",
+      "desc": "累計コンボ100達成"
+    },
+    "total_combo_250": {
+      "name": "コンボベテラン",
+      "desc": "累計コンボ250達成"
+    },
+    "total_combo_500": {
+      "name": "コンボマスター",
+      "desc": "累計コンボ500達成"
+    },
+    "total_combo_1000": {
+      "name": "コンボレジェンド",
+      "desc": "累計コンボ1,000達成"
+    },
+    "total_combo_2500": {
+      "name": "コンボ神話",
+      "desc": "累計コンボ2,500達成"
+    },
+    "total_combo_5000": {
+      "name": "コンボ無限",
+      "desc": "累計コンボ5,000達成"
+    },
+    "games_1": {
+      "name": "最初の一歩",
+      "desc": "初めてのゲームをプレイ"
+    },
+    "games_10": {
+      "name": "本気モード",
+      "desc": "10ゲームプレイ"
+    },
+    "games_50": {
+      "name": "献身的プレイヤー",
+      "desc": "50ゲームプレイ"
+    },
+    "games_100": {
+      "name": "ベテラン",
+      "desc": "100ゲームプレイ"
+    },
+    "games_250": {
+      "name": "ハードコアゲーマー",
+      "desc": "250ゲームプレイ"
+    },
+    "games_500": {
+      "name": "生涯プレイヤー",
+      "desc": "500ゲームプレイ"
+    },
+    "worlds_5": {
+      "name": "世界旅行者",
+      "desc": "5つの世界をクリア"
+    },
+    "tetris_1": {
+      "name": "テトリス！",
+      "desc": "4ライン同時消去"
+    },
+    "tetris_10": {
+      "name": "テトリス中毒",
+      "desc": "4ライン同時消去を10回"
+    },
+    "tetris_50": {
+      "name": "テトリスマスター",
+      "desc": "4ライン同時消去を50回"
+    },
+    "tetris_100": {
+      "name": "テトリスグランドマスター",
+      "desc": "4ライン同時消去を100回"
+    },
+    "tetris_200": {
+      "name": "テトリスゴッド",
+      "desc": "4ライン同時消去を200回"
+    },
+    "best_tetris_1": {
+      "name": "フォーライナー",
+      "desc": "1ゲームで4ライン同時消去"
+    },
+    "best_tetris_3": {
+      "name": "テトリスストリーク",
+      "desc": "1ゲームで4ライン同時消去を3回"
+    },
+    "best_tetris_5": {
+      "name": "テトリススペシャリスト",
+      "desc": "1ゲームで4ライン同時消去を5回"
+    },
+    "best_tetris_10": {
+      "name": "テトリスプロディジー",
+      "desc": "1ゲームで4ライン同時消去を10回"
+    },
+    "tetris_speed_2": {
+      "name": "クイッククリア",
+      "desc": "60秒以内にテトリスを2回決める"
+    },
+    "tetris_speed_3": {
+      "name": "テトリスラッシュ",
+      "desc": "60秒以内にテトリスを3回決める"
+    },
+    "tetris_speed_5": {
+      "name": "テトリスフレンジー",
+      "desc": "60秒以内にテトリスを5回決める"
+    },
+    "perfect_beats_10": {
+      "name": "リズムルーキー",
+      "desc": "1ゲームでパーフェクトビート10回"
+    },
+    "perfect_beats_50": {
+      "name": "リズムマスター",
+      "desc": "1ゲームでパーフェクトビート50回"
+    },
+    "perfect_beats_100": {
+      "name": "リズムレジェンド",
+      "desc": "1ゲームでパーフェクトビート100回"
+    },
+    "total_perfect_beats_50": {
+      "name": "ビートコレクター",
+      "desc": "累計パーフェクトビート50回"
+    },
+    "total_perfect_beats_200": {
+      "name": "ビートエンスージアスト",
+      "desc": "累計パーフェクトビート200回"
+    },
+    "total_perfect_beats_500": {
+      "name": "ビートヴィルトゥオーソ",
+      "desc": "累計パーフェクトビート500回"
+    },
+    "total_perfect_beats_1000": {
+      "name": "ビート不滅",
+      "desc": "累計パーフェクトビート1,000回"
+    },
+    "hard_drops_100": {
+      "name": "スピードドロッパー",
+      "desc": "ハードドロップ100回"
+    },
+    "hard_drops_1000": {
+      "name": "ターミナルベロシティ",
+      "desc": "ハードドロップ1,000回"
+    },
+    "hard_drops_5000": {
+      "name": "メテオストライク",
+      "desc": "ハードドロップ5,000回"
+    },
+    "best_hard_drops_50": {
+      "name": "クイックドロッパー",
+      "desc": "1ゲームでハードドロップ50回"
+    },
+    "best_hard_drops_100": {
+      "name": "スピードデーモン",
+      "desc": "1ゲームでハードドロップ100回"
+    },
+    "best_hard_drops_200": {
+      "name": "ドロップマシン",
+      "desc": "1ゲームでハードドロップ200回"
+    },
+    "best_hard_drops_500": {
+      "name": "グラビティマスター",
+      "desc": "1ゲームでハードドロップ500回"
+    },
+    "pieces_100": {
+      "name": "ブロックビルダー",
+      "desc": "100ピース設置"
+    },
+    "pieces_1000": {
+      "name": "ブロックアーキテクト",
+      "desc": "1,000ピース設置"
+    },
+    "pieces_10000": {
+      "name": "ブロックレジェンド",
+      "desc": "10,000ピース設置"
+    },
+    "pieces_50000": {
+      "name": "ブロックタイタン",
+      "desc": "50,000ピース設置"
+    },
+    "pieces_100000": {
+      "name": "ブロック不滅",
+      "desc": "100,000ピース設置"
+    },
+    "best_pieces_50": {
+      "name": "ピースプレイサー",
+      "desc": "1ゲームで50ピース設置"
+    },
+    "best_pieces_100": {
+      "name": "ピーススタッカー",
+      "desc": "1ゲームで100ピース設置"
+    },
+    "best_pieces_250": {
+      "name": "ピースマスター",
+      "desc": "1ゲームで250ピース設置"
+    },
+    "best_pieces_500": {
+      "name": "ピースタイタン",
+      "desc": "1ゲームで500ピース設置"
+    },
+    "mp_win_1": {
+      "name": "初勝利",
+      "desc": "マルチプレイヤー初勝利"
+    },
+    "mp_win_10": {
+      "name": "アリーナファイター",
+      "desc": "マルチプレイヤー10勝"
+    },
+    "mp_win_50": {
+      "name": "アリーナチャンピオン",
+      "desc": "マルチプレイヤー50勝"
+    },
+    "mp_win_100": {
+      "name": "アリーナレジェンド",
+      "desc": "マルチプレイヤー100勝"
+    },
+    "mp_win_200": {
+      "name": "アリーナゴッド",
+      "desc": "マルチプレイヤー200勝"
+    },
+    "mp_streak_3": {
+      "name": "ホットストリーク",
+      "desc": "3連勝達成"
+    },
+    "mp_streak_5": {
+      "name": "ドミネーション",
+      "desc": "5連勝達成"
+    },
+    "mp_streak_10": {
+      "name": "アンブレイカブル",
+      "desc": "10連勝達成"
+    },
+    "mp_streak_15": {
+      "name": "アンタッチャブル",
+      "desc": "15連勝達成"
+    },
+    "mp_streak_20": {
+      "name": "インビンシブル",
+      "desc": "20連勝達成"
+    },
+    "mp_games_10": {
+      "name": "アリーナ常連",
+      "desc": "マルチプレイヤー10戦"
+    },
+    "mp_games_50": {
+      "name": "アリーナベテラン",
+      "desc": "マルチプレイヤー50戦"
+    },
+    "mp_games_100": {
+      "name": "アリーナグラディエーター",
+      "desc": "マルチプレイヤー100戦"
+    },
+    "mp_games_200": {
+      "name": "アリーナウォーロード",
+      "desc": "マルチプレイヤー200戦"
+    },
+    "loyalty_streak_3": {
+      "name": "3日ストリーク",
+      "desc": "3日連続訪問"
+    },
+    "loyalty_streak_7": {
+      "name": "ウィークリーリズム",
+      "desc": "7日連続訪問"
+    },
+    "loyalty_streak_14": {
+      "name": "フォートナイトビート",
+      "desc": "14日連続訪問"
+    },
+    "loyalty_streak_30": {
+      "name": "マンスリーパルス",
+      "desc": "30日連続訪問"
+    },
+    "loyalty_streak_60": {
+      "name": "シーズナルビート",
+      "desc": "60日連続訪問"
+    },
+    "loyalty_streak_100": {
+      "name": "エターナルリズム",
+      "desc": "100日連続訪問"
+    },
+    "loyalty_visits_5": {
+      "name": "レギュラー",
+      "desc": "5回訪問"
+    },
+    "loyalty_visits_25": {
+      "name": "おなじみの顔",
+      "desc": "25回訪問"
+    },
+    "loyalty_visits_100": {
+      "name": "ファミリーの一員",
+      "desc": "100回訪問"
+    },
+    "loyalty_visits_250": {
+      "name": "リビングレジェンド",
+      "desc": "250回訪問"
+    },
+    "loyalty_visits_500": {
+      "name": "エターナルビジター",
+      "desc": "500回訪問"
+    },
+    "loyalty_games_10": {
+      "name": "プレイヤー",
+      "desc": "10ゲームプレイ"
+    },
+    "loyalty_games_50": {
+      "name": "エンスージアスト",
+      "desc": "50ゲームプレイ"
+    },
+    "loyalty_games_200": {
+      "name": "ディボーティー",
+      "desc": "200ゲームプレイ"
+    },
+    "loyalty_games_500": {
+      "name": "オブセッション",
+      "desc": "500ゲームプレイ"
+    },
+    "loyalty_games_1000": {
+      "name": "超越者",
+      "desc": "1,000ゲームプレイ"
+    },
+    "loyalty_polls_1": {
+      "name": "初投票",
+      "desc": "最初の投票に参加"
+    },
+    "loyalty_polls_5": {
+      "name": "アクティブ投票者",
+      "desc": "5回投票"
+    },
+    "loyalty_polls_10": {
+      "name": "コミュニティの声",
+      "desc": "10回投票"
+    },
+    "loyalty_polls_25": {
+      "name": "民主主義の王者",
+      "desc": "25回投票"
+    },
+    "loyalty_polls_50": {
+      "name": "民衆の声",
+      "desc": "50回投票"
+    }
+  },
+  "localeSwitcher": {
+    "label": "言語",
+    "en": "English",
+    "ja": "日本語",
+    "th": "ไทย",
+    "es": "Español",
+    "fr": "Français",
+    "ru": "Русский"
+  },
+  "vanilla": {
+    "badge": "ソロ",
+    "title": "RHYTHMIA",
+    "subtitle": "クラシック リズムパズル",
+    "description": "ビートに合わせてブロックを落とそう。ライン消去、コンボ、ハイスコアを目指すソロモード。",
+    "gameTitle": "RHYTHMIA"
+  },
+  "updates": {
+    "title": "最新アップデート",
+    "pageTitle": "開発アップデート",
+    "pageSubtitle": "RHYTHMIAの最新の変更と改善をご覧ください",
+    "recentUpdates": "最近の更新",
+    "prsMerged": "件のPR",
+    "merged": "マージ済",
+    "features": "新機能",
+    "enhancements": "改善",
+    "fixes": "修正",
+    "all": "すべて",
+    "viewPR": "PRを見る",
+    "viewAllPRs": "すべてのPRを見る",
+    "viewAllPRsGithub": "GitHubですべてのPRを見る",
+    "videoTitle": "アップデート概要",
+    "changes": "件",
+    "change": "件",
+    "categories": {
+      "feature": "新機能",
+      "enhancement": "改善",
+      "fix": "修正",
+      "refactor": "リファクタ",
+      "docs": "ドキュメント",
+      "i18n": "国際化"
+    }
+  },
+  "skin": {
+    "title": "プロフィール & スキン",
+    "selectSkin": "カラースキンを選択",
+    "currentSkin": "現在のスキン",
+    "selectLanguage": "言語設定",
+    "privacy": "プライバシー",
+    "profileButton": "プロフィール",
+    "changeName": "ニックネーム",
+    "saveNameButton": "保存"
+  },
+  "multiplayer": {
+    "badge": "1v1",
+    "title": "1v1 バトル",
+    "gameTitle": "1v1 バトル",
+    "subtitle": "ランクマッチ",
+    "description": "リアルタイム1v1バトル。相手にお邪魔ラインを送り込もう。最後まで立っていた者が勝利。",
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "ランク戦"
+    },
+    "stats": {
+      "mode": "モード",
+      "battle": "バトル",
+      "status": "状態"
+    }
+  },
+  "skillTree": {
+    "title": "スキルツリー",
+    "pointsAvailable": "SP",
+    "reset": "リセット",
+    "level": "レベル",
+    "tier": "TIER",
+    "cost": "コスト",
+    "pointsUnit": "SP",
+    "unlock": "解放",
+    "upgrade": "強化",
+    "maxed": "MAX",
+    "lockedHint": "前提スキルを先に解放してください",
+    "resetConfirm": "全スキルをリセットしますか？使用したポイントは返還されます。",
+    "cancel": "キャンセル",
+    "resetConfirmBtn": "リセット",
+    "chooseArchetype": "クラスを選択せよ",
+    "switchArchetype": "クラス変更",
+    "page": "ページ",
+    "classes": "クラス一覧",
+    "selectClassForTree": "クラスを選択してアビリティツリーを表示",
+    "difficulty": "難易度",
+    "subclassesTitle": "サブクラス",
+    "stats": {
+      "difficulty": "難易度",
+      "damage": "攻撃",
+      "defence": "防御",
+      "range": "射程",
+      "speed": "速度"
+    },
+    "archetypes": {
+      "striker": "ストライカー",
+      "strikerDesc": "攻撃型スコアラー — コンボと倍率特化",
+      "strikerAlt": "ナイト",
+      "guardian": "ガーディアン",
+      "guardianDesc": "堅牢な生存者 — シールドと回復特化",
+      "guardianAlt": "バスティオン",
+      "virtuoso": "ヴィルトゥオーソ",
+      "virtuosoDesc": "技巧派 — T-Spinとリズム特化",
+      "virtuosoAlt": "ダークメイジ",
+      "trickster": "トリックスター",
+      "tricksterDesc": "速度と撹乱 — 素早い操作と混沌特化",
+      "tricksterAlt": "ニンジャ",
+      "conductor": "コンダクター",
+      "conductorDesc": "リズムマスタリー — ビート同期とテンポ制御",
+      "conductorAlt": "スカイシーアー"
+    },
+    "subclasses": {
+      "brawler": "ブロウラー",
+      "berserker": "バーサーカー",
+      "paladin": "パラディン",
+      "sentinel": "センチネル",
+      "medic": "メディック",
+      "warden": "ウォーデン",
+      "arcanist": "アルカニスト",
+      "chronomancer": "クロノマンサー",
+      "enchanter": "エンチャンター",
+      "shadow": "シャドウ",
+      "phantom": "ファントム",
+      "saboteur": "サボトゥール",
+      "harmonist": "ハーモニスト",
+      "resonator": "レゾネーター",
+      "orchestrator": "オーケストレーター"
+    },
+    "nodes": {
+      "stkScoreAmp": "スコアアンプ",
+      "stkScoreAmpDesc": "基本スコア倍率がレベルごとに増加",
+      "stkLineSurge": "ラインサージ",
+      "stkLineSurgeDesc": "ライン消去ごとのボーナスポイントが増加",
+      "stkComboIgnite": "コンボイグナイト",
+      "stkComboIgniteDesc": "コンボ倍率がレベルごとに向上",
+      "stkTetrisForce": "テトリスフォース",
+      "stkTetrisForceDesc": "4ライン消去（テトリス）の追加ボーナス",
+      "stkChainFire": "チェインファイア",
+      "stkChainFireDesc": "連続スペシャルのBack-to-Backボーナスが強化",
+      "stkFeverSpark": "フィーバースパーク",
+      "stkFeverSparkDesc": "コンボ中のフィーバーモード発動が加速",
+      "stkDevastator": "デヴァステイター",
+      "stkDevastatorDesc": "コンボ中に4ライン以上消去で大量スコアバースト",
+      "stkOverdrive": "オーバードライブ",
+      "stkOverdriveDesc": "フィーバー後10秒間、全スコアボーナスが倍増",
+      "grdFortify": "フォーティファイ",
+      "grdFortifyDesc": "トップアウトまでのボード許容量がレベルごとに増加",
+      "grdBoardShield": "ボードシールド",
+      "grdBoardShieldDesc": "マルチプレイヤーでお邪魔ラインの初期数が減少",
+      "grdLastStand": "ラストスタンド",
+      "grdLastStandDesc": "ボードが危険ゾーンに達した時に短時間の無敵状態",
+      "grdRecovery": "リカバリー",
+      "grdRecoveryDesc": "お邪魔ラインの上昇速度がレベルごとに低下",
+      "grdSteadyHand": "ステディハンド",
+      "grdSteadyHandDesc": "ピース設置時のロックディレイ猶予が拡大",
+      "grdSanctuary": "サンクチュアリ",
+      "grdSanctuaryDesc": "1ゲームに1回、トップアウト寸前で全お邪魔ラインを消去",
+      "vrtPrecision": "プレシジョン",
+      "vrtPrecisionDesc": "パーフェクトビートの判定タイミングがレベルごとに拡大",
+      "vrtTSpinAdept": "T-Spinアデプト",
+      "vrtTSpinAdeptDesc": "T-Spinボーナスポイントがレベルごとに増加",
+      "vrtBeatSync": "ビートシンク",
+      "vrtBeatSyncDesc": "パーフェクトビートのボーナスポイントが増加",
+      "vrtTSpinMaster": "T-Spinマスター",
+      "vrtTSpinMasterDesc": "T-Spinトリプルがダブルスコアとして計算",
+      "vrtHarmonic": "ハーモニック",
+      "vrtHarmonicDesc": "コンボ中のパーフェクトビートで追加倍率を獲得",
+      "vrtPerfectRhythm": "パーフェクトリズム",
+      "vrtPerfectRhythmDesc": "連続パーフェクトビートでフィーバーモードが延長",
+      "vrtGrandMaster": "グランドマスター",
+      "vrtGrandMasterDesc": "フィーバーモード中のT-Spinがトリプルスコア",
+      "vrtCrescendo": "クレッシェンド",
+      "vrtCrescendoDesc": "連続パーフェクトビートごとにスコア倍率が上昇",
+      "trkQuickHands": "クイックハンド",
+      "trkQuickHandsDesc": "ハードドロップのボーナスポイントがレベルごとに増加",
+      "trkDasBoost": "DASブースト",
+      "trkDasBoostDesc": "横移動のオートシフト速度が向上",
+      "trkSoftRush": "ソフトラッシュ",
+      "trkSoftRushDesc": "ソフトドロップでボーナスポイントを獲得",
+      "trkHyperSpeed": "ハイパースピード",
+      "trkHyperSpeedDesc": "DASディレイが短縮され即座にピースが移動",
+      "trkGhostStep": "ゴーストステップ",
+      "trkGhostStepDesc": "プレビューピースに最適配置のヒントを表示",
+      "trkTimeWarp": "タイムワープ",
+      "trkTimeWarpDesc": "3ライン以上消去後に一時的に落下速度が低下",
+      "trkChaosMaster": "カオスマスター",
+      "trkChaosMasterDesc": "受信お邪魔ラインをランダムボーナスアイテムに変換",
+      "trkPhantom": "ファントム",
+      "trkPhantomDesc": "ピースが一瞬だけ1ブロックの隙間を通過可能",
+      "cndTempoSense": "テンポセンス",
+      "cndTempoSenseDesc": "リズム認識が深まり、ビート判定窓がレベルごとに拡大",
+      "cndSyncPulse": "シンクパルス",
+      "cndSyncPulseDesc": "ビートに合わせて防御パルスを生成",
+      "cndBeatWeave": "ビートウィーブ",
+      "cndBeatWeaveDesc": "コンボをリズムパターンに織り込みボーナスポイントを獲得",
+      "cndResonance": "レゾナンス",
+      "cndResonanceDesc": "ライン消去が反響し追加の遅延ダメージを与える",
+      "cndFlowState": "フロウステート",
+      "cndFlowStateDesc": "高集中ゾーンに入りドロップスピードボーナスが向上",
+      "cndHarmonicShield": "ハーモニックシールド",
+      "cndHarmonicShieldDesc": "リズム同期により受信お邪魔ラインを軽減",
+      "cndSymphony": "シンフォニー",
+      "cndSymphonyDesc": "究極のリズムマスタリー — 大規模コンボ倍率クレッシェンド",
+      "cndEncore": "アンコール",
+      "cndEncoreDesc": "1ゲームに1回、ノックアウトからビートバーストで復活"
+    }
+  },
+  "shape": {
+    "selectShape": "UIシェイプ",
+    "default": "デフォルト",
+    "rounded": "丸み",
+    "pill": "ピル",
+    "soft": "ソフト",
+    "sharp": "シャープ"
+  }
 }

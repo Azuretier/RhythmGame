@@ -1330,5 +1330,13 @@
     "pixelNostalgia": "Pixel Nostalgia",
     "neoDesc": "Estética elegante y moderna con efectos de vidrio esmerilado",
     "pixelDesc": "Estética retro de pixel art 8-bit/16-bit con efectos CRT"
+  },
+  "shape": {
+    "selectShape": "Forma de la UI",
+    "default": "Predeterminado",
+    "rounded": "Redondeado",
+    "pill": "Píldora",
+    "soft": "Suave",
+    "sharp": "Afilado"
   }
 }

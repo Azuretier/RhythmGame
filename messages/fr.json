@@ -1330,5 +1330,13 @@
       "night": "Nuit",
       "dawn": "Aube"
     }
+  },
+  "shape": {
+    "selectShape": "Forme de l'UI",
+    "default": "Par défaut",
+    "rounded": "Arrondi",
+    "pill": "Pilule",
+    "soft": "Doux",
+    "sharp": "Anguleux"
   }
 }
