@@ -500,29 +500,38 @@ export class TetrisAIGame {
     let cachedBestMove: AIMove | null | undefined;
     if (this.difficulty.useHold && !this.holdUsed) {
       if (this.holdPiece !== null) {
-        // Swap with hold if the hold piece achieves a better score
+        // Swap with hold if the hold piece achieves a better score.
+        // Cache both evaluations so the winning result is reused directly at execution.
         cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0]);
         const currentScore = cachedBestMove?.score ?? -Infinity;
-        const holdScore = findBestMove(this.holdPiece, this.board, this.difficulty, this.nextQueue[0])?.score ?? -Infinity;
+        const holdBestMove = findBestMove(this.holdPiece, this.board, this.difficulty, this.nextQueue[0]);
+        const holdScore = holdBestMove?.score ?? -Infinity;
         if (holdScore > currentScore) {
           const saved = this.holdPiece;
           this.holdPiece = pieceType;
           this.holdUsed = true;
           actualPieceType = saved;
-          cachedBestMove = undefined; // Piece changed; cache is no longer valid
+          // Reuse the move evaluated during the decision — same board and look-ahead
+          cachedBestMove = holdBestMove;
         }
       } else if (this.nextQueue.length > 0) {
-        // No hold piece yet — save current if next piece gives a significantly better placement
+        // No hold piece yet — save current if next piece gives a significantly better placement.
+        // Evaluate the next piece with nextQueue[1] as its look-ahead (the piece that follows it).
         cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0]);
         const currentScore = cachedBestMove?.score ?? -Infinity;
         const nextLookahead = this.nextQueue[1] ?? pieceType;
-        const nextScore = findBestMove(this.nextQueue[0], this.board, this.difficulty, nextLookahead)?.score ?? -Infinity;
+        const nextBestMove = findBestMove(this.nextQueue[0], this.board, this.difficulty, nextLookahead);
+        const nextScore = nextBestMove?.score ?? -Infinity;
         if (nextScore > currentScore + HOLD_ADVANTAGE_THRESHOLD) {
           this.holdPiece = pieceType;
           this.holdUsed = true;
           actualPieceType = this.nextQueue.shift()!;
           this.fillQueue();
-          cachedBestMove = undefined; // Piece changed; cache is no longer valid
+          // Reuse the move evaluated during the decision — same board and look-ahead.
+          // nextBestMove was computed with nextLookahead = nextQueue[1] before the shift;
+          // after shift nextQueue[0] becomes that same piece, but we skip the recompute
+          // entirely by reusing the cached result.
+          cachedBestMove = nextBestMove;
         }
       }
     }
