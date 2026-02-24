@@ -91,7 +91,9 @@ export type GamePhase =
     | 'CHECKPOINT';
 
 // ===== Item System =====
-export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+// Shared types re-exported from @/lib/items for backward compatibility
+export type { ItemRarity, InventoryEntry as InventoryItem } from '@/lib/items/types';
+import type { ItemRarity } from '@/lib/items/types';
 
 export type ItemType = {
     id: string;
@@ -102,11 +104,6 @@ export type ItemType = {
     glowColor: string;
     rarity: ItemRarity;
     dropWeight: number;
-};
-
-export type InventoryItem = {
-    itemId: string;
-    count: number;
 };
 
 // ===== Floating Item (visual) =====

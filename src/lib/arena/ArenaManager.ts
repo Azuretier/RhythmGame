@@ -20,6 +20,7 @@ import {
   GIMMICK_DURATIONS,
   GIMMICK_WEIGHTS,
 } from '@/types/arena';
+import { getBeatJudgment } from '@/components/rhythmia/tetris/utils/boardUtils';
 
 // ===== Arena Room (Server-side) =====
 
@@ -324,7 +325,7 @@ export class ArenaRoomManager {
     const now = Date.now();
     const elapsed = (now - room.lastBeatTime) % beatInterval;
     const phase = elapsed / beatInterval;
-    const onBeat = phase > 0.75 || phase < 0.15;
+    const onBeat = getBeatJudgment(phase) !== 'miss';
 
     // Update player sync (rolling average)
     const syncScore = onBeat ? 1.0 : Math.max(0, 1.0 - Math.abs(phase - 0.5) * 2);

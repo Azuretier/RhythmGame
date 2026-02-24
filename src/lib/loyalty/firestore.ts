@@ -8,7 +8,8 @@
  *   loyalty_states/{playerId}    — per-player loyalty state sync
  */
 
-import { db, auth, appCheckAvailable } from '@/lib/rhythmia/firebase';
+import { db } from '@/lib/rhythmia/firebase';
+import { initAuth, getPlayerId } from '@/lib/rhythmia/anonymousAuth';
 import {
   doc,
   getDoc,
@@ -21,53 +22,9 @@ import {
   increment,
   Timestamp,
 } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
 import type { Poll, PollVote, LoyaltyState } from './types';
 
-// ===== Auth (shared with advancements, deduped via module cache) =====
-
-let currentUser: User | null = null;
-let authReady: Promise<User | null> | null = null;
-
-export function initAuth(): Promise<User | null> {
-  if (!auth) return Promise.resolve(null);
-  if (authReady) return authReady;
-
-  authReady = new Promise<User | null>(async (resolve) => {
-    // Wait for App Check validation — skip auth if broken
-    const isAppCheckOk = await appCheckAvailable;
-    if (!isAppCheckOk) {
-      resolve(null);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth!, (user) => {
-      if (user) {
-        currentUser = user;
-        unsubscribe();
-        resolve(user);
-      }
-    });
-
-    signInAnonymously(auth!).catch(() => {
-      unsubscribe();
-      resolve(null);
-    });
-
-    setTimeout(() => {
-      unsubscribe();
-      resolve(currentUser);
-    }, 5000);
-  });
-
-  return authReady;
-}
-
-function getPlayerId(): string | null {
-  return currentUser?.uid ?? null;
-}
-
-// ===== Polls =====
+export { initAuth };
 
 const POLLS_COLLECTION = 'loyalty_polls';
 const VOTES_COLLECTION = 'loyalty_poll_votes';

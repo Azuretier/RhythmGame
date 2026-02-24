@@ -17,11 +17,7 @@ import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSoun
 import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
-import BoardGrid from './shared/BoardGrid';
-import PlayerHeader from './shared/PlayerHeader';
-import StatsRow from './shared/StatsRow';
-import MobileControls from './shared/MobileControls';
-import GameOverOverlay from './shared/GameOverOverlay';
+import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
 const VoxelWorldBackground = dynamic(() => import('./VoxelWorldBackground'), {
@@ -736,14 +732,20 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
         // Beat judgment
         const phase = beatPhaseRef.current;
-        const onBeat = phase > 0.8 || phase < 0.12;
-        let mult = 1;
+        const timing = getBeatJudgment(phase);
+        const mult = getBeatMultiplier(timing);
 
-        if (onBeat) {
-            mult = 2;
+        if (timing !== 'miss') {
             comboRef.current++;
-            playPerfectSound();
-            showJudgmentText('PERFECT', '#00FFFF');
+            const judgmentConfig = {
+                perfect: { text: 'PERFECT', color: '#00FFFF' },
+                great:   { text: 'GREAT',   color: '#76FF03' },
+                good:    { text: 'GOOD',    color: '#FFD700' },
+            } as const;
+            showJudgmentText(judgmentConfig[timing].text, judgmentConfig[timing].color);
+            if (timing === 'perfect') playPerfectSound();
+            else if (timing === 'great') playTone(880, 0.15, 'triangle');
+            else playTone(660, 0.1, 'triangle');
 
             // VFX: combo change
             vfx.emit({ type: 'comboChange', combo: comboRef.current, onBeat: true });
@@ -866,7 +868,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 type: 'lineClear',
                 rows: clearedRows.map(r => r + BUFFER_ZONE),
                 count: cleared,
-                onBeat,
+                onBeat: timing !== 'miss',
                 combo: comboRef.current,
             });
         }
@@ -1360,7 +1362,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
     // Beat phase indicator position (0 = start of beat, 1 = end)
     const beatIndicatorPos = beatPhaseDisplay;
-    const isInPerfectWindow = beatIndicatorPos > 0.8 || beatIndicatorPos < 0.12;
+    const beatZone = getBeatJudgment(beatIndicatorPos);
 
     // Build display board with ghost + active piece
     const displayBoard = board.map(row => row.map(cell => cell ? { ...cell, ghost: false } : null));
@@ -1491,11 +1493,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
                     {/* Board */}
                     <div className={styles.boardSection}>
-                        <PlayerHeader
-                            name={playerName}
-                            score={score}
-                            styles={{ header: styles.playerHeader, name: styles.playerName, score: styles.playerScore }}
-                        />
+                        <div className={styles.playerHeader}>
+                            <div className={styles.playerName}>{playerName}</div>
+                            <div className={styles.playerScore}>{score.toLocaleString()}</div>
+                        </div>
 
                         <div className={styles.boardActionArea}>
                         <div className={styles.boardWrap}>
@@ -1537,12 +1538,15 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 </div>
                             )}
 
-                            <BoardGrid
-                                board={displayBoard.flat()}
-                                width={W}
-                                boardRef={playerBoardDomRef}
-                                styles={{ board: styles.board, cell: styles.cell, filled: styles.filled, ghost: styles.ghost }}
-                            />
+                            <div ref={playerBoardDomRef} className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
+                                {displayBoard.flat().map((cell, i) => (
+                                    <div
+                                        key={i}
+                                        className={`${styles.cell} ${cell && !cell.ghost ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''}`}
+                                        style={cell && !cell.ghost ? { backgroundColor: cell.color, boxShadow: `0 0 8px ${cell.color}40` } : cell?.ghost ? { borderColor: `${cell.color}40` } : {}}
+                                    />
+                                ))}
+                            </div>
 
                             {/* VFX Canvas Overlay */}
                             <RhythmVFX
@@ -1576,23 +1580,20 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 <div className={styles.beatPerfectZoneLeft} />
                                 <div className={styles.beatPerfectZoneRight} />
                                 <div
-                                    className={`${styles.beatCursor} ${isInPerfectWindow ? styles.beatCursorPerfect : ''}`}
+                                    className={`${styles.beatCursor} ${beatZone === 'perfect' ? styles.beatCursorPerfect : beatZone === 'great' ? styles.beatCursorGreat : beatZone === 'good' ? styles.beatCursorGood : ''}`}
                                     style={{ left: `${beatIndicatorPos * 100}%` }}
                                 />
                             </div>
                             <div className={styles.beatLabel}>
-                                {isInPerfectWindow ? 'PERFECT' : 'BEAT'}
+                                {beatZone !== 'miss' ? beatZone.toUpperCase() : 'BEAT'}
                             </div>
                         </div>
 
-                        <StatsRow
-                            className={styles.statsRow}
-                            stats={[
-                                { label: 'Lines', value: lines },
-                                { label: 'Combo', value: combo },
-                                { label: 'T-Spins', value: tSpinCountRef.current, show: tSpinCountRef.current > 0 },
-                            ]}
-                        />
+                        <div className={styles.statsRow}>
+                            <span>Lines: {lines}</span>
+                            <span>Combo: {combo}</span>
+                            {tSpinCountRef.current > 0 && <span>T-Spins: {tSpinCountRef.current}</span>}
+                        </div>
                     </div>
                 </div>
 
@@ -1602,11 +1603,10 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 {/* Opponent Side */}
                 <div className={styles.opponentSide}>
                     <div className={styles.boardSection}>
-                        <PlayerHeader
-                            name={opponent?.name || 'Opponent'}
-                            score={opponentScore}
-                            styles={{ header: styles.opponentHeader, name: styles.opponentName, score: styles.opponentScore }}
-                        />
+                        <div className={styles.opponentHeader}>
+                            <div className={styles.opponentName}>{opponent?.name || 'Opponent'}</div>
+                            <div className={styles.opponentScore}>{opponentScore.toLocaleString()}</div>
+                        </div>
 
                         <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
                             {/* Opponent combo indicator */}
@@ -1616,45 +1616,57 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 </div>
                             )}
 
-                            <BoardGrid
-                                board={opponentDisplay.flat()}
-                                width={W}
-                                showGhost={false}
-                                styles={{ board: styles.board, cell: styles.cell, filled: styles.filled }}
-                            />
+                            <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
+                                {opponentDisplay.flat().map((cell, i) => (
+                                    <div
+                                        key={i}
+                                        className={`${styles.cell} ${cell ? styles.filled : ''}`}
+                                        style={cell ? { backgroundColor: cell.color, boxShadow: `0 0 6px ${cell.color}40` } : {}}
+                                    />
+                                ))}
+                            </div>
                         </div>
 
-                        <StatsRow
-                            className={styles.statsRow}
-                            stats={[
-                                { label: 'Lines', value: opponentLines },
-                                { label: 'Combo', value: opponentCombo, show: opponentCombo >= 3 },
-                            ]}
-                        />
+                        <div className={styles.statsRow}>
+                            <span>Lines: {opponentLines}</span>
+                            {opponentCombo >= 3 && <span>Combo: {opponentCombo}</span>}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Mobile Controls */}
-            <MobileControls
-                onControl={handleControlClick}
-                styles={{ controls: styles.controls, controlRow: styles.controlRow, ctrlBtn: styles.ctrlBtn, dropBtn: styles.dropBtn }}
-            />
+            <div className={styles.controls}>
+                <div className={styles.controlRow}>
+                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('hold'); }} onClick={() => handleControlClick('hold')}>H</button>
+                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCCW'); }} onClick={() => handleControlClick('rotateCCW')}>&#x21BA;</button>
+                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCW'); }} onClick={() => handleControlClick('rotateCW')}>&#x21BB;</button>
+                    <button className={`${styles.ctrlBtn} ${styles.dropBtn}`} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('drop'); }} onClick={() => handleControlClick('drop')}>&#x2B07;</button>
+                </div>
+                <div className={styles.controlRow}>
+                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('left'); }} onClick={() => handleControlClick('left')}>&#x2190;</button>
+                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('down'); }} onClick={() => handleControlClick('down')}>&#x2193;</button>
+                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('right'); }} onClick={() => handleControlClick('right')}>&#x2192;</button>
+                </div>
+            </div>
 
             {/* Game Over Overlay */}
-            {gameOver && (
-                <GameOverOverlay
-                    title="GAME OVER"
-                    onAction={onBackToLobby}
-                    actionLabel="Back to Lobby"
-                    styles={{ gameOverOverlay: styles.gameOverOverlay, gameOverTitle: styles.gameOverTitle, backBtn: styles.backBtn }}
-                >
-                    <div className={styles.finalScores}>
-                        <div>{playerName}: {score.toLocaleString()}</div>
-                        <div>{opponent?.name || 'Opponent'}: {opponentScore.toLocaleString()}</div>
+            {
+                gameOver && (
+                    <div className={styles.gameOverOverlay}>
+                        <h2 className={styles.gameOverTitle}>
+                            GAME OVER
+                        </h2>
+                        <div className={styles.finalScores}>
+                            <div>{playerName}: {score.toLocaleString()}</div>
+                            <div>{opponent?.name || 'Opponent'}: {opponentScore.toLocaleString()}</div>
+                        </div>
+                        <button className={styles.backBtn} onClick={onBackToLobby}>
+                            Back to Lobby
+                        </button>
                     </div>
-                </GameOverOverlay>
-            )}
+                )
+            }
 
             {/* Advancement Toast */}
             {
