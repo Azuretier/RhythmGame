@@ -184,6 +184,9 @@ export type CardOffer = {
 // Grid position for block-based movement (orthogonal only, 1 tile per turn)
 export type GridPos = { gx: number; gz: number };
 
+// Minecraft-style enemy types for TD phase
+export type TDEnemyType = 'zombie' | 'skeleton' | 'creeper' | 'spider' | 'enderman';
+
 export type Enemy = {
     id: number;
     // World-space position (derived from grid coords for rendering)
@@ -198,6 +201,8 @@ export type Enemy = {
     maxHealth: number;
     alive: boolean;
     spawnTime: number;
+    // Minecraft mob type for visual appearance
+    enemyType: TDEnemyType;
 };
 
 export type Bullet = {
