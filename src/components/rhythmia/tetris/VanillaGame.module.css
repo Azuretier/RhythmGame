@@ -66,6 +66,12 @@
   z-index: 1;
 }
 
+/* All game UI children render above the Galaxy TD 3D ring (position: fixed, z-index: 2) */
+.game > * {
+  position: relative;
+  z-index: 3;
+}
+
 /* Score display */
 .scoreDisplay {
   font-size: clamp(2rem, 8vw, 4rem);
@@ -3994,7 +4000,7 @@
 /* The payoff: card bursts, particles, "OBTAINED!" slams in. */
 /* 0.2-0.5s of acute visual "juice." */
 .cardAbsorbBurst {
-  animation: cardBurst 350ms ease-out forwards;
+  animation: cardBurst 280ms ease-out forwards;
   z-index: 10;
   pointer-events: none;
 }
@@ -4021,7 +4027,7 @@
 
 /* Flash effect on overlay during impact */
 .cardAbsorbFlash {
-  animation: overlayFlash 350ms ease-out;
+  animation: overlayFlash 280ms ease-out;
 }
 
 @keyframes overlayFlash {
@@ -4050,7 +4056,7 @@
 /* --- Phase 5: DONE --- */
 /* Overlay fade-out when player dismisses */
 .cardAbsorbDone {
-  animation: overlayFadeOut 200ms ease-out forwards;
+  animation: overlayFadeOut 150ms ease-out forwards;
 }
 
 @keyframes overlayFadeOut {
@@ -4073,7 +4079,7 @@
   align-items: center;
   gap: 8px;
   z-index: 20;
-  animation: obtainedSlam 350ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: obtainedSlam 280ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   text-align: center;
 }
 

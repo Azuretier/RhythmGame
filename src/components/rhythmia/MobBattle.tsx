@@ -6,11 +6,7 @@ import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSoun
 import type { Player, ServerMessage, BoardCell } from '@/types/multiplayer';
 import type { ActiveMob, MobBattleRelayPayload } from '@/lib/mob-battle/types';
 import { useSkillTree } from '@/lib/skill-tree/context';
-import BoardGrid from './shared/BoardGrid';
-import PlayerHeader from './shared/PlayerHeader';
-import StatsRow from './shared/StatsRow';
-import MobileControls from './shared/MobileControls';
-import GameOverOverlay from './shared/GameOverOverlay';
+import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
 import {
   MOB_DEFINITIONS,
   MOB_MAP,
@@ -20,7 +16,6 @@ import {
   PASSIVE_INCOME_INTERVAL,
   GOLD_PER_LINE,
   LINE_CLEAR_DAMAGE,
-  BEAT_DAMAGE_MULTIPLIER,
   COMBO_DAMAGE_BONUS,
   BOARD_RELAY_INTERVAL,
 } from '@/lib/mob-battle/constants';
@@ -406,12 +401,12 @@ export const MobBattle: React.FC<Props> = ({
     render();
   }, [sendMobSpawn, playSummon, render]);
 
-  const damageMobs = useCallback((linesCleared: number, onBeat: boolean, combo: number) => {
+  const damageMobs = useCallback((linesCleared: number, beatMult: number, combo: number) => {
     const dmgConfig = LINE_CLEAR_DAMAGE[linesCleared];
     if (!dmgConfig) return;
 
     let damage = dmgConfig.baseDamage;
-    if (onBeat) damage *= BEAT_DAMAGE_MULTIPLIER;
+    if (beatMult > 1) damage *= beatMult;
     damage += combo * COMBO_DAMAGE_BONUS;
     damage = Math.floor(damage);
 
@@ -583,13 +578,14 @@ export const MobBattle: React.FC<Props> = ({
 
     // Beat judgment
     const phase = beatPhaseRef.current;
-    const onBeat = phase > 0.8 || phase < 0.12;
-    let mult = 1;
+    const timing = getBeatJudgment(phase);
+    const mult = getBeatMultiplier(timing);
 
-    if (onBeat) {
-      mult = 2;
+    if (timing !== 'miss') {
       comboRef.current++;
-      playTone(1047, 0.15, 'triangle');
+      if (timing === 'perfect') playTone(1047, 0.15, 'triangle');
+      else if (timing === 'great') playTone(880, 0.12, 'triangle');
+      else playTone(660, 0.1, 'triangle');
     } else {
       comboRef.current = 0;
     }
@@ -613,7 +609,7 @@ export const MobBattle: React.FC<Props> = ({
       totalGoldEarnedRef.current += lineGold;
 
       // Damage incoming mobs
-      damageMobs(cleared, onBeat, comboRef.current);
+      damageMobs(cleared, mult, comboRef.current);
 
       playLineClear(cleared);
     }
@@ -1152,21 +1148,22 @@ export const MobBattle: React.FC<Props> = ({
             </div>
 
             <div className={styles.boardWrap}>
-              <BoardGrid
-                board={displayBoard.flat()}
-                width={W}
-                styles={{ board: styles.board, cell: styles.cell, filled: styles.filled, ghost: styles.ghost }}
-              />
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
+                {displayBoard.flat().map((cell, i) => (
+                  <div
+                    key={i}
+                    className={`${styles.cell} ${cell && !cell.ghost ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''}`}
+                    style={cell && !cell.ghost ? { backgroundColor: cell.color, boxShadow: `0 0 8px ${cell.color}40` } : cell?.ghost ? { borderColor: `${cell.color}40` } : {}}
+                  />
+                ))}
+              </div>
             </div>
 
-            <StatsRow
-              className={styles.statsRow}
-              stats={[
-                { label: 'Lines', value: lines },
-                { label: 'Score', value: score.toLocaleString() },
-                { label: 'Combo', value: combo },
-              ]}
-            />
+            <div className={styles.statsRow}>
+              <span>Lines: {lines}</span>
+              <span>Score: {score.toLocaleString()}</span>
+              <span>Combo: {combo}</span>
+            </div>
           </div>
         </div>
 
@@ -1179,11 +1176,10 @@ export const MobBattle: React.FC<Props> = ({
         {/* === Opponent Side === */}
         <div className={styles.opponentSide}>
           <div className={styles.boardSection}>
-            <PlayerHeader
-              name={opponent?.name || 'Opponent'}
-              score={opponentScore}
-              styles={{ header: styles.opponentHeader, name: styles.opponentName, score: styles.opponentScore }}
-            />
+            <div className={styles.opponentHeader}>
+              <div className={styles.opponentName}>{opponent?.name || 'Opponent'}</div>
+              <div className={styles.opponentScore}>{opponentScore.toLocaleString()}</div>
+            </div>
 
             {/* Opponent Base HP Bar */}
             <div className={styles.hpBarContainer}>
@@ -1198,18 +1194,20 @@ export const MobBattle: React.FC<Props> = ({
             </div>
 
             <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
-              <BoardGrid
-                board={opponentDisplay.flat()}
-                width={W}
-                showGhost={false}
-                styles={{ board: styles.board, cell: styles.cell, filled: styles.filled }}
-              />
+              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
+                {opponentDisplay.flat().map((cell, i) => (
+                  <div
+                    key={i}
+                    className={`${styles.cell} ${cell ? styles.filled : ''}`}
+                    style={cell ? { backgroundColor: cell.color, boxShadow: `0 0 6px ${cell.color}40` } : {}}
+                  />
+                ))}
+              </div>
             </div>
 
-            <StatsRow
-              className={styles.statsRow}
-              stats={[{ label: 'Lines', value: opponentLines }]}
-            />
+            <div className={styles.statsRow}>
+              <span>Lines: {opponentLines}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1248,33 +1246,39 @@ export const MobBattle: React.FC<Props> = ({
       </div>
 
       {/* === Mobile Controls === */}
-      <MobileControls
-        onControl={handleControlClick}
-        styles={{ controls: styles.controls, controlRow: styles.controlRow, ctrlBtn: styles.ctrlBtn, dropBtn: styles.dropBtn }}
-        extraRows={
-          <div className={styles.controlRow}>
-            {MOB_DEFINITIONS.slice(0, 4).map((def) => (
-              <button
-                key={def.id}
-                className={`${styles.ctrlBtn} ${gold < def.cost ? styles.ctrlBtnDisabled : ''}`}
-                onClick={() => summonMob(def.id)}
-                disabled={gold < def.cost || gameOver}
-              >
-                {def.icon}
-              </button>
-            ))}
-          </div>
-        }
-      />
+      <div className={styles.controls}>
+        <div className={styles.controlRow}>
+          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('hold'); }} onClick={() => handleControlClick('hold')}>H</button>
+          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCCW'); }} onClick={() => handleControlClick('rotateCCW')}>&#x21BA;</button>
+          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCW'); }} onClick={() => handleControlClick('rotateCW')}>&#x21BB;</button>
+          <button className={`${styles.ctrlBtn} ${styles.dropBtn}`} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('drop'); }} onClick={() => handleControlClick('drop')}>&#x2B07;</button>
+        </div>
+        <div className={styles.controlRow}>
+          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('left'); }} onClick={() => handleControlClick('left')}>&#x2190;</button>
+          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('down'); }} onClick={() => handleControlClick('down')}>&#x2193;</button>
+          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('right'); }} onClick={() => handleControlClick('right')}>&#x2192;</button>
+        </div>
+        {/* Mobile mob summon bar */}
+        <div className={styles.controlRow}>
+          {MOB_DEFINITIONS.slice(0, 4).map((def) => (
+            <button
+              key={def.id}
+              className={`${styles.ctrlBtn} ${gold < def.cost ? styles.ctrlBtnDisabled : ''}`}
+              onClick={() => summonMob(def.id)}
+              disabled={gold < def.cost || gameOver}
+            >
+              {def.icon}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* === Game Over Overlay === */}
       {gameOver && (
-        <GameOverOverlay
-          title={baseHp <= 0 ? 'DEFEAT' : 'VICTORY'}
-          onAction={onBackToLobby}
-          actionLabel="Back to Lobby"
-          styles={{ gameOverOverlay: styles.gameOverOverlay, gameOverTitle: styles.gameOverTitle, backBtn: styles.backBtn }}
-        >
+        <div className={styles.gameOverOverlay}>
+          <h2 className={styles.gameOverTitle}>
+            {baseHp <= 0 ? 'DEFEAT' : 'VICTORY'}
+          </h2>
           <div className={styles.finalStats}>
             <div className={styles.statBlock}>
               <div className={styles.statBlockLabel}>{playerName}</div>
@@ -1289,7 +1293,10 @@ export const MobBattle: React.FC<Props> = ({
               <div>Lines: {opponentLines}</div>
             </div>
           </div>
-        </GameOverOverlay>
+          <button className={styles.backBtn} onClick={onBackToLobby}>
+            Back to Lobby
+          </button>
+        </div>
       )}
     </div>
   );

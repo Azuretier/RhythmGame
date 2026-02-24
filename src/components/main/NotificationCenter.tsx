@@ -1,13 +1,10 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
 import { useNotifications } from '@/lib/notifications';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
-import { useEscapeClose } from '@/hooks/useEscapeClose';
-import { fadeScale } from '@/lib/motion';
-import LoadingState from '@/components/ui/LoadingState';
 import styles from './NotificationCenter.module.css';
 
 function formatRelativeTime(timestamp: number, locale: string): string {
@@ -45,7 +42,17 @@ export default function NotificationCenter() {
   const locale = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEscapeClose(isOpen, close);
+  // Close on escape
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') close();
+    }
+
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [isOpen, close]);
 
   return (
     <div className={styles.container} ref={containerRef}>
@@ -80,7 +87,10 @@ export default function NotificationCenter() {
             <div className={styles.backdrop} onClick={close} />
             <motion.div
               className={styles.dropdown}
-              {...fadeScale}
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
             >
               <div className={styles.dropdownHeader}>
                 <span className={styles.dropdownTitle}>
@@ -94,21 +104,36 @@ export default function NotificationCenter() {
               </div>
 
               <div className={styles.notifList}>
-                <LoadingState
-                  isLoading={isLoading}
-                  isEmpty={notifications.length === 0}
-                  emptyMessage={locale === 'ja' ? 'まだ通知はありません' : 'No notifications yet'}
-                  emptyIcon={
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                    </svg>
-                  }
-                  loadingClassName={styles.loadingState}
-                  emptyClassName={styles.emptyState}
-                  spinnerClassName={styles.spinner}
-                >
-                  {notifications.map((notif) => {
+                {isLoading ? (
+                  <div className={styles.loadingState}>
+                    <div className={styles.spinner} />
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <div className={styles.emptyIcon}>
+                      <svg
+                        width="28"
+                        height="28"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        opacity="0.3"
+                      >
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                      </svg>
+                    </div>
+                    <span className={styles.emptyText}>
+                      {locale === 'ja'
+                        ? 'まだ通知はありません'
+                        : 'No notifications yet'}
+                    </span>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
                     const adv = ADVANCEMENTS.find(
                       (a) => a.id === notif.advancementId
                     );
@@ -146,8 +171,8 @@ export default function NotificationCenter() {
                         {!notif.read && <div className={styles.unreadDot} />}
                       </button>
                     );
-                  })}
-                </LoadingState>
+                  })
+                )}
               </div>
             </motion.div>
           </>

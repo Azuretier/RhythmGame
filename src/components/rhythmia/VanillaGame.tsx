@@ -5,6 +5,7 @@ import { recordGameEnd, checkLiveGameAdvancements, saveLiveUnlocks } from '@/lib
 import { useSkillTree } from '@/lib/skill-tree/context';
 import AdvancementToast from './AdvancementToast';
 import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
+import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
 
 // ===== Types =====
 interface PieceCell {
@@ -475,23 +476,30 @@ export const Rhythmia: React.FC = () => {
     if (!currentPiece) return;
 
     // Beat judgment
-    const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
-    let mult = 1;
+    const timing = getBeatJudgment(currentBeatPhase);
+    const mult = getBeatMultiplier(timing);
 
-    if (onBeat) {
-      mult = 2;
+    if (timing !== 'miss') {
       const newCombo = comboRef.current + 1;
       setCombo(newCombo);
       comboRef.current = newCombo;
-      gamePerfectBeatsRef.current++;
+      if (timing === 'perfect') gamePerfectBeatsRef.current++;
       if (newCombo > gameBestComboRef.current) {
         gameBestComboRef.current = newCombo;
       }
-      showJudgment('PERFECT! ', '#FFD700');
-      playTone(1047, 0.2, 'triangle');
+      const judgmentConfig = {
+        perfect: { text: 'PERFECT!', color: '#FFD700' },
+        great:   { text: 'GREAT!',   color: '#00E5FF' },
+        good:    { text: 'GOOD',     color: '#76FF03' },
+      } as const;
+      showJudgment(judgmentConfig[timing].text, judgmentConfig[timing].color);
+      if (timing === 'perfect') playTone(1047, 0.2, 'triangle');
+      else if (timing === 'great') playTone(880, 0.15, 'triangle');
+      else playTone(660, 0.1, 'triangle');
       if (boardRef.current) {
         const rect = boardRef.current.getBoundingClientRect();
-        spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#FFD700', 12);
+        const particleColor = timing === 'perfect' ? '#FFD700' : timing === 'great' ? '#00E5FF' : '#76FF03';
+        spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, particleColor, 12);
       }
     } else {
       setCombo(0);
@@ -1012,6 +1020,7 @@ export const Rhythmia: React.FC = () => {
   const world = WORLDS[worldIdx];
   const displayBoard = getDisplayBoard();
   const unit = cellSizeRef.current + 1;
+  const beatZone = getBeatJudgment(beatPhase);
 
   return (
     <div className={`${styles.body} ${styles[`w${worldIdx}`]}`}>
@@ -1136,7 +1145,8 @@ export const Rhythmia: React.FC = () => {
             <div className={styles.beatTargetLeft} />
             <div className={styles.beatTargetRight} />
             <div
-              className={`${styles.beatCursor} ${(beatPhase > 0.75 || beatPhase < 0.15) ? styles.onBeat : ''}`}
+              className={styles.beatCursor}
+              data-onbeat={beatZone !== 'miss' ? beatZone : undefined}
               style={{ left: `${beatPhase * 100}%` }}
             />
           </div>
