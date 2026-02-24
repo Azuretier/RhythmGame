@@ -115,9 +115,14 @@ export default function UpdatesPage() {
       .then((remoteUpdates) => {
         if (!active || remoteUpdates.length === 0) return;
 
-        const staticByNumber = new Map(PR_UPDATES.map((update) => [update.number, update]));
-        const combined = remoteUpdates.map((update) => staticByNumber.get(update.number) ?? update);
-        setUpdates(combined);
+        const combinedByNumber = new Map(PR_UPDATES.map((update) => [update.number, update]));
+        for (const update of remoteUpdates) {
+          if (!combinedByNumber.has(update.number)) {
+            combinedByNumber.set(update.number, update);
+          }
+        }
+
+        setUpdates(Array.from(combinedByNumber.values()).sort((a, b) => b.number - a.number));
       })
       .catch((error) => {
         console.warn('Failed to load merged PRs for updates page; using static fallback.', error);
