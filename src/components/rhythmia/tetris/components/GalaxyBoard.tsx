@@ -1,25 +1,14 @@
 'use client';
 
 import React from 'react';
-import dynamic from 'next/dynamic';
 import { Board } from './Board';
-import type { GalaxyRingEnemy, GalaxyTower, GalaxyGate } from '../galaxy-types';
 import type { Piece, Board as BoardType, FeatureSettings } from '../types';
 import type { ColorTheme } from '../constants';
 import type { GameKeybinds } from '../hooks/useKeybinds';
 import galaxyStyles from '../Galaxy.module.css';
 
-// Dynamically import the 3D ring (Three.js requires client-side only)
-const GalaxyRing3D = dynamic(
-    () => import('./GalaxyRing3D').then(mod => ({ default: mod.GalaxyRing3D })),
-    { ssr: false }
-);
-
 interface GalaxyBoardProps {
     // Galaxy TD state
-    galaxyEnemies: GalaxyRingEnemy[];
-    galaxyTowers: GalaxyTower[];
-    galaxyGates: GalaxyGate[];
     galaxyActive: boolean;
     waveNumber: number;
 
@@ -56,15 +45,10 @@ interface GalaxyBoardProps {
 }
 
 /**
- * Galaxy Board — wraps the Tetris Board with a 3D floating ring.
- * During the dig phase, a planetary ring orbits around the board showing
- * pixelated Minecraft-style enemies and towers in 3D space.
- * When galaxy TD is inactive, renders the board without the ring.
+ * Galaxy Board — wraps the Tetris Board with a wave label during dig phase.
+ * The 3D ring is rendered separately in tetris.tsx to avoid z-index stacking issues.
  */
 export function GalaxyBoard({
-    galaxyEnemies,
-    galaxyTowers,
-    galaxyGates,
     galaxyActive,
     waveNumber,
     board,
@@ -131,29 +115,14 @@ export function GalaxyBoard({
         />
     );
 
-    if (!galaxyActive) {
+    if (!galaxyActive || waveNumber <= 0) {
         return boardElement;
     }
 
     return (
         <div className={galaxyStyles.galaxyContainer}>
-            {/* Wave label */}
-            {waveNumber > 0 && (
-                <div className={galaxyStyles.waveLabel}>WAVE {waveNumber}</div>
-            )}
-
-            {/* Board sits at the center — the "planet" */}
-            <div className={galaxyStyles.boardCenter}>
-                {boardElement}
-            </div>
-
-            {/* 3D ring overlays around the board — transparent background, no pointer events */}
-            <GalaxyRing3D
-                enemies={galaxyEnemies}
-                towers={galaxyTowers}
-                gates={galaxyGates}
-                waveNumber={waveNumber}
-            />
+            <div className={galaxyStyles.waveLabel}>WAVE {waveNumber}</div>
+            {boardElement}
         </div>
     );
 }

@@ -20,6 +20,12 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
   ssr: false,
 });
 
+// Dynamically import GalaxyRing3D (Three.js requires client-side only)
+const GalaxyRing3D = dynamic(
+  () => import('./components/GalaxyRing3D').then(mod => ({ default: mod.GalaxyRing3D })),
+  { ssr: false }
+);
+
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
@@ -1700,6 +1706,16 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       {/* Game */}
       {(isPlaying || gameOver) && (
         <div className={styles.game}>
+          {/* Galaxy TD 3D ring — fullscreen behind game UI, only during dig phase */}
+          {terrainPhase === 'dig' && (
+            <GalaxyRing3D
+              enemies={galaxyTD.enemies}
+              towers={galaxyTD.towers}
+              gates={galaxyTD.gates}
+              waveNumber={galaxyTD.waveNumber}
+            />
+          )}
+
           {/* Game phase indicator */}
           <GamePhaseIndicator
             phase={gamePhase}
@@ -1741,9 +1757,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             <div className={styles.centerColumn}>
               <div className={styles.boardActionArea}>
               <GalaxyBoard
-                galaxyEnemies={galaxyTD.enemies}
-                galaxyTowers={galaxyTD.towers}
-                galaxyGates={galaxyTD.gates}
                 galaxyActive={terrainPhase === 'dig'}
                 waveNumber={galaxyTD.waveNumber}
                 board={board}

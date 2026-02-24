@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo, useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { GalaxyRingEnemy, GalaxyTower, GalaxyGate } from '../galaxy-types';
@@ -584,13 +583,11 @@ export interface GalaxyRing3DProps {
 }
 
 export function GalaxyRing3D({ enemies, towers, gates, waveNumber }: GalaxyRing3DProps) {
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
-
-    if (!mounted) return null;
-
-    // Portal to document.body so no parent container can clip/overflow the ring
-    return createPortal(
+    // Render with position: fixed to fill viewport.
+    // No portal needed — this renders inside .game (z-index: 1 stacking context),
+    // so z-index: 2 puts the ring above VoxelWorldBackground (z-index: 0)
+    // but below the board (.boardCenter z-index: 10) and game UI overlays.
+    return (
         <Canvas
             gl={{ antialias: true, alpha: true }}
             camera={{ position: [0, 5, 8], fov: 50, near: 0.1, far: 100 }}
@@ -600,7 +597,7 @@ export function GalaxyRing3D({ enemies, towers, gates, waveNumber }: GalaxyRing3
                 width: '100vw',
                 height: '100vh',
                 pointerEvents: 'none',
-                zIndex: 5,
+                zIndex: 2,
             }}
         >
             <GalaxyRingScene
@@ -609,8 +606,7 @@ export function GalaxyRing3D({ enemies, towers, gates, waveNumber }: GalaxyRing3
                 gates={gates}
                 waveNumber={waveNumber}
             />
-        </Canvas>,
-        document.body
+        </Canvas>
     );
 }
 

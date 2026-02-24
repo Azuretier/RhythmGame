@@ -66,6 +66,12 @@
   z-index: 1;
 }
 
+/* All game UI children render above the Galaxy TD 3D ring (position: fixed, z-index: 2) */
+.game > * {
+  position: relative;
+  z-index: 3;
+}
+
 /* Score display */
 .scoreDisplay {
   font-size: clamp(2rem, 8vw, 4rem);

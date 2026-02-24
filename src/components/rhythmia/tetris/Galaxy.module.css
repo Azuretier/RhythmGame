@@ -1,16 +1,10 @@
 /* ===== Galaxy Board Container =====
- * The board ("planet") sits at the center.
- * The 3D ring (Three.js Canvas) overlays around it as a floating torus.
+ * Wraps the board with a wave label during dig phase.
+ * The 3D ring is rendered separately in tetris.tsx as a fixed overlay.
  */
 .galaxyContainer {
     position: relative;
     display: inline-block;
-}
-
-/* Board sits in the center — the "planet", above the fullscreen 3D ring (z-index: 5) */
-.boardCenter {
-    position: relative;
-    z-index: 10;
 }
 
 /* ===== Wave Label ===== */
@@ -26,11 +20,11 @@
     text-transform: uppercase;
     white-space: nowrap;
     pointer-events: none;
-    z-index: 15;
+    z-index: 10;
     text-shadow: 0 0 8px rgba(140, 60, 255, 0.4);
 }
 
-/* ===== Mobile: Hide ring and label ===== */
+/* ===== Mobile: Hide wave label ===== */
 @media (max-width: 768px) {
     .waveLabel {
         display: none;
