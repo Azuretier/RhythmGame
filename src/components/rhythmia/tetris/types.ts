@@ -184,6 +184,9 @@ export type CardOffer = {
 // Grid position for block-based movement (orthogonal only, 1 tile per turn)
 export type GridPos = { gx: number; gz: number };
 
+// Enemy types for the Rhythmia TD phase
+export type TDEnemyType = 'walker' | 'runner' | 'tank' | 'garbage_thrower' | 'boss';
+
 export type Enemy = {
     id: number;
     // World-space position (derived from grid coords for rendering)
@@ -198,6 +201,10 @@ export type Enemy = {
     maxHealth: number;
     alive: boolean;
     spawnTime: number;
+    // Enemy type (determines HP, speed, and special abilities)
+    enemyType?: TDEnemyType;
+    // Timestamp of last garbage throw (for garbage_thrower type)
+    lastGarbageAt?: number;
 };
 
 export type Bullet = {
@@ -210,6 +217,39 @@ export type Bullet = {
     vz: number;
     targetEnemyId: number;
     alive: boolean;
+    /** Whether this bullet was fired from a mini-tower (for rendering tint) */
+    fromMiniTower?: boolean;
+};
+
+// ===== Mini-Tower =====
+export type MiniTower = {
+    id: number;
+    gridX: number;
+    gridZ: number;
+    hp: number;
+    maxHp: number;
+    lastShotAt: number; // timestamp (ms)
+};
+
+// ===== Line-Clear Aura Burst =====
+export type TDLineClearAura = {
+    id: number;
+    startTime: number;   // ms timestamp
+    duration: number;    // ms total animation
+    maxRadius: number;   // grid-tile radius at full expansion
+    currentRadius: number;
+};
+
+// ===== Garbage-Thrower Arc Projectile =====
+export type TDGarbageArc = {
+    id: number;
+    enemyId: number;
+    startX: number;  // world-space X
+    startZ: number;  // world-space Z
+    progress: number; // 0→1
+    startTime: number;
+    duration: number;
+    garbageLines: number;
 };
 
 // ===== Terrain Particle =====

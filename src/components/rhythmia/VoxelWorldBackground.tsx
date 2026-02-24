@@ -2,8 +2,8 @@
 
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
-import type { Enemy, Bullet, TerrainPhase, CorruptionNode } from './tetris/types';
-import { BULLET_GRAVITY, BULLET_GROUND_Y, CORRUPTION_MAX_TERRAIN_NODES } from './tetris/constants';
+import type { Enemy, Bullet, TerrainPhase, CorruptionNode, MiniTower, TDLineClearAura, TDGarbageArc } from './tetris/types';
+import { BULLET_GRAVITY, BULLET_GROUND_Y, CORRUPTION_MAX_TERRAIN_NODES, GRID_TILE_SIZE } from './tetris/constants';
 
 // Simple seeded random for deterministic terrain
 function seededRandom(seed: number) {
@@ -12,6 +12,25 @@ function seededRandom(seed: number) {
     s = (s * 16807 + 0) % 2147483647;
     return (s - 1) / 2147483646;
   };
+}
+
+/** Format HP as large numerical value (100k / 5k / 300) for the 2D HP overlay */
+function formatHPOverlay(hp: number): string {
+  const v = Math.max(0, hp);
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
+  return `${Math.round(v)}`;
+}
+
+/** Distinct color per enemy type for the type badge */
+function enemyTypeColor(type: string): string {
+  switch (type) {
+    case 'runner':          return '#88ffcc';
+    case 'tank':            return '#ff8844';
+    case 'garbage_thrower': return '#ffdd44';
+    case 'boss':            return '#ff44ff';
+    default:                return '#aaaaaa';
+  }
 }
 
 // 2D noise for terrain generation
@@ -546,6 +565,9 @@ interface SceneState {
   corruptMesh: THREE.InstancedMesh | null;
   corruptGeo: THREE.BoxGeometry;
   corruptMat: THREE.MeshStandardMaterial;
+  miniTowerMesh: THREE.InstancedMesh | null;
+  miniTowerGeo: THREE.BoxGeometry;
+  miniTowerMat: THREE.MeshStandardMaterial;
 }
 
 interface VoxelWorldBackgroundProps {
@@ -557,6 +579,9 @@ interface VoxelWorldBackgroundProps {
   corruptedCells?: Map<string, CorruptionNode>;
   onTerrainReady?: (totalBlocks: number) => void;
   worldIdx?: number;
+  miniTowers?: MiniTower[];
+  lineClearAuras?: TDLineClearAura[];
+  garbageArcs?: TDGarbageArc[];
 }
 
 export default function VoxelWorldBackground({
@@ -568,6 +593,9 @@ export default function VoxelWorldBackground({
   corruptedCells,
   onTerrainReady,
   worldIdx = 0,
+  miniTowers = [],
+  lineClearAuras = [],
+  garbageArcs = [],
 }: VoxelWorldBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hpOverlayRef = useRef<HTMLCanvasElement>(null);
@@ -596,10 +624,15 @@ export default function VoxelWorldBackground({
   const originalColorsRef = useRef<Float32Array | null>(null);
   /** Track which indices are currently tinted so we can restore them */
   const corruptedIndicesRef = useRef<Set<number>>(new Set());
+  const miniTowersRef = useRef<MiniTower[]>(miniTowers);
+  miniTowersRef.current = miniTowers;
+  const lineClearAurasRef = useRef<TDLineClearAura[]>(lineClearAuras);
+  lineClearAurasRef.current = lineClearAuras;
+  const garbageArcsRef = useRef<TDGarbageArc[]>(garbageArcs);
+  garbageArcsRef.current = garbageArcs;
+
   /** Enemy position interpolation state: id → {fromX, fromZ, toX, toZ, t} */
   const enemyLerpRef = useRef<Map<number, { fromX: number; fromZ: number; toX: number; toZ: number; t: number }>>(new Map());
-
-  // Build terrain mesh into the scene (called once)
   const buildTerrain = useCallback((terrainSeed: number, mode: TerrainPhase, wIdx: number = 0) => {
     const ss = sceneStateRef.current;
     if (!ss) return;
@@ -791,6 +824,20 @@ export default function VoxelWorldBackground({
     const gridLines = createGridLines();
     scene.add(gridLines);
 
+    // Mini-tower instanced mesh (small glowing cyan pillars)
+    const miniTowerGeo = new THREE.BoxGeometry(0.6, 4.5, 0.6);
+    const miniTowerMat = new THREE.MeshStandardMaterial({
+      color: 0x44aaff,
+      roughness: 0.2,
+      metalness: 0.6,
+      emissive: 0x0066cc,
+      emissiveIntensity: 1.2,
+    });
+    const MAX_MINI_TOWERS = 16;
+    const miniTowerMesh = new THREE.InstancedMesh(miniTowerGeo, miniTowerMat, MAX_MINI_TOWERS);
+    miniTowerMesh.count = 0;
+    scene.add(miniTowerMesh);
+
     sceneStateRef.current = {
       renderer, scene, camera, gridLines,
       instancedMesh: null, boxGeo, boxMat,
@@ -801,6 +848,7 @@ export default function VoxelWorldBackground({
       bulletMesh, bulletGeo, bulletMat,
       impactMesh, impactGeo, impactMat,
       corruptMesh, corruptGeo, corruptMat,
+      miniTowerMesh, miniTowerGeo, miniTowerMat,
     };
 
     // Handle resize
@@ -1054,6 +1102,29 @@ export default function VoxelWorldBackground({
           }
         }
 
+        // === Mini-tower rendering ===
+        if (ss?.miniTowerMesh) {
+          const towers = miniTowersRef.current;
+          const terrainRotY2 = ss.instancedMesh?.rotation.y ?? 0;
+          const cosR2 = Math.cos(terrainRotY2);
+          const sinR2 = Math.sin(terrainRotY2);
+          ss.miniTowerMesh.count = towers.length;
+          const pulse2 = 0.9 + 0.1 * Math.sin(time * 0.004);
+          for (let i = 0; i < towers.length; i++) {
+            const t2 = towers[i];
+            const wx = t2.gridX * GRID_TILE_SIZE;
+            const wz = t2.gridZ * GRID_TILE_SIZE;
+            const rx2 = wx * cosR2 - wz * sinR2;
+            const rz2 = wx * sinR2 + wz * cosR2;
+            dummy.position.set(rx2, 2.25, rz2); // center at half height
+            dummy.scale.set(pulse2, pulse2, pulse2);
+            dummy.rotation.set(0, time * 0.002 + i * 0.8, 0);
+            dummy.updateMatrix();
+            ss.miniTowerMesh.setMatrixAt(i, dummy.matrix);
+          }
+          if (towers.length > 0) ss.miniTowerMesh.instanceMatrix.needsUpdate = true;
+        }
+
         // === Impact particles ===
         if (ss?.impactMesh) {
           // Update particle physics
@@ -1184,24 +1255,102 @@ export default function VoxelWorldBackground({
           // Skip if behind camera
           if (projVec.z > 1) continue;
 
-          const barW = 28;
-          const barH = 4;
+          const barW = 36;
+          const barH = 5;
           const hpPct = Math.max(0, e.health / e.maxHealth);
 
           // Background (dark)
-          hpCtx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-          hpCtx.fillRect(sx - barW / 2, sy - barH / 2, barW, barH);
+          hpCtx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+          hpCtx.fillRect(sx - barW / 2, sy - barH / 2 - 8, barW, barH);
 
           // HP fill (green → yellow → red based on %)
           const r = hpPct < 0.5 ? 255 : Math.round(255 * (1 - hpPct) * 2);
           const g = hpPct > 0.5 ? 255 : Math.round(255 * hpPct * 2);
           hpCtx.fillStyle = `rgb(${r}, ${g}, 40)`;
-          hpCtx.fillRect(sx - barW / 2, sy - barH / 2, barW * hpPct, barH);
+          hpCtx.fillRect(sx - barW / 2, sy - barH / 2 - 8, barW * hpPct, barH);
 
           // Border
           hpCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
           hpCtx.lineWidth = 0.5;
-          hpCtx.strokeRect(sx - barW / 2, sy - barH / 2, barW, barH);
+          hpCtx.strokeRect(sx - barW / 2, sy - barH / 2 - 8, barW, barH);
+
+          // HP number label (large numerical HP display)
+          const hpText = formatHPOverlay(Math.max(0, e.health));
+          hpCtx.fillStyle = '#fff';
+          hpCtx.font = 'bold 9px monospace';
+          hpCtx.textAlign = 'center';
+          hpCtx.fillText(hpText, sx, sy - barH / 2 - 10);
+
+          // Enemy type label
+          if (e.enemyType && e.enemyType !== 'walker') {
+            hpCtx.fillStyle = enemyTypeColor(e.enemyType);
+            hpCtx.font = '8px monospace';
+            hpCtx.fillText(e.enemyType.toUpperCase(), sx, sy - barH / 2 - 19);
+          }
+        }
+
+        // === Draw line-clear aura rings on overlay ===
+        const nowMs = Date.now();
+        // Compute terrain rotation once for all aura/arc rendering
+        const terrainRotYOverlay = sceneStateRef.current?.instancedMesh?.rotation.y ?? 0;
+        const cosROverlay = Math.cos(terrainRotYOverlay);
+        const sinROverlay = Math.sin(terrainRotYOverlay);
+
+        // Project main tower center to screen (shared by auras)
+        projVec.set(0, 2, 0);
+        projVec.project(camera);
+        const auraScreenCx = (projVec.x * 0.5 + 0.5) * hpCanvas.width;
+        const auraScreenCy = (-projVec.y * 0.5 + 0.5) * hpCanvas.height;
+
+        for (const aura of lineClearAurasRef.current) {
+          const elapsed = nowMs - aura.startTime;
+          const progress = Math.min(1, elapsed / aura.duration);
+          const radius = aura.maxRadius * progress;
+          // Project a point at (radius, 0, 0) to get screen radius
+          projVec.set(radius * cosROverlay, 2, radius * sinROverlay);
+          projVec.project(camera);
+          const ex2 = (projVec.x * 0.5 + 0.5) * hpCanvas.width;
+          const ey2 = (-projVec.y * 0.5 + 0.5) * hpCanvas.height;
+          const screenRadius = Math.sqrt((ex2 - auraScreenCx) ** 2 + (ey2 - auraScreenCy) ** 2);
+          const alpha = 1 - progress;
+          hpCtx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.9})`;
+          hpCtx.lineWidth = 3 * (1 - progress * 0.5) + 1;
+          hpCtx.beginPath();
+          hpCtx.arc(auraScreenCx, auraScreenCy, screenRadius, 0, Math.PI * 2);
+          hpCtx.stroke();
+          hpCtx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
+          hpCtx.lineWidth = 1;
+          hpCtx.beginPath();
+          hpCtx.arc(auraScreenCx, auraScreenCy, screenRadius * 0.8, 0, Math.PI * 2);
+          hpCtx.stroke();
+        }
+
+        // === Draw garbage arc projectiles on overlay ===
+        for (const arc of garbageArcsRef.current) {
+          const elapsed2 = nowMs - arc.startTime;
+          const t = Math.min(1, elapsed2 / arc.duration);
+          // Parabolic arc: start from enemy world pos (rotated), land at center
+          const startX2 = arc.startX * cosROverlay - arc.startZ * sinROverlay;
+          const startZ2 = arc.startX * sinROverlay + arc.startZ * cosROverlay;
+          const arcHeight = 12;
+          const lerpX = startX2 * (1 - t);
+          const lerpZ = startZ2 * (1 - t);
+          const arcY = 2 + arcHeight * 4 * t * (1 - t);
+          projVec.set(lerpX, arcY, lerpZ);
+          projVec.project(camera);
+          const ax = (projVec.x * 0.5 + 0.5) * hpCanvas.width;
+          const ay = (-projVec.y * 0.5 + 0.5) * hpCanvas.height;
+          if (projVec.z < 1) {
+            const gAlpha = t < 0.9 ? 0.85 : 0.85 * (1 - (t - 0.9) / 0.1);
+            hpCtx.fillStyle = `rgba(255, 120, 30, ${gAlpha})`;
+            hpCtx.beginPath();
+            hpCtx.arc(ax, ay, 5, 0, Math.PI * 2);
+            hpCtx.fill();
+            hpCtx.fillStyle = `rgba(255, 220, 80, ${gAlpha})`;
+            hpCtx.beginPath();
+            hpCtx.arc(ax, ay, 2.5, 0, Math.PI * 2);
+            hpCtx.fill();
+          }
         }
       }
     };

@@ -391,15 +391,39 @@ export const GRID_SPAWN_RING = 18;       // Manhattan distance from center for s
 export const GRID_TOWER_RADIUS = 1;      // Grid tiles — enemy reaches tower at Manhattan dist ≤ this
 
 // ===== Tower Defense HUD =====
-export const MAX_HEALTH = 100;
-export const ENEMY_REACH_DAMAGE = 15;    // Damage when an enemy reaches the tower
-export const ENEMY_HP = 3;              // Default HP for each enemy
+export const MAX_HEALTH = 5000;          // Main tower HP (numerical, large scale)
+export const ENEMY_REACH_DAMAGE = 300;   // Damage when an enemy reaches the tower
+export const ENEMY_HP = 300;            // Default HP for walker enemies
+// Enemy HP by type
+export const WALKER_HP = 300;
+export const RUNNER_HP = 100;
+export const TANK_HP = 5000;
+export const GARBAGE_THROWER_HP = 1000;
+export const BOSS_HP = 100_000;
 export const BULLET_SPEED = 18;         // Horizontal launch speed (units/sec)
 export const BULLET_GRAVITY = 9.8;      // Gravity acceleration (units/sec²) — matches Earth gravity
 export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
-export const BULLET_DAMAGE = 1;         // Damage per bullet hit
+export const BULLET_DAMAGE = 60;        // Damage per main-tower bullet hit
+export const MINI_TOWER_BULLET_DAMAGE = 40; // Damage per mini-tower bullet hit
 export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
 export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
+
+// ===== Mini-Tower System =====
+export const MINI_TOWER_HP = 500;           // HP of a placed mini-tower
+export const MINI_TOWER_RANGE = 8;          // Grid tiles radius
+export const MINI_TOWER_FIRE_INTERVAL = 2000; // ms between shots
+export const MINI_TOWER_MAX_COUNT = 8;       // Max mini-towers placeable per wave
+export const TD_SETUP_GRID_HALF = 8;         // Mini-tower placement area: ±8 grid tiles from center
+
+// ===== Line-Clear Aura =====
+export const LINE_CLEAR_AURA_BASE_DAMAGE = 80_000; // Damage per line cleared (hits ALL enemies)
+export const LINE_CLEAR_AURA_DURATION = 1200;       // ms for the ring animation
+export const LINE_CLEAR_AURA_RADIUS = 22;            // Grid tiles max radius
+
+// ===== Garbage-Thrower Enemy =====
+export const GARBAGE_THROW_INTERVAL = 5000; // ms between garbage throws
+export const GARBAGE_ARC_DURATION = 1500;   // ms for the throw arc animation
+export const GARBAGE_THROW_LINES = 1;       // Garbage rows added per throw
 
 // ===== Corruption & Anomaly Settings =====
 // Side board minimap dimensions

@@ -62,6 +62,7 @@ import {
   TutorialGuide,
   hasTutorialBeenSeen,
   DragonGauge,
+  TDGridSetup,
 
 } from './components';
 import type { JudgmentDisplayMode } from './components';
@@ -110,13 +111,14 @@ function detectTSpin(
 interface RhythmiaProps {
   onQuit?: () => void;
   onGameEnd?: (stats: { score: number; lines: number; bestCombo: number }) => void;
+  locale?: string;
 }
 
 /**
  * Rhythmia - A rhythm-based Tetris game with full game loop:
  * World Creation → Dig → Item Drop → Craft → Firepower → Collapse → Reload → Next World
  */
-export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
+export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaProps) {
   // Device type detection for responsive layouts
   const deviceInfo = useDeviceType();
   const { type: deviceType, isLandscape } = deviceInfo;
@@ -382,6 +384,20 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     fireBullet,
     updateBullets,
     setGameOver,
+    // Mini-tower actions
+    placeMiniTower,
+    removeMiniTower,
+    fireMiniTowerBullets,
+    miniTowersRef,
+    miniTowers,
+    // Aura & garbage arc
+    triggerLineClearAura,
+    spawnGarbageArc,
+    lineClearAuras,
+    garbageArcs,
+    // TD setup
+    confirmTDSetup,
+    tdSetupActive,
   } = gameState;
 
   const {
@@ -443,6 +459,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   addGarbageRowsRef.current = gameState.addGarbageRows;
   const triggerBoardShakeRef = useRef(triggerBoardShake);
   triggerBoardShakeRef.current = triggerBoardShake;
+  const fireMiniTowerBulletsRef = useRef(fireMiniTowerBullets);
+  fireMiniTowerBulletsRef.current = fireMiniTowerBullets;
+  const spawnGarbageArcRef = useRef(spawnGarbageArc);
+  spawnGarbageArcRef.current = spawnGarbageArc;
+  const triggerLineClearAuraRef = useRef(triggerLineClearAura);
+  triggerLineClearAuraRef.current = triggerLineClearAura;
   const spawnFromCorruptionRef = useRef(corruption.spawnFromCorruption);
   spawnFromCorruptionRef.current = corruption.spawnFromCorruption;
 
@@ -891,7 +913,11 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       const center = getBoardCenter();
 
       if (phase === 'td') {
-        // === TD PHASE: Kill enemies when lines are cleared ===
+        // === TD PHASE: Line-clear aura burst — massive damage to ALL enemies ===
+        // The aura instantly kills/damages all enemies AND plays an expanding ring VFX
+        triggerLineClearAuraRef.current(clearedLines);
+
+        // Also kill nearest enemies based on line count (legacy behavior kept)
         const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * amplifiedCombo);
         killEnemies(killCount);
 
@@ -1184,10 +1210,30 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           setTdBeatsRemaining(tdBeatsRemainingRef.current);
         }
 
+        // Mini-tower auto-fire
+        fireMiniTowerBulletsRef.current();
+
         // Move bullets and check collisions — returns kill count
         const kills = updateBulletsRef.current();
         if (kills > 0) {
           playKillSoundRef.current();
+        }
+
+        // Garbage-thrower enemies: periodically throw garbage arcs at the player's board
+        const now = Date.now();
+        for (const enemy of enemiesRef.current) {
+          if (!enemy.alive) continue;
+          if (enemy.enemyType !== 'garbage_thrower' && enemy.enemyType !== 'boss') continue;
+          const lastThrow = enemy.lastGarbageAt ?? 0;
+          if (now - lastThrow >= 5000) {
+            enemy.lastGarbageAt = now;
+            spawnGarbageArcRef.current(
+              enemy.id,
+              enemy.x,
+              enemy.z,
+              enemy.enemyType === 'boss' ? 2 : 1,
+            );
+          }
         }
 
         // Enemies reaching tower → add garbage rows instead of HP damage
@@ -1654,6 +1700,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           corruptedCells={terrainPhase === 'td' ? corruption.corruptedCells : undefined}
           onTerrainReady={handleTerrainReady}
           worldIdx={worldIdx}
+          miniTowers={terrainPhase === 'td' ? miniTowers : []}
+          lineClearAuras={terrainPhase === 'td' ? lineClearAuras : []}
+          garbageArcs={terrainPhase === 'td' ? garbageArcs : []}
         />
       )}
 
@@ -1677,6 +1726,17 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       {/* Tutorial Guide — shown on first vanilla play */}
       {showTutorial && (
         <TutorialGuide onComplete={handleTutorialComplete} />
+      )}
+
+      {/* TD Grid Setup overlay — shown during CHECKPOINT phase so players can place mini-towers */}
+      {isPlaying && tdSetupActive && (
+        <TDGridSetup
+          miniTowers={miniTowers}
+          onPlace={placeMiniTower}
+          onRemove={removeMiniTower}
+          onConfirm={confirmTDSetup}
+          locale={locale}
+        />
       )}
 
       {/* Title Screen */}

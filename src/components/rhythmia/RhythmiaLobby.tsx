@@ -228,7 +228,7 @@ export default function RhythmiaLobby() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <VanillaGame onQuit={closeGame} />
+                <VanillaGame onQuit={closeGame} locale={locale} />
             </motion.div>
         );
     }
