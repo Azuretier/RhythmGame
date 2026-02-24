@@ -1,19 +1,5 @@
-const SKIN_STORAGE_KEY = 'azuret_skin';
+import { createLocalStorageItem } from '@/lib/storage-utils';
 
-export function getStoredSkinId(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage.getItem(SKIN_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
+const { get: getStoredSkinId, set: setStoredSkinId } = createLocalStorageItem('azuret_skin');
 
-export function setStoredSkinId(skinId: string): void {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(SKIN_STORAGE_KEY, skinId);
-  } catch {
-    // localStorage may be full or disabled
-  }
-}
+export { getStoredSkinId, setStoredSkinId };
