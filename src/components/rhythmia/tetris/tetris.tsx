@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION, BEAT_GOOD_WINDOW } from './constants';
 import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import { getModifiers } from './protocol';
@@ -903,8 +903,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         spawnItemDrops(killCount, center.x, center.y);
       } else {
         // === DIG PHASE: Destroy terrain blocks ===
-        // terrain_surge bonus only applies on beat
-        const surgeBonus = onBeat ? activeEffectsRef.current.terrainSurgeBonus : 0;
+        // terrain_surge bonus only applies on perfect beats
+        const surgeBonus = timing === 'perfect' ? activeEffectsRef.current.terrainSurgeBonus : 0;
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * amplifiedCombo * (1 + surgeBonus));
         const remaining = destroyTerrain(damage);
 
@@ -1795,7 +1795,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                 </div>
               )}
               </div>
-              {featureSettings.beatBar && <BeatBar containerRef={beatBarRef} />}
+              {featureSettings.beatBar && (
+                <BeatBar
+                  containerRef={beatBarRef}
+                  beatZoneWidth={(BEAT_GOOD_WINDOW + activeEffects.beatExtendBonus) * protocolMods.beatWindowMultiplier}
+                />
+              )}
               <StatsPanel lines={lines} level={level} />
             </div>
 
