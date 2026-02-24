@@ -28,35 +28,40 @@ const RARITY_COLORS: Record<string, string> = {
 
 // Phase 1: Anticipation — "wind-up" before the reveal
 // Standard cards keep it fast; rare+ extends anticipation to spike dopamine
+// Tuned to 400-1200ms sweet spot: short enough to avoid frustration, long enough to build anticipation
 const RARITY_ANTICIPATION_MS: Record<string, number> = {
-    common: 500,
-    uncommon: 650,
-    rare: 900,
-    epic: 1100,
-    legendary: 1400,
+    common: 400,
+    uncommon: 600,
+    rare: 800,
+    epic: 1000,
+    legendary: 1200,
 };
 
-// Phase 2: Hitstop — micro-freeze before the grand reveal (rare+ only)
+// Phase 2: Hitstop — micro-freeze before the grand reveal
 // Momentarily freezing game state artificially spikes the impact
+// Even uncommon gets a subtle freeze; stronger for rarer cards
 const RARITY_HITSTOP_MS: Record<string, number> = {
     common: 0,
-    uncommon: 0,
-    rare: 60,
-    epic: 100,
-    legendary: 150,
+    uncommon: 30,
+    rare: 80,
+    epic: 120,
+    legendary: 200,
 };
 
 // Phase 3: Impact duration — burst/flash/"OBTAINED!" slam
-const IMPACT_DURATION_MS = 350;
+// 280ms keeps the impact snappy and satisfying
+const IMPACT_DURATION_MS = 280;
 
 // Phase 4: Display — auto-dismiss fallback (wait-for-input is primary)
-const DISPLAY_AUTO_DISMISS_MS = 3500;
+// 2000ms is enough to read and appreciate the card without feeling like waiting
+const DISPLAY_AUTO_DISMISS_MS = 2000;
 
 // Phase 5: Done — fade-out
-const DONE_FADE_MS = 200;
+const DONE_FADE_MS = 150;
 
 // Variable ratio jitter: ±range added to anticipation (prevents habituation)
-const JITTER_RANGE_MS = 100;
+// Wider range (150ms) increases unpredictability for a stronger dopamine response
+const JITTER_RANGE_MS = 150;
 
 const RARITY_PARTICLE_CONFIG: Record<string, { count: number; spread: number; size: number; waves: number }> = {
     common:    { count: 8,  spread: 60,  size: 6,  waves: 1 },
