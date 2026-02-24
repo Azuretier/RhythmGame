@@ -868,7 +868,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 type: 'lineClear',
                 rows: clearedRows.map(r => r + BUFFER_ZONE),
                 count: cleared,
-                onBeat,
+                onBeat: timing !== 'miss',
                 combo: comboRef.current,
             });
         }
