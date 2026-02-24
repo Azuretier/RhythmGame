@@ -855,6 +855,18 @@ export default function BoardRenderer3D({
     onMove(dir);
   }, [onMove]);
 
+  // D-pad hold-to-move refs
+  const dpadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearDpadInterval = useCallback(() => {
+    if (dpadIntervalRef.current) { clearInterval(dpadIntervalRef.current); dpadIntervalRef.current = null; }
+  }, []);
+  const startDpadHold = useCallback((dir: Direction) => {
+    handleTouchMove(dir);
+    clearDpadInterval();
+    dpadIntervalRef.current = setInterval(() => handleTouchMove(dir), MOVE_POLL_MS);
+  }, [handleTouchMove, clearDpadInterval]);
+  useEffect(() => clearDpadInterval, [clearDpadInterval]);
+
   const bgColor = DAY_NIGHT_PRESETS[dayPhase]?.bgColor || '#1e1812';
 
   // FPS mode: wider FOV, eye-level initial camera
@@ -917,12 +929,21 @@ export default function BoardRenderer3D({
         X: {selfState.x} Y: {selfState.y} | {dayPhase.toUpperCase()} | {cameraMode === 'fps' ? 'FPS' : 'BOARD'}
       </div>
 
-      {/* Mobile D-pad */}
+      {/* Mobile D-pad with hold-to-move */}
       <div className={styles.dpad3d}>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadUp3d}`} onClick={() => handleTouchMove('up')}>W</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadLeft3d}`} onClick={() => handleTouchMove('left')}>A</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadDown3d}`} onClick={() => handleTouchMove('down')}>S</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadRight3d}`} onClick={() => handleTouchMove('right')}>D</button>
+        {(['up', 'left', 'down', 'right'] as const).map(dir => (
+          <button
+            key={dir}
+            className={`${styles.dpadBtn3d} ${styles[`dpad${dir.charAt(0).toUpperCase() + dir.slice(1)}3d` as keyof typeof styles]}`}
+            onPointerDown={e => { e.preventDefault(); startDpadHold(dir); }}
+            onPointerUp={clearDpadInterval}
+            onPointerCancel={clearDpadInterval}
+            onPointerLeave={clearDpadInterval}
+            onContextMenu={e => e.preventDefault()}
+          >
+            {{ up: 'W', left: 'A', down: 'S', right: 'D' }[dir]}
+          </button>
+        ))}
       </div>
     </div>
   );

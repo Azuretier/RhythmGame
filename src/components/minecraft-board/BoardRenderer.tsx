@@ -297,10 +297,21 @@ export default function BoardRenderer({
     return cells;
   }, [visibleTileMap, exploredTilesRef, playerMap, mobMap, selfState, playerId, onTileClick, onMobClick, onPlayerClick, activeAnomaly]);
 
-  // Mobile touch controls
+  // Mobile touch controls with hold-to-move
   const handleTouchMove = useCallback((dir: Direction) => {
     onMove(dir);
   }, [onMove]);
+
+  const dpadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearDpadInterval = useCallback(() => {
+    if (dpadIntervalRef.current) { clearInterval(dpadIntervalRef.current); dpadIntervalRef.current = null; }
+  }, []);
+  const startDpadHold = useCallback((dir: Direction) => {
+    handleTouchMove(dir);
+    clearDpadInterval();
+    dpadIntervalRef.current = setInterval(() => handleTouchMove(dir), MOVE_POLL_MS);
+  }, [handleTouchMove, clearDpadInterval]);
+  useEffect(() => clearDpadInterval, [clearDpadInterval]);
 
   return (
     <div className={`${styles.boardWrapper} ${activeAnomaly ? styles.boardAnomaly : ''}`}>
@@ -325,12 +336,21 @@ export default function BoardRenderer({
         X: {selfState.x} Y: {selfState.y} | {dayPhase.toUpperCase()}
       </div>
 
-      {/* Mobile D-pad */}
+      {/* Mobile D-pad with hold-to-move */}
       <div className={styles.dpad}>
-        <button className={`${styles.dpadBtn} ${styles.dpadUp}`} onClick={() => handleTouchMove('up')}>W</button>
-        <button className={`${styles.dpadBtn} ${styles.dpadLeft}`} onClick={() => handleTouchMove('left')}>A</button>
-        <button className={`${styles.dpadBtn} ${styles.dpadDown}`} onClick={() => handleTouchMove('down')}>S</button>
-        <button className={`${styles.dpadBtn} ${styles.dpadRight}`} onClick={() => handleTouchMove('right')}>D</button>
+        {(['up', 'left', 'down', 'right'] as const).map(dir => (
+          <button
+            key={dir}
+            className={`${styles.dpadBtn} ${styles[`dpad${dir.charAt(0).toUpperCase() + dir.slice(1)}` as keyof typeof styles]}`}
+            onPointerDown={e => { e.preventDefault(); startDpadHold(dir); }}
+            onPointerUp={clearDpadInterval}
+            onPointerCancel={clearDpadInterval}
+            onPointerLeave={clearDpadInterval}
+            onContextMenu={e => e.preventDefault()}
+          >
+            {{ up: 'W', left: 'A', down: 'S', right: 'D' }[dir]}
+          </button>
+        ))}
       </div>
     </div>
   );
