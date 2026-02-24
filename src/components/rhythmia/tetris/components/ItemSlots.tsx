@@ -118,8 +118,8 @@ export function ItemSlots({ inventory, equippedCards, activeEffects }: ItemSlots
                     {activeEffects.comboGuardUsesRemaining > 0 && (
                         <span className={styles.effectBadge}>GUARD: {activeEffects.comboGuardUsesRemaining}</span>
                     )}
-                    {activeEffects.shieldActive && (
-                        <span className={styles.effectBadge}>SHIELD</span>
+                    {activeEffects.shieldUsesRemaining > 0 && (
+                        <span className={styles.effectBadge}>SHIELD: {activeEffects.shieldUsesRemaining}</span>
                     )}
                     {activeEffects.terrainSurgeBonus > 0 && (
                         <span className={styles.effectBadge}>SURGE +{Math.round(activeEffects.terrainSurgeBonus * 100)}%</span>

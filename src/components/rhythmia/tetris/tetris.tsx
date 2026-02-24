@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION, BEAT_GOOD_WINDOW } from './constants';
 import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import { getModifiers } from './protocol';
@@ -20,10 +20,17 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
   ssr: false,
 });
 
+// Dynamically import GalaxyRing3D (Three.js requires client-side only)
+const GalaxyRing3D = dynamic(
+  () => import('./components/GalaxyRing3D').then(mod => ({ default: mod.GalaxyRing3D })),
+  { ssr: false }
+);
+
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
 import { useCorruptionSystem } from './hooks/useCorruptionSystem';
+import { useGalaxyTD } from './hooks/useGalaxyTD';
 
 // Corruption system
 
@@ -65,7 +72,7 @@ import {
   TutorialGuide,
   hasTutorialBeenSeen,
   DragonGauge,
-
+  GalaxyBoard,
 } from './components';
 import type { JudgmentDisplayMode } from './components';
 
@@ -414,6 +421,22 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     terrainPhase,
     onCorruptionSpawnEnemy: handleCorruptionSpawnEnemy,
   });
+
+  // ===== Galaxy TD System (ring around board during dig phase) =====
+  const galaxyTD = useGalaxyTD({
+    isPlaying,
+    isPaused,
+    gameOver,
+    terrainPhase,
+  });
+  const galaxyTDTickRef = useRef(galaxyTD.tick);
+  galaxyTDTickRef.current = galaxyTD.tick;
+  const galaxyTDOnLineClearRef = useRef(galaxyTD.onLineClear);
+  galaxyTDOnLineClearRef.current = galaxyTD.onLineClear;
+
+  // Line clear pulse for tower aura visual
+  const [galaxyLineClearPulse, setGalaxyLineClearPulse] = useState(false);
+  const galaxyPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -887,10 +910,18 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         spawnItemDrops(killCount, center.x, center.y);
       } else {
         // === DIG PHASE: Destroy terrain blocks ===
-        // terrain_surge bonus only applies on beat
-        const surgeBonus = onBeat ? activeEffectsRef.current.terrainSurgeBonus : 0;
+        // terrain_surge bonus only applies on perfect beats
+        const surgeBonus = timing === 'perfect' ? activeEffectsRef.current.terrainSurgeBonus : 0;
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * amplifiedCombo * (1 + surgeBonus));
         const remaining = destroyTerrain(damage);
+
+        // Galaxy TD: line clears power up towers on the ring
+        galaxyTDOnLineClearRef.current(clearedLines);
+
+        // Flash tower aura pulse
+        setGalaxyLineClearPulse(true);
+        if (galaxyPulseTimerRef.current) clearTimeout(galaxyPulseTimerRef.current);
+        galaxyPulseTimerRef.current = setTimeout(() => setGalaxyLineClearPulse(false), 600);
 
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
@@ -1080,7 +1111,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     setToastIds([]);
     setActionToasts([]);
     corruption.reset();
-  }, [initAudio, initGame, corruption]);
+    galaxyTD.reset();
+  }, [initAudio, initGame, corruption, galaxyTD]);
 
   // Start game — intercept for tutorial on first play
   const startGame = useCallback((protocolId: number = 0) => {
@@ -1196,8 +1228,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             completeWaveRef.current();
           }
         }
+      } else {
+        // === Dig phase: Galaxy TD ring tick ===
+        galaxyTDTickRef.current();
       }
-      // Dig phase: no enemy/bullet/tower logic — just rhythm VFX below
 
       // VFX: beat pulse ring — intensity scales with BPM (both modes)
       const intensity = Math.min(1, (effectiveBpm - 80) / 100);
@@ -1265,8 +1299,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           }
         }
 
-        // Throttled React state update (~30fps) for Board fever rainbow effect
-        if (now - lastStateUpdate > 33) {
+        // Throttled React state update (~30fps) — only needed during fever mode
+        // (combo >= 10) for the rainbow hue-shift effect. During normal play,
+        // skip the state update to avoid ~30 re-renders/second on the entire tree.
+        if (comboRef.current >= 10 && now - lastStateUpdate > 33) {
           setBeatPhase(phase);
           lastStateUpdate = now;
         }
@@ -1277,7 +1313,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     animFrame = requestAnimationFrame(updateBeat);
 
     return () => cancelAnimationFrame(animFrame);
-  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, setBeatPhase]);
+  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, comboRef, setBeatPhase]);
 
   // Main game loop
   useEffect(() => {
@@ -1669,6 +1705,17 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       {/* Game */}
       {(isPlaying || gameOver) && (
         <div className={styles.game}>
+          {/* Galaxy TD 3D ring — fullscreen behind game UI, only during dig phase */}
+          {terrainPhase === 'dig' && (
+            <GalaxyRing3D
+              enemies={galaxyTD.enemies}
+              towers={galaxyTD.towers}
+              gates={galaxyTD.gates}
+              waveNumber={galaxyTD.waveNumber}
+              lineClearPulse={galaxyLineClearPulse}
+            />
+          )}
+
           {/* Game phase indicator */}
           <GamePhaseIndicator
             phase={gamePhase}
@@ -1709,7 +1756,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             {/* Center column: Board + Beat bar + Stats */}
             <div className={styles.centerColumn}>
               <div className={styles.boardActionArea}>
-              <Board
+              <GalaxyBoard
+                galaxyActive={terrainPhase === 'dig'}
+                waveNumber={galaxyTD.waveNumber}
                 board={board}
                 currentPiece={currentPiece}
                 boardBeat={boardBeat}
@@ -1755,7 +1804,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                 </div>
               )}
               </div>
-              {featureSettings.beatBar && <BeatBar containerRef={beatBarRef} />}
+              {featureSettings.beatBar && (
+                <BeatBar
+                  containerRef={beatBarRef}
+                  beatZoneWidth={(BEAT_GOOD_WINDOW + activeEffects.beatExtendBonus) * protocolMods.beatWindowMultiplier}
+                />
+              )}
               <StatsPanel lines={lines} level={level} />
             </div>
 

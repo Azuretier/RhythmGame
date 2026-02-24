@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Kolekcjoner monet",
+      "desc": "Zdobądź łącznie 100 złota"
+    },
+    "gold_1000": {
+      "name": "Chomik monet",
+      "desc": "Zdobądź łącznie 1 000 złota"
+    },
+    "gold_5000": {
+      "name": "Łowca skarbów",
+      "desc": "Zdobądź łącznie 5 000 złota"
+    },
+    "gold_25000": {
+      "name": "Złoty Król",
+      "desc": "Zdobądź łącznie 25 000 złota"
+    },
+    "gold_100000": {
+      "name": "Legendarny Magnat",
+      "desc": "Zdobądź łącznie 100 000 złota"
+    },
+    "treasure_10": {
+      "name": "Znaleziony skarb",
+      "desc": "Zbierz 10 skarbów"
+    },
+    "treasure_50": {
+      "name": "Poszukiwacz skarbów",
+      "desc": "Zbierz 50 skarbów"
+    },
+    "treasure_200": {
+      "name": "Mistrz skarbów",
+      "desc": "Zbierz 200 skarbów"
+    },
+    "treasure_500": {
+      "name": "Strażnik skarbów",
+      "desc": "Zbierz 500 skarbów"
+    },
+    "treasure_1000": {
+      "name": "Pan bogactw",
+      "desc": "Zbierz 1 000 skarbów"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "Arena Bitewna",
     "subtitle": "Walki 1v1 w czasie rzeczywistym",
     "description": "Walki 1v1 w czasie rzeczywistym przez WebSocket.",
-    "features": "Czas Rzeczywisty|System Śmietnikowych Linii|Rankingowy",
-    "stats": "1v1 Walka|8s Matchmaking|Zastępstwo AI"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Rankingowy"
+    },
+    "stats": {
+      "mode": "Tryb",
+      "battle": "Bitwa",
+      "status": "Status"
+    }
   },
   "uiTheme": {
     "selectTheme": "Wybierz motyw",

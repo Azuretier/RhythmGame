@@ -178,7 +178,7 @@ export type EquippedCard = {
 // ===== Active Attribute Effects (runtime tracking) =====
 export type ActiveEffects = {
     comboGuardUsesRemaining: number;
-    shieldActive: boolean;
+    shieldUsesRemaining: number;
     terrainSurgeBonus: number;
     beatExtendBonus: number;
     scoreBoostMultiplier: number;

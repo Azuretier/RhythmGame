@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Συλλέκτης Νομισμάτων",
+      "desc": "Κέρδισε 100 χρυσό συνολικά"
+    },
+    "gold_1000": {
+      "name": "Συσσωρευτής Νομισμάτων",
+      "desc": "Κέρδισε 1.000 χρυσό συνολικά"
+    },
+    "gold_5000": {
+      "name": "Κυνηγός Θησαυρών",
+      "desc": "Κέρδισε 5.000 χρυσό συνολικά"
+    },
+    "gold_25000": {
+      "name": "Βασιλιάς του Χρυσού",
+      "desc": "Κέρδισε 25.000 χρυσό συνολικά"
+    },
+    "gold_100000": {
+      "name": "Θρυλικός Μεγιστάνας",
+      "desc": "Κέρδισε 100.000 χρυσό συνολικά"
+    },
+    "treasure_10": {
+      "name": "Θησαυρός Βρέθηκε",
+      "desc": "Μάζεψε 10 θησαυρούς"
+    },
+    "treasure_50": {
+      "name": "Αναζητητής Θησαυρών",
+      "desc": "Μάζεψε 50 θησαυρούς"
+    },
+    "treasure_200": {
+      "name": "Μάστορας Θησαυρών",
+      "desc": "Μάζεψε 200 θησαυρούς"
+    },
+    "treasure_500": {
+      "name": "Φύλακας Θησαυρών",
+      "desc": "Μάζεψε 500 θησαυρούς"
+    },
+    "treasure_1000": {
+      "name": "Κύριος του Πλούτου",
+      "desc": "Μάζεψε 1.000 θησαυρούς"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "Αρένα Μάχης",
     "subtitle": "Αγώνες 1v1 σε πραγματικό χρόνο",
     "description": "Αγώνες 1v1 σε πραγματικό χρόνο μέσω WebSocket.",
-    "features": "Πραγματικός Χρόνος|Σύστημα Γραμμών Σκουπιδιών|Κατατεταγμένο",
-    "stats": "1v1 Μάχη|8s Ταίριασμα|Εφεδρεία ΑΙ"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Κατάταξη"
+    },
+    "stats": {
+      "mode": "Λειτουργία",
+      "battle": "Μάχη",
+      "status": "Κατάσταση"
+    }
   },
   "uiTheme": {
     "selectTheme": "Επιλογή θέματος",

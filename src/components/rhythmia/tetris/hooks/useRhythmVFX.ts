@@ -185,6 +185,32 @@ export interface BoardGeometry {
     height: number;
 }
 
+// Particle pool caps — prevent unbounded growth during intense gameplay
+const MAX_BEAT_RINGS = 30;
+const MAX_EQUALIZER_BARS = 60;
+const MAX_GLITCH_PARTICLES = 80;
+const MAX_ROTATION_TRAILS = 20;
+const MAX_WHIRLPOOLS = 10;
+const MAX_SPEED_LINES = 60;
+const MAX_ASCENDING_PARTICLES = 80;
+const MAX_GENERIC_PARTICLES = 120;
+const MAX_COMBO_BREAK_SHARDS = 50;
+const MAX_COMBO_BREAK_RINGS = 20;
+const MAX_DRAGON_ENERGY_TRAILS = 30;
+const MAX_DRAGON_FIRE_PARTICLES = 100;
+const MAX_DRAGON_EMBERS = 80;
+const MAX_DRAGON_BREATH_WAVES = 20;
+
+/**
+ * O(1) removal from array during reverse iteration:
+ * swap dead element with last element and pop.
+ */
+function swapRemove<T>(arr: T[], i: number): void {
+    const last = arr.length - 1;
+    if (i !== last) arr[i] = arr[last];
+    arr.pop();
+}
+
 /**
  * Hook for managing rhythm-reactive VFX on a canvas overlay
  */
@@ -229,6 +255,7 @@ export function useRhythmVFX() {
     // ===== Effect Spawners =====
 
     const spawnBeatRing = useCallback((bpm: number, intensity: number) => {
+        if (stateRef.current.beatRings.length >= MAX_BEAT_RINGS) return;
         const geo = boardGeoRef.current;
         const cx = geo.left + geo.width / 2;
         const cy = geo.top + geo.height / 2;
@@ -262,6 +289,7 @@ export function useRhythmVFX() {
     }, []);
 
     const spawnEqualizerBars = useCallback((rows: number[], count: number, onBeat: boolean) => {
+        if (stateRef.current.equalizerBars.length >= MAX_EQUALIZER_BARS) return;
         const geo = boardGeoRef.current;
         const barWidth = geo.cellSize * 0.8;
         const state = stateRef.current;
@@ -290,6 +318,7 @@ export function useRhythmVFX() {
     }, []);
 
     const spawnGlitchParticles = useCallback((rows: number[], combo: number) => {
+        if (stateRef.current.glitchParticles.length >= MAX_GLITCH_PARTICLES) return;
         const geo = boardGeoRef.current;
         const state = stateRef.current;
         const particleCount = 15 + combo * 3;
@@ -361,6 +390,7 @@ export function useRhythmVFX() {
     }, [cellToPixel]);
 
     const spawnSpeedLines = useCallback((combo: number) => {
+        if (stateRef.current.speedLines.length >= MAX_SPEED_LINES) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         const state = stateRef.current;
@@ -387,6 +417,7 @@ export function useRhythmVFX() {
     }, []);
 
     const spawnAscendingParticles = useCallback((count: number) => {
+        if (stateRef.current.ascendingParticles.length >= MAX_ASCENDING_PARTICLES) return;
         const geo = boardGeoRef.current;
         const state = stateRef.current;
 
@@ -411,6 +442,7 @@ export function useRhythmVFX() {
     }, []);
 
     const spawnHardDropParticles = useCallback((boardX: number, boardY: number, dropDistance: number, color: string) => {
+        if (stateRef.current.genericParticles.length >= MAX_GENERIC_PARTICLES) return;
         const geo = boardGeoRef.current;
         const state = stateRef.current;
         const count = Math.min(30, 8 + dropDistance * 2);
@@ -434,6 +466,7 @@ export function useRhythmVFX() {
     }, []);
 
     const spawnComboBreakEffect = useCallback((lostCombo: number) => {
+        if (stateRef.current.comboBreakShards.length >= MAX_COMBO_BREAK_SHARDS) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
         const geo = boardGeoRef.current;
@@ -510,6 +543,7 @@ export function useRhythmVFX() {
     // ===== Dragon Breath VFX Spawners =====
 
     const spawnDragonEnergyTrail = useCallback((gauge: 'fury' | 'might', newValue: number) => {
+        if (stateRef.current.dragonEnergyTrails.length >= MAX_DRAGON_ENERGY_TRAILS) return;
         const geo = boardGeoRef.current;
         const state = stateRef.current;
         const cx = geo.left + geo.width / 2;
@@ -543,6 +577,7 @@ export function useRhythmVFX() {
     }, []);
 
     const spawnDragonFireBurst = useCallback(() => {
+        if (stateRef.current.dragonFireParticles.length >= MAX_DRAGON_FIRE_PARTICLES) return;
         const geo = boardGeoRef.current;
         const state = stateRef.current;
         const cx = geo.left + geo.width / 2;
@@ -588,6 +623,7 @@ export function useRhythmVFX() {
     }, []);
 
     const spawnDragonEmbers = useCallback((count: number) => {
+        if (stateRef.current.dragonEmbers.length >= MAX_DRAGON_EMBERS) return;
         const geo = boardGeoRef.current;
         const state = stateRef.current;
         const colors = ['#FFB300', '#FF8C00', '#DC143C', '#FFF8E1', '#C41E3A'];
@@ -719,7 +755,7 @@ export function useRhythmVFX() {
             ring.radius += (ring.maxRadius - ring.radius) * dt * 6;
 
             if (ring.life <= 0) {
-                state.beatRings.splice(i, 1);
+                swapRemove(state.beatRings, i);
                 continue;
             }
 
@@ -739,7 +775,7 @@ export function useRhythmVFX() {
             bar.life -= dt * 1.8;
 
             if (bar.life <= 0) {
-                state.equalizerBars.splice(i, 1);
+                swapRemove(state.equalizerBars, i);
                 continue;
             }
 
@@ -766,7 +802,7 @@ export function useRhythmVFX() {
             p.glitchOffset = (Math.random() - 0.5) * 6 * p.life;
 
             if (p.life <= 0) {
-                state.glitchParticles.splice(i, 1);
+                swapRemove(state.glitchParticles, i);
                 continue;
             }
 
@@ -791,7 +827,7 @@ export function useRhythmVFX() {
             trail.life -= dt * 4;
 
             if (trail.life <= 0) {
-                state.rotationTrails.splice(i, 1);
+                swapRemove(state.rotationTrails, i);
                 continue;
             }
 
@@ -816,7 +852,7 @@ export function useRhythmVFX() {
             wp.rotation += dt * 8;
 
             if (wp.life <= 0) {
-                state.whirlpools.splice(i, 1);
+                swapRemove(state.whirlpools, i);
                 continue;
             }
 
@@ -855,7 +891,7 @@ export function useRhythmVFX() {
             line.y += Math.sin(line.angle) * line.speed * dt;
 
             if (line.life <= 0) {
-                state.speedLines.splice(i, 1);
+                swapRemove(state.speedLines, i);
                 continue;
             }
 
@@ -889,7 +925,7 @@ export function useRhythmVFX() {
             p.pulsePhase += p.pulseSpeed * dt;
 
             if (p.life <= 0 || p.y < geo.top - 20) {
-                state.ascendingParticles.splice(i, 1);
+                swapRemove(state.ascendingParticles, i);
                 continue;
             }
 
@@ -919,7 +955,7 @@ export function useRhythmVFX() {
             p.vy += 12 * dt;
 
             if (p.life <= 0) {
-                state.genericParticles.splice(i, 1);
+                swapRemove(state.genericParticles, i);
                 continue;
             }
 
@@ -949,7 +985,7 @@ export function useRhythmVFX() {
             if (shard.trail.length > 6) shard.trail.shift();
 
             if (shard.life <= 0) {
-                state.comboBreakShards.splice(i, 1);
+                swapRemove(state.comboBreakShards, i);
                 continue;
             }
 
@@ -995,7 +1031,7 @@ export function useRhythmVFX() {
             ring.radius += (ring.maxRadius - ring.radius) * dt * 5;
 
             if (ring.life <= 0) {
-                state.comboBreakRings.splice(i, 1);
+                swapRemove(state.comboBreakRings, i);
                 continue;
             }
 
@@ -1023,7 +1059,7 @@ export function useRhythmVFX() {
             trail.life -= dt * 1.2;
 
             if (trail.life <= 0 || trail.progress >= 1) {
-                state.dragonEnergyTrails.splice(i, 1);
+                swapRemove(state.dragonEnergyTrails, i);
                 continue;
             }
 
@@ -1075,7 +1111,7 @@ export function useRhythmVFX() {
             p.vx *= 0.98;
 
             if (p.life <= 0) {
-                state.dragonFireParticles.splice(i, 1);
+                swapRemove(state.dragonFireParticles, i);
                 continue;
             }
 
@@ -1116,7 +1152,7 @@ export function useRhythmVFX() {
             ember.flicker += ember.flickerSpeed * dt;
 
             if (ember.life <= 0 || ember.y < geo.top - 30) {
-                state.dragonEmbers.splice(i, 1);
+                swapRemove(state.dragonEmbers, i);
                 continue;
             }
 
@@ -1141,7 +1177,7 @@ export function useRhythmVFX() {
             wave.radius += (wave.maxRadius - wave.radius) * dt * 4;
 
             if (wave.life <= 0) {
-                state.dragonBreathWaves.splice(i, 1);
+                swapRemove(state.dragonBreathWaves, i);
                 continue;
             }
 

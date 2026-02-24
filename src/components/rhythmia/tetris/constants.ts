@@ -160,7 +160,11 @@ export const TERRAIN_DAMAGE_PER_LINE = 4;
 // ===== Item Definitions =====
 // Items are now defined in the shared registry at @/lib/items/registry.
 // These re-exports maintain backward compatibility for game-specific code.
+<<<<<<< claude/add-treasure-box-element-Kni8D
 import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState, TreasureBoxTier } from './types';
+=======
+import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState } from './types';
+>>>>>>> main
 import { MATERIAL_ITEMS, ITEM_REGISTRY, TOTAL_DROP_WEIGHT as _TOTAL_DROP_WEIGHT } from '@/lib/items/registry';
 
 export const ITEMS: ItemType[] = MATERIAL_ITEMS.map(item => ({
@@ -335,7 +339,7 @@ export const RARITY_OFFER_WEIGHTS: Record<string, number> = {
 // Default (zero) active effects
 export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
     comboGuardUsesRemaining: 0,
-    shieldActive: false,
+    shieldUsesRemaining: 0,
     terrainSurgeBonus: 0,
     beatExtendBonus: 0,
     scoreBoostMultiplier: 1,
