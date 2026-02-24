@@ -418,6 +418,7 @@ export function useGameState() {
     const finishCardSelect = useCallback(() => {
         setShowCardSelect(false);
         setIsPaused(false);
+        isPausedRef.current = false;
 
         // Abort if player died during card select
         if (gameOverRef.current) return;
@@ -453,6 +454,7 @@ export function useGameState() {
         setGamePhase('CARD_SELECT');
         gamePhaseRef.current = 'CARD_SELECT';
         setIsPaused(true);
+        isPausedRef.current = true;
     }, [generateCardOffers]);
 
     // Select a card from offers
@@ -1145,10 +1147,12 @@ export function useGameState() {
 
         setGameOver(false);
         setIsPaused(false);
+        isPausedRef.current = false;
         setIsPlaying(true);
 
         // Reset game loop state
         setGamePhase('WORLD_CREATION');
+        gamePhaseRef.current = 'WORLD_CREATION';
         setInventory([]);
         setFloatingItems([]);
         setTerrainParticles([]);
@@ -1203,6 +1207,7 @@ export function useGameState() {
         // Transition to PLAYING after world creation animation
         setTimeout(() => {
             setGamePhase('PLAYING');
+            gamePhaseRef.current = 'PLAYING';
         }, 1500);
     }, [resetKeyStates]);
 

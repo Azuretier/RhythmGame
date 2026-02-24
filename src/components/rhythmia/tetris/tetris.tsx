@@ -6,7 +6,7 @@ import styles from './VanillaGame.module.css';
 
 // Constants and Types
 import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION } from './constants';
-import type { Piece, GameMode, FeatureSettings } from './types';
+import type { Piece, GameMode, FeatureSettings, GamePhase } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import { getModifiers } from './protocol';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
@@ -162,6 +162,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   vfxRef.current = vfx;
   const boardElRef = useRef<HTMLDivElement>(null);
   const beatBarRef = useRef<HTMLDivElement>(null);
+  // Tracks the previous game phase to detect transitions (e.g. WORLD_CREATION → PLAYING)
+  const prevGamePhaseRef = useRef<GamePhase>('PLAYING');
 
   const [pauseStateBeforeOverlay, setPauseStateBeforeOverlay] = useState(false);
 
@@ -443,6 +445,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   completeWaveRef.current = completeWave;
   const addGarbageRowsRef = useRef(gameState.addGarbageRows);
   addGarbageRowsRef.current = gameState.addGarbageRows;
+  const resetKeyStatesRef = useRef(gameState.resetKeyStates);
+  resetKeyStatesRef.current = gameState.resetKeyStates;
   const triggerBoardShakeRef = useRef(triggerBoardShake);
   triggerBoardShakeRef.current = triggerBoardShake;
   const spawnFromCorruptionRef = useRef(corruption.spawnFromCorruption);
@@ -1278,38 +1282,52 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
     const gameLoop = (currentTime: number) => {
       if (!isPausedRef.current && !gameOverRef.current) {
-        processHorizontalDasArr('left', currentTime);
-        processHorizontalDasArr('right', currentTime);
-        processSoftDrop(currentTime);
-        processMouseSoftDrop(currentTime);
-
-        const baseSpeed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
-        const speed = baseSpeed / ((activeEffectsRef.current?.gravitySlowFactor || 1) * protocolModsRef.current.gravityMultiplier);
-        if (currentTime - lastGravityRef.current >= speed) {
-          tick();
+        // Reset stale input/lock state on every transition into PLAYING phase
+        if (gamePhaseRef.current === 'PLAYING' && prevGamePhaseRef.current !== 'PLAYING') {
+          lockStartTimeRef.current = null;
+          lockMovesRef.current = 0;
           lastGravityRef.current = currentTime;
+          resetKeyStatesRef.current();
         }
+        prevGamePhaseRef.current = gamePhaseRef.current;
 
-        // Lock delay check — piece gets a grace period on ground before locking
-        const piece = currentPieceRef.current;
-        if (piece) {
-          const onGround = !isValidPosition({ ...piece, y: piece.y + 1 }, boardRef.current);
-          if (onGround) {
-            if (lockStartTimeRef.current === null) {
-              lockStartTimeRef.current = currentTime;
-            } else if (currentTime - lockStartTimeRef.current >= LOCK_DELAY) {
-              handlePieceLockRef.current(piece);
-            }
-          } else {
-            lockStartTimeRef.current = null;
+        // Only run game physics and input during the PLAYING phase — prevents piece
+        // gravity / lock-delay from advancing game state during WORLD_CREATION,
+        // COLLAPSE, CHECKPOINT, TRANSITION, CARD_SELECT and CARD_ABSORBING phases.
+        if (gamePhaseRef.current === 'PLAYING') {
+          processHorizontalDasArr('left', currentTime);
+          processHorizontalDasArr('right', currentTime);
+          processSoftDrop(currentTime);
+          processMouseSoftDrop(currentTime);
+
+          const baseSpeed = Math.max(100, 1000 - (levelRef.current - 1) * 100);
+          const speed = baseSpeed / ((activeEffectsRef.current?.gravitySlowFactor || 1) * protocolModsRef.current.gravityMultiplier);
+          if (currentTime - lastGravityRef.current >= speed) {
+            tick();
+            lastGravityRef.current = currentTime;
           }
-        }
 
-        // Process deferred terrain checkpoint when game returns to PLAYING
-        if (pendingCheckpointRef.current && gamePhaseRef.current === 'PLAYING') {
-          pendingCheckpointRef.current = false;
-          gameWorldsClearedRef.current++;
-          enterCheckpointRef.current();
+          // Lock delay check — piece gets a grace period on ground before locking
+          const piece = currentPieceRef.current;
+          if (piece) {
+            const onGround = !isValidPosition({ ...piece, y: piece.y + 1 }, boardRef.current);
+            if (onGround) {
+              if (lockStartTimeRef.current === null) {
+                lockStartTimeRef.current = currentTime;
+              } else if (currentTime - lockStartTimeRef.current >= LOCK_DELAY) {
+                handlePieceLockRef.current(piece);
+              }
+            } else {
+              lockStartTimeRef.current = null;
+            }
+          }
+
+          // Process deferred terrain checkpoint when game returns to PLAYING
+          if (pendingCheckpointRef.current) {
+            pendingCheckpointRef.current = false;
+            gameWorldsClearedRef.current++;
+            enterCheckpointRef.current();
+          }
         }
       }
 
@@ -1334,6 +1352,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
       // Don't process game inputs while card select is showing
       if (showCardSelect) return;
+
+      // Don't process game inputs during phase transitions — only PLAYING is interactive
+      if (gamePhaseRef.current !== 'PLAYING') return;
 
       const currentTime = performance.now();
 
