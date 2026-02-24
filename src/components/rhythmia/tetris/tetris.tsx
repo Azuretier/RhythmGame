@@ -938,9 +938,10 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
           if (gamePhaseRef.current === 'PLAYING') {
             gameWorldsClearedRef.current++;
             enterCheckpoint();
-          } else {
+          } else if (gamePhaseRef.current !== 'COLLAPSE' && gamePhaseRef.current !== 'CHECKPOINT') {
             // Terrain fully destroyed during a non-PLAYING phase (e.g. WORLD_CREATION).
             // Defer the checkpoint until the game phase returns to PLAYING.
+            // Skip COLLAPSE/CHECKPOINT — a checkpoint transition is already in progress.
             pendingCheckpointRef.current = true;
           }
         }

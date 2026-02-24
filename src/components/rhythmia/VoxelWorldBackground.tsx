@@ -1350,15 +1350,58 @@ export default function VoxelWorldBackground({
           const ey2 = (-projVec.y * 0.5 + 0.5) * hpCanvas.height;
           const screenRadius = Math.sqrt((ex2 - auraScreenCx) ** 2 + (ey2 - auraScreenCy) ** 2);
           const alpha = 1 - progress;
-          hpCtx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.9})`;
-          hpCtx.lineWidth = 3 * (1 - progress * 0.5) + 1;
+
+          // Filled radial gradient — visible area-of-effect glow
+          if (screenRadius > 0) {
+            const grad = hpCtx.createRadialGradient(
+              auraScreenCx, auraScreenCy, screenRadius * 0.3,
+              auraScreenCx, auraScreenCy, screenRadius,
+            );
+            grad.addColorStop(0, `rgba(80, 200, 255, ${alpha * 0.25})`);
+            grad.addColorStop(0.6, `rgba(60, 160, 255, ${alpha * 0.12})`);
+            grad.addColorStop(1, `rgba(40, 120, 255, 0)`);
+            hpCtx.fillStyle = grad;
+            hpCtx.beginPath();
+            hpCtx.arc(auraScreenCx, auraScreenCy, screenRadius, 0, Math.PI * 2);
+            hpCtx.fill();
+          }
+
+          // Bright center flash (fades quickly)
+          const flashAlpha = Math.max(0, 1 - progress * 3);
+          if (flashAlpha > 0 && screenRadius > 0) {
+            const flashGrad = hpCtx.createRadialGradient(
+              auraScreenCx, auraScreenCy, 0,
+              auraScreenCx, auraScreenCy, screenRadius * 0.3,
+            );
+            flashGrad.addColorStop(0, `rgba(255, 255, 255, ${flashAlpha * 0.6})`);
+            flashGrad.addColorStop(1, `rgba(100, 200, 255, 0)`);
+            hpCtx.fillStyle = flashGrad;
+            hpCtx.beginPath();
+            hpCtx.arc(auraScreenCx, auraScreenCy, screenRadius * 0.3, 0, Math.PI * 2);
+            hpCtx.fill();
+          }
+
+          // Main cyan ring — thick and bright
+          hpCtx.strokeStyle = `rgba(100, 220, 255, ${alpha * 0.95})`;
+          hpCtx.lineWidth = 5 * (1 - progress * 0.4) + 2;
           hpCtx.beginPath();
           hpCtx.arc(auraScreenCx, auraScreenCy, screenRadius, 0, Math.PI * 2);
           hpCtx.stroke();
+
+          // Secondary ring (slightly behind the main ring)
+          if (screenRadius > 8) {
+            hpCtx.strokeStyle = `rgba(160, 230, 255, ${alpha * 0.6})`;
+            hpCtx.lineWidth = 2;
+            hpCtx.beginPath();
+            hpCtx.arc(auraScreenCx, auraScreenCy, screenRadius * 0.88, 0, Math.PI * 2);
+            hpCtx.stroke();
+          }
+
+          // Inner white ring
           hpCtx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.5})`;
-          hpCtx.lineWidth = 1;
+          hpCtx.lineWidth = 1.5;
           hpCtx.beginPath();
-          hpCtx.arc(auraScreenCx, auraScreenCy, screenRadius * 0.8, 0, Math.PI * 2);
+          hpCtx.arc(auraScreenCx, auraScreenCy, screenRadius * 0.75, 0, Math.PI * 2);
           hpCtx.stroke();
         }
 
