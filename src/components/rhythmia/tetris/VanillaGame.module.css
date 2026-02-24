@@ -1095,6 +1095,7 @@
   flex-shrink: 0;
   clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
   border-radius: 0;
+  overflow: visible;
 }
 
 .protocolEnterBtn:hover {
@@ -1118,7 +1119,7 @@
 /* Corner accent elements on the Enter button */
 .hsrEnterCornerTL {
   position: absolute;
-  top: -1px;
+  top: 0px;
   left: 8px;
   width: 16px;
   height: 16px;
@@ -1130,7 +1131,7 @@
 
 .hsrEnterCornerBR {
   position: absolute;
-  bottom: -1px;
+  bottom: 0px;
   right: 8px;
   width: 16px;
   height: 16px;
