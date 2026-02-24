@@ -42,6 +42,8 @@ import {
   clearLines,
   createSpawnPiece,
   getShape,
+  getBeatJudgment,
+  getBeatMultiplier,
 } from './utils';
 import {
   getBeatJudgment,
@@ -956,6 +958,14 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * amplifiedCombo * (1 + surgeBonus));
         const remaining = destroyTerrain(damage);
 
+        // Galaxy TD: line clears power up towers on the ring
+        galaxyTDOnLineClearRef.current(clearedLines);
+
+        // Flash tower aura pulse
+        setGalaxyLineClearPulse(true);
+        if (galaxyPulseTimerRef.current) clearTimeout(galaxyPulseTimerRef.current);
+        galaxyPulseTimerRef.current = setTimeout(() => setGalaxyLineClearPulse(false), 600);
+
         // Item drops from terrain
         spawnItemDrops(damage, center.x, center.y);
 
@@ -1345,7 +1355,6 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
           beatBarRef.current.style.setProperty('--beat-phase', String(phase));
           const beatExtend = activeEffectsRef.current?.beatExtendBonus || 0;
           const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
-
           const zone = getBeatJudgment(phase, beatExtend, beatWindowMod);
           if (zone !== 'miss') {
             beatBarRef.current.setAttribute('data-onbeat', zone);
@@ -1354,8 +1363,10 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
           }
         }
 
-        // Throttled React state update (~30fps) for Board fever rainbow effect
-        if (now - lastStateUpdate > 33) {
+        // Throttled React state update (~30fps) — only needed during fever mode
+        // (combo >= 10) for the rainbow hue-shift effect. During normal play,
+        // skip the state update to avoid ~30 re-renders/second on the entire tree.
+        if (comboRef.current >= 10 && now - lastStateUpdate > 33) {
           setBeatPhase(phase);
           lastStateUpdate = now;
         }
@@ -1366,7 +1377,7 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     animFrame = requestAnimationFrame(updateBeat);
 
     return () => cancelAnimationFrame(animFrame);
-  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, setBeatPhase]);
+  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, comboRef, setBeatPhase]);
 
   // Main game loop
   useEffect(() => {
@@ -1783,6 +1794,17 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
       {/* Game */}
       {(isPlaying || gameOver) && (
         <div className={styles.game}>
+          {/* Galaxy TD 3D ring — fullscreen behind game UI, only during dig phase */}
+          {terrainPhase === 'dig' && (
+            <GalaxyRing3D
+              enemies={galaxyTD.enemies}
+              towers={galaxyTD.towers}
+              gates={galaxyTD.gates}
+              waveNumber={galaxyTD.waveNumber}
+              lineClearPulse={galaxyLineClearPulse}
+            />
+          )}
+
           {/* Game phase indicator */}
           <GamePhaseIndicator
             phase={gamePhase}

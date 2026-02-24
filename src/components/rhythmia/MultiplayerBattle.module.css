@@ -586,6 +586,18 @@
     width: 4px;
 }
 
+.beatCursorGreat {
+    background: #76FF03;
+    box-shadow: 0 0 5px #76FF03, 0 0 10px rgba(118, 255, 3, 0.35);
+    width: 4px;
+}
+
+.beatCursorGood {
+    background: #FFD700;
+    box-shadow: 0 0 4px #FFD700, 0 0 8px rgba(255, 215, 0, 0.3);
+    width: 4px;
+}
+
 .beatLabel {
     font-size: 0.55rem;
     font-weight: 600;

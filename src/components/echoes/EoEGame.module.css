@@ -1,0 +1,1745 @@
+/* =============================================================================
+   ECHOES OF ETERNITY — Game Styles
+   ============================================================================= */
+
+/* --- Layout --- */
+.gameContainer {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a3e 100%);
+  color: #e0e0e0;
+  font-family: var(--font-theme-body, 'Inter', sans-serif);
+  overflow: hidden;
+}
+
+.mainContent {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+/* --- Connection / Error Banners --- */
+.connectionBanner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  text-align: center;
+  font-size: 0.875rem;
+  z-index: 100;
+}
+
+.errorBanner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem;
+  background: rgba(234, 179, 8, 0.9);
+  color: #1a1a2e;
+  text-align: center;
+  font-size: 0.875rem;
+  z-index: 99;
+}
+
+/* --- Menu --- */
+.menu {
+  width: 100%;
+  max-width: 1200px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.menuHeader {
+  text-align: center;
+}
+
+.gameTitle {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  background: linear-gradient(135deg, #007fff, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+}
+
+.gameSubtitle {
+  font-size: 1.25rem;
+  color: #a0a0c0;
+  margin-top: 0.25rem;
+}
+
+.modeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.modeCard {
+  position: relative;
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.modeCard:hover {
+  border-color: var(--mode-color, #007fff);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.modeCardSelected {
+  border-color: var(--mode-color, #007fff);
+  background: rgba(0, 127, 255, 0.15);
+  box-shadow: 0 0 20px rgba(0, 127, 255, 0.2);
+}
+
+.modeCardLocked {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modeIcon {
+  font-size: 2rem;
+}
+
+.modeName {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.modeNameJa {
+  font-size: 0.75rem;
+  color: #a0a0c0;
+}
+
+.modeDesc {
+  font-size: 0.7rem;
+  color: #808090;
+  line-height: 1.3;
+}
+
+.modePlayers {
+  font-size: 0.7rem;
+  color: #a0a0c0;
+  margin-top: 0.25rem;
+}
+
+.rankedBadge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  background: #f59e0b;
+  color: #1a1a2e;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.menuActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.menuFooter {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.footerButton {
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.footerButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* --- Buttons --- */
+.primaryButton {
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #007fff, #0066cc);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.primaryButton:hover {
+  background: linear-gradient(135deg, #0066cc, #004fa3);
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.backButton {
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  color: #a0a0c0;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.cancelButton {
+  composes: secondaryButton;
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.leaveButton {
+  composes: secondaryButton;
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* --- Modal --- */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modalContent {
+  background: #1a1a2e;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 300px;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.codeInput {
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 1.5rem;
+  text-align: center;
+  letter-spacing: 0.3em;
+  font-family: monospace;
+}
+
+/* --- Queue --- */
+.queueScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.queueSpinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #007fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.queueTitle {
+  font-size: 1.5rem;
+}
+
+.queuePosition {
+  color: #a0a0c0;
+}
+
+/* --- Loading --- */
+.loadingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loadingBar {
+  width: 200px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loadingBar::after {
+  content: '';
+  display: block;
+  width: 50%;
+  height: 100%;
+  background: #007fff;
+  animation: loadSlide 1.5s ease-in-out infinite;
+}
+
+@keyframes loadSlide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+/* --- Lobby --- */
+.lobby {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.lobbyHeader {
+  text-align: center;
+}
+
+.roomCode {
+  font-size: 0.875rem;
+  color: #a0a0c0;
+}
+
+.codeHighlight {
+  font-family: monospace;
+  font-weight: 700;
+  color: #007fff;
+  font-size: 1.25rem;
+  letter-spacing: 0.2em;
+}
+
+.lobbyMode {
+  color: #a0a0c0;
+  font-size: 0.875rem;
+}
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.playerCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.playerReady {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.playerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.playerName {
+  font-weight: 600;
+}
+
+.playerCharacter {
+  font-size: 0.75rem;
+}
+
+.readyBadge {
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.notReadyBadge {
+  color: #808090;
+  font-size: 0.75rem;
+}
+
+/* --- Character Grid (Lobby) --- */
+.characterGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.charList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.charCard {
+  padding: 0.75rem 0.5rem;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 0.75rem;
+}
+
+.charCard:hover {
+  border-color: var(--char-color, #007fff);
+}
+
+.charCardSelected {
+  border-color: var(--char-color, #007fff);
+  background: rgba(0, 127, 255, 0.15);
+}
+
+.charCardTaken {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.charRarity {
+  color: #ffd700;
+  font-size: 0.65rem;
+}
+
+.charName {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.charNameJa {
+  font-size: 0.7rem;
+  color: #a0a0c0;
+}
+
+.charElement {
+  font-size: 0.65rem;
+  color: var(--char-color, #a0a0c0);
+}
+
+.charRole {
+  font-size: 0.6rem;
+  color: #808090;
+  text-transform: uppercase;
+}
+
+/* --- Lobby Actions --- */
+.lobbyActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.readyButton {
+  composes: primaryButton;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.readyButton:hover {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.readyButtonActive {
+  composes: secondaryButton;
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.startButton {
+  composes: primaryButton;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.startButton:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+.startButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Battle Screen --- */
+.battleScreen {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem;
+}
+
+.battleLoading {
+  text-align: center;
+  color: #a0a0c0;
+}
+
+.turnIndicator {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: #a0a0c0;
+}
+
+.phaseLabel {
+  color: #007fff;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.yourTurn {
+  color: #22c55e;
+  font-weight: 700;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* --- Combo Counter --- */
+.comboCounter {
+  position: fixed;
+  top: 50%;
+  right: 2rem;
+  transform: translateY(-50%);
+  text-align: center;
+  z-index: 10;
+}
+
+.comboNumber {
+  display: block;
+  font-size: 3rem;
+  font-weight: 900;
+  color: #f59e0b;
+  line-height: 1;
+}
+
+.comboLabel {
+  font-size: 0.875rem;
+  color: #a0a0c0;
+  letter-spacing: 0.2em;
+}
+
+.comboMultiplier {
+  display: block;
+  font-size: 1.25rem;
+  color: #ec4899;
+  font-weight: 700;
+}
+
+/* --- Damage Popup --- */
+.damagePopup {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  font-weight: 900;
+  color: #ef4444;
+  animation: damageFloat 0.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.critDamage {
+  font-size: 3rem;
+  color: #ffd700;
+}
+
+.perfectCrit {
+  display: block;
+  font-size: 1rem;
+  color: #a855f7;
+}
+
+@keyframes damageFloat {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-60px); }
+}
+
+/* --- Reaction Popup --- */
+.reactionPopup {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  animation: reactionPop 1s ease-out forwards;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.reactionType {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #a855f7;
+  letter-spacing: 0.1em;
+}
+
+.reactionDamage {
+  font-size: 1rem;
+  color: #ec4899;
+}
+
+@keyframes reactionPop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  20% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+  100% { opacity: 0; transform: translateX(-50%) scale(1) translateY(-40px); }
+}
+
+/* --- Enemy / Ally Cards --- */
+.enemySide {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.playerSide {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.enemyCard, .allyCard {
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  min-width: 140px;
+  max-width: 200px;
+}
+
+.enemyCard {
+  cursor: default;
+  transition: all 0.2s;
+}
+
+.enemyTargetable {
+  cursor: pointer;
+  border-color: #ef4444;
+}
+
+.enemyTargetable:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.enemyTargeted {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.enemyDead, .allyDead {
+  opacity: 0.3;
+}
+
+.allyCurrent {
+  border-color: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+}
+
+.enemyHeader, .allyHeader {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.enemyElement, .allyElement {
+  font-weight: 700;
+}
+
+.enemyName, .allyName {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.enemyLevel, .allyLevel {
+  color: #a0a0c0;
+  font-size: 0.7rem;
+}
+
+.bossBadge {
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  background: #ef4444;
+  color: white;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+/* --- HP / MP Bars --- */
+.hpBarOuter, .mpBarOuter {
+  position: relative;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 0.25rem;
+}
+
+.hpBarInner {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s;
+}
+
+.mpBarOuter {
+  height: 8px;
+  margin-top: 0.125rem;
+}
+
+.mpBarInner {
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.hpText, .mpText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  color: white;
+  font-weight: 600;
+}
+
+/* --- Status Effects --- */
+.statusEffects {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+.statusBadge {
+  font-size: 0.5rem;
+  padding: 1px 3px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  color: #a0a0c0;
+}
+
+/* --- Skill Bar --- */
+.skillBar {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+}
+
+.skillButton {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.skillButton:hover {
+  border-color: var(--skill-color, #007fff);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.skillSelected {
+  border-color: var(--skill-color, #007fff);
+  background: rgba(0, 127, 255, 0.2);
+}
+
+.skillButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.skillName {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #e0e0e0;
+}
+
+.skillType {
+  font-size: 0.6rem;
+  color: #808090;
+  text-transform: uppercase;
+}
+
+.skillCost {
+  font-size: 0.6rem;
+  color: #3b82f6;
+}
+
+.skillCooldown {
+  font-size: 0.6rem;
+  color: #ef4444;
+}
+
+.skillMultiplier {
+  font-size: 0.6rem;
+  color: #f59e0b;
+}
+
+.endTurnButton {
+  composes: secondaryButton;
+  align-self: center;
+}
+
+/* --- Rhythm Screen --- */
+.rhythmScreen {
+  width: 100%;
+  max-width: 600px;
+  height: 80vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.rhythmLoading {
+  text-align: center;
+  color: #a0a0c0;
+}
+
+.rhythmHeader {
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.rhythmStats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.rhythmCombo {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.rhythmProgress {
+  color: #a0a0c0;
+}
+
+.rhythmProgressBar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.rhythmProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #007fff, #a855f7);
+  border-radius: 2px;
+  transition: width 0.1s;
+}
+
+/* --- Judgement Display --- */
+.judgementDisplay {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  font-weight: 900;
+  animation: judgePop 0.4s ease-out forwards;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.judgement_perfect { color: #ffd700; }
+.judgement_great { color: #3b82f6; }
+.judgement_good { color: #22c55e; }
+.judgement_miss { color: #ef4444; }
+
+@keyframes judgePop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  30% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+  100% { opacity: 0; transform: translateX(-50%) scale(1) translateY(-20px); }
+}
+
+/* --- Lane Container --- */
+.laneContainer {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.lane {
+  flex: 1;
+  position: relative;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lane:last-child {
+  border-right: none;
+}
+
+.note {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  transition: top 0.05s linear;
+}
+
+.note_hold {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.note_flick {
+  border-radius: 50%;
+}
+
+.holdTail {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 4px;
+  height: 40px;
+  background: inherit;
+  opacity: 0.5;
+  transform: translateX(-50%);
+}
+
+.flickArrow, .slideArrow {
+  font-size: 1rem;
+}
+
+.hitZone {
+  position: absolute;
+  bottom: 10%;
+  left: 10%;
+  width: 80%;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.laneKey {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* --- Rhythm Score --- */
+.rhythmScore {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.scoreItem {
+  font-family: monospace;
+}
+
+/* --- Rhythm Ready --- */
+.rhythmReady {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 20;
+}
+
+.rhythmReady h2 {
+  font-size: 2.5rem;
+  color: #007fff;
+  animation: pulse 1s infinite;
+}
+
+.rhythmDifficulty {
+  color: #a0a0c0;
+  font-size: 0.875rem;
+}
+
+/* --- Results Screen --- */
+.resultsScreen {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.resultBanner {
+  text-align: center;
+  padding: 2rem;
+  border-radius: 16px;
+}
+
+.result_victory {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(0, 127, 255, 0.1));
+  border: 2px solid #22c55e;
+}
+
+.result_defeat {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(100, 0, 0, 0.1));
+  border: 2px solid #ef4444;
+}
+
+.result_draw {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(100, 80, 0, 0.1));
+  border: 2px solid #eab308;
+}
+
+.resultTitle {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+}
+
+.result_victory .resultTitle { color: #22c55e; }
+.result_defeat .resultTitle { color: #ef4444; }
+.result_draw .resultTitle { color: #eab308; }
+
+.resultTitleJa {
+  font-size: 1.25rem;
+  color: #a0a0c0;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.statCard {
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  color: #808090;
+  text-transform: uppercase;
+  display: block;
+}
+
+.statValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+
+.damageBreakdown {
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.damageRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.8rem;
+}
+
+.damageValue {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.rewardsSection {
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.rewardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rewardItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.rewardValue {
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.mvpSection {
+  text-align: center;
+  padding: 0.75rem;
+}
+
+.mvpLabel {
+  font-size: 0.7rem;
+  color: #ffd700;
+  letter-spacing: 0.15em;
+}
+
+.mvpName {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffd700;
+}
+
+.resultsActions {
+  display: flex;
+  justify-content: center;
+}
+
+/* --- Character Select --- */
+.charSelectScreen {
+  width: 100%;
+  max-width: 1100px;
+  padding: 1rem;
+}
+
+.charSelectTitle {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.charSelectLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .charSelectLayout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.charSelectGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.5rem;
+}
+
+.charSelectCard {
+  padding: 0.75rem 0.5rem;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.charSelectCard:hover {
+  border-color: var(--char-color, #007fff);
+}
+
+.charSelectCardActive {
+  border-color: var(--char-color, #007fff);
+  background: rgba(0, 127, 255, 0.15);
+  box-shadow: 0 0 15px rgba(0, 127, 255, 0.2);
+}
+
+.charSelectRarity {
+  color: #ffd700;
+  font-size: 0.6rem;
+}
+
+.charSelectName {
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.charSelectNameJa {
+  font-size: 0.65rem;
+  color: #a0a0c0;
+}
+
+.charSelectElement {
+  font-size: 0.6rem;
+  color: var(--char-color, #a0a0c0);
+}
+
+.charSelectRole {
+  font-size: 0.55rem;
+  color: #808090;
+  text-transform: uppercase;
+}
+
+/* --- Character Detail --- */
+.charDetail {
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.charTitle {
+  font-size: 0.875rem;
+  color: #a0a0c0;
+  font-style: italic;
+}
+
+.charLore {
+  font-size: 0.8rem;
+  color: #808090;
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
+.charStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+  margin: 0.75rem 0;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.charSkillList, .charPassives {
+  margin-top: 0.75rem;
+}
+
+.charSkillList h4, .charPassives h4 {
+  font-size: 0.875rem;
+  color: #a0a0c0;
+  margin-bottom: 0.5rem;
+}
+
+.skillDetail {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.skillDetailName {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.skillDetailType {
+  font-size: 0.65rem;
+  color: #808090;
+  margin-left: 0.5rem;
+}
+
+.skillDetailDesc {
+  font-size: 0.7rem;
+  color: #a0a0c0;
+  margin: 0.125rem 0;
+}
+
+.skillDetailMeta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.65rem;
+  color: #808090;
+}
+
+.passiveDetail {
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.passiveName {
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.passiveDesc {
+  font-size: 0.7rem;
+  color: #a0a0c0;
+}
+
+/* --- Gacha Screen --- */
+.gachaScreen {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.gachaTitle {
+  font-size: 2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #ffd700, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gachaSubtitle {
+  color: #a0a0c0;
+  margin-top: -1rem;
+}
+
+.bannerInfo {
+  text-align: center;
+}
+
+.bannerName {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.bannerRates {
+  font-size: 0.75rem;
+  color: #808090;
+}
+
+.pityInfo {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #a0a0c0;
+}
+
+.guaranteedBadge {
+  color: #ffd700;
+  font-weight: 700;
+}
+
+.pullButtons {
+  display: flex;
+  gap: 1rem;
+}
+
+.pullButton {
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: 2px solid #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pullButton:hover {
+  background: rgba(255, 215, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.pullButton10 {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.pullButton10:hover {
+  background: rgba(168, 85, 247, 0.2);
+}
+
+.pullLabel {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #e0e0e0;
+}
+
+.pullCost {
+  font-size: 0.75rem;
+  color: #a0a0c0;
+}
+
+/* --- Gacha Results --- */
+.gachaResults {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.gachaCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.gachaCard {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  text-align: center;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: all 0.3s;
+}
+
+.gachaCardRevealed {
+  transform: rotateY(0);
+}
+
+.gacha_rainbow {
+  border-color: #ffd700;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(168, 85, 247, 0.15));
+}
+
+.gacha_golden {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.gachaRarity {
+  color: #ffd700;
+  font-size: 0.75rem;
+}
+
+.gachaCharName {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.gachaCharTitle {
+  font-size: 0.65rem;
+  color: #a0a0c0;
+}
+
+.gachaHidden {
+  font-size: 2rem;
+  color: #808090;
+}
+
+.gachaNewBadge {
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  background: #22c55e;
+  color: white;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.gachaFeaturedBadge {
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  background: #f59e0b;
+  color: #1a1a2e;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.gachaPityBadge {
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  background: #a855f7;
+  color: white;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.gachaRevealActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* --- HUD --- */
+.hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.hud > * {
+  pointer-events: auto;
+}
+
+.hudTopRight {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.hudBottomLeft {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hudBottomRight {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+}
+
+.hudButton {
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.5);
+  color: #e0e0e0;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+/* --- Chat --- */
+.chatBox {
+  width: 280px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.chatMessages {
+  max-height: 150px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.chatMessage {
+  font-size: 0.7rem;
+  color: #c0c0d0;
+}
+
+.chatSender {
+  color: #007fff;
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.chatInputRow {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.chatInput {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  font-size: 0.7rem;
+}
+
+.chatSendButton {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: none;
+  background: #007fff;
+  color: white;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+/* --- Emotes --- */
+.emoteBar {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.emoteButton {
+  padding: 0.25rem;
+  font-size: 1.25rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.emoteButton:hover {
+  transform: scale(1.2);
+}
+
+.emotePopup {
+  position: absolute;
+  bottom: 4rem;
+  animation: emoteRise 2s ease-out forwards;
+  pointer-events: none;
+}
+
+.emoteIcon {
+  font-size: 2rem;
+}
+
+@keyframes emoteRise {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-80px); }
+}
+
+/* --- Notifications --- */
+.levelUpNotification, .achievementNotification {
+  position: fixed;
+  top: 3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  text-align: center;
+  z-index: 50;
+  animation: slideDown 0.3s ease-out;
+}
+
+.levelUpNotification {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(0, 127, 255, 0.9));
+  border: 2px solid #22c55e;
+}
+
+.achievementNotification {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(168, 85, 247, 0.9));
+  border: 2px solid #f59e0b;
+}
+
+.achievementJa {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+@keyframes slideDown {
+  from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* --- Coming Soon --- */
+.comingSoon {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.comingSoon h2 {
+  font-size: 1.5rem;
+  color: #a0a0c0;
+}
+
+.comingSoon p {
+  color: #808090;
+}

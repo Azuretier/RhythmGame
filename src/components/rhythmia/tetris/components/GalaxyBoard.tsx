@@ -47,8 +47,10 @@ interface GalaxyBoardProps {
 /**
  * Galaxy Board — wraps the Tetris Board with a wave label during dig phase.
  * The 3D grid terrain ring is rendered separately in GalaxyRing3D.tsx.
+ * Wrapped in React.memo to prevent re-renders from parent state changes
+ * that don't affect the board area.
  */
-export function GalaxyBoard({
+export const GalaxyBoard = React.memo(function GalaxyBoard({
     galaxyActive,
     waveNumber,
     board,
@@ -125,4 +127,4 @@ export function GalaxyBoard({
             {boardElement}
         </div>
     );
-}
+});

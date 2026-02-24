@@ -236,7 +236,6 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
 
     let count = 3;
     setCountdownNumber(count);
-    setPhase('countdown');
 
     const interval = setInterval(() => {
       count--;
@@ -343,7 +342,7 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
       )}
 
       {/* Countdown */}
-      {phase === 'countdown' && (
+      {phase === 'found' && (
         <div className={styles.countdownScreen}>
           <div className={styles.matchupDisplay}>
             <div className={styles.matchupPlayer}>

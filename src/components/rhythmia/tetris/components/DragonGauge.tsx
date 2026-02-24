@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react';
 import type { DragonGaugeState } from '../types';
 import { DRAGON_FURY_MAX, DRAGON_MIGHT_MAX } from '../constants';
+import { DragonModel3D } from './DragonModel3D';
 
 interface DragonGaugeProps {
     gauge: DragonGaugeState;
@@ -107,11 +108,9 @@ export function DragonGauge({ gauge }: DragonGaugeProps) {
                             : 'none',
                 }}
             >
-                {/* Dragon icon */}
+                {/* Dragon 3D model */}
                 <div
                     style={{
-                        fontSize: 20,
-                        lineHeight: 1,
                         marginBottom: 4,
                         filter: gauge.isBreathing
                             ? 'drop-shadow(0 0 12px #FFB300) drop-shadow(0 0 24px #FF8C00)'
@@ -123,7 +122,12 @@ export function DragonGauge({ gauge }: DragonGaugeProps) {
                         transition: 'filter 0.5s ease',
                     }}
                 >
-                    🐉
+                    <DragonModel3D
+                        isBreathing={gauge.isBreathing}
+                        bothFull={bothFull}
+                        furyPercent={furyPercent}
+                        mightPercent={mightPercent}
+                    />
                 </div>
 
                 {/* Fury gauge label */}

@@ -1139,6 +1139,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Münzsammler",
+      "desc": "Verdiene insgesamt 100 Gold"
+    },
+    "gold_1000": {
+      "name": "Münzhorten",
+      "desc": "Verdiene insgesamt 1.000 Gold"
+    },
+    "gold_5000": {
+      "name": "Schatzjäger",
+      "desc": "Verdiene insgesamt 5.000 Gold"
+    },
+    "gold_25000": {
+      "name": "Goldkönig",
+      "desc": "Verdiene insgesamt 25.000 Gold"
+    },
+    "gold_100000": {
+      "name": "Legendärer Magnat",
+      "desc": "Verdiene insgesamt 100.000 Gold"
+    },
+    "treasure_10": {
+      "name": "Schatz gefunden",
+      "desc": "Sammle 10 Schätze"
+    },
+    "treasure_50": {
+      "name": "Schatzsucher",
+      "desc": "Sammle 50 Schätze"
+    },
+    "treasure_200": {
+      "name": "Schatzmeister",
+      "desc": "Sammle 200 Schätze"
+    },
+    "treasure_500": {
+      "name": "Schatzwächter",
+      "desc": "Sammle 500 Schätze"
+    },
+    "treasure_1000": {
+      "name": "Herr der Reichtümer",
+      "desc": "Sammle 1.000 Schätze"
     }
   },
   "updates": {
@@ -1293,8 +1333,16 @@
     "gameTitle": "Kampfarena",
     "subtitle": "Echtzeit 1v1 Kämpfe",
     "description": "Echtzeit 1v1 Kämpfe via WebSocket.",
-    "features": "Echtzeit|Müllzeilen-System|Ranked",
-    "stats": "1v1 Kampf|8s Matchmaking|KI-Fallback"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Ranglistenspiel"
+    },
+    "stats": {
+      "mode": "Modus",
+      "battle": "Kampf",
+      "status": "Status"
+    }
   },
   "uiTheme": {
     "selectTheme": "Thema wählen",
