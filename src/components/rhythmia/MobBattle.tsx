@@ -6,6 +6,11 @@ import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSoun
 import type { Player, ServerMessage, BoardCell } from '@/types/multiplayer';
 import type { ActiveMob, MobBattleRelayPayload } from '@/lib/mob-battle/types';
 import { useSkillTree } from '@/lib/skill-tree/context';
+import BoardGrid from './shared/BoardGrid';
+import PlayerHeader from './shared/PlayerHeader';
+import StatsRow from './shared/StatsRow';
+import MobileControls from './shared/MobileControls';
+import GameOverOverlay from './shared/GameOverOverlay';
 import {
   MOB_DEFINITIONS,
   MOB_MAP,
@@ -1147,22 +1152,21 @@ export const MobBattle: React.FC<Props> = ({
             </div>
 
             <div className={styles.boardWrap}>
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
-                {displayBoard.flat().map((cell, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.cell} ${cell && !cell.ghost ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''}`}
-                    style={cell && !cell.ghost ? { backgroundColor: cell.color, boxShadow: `0 0 8px ${cell.color}40` } : cell?.ghost ? { borderColor: `${cell.color}40` } : {}}
-                  />
-                ))}
-              </div>
+              <BoardGrid
+                board={displayBoard.flat()}
+                width={W}
+                styles={{ board: styles.board, cell: styles.cell, filled: styles.filled, ghost: styles.ghost }}
+              />
             </div>
 
-            <div className={styles.statsRow}>
-              <span>Lines: {lines}</span>
-              <span>Score: {score.toLocaleString()}</span>
-              <span>Combo: {combo}</span>
-            </div>
+            <StatsRow
+              className={styles.statsRow}
+              stats={[
+                { label: 'Lines', value: lines },
+                { label: 'Score', value: score.toLocaleString() },
+                { label: 'Combo', value: combo },
+              ]}
+            />
           </div>
         </div>
 
@@ -1175,10 +1179,11 @@ export const MobBattle: React.FC<Props> = ({
         {/* === Opponent Side === */}
         <div className={styles.opponentSide}>
           <div className={styles.boardSection}>
-            <div className={styles.opponentHeader}>
-              <div className={styles.opponentName}>{opponent?.name || 'Opponent'}</div>
-              <div className={styles.opponentScore}>{opponentScore.toLocaleString()}</div>
-            </div>
+            <PlayerHeader
+              name={opponent?.name || 'Opponent'}
+              score={opponentScore}
+              styles={{ header: styles.opponentHeader, name: styles.opponentName, score: styles.opponentScore }}
+            />
 
             {/* Opponent Base HP Bar */}
             <div className={styles.hpBarContainer}>
@@ -1193,20 +1198,18 @@ export const MobBattle: React.FC<Props> = ({
             </div>
 
             <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
-              <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, auto)` }}>
-                {opponentDisplay.flat().map((cell, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.cell} ${cell ? styles.filled : ''}`}
-                    style={cell ? { backgroundColor: cell.color, boxShadow: `0 0 6px ${cell.color}40` } : {}}
-                  />
-                ))}
-              </div>
+              <BoardGrid
+                board={opponentDisplay.flat()}
+                width={W}
+                showGhost={false}
+                styles={{ board: styles.board, cell: styles.cell, filled: styles.filled }}
+              />
             </div>
 
-            <div className={styles.statsRow}>
-              <span>Lines: {opponentLines}</span>
-            </div>
+            <StatsRow
+              className={styles.statsRow}
+              stats={[{ label: 'Lines', value: opponentLines }]}
+            />
           </div>
         </div>
       </div>
@@ -1245,39 +1248,33 @@ export const MobBattle: React.FC<Props> = ({
       </div>
 
       {/* === Mobile Controls === */}
-      <div className={styles.controls}>
-        <div className={styles.controlRow}>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('hold'); }} onClick={() => handleControlClick('hold')}>H</button>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCCW'); }} onClick={() => handleControlClick('rotateCCW')}>&#x21BA;</button>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCW'); }} onClick={() => handleControlClick('rotateCW')}>&#x21BB;</button>
-          <button className={`${styles.ctrlBtn} ${styles.dropBtn}`} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('drop'); }} onClick={() => handleControlClick('drop')}>&#x2B07;</button>
-        </div>
-        <div className={styles.controlRow}>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('left'); }} onClick={() => handleControlClick('left')}>&#x2190;</button>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('down'); }} onClick={() => handleControlClick('down')}>&#x2193;</button>
-          <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('right'); }} onClick={() => handleControlClick('right')}>&#x2192;</button>
-        </div>
-        {/* Mobile mob summon bar */}
-        <div className={styles.controlRow}>
-          {MOB_DEFINITIONS.slice(0, 4).map((def) => (
-            <button
-              key={def.id}
-              className={`${styles.ctrlBtn} ${gold < def.cost ? styles.ctrlBtnDisabled : ''}`}
-              onClick={() => summonMob(def.id)}
-              disabled={gold < def.cost || gameOver}
-            >
-              {def.icon}
-            </button>
-          ))}
-        </div>
-      </div>
+      <MobileControls
+        onControl={handleControlClick}
+        styles={{ controls: styles.controls, controlRow: styles.controlRow, ctrlBtn: styles.ctrlBtn, dropBtn: styles.dropBtn }}
+        extraRows={
+          <div className={styles.controlRow}>
+            {MOB_DEFINITIONS.slice(0, 4).map((def) => (
+              <button
+                key={def.id}
+                className={`${styles.ctrlBtn} ${gold < def.cost ? styles.ctrlBtnDisabled : ''}`}
+                onClick={() => summonMob(def.id)}
+                disabled={gold < def.cost || gameOver}
+              >
+                {def.icon}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
       {/* === Game Over Overlay === */}
       {gameOver && (
-        <div className={styles.gameOverOverlay}>
-          <h2 className={styles.gameOverTitle}>
-            {baseHp <= 0 ? 'DEFEAT' : 'VICTORY'}
-          </h2>
+        <GameOverOverlay
+          title={baseHp <= 0 ? 'DEFEAT' : 'VICTORY'}
+          onAction={onBackToLobby}
+          actionLabel="Back to Lobby"
+          styles={{ gameOverOverlay: styles.gameOverOverlay, gameOverTitle: styles.gameOverTitle, backBtn: styles.backBtn }}
+        >
           <div className={styles.finalStats}>
             <div className={styles.statBlock}>
               <div className={styles.statBlockLabel}>{playerName}</div>
@@ -1292,10 +1289,7 @@ export const MobBattle: React.FC<Props> = ({
               <div>Lines: {opponentLines}</div>
             </div>
           </div>
-          <button className={styles.backBtn} onClick={onBackToLobby}>
-            Back to Lobby
-          </button>
-        </div>
+        </GameOverOverlay>
       )}
     </div>
   );

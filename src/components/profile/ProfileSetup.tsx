@@ -9,6 +9,8 @@ import { generateFriendCode } from '@/lib/profile/storage';
 import { useProfile } from '@/lib/profile/context';
 import type { UserProfile } from '@/lib/profile/types';
 import type { Locale } from '@/i18n/routing';
+import { fadeOnly, fadeSlideRight } from '@/lib/motion';
+import StepIndicator from '@/components/ui/StepIndicator';
 import styles from './ProfileSetup.module.css';
 
 type Step = 'icon' | 'name' | 'language' | 'confirm';
@@ -97,33 +99,26 @@ export default function ProfileSetup() {
   return (
     <motion.div
       className={styles.overlay}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      {...fadeOnly}
       transition={{ duration: 0.3 }}
     >
       <div className={styles.container}>
         {/* Step indicators */}
-        <div className={styles.steps}>
-          {STEPS.map((s, i) => (
-            <div
-              key={s}
-              className={`${styles.stepDot} ${
-                i === stepIndex ? styles.stepDotActive : i < stepIndex ? styles.stepDotDone : ''
-              }`}
-            />
-          ))}
-        </div>
+        <StepIndicator
+          steps={STEPS}
+          currentIndex={stepIndex}
+          className={styles.steps}
+          dotClassName={styles.stepDot}
+          activeDotClassName={styles.stepDotActive}
+          doneDotClassName={styles.stepDotDone}
+        />
 
         <AnimatePresence mode="wait">
           {/* Step 1: Icon Selection */}
           {step === 'icon' && (
             <motion.div
               key="icon"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.25 }}
+              {...fadeSlideRight}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}
             >
               <div className={styles.title}>{t('iconTitle')}</div>
@@ -159,10 +154,7 @@ export default function ProfileSetup() {
           {step === 'name' && (
             <motion.div
               key="name"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.25 }}
+              {...fadeSlideRight}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}
             >
               <div className={styles.title}>{t('nameTitle')}</div>
@@ -215,10 +207,7 @@ export default function ProfileSetup() {
           {step === 'language' && (
             <motion.div
               key="language"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.25 }}
+              {...fadeSlideRight}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}
             >
               <div className={styles.title}>{t('langTitle')}</div>
@@ -258,10 +247,7 @@ export default function ProfileSetup() {
           {step === 'confirm' && (
             <motion.div
               key="confirm"
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.25 }}
+              {...fadeSlideRight}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}
             >
               <div className={styles.title}>{t('confirmTitle')}</div>

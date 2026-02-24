@@ -17,6 +17,11 @@ import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSoun
 import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
+import BoardGrid from './shared/BoardGrid';
+import PlayerHeader from './shared/PlayerHeader';
+import StatsRow from './shared/StatsRow';
+import MobileControls from './shared/MobileControls';
+import GameOverOverlay from './shared/GameOverOverlay';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
 const VoxelWorldBackground = dynamic(() => import('./VoxelWorldBackground'), {
@@ -1486,10 +1491,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
                     {/* Board */}
                     <div className={styles.boardSection}>
-                        <div className={styles.playerHeader}>
-                            <div className={styles.playerName}>{playerName}</div>
-                            <div className={styles.playerScore}>{score.toLocaleString()}</div>
-                        </div>
+                        <PlayerHeader
+                            name={playerName}
+                            score={score}
+                            styles={{ header: styles.playerHeader, name: styles.playerName, score: styles.playerScore }}
+                        />
 
                         <div className={styles.boardActionArea}>
                         <div className={styles.boardWrap}>
@@ -1531,15 +1537,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 </div>
                             )}
 
-                            <div ref={playerBoardDomRef} className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
-                                {displayBoard.flat().map((cell, i) => (
-                                    <div
-                                        key={i}
-                                        className={`${styles.cell} ${cell && !cell.ghost ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''}`}
-                                        style={cell && !cell.ghost ? { backgroundColor: cell.color, boxShadow: `0 0 8px ${cell.color}40` } : cell?.ghost ? { borderColor: `${cell.color}40` } : {}}
-                                    />
-                                ))}
-                            </div>
+                            <BoardGrid
+                                board={displayBoard.flat()}
+                                width={W}
+                                boardRef={playerBoardDomRef}
+                                styles={{ board: styles.board, cell: styles.cell, filled: styles.filled, ghost: styles.ghost }}
+                            />
 
                             {/* VFX Canvas Overlay */}
                             <RhythmVFX
@@ -1582,11 +1585,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
                             </div>
                         </div>
 
-                        <div className={styles.statsRow}>
-                            <span>Lines: {lines}</span>
-                            <span>Combo: {combo}</span>
-                            {tSpinCountRef.current > 0 && <span>T-Spins: {tSpinCountRef.current}</span>}
-                        </div>
+                        <StatsRow
+                            className={styles.statsRow}
+                            stats={[
+                                { label: 'Lines', value: lines },
+                                { label: 'Combo', value: combo },
+                                { label: 'T-Spins', value: tSpinCountRef.current, show: tSpinCountRef.current > 0 },
+                            ]}
+                        />
                     </div>
                 </div>
 
@@ -1596,10 +1602,11 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 {/* Opponent Side */}
                 <div className={styles.opponentSide}>
                     <div className={styles.boardSection}>
-                        <div className={styles.opponentHeader}>
-                            <div className={styles.opponentName}>{opponent?.name || 'Opponent'}</div>
-                            <div className={styles.opponentScore}>{opponentScore.toLocaleString()}</div>
-                        </div>
+                        <PlayerHeader
+                            name={opponent?.name || 'Opponent'}
+                            score={opponentScore}
+                            styles={{ header: styles.opponentHeader, name: styles.opponentName, score: styles.opponentScore }}
+                        />
 
                         <div className={`${styles.boardWrap} ${styles.opponentBoardWrap}`}>
                             {/* Opponent combo indicator */}
@@ -1609,57 +1616,45 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 </div>
                             )}
 
-                            <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
-                                {opponentDisplay.flat().map((cell, i) => (
-                                    <div
-                                        key={i}
-                                        className={`${styles.cell} ${cell ? styles.filled : ''}`}
-                                        style={cell ? { backgroundColor: cell.color, boxShadow: `0 0 6px ${cell.color}40` } : {}}
-                                    />
-                                ))}
-                            </div>
+                            <BoardGrid
+                                board={opponentDisplay.flat()}
+                                width={W}
+                                showGhost={false}
+                                styles={{ board: styles.board, cell: styles.cell, filled: styles.filled }}
+                            />
                         </div>
 
-                        <div className={styles.statsRow}>
-                            <span>Lines: {opponentLines}</span>
-                            {opponentCombo >= 3 && <span>Combo: {opponentCombo}</span>}
-                        </div>
+                        <StatsRow
+                            className={styles.statsRow}
+                            stats={[
+                                { label: 'Lines', value: opponentLines },
+                                { label: 'Combo', value: opponentCombo, show: opponentCombo >= 3 },
+                            ]}
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Mobile Controls */}
-            <div className={styles.controls}>
-                <div className={styles.controlRow}>
-                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('hold'); }} onClick={() => handleControlClick('hold')}>H</button>
-                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCCW'); }} onClick={() => handleControlClick('rotateCCW')}>&#x21BA;</button>
-                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('rotateCW'); }} onClick={() => handleControlClick('rotateCW')}>&#x21BB;</button>
-                    <button className={`${styles.ctrlBtn} ${styles.dropBtn}`} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('drop'); }} onClick={() => handleControlClick('drop')}>&#x2B07;</button>
-                </div>
-                <div className={styles.controlRow}>
-                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('left'); }} onClick={() => handleControlClick('left')}>&#x2190;</button>
-                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('down'); }} onClick={() => handleControlClick('down')}>&#x2193;</button>
-                    <button className={styles.ctrlBtn} onTouchEnd={(e) => { e.preventDefault(); handleControlClick('right'); }} onClick={() => handleControlClick('right')}>&#x2192;</button>
-                </div>
-            </div>
+            <MobileControls
+                onControl={handleControlClick}
+                styles={{ controls: styles.controls, controlRow: styles.controlRow, ctrlBtn: styles.ctrlBtn, dropBtn: styles.dropBtn }}
+            />
 
             {/* Game Over Overlay */}
-            {
-                gameOver && (
-                    <div className={styles.gameOverOverlay}>
-                        <h2 className={styles.gameOverTitle}>
-                            GAME OVER
-                        </h2>
-                        <div className={styles.finalScores}>
-                            <div>{playerName}: {score.toLocaleString()}</div>
-                            <div>{opponent?.name || 'Opponent'}: {opponentScore.toLocaleString()}</div>
-                        </div>
-                        <button className={styles.backBtn} onClick={onBackToLobby}>
-                            Back to Lobby
-                        </button>
+            {gameOver && (
+                <GameOverOverlay
+                    title="GAME OVER"
+                    onAction={onBackToLobby}
+                    actionLabel="Back to Lobby"
+                    styles={{ gameOverOverlay: styles.gameOverOverlay, gameOverTitle: styles.gameOverTitle, backBtn: styles.backBtn }}
+                >
+                    <div className={styles.finalScores}>
+                        <div>{playerName}: {score.toLocaleString()}</div>
+                        <div>{opponent?.name || 'Opponent'}: {opponentScore.toLocaleString()}</div>
                     </div>
-                )
-            }
+                </GameOverOverlay>
+            )}
 
             {/* Advancement Toast */}
             {
