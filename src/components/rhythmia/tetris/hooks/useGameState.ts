@@ -995,17 +995,16 @@ export function useGameState() {
     }, []);
 
     // Add garbage rows to the bottom of the board (used by TD: enemy reach + corruption raids)
+    // boardRef is updated SYNCHRONOUSLY so handlePieceLock always sees the latest board.
     const addGarbageRows = useCallback((count: number) => {
-        setBoard(prev => {
-            const rows: (string | null)[][] = [];
-            for (let g = 0; g < count; g++) {
-                const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
-                rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
-            }
-            const newBoard = [...prev.slice(count), ...rows];
-            boardRef.current = newBoard;
-            return newBoard;
-        });
+        const rows: (string | null)[][] = [];
+        for (let g = 0; g < count; g++) {
+            const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+            rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
+        }
+        const newBoard = [...boardRef.current.slice(count), ...rows];
+        boardRef.current = newBoard;
+        setBoard(newBoard);
     }, []);
 
     // Spawn an enemy at a specific grid cell (used by corruption system)
