@@ -1292,8 +1292,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           }
         }
 
-        // Throttled React state update (~30fps) for Board fever rainbow effect
-        if (now - lastStateUpdate > 33) {
+        // Throttled React state update (~30fps) — only needed during fever mode
+        // (combo >= 10) for the rainbow hue-shift effect. During normal play,
+        // skip the state update to avoid ~30 re-renders/second on the entire tree.
+        if (comboRef.current >= 10 && now - lastStateUpdate > 33) {
           setBeatPhase(phase);
           lastStateUpdate = now;
         }
@@ -1304,7 +1306,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     animFrame = requestAnimationFrame(updateBeat);
 
     return () => cancelAnimationFrame(animFrame);
-  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, setBeatPhase]);
+  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, comboRef, setBeatPhase]);
 
   // Main game loop
   useEffect(() => {

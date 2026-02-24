@@ -150,6 +150,7 @@
   background: rgba(0, 0, 0, 0.25);
   transition: box-shadow 0.1s, transform 0.1s, border-color 0.1s;
   overflow: visible;
+  will-change: transform, box-shadow;
 }
 
 .boardWrap.beat {
@@ -237,6 +238,7 @@
   position: relative;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  will-change: transform;
 }
 
 .cell {
@@ -244,9 +246,10 @@
   height: clamp(16px, 4vw, 28px);
   background: rgba(255, 255, 255, 0.01);
   border-radius: 0;
-  transition: all 0.1s;
+  transition: background-color 0.1s, box-shadow 0.1s;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  contain: strict;
 }
 
 .cell.filled {
