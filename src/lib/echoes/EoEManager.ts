@@ -947,6 +947,23 @@ export class EoEManager {
           players: matchPlayers.map(([id]) => id),
         });
       }
+
+      // Auto-start: assign default characters to queue players without one, then begin.
+      // The 3s delay gives clients time to transition to the loading phase (after
+      // receiving eoe_match_found) before the first game-state broadcast arrives.
+      setTimeout(() => {
+        const internal = this.rooms.get(roomCode);
+        if (!internal) return;
+        const defaultDef = getCharacterDefinition('aether_flame');
+        if (defaultDef) {
+          for (const player of internal.room.players.values()) {
+            if (!player.character) {
+              player.character = createCharacterInstance(defaultDef, 1);
+            }
+          }
+        }
+        this.initializeGameMode(roomCode);
+      }, 3000);
     }
   }
 
@@ -1169,6 +1186,10 @@ export class EoEManager {
   getRoomByPlayerId(playerId: string): EoERoom | null {
     const roomCode = this.playerToRoom.get(playerId);
     if (!roomCode) return null;
+    return this.rooms.get(roomCode)?.room ?? null;
+  }
+
+  getRoomByCode(roomCode: string): EoERoom | null {
     return this.rooms.get(roomCode)?.room ?? null;
   }
 
