@@ -1,15 +1,15 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
-    "online": "Online",
-    "onlineCount": "{count} online",
-    "loyalty": "Ranking"
+    "loading": "ЗАВАНТАЖЕННЯ",
+    "selectServer": "ВИБІР РЕЖИМУ",
+    "chooseMode": "Оберіть ігровий режим",
+    "tagline": "Ритмічна пазл-гра. Клади блоки в такт, змагайся з друзями та розблоковуй досягнення.",
+    "play": "ГРАТИ",
+    "battle": "БІЙ",
+    "back": "← Назад",
+    "online": "Онлайн",
+    "onlineCount": "{count} онлайн",
+    "loyalty": "Рейтинг"
   },
   "wiki": {
     "meta": {
@@ -1139,46 +1139,6 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
-    },
-    "gold_100": {
-      "name": "Coin Collector",
-      "desc": "Earn 100 gold in total"
-    },
-    "gold_1000": {
-      "name": "Coin Hoarder",
-      "desc": "Earn 1,000 gold in total"
-    },
-    "gold_5000": {
-      "name": "Treasure Hunter",
-      "desc": "Earn 5,000 gold in total"
-    },
-    "gold_25000": {
-      "name": "Gold King",
-      "desc": "Earn 25,000 gold in total"
-    },
-    "gold_100000": {
-      "name": "Legendary Magnate",
-      "desc": "Earn 100,000 gold in total"
-    },
-    "treasure_10": {
-      "name": "Treasure Found",
-      "desc": "Collect 10 treasures"
-    },
-    "treasure_50": {
-      "name": "Treasure Seeker",
-      "desc": "Collect 50 treasures"
-    },
-    "treasure_200": {
-      "name": "Treasure Master",
-      "desc": "Collect 200 treasures"
-    },
-    "treasure_500": {
-      "name": "Treasure Guardian",
-      "desc": "Collect 500 treasures"
-    },
-    "treasure_1000": {
-      "name": "Lord of Riches",
-      "desc": "Collect 1,000 treasures"
     }
   },
   "updates": {
@@ -1252,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© 2024 Azuretier. Усі права захищено."
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1266,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "Мова",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1308,48 +1268,40 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "Одиночна гра",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "Ритмічний пазл",
+    "description": "Грай наодинці через музичні світи.",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
-    "wiki": "Wiki",
-    "updates": "Updates",
-    "lobby": "Lobby"
+    "wiki": "Вікі",
+    "updates": "Оновлення",
+    "lobby": "Лобі"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — Ритмічна блок-гра",
+    "description": "RHYTHMIA — браузерна ритмічна пазл-гра. Клади блоки в такт, змагайся та розблоковуй досягнення.",
+    "ogTitle": "RHYTHMIA — Ритмічна блок-гра",
+    "ogDescription": "Клади блоки в такт, змагайся з друзями та розблоковуй досягнення.",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "ритмічна гра,тетріс,пазл,мультигравець"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "Мульти",
+    "title": "Бойова арена",
+    "gameTitle": "Бойова арена",
+    "subtitle": "Бої 1v1 у реальному часі",
+    "description": "Бої 1v1 у реальному часі через WebSocket.",
+    "features": "Реальний час|Система сміттєвих рядків|Рейтингові",
+    "stats": "1v1 Бій|8с Пошук|Запасний ШІ"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "Вибрати тему",
+    "neoFuturistic": "Нео-футуристичний",
+    "pixelNostalgia": "Піксельна ностальгія",
+    "neoDesc": "Сучасне відчуття. Гладкий інтерфейс із яскравими градієнтами.",
+    "pixelDesc": "Ретро відчуття. Піксельні шрифти та класична палітра."
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1494,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "Вибрати форму",
+    "default": "Стандарт",
+    "rounded": "Заокруглений",
+    "pill": "Пілюля",
+    "soft": "М'який",
+    "sharp": "Гострий"
   }
 }

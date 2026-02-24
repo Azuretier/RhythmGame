@@ -1,15 +1,15 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
-    "online": "Online",
-    "onlineCount": "{count} online",
-    "loyalty": "Ranking"
+    "loading": "جار التحميل",
+    "selectServer": "اختر الوضع",
+    "chooseMode": "اختر وضع اللعبة",
+    "tagline": "لعبة ألغاز إيقاعية. ضع الكتل على الإيقاع، تنافس مع الأصدقاء، وافتح الإنجازات.",
+    "play": "العب",
+    "battle": "معركة",
+    "back": "رجوع ←",
+    "online": "متصل",
+    "onlineCount": "{count} متصل",
+    "loyalty": "الترتيب"
   },
   "wiki": {
     "meta": {
@@ -1139,46 +1139,6 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
-    },
-    "gold_100": {
-      "name": "Coin Collector",
-      "desc": "Earn 100 gold in total"
-    },
-    "gold_1000": {
-      "name": "Coin Hoarder",
-      "desc": "Earn 1,000 gold in total"
-    },
-    "gold_5000": {
-      "name": "Treasure Hunter",
-      "desc": "Earn 5,000 gold in total"
-    },
-    "gold_25000": {
-      "name": "Gold King",
-      "desc": "Earn 25,000 gold in total"
-    },
-    "gold_100000": {
-      "name": "Legendary Magnate",
-      "desc": "Earn 100,000 gold in total"
-    },
-    "treasure_10": {
-      "name": "Treasure Found",
-      "desc": "Collect 10 treasures"
-    },
-    "treasure_50": {
-      "name": "Treasure Seeker",
-      "desc": "Collect 50 treasures"
-    },
-    "treasure_200": {
-      "name": "Treasure Master",
-      "desc": "Collect 200 treasures"
-    },
-    "treasure_500": {
-      "name": "Treasure Guardian",
-      "desc": "Collect 500 treasures"
-    },
-    "treasure_1000": {
-      "name": "Lord of Riches",
-      "desc": "Collect 1,000 treasures"
     }
   },
   "updates": {
@@ -1252,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© 2024 Azuretier. جميع الحقوق محفوظة."
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1266,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "اللغة",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1308,48 +1268,40 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "لاعب واحد",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "ألغاز إيقاعية",
+    "description": "العب بمفردك عبر عوالم موسيقية.",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
-    "wiki": "Wiki",
-    "updates": "Updates",
-    "lobby": "Lobby"
+    "wiki": "ويكي",
+    "updates": "تحديثات",
+    "lobby": "اللوبي"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — لعبة الكتل الإيقاعية",
+    "description": "RHYTHMIA لعبة ألغاز إيقاعية في المتصفح. ضع الكتل على الإيقاع، تنافس وافتح الإنجازات.",
+    "ogTitle": "RHYTHMIA — لعبة الكتل الإيقاعية",
+    "ogDescription": "ضع الكتل على الإيقاع، تنافس مع الأصدقاء، وافتح الإنجازات.",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "لعبة إيقاعية,تتريس,ألغاز,متعدد اللاعبين"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "متعدد",
+    "title": "ساحة المعارك",
+    "gameTitle": "ساحة المعارك",
+    "subtitle": "معارك 1v1 في الوقت الفعلي",
+    "description": "معارك 1v1 في الوقت الفعلي عبر WebSocket.",
+    "features": "الوقت الفعلي|نظام الخطوط|مصنّف",
+    "stats": "1v1 معركة|8 ثوانٍ مطابقة|بديل الذكاء الاصطناعي"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "اختر الثيم",
+    "neoFuturistic": "مستقبلي جديد",
+    "pixelNostalgia": "نوستالجيا البكسل",
+    "neoDesc": "شعور حديث. واجهة أنيقة مع تدرجات حيوية.",
+    "pixelDesc": "شعور ريترو. خطوط بكسل وألوان كلاسيكية."
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1494,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "اختر الشكل",
+    "default": "افتراضي",
+    "rounded": "مدوّر",
+    "pill": "بيضاوي",
+    "soft": "ناعم",
+    "sharp": "حاد"
   }
 }

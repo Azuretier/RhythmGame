@@ -1,15 +1,15 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
-    "online": "Online",
-    "onlineCount": "{count} online",
-    "loyalty": "Ranking"
+    "loading": "MEMUATKAN",
+    "selectServer": "PILIH MOD",
+    "chooseMode": "Pilih mod permainan",
+    "tagline": "Permainan teka-teki berasaskan irama. Jatuhkan blok mengikut irama, lawan rakan dan buka pencapaian.",
+    "play": "MAIN",
+    "battle": "PERTARUNGAN",
+    "back": "← Kembali",
+    "online": "Dalam talian",
+    "onlineCount": "{count} dalam talian",
+    "loyalty": "Kedudukan"
   },
   "wiki": {
     "meta": {
@@ -1139,46 +1139,6 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
-    },
-    "gold_100": {
-      "name": "Coin Collector",
-      "desc": "Earn 100 gold in total"
-    },
-    "gold_1000": {
-      "name": "Coin Hoarder",
-      "desc": "Earn 1,000 gold in total"
-    },
-    "gold_5000": {
-      "name": "Treasure Hunter",
-      "desc": "Earn 5,000 gold in total"
-    },
-    "gold_25000": {
-      "name": "Gold King",
-      "desc": "Earn 25,000 gold in total"
-    },
-    "gold_100000": {
-      "name": "Legendary Magnate",
-      "desc": "Earn 100,000 gold in total"
-    },
-    "treasure_10": {
-      "name": "Treasure Found",
-      "desc": "Collect 10 treasures"
-    },
-    "treasure_50": {
-      "name": "Treasure Seeker",
-      "desc": "Collect 50 treasures"
-    },
-    "treasure_200": {
-      "name": "Treasure Master",
-      "desc": "Collect 200 treasures"
-    },
-    "treasure_500": {
-      "name": "Treasure Guardian",
-      "desc": "Collect 500 treasures"
-    },
-    "treasure_1000": {
-      "name": "Lord of Riches",
-      "desc": "Collect 1,000 treasures"
     }
   },
   "updates": {
@@ -1252,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© 2024 Azuretier. Semua hak terpelihara."
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1266,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "Bahasa",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1308,48 +1268,40 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "Pemain Tunggal",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "Teka-teki Irama",
+    "description": "Main bersendirian melalui dunia bertema muzik.",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
     "wiki": "Wiki",
-    "updates": "Updates",
-    "lobby": "Lobby"
+    "updates": "Kemas kini",
+    "lobby": "Lobi"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — Permainan Blok Irama",
+    "description": "RHYTHMIA ialah permainan teka-teki irama berasaskan pelayar. Jatuhkan blok mengikut irama, lawan dan buka pencapaian.",
+    "ogTitle": "RHYTHMIA — Permainan Blok Irama",
+    "ogDescription": "Jatuhkan blok mengikut irama, lawan rakan dan buka pencapaian.",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "permainan irama,tetris,teka-teki,berbilang pemain"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "Berbilang",
+    "title": "Arena Pertarungan",
+    "gameTitle": "Arena Pertarungan",
+    "subtitle": "Pertarungan 1v1 masa nyata",
+    "description": "Pertarungan 1v1 masa nyata melalui WebSocket.",
+    "features": "Masa Nyata|Sistem Baris Sampah|Bertangga",
+    "stats": "1v1 Pertarungan|8s Pemadanan|Sandaran AI"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "Pilih Tema",
+    "neoFuturistic": "Neo Futuristik",
+    "pixelNostalgia": "Nostalgia Piksel",
+    "neoDesc": "Rasa moden. Antara muka licin dengan kecerunan bersemangat.",
+    "pixelDesc": "Rasa retro. Fon piksel dan palet klasik."
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1494,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "Pilih Bentuk",
+    "default": "Lalai",
+    "rounded": "Bulat",
+    "pill": "Pil",
+    "soft": "Lembut",
+    "sharp": "Tajam"
   }
 }

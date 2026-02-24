@@ -1,12 +1,12 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
+    "loading": "CARREGANDO",
+    "selectServer": "SELECIONAR MODO",
+    "chooseMode": "Escolha seu modo de jogo",
+    "tagline": "Um jogo de puzzle com ritmo. Solte blocos na batida, batalhe com amigos e desbloqueie conquistas.",
+    "play": "JOGAR",
+    "battle": "BATALHA",
+    "back": "← Voltar",
     "online": "Online",
     "onlineCount": "{count} online",
     "loyalty": "Ranking"
@@ -1139,46 +1139,6 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
-    },
-    "gold_100": {
-      "name": "Coin Collector",
-      "desc": "Earn 100 gold in total"
-    },
-    "gold_1000": {
-      "name": "Coin Hoarder",
-      "desc": "Earn 1,000 gold in total"
-    },
-    "gold_5000": {
-      "name": "Treasure Hunter",
-      "desc": "Earn 5,000 gold in total"
-    },
-    "gold_25000": {
-      "name": "Gold King",
-      "desc": "Earn 25,000 gold in total"
-    },
-    "gold_100000": {
-      "name": "Legendary Magnate",
-      "desc": "Earn 100,000 gold in total"
-    },
-    "treasure_10": {
-      "name": "Treasure Found",
-      "desc": "Collect 10 treasures"
-    },
-    "treasure_50": {
-      "name": "Treasure Seeker",
-      "desc": "Collect 50 treasures"
-    },
-    "treasure_200": {
-      "name": "Treasure Master",
-      "desc": "Collect 200 treasures"
-    },
-    "treasure_500": {
-      "name": "Treasure Guardian",
-      "desc": "Collect 500 treasures"
-    },
-    "treasure_1000": {
-      "name": "Lord of Riches",
-      "desc": "Collect 1,000 treasures"
     }
   },
   "updates": {
@@ -1252,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© 2024 Azuretier. Todos os direitos reservados."
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1266,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "Idioma",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1308,48 +1268,40 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "Solo",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "Puzzle Rítmico",
+    "description": "Jogue solo por mundos temáticos musicais.",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
     "wiki": "Wiki",
-    "updates": "Updates",
+    "updates": "Atualizações",
     "lobby": "Lobby"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — Jogo de Blocos Rítmico",
+    "description": "RHYTHMIA é um jogo de puzzle baseado em navegador. Solte peças na batida, batalhe com amigos e desbloqueie conquistas.",
+    "ogTitle": "RHYTHMIA — Jogo de Blocos Rítmico",
+    "ogDescription": "Solte blocos na batida, batalhe com amigos e desbloqueie conquistas.",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "jogo de ritmo,tetris,puzzle,multijogador"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "Multi",
+    "title": "Arena de Batalha",
+    "gameTitle": "Arena de Batalha",
+    "subtitle": "Batalhas 1v1 em tempo real",
+    "description": "Batalhas 1v1 em tempo real via WebSocket.",
+    "features": "Tempo Real|Sistema de Lixo|Ranked",
+    "stats": "1v1 Batalha|8s Matchmaking|Fallback de IA"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "Selecionar Tema",
+    "neoFuturistic": "Neo Futurista",
+    "pixelNostalgia": "Nostalgia Pixel",
+    "neoDesc": "Sensação moderna. Interface elegante com gradientes vibrantes.",
+    "pixelDesc": "Sensação retrô. Fontes pixeladas e paleta clássica."
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1494,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "Selecionar Forma",
+    "default": "Padrão",
+    "rounded": "Arredondado",
+    "pill": "Pílula",
+    "soft": "Suave",
+    "sharp": "Afiado"
   }
 }
