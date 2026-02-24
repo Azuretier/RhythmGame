@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, TreasureBox, TreasureBoxTier, TreasureBoxReward } from '../types';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
@@ -15,6 +15,8 @@ import {
     DEFAULT_DRAGON_GAUGE, DRAGON_FURY_MAX, DRAGON_MIGHT_MAX,
     DRAGON_BREATH_DURATION, DRAGON_BREATH_SCORE_BONUS,
     DRAGON_FURY_CHARGE, DRAGON_MIGHT_CHARGE,
+    TREASURE_BOX_STAGE_INTERVAL, TREASURE_BOX_RANDOM_CHANCE,
+    TREASURE_BOX_TIER_WEIGHTS, TREASURE_BOX_TIERS,
 } from '../constants';
 import type { ProtocolModifiers } from '../protocol';
 import { DEFAULT_PROTOCOL_MODIFIERS } from '../protocol';
@@ -24,6 +26,7 @@ let nextFloatingId = 0;
 let nextParticleId = 0;
 let nextEnemyId = 0;
 let nextBulletId = 0;
+let nextTreasureBoxId = 0;
 
 /**
  * Roll a random item based on drop weights.
@@ -121,6 +124,10 @@ export function useGameState() {
     // ===== Mandarin Fever Dragon Gauge =====
     const [dragonGauge, setDragonGauge] = useState<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
     const dragonGaugeRef = useRef<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
+
+    // ===== Treasure Box System =====
+    const [currentTreasureBox, setCurrentTreasureBox] = useState<TreasureBox | null>(null);
+    const [showTreasureBox, setShowTreasureBox] = useState(false);
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -630,6 +637,185 @@ export function useGameState() {
         };
     }, []);
 
+    // ===== Treasure Box System =====
+
+    // Roll a random treasure box tier based on current world index
+    const rollTreasureBoxTier = useCallback((currentWorldIdx: number): TreasureBoxTier => {
+        const tiers: TreasureBoxTier[] = ['wooden', 'iron', 'golden', 'crystal'];
+        const worldSlot = Math.min(currentWorldIdx, 4);
+        const weights = tiers.map(t => TREASURE_BOX_TIER_WEIGHTS[t][worldSlot]);
+        const total = weights.reduce((s, w) => s + w, 0);
+        let roll = Math.random() * total;
+        for (let i = 0; i < tiers.length; i++) {
+            roll -= weights[i];
+            if (roll <= 0) return tiers[i];
+        }
+        return 'wooden';
+    }, []);
+
+    // Generate rewards for a treasure box based on its tier
+    const generateTreasureBoxRewards = useCallback((tier: TreasureBoxTier, currentWorldIdx: number): TreasureBoxReward[] => {
+        const config = TREASURE_BOX_TIERS[tier];
+        const rewards: TreasureBoxReward[] = [];
+
+        // Always give materials
+        const materialCount = Math.ceil(2 * config.materialRewardMultiplier);
+        const materialItems: { itemId: string; count: number }[] = [];
+        for (let i = 0; i < materialCount; i++) {
+            const itemId = rollItem(tier === 'crystal' ? 0.5 : tier === 'golden' ? 0.3 : 0);
+            const existing = materialItems.find(m => m.itemId === itemId);
+            if (existing) {
+                existing.count++;
+            } else {
+                materialItems.push({ itemId, count: 1 });
+            }
+        }
+        rewards.push({ type: 'materials', items: materialItems });
+
+        // Score bonus
+        const scoreBonus = Math.floor(config.scoreRewardBase * (1 + currentWorldIdx * 0.5));
+        rewards.push({ type: 'score_bonus', amount: scoreBonus });
+
+        // Chance for free card (no cost)
+        if (Math.random() < config.freeCardChance) {
+            const card = ROGUE_CARDS[Math.floor(Math.random() * ROGUE_CARDS.length)];
+            rewards.push({ type: 'free_card', card });
+        }
+
+        // Chance for temporary effect boost
+        if (Math.random() < config.effectBoostChance) {
+            const boostOptions: Array<{ effect: 'score_boost' | 'terrain_surge' | 'lucky_drops' | 'gravity_slow'; value: number }> = [
+                { effect: 'score_boost', value: 0.25 },
+                { effect: 'terrain_surge', value: 0.2 },
+                { effect: 'lucky_drops', value: 0.2 },
+                { effect: 'gravity_slow', value: 0.15 },
+            ];
+            const chosen = boostOptions[Math.floor(Math.random() * boostOptions.length)];
+            rewards.push({
+                type: 'effect_boost',
+                effect: chosen.effect,
+                value: chosen.value,
+                duration: 1, // lasts for next stage
+            });
+        }
+
+        return rewards;
+    }, []);
+
+    // Check if a treasure box should spawn for the given stage
+    const shouldSpawnTreasureBox = useCallback((stage: number): boolean => {
+        // Guaranteed on interval stages (3, 6, 9, ...)
+        if (stage > 1 && stage % TREASURE_BOX_STAGE_INTERVAL === 0) return true;
+        // Random chance on other stages (skip stage 1)
+        if (stage > 1 && Math.random() < TREASURE_BOX_RANDOM_CHANCE) return true;
+        return false;
+    }, []);
+
+    // Generate and enter treasure box phase
+    const enterTreasureBox = useCallback(() => {
+        const tier = rollTreasureBoxTier(worldIdxRef.current);
+        const rewards = generateTreasureBoxRewards(tier, worldIdxRef.current);
+        const box: TreasureBox = {
+            id: nextTreasureBoxId++,
+            tier,
+            rewards,
+            opened: false,
+            spawnStage: stageNumberRef.current,
+        };
+        setCurrentTreasureBox(box);
+        setShowTreasureBox(true);
+        setGamePhase('TREASURE_BOX');
+        gamePhaseRef.current = 'TREASURE_BOX';
+        setIsPaused(true);
+    }, [rollTreasureBoxTier, generateTreasureBoxRewards]);
+
+    // Open the treasure box and collect rewards
+    const openTreasureBox = useCallback(() => {
+        const box = currentTreasureBox;
+        if (!box || box.opened) return;
+
+        // Mark as opened
+        setCurrentTreasureBox(prev => prev ? { ...prev, opened: true } : null);
+
+        // Apply rewards
+        for (const reward of box.rewards) {
+            switch (reward.type) {
+                case 'materials':
+                    setInventory(prev => {
+                        const updated = [...prev];
+                        for (const item of reward.items) {
+                            const existing = updated.find(i => i.itemId === item.itemId);
+                            if (existing) {
+                                existing.count += item.count;
+                            } else {
+                                updated.push({ itemId: item.itemId, count: item.count });
+                            }
+                        }
+                        return updated;
+                    });
+                    break;
+
+                case 'score_bonus':
+                    updateScore(scoreRef.current + reward.amount);
+                    break;
+
+                case 'free_card': {
+                    const cardId = reward.card.id;
+                    setEquippedCards(prev => {
+                        const existing = prev.find(ec => ec.cardId === cardId);
+                        let updated: EquippedCard[];
+                        if (existing && existing.stackCount < 3) {
+                            updated = prev.map(ec =>
+                                ec.cardId === cardId
+                                    ? { ...ec, stackCount: ec.stackCount + 1 }
+                                    : ec
+                            );
+                        } else if (!existing) {
+                            updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+                        } else {
+                            updated = prev;
+                        }
+                        const effects = computeActiveEffects(updated);
+                        setActiveEffects(effects);
+                        equippedCardsRef.current = updated;
+                        return updated;
+                    });
+                    break;
+                }
+
+                case 'effect_boost':
+                    // Apply temporary effect boost to active effects
+                    setActiveEffects(prev => {
+                        const updated = { ...prev };
+                        switch (reward.effect) {
+                            case 'score_boost':
+                                updated.scoreBoostMultiplier += reward.value;
+                                break;
+                            case 'terrain_surge':
+                                updated.terrainSurgeBonus += reward.value;
+                                break;
+                            case 'lucky_drops':
+                                updated.luckyDropsBonus += reward.value;
+                                break;
+                            case 'gravity_slow':
+                                updated.gravitySlowFactor = Math.max(0.1, updated.gravitySlowFactor - reward.value);
+                                break;
+                        }
+                        return updated;
+                    });
+                    break;
+            }
+        }
+    }, [currentTreasureBox, computeActiveEffects, updateScore]);
+
+    // Finish treasure box phase and proceed to card select
+    const finishTreasureBox = useCallback(() => {
+        setShowTreasureBox(false);
+        setCurrentTreasureBox(null);
+        // Proceed to card select
+        enterCardSelect();
+    }, [enterCardSelect]);
+
     // ===== Item System Actions =====
 
     // Spawn floating items from terrain destruction
@@ -1108,10 +1294,14 @@ export function useGameState() {
             // Abort transition if player died during collapse
             if (gameOverRef.current) return;
 
-            // Enter card select directly — stage transition effects play after selection
-            enterCardSelect();
+            // Check for treasure box spawn before card select
+            if (shouldSpawnTreasureBox(stageNumberRef.current)) {
+                enterTreasureBox();
+            } else {
+                enterCardSelect();
+            }
         }, 1200);
-    }, [enterCardSelect]);
+    }, [enterCardSelect, shouldSpawnTreasureBox, enterTreasureBox]);
 
     // Initialize/reset game
     const initGame = useCallback((mode: GameMode = 'vanilla', protocolModifiers?: ProtocolModifiers) => {
@@ -1163,6 +1353,10 @@ export function useGameState() {
         // Reset dragon gauge
         setDragonGauge(DEFAULT_DRAGON_GAUGE);
         dragonGaugeRef.current = { ...DEFAULT_DRAGON_GAUGE };
+
+        // Reset treasure box state
+        setCurrentTreasureBox(null);
+        setShowTreasureBox(false);
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -1261,6 +1455,10 @@ export function useGameState() {
         // Dragon gauge
         dragonGauge,
 
+        // Treasure box
+        currentTreasureBox,
+        showTreasureBox,
+
         // Tower defense
         enemies,
         bullets,
@@ -1357,6 +1555,9 @@ export function useGameState() {
         triggerDragonBreath,
         endDragonBreath,
         dragonGaugeRef,
+        // Treasure box actions
+        openTreasureBox,
+        finishTreasureBox,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,

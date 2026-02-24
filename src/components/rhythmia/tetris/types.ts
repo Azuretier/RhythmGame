@@ -86,9 +86,27 @@ export type GamePhase =
     | 'PLAYING'
     | 'CARD_SELECT'
     | 'CARD_ABSORBING'
+    | 'TREASURE_BOX'
     | 'COLLAPSE'
     | 'TRANSITION'
     | 'CHECKPOINT';
+
+// ===== Treasure Box System =====
+export type TreasureBoxTier = 'wooden' | 'iron' | 'golden' | 'crystal';
+
+export type TreasureBoxReward =
+    | { type: 'materials'; items: { itemId: string; count: number }[] }
+    | { type: 'score_bonus'; amount: number }
+    | { type: 'free_card'; card: RogueCard }
+    | { type: 'effect_boost'; effect: CardAttribute; value: number; duration: number };
+
+export type TreasureBox = {
+    id: number;
+    tier: TreasureBoxTier;
+    rewards: TreasureBoxReward[];
+    opened: boolean;
+    spawnStage: number;
+};
 
 // ===== Item System =====
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
