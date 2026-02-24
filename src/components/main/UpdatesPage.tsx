@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -19,6 +19,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 const GITHUB_OWNER = 'Azuretier';
 const GITHUB_REPO = 'RhythmGame';
+const MAX_GITHUB_PR_PAGES = 10;
 
 type GitHubPullRequest = {
   number: number;
@@ -53,11 +54,14 @@ function getUpdateStatsFrom(updates: PRUpdate[]) {
 
 async function fetchAllMergedPullRequests(): Promise<PRUpdate[]> {
   const merged: PRUpdate[] = [];
-  for (let page = 1; page <= 10; page += 1) {
+  for (let page = 1; page <= MAX_GITHUB_PR_PAGES; page += 1) {
     const response = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls?state=closed&sort=created&direction=desc&per_page=100&page=${page}`
     );
-    if (!response.ok) break;
+    if (!response.ok) {
+      console.warn(`Failed to fetch merged PR page ${page}: ${response.status} ${response.statusText}`);
+      break;
+    }
 
     const pulls = (await response.json()) as GitHubPullRequest[];
     if (!Array.isArray(pulls) || pulls.length === 0) break;
@@ -67,12 +71,12 @@ async function fetchAllMergedPullRequests(): Promise<PRUpdate[]> {
       .map<PRUpdate>((pr) => ({
         number: pr.number,
         title: pr.title,
-        titleJa: pr.title,
+        titleJa: '',
         category: inferCategory(pr.title),
-        date: pr.merged_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+        date: new Date(pr.merged_at!).toISOString().slice(0, 10),
         merged: true,
         description: pr.title,
-        descriptionJa: pr.title,
+        descriptionJa: '',
       }));
 
     merged.push(...mergedPulls);
@@ -102,6 +106,7 @@ export default function UpdatesPage() {
   const t = useTranslations();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [updates, setUpdates] = useState<PRUpdate[]>(PR_UPDATES);
+  const dateLocale = Intl.getCanonicalLocales(locale)[0] ?? 'en-US';
 
   useEffect(() => {
     let active = true;
@@ -114,7 +119,8 @@ export default function UpdatesPage() {
         const combined = remoteUpdates.map((update) => staticByNumber.get(update.number) ?? update);
         setUpdates(combined);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.warn('Failed to load merged PRs for updates page; using static fallback.', error);
         // Keep static fallback when network requests fail.
       });
 
@@ -123,7 +129,7 @@ export default function UpdatesPage() {
     };
   }, []);
 
-  const stats = useMemo(() => getUpdateStatsFrom(updates), [updates]);
+  const stats = getUpdateStatsFrom(updates);
 
   const filteredUpdates = selectedCategory
     ? updates.filter((u) => u.merged && u.category === selectedCategory)
@@ -256,7 +262,7 @@ export default function UpdatesPage() {
                 <div className={styles.dateHeader}>
                   <div className={styles.dateDot} />
                   <span className={styles.dateText}>
-                    {new Date(date).toLocaleDateString(locale, {
+                    {new Date(date).toLocaleDateString(dateLocale, {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
