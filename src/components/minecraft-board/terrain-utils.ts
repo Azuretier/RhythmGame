@@ -99,8 +99,14 @@ export interface VoxelBlock {
 
 function blockColor(y: number, maxY: number, palette: BiomePalette): THREE.Color {
   const t = maxY > 1 ? y / (maxY - 1) : 1;
-  if (t > 0.7) return palette.top.clone();
-  if (t > 0.3) return palette.mid.clone();
+  if (t > 0.7) {
+    // Top layer: gradient blend toward mid color — fades as elevation increases toward max
+    return palette.top.clone().lerp(palette.mid, 0.12 * (1 - t));
+  }
+  if (t > 0.3) {
+    // Mid layer: gradient blend toward deep color — increases as elevation decreases
+    return palette.mid.clone().lerp(palette.deep, 0.18 * (0.7 - t));
+  }
   return palette.deep.clone();
 }
 
@@ -158,20 +164,26 @@ export function buildTerrainBlocks(
       if (ly === baseHeight - 1 && overrideColor && !isFeature) {
         // Top block uses override color for special blocks
         col = overrideColor.clone();
+        // Add slight variation even for special blocks
+        const ov = (noise2D(x * 3 + ly, tileY * 3 + ly, seed + 900) - 0.5) * 0.04;
+        col.r = Math.max(0, Math.min(1, col.r + ov));
+        col.g = Math.max(0, Math.min(1, col.g + ov));
+        col.b = Math.max(0, Math.min(1, col.b + ov));
       } else if (ly === baseHeight - 1 && !isFeature) {
         // Top block uses biome top color but tinted toward actual block color
         const biomeCol = blockColor(ly, baseHeight, palette);
         const actualCol = new THREE.Color(BLOCK_COLORS[tile.block] || '#808080');
-        col = biomeCol.clone().lerp(actualCol, 0.4);
+        col = biomeCol.clone().lerp(actualCol, 0.45);
       } else {
         col = blockColor(ly, baseHeight, palette);
       }
 
-      // Add per-block color noise
-      const colorNoise = (noise2D(x + ly * 7, tileY + ly * 13, seed + 500) - 0.5) * 0.06;
-      col.r = Math.max(0, Math.min(1, col.r + colorNoise));
-      col.g = Math.max(0, Math.min(1, col.g + colorNoise));
-      col.b = Math.max(0, Math.min(1, col.b + colorNoise));
+      // Add per-block color noise — secondary noise for richer texture
+      const colorNoise = (noise2D(x + ly * 7, tileY + ly * 13, seed + 500) - 0.5) * 0.09;
+      const colorNoise2 = (noise2D(x * 2 + ly, tileY * 2 + ly, seed + 701) - 0.5) * 0.04;
+      col.r = Math.max(0, Math.min(1, col.r + colorNoise + colorNoise2));
+      col.g = Math.max(0, Math.min(1, col.g + colorNoise + colorNoise2));
+      col.b = Math.max(0, Math.min(1, col.b + colorNoise + colorNoise2));
 
       // Dim colors for explored-but-not-visible tiles
       if (isDimmed) {
