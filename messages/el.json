@@ -1,15 +1,15 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
-    "online": "Online",
-    "onlineCount": "{count} online",
-    "loyalty": "Ranking"
+    "loading": "ΦΟΡΤΩΣΗ",
+    "selectServer": "ΕΠΙΛΟΓΗ ΛΕΙΤΟΥΡΓΙΑΣ",
+    "chooseMode": "Επιλέξτε λειτουργία παιχνιδιού",
+    "tagline": "Ένα παιχνίδι παζλ με ρυθμό. Ρίξε μπλοκ στο ρυθμό, παλέψτε με φίλους και ξεκλειδώστε επιτεύγματα.",
+    "play": "ΠΑΙΞΕ",
+    "battle": "ΜΑΧΗ",
+    "back": "← Πίσω",
+    "online": "Σε σύνδεση",
+    "onlineCount": "{count} σε σύνδεση",
+    "loyalty": "Κατάταξη"
   },
   "wiki": {
     "meta": {
@@ -1212,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© 2024 Azuretier. Με επιφύλαξη παντός δικαιώματος."
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1226,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "Γλώσσα",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1268,48 +1268,40 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "Μονός παίκτης",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "Ρυθμικό Παζλ",
+    "description": "Παίξτε μόνοι σας μέσα από μουσικούς κόσμους.",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
-    "wiki": "Wiki",
-    "updates": "Updates",
-    "lobby": "Lobby"
+    "wiki": "Βικι",
+    "updates": "Ενημερώσεις",
+    "lobby": "Λόμπι"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — Ρυθμικό Παιχνίδι Μπλοκ",
+    "description": "Το RHYTHMIA είναι ένα ρυθμικό παιχνίδι παζλ σε πρόγραμμα περιήγησης.",
+    "ogTitle": "RHYTHMIA — Ρυθμικό Παιχνίδι Μπλοκ",
+    "ogDescription": "Ρίξε μπλοκ στο ρυθμό, παλέψτε με φίλους και ξεκλειδώστε επιτεύγματα.",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "ρυθμικό παιχνίδι,τετρίς,παζλ,πολλαπλοί παίκτες"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "Πολλαπλοί",
+    "title": "Αρένα Μάχης",
+    "gameTitle": "Αρένα Μάχης",
+    "subtitle": "Αγώνες 1v1 σε πραγματικό χρόνο",
+    "description": "Αγώνες 1v1 σε πραγματικό χρόνο μέσω WebSocket.",
+    "features": "Πραγματικός Χρόνος|Σύστημα Γραμμών Σκουπιδιών|Κατατεταγμένο",
+    "stats": "1v1 Μάχη|8s Ταίριασμα|Εφεδρεία ΑΙ"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "Επιλογή θέματος",
+    "neoFuturistic": "Νέο-Φουτουριστικό",
+    "pixelNostalgia": "Pixel Νοσταλγία",
+    "neoDesc": "Μοντέρνα αίσθηση. Λεία διεπαφή με ζωντανές κλίσεις.",
+    "pixelDesc": "Ρέτρο αίσθηση. Γραμματοσειρές pixel και κλασική παλέτα."
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1454,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "Επιλογή σχήματος",
+    "default": "Προεπιλογή",
+    "rounded": "Στρογγυλεμένο",
+    "pill": "Χάπι",
+    "soft": "Μαλακό",
+    "sharp": "Αιχμηρό"
   }
 }

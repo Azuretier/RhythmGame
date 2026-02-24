@@ -1,15 +1,15 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
-    "online": "Online",
-    "onlineCount": "{count} online",
-    "loyalty": "Ranking"
+    "loading": "در حال بارگذاری",
+    "selectServer": "انتخاب حالت",
+    "chooseMode": "حالت بازی را انتخاب کنید",
+    "tagline": "یک بازی پازل ریتمیک. بلوک‌ها را با ضرباهنگ بیندازید، با دوستان رقابت کنید و دستاوردها را باز کنید.",
+    "play": "بازی",
+    "battle": "نبرد",
+    "back": "برگشت ←",
+    "online": "آنلاین",
+    "onlineCount": "{count} آنلاین",
+    "loyalty": "رتبه‌بندی"
   },
   "wiki": {
     "meta": {
@@ -1212,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© ۲۰۲۴ Azuretier. تمام حقوق محفوظ است."
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1226,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "زبان",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1268,48 +1268,40 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "تک‌نفره",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "پازل ریتمیک",
+    "description": "به‌تنهایی در دنیاهای موسیقی بازی کنید.",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
-    "wiki": "Wiki",
-    "updates": "Updates",
-    "lobby": "Lobby"
+    "wiki": "ویکی",
+    "updates": "به‌روزرسانی‌ها",
+    "lobby": "لابی"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — بازی بلوک ریتمیک",
+    "description": "RHYTHMIA یک بازی پازل ریتمیک مبتنی بر مرورگر است. بلوک‌ها را با ضرباهنگ بیندازید، رقابت کنید و دستاوردها را باز کنید.",
+    "ogTitle": "RHYTHMIA — بازی بلوک ریتمیک",
+    "ogDescription": "بلوک‌ها را با ضرباهنگ بیندازید، با دوستان رقابت کنید و دستاوردها را باز کنید.",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "بازی ریتمیک,تتریس,پازل,چندنفره"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "چندنفره",
+    "title": "عرصه نبرد",
+    "gameTitle": "عرصه نبرد",
+    "subtitle": "نبردهای 1v1 در زمان واقعی",
+    "description": "نبردهای 1v1 در زمان واقعی از طریق WebSocket.",
+    "features": "زمان واقعی|سیستم ردیف‌های زباله|رتبه‌بندی‌شده",
+    "stats": "1v1 نبرد|۸ ثانیه تطابق|هوش مصنوعی پشتیبان"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "انتخاب موضوع",
+    "neoFuturistic": "نئو-آینده‌نگر",
+    "pixelNostalgia": "نوستالژی پیکسل",
+    "neoDesc": "احساس مدرن. رابط کاربری روان با گرادیان‌های پویا.",
+    "pixelDesc": "احساس رتروی. فونت‌های پیکسلی و پالت کلاسیک."
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1454,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "انتخاب شکل",
+    "default": "پیش‌فرض",
+    "rounded": "گرد",
+    "pill": "قرص",
+    "soft": "نرم",
+    "sharp": "تیز"
   }
 }

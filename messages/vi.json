@@ -1,15 +1,15 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
-    "online": "Online",
-    "onlineCount": "{count} online",
-    "loyalty": "Ranking"
+    "loading": "ĐANG TẢI",
+    "selectServer": "CHỌN CHẾ ĐỘ",
+    "chooseMode": "Chọn chế độ chơi",
+    "tagline": "Trò chơi xếp hình theo nhịp điệu. Thả khối theo nhịp, chiến đấu với bạn bè và mở khóa thành tích.",
+    "play": "CHƠI",
+    "battle": "CHIẾN",
+    "back": "← Quay lại",
+    "online": "Trực tuyến",
+    "onlineCount": "{count} trực tuyến",
+    "loyalty": "Xếp hạng"
   },
   "wiki": {
     "meta": {
@@ -1212,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© 2024 Azuretier. Bảo lưu mọi quyền."
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1226,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "Ngôn ngữ",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1268,48 +1268,40 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "Đơn người chơi",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "Xếp Hình Theo Nhịp",
+    "description": "Chơi một mình qua các thế giới âm nhạc.",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
     "wiki": "Wiki",
-    "updates": "Updates",
-    "lobby": "Lobby"
+    "updates": "Cập nhật",
+    "lobby": "Sảnh"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — Trò Chơi Xếp Hình Theo Nhịp",
+    "description": "RHYTHMIA là trò chơi xếp hình theo nhịp điệu trên trình duyệt. Thả khối theo nhịp, chiến đấu và mở khóa thành tích.",
+    "ogTitle": "RHYTHMIA — Trò Chơi Xếp Hình Theo Nhịp",
+    "ogDescription": "Thả khối theo nhịp, chiến đấu với bạn bè và mở khóa thành tích.",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "trò chơi nhịp điệu,tetris,xếp hình,nhiều người chơi"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "Nhiều người",
+    "title": "Đấu Trường",
+    "gameTitle": "Đấu Trường",
+    "subtitle": "Trận đấu 1v1 thời gian thực",
+    "description": "Trận đấu 1v1 thời gian thực qua WebSocket.",
+    "features": "Thời Gian Thực|Hệ Thống Dòng Rác|Xếp Hạng",
+    "stats": "1v1 Đấu|8s Ghép Trận|AI Dự Phòng"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "Chọn giao diện",
+    "neoFuturistic": "Neo Tương Lai",
+    "pixelNostalgia": "Pixel Hoài Niệm",
+    "neoDesc": "Cảm giác hiện đại. Giao diện mượt với gradient sống động.",
+    "pixelDesc": "Cảm giác retro. Font pixel và bảng màu cổ điển."
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1454,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "Chọn hình dạng",
+    "default": "Mặc định",
+    "rounded": "Bo tròn",
+    "pill": "Viên thuốc",
+    "soft": "Mềm mại",
+    "sharp": "Sắc nét"
   }
 }

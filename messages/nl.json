@@ -1,15 +1,15 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
+    "loading": "LADEN",
+    "selectServer": "SELECTEER MODUS",
+    "chooseMode": "Kies je spelmodus",
+    "tagline": "Een ritmisch puzzelspel. Gooi blokken op de maat, vecht tegen vrienden en ontgrendel prestaties.",
+    "play": "SPELEN",
+    "battle": "GEVECHT",
+    "back": "← Terug",
     "online": "Online",
     "onlineCount": "{count} online",
-    "loyalty": "Ranking"
+    "loyalty": "Ranglijst"
   },
   "wiki": {
     "meta": {
@@ -1212,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© 2024 Azuretier. Alle rechten voorbehouden."
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1226,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "Taal",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1268,10 +1268,10 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "Solo",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "Ritmisch Puzzel",
+    "description": "Speel solo door muzikaal getinte werelden.",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
@@ -1280,36 +1280,28 @@
     "lobby": "Lobby"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — Ritmisch Blokkenspel",
+    "description": "RHYTHMIA is een browsergebaseerd ritmisch puzzelspel. Gooi blokken op de maat, vecht en ontgrendel prestaties.",
+    "ogTitle": "RHYTHMIA — Ritmisch Blokkenspel",
+    "ogDescription": "Gooi blokken op de maat, vecht tegen vrienden en ontgrendel prestaties.",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "ritmisch spel,tetris,puzzel,multiplayer"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "Multi",
+    "title": "Strijdarena",
+    "gameTitle": "Strijdarena",
+    "subtitle": "Realtime 1v1-gevechten",
+    "description": "Realtime 1v1-gevechten via WebSocket.",
+    "features": "Realtime|Vuilnisregel-systeem|Gerangschikt",
+    "stats": "1v1 Gevecht|8s Matchmaking|AI-terugval"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "Selecteer thema",
+    "neoFuturistic": "Neo-futuristisch",
+    "pixelNostalgia": "Pixelnostalgie",
+    "neoDesc": "Modern gevoel. Strakke interface met levendige verlopen.",
+    "pixelDesc": "Retro gevoel. Pixellettertypen en klassiek palet."
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1454,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "Selecteer vorm",
+    "default": "Standaard",
+    "rounded": "Afgerond",
+    "pill": "Pil",
+    "soft": "Zacht",
+    "sharp": "Scherp"
   }
 }

@@ -1,15 +1,15 @@
 {
   "lobby": {
-    "loading": "LOADING",
-    "selectServer": "SELECT MODE",
-    "chooseMode": "Choose your game mode",
-    "tagline": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends, and unlock achievements.",
-    "play": "PLAY",
-    "battle": "BATTLE",
-    "back": "← Back",
-    "online": "Online",
-    "onlineCount": "{count} online",
-    "loyalty": "Ranking"
+    "loading": "加载中",
+    "selectServer": "选择模式",
+    "chooseMode": "选择游戏模式",
+    "tagline": "节奏驱动的益智游戏。跟着节拍放置方块，与朋友对战，解锁成就。",
+    "play": "开始",
+    "battle": "对战",
+    "back": "← 返回",
+    "online": "在线",
+    "onlineCount": "{count} 在线",
+    "loyalty": "排名"
   },
   "wiki": {
     "meta": {
@@ -1212,7 +1212,7 @@
     }
   },
   "footer": {
-    "copyright": "azuretier.net © 2025"
+    "copyright": "© 2024 Azuretier. 保留所有权利。"
   },
   "googleSync": {
     "sectionTitle": "Google Account Sync",
@@ -1226,7 +1226,7 @@
     "error": "Sync failed"
   },
   "localeSwitcher": {
-    "label": "Language",
+    "label": "语言",
     "ja": "日本語",
     "en": "English",
     "th": "ไทย",
@@ -1268,48 +1268,40 @@
     "chapterSelect": "Chapter Select"
   },
   "vanilla": {
-    "badge": "SOLO",
+    "badge": "单人",
     "title": "RHYTHMIA",
-    "subtitle": "Classic Rhythm Puzzle",
-    "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode.",
+    "subtitle": "节奏益智游戏",
+    "description": "随着节拍放置方块，消除行，在音乐主题世界中前进。",
     "gameTitle": "RHYTHMIA"
   },
   "nav": {
-    "wiki": "Wiki",
-    "updates": "Updates",
-    "lobby": "Lobby"
+    "wiki": "百科",
+    "updates": "更新",
+    "lobby": "大厅"
   },
   "meta": {
-    "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",
-    "description": "Experience the ultimate fusion of music and puzzles! Play RHYTHMIA, the free browser-based rhythm Tetris game. Match the beat, clear blocks, and climb the leaderboard.",
-    "ogTitle": "RHYTHMIA - The Next-Gen Rhythm Puzzle Experience",
-    "ogDescription": "Can you keep the beat? Drop into RHYTHMIA, a high-energy blend of rhythm action and classic falling-block puzzles. Play free on Azuretier.",
+    "title": "RHYTHMIA — 节奏方块游戏",
+    "description": "RHYTHMIA 是一款浏览器节奏益智游戏。随着节拍放置方块，与朋友对战，解锁成就。",
+    "ogTitle": "RHYTHMIA — 节奏方块游戏",
+    "ogDescription": "随着节拍放置方块，与朋友对战，解锁成就。",
     "ogType": "website",
-    "keywords": "RHYTHMIA, Tetris, Rhythm Game, Music Puzzle, Free Online Game, Browser Game, Falling Block Puzzle, Arcade, Azuretier"
+    "keywords": "节奏游戏,俄罗斯方块,益智游戏,多人游戏"
   },
   "multiplayer": {
-    "badge": "1v1",
-    "title": "1v1 BATTLE",
-    "gameTitle": "1v1 BATTLE",
-    "subtitle": "Ranked Multiplayer",
-    "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins.",
-    "features": {
-      "vs": "1v1",
-      "websocket": "WebSocket",
-      "ranked": "Ranked"
-    },
-    "stats": {
-      "mode": "Mode",
-      "battle": "Battle",
-      "status": "Status"
-    }
+    "badge": "多人",
+    "title": "对战竞技场",
+    "gameTitle": "对战竞技场",
+    "subtitle": "实时1v1对战",
+    "description": "通过WebSocket进行实时1v1对战。",
+    "features": "实时对战|垃圾行系统|排位赛",
+    "stats": "1v1 对战|8秒 匹配|AI 替补"
   },
   "uiTheme": {
-    "selectTheme": "UI Theme",
-    "neoFuturistic": "Neo-Futuristic",
-    "pixelNostalgia": "Pixel Nostalgia",
-    "neoDesc": "Sleek, clean, and advanced aesthetic with frosted glass effects",
-    "pixelDesc": "Retro 8-bit/16-bit pixel art game aesthetic with CRT effects"
+    "selectTheme": "选择主题",
+    "neoFuturistic": "新未来主义",
+    "pixelNostalgia": "像素怀旧",
+    "neoDesc": "现代感。光滑的界面配以活力渐变。",
+    "pixelDesc": "复古感。像素字体与经典配色。"
   },
   "skillTree": {
     "title": "SKILL TREE",
@@ -1454,11 +1446,11 @@
     }
   },
   "shape": {
-    "selectShape": "UI Shape",
-    "default": "Default",
-    "rounded": "Rounded",
-    "pill": "Pill",
-    "soft": "Soft",
-    "sharp": "Sharp"
+    "selectShape": "选择形状",
+    "default": "默认",
+    "rounded": "圆角",
+    "pill": "椭圆",
+    "soft": "柔和",
+    "sharp": "锐利"
   }
 }
