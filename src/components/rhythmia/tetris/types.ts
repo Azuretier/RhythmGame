@@ -65,6 +65,8 @@ export type DragonGaugeState = {
 
 // ===== VFX Event Types =====
 
+import type { ElementType, ReactionType } from '@/lib/elements/types';
+
 export type VFXEvent =
     | { type: 'beat'; bpm: number; intensity: number }
     | { type: 'lineClear'; rows: number[]; count: number; onBeat: boolean; combo: number }
@@ -76,7 +78,15 @@ export type VFXEvent =
     | { type: 'feverEnd' }
     | { type: 'dragonGaugeCharge'; gauge: 'fury' | 'might'; amount: number; newValue: number }
     | { type: 'dragonBreathStart' }
-    | { type: 'dragonBreathEnd' };
+    | { type: 'dragonBreathEnd' }
+    // Elemental system VFX events
+    | { type: 'elementOrbSpawn'; element: ElementType; boardX: number; boardY: number }
+    | { type: 'elementOrbCollect'; element: ElementType; count: number }
+    | { type: 'reactionTrigger'; reaction: ReactionType; intensity: number }
+    | { type: 'reactionEnd'; reaction: ReactionType }
+    | { type: 'corruptionBackfire' }
+    // Equipment loot VFX events
+    | { type: 'equipmentDrop'; equipmentId: string; rarity: ItemRarity; boardX: number; boardY: number };
 
 export type VFXEmitter = (event: VFXEvent) => void;
 
@@ -156,6 +166,8 @@ export type EquippedCard = {
 };
 
 // ===== Active Attribute Effects (runtime tracking) =====
+import type { EnchantmentType } from '@/lib/equipment/types';
+
 export type ActiveEffects = {
     comboGuardUsesRemaining: number;
     shieldUsesRemaining: number;
@@ -167,6 +179,16 @@ export type ActiveEffects = {
     comboAmplifyFactor: number;
     dragonBoostEnabled: boolean;
     dragonBoostChargeMultiplier: number;
+    // Equipment bonuses (merged from equipped gear)
+    equipmentScoreBonus: number;
+    equipmentComboDuration: number;
+    equipmentBeatWindow: number;
+    equipmentTerrainDamage: number;
+    equipmentDropRate: number;
+    equipmentGravityReduce: number;
+    equipmentComboAmplify: number;
+    equipmentReactionPower: number;
+    equipmentEnchantments: EnchantmentType[];
 };
 
 // ===== Card Selection Offer =====
