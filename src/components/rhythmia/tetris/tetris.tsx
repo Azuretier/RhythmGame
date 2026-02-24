@@ -448,6 +448,12 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
   // Line clear pulse for tower aura visual
   const [galaxyLineClearPulse, setGalaxyLineClearPulse] = useState(false);
   const galaxyPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Cleanup pulse timer on unmount to avoid React state-update-after-unmount warning
+  useEffect(() => {
+    return () => {
+      if (galaxyPulseTimerRef.current) clearTimeout(galaxyPulseTimerRef.current);
+    };
+  }, []);
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -494,6 +500,10 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
   triggerLineClearAuraRef.current = triggerLineClearAura;
   const spawnFromCorruptionRef = useRef(corruption.spawnFromCorruption);
   spawnFromCorruptionRef.current = corruption.spawnFromCorruption;
+  const corruptionResetRef = useRef(corruption.reset);
+  corruptionResetRef.current = corruption.reset;
+  const galaxyTDResetRef = useRef(galaxyTD.reset);
+  galaxyTDResetRef.current = galaxyTD.reset;
 
   // Helper: get center of board area for particle/item spawn origin
   const getBoardCenter = useCallback((): { x: number; y: number } => {
@@ -1134,9 +1144,9 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     bestTetrisIn60sRef.current = 0;
     setToastIds([]);
     setActionToasts([]);
-    corruption.reset();
-    galaxyTD.reset();
-  }, [initAudio, initGame, corruption, galaxyTD]);
+    corruptionResetRef.current();
+    galaxyTDResetRef.current();
+  }, [initAudio, initGame]);
 
   // Start game — intercept for tutorial on first play
   const startGame = useCallback((protocolId: number = 0) => {
