@@ -3,7 +3,7 @@
 import React from 'react';
 import type { ItemType, RogueCard } from '../types';
 import { ITEM_MAP } from '../constants';
-import { ItemIcon } from './ItemIcon';
+import { ItemTexture } from '@/components/items/ItemTexture';
 import styles from './ItemTooltip.module.css';
 
 // ===== Rarity Config =====
@@ -183,7 +183,7 @@ export function RogueCardTooltip({ card, stackCount }: RogueCardTooltipProps) {
                                         return (
                                             <div key={i} className={styles.recipeRow}>
                                                 <div className={styles.recipeIconWrap}>
-                                                    <ItemIcon itemId={req.itemId} size={14} />
+                                                    <ItemTexture itemId={req.itemId} size={14} />
                                                 </div>
                                                 <span className={styles.recipeMatName}>{mat.name}</span>
                                                 <span className={styles.recipeMatCount}>x{req.count}</span>

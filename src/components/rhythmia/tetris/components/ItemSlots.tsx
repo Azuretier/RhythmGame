@@ -1,8 +1,8 @@
 import React from 'react';
 import type { InventoryItem, EquippedCard, ActiveEffects } from '../types';
 import { ITEM_MAP, ROGUE_CARD_MAP } from '../constants';
-import { ItemIcon } from './ItemIcon';
-import { ItemTooltipWrapper } from './ItemTooltip';
+import { ItemTexture } from '@/components/items/ItemTexture';
+import { ItemTooltipWrapper } from '@/components/items/ItemTooltip';
 import styles from '../VanillaGame.module.css';
 
 interface ItemSlotsProps {
@@ -50,7 +50,7 @@ export function ItemSlots({ inventory, equippedCards, activeEffects }: ItemSlots
                     return (
                         <ItemTooltipWrapper
                             key={inv.itemId}
-                            item={item}
+                            itemId={inv.itemId}
                             count={inv.count}
                             side="right"
                         >
@@ -69,7 +69,7 @@ export function ItemSlots({ inventory, equippedCards, activeEffects }: ItemSlots
                                         background: `radial-gradient(circle at 50% 50%, ${item.glowColor}18, transparent)`,
                                     }}
                                 >
-                                    <ItemIcon itemId={inv.itemId} size={22} />
+                                    <ItemTexture itemId={inv.itemId} size={22} />
                                 </div>
                                 {/* Count — large number typography */}
                                 <span className={styles.itemCardCount}>{inv.count}</span>
