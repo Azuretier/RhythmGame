@@ -335,7 +335,7 @@ export const RARITY_OFFER_WEIGHTS: Record<string, number> = {
 // Default (zero) active effects
 export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
     comboGuardUsesRemaining: 0,
-    shieldActive: false,
+    shieldUsesRemaining: 0,
     terrainSurgeBonus: 0,
     beatExtendBonus: 0,
     scoreBoostMultiplier: 1,

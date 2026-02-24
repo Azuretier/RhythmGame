@@ -302,6 +302,9 @@ interface BeatBarProps {
      *  --beat-phase CSS var and data-onbeat attribute directly on this element
      *  to bypass React re-render batching for smooth cross-browser animation. */
     containerRef?: React.Ref<HTMLDivElement>;
+    /** Effective GOOD-window half-width as a fraction (0–1).
+     *  Used to size the visual target zones. Defaults to 0.20 (BEAT_GOOD_WINDOW). */
+    beatZoneWidth?: number;
 }
 
 /**
@@ -310,11 +313,12 @@ interface BeatBarProps {
  * the on-beat glow by a data-onbeat attribute, both set from the parent's
  * requestAnimationFrame loop for frame-precise, re-render-free animation.
  */
-export function BeatBar({ containerRef }: BeatBarProps) {
+export function BeatBar({ containerRef, beatZoneWidth = 0.20 }: BeatBarProps) {
+    const zonePct = `${Math.min(beatZoneWidth * 100, 50)}%`;
     return (
         <div ref={containerRef} className={styles.beatBar}>
-            <div className={styles.beatTargetLeft} />
-            <div className={styles.beatTargetRight} />
+            <div className={styles.beatTargetLeft} style={{ width: zonePct }} />
+            <div className={styles.beatTargetRight} style={{ width: zonePct }} />
             <div className={styles.beatCursor} />
         </div>
     );

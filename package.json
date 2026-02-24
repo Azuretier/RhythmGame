@@ -8,6 +8,8 @@
     "postbuild": "next-sitemap",
     "start": "ts-node --project tsconfig.server.json server.ts",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "multiplayer": "ts-node --project tsconfig.server.json multiplayer-server.ts"
   },
   "dependencies": {
@@ -91,6 +93,7 @@
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   }
 }
