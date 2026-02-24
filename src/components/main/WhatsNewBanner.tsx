@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
-import { getRecentUpdates } from '@/lib/updates';
+import { getRecentUpdates, getLocalizedPRContent } from '@/lib/updates';
 import styles from './WhatsNewBanner.module.css';
 
 interface WhatsNewBannerProps {
@@ -57,6 +57,7 @@ export default function WhatsNewBanner({ autoShow = true, dismissible = true }: 
   if (isDismissed) return null;
 
   const recentUpdates = getRecentUpdates(3);
+  const latestLocalized = recentUpdates[0] ? getLocalizedPRContent(recentUpdates[0], locale) : null;
 
   return (
     <AnimatePresence>
@@ -72,19 +73,21 @@ export default function WhatsNewBanner({ autoShow = true, dismissible = true }: 
             <div className={styles.icon}>✨</div>
             <div className={styles.text}>
               <h3 className={styles.title}>
-                {locale === 'ja' ? '新しいアップデート！' : "What's New!"}
+                {t('updates.whatsNewTitle')}
               </h3>
-              <p className={styles.description}>
-                {recentUpdates.length > 0 && recentUpdates[0].title}
-              </p>
+              {latestLocalized?.title && (
+                <p className={styles.description}>
+                  {latestLocalized.title}
+                </p>
+              )}
             </div>
             <div className={styles.actions}>
               <button onClick={handleViewUpdates} className={styles.viewBtn}>
-                {locale === 'ja' ? '詳細を見る' : 'View Details'}
+                {t('updates.viewDetails')}
               </button>
               {dismissible && (
                 <button onClick={handleDismiss} className={styles.dismissBtn}>
-                  {locale === 'ja' ? '閉じる' : 'Dismiss'}
+                  {t('updates.dismiss')}
                 </button>
               )}
             </div>

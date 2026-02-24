@@ -69,7 +69,7 @@ export default function UpdatesPage() {
         </div>
         <div className={styles.headerRight}>
           <button className={styles.navLink} onClick={() => router.push('/wiki')}>
-            Wiki
+            {t('nav.wiki')}
           </button>
           <LocaleSwitcher />
         </div>
