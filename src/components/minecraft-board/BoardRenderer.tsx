@@ -78,21 +78,69 @@ export default function BoardRenderer({
     return map;
   }, [visibleMobs]);
 
-  // Keyboard controls
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  // Continuous key polling — eliminates browser keyboard repeat delay
+  const pressedDirs = useRef(new Set<Direction>());
+  const lastMoveTimeRef = useRef(0);
+  const MOVE_POLL_MS = 100;
 
-      switch (e.key) {
-        case 'ArrowUp': case 'w': case 'W': e.preventDefault(); onMove('up'); break;
-        case 'ArrowDown': case 's': case 'S': e.preventDefault(); onMove('down'); break;
-        case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); onMove('left'); break;
-        case 'ArrowRight': case 'd': case 'D': e.preventDefault(); onMove('right'); break;
+  useEffect(() => {
+    const keyToDir = (key: string): Direction | null => {
+      switch (key) {
+        case 'ArrowUp': case 'w': case 'W': return 'up';
+        case 'ArrowDown': case 's': case 'S': return 'down';
+        case 'ArrowLeft': case 'a': case 'A': return 'left';
+        case 'ArrowRight': case 'd': case 'D': return 'right';
+        default: return null;
       }
     };
 
+    const fireMove = (dir: Direction) => {
+      onMove(dir);
+      lastMoveTimeRef.current = performance.now();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const dir = keyToDir(e.key);
+      if (!dir) return;
+      e.preventDefault();
+      const wasEmpty = pressedDirs.current.size === 0;
+      pressedDirs.current.add(dir);
+      if (wasEmpty) {
+        const now = performance.now();
+        if (now - lastMoveTimeRef.current >= MOVE_POLL_MS) {
+          fireMove(dir);
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const dir = keyToDir(e.key);
+      if (dir) pressedDirs.current.delete(dir);
+    };
+
+    const handleBlur = () => {
+      pressedDirs.current.clear();
+    };
+
+    const pollInterval = setInterval(() => {
+      if (pressedDirs.current.size === 0) return;
+      const now = performance.now();
+      if (now - lastMoveTimeRef.current < MOVE_POLL_MS) return;
+      let dir: Direction | null = null;
+      for (const d of pressedDirs.current) dir = d;
+      if (dir) fireMove(dir);
+    }, 16);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
   }, [onMove]);
 
   // Night overlay opacity

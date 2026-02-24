@@ -183,8 +183,8 @@ function PlayerEntity({
     // Lerp to new tile position for smooth movement
     const prevX = groupRef.current.position.x;
     const prevZ = groupRef.current.position.z;
-    groupRef.current.position.x = THREE.MathUtils.lerp(prevX, posRef.current.x, 0.18);
-    groupRef.current.position.z = THREE.MathUtils.lerp(prevZ, posRef.current.z, 0.18);
+    groupRef.current.position.x = THREE.MathUtils.lerp(prevX, posRef.current.x, 0.35);
+    groupRef.current.position.z = THREE.MathUtils.lerp(prevZ, posRef.current.z, 0.35);
     groupRef.current.position.y = topY + bob;
     // Swing limbs only when the entity is visibly moving
     const isMoving = Math.abs(groupRef.current.position.x - posRef.current.x) > 0.01 ||
@@ -290,8 +290,8 @@ function MobEntity({ mob, heightMap }: { mob: MCMobState; heightMap: Map<string,
 
   useFrame(({ clock }) => {
     if (!groupRef.current) return;
-    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, posRef.current.x, 0.18);
-    groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, posRef.current.z, 0.18);
+    groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, posRef.current.x, 0.22);
+    groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, posRef.current.z, 0.22);
     if (mob.hostile) {
       groupRef.current.position.y = topY + Math.sin(clock.elapsedTime * 3 + mob.x * 7) * 0.06;
     } else {
@@ -514,7 +514,7 @@ function BoardCameraController({ targetX, targetZ }: { targetX: number; targetZ:
   useFrame(() => {
     const target = targetRef.current;
     const desiredPos = new THREE.Vector3(target.x + 20, 28, target.z + 20);
-    camera.position.lerp(desiredPos, 0.10);
+    camera.position.lerp(desiredPos, 0.18);
     camera.lookAt(target.x, 0, target.z);
     camera.updateProjectionMatrix();
   });
@@ -565,7 +565,7 @@ function FPSCameraController({
       case 'right': targetLookOffset.current.set(1, 0, 0);  break;
     }
     // Smooth camera position to player eye level
-    camera.position.lerp(targetPos.current, 0.14);
+    camera.position.lerp(targetPos.current, 0.22);
     // Smooth look target
     const fv = targetLookOffset.current;
     const lookTarget = new THREE.Vector3(
@@ -779,22 +779,75 @@ export default function BoardRenderer3D({
   // Track last movement direction for FPS camera
   const facingRef = useRef<Direction>('up');
 
+  // Continuous key polling — eliminates browser keyboard repeat delay
+  const pressedDirs = useRef(new Set<Direction>());
+  const lastMoveDirRef = useRef<Direction | null>(null);
+  const lastMoveTimeRef = useRef(0);
+  const MOVE_POLL_MS = 100; // match server cooldown (1 tick = 100ms)
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      switch (e.key) {
-        case 'ArrowUp': case 'w': case 'W':
-          e.preventDefault(); facingRef.current = 'up'; onMove('up'); break;
-        case 'ArrowDown': case 's': case 'S':
-          e.preventDefault(); facingRef.current = 'down'; onMove('down'); break;
-        case 'ArrowLeft': case 'a': case 'A':
-          e.preventDefault(); facingRef.current = 'left'; onMove('left'); break;
-        case 'ArrowRight': case 'd': case 'D':
-          e.preventDefault(); facingRef.current = 'right'; onMove('right'); break;
+    const keyToDir = (key: string): Direction | null => {
+      switch (key) {
+        case 'ArrowUp': case 'w': case 'W': return 'up';
+        case 'ArrowDown': case 's': case 'S': return 'down';
+        case 'ArrowLeft': case 'a': case 'A': return 'left';
+        case 'ArrowRight': case 'd': case 'D': return 'right';
+        default: return null;
       }
     };
+
+    const fireMove = (dir: Direction) => {
+      facingRef.current = dir;
+      lastMoveDirRef.current = dir;
+      onMove(dir);
+      lastMoveTimeRef.current = performance.now();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const dir = keyToDir(e.key);
+      if (!dir) return;
+      e.preventDefault();
+      const wasEmpty = pressedDirs.current.size === 0;
+      pressedDirs.current.add(dir);
+      // Fire immediately on fresh press (no waiting for poll interval)
+      if (wasEmpty || dir !== lastMoveDirRef.current) {
+        const now = performance.now();
+        if (now - lastMoveTimeRef.current >= MOVE_POLL_MS) {
+          fireMove(dir);
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const dir = keyToDir(e.key);
+      if (dir) pressedDirs.current.delete(dir);
+    };
+
+    const handleBlur = () => {
+      pressedDirs.current.clear();
+    };
+
+    // Poll pressed keys at ~60fps, send move when cooldown allows
+    const pollInterval = setInterval(() => {
+      if (pressedDirs.current.size === 0) return;
+      const now = performance.now();
+      if (now - lastMoveTimeRef.current < MOVE_POLL_MS) return;
+      // Use the most recently pressed direction (last in set)
+      let dir: Direction | null = null;
+      for (const d of pressedDirs.current) dir = d;
+      if (dir) fireMove(dir);
+    }, 16);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
   }, [onMove]);
 
   const handleTouchMove = useCallback((dir: Direction) => {
