@@ -139,11 +139,15 @@ export function TreasureBoxUI({ box, onOpen, onFinish }: TreasureBoxUIProps) {
         timersRef.current.push(setTimeout(fn, ms));
     }, []);
 
+    // Clean up all timers on unmount
+    useEffect(() => {
+        return clearTimers;
+    }, [clearTimers]);
+
     // Appear animation
     useEffect(() => {
         addTimer(() => setPhase('idle'), PHASE_TIMINGS.appear);
-        return clearTimers;
-    }, [addTimer, clearTimers]);
+    }, [addTimer]);
 
     const handleOpen = useCallback(() => {
         if (phase !== 'idle') return;

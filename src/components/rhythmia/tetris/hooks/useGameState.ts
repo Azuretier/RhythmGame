@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, TreasureBox, TreasureBoxTier, TreasureBoxReward } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, TreasureBox, TreasureBoxTier, TreasureBoxReward, TreasureBoxBoostEffect } from '../types';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
@@ -483,29 +483,28 @@ export function useGameState() {
         }
         setInventory(invCopy.filter(i => i.count > 0));
 
-        // Add or stack equipped card
-        setEquippedCards(prev => {
-            const existing = prev.find(ec => ec.cardId === cardId);
-            let updated: EquippedCard[];
-            if (existing && existing.stackCount < 3) {
-                // Stack: increment count
-                updated = prev.map(ec =>
-                    ec.cardId === cardId
-                        ? { ...ec, stackCount: ec.stackCount + 1 }
-                        : ec
-                );
-            } else if (existing) {
-                // Already at max stack — still allow (re-equip)
-                updated = prev;
-            } else {
-                updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
-            }
-            // Recompute active effects
-            const effects = computeActiveEffects(updated);
-            setActiveEffects(effects);
-            equippedCardsRef.current = updated;
-            return updated;
-        });
+        // Compute updated equipped cards
+        const prev = equippedCardsRef.current;
+        const existing = prev.find(ec => ec.cardId === cardId);
+        let updatedCards: EquippedCard[];
+        if (existing && existing.stackCount < 3) {
+            updatedCards = prev.map(ec =>
+                ec.cardId === cardId
+                    ? { ...ec, stackCount: ec.stackCount + 1 }
+                    : ec
+            );
+        } else if (existing) {
+            updatedCards = prev;
+        } else {
+            updatedCards = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+        }
+
+        // Update cards, effects, and refs synchronously
+        equippedCardsRef.current = updatedCards;
+        setEquippedCards(updatedCards);
+        const effects = computeActiveEffects(updatedCards);
+        activeEffectsRef.current = effects;
+        setActiveEffects(effects);
 
         // Enter absorbing phase — animation plays before finishing
         setAbsorbingCardId(cardId);
@@ -684,7 +683,7 @@ export function useGameState() {
 
         // Chance for temporary effect boost
         if (Math.random() < config.effectBoostChance) {
-            const boostOptions: Array<{ effect: 'score_boost' | 'terrain_surge' | 'lucky_drops' | 'gravity_slow'; value: number }> = [
+            const boostOptions: Array<{ effect: TreasureBoxBoostEffect; value: number }> = [
                 { effect: 'score_boost', value: 0.25 },
                 { effect: 'terrain_surge', value: 0.2 },
                 { effect: 'lucky_drops', value: 0.2 },
@@ -737,6 +736,12 @@ export function useGameState() {
         // Mark as opened
         setCurrentTreasureBox(prev => prev ? { ...prev, opened: true } : null);
 
+        // Track whether cards/effects need updating
+        let updatedCards = equippedCardsRef.current;
+        let updatedEffects = activeEffectsRef.current;
+        let cardsChanged = false;
+        let effectsBoosted = false;
+
         // Apply rewards
         for (const reward of box.rewards) {
             switch (reward.type) {
@@ -761,50 +766,74 @@ export function useGameState() {
 
                 case 'free_card': {
                     const cardId = reward.card.id;
-                    setEquippedCards(prev => {
-                        const existing = prev.find(ec => ec.cardId === cardId);
-                        let updated: EquippedCard[];
-                        if (existing && existing.stackCount < 3) {
-                            updated = prev.map(ec =>
-                                ec.cardId === cardId
-                                    ? { ...ec, stackCount: ec.stackCount + 1 }
-                                    : ec
-                            );
-                        } else if (!existing) {
-                            updated = [...prev, { cardId, equippedAt: Date.now(), stackCount: 1 }];
-                        } else {
-                            updated = prev;
-                        }
-                        const effects = computeActiveEffects(updated);
-                        setActiveEffects(effects);
-                        equippedCardsRef.current = updated;
-                        return updated;
-                    });
+                    const existing = updatedCards.find(ec => ec.cardId === cardId);
+                    if (existing && existing.stackCount < 3) {
+                        updatedCards = updatedCards.map(ec =>
+                            ec.cardId === cardId
+                                ? { ...ec, stackCount: ec.stackCount + 1 }
+                                : ec
+                        );
+                        cardsChanged = true;
+                    } else if (!existing) {
+                        updatedCards = [...updatedCards, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+                        cardsChanged = true;
+                    }
                     break;
                 }
 
-                case 'effect_boost':
-                    // Apply temporary effect boost to active effects
-                    setActiveEffects(prev => {
-                        const updated = { ...prev };
-                        switch (reward.effect) {
-                            case 'score_boost':
-                                updated.scoreBoostMultiplier += reward.value;
-                                break;
-                            case 'terrain_surge':
-                                updated.terrainSurgeBonus += reward.value;
-                                break;
-                            case 'lucky_drops':
-                                updated.luckyDropsBonus += reward.value;
-                                break;
-                            case 'gravity_slow':
-                                updated.gravitySlowFactor = Math.max(0.1, updated.gravitySlowFactor - reward.value);
-                                break;
-                        }
-                        return updated;
-                    });
+                case 'effect_boost': {
+                    // Apply temporary effect boost
+                    updatedEffects = { ...updatedEffects };
+                    switch (reward.effect) {
+                        case 'score_boost':
+                            updatedEffects.scoreBoostMultiplier += reward.value;
+                            break;
+                        case 'terrain_surge':
+                            updatedEffects.terrainSurgeBonus += reward.value;
+                            break;
+                        case 'lucky_drops':
+                            updatedEffects.luckyDropsBonus += reward.value;
+                            break;
+                        case 'gravity_slow':
+                            updatedEffects.gravitySlowFactor = Math.max(0.1, updatedEffects.gravitySlowFactor - reward.value);
+                            break;
+                    }
+                    effectsBoosted = true;
                     break;
+                }
             }
+        }
+
+        // Synchronize cards, effects, and refs outside of setter callbacks
+        if (cardsChanged) {
+            equippedCardsRef.current = updatedCards;
+            setEquippedCards(updatedCards);
+            // Recompute base effects from cards, then layer boosts on top
+            updatedEffects = computeActiveEffects(updatedCards);
+            // Re-apply any effect boosts from this box
+            for (const reward of box.rewards) {
+                if (reward.type === 'effect_boost') {
+                    switch (reward.effect) {
+                        case 'score_boost':
+                            updatedEffects.scoreBoostMultiplier += reward.value;
+                            break;
+                        case 'terrain_surge':
+                            updatedEffects.terrainSurgeBonus += reward.value;
+                            break;
+                        case 'lucky_drops':
+                            updatedEffects.luckyDropsBonus += reward.value;
+                            break;
+                        case 'gravity_slow':
+                            updatedEffects.gravitySlowFactor = Math.max(0.1, updatedEffects.gravitySlowFactor - reward.value);
+                            break;
+                    }
+                }
+            }
+        }
+
+        if (cardsChanged || effectsBoosted) {
+            activeEffectsRef.current = updatedEffects;
+            setActiveEffects(updatedEffects);
         }
     }, [currentTreasureBox, computeActiveEffects, updateScore]);
 
