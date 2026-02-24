@@ -865,7 +865,9 @@ export default function BoardRenderer3D({
     clearDpadInterval();
     dpadIntervalRef.current = setInterval(() => handleTouchMove(dir), MOVE_POLL_MS);
   }, [handleTouchMove, clearDpadInterval]);
-  useEffect(() => clearDpadInterval, [clearDpadInterval]);
+  useEffect(() => {
+    return () => { clearDpadInterval(); };
+  }, [clearDpadInterval]);
 
   const bgColor = DAY_NIGHT_PRESETS[dayPhase]?.bgColor || '#1e1812';
 

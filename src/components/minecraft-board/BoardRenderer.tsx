@@ -311,7 +311,9 @@ export default function BoardRenderer({
     clearDpadInterval();
     dpadIntervalRef.current = setInterval(() => handleTouchMove(dir), MOVE_POLL_MS);
   }, [handleTouchMove, clearDpadInterval]);
-  useEffect(() => clearDpadInterval, [clearDpadInterval]);
+  useEffect(() => {
+    return () => { clearDpadInterval(); };
+  }, [clearDpadInterval]);
 
   return (
     <div className={`${styles.boardWrapper} ${activeAnomaly ? styles.boardAnomaly : ''}`}>
