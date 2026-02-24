@@ -5,20 +5,36 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { GalaxyRingEnemy, GalaxyTower, GalaxyGate } from '../galaxy-types';
 import {
+    GALAXY_RING_DEPTH,
+    GALAXY_TOP_WIDTH,
+    GALAXY_SIDE_HEIGHT,
+    GALAXY_PATH_LENGTH,
     GALAXY_SIDE_BOUNDARIES,
+    GALAXY_GATE_POSITIONS,
     GALAXY_TOWERS_PER_SIDE_TB,
     GALAXY_TOWERS_PER_SIDE_LR,
 } from '../galaxy-constants';
 
-// ===== Constants =====
-const RING_RADIUS = 5.5;
-const RING_TILT = 0.3;
-const TERRAIN_BLOCK_SIZE = 0.28;
-const TERRAIN_SEGMENTS = 80;
-const TERRAIN_WIDTH = 3;
-const ENEMY_SIZE = 0.3;
-const TOWER_SIZE = 0.25;
-const LERP_SPEED = 8; // Smooth movement interpolation speed
+// ===== Grid dimensions =====
+// Board = 10 wide × 20 tall.  Ring = 3 cells deep on each side.
+// Total grid = 16 wide × 26 tall.  Center 10×20 is the board (empty).
+const GRID_W = GALAXY_TOP_WIDTH;               // 16
+const GRID_H = GALAXY_SIDE_HEIGHT + 2 * GALAXY_RING_DEPTH; // 26
+const BOARD_W = GRID_W - 2 * GALAXY_RING_DEPTH; // 10
+const BOARD_H = GALAXY_SIDE_HEIGHT;              // 20
+const DEPTH = GALAXY_RING_DEPTH;                 // 3
+
+// ===== 3D sizing =====
+const CELL = 0.32;                  // World units per grid cell
+const CELL_GAP = 0.02;             // Gap between cells
+const BLOCK_H = 0.18;              // Terrain block height
+const ENEMY_SIZE = 0.28;
+const TOWER_SIZE = 0.22;
+const LERP_SPEED = 8;
+
+// Precomputed grid origin — center the grid at world origin
+const ORIGIN_X = -(GRID_W - 1) * CELL * 0.5;
+const ORIGIN_Z = -(GRID_H - 1) * CELL * 0.5;
 
 // ===== Color palettes =====
 const ENEMY_COLORS = [
@@ -29,102 +45,195 @@ const ENEMY_COLORS = [
     new THREE.Color('#ccaa77'),
 ];
 
-const TERRAIN_COLORS = [
-    new THREE.Color('#4a3a6a'),
-    new THREE.Color('#5a4a7a'),
-    new THREE.Color('#3a2a5a'),
-    new THREE.Color('#6a5a8a'),
-    new THREE.Color('#4a4a6a'),
-];
-
-const TERRAIN_GRASS_COLORS = [
+const PATH_COLORS = [
     new THREE.Color('#3a6a4a'),
     new THREE.Color('#4a7a5a'),
     new THREE.Color('#3a5a4a'),
+    new THREE.Color('#4a7a5a'),
 ];
+const TOWER_LAYER_COLORS = [
+    new THREE.Color('#4a3a6a'),
+    new THREE.Color('#5a4a7a'),
+    new THREE.Color('#3a2a5a'),
+];
+const BUFFER_COLORS = [
+    new THREE.Color('#2a1a4a'),
+    new THREE.Color('#3a2a5a'),
+];
+const CORNER_COLOR = new THREE.Color('#1a1030');
+const GATE_COLOR_FULL = new THREE.Color('#44ff88');
 
 const TOWER_COLOR_IDLE = new THREE.Color('#6655aa');
 const TOWER_COLOR_CHARGED = new THREE.Color('#aa88ff');
 const TOWER_GLOW_COLOR = new THREE.Color('#00ccff');
 
-// ===== Pixelized texture helper =====
-// Creates a small canvas texture with NearestFilter for pixel-art look
-function createPixelTexture(width: number, height: number, fillFn: (ctx: CanvasRenderingContext2D) => void): THREE.CanvasTexture {
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d')!;
-    fillFn(ctx);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.magFilter = THREE.NearestFilter;
-    tex.minFilter = THREE.NearestFilter;
-    tex.generateMipmaps = false;
-    return tex;
-}
-
-// ===== Set NearestFilter on all scene textures for pixelized look =====
+// ===== Pixel filter setup =====
 function PixelFilterSetup() {
     const { gl } = useThree();
-    useEffect(() => {
-        gl.outputColorSpace = THREE.SRGBColorSpace;
-    }, [gl]);
+    useEffect(() => { gl.outputColorSpace = THREE.SRGBColorSpace; }, [gl]);
     return null;
 }
 
-// ===== Path position → 3D flat ring position =====
-function pathTo3DFlat(pathPos: number): [number, number, number] {
-    const angle = pathPos * Math.PI * 2;
-    return [Math.cos(angle) * RING_RADIUS, 0, Math.sin(angle) * RING_RADIUS];
+// ===== Cell type identification =====
+type CellKind = 'path' | 'tower' | 'buffer' | 'corner' | 'empty';
+
+function getCellKind(col: number, row: number): CellKind {
+    const inTopStrip = row < DEPTH;
+    const inBottomStrip = row >= DEPTH + BOARD_H;
+    const inLeftStrip = col < DEPTH;
+    const inRightStrip = col >= DEPTH + BOARD_W;
+    const inCenter = col >= DEPTH && col < DEPTH + BOARD_W && row >= DEPTH && row < DEPTH + BOARD_H;
+
+    if (inCenter) return 'empty';
+
+    // Corners (3×3 blocks at each corner)
+    if ((inTopStrip || inBottomStrip) && (inLeftStrip || inRightStrip)) return 'corner';
+
+    // Determine layer (distance from outer edge)
+    let layer: number;
+    if (inTopStrip) {
+        layer = row;
+    } else if (inBottomStrip) {
+        layer = GRID_H - 1 - row;
+    } else if (inLeftStrip) {
+        layer = col;
+    } else if (inRightStrip) {
+        layer = GRID_W - 1 - col;
+    } else {
+        return 'empty';
+    }
+
+    if (layer === 0) return 'path';
+    if (layer === 1) return 'tower';
+    return 'buffer';
 }
 
-// ===== Get tower path position =====
-function getTowerPathPos(side: string, index: number): number {
+// ===== Path fraction (0-1) → 3D world position on the rectangular path =====
+// Clockwise: top (left→right), right (top→bottom), bottom (right→left), left (bottom→top)
+function pathToWorld(pathPos: number): { x: number; z: number; angle: number } {
+    const p = ((pathPos % 1.0) + 1.0) % 1.0;
+    const totalLen = GALAXY_PATH_LENGTH; // 72
+    const cellIdx = p * totalLen;
+
+    const topLen = GALAXY_TOP_WIDTH;     // 16
+    const rightLen = GALAXY_SIDE_HEIGHT; // 20
+    const bottomLen = GALAXY_TOP_WIDTH;  // 16
+    // leftLen = 20
+
+    let col: number, row: number, angle: number;
+
+    if (cellIdx < topLen) {
+        // Top side: row=0, col goes left→right
+        const t = cellIdx / topLen;
+        col = t * (GRID_W - 1);
+        row = 0;
+        angle = 0; // facing right
+    } else if (cellIdx < topLen + rightLen) {
+        // Right side: col=GRID_W-1, row goes top→bottom
+        const t = (cellIdx - topLen) / rightLen;
+        col = GRID_W - 1;
+        row = DEPTH + t * (BOARD_H - 1);
+        angle = -Math.PI / 2; // facing down
+    } else if (cellIdx < topLen + rightLen + bottomLen) {
+        // Bottom side: row=GRID_H-1, col goes right→left
+        const t = (cellIdx - topLen - rightLen) / bottomLen;
+        col = (GRID_W - 1) * (1 - t);
+        row = GRID_H - 1;
+        angle = Math.PI; // facing left
+    } else {
+        // Left side: col=0, row goes bottom→top
+        const leftStart = topLen + rightLen + bottomLen;
+        const t = (cellIdx - leftStart) / GALAXY_SIDE_HEIGHT;
+        col = 0;
+        row = DEPTH + (BOARD_H - 1) * (1 - t);
+        angle = Math.PI / 2; // facing up
+    }
+
+    return {
+        x: ORIGIN_X + col * CELL,
+        z: ORIGIN_Z + row * CELL,
+        angle,
+    };
+}
+
+// ===== Tower position on the tower layer (1 cell inward from path) =====
+function towerToWorld(side: string, index: number): { x: number; z: number; angle: number } {
     const bounds = GALAXY_SIDE_BOUNDARIES[side as keyof typeof GALAXY_SIDE_BOUNDARIES];
-    const count = (side === 'top' || side === 'bottom')
-        ? GALAXY_TOWERS_PER_SIDE_TB
-        : GALAXY_TOWERS_PER_SIDE_LR;
+    const count = (side === 'top' || side === 'bottom') ? GALAXY_TOWERS_PER_SIDE_TB : GALAXY_TOWERS_PER_SIDE_LR;
     const sideLen = bounds.end - bounds.start;
-    return bounds.start + (index + 0.5) * (sideLen / count);
+    const padding = (side === 'top' || side === 'bottom') ? sideLen * (DEPTH / GALAXY_TOP_WIDTH) : 0;
+    const usable = sideLen - 2 * padding;
+    const pathFrac = bounds.start + padding + (index + 0.5) * (usable / count);
+
+    // Get the path position, then offset inward by 1 cell
+    const pathWorld = pathToWorld(pathFrac);
+    let dx = 0, dz = 0;
+
+    if (side === 'top') { dz = CELL; }
+    else if (side === 'bottom') { dz = -CELL; }
+    else if (side === 'left') { dx = CELL; }
+    else { dx = -CELL; }
+
+    return {
+        x: pathWorld.x + dx,
+        z: pathWorld.z + dz,
+        angle: pathWorld.angle,
+    };
 }
 
-// ===== Voxel Terrain Ring (static, no rotation) =====
-function TerrainRing() {
+// ===== Terrain Grid — instanced mesh of all ring cells =====
+function TerrainGrid() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
 
     const { count, matrices, colors } = useMemo(() => {
-        const totalBlocks = TERRAIN_SEGMENTS * TERRAIN_WIDTH;
+        const rng = mulberry32(42);
+        const cells: { x: number; z: number; color: THREE.Color; heightVar: number }[] = [];
+
+        for (let row = 0; row < GRID_H; row++) {
+            for (let col = 0; col < GRID_W; col++) {
+                const kind = getCellKind(col, row);
+                if (kind === 'empty') continue;
+
+                const wx = ORIGIN_X + col * CELL;
+                const wz = ORIGIN_Z + row * CELL;
+                const hv = (rng() - 0.5) * 0.04;
+
+                let color: THREE.Color;
+                switch (kind) {
+                    case 'path':
+                        color = PATH_COLORS[Math.floor(rng() * PATH_COLORS.length)];
+                        break;
+                    case 'tower':
+                        color = TOWER_LAYER_COLORS[Math.floor(rng() * TOWER_LAYER_COLORS.length)];
+                        break;
+                    case 'buffer':
+                        color = BUFFER_COLORS[Math.floor(rng() * BUFFER_COLORS.length)];
+                        break;
+                    case 'corner':
+                        color = CORNER_COLOR.clone();
+                        break;
+                    default:
+                        color = CORNER_COLOR.clone();
+                }
+
+                cells.push({ x: wx, z: wz, color, heightVar: hv });
+            }
+        }
+
+        const totalBlocks = cells.length;
         const mat = new Float32Array(totalBlocks * 16);
         const col = new Float32Array(totalBlocks * 3);
         const dummy = new THREE.Matrix4();
-        const rng = mulberry32(42);
 
-        let idx = 0;
-        for (let seg = 0; seg < TERRAIN_SEGMENTS; seg++) {
-            const t = seg / TERRAIN_SEGMENTS;
-            const angle = t * Math.PI * 2;
-
-            for (let w = 0; w < TERRAIN_WIDTH; w++) {
-                const radialOffset = (w - (TERRAIN_WIDTH - 1) / 2) * TERRAIN_BLOCK_SIZE;
-                const r = RING_RADIUS + radialOffset;
-                const x = Math.cos(angle) * r;
-                const z = Math.sin(angle) * r;
-                const heightVar = (rng() - 0.5) * 0.06;
-
-                dummy.makeTranslation(x, heightVar, z);
-                const blockRotation = new THREE.Matrix4().makeRotationY(-angle + Math.PI / 2);
-                dummy.multiply(blockRotation);
-                dummy.toArray(mat, idx * 16);
-
-                const color = w === 0
-                    ? TERRAIN_GRASS_COLORS[Math.floor(rng() * TERRAIN_GRASS_COLORS.length)]
-                    : TERRAIN_COLORS[Math.floor(rng() * TERRAIN_COLORS.length)];
-
-                col[idx * 3] = color.r;
-                col[idx * 3 + 1] = color.g;
-                col[idx * 3 + 2] = color.b;
-                idx++;
-            }
+        for (let i = 0; i < totalBlocks; i++) {
+            const c = cells[i];
+            dummy.makeTranslation(c.x, c.heightVar, c.z);
+            dummy.toArray(mat, i * 16);
+            col[i * 3] = c.color.r;
+            col[i * 3 + 1] = c.color.g;
+            col[i * 3 + 2] = c.color.b;
         }
+
         return { count: totalBlocks, matrices: mat, colors: col };
     }, []);
 
@@ -140,35 +249,35 @@ function TerrainRing() {
         mesh.instanceMatrix.needsUpdate = true;
     }, [count, matrices, colors]);
 
+    const blockSize = CELL - CELL_GAP;
+
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]} castShadow={false} receiveShadow={false}>
-            <boxGeometry args={[TERRAIN_BLOCK_SIZE * 0.95, TERRAIN_BLOCK_SIZE * 0.6, TERRAIN_BLOCK_SIZE * 0.95]} />
+            <boxGeometry args={[blockSize, BLOCK_H, blockSize]} />
             <meshStandardMaterial vertexColors roughness={0.85} metalness={0.05} flatShading />
         </instancedMesh>
     );
 }
 
-// ===== Terrain underside =====
+// ===== Terrain underside — darker slab beneath the whole ring =====
 function TerrainUnderside() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
 
     const { count, matrices } = useMemo(() => {
-        const totalBlocks = TERRAIN_SEGMENTS;
-        const mat = new Float32Array(totalBlocks * 16);
-        const dummy = new THREE.Matrix4();
-        for (let seg = 0; seg < TERRAIN_SEGMENTS; seg++) {
-            const t = seg / TERRAIN_SEGMENTS;
-            const angle = t * Math.PI * 2;
-            dummy.makeTranslation(
-                Math.cos(angle) * RING_RADIUS,
-                -TERRAIN_BLOCK_SIZE * 0.5,
-                Math.sin(angle) * RING_RADIUS,
-            );
-            const blockRotation = new THREE.Matrix4().makeRotationY(-angle + Math.PI / 2);
-            dummy.multiply(blockRotation);
-            dummy.toArray(mat, seg * 16);
+        const cells: { x: number; z: number }[] = [];
+        for (let row = 0; row < GRID_H; row++) {
+            for (let col = 0; col < GRID_W; col++) {
+                if (getCellKind(col, row) === 'empty') continue;
+                cells.push({ x: ORIGIN_X + col * CELL, z: ORIGIN_Z + row * CELL });
+            }
         }
-        return { count: totalBlocks, matrices: mat };
+        const mat = new Float32Array(cells.length * 16);
+        const dummy = new THREE.Matrix4();
+        for (let i = 0; i < cells.length; i++) {
+            dummy.makeTranslation(cells[i].x, -BLOCK_H * 0.6, cells[i].z);
+            dummy.toArray(mat, i * 16);
+        }
+        return { count: cells.length, matrices: mat };
     }, []);
 
     useEffect(() => {
@@ -182,67 +291,81 @@ function TerrainUnderside() {
         mesh.instanceMatrix.needsUpdate = true;
     }, [count, matrices]);
 
+    const blockSize = CELL - CELL_GAP;
+
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
-            <boxGeometry args={[TERRAIN_BLOCK_SIZE * TERRAIN_WIDTH * 0.95, TERRAIN_BLOCK_SIZE * 0.4, TERRAIN_BLOCK_SIZE * 0.95]} />
-            <meshStandardMaterial color="#2a1a4a" roughness={0.95} flatShading />
+            <boxGeometry args={[blockSize, BLOCK_H * 0.5, blockSize]} />
+            <meshStandardMaterial color="#1a0e30" roughness={0.95} flatShading />
         </instancedMesh>
     );
 }
 
-// ===== Ground plane beneath the ring — pixelized flat terrain =====
+// ===== Ground plane with pixelated texture =====
 function GroundPlane() {
     const texture = useMemo(() => {
-        return createPixelTexture(16, 16, (ctx) => {
-            // Pixelated ground pattern
-            const colors = ['#1a1028', '#1e1430', '#221838', '#1a1030', '#161028'];
-            for (let x = 0; x < 16; x++) {
-                for (let y = 0; y < 16; y++) {
-                    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
-                    ctx.fillRect(x, y, 1, 1);
-                }
+        const canvas = document.createElement('canvas');
+        canvas.width = 16;
+        canvas.height = 16;
+        const ctx = canvas.getContext('2d')!;
+        const rng = mulberry32(99);
+        const cs = ['#0e0818', '#120c20', '#160e28', '#0e0a1a', '#100c1e'];
+        for (let x = 0; x < 16; x++) {
+            for (let y = 0; y < 16; y++) {
+                ctx.fillStyle = cs[Math.floor(rng() * cs.length)];
+                ctx.fillRect(x, y, 1, 1);
             }
-        });
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.magFilter = THREE.NearestFilter;
+        tex.minFilter = THREE.NearestFilter;
+        tex.generateMipmaps = false;
+        return tex;
     }, []);
 
+    const size = Math.max(GRID_W, GRID_H) * CELL * 2;
+
     return (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -TERRAIN_BLOCK_SIZE * 0.8, 0]}>
-            <planeGeometry args={[20, 20]} />
-            <meshStandardMaterial
-                map={texture}
-                roughness={0.95}
-                metalness={0}
-                transparent
-                opacity={0.5}
-            />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -BLOCK_H, 0]}>
+            <planeGeometry args={[size, size]} />
+            <meshStandardMaterial map={texture} roughness={0.95} transparent opacity={0.45} />
         </mesh>
     );
 }
 
-// ===== Ring track line =====
-function RingPathLine() {
+// ===== Path outline — thin rectangular loop marking the outer path =====
+function PathOutline() {
+    const points = useMemo(() => {
+        const y = BLOCK_H * 0.5 + 0.01;
+        const halfW = (GRID_W - 1) * CELL * 0.5 + CELL * 0.5;
+        const topZ = ORIGIN_Z - CELL * 0.5;
+        const botZ = ORIGIN_Z + (GRID_H - 1) * CELL + CELL * 0.5;
+        return [
+            new THREE.Vector3(-halfW, y, topZ),
+            new THREE.Vector3(halfW, y, topZ),
+            new THREE.Vector3(halfW, y, botZ),
+            new THREE.Vector3(-halfW, y, botZ),
+            new THREE.Vector3(-halfW, y, topZ),
+        ];
+    }, []);
+
+    const lineGeo = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]);
+
     return (
-        <mesh>
-            <torusGeometry args={[RING_RADIUS + TERRAIN_BLOCK_SIZE * 1.2, 0.02, 6, 96]} />
-            <meshStandardMaterial
-                color="#9977ee"
-                emissive="#7755cc"
-                emissiveIntensity={0.4}
-                transparent
-                opacity={0.6}
-                roughness={0.5}
-            />
-        </mesh>
+        <line>
+            <bufferGeometry attach="geometry" {...lineGeo} />
+            <lineBasicMaterial color="#9977ee" transparent opacity={0.5} />
+        </line>
     );
 }
 
-// ===== Decorative terrain elements =====
+// ===== Decorative crystals scattered on the ring =====
 function TerrainDecorations() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
 
     const { count, matrices, colors } = useMemo(() => {
         const rng = mulberry32(137);
-        const decoCount = 40;
+        const decoCount = 30;
         const mat = new Float32Array(decoCount * 16);
         const col = new Float32Array(decoCount * 3);
         const dummy = new THREE.Matrix4();
@@ -253,28 +376,31 @@ function TerrainDecorations() {
             new THREE.Color('#5588aa'),
         ];
 
-        for (let i = 0; i < decoCount; i++) {
-            const angle = rng() * Math.PI * 2;
-            const radialVar = (rng() - 0.5) * TERRAIN_BLOCK_SIZE * TERRAIN_WIDTH * 0.7;
-            const r = RING_RADIUS + radialVar;
-            const scale = 0.04 + rng() * 0.08;
-            const heightScale = 0.5 + rng() * 1.5;
+        let placed = 0;
+        for (let attempt = 0; attempt < decoCount * 3 && placed < decoCount; attempt++) {
+            const gCol = Math.floor(rng() * GRID_W);
+            const gRow = Math.floor(rng() * GRID_H);
+            const kind = getCellKind(gCol, gRow);
+            if (kind === 'empty') continue;
+
+            const scale = 0.03 + rng() * 0.06;
+            const hScale = 0.5 + rng() * 2;
+            const wx = ORIGIN_X + gCol * CELL + (rng() - 0.5) * CELL * 0.4;
+            const wz = ORIGIN_Z + gRow * CELL + (rng() - 0.5) * CELL * 0.4;
 
             dummy.identity();
-            dummy.makeTranslation(
-                Math.cos(angle) * r,
-                TERRAIN_BLOCK_SIZE * 0.3 + scale * heightScale * 0.5,
-                Math.sin(angle) * r,
-            );
-            dummy.multiply(new THREE.Matrix4().makeScale(scale, scale * heightScale, scale));
-            dummy.toArray(mat, i * 16);
+            dummy.makeTranslation(wx, BLOCK_H * 0.5 + scale * hScale * 0.5, wz);
+            dummy.multiply(new THREE.Matrix4().makeScale(scale, scale * hScale, scale));
+            dummy.toArray(mat, placed * 16);
 
             const c = crystalColors[Math.floor(rng() * crystalColors.length)];
-            col[i * 3] = c.r;
-            col[i * 3 + 1] = c.g;
-            col[i * 3 + 2] = c.b;
+            col[placed * 3] = c.r;
+            col[placed * 3 + 1] = c.g;
+            col[placed * 3 + 2] = c.b;
+            placed++;
         }
-        return { count: decoCount, matrices: mat, colors: col };
+
+        return { count: placed, matrices: mat.slice(0, placed * 16), colors: col.slice(0, placed * 3) };
     }, []);
 
     useEffect(() => {
@@ -298,7 +424,6 @@ function TerrainDecorations() {
 }
 
 // ===== HP Number Sprite =====
-// Renders a small canvas texture showing "HP/MaxHP" as a billboard sprite
 function HPNumberSprite({ health, maxHealth }: { health: number; maxHealth: number }) {
     const texture = useMemo(() => {
         const canvas = document.createElement('canvas');
@@ -306,7 +431,6 @@ function HPNumberSprite({ health, maxHealth }: { health: number; maxHealth: numb
         canvas.height = 24;
         const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, 64, 24);
-        // Text with outline
         ctx.font = 'bold 18px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -323,13 +447,10 @@ function HPNumberSprite({ health, maxHealth }: { health: number; maxHealth: numb
         return tex;
     }, [health, maxHealth]);
 
-    // Dispose on unmount
-    useEffect(() => {
-        return () => { texture.dispose(); };
-    }, [texture]);
+    useEffect(() => () => { texture.dispose(); }, [texture]);
 
     return (
-        <sprite position={[0, ENEMY_SIZE * 2.15, 0]} scale={[0.4, 0.15, 1]}>
+        <sprite position={[0, ENEMY_SIZE * 2.15, 0]} scale={[0.38, 0.14, 1]}>
             <spriteMaterial map={texture} transparent depthTest={false} />
         </sprite>
     );
@@ -338,29 +459,26 @@ function HPNumberSprite({ health, maxHealth }: { health: number; maxHealth: numb
 // ===== Enemy HP Bar =====
 function EnemyHPBar({ health, maxHealth }: { health: number; maxHealth: number }) {
     const ratio = Math.max(0, health / maxHealth);
-    const barWidth = ENEMY_SIZE * 1.4;
-    const barHeight = 0.04;
+    const barW = ENEMY_SIZE * 1.3;
+    const barH = 0.035;
     const barColor = ratio > 0.5 ? '#44dd66' : ratio > 0.25 ? '#ddaa33' : '#dd3333';
 
     return (
         <group position={[0, ENEMY_SIZE * 1.85, 0]}>
-            {/* HP Number */}
             <HPNumberSprite health={health} maxHealth={maxHealth} />
-            {/* Background */}
-            <mesh position={[0, 0, 0]}>
-                <planeGeometry args={[barWidth, barHeight]} />
+            <mesh>
+                <planeGeometry args={[barW, barH]} />
                 <meshBasicMaterial color="#111111" transparent opacity={0.7} side={THREE.DoubleSide} />
             </mesh>
-            {/* Fill */}
-            <mesh position={[(ratio - 1) * barWidth * 0.5, 0, 0.001]}>
-                <planeGeometry args={[barWidth * ratio, barHeight * 0.8]} />
+            <mesh position={[(ratio - 1) * barW * 0.5, 0, 0.001]}>
+                <planeGeometry args={[barW * ratio, barH * 0.8]} />
                 <meshBasicMaterial color={barColor} side={THREE.DoubleSide} />
             </mesh>
         </group>
     );
 }
 
-// ===== Pixelated Enemy with smooth movement and HP bar =====
+// ===== Pixelated Enemy with smooth movement =====
 function PixelEnemy({ pathPosition, index, health, maxHealth }: {
     pathPosition: number;
     index: number;
@@ -368,72 +486,56 @@ function PixelEnemy({ pathPosition, index, health, maxHealth }: {
     maxHealth: number;
 }) {
     const groupRef = useRef<THREE.Group>(null);
-    const smoothPosRef = useRef({ x: 0, y: 0, z: 0, angle: 0, initialized: false });
+    const smoothRef = useRef({ x: 0, z: 0, angle: 0, init: false });
     const color = useMemo(() => ENEMY_COLORS[index % ENEMY_COLORS.length], [index]);
 
     useFrame(({ clock }, delta) => {
         if (!groupRef.current) return;
+        const target = pathToWorld(pathPosition);
+        const bobY = BLOCK_H * 0.5 + Math.sin(clock.elapsedTime * 2 + index) * 0.04;
 
-        const angle = pathPosition * Math.PI * 2;
-        const outerR = RING_RADIUS + TERRAIN_BLOCK_SIZE * 0.8;
-        const targetX = Math.cos(angle) * outerR;
-        const targetZ = Math.sin(angle) * outerR;
-        const bobY = TERRAIN_BLOCK_SIZE * 0.3 + Math.sin(clock.elapsedTime * 2 + index) * 0.06;
-
-        const sp = smoothPosRef.current;
-        if (!sp.initialized) {
-            sp.x = targetX;
-            sp.y = bobY;
-            sp.z = targetZ;
-            sp.angle = angle;
-            sp.initialized = true;
+        const s = smoothRef.current;
+        if (!s.init) {
+            s.x = target.x; s.z = target.z; s.angle = target.angle; s.init = true;
         } else {
-            // Smooth lerp interpolation
             const t = 1 - Math.exp(-LERP_SPEED * delta);
-            sp.x += (targetX - sp.x) * t;
-            sp.z += (targetZ - sp.z) * t;
-            sp.y = bobY; // Keep bob instant for liveliness
-            // Lerp angle with wrapping
-            let angleDiff = angle - sp.angle;
-            if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-            if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-            sp.angle += angleDiff * t;
+            s.x += (target.x - s.x) * t;
+            s.z += (target.z - s.z) * t;
+            let ad = target.angle - s.angle;
+            if (ad > Math.PI) ad -= Math.PI * 2;
+            if (ad < -Math.PI) ad += Math.PI * 2;
+            s.angle += ad * t;
         }
 
-        groupRef.current.position.set(sp.x, sp.y, sp.z);
-        groupRef.current.rotation.y = -sp.angle + Math.PI / 2;
+        groupRef.current.position.set(s.x, bobY, s.z);
+        groupRef.current.rotation.y = s.angle;
     });
 
     const bodyColor = useMemo(() => color.clone(), [color]);
     const headColor = useMemo(() => color.clone().multiplyScalar(1.15), [color]);
     const feetColor = useMemo(() => color.clone().multiplyScalar(0.75), [color]);
 
-    // Walking animation for feet
     const leftFootRef = useRef<THREE.Mesh>(null);
     const rightFootRef = useRef<THREE.Mesh>(null);
 
     useFrame(({ clock }) => {
         if (!leftFootRef.current || !rightFootRef.current) return;
-        const walkCycle = Math.sin(clock.elapsedTime * 6 + index * 2);
-        leftFootRef.current.position.z = walkCycle * 0.05;
-        rightFootRef.current.position.z = -walkCycle * 0.05;
+        const w = Math.sin(clock.elapsedTime * 6 + index * 2);
+        leftFootRef.current.position.z = w * 0.04;
+        rightFootRef.current.position.z = -w * 0.04;
     });
 
     return (
         <group ref={groupRef}>
-            {/* HP Bar */}
             <EnemyHPBar health={health} maxHealth={maxHealth} />
-            {/* Body */}
             <mesh position={[0, ENEMY_SIZE * 0.5, 0]}>
                 <boxGeometry args={[ENEMY_SIZE, ENEMY_SIZE, ENEMY_SIZE * 0.8]} />
                 <meshStandardMaterial color={bodyColor} roughness={0.9} flatShading />
             </mesh>
-            {/* Head */}
             <mesh position={[0, ENEMY_SIZE * 1.25, 0]}>
                 <boxGeometry args={[ENEMY_SIZE * 1.1, ENEMY_SIZE * 0.8, ENEMY_SIZE * 0.9]} />
                 <meshStandardMaterial color={headColor} roughness={0.85} flatShading />
             </mesh>
-            {/* Eyes */}
             <mesh position={[-ENEMY_SIZE * 0.22, ENEMY_SIZE * 1.3, ENEMY_SIZE * 0.42]}>
                 <boxGeometry args={[ENEMY_SIZE * 0.15, ENEMY_SIZE * 0.12, ENEMY_SIZE * 0.08]} />
                 <meshStandardMaterial color="#111111" />
@@ -442,7 +544,6 @@ function PixelEnemy({ pathPosition, index, health, maxHealth }: {
                 <boxGeometry args={[ENEMY_SIZE * 0.15, ENEMY_SIZE * 0.12, ENEMY_SIZE * 0.08]} />
                 <meshStandardMaterial color="#111111" />
             </mesh>
-            {/* Feet with walk animation */}
             <mesh ref={leftFootRef} position={[-ENEMY_SIZE * 0.2, 0, 0]}>
                 <boxGeometry args={[ENEMY_SIZE * 0.35, ENEMY_SIZE * 0.3, ENEMY_SIZE * 0.4]} />
                 <meshStandardMaterial color={feetColor} roughness={0.95} flatShading />
@@ -455,7 +556,7 @@ function PixelEnemy({ pathPosition, index, health, maxHealth }: {
     );
 }
 
-// ===== Tower Aura Ring — radiating pulse on line clear =====
+// ===== Tower Aura =====
 function TowerAura({ active }: { active: boolean }) {
     const meshRef = useRef<THREE.Mesh>(null);
     const matRef = useRef<THREE.MeshBasicMaterial>(null);
@@ -476,20 +577,14 @@ function TowerAura({ active }: { active: boolean }) {
 
     return (
         <mesh ref={meshRef} position={[0, TOWER_SIZE * 1.5, 0]} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
-            <ringGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 2.5, 8]} />
-            <meshBasicMaterial
-                ref={matRef}
-                color={TOWER_GLOW_COLOR}
-                transparent
-                opacity={0}
-                side={THREE.DoubleSide}
-            />
+            <ringGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 2.2, 8]} />
+            <meshBasicMaterial ref={matRef} color={TOWER_GLOW_COLOR} transparent opacity={0} side={THREE.DoubleSide} />
         </mesh>
     );
 }
 
-// ===== Tower Mesh with aura =====
-function RingTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
+// ===== Tower Mesh =====
+function GridTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
     side: string;
     index: number;
     charge: number;
@@ -498,64 +593,43 @@ function RingTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
     lineClearPulse: boolean;
 }) {
     const groupRef = useRef<THREE.Group>(null);
-    const pathPos = useMemo(() => getTowerPathPos(side, index), [side, index]);
     const isCharged = charge > 0;
     const chargeRatio = charge / maxCharge;
 
-    // Static placement — computed once, updated in useFrame for pulse only
-    const position = useMemo(() => {
-        const angle = pathPos * Math.PI * 2;
-        const innerR = RING_RADIUS - TERRAIN_BLOCK_SIZE * 0.5;
-        return {
-            x: Math.cos(angle) * innerR,
-            z: Math.sin(angle) * innerR,
-            rotY: -angle,
-        };
-    }, [pathPos]);
+    const pos = useMemo(() => towerToWorld(side, index), [side, index]);
 
     useFrame(({ clock }) => {
         if (!groupRef.current) return;
-        groupRef.current.position.set(position.x, TERRAIN_BLOCK_SIZE * 0.3, position.z);
-        groupRef.current.rotation.y = position.rotY;
+        groupRef.current.position.set(pos.x, BLOCK_H * 0.5, pos.z);
+        groupRef.current.rotation.y = pos.angle;
         if (isCharged) {
-            const pulse = 1 + Math.sin(clock.elapsedTime * 3) * 0.06;
-            groupRef.current.scale.setScalar(pulse);
+            groupRef.current.scale.setScalar(1 + Math.sin(clock.elapsedTime * 3) * 0.05);
         } else {
             groupRef.current.scale.setScalar(1);
         }
     });
 
-    const baseColor = useMemo(() =>
-        isCharged ? TOWER_COLOR_CHARGED : TOWER_COLOR_IDLE, [isCharged]);
+    const baseColor = isCharged ? TOWER_COLOR_CHARGED : TOWER_COLOR_IDLE;
 
     return (
         <group ref={groupRef}>
-            {/* Aura ring — radiates on line clear */}
             <TowerAura active={lineClearPulse && isCharged} />
-            {/* Tower base */}
-            <mesh position={[0, TOWER_SIZE * 0.4, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 1.5, TOWER_SIZE * 0.8, TOWER_SIZE * 1.5]} />
+            <mesh position={[0, TOWER_SIZE * 0.35, 0]}>
+                <boxGeometry args={[TOWER_SIZE * 1.4, TOWER_SIZE * 0.7, TOWER_SIZE * 1.4]} />
                 <meshStandardMaterial color={baseColor} roughness={0.75} flatShading />
             </mesh>
-            {/* Tower body */}
-            <mesh position={[0, TOWER_SIZE * 1.4, 0]}>
-                <boxGeometry args={[TOWER_SIZE, TOWER_SIZE * 1.4, TOWER_SIZE]} />
+            <mesh position={[0, TOWER_SIZE * 1.2, 0]}>
+                <boxGeometry args={[TOWER_SIZE * 0.9, TOWER_SIZE * 1.2, TOWER_SIZE * 0.9]} />
                 <meshStandardMaterial color={baseColor} roughness={0.65} flatShading />
             </mesh>
-            {/* Tower top */}
-            <mesh position={[0, TOWER_SIZE * 2.4, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 1.3, TOWER_SIZE * 0.3, TOWER_SIZE * 1.3]} />
-                <meshStandardMaterial
-                    color={isCharged ? '#bb99ff' : '#776699'}
-                    roughness={0.7}
-                    flatShading
-                />
+            <mesh position={[0, TOWER_SIZE * 2.1, 0]}>
+                <boxGeometry args={[TOWER_SIZE * 1.2, TOWER_SIZE * 0.25, TOWER_SIZE * 1.2]} />
+                <meshStandardMaterial color={isCharged ? '#bb99ff' : '#776699'} roughness={0.7} flatShading />
             </mesh>
-            {/* Charge crystal */}
             {isCharged && (
                 <>
-                    <mesh position={[0, TOWER_SIZE * 3, 0]}>
-                        <boxGeometry args={[TOWER_SIZE * 0.4, TOWER_SIZE * 0.6, TOWER_SIZE * 0.4]} />
+                    <mesh position={[0, TOWER_SIZE * 2.6, 0]}>
+                        <boxGeometry args={[TOWER_SIZE * 0.35, TOWER_SIZE * 0.5, TOWER_SIZE * 0.35]} />
                         <meshStandardMaterial
                             color={TOWER_GLOW_COLOR}
                             emissive={TOWER_GLOW_COLOR}
@@ -564,18 +638,12 @@ function RingTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
                             flatShading
                         />
                     </mesh>
-                    <pointLight
-                        position={[0, TOWER_SIZE * 3.2, 0]}
-                        color={TOWER_GLOW_COLOR}
-                        intensity={chargeRatio * 0.8}
-                        distance={2}
-                    />
+                    <pointLight position={[0, TOWER_SIZE * 2.8, 0]} color={TOWER_GLOW_COLOR} intensity={chargeRatio * 0.6} distance={1.5} />
                 </>
             )}
-            {/* Level indicator */}
             {level > 1 && (
-                <mesh position={[0, TOWER_SIZE * 2.7, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 1.1, TOWER_SIZE * 0.15, TOWER_SIZE * 1.1]} />
+                <mesh position={[0, TOWER_SIZE * 2.35, 0]}>
+                    <boxGeometry args={[TOWER_SIZE * 1.0, TOWER_SIZE * 0.12, TOWER_SIZE * 1.0]} />
                     <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={0.3} roughness={0.5} flatShading />
                 </mesh>
             )}
@@ -585,40 +653,36 @@ function RingTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
 
 // ===== Gate markers =====
 function GateMarkers({ gates }: { gates: GalaxyGate[] }) {
-    const gatePositions = useMemo(() => {
+    const positions = useMemo(() => {
         const sides = ['top', 'right', 'bottom', 'left'] as const;
-        return sides.map((side, i) => {
+        return sides.map(side => {
             const gate = gates.find(g => g.side === side);
-            const angle = ((i + 0.5) / 4) * Math.PI * 2;
             const ratio = gate ? gate.health / gate.maxHealth : 1;
-            return {
-                x: Math.cos(angle) * RING_RADIUS,
-                z: Math.sin(angle) * RING_RADIUS,
-                ratio,
-                side,
-            };
+            const pos = GALAXY_GATE_POSITIONS[side];
+            const world = pathToWorld(pos);
+            return { ...world, ratio, side };
         });
     }, [gates]);
 
     return (
         <>
-            {gatePositions.map(({ x, z, ratio, side }) => {
+            {positions.map(({ x, z, angle, ratio, side }) => {
                 const gateColor = ratio > 0.5 ? '#44ff88' : ratio > 0.25 ? '#ffaa44' : '#ff4444';
                 return (
-                    <group key={side} position={[x, 0, z]}>
-                        <mesh position={[-0.15, 0.25, 0]}>
-                            <boxGeometry args={[0.12, 0.5, 0.12]} />
+                    <group key={side} position={[x, BLOCK_H * 0.5, z]} rotation={[0, angle, 0]}>
+                        <mesh position={[-0.12, 0.2, 0]}>
+                            <boxGeometry args={[0.08, 0.4, 0.08]} />
                             <meshStandardMaterial color={gateColor} emissive={gateColor} emissiveIntensity={0.6} roughness={0.4} flatShading />
                         </mesh>
-                        <mesh position={[0.15, 0.25, 0]}>
-                            <boxGeometry args={[0.12, 0.5, 0.12]} />
+                        <mesh position={[0.12, 0.2, 0]}>
+                            <boxGeometry args={[0.08, 0.4, 0.08]} />
                             <meshStandardMaterial color={gateColor} emissive={gateColor} emissiveIntensity={0.6} roughness={0.4} flatShading />
                         </mesh>
-                        <mesh position={[0, 0.55, 0]}>
-                            <boxGeometry args={[0.42, 0.1, 0.12]} />
+                        <mesh position={[0, 0.44, 0]}>
+                            <boxGeometry args={[0.32, 0.08, 0.08]} />
                             <meshStandardMaterial color={gateColor} emissive={gateColor} emissiveIntensity={0.8} roughness={0.3} flatShading />
                         </mesh>
-                        <pointLight color={gateColor} intensity={0.5} distance={2} position={[0, 0.6, 0]} />
+                        <pointLight color={gateColor} intensity={0.4} distance={1.5} position={[0, 0.5, 0]} />
                     </group>
                 );
             })}
@@ -643,23 +707,19 @@ function GalaxyRingScene({
         <>
             <PixelFilterSetup />
 
-            {/* Lighting */}
             <ambientLight intensity={0.7} color="#ccccff" />
             <directionalLight position={[5, 10, 5]} intensity={0.9} color="#ffffff" />
             <directionalLight position={[-4, 6, -6]} intensity={0.25} color="#8888cc" />
 
-            {/* Everything tilted together — terrain is STATIC (no rotation) */}
-            <group rotation={[RING_TILT, 0, 0]}>
-                {/* Static terrain */}
+            <group rotation={[0.45, 0, 0]}>
                 <GroundPlane />
-                <TerrainRing />
+                <TerrainGrid />
                 <TerrainUnderside />
-                <RingPathLine />
+                <PathOutline />
                 <TerrainDecorations />
                 <GateMarkers gates={gates} />
 
-                {/* Enemies — directly placed, no rotating wrapper */}
-                {enemies.filter(e => e.alive).map((enemy) => (
+                {enemies.filter(e => e.alive).map(enemy => (
                     <PixelEnemy
                         key={enemy.id}
                         pathPosition={enemy.pathPosition}
@@ -669,9 +729,8 @@ function GalaxyRingScene({
                     />
                 ))}
 
-                {/* Towers — static positions, no rotating wrapper */}
                 {towers.map(tower => (
-                    <RingTower
+                    <GridTower
                         key={tower.id}
                         side={tower.side}
                         index={tower.index}
@@ -699,7 +758,7 @@ export function GalaxyRing3D({ enemies, towers, gates, waveNumber, lineClearPuls
     return (
         <Canvas
             gl={{ antialias: true, alpha: true }}
-            camera={{ position: [0, 5, 8], fov: 50, near: 0.1, far: 100 }}
+            camera={{ position: [0, 5, 7], fov: 50, near: 0.1, far: 100 }}
             style={{
                 position: 'fixed',
                 inset: 0,

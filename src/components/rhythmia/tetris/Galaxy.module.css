@@ -1,6 +1,6 @@
 /* ===== Galaxy Board Container =====
- * Wraps the board with a 2D grid terrain ring overlay during dig phase.
- * The 3D ring is rendered separately in tetris.tsx as a fixed overlay.
+ * Wraps the board with a wave label during dig phase.
+ * The 3D grid terrain ring is rendered separately in GalaxyRing3D.tsx.
  */
 .galaxyContainer {
     position: relative;
@@ -24,114 +24,9 @@
     text-shadow: 0 0 8px rgba(140, 60, 255, 0.4);
 }
 
-/* ===== Grid Terrain — CSS Grid wrapping the board ===== */
-.gridTerrain {
-    display: grid;
-    gap: 1px;
-    pointer-events: none;
-    image-rendering: pixelated;
-}
-
-/* ===== Board slot (center of the grid, spans BOARD_WIDTH × VISIBLE_HEIGHT) ===== */
-.boardSlot {
-    pointer-events: auto;
-    z-index: 1;
-}
-
-/* ===== Ring cells (shared) ===== */
-.ringCell {
-    width: clamp(6px, 1.2vw, 10px);
-    height: clamp(6px, 1.2vw, 10px);
-    image-rendering: pixelated;
-    box-sizing: border-box;
-    position: relative;
-}
-
-/* ===== Corner cells — dark inert blocks ===== */
-.cornerCell {
-    background: rgba(20, 12, 35, 0.6);
-    border: 1px solid rgba(60, 40, 100, 0.2);
-}
-
-/* ===== Path cells — outer ring where enemies walk ===== */
-.pathCell {
-    background: rgba(50, 35, 80, 0.5);
-    border: 1px solid rgba(100, 70, 160, 0.25);
-    transition: background 0.15s, box-shadow 0.15s;
-}
-
-/* ===== Tower cells — middle ring row ===== */
-.towerCell {
-    background: rgba(60, 45, 100, 0.4);
-    border: 1px solid rgba(80, 60, 130, 0.2);
-    transition: background 0.2s, opacity 0.2s;
-}
-
-.towerCharged {
-    background: rgba(100, 80, 180, 0.65);
-    border-color: rgba(140, 100, 220, 0.5);
-    box-shadow: inset 0 0 3px rgba(0, 200, 255, 0.3);
-}
-
-.towerUpgraded {
-    background: rgba(140, 100, 220, 0.7);
-    border-color: rgba(200, 160, 255, 0.6);
-    box-shadow: inset 0 0 4px rgba(255, 200, 60, 0.4);
-}
-
-/* ===== Buffer cells — innermost ring row ===== */
-.bufferCell {
-    background: rgba(30, 20, 50, 0.3);
-    border: 1px solid rgba(50, 35, 80, 0.15);
-}
-
-/* ===== Gate cells — special path cells at side midpoints ===== */
-.gateCell {
-    background: rgba(40, 80, 60, 0.6) !important;
-    border: 1px solid rgba(68, 255, 136, 0.5) !important;
-    box-shadow: inset 0 0 4px rgba(68, 255, 136, 0.3);
-}
-
-/* ===== Enemy cells — path cells occupied by enemies ===== */
-.enemyCell {
-    background: rgba(120, 60, 60, 0.7) !important;
-    border-color: rgba(200, 80, 80, 0.5) !important;
-    box-shadow: inset 0 0 3px rgba(255, 80, 80, 0.4);
-    animation: enemyPulse 0.6s ease-in-out infinite alternate;
-}
-
-.enemyHP {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 6px;
-    font-weight: 700;
-    font-family: monospace;
-    line-height: 1;
-    text-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
-    pointer-events: none;
-}
-
-/* ===== Animations ===== */
-@keyframes enemyPulse {
-    from { opacity: 0.8; }
-    to { opacity: 1; }
-}
-
-/* ===== Mobile: Hide wave label, shrink ring cells ===== */
+/* ===== Mobile: Hide wave label ===== */
 @media (max-width: 768px) {
     .waveLabel {
         display: none;
-    }
-
-    .ringCell {
-        width: clamp(4px, 1vw, 7px);
-        height: clamp(4px, 1vw, 7px);
-    }
-
-    .enemyHP {
-        font-size: 4px;
     }
 }
