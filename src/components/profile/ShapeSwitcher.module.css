@@ -1,0 +1,116 @@
+/* ShapeSwitcher */
+.wrapper {
+  padding: 0 28px 24px;
+}
+
+.shapeGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+/* Individual shape option card */
+.shapeCard {
+  position: relative;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 2px solid var(--skin-border, rgba(255, 255, 255, 0.06));
+  border-radius: 10px;
+  padding: 10px 6px 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  color: inherit;
+}
+
+.shapeCard:hover {
+  border-color: var(--skin-border-hover, rgba(255, 255, 255, 0.15));
+  background: var(--skin-accent-dim, rgba(255, 255, 255, 0.04));
+}
+
+.shapeCardActive {
+  border-color: var(--skin-accent, #007FFF) !important;
+  background: var(--skin-accent-dim, rgba(0, 127, 255, 0.08)) !important;
+}
+
+/* Mini preview showing shape */
+.previewArea {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.previewCard {
+  width: 100%;
+  padding: 6px;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.1));
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.previewBar {
+  height: 4px;
+  width: 70%;
+  background: var(--skin-accent, #007FFF);
+  opacity: 0.85;
+}
+
+.previewRow {
+  display: flex;
+  gap: 3px;
+}
+
+.previewChip {
+  flex: 1;
+  height: 10px;
+  background: var(--skin-border-hover, rgba(255, 255, 255, 0.15));
+}
+
+.previewBtn {
+  height: 5px;
+  width: 55%;
+  background: var(--skin-accent, #007FFF);
+  opacity: 0.7;
+}
+
+/* Labels */
+.shapeName {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--skin-foreground, #ffffff);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+/* Active check badge */
+.activeBadge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--skin-accent, #007FFF);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .wrapper {
+    padding: 0 20px 20px;
+  }
+
+  .shapeGrid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+}

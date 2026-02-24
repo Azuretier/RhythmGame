@@ -11,6 +11,7 @@ import { useGoogleSync } from '@/lib/google-sync/context';
 import { getIconById } from '@/lib/profile/types';
 import type { Skin } from '@/lib/skin/types';
 import ThemeSwitcher from './ThemeSwitcher';
+import ShapeSwitcher from './ShapeSwitcher';
 import styles from './SkinCustomizer.module.css';
 
 const MAX_NAME_LENGTH = 10;
@@ -134,6 +135,7 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
   const t = useTranslations('skin');
   const tProfile = useTranslations('profile');
   const tTheme = useTranslations('uiTheme');
+  const tShape = useTranslations('shape');
   const tSync = useTranslations('googleSync');
   const tLocale = useTranslations('localeSwitcher');
   const { currentSkin, setSkin, skins } = useSkin();
@@ -301,6 +303,10 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
         {/* UI Theme selection */}
         <div className={styles.sectionLabel}>{tTheme('selectTheme')}</div>
         <ThemeSwitcher />
+
+        {/* UI Shape selection */}
+        <div className={styles.sectionLabel}>{tShape('selectShape')}</div>
+        <ShapeSwitcher />
         
         {/* Google Account Sync */}
         <div className={styles.sectionLabel}>{tSync('sectionTitle')}</div>
