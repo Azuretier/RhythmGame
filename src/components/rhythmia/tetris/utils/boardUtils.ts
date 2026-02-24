@@ -1,4 +1,4 @@
-import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TETROMINOES, WALL_KICKS_I, WALL_KICKS_JLSTZ, ROTATION_NAMES } from '../constants';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TETROMINOES, WALL_KICKS_I, WALL_KICKS_JLSTZ, ROTATION_NAMES, BEAT_PERFECT_WINDOW, BEAT_GREAT_WINDOW, BEAT_GOOD_WINDOW } from '../constants';
 import type { Piece, Board } from '../types';
 
 /**
@@ -152,3 +152,34 @@ export const createSpawnPiece = (type: string): Piece => {
         y: BUFFER_ZONE - 1,
     };
 };
+
+// ===== Beat Judgment =====
+export type BeatJudgment = 'perfect' | 'great' | 'good' | 'miss';
+
+/**
+ * Determine the beat timing judgment for a piece placement.
+ * @param phase          - Current beat phase (0–1).
+ * @param beatExtendBonus - Extra half-window from card effects (default 0).
+ * @param beatWindowMod  - Protocol difficulty multiplier (default 1.0).
+ */
+export function getBeatJudgment(
+    phase: number,
+    beatExtendBonus = 0,
+    beatWindowMod = 1.0,
+): BeatJudgment {
+    const dist = phase <= 0.5 ? phase : 1 - phase;
+    if (dist < (BEAT_PERFECT_WINDOW + beatExtendBonus) * beatWindowMod) return 'perfect';
+    if (dist < (BEAT_GREAT_WINDOW   + beatExtendBonus) * beatWindowMod) return 'great';
+    if (dist < (BEAT_GOOD_WINDOW    + beatExtendBonus) * beatWindowMod) return 'good';
+    return 'miss';
+}
+
+/** Score multiplier for a given beat judgment tier. */
+export function getBeatMultiplier(judgment: BeatJudgment): number {
+    switch (judgment) {
+        case 'perfect': return 2;
+        case 'great':   return 1.5;
+        case 'good':    return 1.2;
+        default:        return 1;
+    }
+}

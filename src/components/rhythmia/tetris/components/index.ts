@@ -28,4 +28,5 @@ export { KeyBindSettings } from './KeyBindSettings';
 export { FeatureCustomizer } from './FeatureCustomizer';
 export { PauseMenu } from './PauseMenu';
 export { DragonGauge } from './DragonGauge';
+export { GalaxyBoard } from './GalaxyBoard';
 export { default as TDGridSetup } from './TDGridSetup';

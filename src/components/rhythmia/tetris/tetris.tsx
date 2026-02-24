@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION, BEAT_GOOD_WINDOW } from './constants';
 import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import { getModifiers } from './protocol';
@@ -20,10 +20,17 @@ const VoxelWorldBackground = dynamic(() => import('../VoxelWorldBackground'), {
   ssr: false,
 });
 
+// Dynamically import GalaxyRing3D (Three.js requires client-side only)
+const GalaxyRing3D = dynamic(
+  () => import('./components/GalaxyRing3D').then(mod => ({ default: mod.GalaxyRing3D })),
+  { ssr: false }
+);
+
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
 import { useCorruptionSystem } from './hooks/useCorruptionSystem';
+import { useGalaxyTD } from './hooks/useGalaxyTD';
 
 // Corruption system
 
@@ -36,10 +43,15 @@ import {
   createSpawnPiece,
   getShape,
 } from './utils';
+import {
+  getBeatJudgment,
+  getBeatMultiplier,
+} from './utils';
 
 // Components
 import {
   Board,
+  GalaxyBoard,
   NextPiece,
   HoldPiece,
   TitleScreen,
@@ -63,7 +75,6 @@ import {
   hasTutorialBeenSeen,
   DragonGauge,
   TDGridSetup,
-
 } from './components';
 import type { JudgmentDisplayMode } from './components';
 
@@ -422,6 +433,22 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     onCorruptionSpawnEnemy: handleCorruptionSpawnEnemy,
   });
 
+  // ===== Galaxy TD System (ring around board during dig phase) =====
+  const galaxyTD = useGalaxyTD({
+    isPlaying,
+    isPaused,
+    gameOver,
+    terrainPhase,
+  });
+  const galaxyTDTickRef = useRef(galaxyTD.tick);
+  galaxyTDTickRef.current = galaxyTD.tick;
+  const galaxyTDOnLineClearRef = useRef(galaxyTD.onLineClear);
+  galaxyTDOnLineClearRef.current = galaxyTD.onLineClear;
+
+  // Line clear pulse for tower aura visual
+  const [galaxyLineClearPulse, setGalaxyLineClearPulse] = useState(false);
+  const galaxyPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
   spawnEnemiesRef.current = spawnEnemies;
@@ -665,28 +692,14 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
 
     const phase = terrainPhaseRef.current;
 
-    // Beat judgment — granular timing windows with beat_extend card effect
+    // Beat judgment — centralised via getBeatJudgment() utility
     const currentBeatPhase = beatPhaseRef.current;
-    // Distance from beat center (0.0 = exactly on beat, 0.5 = furthest away)
-    const distFromBeat = currentBeatPhase <= 0.5 ? currentBeatPhase : 1 - currentBeatPhase;
-
     // Apply beat_extend bonus from cards (widens timing windows)
     const beatExtend = activeEffectsRef.current.beatExtendBonus || 0;
-    // Protocol beat window modifier (< 1.0 = harder, shrinks windows)
     const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
 
-    let mult = 1;
-    let timing: 'perfect' | 'great' | 'good' | 'miss';
-
-    if (distFromBeat < ((0.06 + beatExtend) * beatWindowMod)) {
-      timing = 'perfect';  // ~12% of beat window (tightest) + card bonus + protocol mod
-    } else if (distFromBeat < ((0.12 + beatExtend) * beatWindowMod)) {
-      timing = 'great';    // ~12% more + card bonus + protocol mod
-    } else if (distFromBeat < ((0.20 + beatExtend) * beatWindowMod)) {
-      timing = 'good';     // ~16% more + card bonus + protocol mod
-    } else {
-      timing = 'miss';     // everything else
-    }
+    const timing = getBeatJudgment(currentBeatPhase, beatExtend, beatWindowMod);
+    let mult = getBeatMultiplier(timing);
 
     // Track pieces placed for advancements
     gamePiecesPlacedRef.current++;
@@ -697,12 +710,7 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     const onBeat = timing !== 'miss';
 
     if (timing !== 'miss') {
-      // On-beat — determine multiplier by timing quality
-      switch (timing) {
-        case 'perfect': mult = 2; break;
-        case 'great': mult = 1.5; break;
-        case 'good': mult = 1.2; break;
-      }
+      // On-beat — multiplier already set by getBeatMultiplier above
       newCombo = prevCombo + 1;
       setCombo(newCombo);
     } else {
@@ -917,6 +925,14 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
         // The aura instantly kills/damages all enemies AND plays an expanding ring VFX
         triggerLineClearAuraRef.current(clearedLines);
 
+        // Galaxy TD: line clears power up towers on the ring
+        galaxyTDOnLineClearRef.current(clearedLines);
+
+        // Flash tower aura pulse
+        setGalaxyLineClearPulse(true);
+        if (galaxyPulseTimerRef.current) clearTimeout(galaxyPulseTimerRef.current);
+        galaxyPulseTimerRef.current = setTimeout(() => setGalaxyLineClearPulse(false), 600);
+
         // Also kill nearest enemies based on line count (legacy behavior kept)
         const killCount = Math.ceil(clearedLines * ENEMIES_KILLED_PER_LINE * mult * amplifiedCombo);
         killEnemies(killCount);
@@ -925,8 +941,8 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
         spawnItemDrops(killCount, center.x, center.y);
       } else {
         // === DIG PHASE: Destroy terrain blocks ===
-        // terrain_surge bonus only applies on beat
-        const surgeBonus = onBeat ? activeEffectsRef.current.terrainSurgeBonus : 0;
+        // terrain_surge bonus only applies on perfect beats
+        const surgeBonus = timing === 'perfect' ? activeEffectsRef.current.terrainSurgeBonus : 0;
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * amplifiedCombo * (1 + surgeBonus));
         const remaining = destroyTerrain(damage);
 
@@ -1119,7 +1135,8 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     setToastIds([]);
     setActionToasts([]);
     corruption.reset();
-  }, [initAudio, initGame, corruption]);
+    galaxyTD.reset();
+  }, [initAudio, initGame, corruption, galaxyTD]);
 
   // Start game — intercept for tutorial on first play
   const startGame = useCallback((protocolId: number = 0) => {
@@ -1255,8 +1272,10 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
             completeWaveRef.current();
           }
         }
+      } else {
+        // === Dig phase: Galaxy TD ring tick ===
+        galaxyTDTickRef.current();
       }
-      // Dig phase: no enemy/bullet/tower logic — just rhythm VFX below
 
       // VFX: beat pulse ring — intensity scales with BPM (both modes)
       const intensity = Math.min(1, (effectiveBpm - 80) / 100);
@@ -1314,17 +1333,12 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
         // Direct DOM update — bypasses React for smooth cross-browser animation
         if (beatBarRef.current) {
           beatBarRef.current.style.setProperty('--beat-phase', String(phase));
-          // Distance from beat center for timing zone display
-          const dist = phase <= 0.5 ? phase : 1 - phase;
           const beatExtend = activeEffectsRef.current?.beatExtendBonus || 0;
           const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
 
-          if (dist < ((0.06 + beatExtend) * beatWindowMod)) {
-            beatBarRef.current.setAttribute('data-onbeat', 'perfect');
-          } else if (dist < ((0.12 + beatExtend) * beatWindowMod)) {
-            beatBarRef.current.setAttribute('data-onbeat', 'great');
-          } else if (dist < ((0.20 + beatExtend) * beatWindowMod)) {
-            beatBarRef.current.setAttribute('data-onbeat', 'good');
+          const zone = getBeatJudgment(phase, beatExtend, beatWindowMod);
+          if (zone !== 'miss') {
+            beatBarRef.current.setAttribute('data-onbeat', zone);
           } else {
             beatBarRef.current.removeAttribute('data-onbeat');
           }
@@ -1729,6 +1743,17 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
         <TutorialGuide onComplete={handleTutorialComplete} />
       )}
 
+      {/* Galaxy TD 3D ring — fullscreen behind game UI, only during dig phase */}
+      {terrainPhase === 'dig' && (
+        <GalaxyRing3D
+          enemies={galaxyTD.enemies}
+          towers={galaxyTD.towers}
+          gates={galaxyTD.gates}
+          waveNumber={galaxyTD.waveNumber}
+          lineClearPulse={galaxyLineClearPulse}
+        />
+      )}
+
       {/* TD Grid Setup overlay — shown during CHECKPOINT phase so players can place mini-towers */}
       {isPlaying && tdSetupActive && (
         <TDGridSetup
@@ -1788,7 +1813,9 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
             {/* Center column: Board + Beat bar + Stats */}
             <div className={styles.centerColumn}>
               <div className={styles.boardActionArea}>
-              <Board
+              <GalaxyBoard
+                galaxyActive={terrainPhase === 'dig'}
+                waveNumber={galaxyTD.waveNumber}
                 board={board}
                 currentPiece={currentPiece}
                 boardBeat={boardBeat}
@@ -1834,7 +1861,12 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
                 </div>
               )}
               </div>
-              {featureSettings.beatBar && <BeatBar containerRef={beatBarRef} />}
+              {featureSettings.beatBar && (
+                <BeatBar
+                  containerRef={beatBarRef}
+                  beatZoneWidth={(BEAT_GOOD_WINDOW + activeEffects.beatExtendBonus) * protocolMods.beatWindowMultiplier}
+                />
+              )}
               <StatsPanel lines={lines} level={level} />
             </div>
 
