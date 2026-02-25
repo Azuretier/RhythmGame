@@ -35,6 +35,16 @@ function getDefaultStats(): PlayerStats {
     pollsVoted: 0,
     totalGoldEarned: 0,
     totalTreasuresCollected: 0,
+    // Elemental stats
+    totalReactionsTriggered: 0,
+    totalVaporizeReactions: 0,
+    totalCorruptionSuccesses: 0,
+    totalCorruptionBackfires: 0,
+    bestReactionsPerGame: 0,
+    // Equipment stats
+    totalEquipmentObtained: 0,
+    totalEquipmentScrapped: 0,
+    legendaryEquipmentObtained: 0,
   };
 }
 

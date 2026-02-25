@@ -6,7 +6,9 @@ export type AdvancementCategory =
   | 'general'
   | 'multiplayer'
   | 'loyalty'
-  | 'treasure';
+  | 'treasure'
+  | 'elemental'
+  | 'equipment';
 
 export interface Advancement {
   id: string;
@@ -49,6 +51,16 @@ export interface PlayerStats {
   // Treasure stats
   totalGoldEarned: number;
   totalTreasuresCollected: number;
+  // Elemental stats
+  totalReactionsTriggered: number;
+  totalVaporizeReactions: number;
+  totalCorruptionSuccesses: number;
+  totalCorruptionBackfires: number;
+  bestReactionsPerGame: number;
+  // Equipment stats
+  totalEquipmentObtained: number;
+  totalEquipmentScrapped: number;
+  legendaryEquipmentObtained: number;
 }
 
 export interface AdvancementState {
