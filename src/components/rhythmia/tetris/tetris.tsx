@@ -45,10 +45,6 @@ import {
   getBeatJudgment,
   getBeatMultiplier,
 } from './utils';
-import {
-  getBeatJudgment,
-  getBeatMultiplier,
-} from './utils';
 
 // Components
 import {
