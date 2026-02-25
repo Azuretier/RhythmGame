@@ -66,6 +66,7 @@ import {
   FloatingItems,
   ItemSlots,
   CardSelectUI,
+  TreasureBoxUI,
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
@@ -308,6 +309,9 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     tdBeatsRemaining,
     // Dragon gauge
     dragonGauge,
+    // Treasure box
+    currentTreasureBox,
+    showTreasureBox,
     // Tower defense
     enemies,
     bullets,
@@ -382,6 +386,12 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     triggerDragonBreath,
     endDragonBreath,
     dragonGaugeRef,
+    // Treasure box actions
+    openTreasureBox,
+    finishTreasureBox,
+    // Elemental actions
+    spawnElementOrbs,
+    tryTriggerReaction,
     // Terrain phase actions
     enterCheckpoint,
     completeWave,
@@ -702,10 +712,8 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
 
     // Beat judgment — centralised via getBeatJudgment() utility
     const currentBeatPhase = beatPhaseRef.current;
-    // Apply beat_extend bonus from cards (widens timing windows)
     const beatExtend = activeEffectsRef.current.beatExtendBonus || 0;
     const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
-
     const timing = getBeatJudgment(currentBeatPhase, beatExtend, beatWindowMod);
     let mult = getBeatMultiplier(timing);
 
@@ -991,6 +999,23 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
       // Particle effects (both modes)
       spawnTerrainParticles(center.x, center.y, clearedLines * TERRAIN_PARTICLES_PER_LINE);
 
+      // ===== Elemental Orb Spawning =====
+      const orbVfxEvents = spawnElementOrbs(piece.type, clearedLines, onBeat, center.x, center.y);
+      for (const orbEvt of orbVfxEvents) {
+        vfxRef.current.emit({ type: 'elementOrbSpawn', element: orbEvt.element, boardX: orbEvt.boardX, boardY: orbEvt.boardY });
+      }
+
+      // Try to trigger an elemental reaction
+      const reactionResult = tryTriggerReaction();
+      if (reactionResult) {
+        vfxRef.current.emit({ type: 'reactionTrigger', reaction: reactionResult.reactionType, intensity: 1.0 });
+
+        if (!reactionResult.success) {
+          // Corruption backfire
+          vfxRef.current.emit({ type: 'corruptionBackfire' });
+        }
+      }
+
       playLineClear(clearedLines, worldIdxRef.current);
       triggerBoardShake();
     }
@@ -1015,6 +1040,7 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
     consumeComboGuard, consumeShield, showActionMessage,
     chargeDragonFury, chargeDragonMight, isDragonBreathReady, triggerDragonBreath, endDragonBreath,
+    spawnElementOrbs, tryTriggerReaction,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -1150,9 +1176,9 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
     bestTetrisIn60sRef.current = 0;
     setToastIds([]);
     setActionToasts([]);
-    corruptionResetRef.current();
-    galaxyTDResetRef.current();
-  }, [initAudio, initGame]);
+    corruption.reset();
+    galaxyTD.reset();
+  }, [initAudio, initGame, corruption, galaxyTD]);
 
   // Start game — intercept for tutorial on first play
   const startGame = useCallback((protocolId: number = 0) => {
@@ -1435,8 +1461,8 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
-      // Don't process game inputs while card select or TD setup is showing
-      if (showCardSelect || tdSetupActive) return;
+      // Don't process game inputs while card select, TD setup, or treasure box is showing
+      if (showCardSelect || tdSetupActive || showTreasureBox) return;
 
       const currentTime = performance.now();
 
@@ -1543,7 +1569,7 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCardSelect, tdSetupActive, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
+  }, [isPlaying, isPaused, gameOver, showCardSelect, tdSetupActive, showTreasureBox, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
   // Mouse input handlers — move piece by hovering over board columns,
   // hold left/right button to soft drop (driven by game loop via mouseHeldRef),
@@ -1668,7 +1694,7 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
       boardEl.removeEventListener('wheel', handleWheel);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
+  }, [isPlaying, gameOver, showCardSelect, showTreasureBox, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
 
   // Clean up action toasts on unmount
   useEffect(() => {
@@ -1932,6 +1958,15 @@ export default function Rhythmia({ onQuit, onGameEnd, locale = 'ja' }: RhythmiaP
           isPlaying={isPlaying && !gameOver}
           onStart={vfx.start}
           onStop={vfx.stop}
+        />
+      )}
+
+      {/* Treasure box overlay */}
+      {showTreasureBox && currentTreasureBox && (
+        <TreasureBoxUI
+          box={currentTreasureBox}
+          onOpen={openTreasureBox}
+          onFinish={finishTreasureBox}
         />
       )}
 

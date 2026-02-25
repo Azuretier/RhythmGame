@@ -1644,6 +1644,12 @@
 
 .gameover.show {
   display: flex;
+  animation: gameoverFadeIn 0.6s ease-out;
+}
+
+@keyframes gameoverFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .gameover h2 {
@@ -1651,12 +1657,146 @@
   font-weight: 200;
   color: white;
   letter-spacing: 0.3em;
+  animation: slideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.9);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.gameoverStats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .finalScore {
   font-size: 1.5rem;
   font-weight: 300;
   color: rgba(255, 255, 255, 0.7);
+  animation: scoreReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+
+.scoreNumber {
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: scoreShimmer 2s ease-in-out 1.2s both;
+}
+
+.scoreSuffix {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9rem;
+}
+
+@keyframes scoreShimmer {
+  0% {
+    background-position: 200% center;
+  }
+  50% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: -200% center;
+    background-size: 100% 100%;
+    background-image: none;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+@keyframes scoreReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.95);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.gameoverStatRow {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.gameoverStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  min-width: 80px;
+  animation: statCardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.statDelay1 { animation-delay: 0.35s; }
+.statDelay2 { animation-delay: 0.45s; }
+.statDelay3 { animation-delay: 0.55s; }
+
+@keyframes statCardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.gameoverStatValue {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+.gameoverStatLabel {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .restartBtn {
@@ -1670,10 +1810,23 @@
   cursor: pointer;
   letter-spacing: 0.2em;
   transition: all 0.25s;
+  animation:
+    slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both,
+    btnGlow 2s ease-in-out 1.5s infinite;
+}
+
+@keyframes btnGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+  }
 }
 
 .restartBtn:hover {
   background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
 }
 
 /* Pause menu: theme selector */
@@ -4515,7 +4668,325 @@
   letter-spacing: 0.05em;
 }
 
-/* Mobile responsive for card select */
+/* ===== Treasure Box Overlay ===== */
+
+@keyframes treasureFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes treasureFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes treasureFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes treasureShake {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  15% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  30% {
+    transform: rotate(8deg) scale(1.1);
+  }
+  45% {
+    transform: rotate(-6deg) scale(1.15);
+  }
+  60% {
+    transform: rotate(6deg) scale(1.2);
+  }
+  75% {
+    transform: rotate(-3deg) scale(1.15);
+  }
+  90% {
+    transform: rotate(0deg) scale(1.3);
+  }
+}
+
+@keyframes treasureFlash {
+  0% {
+    background: rgba(0, 0, 0, 0.92);
+  }
+  50% {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  100% {
+    background: rgba(0, 0, 0, 0.92);
+  }
+}
+
+@keyframes treasureRewardsSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes treasurePromptPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.treasureBoxOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: treasureFadeIn 0.5s ease forwards;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.treasureBoxAppear {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.treasureBoxDone {
+  animation: treasureFadeOut 0.3s ease forwards;
+}
+
+.treasureBoxFlash {
+  animation: treasureFlash 0.4s ease;
+}
+
+.treasureBoxPanel {
+  max-width: 500px;
+  width: 90vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 32px 24px;
+}
+
+/* Header */
+.treasureBoxHeader {
+  text-align: center;
+}
+
+.treasureBoxTitle {
+  font-size: 2rem;
+  font-weight: 200;
+  color: white;
+  letter-spacing: 0.3em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.treasureBoxSubtitle {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.15em;
+  margin-top: 4px;
+}
+
+/* Chest */
+.treasureBoxChest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  position: relative;
+}
+
+.treasureBoxChestIdle {
+  animation: treasureFloat 2s ease-in-out infinite;
+  cursor: pointer;
+}
+
+.treasureBoxChestOpening {
+  animation: treasureShake 0.8s ease forwards;
+}
+
+.treasureBoxChestRevealed {
+  transform: scale(1.3);
+  filter: drop-shadow(0 0 24px var(--chest-glow));
+  transition: all 0.4s ease;
+}
+
+.treasureBoxIcon {
+  font-size: 4rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px var(--chest-glow, rgba(255, 255, 255, 0.3)));
+}
+
+.treasureBoxTierName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.treasureBoxTierNameJa {
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+
+/* Interaction prompts */
+.treasureBoxPrompt {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  animation: treasurePromptPulse 1.5s ease-in-out infinite;
+}
+
+.treasureBoxContinue {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  animation: treasurePromptPulse 1.5s ease-in-out infinite;
+}
+
+/* Rewards */
+.treasureBoxRewards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  animation: treasureRewardsSlideUp 0.4s ease forwards;
+}
+
+.treasureBoxRewardsTitle {
+  font-size: 1.3rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 16px currentColor;
+}
+
+.treasureBoxRewardsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Individual reward items */
+.treasureRewardItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.treasureRewardVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.treasureRewardLabel {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.treasureRewardMaterials {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.treasureRewardMaterialChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.treasureRewardScore {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #FFD54F;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 12px rgba(255, 213, 79, 0.3);
+}
+
+.treasureRewardCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.treasureRewardCardIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.treasureRewardCardName {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.05em;
+}
+
+.treasureRewardCardNameJa {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+}
+
+.treasureRewardEffect {
+  font-size: 0.9rem;
+  color: #80CBC4;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 8px rgba(128, 203, 196, 0.3);
+}
+
+/* Mobile responsive for card select & treasure box */
 @media (max-width: 768px) {
   .cardSelectCards {
     flex-direction: column;
@@ -4609,4 +5080,28 @@
 .tdSetupStartBtn:hover {
   filter: brightness(1.25);
   transform: scale(1.03);
+}
+
+@media (max-width: 768px) {
+  .treasureBoxTitle {
+    font-size: 1.4rem;
+    letter-spacing: 0.2em;
+  }
+
+  .treasureBoxSubtitle {
+    font-size: 0.75rem;
+  }
+
+  .treasureBoxIcon {
+    font-size: 3rem;
+  }
+
+  .treasureBoxPanel {
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  .treasureRewardItem {
+    padding: 10px 12px;
+  }
 }

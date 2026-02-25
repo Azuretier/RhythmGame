@@ -159,6 +159,7 @@ export type BeatJudgment = 'perfect' | 'great' | 'good' | 'miss';
 
 /**
  * Determine the beat timing judgment for a piece placement.
+ *
  * @param phase          - Current beat phase (0 = just after the beat, 1 = just before the next beat).
  * @param beatExtendBonus - Extra half-window added by card effects (default 0).
  * @param beatWindowMod  - Protocol difficulty multiplier: < 1.0 shrinks windows (default 1.0).
