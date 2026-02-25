@@ -112,6 +112,10 @@ export function useGameState() {
     const [dragonGauge, setDragonGauge] = useState<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
     const dragonGaugeRef = useRef<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
 
+    // ===== Elemental System =====
+    const [elementalState, setElementalState] = useState<ElementalState>(DEFAULT_ELEMENTAL_STATE);
+    const elementalStateRef = useRef<ElementalState>(DEFAULT_ELEMENTAL_STATE);
+
     // ===== Treasure Box System =====
     const [currentTreasureBox, setCurrentTreasureBox] = useState<TreasureBox | null>(null);
     const [showTreasureBox, setShowTreasureBox] = useState(false);
@@ -1536,6 +1540,10 @@ export function useGameState() {
 
         // Dragon gauge
         dragonGauge,
+
+        // Elemental system
+        elementalState,
+        elementalStateRef,
 
         // Treasure box
         currentTreasureBox,
