@@ -160,7 +160,7 @@ export const TERRAIN_DAMAGE_PER_LINE = 4;
 // ===== Item Definitions =====
 // Items are now defined in the shared registry at @/lib/items/registry.
 // These re-exports maintain backward compatibility for game-specific code.
-import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState } from './types';
+import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState, TreasureBoxTier } from './types';
 import { MATERIAL_ITEMS, ITEM_REGISTRY, TOTAL_DROP_WEIGHT as _TOTAL_DROP_WEIGHT } from '@/lib/items/registry';
 
 export const ITEMS: ItemType[] = MATERIAL_ITEMS.map(item => ({
@@ -344,6 +344,16 @@ export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
     comboAmplifyFactor: 1,
     dragonBoostEnabled: false,
     dragonBoostChargeMultiplier: 1,
+    // Equipment defaults (zeroed until gear equipped)
+    equipmentScoreBonus: 0,
+    equipmentComboDuration: 0,
+    equipmentBeatWindow: 0,
+    equipmentTerrainDamage: 0,
+    equipmentDropRate: 0,
+    equipmentGravityReduce: 0,
+    equipmentComboAmplify: 0,
+    equipmentReactionPower: 0,
+    equipmentEnchantments: [],
 };
 
 // Max cards to offer per selection
@@ -386,6 +396,80 @@ export const DEFAULT_DRAGON_GAUGE: DragonGaugeState = {
     isBreathing: false,
     breathStartTime: 0,
     enabled: false,
+};
+
+// ===== Treasure Box Settings =====
+// Treasure box spawns every N stages (guaranteed)
+export const TREASURE_BOX_STAGE_INTERVAL = 3;
+// Random chance to spawn a treasure box on non-guaranteed stages (15%)
+export const TREASURE_BOX_RANDOM_CHANCE = 0.15;
+// Combo streak threshold — bonus treasure box awarded at this combo count
+export const TREASURE_BOX_COMBO_THRESHOLD = 15;
+
+// Tier appearance weights by world index (later worlds = rarer boxes)
+export const TREASURE_BOX_TIER_WEIGHTS: Record<TreasureBoxTier, number[]> = {
+    wooden:  [50, 40, 30, 20, 15],
+    iron:    [35, 35, 35, 30, 25],
+    golden:  [12, 20, 25, 30, 35],
+    crystal: [3,  5,  10, 20, 25],
+};
+
+// Tier visual configuration
+export const TREASURE_BOX_TIERS: Record<TreasureBoxTier, {
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    materialRewardMultiplier: number;
+    scoreRewardBase: number;
+    freeCardChance: number;
+    effectBoostChance: number;
+}> = {
+    wooden: {
+        name: 'Wooden Chest',
+        nameJa: '木の宝箱',
+        icon: '📦',
+        color: '#8B6914',
+        glowColor: '#D4A543',
+        materialRewardMultiplier: 1,
+        scoreRewardBase: 500,
+        freeCardChance: 0,
+        effectBoostChance: 0,
+    },
+    iron: {
+        name: 'Iron Chest',
+        nameJa: '鉄の宝箱',
+        icon: '🗃️',
+        color: '#71797E',
+        glowColor: '#A9B2B8',
+        materialRewardMultiplier: 1.5,
+        scoreRewardBase: 1500,
+        freeCardChance: 0.1,
+        effectBoostChance: 0.05,
+    },
+    golden: {
+        name: 'Golden Chest',
+        nameJa: '黄金の宝箱',
+        icon: '📀',
+        color: '#FFD700',
+        glowColor: '#FFECB3',
+        materialRewardMultiplier: 2.5,
+        scoreRewardBase: 3000,
+        freeCardChance: 0.25,
+        effectBoostChance: 0.15,
+    },
+    crystal: {
+        name: 'Crystal Chest',
+        nameJa: '水晶の宝箱',
+        icon: '💎',
+        color: '#4FC3F7',
+        glowColor: '#E1F5FE',
+        materialRewardMultiplier: 4,
+        scoreRewardBase: 6000,
+        freeCardChance: 0.5,
+        effectBoostChance: 0.3,
+    },
 };
 
 // ===== Tower Defense Settings =====
@@ -438,6 +522,10 @@ export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
 
 // ===== Piece Type Array =====
 export const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
+// ===== Elemental System Settings =====
+export const ELEMENT_ORB_FLOAT_DURATION = 600;   // ms for orb float animation
+export const MAX_FLOATING_ORBS = 8;              // Max orb particles on screen
 
 // ===== Color Theme Helper =====
 // Get color for a piece type based on theme and world

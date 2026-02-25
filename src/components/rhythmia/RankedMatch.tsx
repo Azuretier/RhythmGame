@@ -59,8 +59,16 @@ interface Props {
 export default function RankedMatch({ playerName, onBack, ws, connectionStatus, playerId }: Props) {
   // Keep a ref to the ws prop for use in effects
   const wsRef = useRef<WebSocket | null>(ws);
+  // Tracks last known good WebSocket — prevents MultiplayerBattle unmount on brief disconnects
+  const [activeWs, setActiveWs] = useState<WebSocket | null>(ws);
+  // Ref version of activeWs so AI effect always has access to the last good connection
+  const activeWsRef = useRef<WebSocket | null>(ws);
   useEffect(() => {
     wsRef.current = ws;
+    if (ws) {
+      setActiveWs(ws);
+      activeWsRef.current = ws;
+    }
   }, [ws]);
 
   // Ranked state
@@ -94,99 +102,90 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
   }, []);
 
   // ===== AI Match Setup =====
-  // The AI runs client-side, relaying board updates through fake WebSocket messages
+  // Effect 1: AI game lifecycle — uses wsRef (always latest) for event dispatch
   useEffect(() => {
     if (phase !== 'playing') return;
-
-    const currentWs = wsRef.current;
-    if (!currentWs) return;
 
     const currentOpponentId = opponentId;
     const difficulty = getDifficultyForRank(rankedState.points);
 
+    const dispatchFakeMessage = (fakeMessage: ServerMessage) => {
+      // Use activeWsRef.current (last known good WS) so AI events continue to dispatch
+      // during brief disconnects when wsRef.current may be null.
+      const currentWs = activeWsRef.current;
+      if (!currentWs) return;
+      const event = new MessageEvent('message', {
+        data: JSON.stringify(fakeMessage),
+      });
+      currentWs.dispatchEvent(event);
+    };
+
     const aiGame = new TetrisAIGame(gameSeed, difficulty, {
       onBoardUpdate: (board, score, lines, combo, piece, hold) => {
-        if (currentWs.readyState === WebSocket.OPEN) {
-          const fakeMessage: ServerMessage = {
-            type: 'relayed',
-            fromPlayerId: currentOpponentId,
-            payload: {
-              event: 'board_update',
-              board,
-              score,
-              lines,
-              combo,
-              piece,
-              hold,
-            },
-          };
-          const event = new MessageEvent('message', {
-            data: JSON.stringify(fakeMessage),
-          });
-          currentWs.dispatchEvent(event);
-        }
+        dispatchFakeMessage({
+          type: 'relayed',
+          fromPlayerId: currentOpponentId,
+          payload: { event: 'board_update', board, score, lines, combo, piece, hold },
+        });
       },
       onGarbage: (lines) => {
-        if (currentWs.readyState === WebSocket.OPEN) {
-          const fakeMessage: ServerMessage = {
-            type: 'relayed',
-            fromPlayerId: currentOpponentId,
-            payload: { event: 'garbage', lines },
-          };
-          const event = new MessageEvent('message', {
-            data: JSON.stringify(fakeMessage),
-          });
-          currentWs.dispatchEvent(event);
-        }
+        dispatchFakeMessage({
+          type: 'relayed',
+          fromPlayerId: currentOpponentId,
+          payload: { event: 'garbage', lines },
+        });
       },
       onGameOver: () => {
-        if (currentWs.readyState === WebSocket.OPEN) {
-          const fakeMessage: ServerMessage = {
-            type: 'relayed',
-            fromPlayerId: currentOpponentId,
-            payload: { event: 'game_over' },
-          };
-          const event = new MessageEvent('message', {
-            data: JSON.stringify(fakeMessage),
-          });
-          currentWs.dispatchEvent(event);
-        }
+        dispatchFakeMessage({
+          type: 'relayed',
+          fromPlayerId: currentOpponentId,
+          payload: { event: 'game_over' },
+        });
       },
     });
 
     aiGameRef.current = aiGame;
     aiGame.start();
 
-    // Intercept outgoing messages: route relay messages to AI locally,
-    // pass non-relay messages (pong, etc.) through to the server
+    return () => {
+      aiGame.stop();
+      aiGameRef.current = null;
+    };
+  }, [phase, gameSeed, opponentId, rankedState.points]);
+
+  // Effect 2: Intercept ws.send for AI matches — re-runs when ws changes (e.g., after reconnect)
+  useEffect(() => {
+    if (phase !== 'playing') return;
+    if (!ws) return;
+
+    const currentWs = ws;
     const originalSend = currentWs.send.bind(currentWs);
+
+    // Route relay messages to AI locally, pass everything else (pong, etc.) to server
     currentWs.send = (data: string | ArrayBufferLike | Blob | ArrayBufferView) => {
       try {
         if (typeof data === 'string') {
           const msg = JSON.parse(data);
           if (msg.type === 'relay') {
-            if (msg.payload?.event === 'garbage') {
-              aiGame.addGarbage(msg.payload.lines);
+            if (msg.payload?.event === 'garbage' && aiGameRef.current) {
+              aiGameRef.current.addGarbage(msg.payload.lines);
             }
-            if (msg.payload?.event === 'game_over') {
-              aiGame.stop();
+            if (msg.payload?.event === 'game_over' && aiGameRef.current) {
+              aiGameRef.current.stop();
             }
             return; // Don't send relay messages to server for AI matches
           }
         }
         originalSend(data);
-      } catch {}
+      } catch (err) {
+        console.warn('[WS] Ranked send interceptor error:', err);
+      }
     };
 
     return () => {
-      aiGame.stop();
-      aiGameRef.current = null;
-      // Restore original send
-      if (currentWs) {
-        currentWs.send = originalSend;
-      }
+      currentWs.send = originalSend;
     };
-  }, [phase, gameSeed, opponentId, rankedState.points]);
+  }, [phase, ws]);
 
   // ===== Game End =====
   const handleGameEnd = useCallback((winnerId: string) => {
@@ -360,22 +359,29 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
       )}
 
       {/* Playing */}
-      {phase === 'playing' && ws && (
-        <MultiplayerBattle
-          ws={ws}
-          roomCode={roomCode}
-          playerId={playerId}
-          playerName={playerName}
-          opponents={[{
-            id: opponentId,
-            name: opponentName,
-            ready: true,
-            connected: true,
-          }]}
-          gameSeed={gameSeed}
-          onGameEnd={handleGameEnd}
-          onBackToLobby={handleBackToLobby}
-        />
+      {phase === 'playing' && activeWs && (
+        <>
+          <MultiplayerBattle
+            ws={activeWs}
+            roomCode={roomCode}
+            playerId={playerId}
+            playerName={playerName}
+            opponents={[{
+              id: opponentId,
+              name: opponentName,
+              ready: true,
+              connected: true,
+            }]}
+            gameSeed={gameSeed}
+            onGameEnd={handleGameEnd}
+            onBackToLobby={handleBackToLobby}
+          />
+          {connectionStatus !== 'connected' && (
+            <div className={styles.reconnectingOverlay}>
+              Reconnecting...
+            </div>
+          )}
+        </>
       )}
 
       {/* Result */}
