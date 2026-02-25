@@ -223,8 +223,7 @@ export const Rhythmia: React.FC = () => {
       clearTimeout(timeout);
       cancelAnimationFrame(rafId);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showGameOver]);
+  }, [showGameOver, score, lines, level]);
 
   // ===== Audio =====
   const initAudio = useCallback(() => {
