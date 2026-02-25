@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, TreasureBox, TreasureBoxTier, TreasureBoxReward, TreasureBoxBoostEffect } from '../types';
+import type { ElementType, ReactionType, ElementalState, ElementOrb, ActiveReaction, ReactionResult } from '@/lib/elements/types';
+import { DEFAULT_ELEMENTAL_STATE } from '@/lib/elements/types';
+import {
+    rollElementOrb, calculateOrbCount, findBestReaction,
+    consumeOrbs, applyReactionEffect, createActiveReaction,
+    pruneExpiredReactions, addOrbs, createFreshElementalState,
+} from '@/lib/elements/engine';
+import { REACTION_DEFINITIONS } from '@/lib/elements/definitions';
+import { useEquipment } from '@/lib/equipment/context';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
@@ -106,6 +115,9 @@ export function useGameState() {
     // ===== Treasure Box System =====
     const [currentTreasureBox, setCurrentTreasureBox] = useState<TreasureBox | null>(null);
     const [showTreasureBox, setShowTreasureBox] = useState(false);
+
+    // ===== Equipment System =====
+    const { getBonuses: getEquipmentBonuses } = useEquipment();
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -275,8 +287,8 @@ export function useGameState() {
 
     // Compute active effects from all equipped cards (delegated to pure utility)
     const computeActiveEffects = useCallback((cards: EquippedCard[]): ActiveEffects => {
-        return computeActiveEffectsImpl(cards);
-    }, []);
+        return computeActiveEffectsImpl(cards, getEquipmentBonuses());
+    }, [getEquipmentBonuses]);
 
     // Generate card offers for CARD_SELECT phase
     const generateCardOffers = useCallback((currentWorldIdx: number): CardOffer[] => {
@@ -1303,7 +1315,8 @@ export function useGameState() {
 
         // Schedule orb collection animation
         setTimeout(() => {
-            setFloatingOrbs(prev => prev.filter(o => (now - o.startTime) < o.duration + 500));
+            const cleanupTime = Date.now();
+            setFloatingOrbs(prev => prev.filter(o => (cleanupTime - o.startTime) < o.duration + 500));
         }, ELEMENT_ORB_FLOAT_DURATION + 300);
 
         return vfxEvents;
@@ -1343,9 +1356,13 @@ export function useGameState() {
         // Create active reaction for duration-based effects
         const activeReaction = createActiveReaction(bestReaction, 1.0);
 
-        // Update cooldowns
+        // Update cooldowns — replace entry for this reaction and prune any expired entries
         reactionCooldownsRef.current = [
-            ...reactionCooldownsRef.current.filter(r => r.type !== bestReaction),
+            ...reactionCooldownsRef.current.filter(r => {
+                if (r.type === bestReaction) return false; // replaced below
+                const def = REACTION_DEFINITIONS[r.type];
+                return def ? (now - r.time) < def.cooldown : false;
+            }),
             { type: bestReaction, time: now },
         ];
 
