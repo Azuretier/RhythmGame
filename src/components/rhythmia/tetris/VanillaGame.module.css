@@ -5082,6 +5082,7 @@
   transform: scale(1.03);
 }
 
+@media (max-width: 768px) {
   .treasureBoxTitle {
     font-size: 1.4rem;
     letter-spacing: 0.2em;
