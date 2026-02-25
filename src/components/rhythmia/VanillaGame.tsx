@@ -1213,6 +1213,22 @@ export const Rhythmia: React.FC = () => {
         <div className={`${styles.gameover} ${styles.show}`}>
           <h2>GAME OVER</h2>
           <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
+          <div className={styles.gameoverStats}>
+            <div className={styles.gameoverStatRow}>
+              <div className={styles.gameoverStat}>
+                <span className={styles.gameoverStatValue}>{lines}</span>
+                <span className={styles.gameoverStatLabel}>Lines</span>
+              </div>
+              <div className={styles.gameoverStat}>
+                <span className={styles.gameoverStatValue}>{level}</span>
+                <span className={styles.gameoverStatLabel}>Level</span>
+              </div>
+              <div className={styles.gameoverStat}>
+                <span className={styles.gameoverStatValue}>{WORLDS[worldIdx]?.name.split(' ')[0] || '🎀'}</span>
+                <span className={styles.gameoverStatLabel}>World</span>
+              </div>
+            </div>
+          </div>
           <button className={styles.restartBtn} onClick={startGame}>もう一度</button>
         </div>
       )}
