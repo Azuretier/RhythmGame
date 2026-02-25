@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(*)",
+      "Read(*)",
+      "Bash(npm run lint)",
+      "Bash(npm run build)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git status)",
+      "Bash(git diff)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}

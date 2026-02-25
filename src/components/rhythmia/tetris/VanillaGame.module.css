@@ -1678,7 +1678,6 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
 
 @keyframes slideUp {
@@ -1697,6 +1696,45 @@
   font-weight: 300;
   color: rgba(255, 255, 255, 0.7);
   animation: scoreReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+
+.scoreNumber {
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.7) 0%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: scoreShimmer 2s ease-in-out 1.2s both;
+}
+
+.scoreSuffix {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9rem;
+}
+
+@keyframes scoreShimmer {
+  0% {
+    background-position: 200% center;
+  }
+  50% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: -200% center;
+    background-size: 100% 100%;
+    background-image: none;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.9);
+  }
 }
 
 @keyframes scoreReveal {
@@ -1728,6 +1766,22 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   min-width: 80px;
+  animation: statCardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.statDelay1 { animation-delay: 0.35s; }
+.statDelay2 { animation-delay: 0.45s; }
+.statDelay3 { animation-delay: 0.55s; }
+
+@keyframes statCardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .gameoverStatValue {
@@ -1756,7 +1810,18 @@
   cursor: pointer;
   letter-spacing: 0.2em;
   transition: all 0.25s;
-  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  animation:
+    slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.7s both,
+    btnGlow 2s ease-in-out 1.5s infinite;
+}
+
+@keyframes btnGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+  }
 }
 
 .restartBtn:hover {
