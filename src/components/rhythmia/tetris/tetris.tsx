@@ -387,6 +387,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     // Treasure box actions
     openTreasureBox,
     finishTreasureBox,
+    // Elemental actions
+    spawnElementOrbs,
+    tryTriggerReaction,
     // Terrain phase actions
     enterCheckpoint,
     completeWave,

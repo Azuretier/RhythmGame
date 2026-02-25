@@ -118,6 +118,7 @@ export function useGameState() {
     const elementalStateRef = useRef<ElementalState>(DEFAULT_ELEMENTAL_STATE);
     const [floatingOrbs, setFloatingOrbs] = useState<ElementOrb[]>([]);
     const nextOrbIdRef = useRef(0);
+    const reactionCooldownsRef = useRef<{ type: ReactionType; time: number }[]>([]);
 
     // ===== Treasure Box System =====
     const [currentTreasureBox, setCurrentTreasureBox] = useState<TreasureBox | null>(null);
@@ -1548,6 +1549,8 @@ export function useGameState() {
         elementalState,
         elementalStateRef,
         floatingOrbs,
+        spawnElementOrbs,
+        tryTriggerReaction,
 
         // Treasure box
         currentTreasureBox,
