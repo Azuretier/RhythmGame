@@ -26,6 +26,7 @@ import {
     DRAGON_FURY_CHARGE, DRAGON_MIGHT_CHARGE,
     TREASURE_BOX_STAGE_INTERVAL, TREASURE_BOX_RANDOM_CHANCE,
     TREASURE_BOX_TIER_WEIGHTS, TREASURE_BOX_TIERS,
+    MAX_FLOATING_ORBS, ELEMENT_ORB_FLOAT_DURATION,
 } from '../constants';
 import type { ProtocolModifiers } from '../protocol';
 import { DEFAULT_PROTOCOL_MODIFIERS } from '../protocol';
@@ -115,6 +116,8 @@ export function useGameState() {
     // ===== Elemental System =====
     const [elementalState, setElementalState] = useState<ElementalState>(DEFAULT_ELEMENTAL_STATE);
     const elementalStateRef = useRef<ElementalState>(DEFAULT_ELEMENTAL_STATE);
+    const [floatingOrbs, setFloatingOrbs] = useState<ElementOrb[]>([]);
+    const nextOrbIdRef = useRef(0);
 
     // ===== Treasure Box System =====
     const [currentTreasureBox, setCurrentTreasureBox] = useState<TreasureBox | null>(null);
@@ -1295,7 +1298,7 @@ export function useGameState() {
 
             // Create floating orb visual
             const newOrb: ElementOrb = {
-                id: nextOrbId++,
+                id: nextOrbIdRef.current++,
                 element,
                 x: originX + (Math.random() - 0.5) * 150,
                 y: originY + (Math.random() - 0.5) * 80,
@@ -1544,6 +1547,7 @@ export function useGameState() {
         // Elemental system
         elementalState,
         elementalStateRef,
+        floatingOrbs,
 
         // Treasure box
         currentTreasureBox,
