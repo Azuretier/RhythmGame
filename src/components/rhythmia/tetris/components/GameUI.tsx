@@ -18,7 +18,7 @@ const RULE_LABELS: Record<AdvancedRule, string> = {
 };
 
 /**
- * Protocol Select screen — HSR-inspired left-panel difficulty selection.
+ * Protocol Select screen — Honkai: Star Rail themed difficulty selection.
  * Left: vertical protocol list. Right: world preview + details + enter.
  */
 export function TitleScreen({ onStart }: TitleScreenProps) {
@@ -35,18 +35,32 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
 
     return (
         <div className={styles.titleScreen}>
+            {/* HSR Background layers */}
+            <div className={styles.hsrStarfield} />
+            <div className={styles.hsrNebula} />
+
+            {/* HSR Top navigation bar */}
+            <div className={styles.hsrTopBar}>
+                <div className={styles.hsrTopBarLeft}>
+                    <div className={styles.hsrTopBarDeco} />
+                    <span className={styles.hsrTopBarTitle}>PROTOCOL SELECT</span>
+                    <span className={styles.hsrTopBarTitleJa}>難易度選択</span>
+                </div>
+                <div className={styles.hsrTopBarRight}>
+                    <span className={styles.hsrTopBarGame}>RHYTHMIA</span>
+                </div>
+            </div>
+
             <div className={styles.protocolLayout}>
                 {/* ===== Left Panel: Protocol List ===== */}
                 <div
                     className={styles.protocolLeftPanel}
                     style={{ '--protocol-accent': protocol.accentColor } as React.CSSProperties}
                 >
-                    <div className={styles.circuitGrid} />
-                    <div className={styles.scanlineOverlay} />
-
-                    <div className={styles.protocolSectionTitle}>
-                        <span className={styles.protocolSectionLabel}>PROTOCOL</span>
-                        <div className={styles.protocolHeaderLine} />
+                    <div className={styles.hsrPanelHeader}>
+                        <div className={styles.hsrPanelHeaderBar} />
+                        <span className={styles.hsrPanelHeaderText}>DIFFICULTY</span>
+                        <span className={styles.hsrPanelHeaderTextJa}>難易度</span>
                     </div>
 
                     <div className={styles.protocolList}>
@@ -71,6 +85,14 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                                     <div className={styles.protocolBtnInfo}>
                                         <div className={styles.protocolBtnName}>{p.name}</div>
                                         <div className={styles.protocolBtnSub}>{p.nameJa}</div>
+                                        <div className={styles.hsrDiffStars}>
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <div
+                                                    key={i}
+                                                    className={`${styles.hsrDiffStar} ${i <= p.id ? styles.hsrDiffStarFilled : styles.hsrDiffStarEmpty}`}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
                                 </button>
                             );
@@ -83,17 +105,23 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                     className={styles.protocolRightPanel}
                     style={{ '--protocol-accent': protocol.accentColor } as React.CSSProperties}
                 >
-                    <div className={styles.circuitGrid} />
-
                     {/* Protocol detail header */}
                     <div className={styles.protocolDetailHeader}>
                         <div className={styles.protocolDetailNumeral}>{protocol.numeral}</div>
-                        <div>
+                        <div className={styles.hsrDetailTitleGroup}>
                             <div className={styles.protocolDetailName}>
                                 {protocol.name}
                             </div>
                             <div className={styles.protocolDetailNameJa}>
                                 {protocol.nameJa}
+                            </div>
+                            <div className={styles.hsrDetailStars}>
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className={`${styles.hsrDiffStar} ${i <= protocol.id ? styles.hsrDiffStarFilled : styles.hsrDiffStarEmpty}`}
+                                    />
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -102,20 +130,24 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                         {protocol.description}
                     </div>
 
-                    {/* Modifier stats row */}
-                    <div className={styles.protocolDetailStats}>
-                        <span className={styles.protocolStat}>
-                            BPM <span className={styles.protocolStatValue}>&times;{protocol.bpmMultiplier}</span>
-                        </span>
-                        <span className={styles.protocolStat}>
-                            Gravity <span className={styles.protocolStatValue}>&times;{protocol.gravityMultiplier}</span>
-                        </span>
-                        <span className={styles.protocolStat}>
-                            Beat <span className={styles.protocolStatValue}>&times;{protocol.beatWindowMultiplier}</span>
-                        </span>
-                        <span className={styles.protocolStat}>
-                            Score <span className={styles.protocolStatValue}>&times;{protocol.scoreMultiplier}</span>
-                        </span>
+                    {/* Modifier stats grid */}
+                    <div className={styles.hsrStatsGrid}>
+                        <div className={styles.hsrStatItem}>
+                            <span className={styles.hsrStatLabel}>BPM</span>
+                            <span className={styles.hsrStatValue}>&times;{protocol.bpmMultiplier}</span>
+                        </div>
+                        <div className={styles.hsrStatItem}>
+                            <span className={styles.hsrStatLabel}>GRAVITY</span>
+                            <span className={styles.hsrStatValue}>&times;{protocol.gravityMultiplier}</span>
+                        </div>
+                        <div className={styles.hsrStatItem}>
+                            <span className={styles.hsrStatLabel}>BEAT WINDOW</span>
+                            <span className={styles.hsrStatValue}>&times;{protocol.beatWindowMultiplier}</span>
+                        </div>
+                        <div className={styles.hsrStatItem}>
+                            <span className={styles.hsrStatLabel}>SCORE</span>
+                            <span className={styles.hsrStatValue}>&times;{protocol.scoreMultiplier}</span>
+                        </div>
                     </div>
 
                     {protocol.advancedRules.length > 0 && (
@@ -128,13 +160,17 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                         </div>
                     )}
 
-                    {/* Divider */}
-                    <div className={styles.protocolDivider} />
+                    {/* HSR-style diamond divider */}
+                    <div className={styles.hsrDivider}>
+                        <div className={styles.hsrDividerLine} />
+                        <div className={styles.hsrDividerDiamond} />
+                        <div className={styles.hsrDividerLine} />
+                    </div>
 
                     {/* World preview */}
-                    <div className={styles.protocolSectionTitle}>
-                        <span className={styles.protocolSectionLabel}>WORLDS</span>
-                        <div className={styles.protocolHeaderLine} />
+                    <div className={styles.hsrSectionHeader}>
+                        <div className={styles.hsrSectionHeaderBar} />
+                        <span className={styles.hsrSectionHeaderText}>STAGE WORLDS</span>
                     </div>
 
                     <div className={styles.worldRow}>
@@ -161,12 +197,14 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                         ))}
                     </div>
 
-                    {/* Enter Button */}
+                    {/* HSR Enter Button */}
                     <button
                         className={styles.protocolEnterBtn}
                         onClick={() => onStart(selectedProtocol)}
                     >
-                        <span>&#9654; ENTER</span>
+                        <div className={styles.hsrEnterCornerTL} />
+                        <div className={styles.hsrEnterCornerBR} />
+                        <span>&#9654; START PROTOCOL</span>
                         <span className={styles.protocolEnterBtnSub}>突入</span>
                     </button>
                 </div>
@@ -302,7 +340,8 @@ interface BeatBarProps {
      *  --beat-phase CSS var and data-onbeat attribute directly on this element
      *  to bypass React re-render batching for smooth cross-browser animation. */
     containerRef?: React.Ref<HTMLDivElement>;
-    /** Total beat zone width as a fraction (0–0.5). Used to size the visual hit zone. */
+    /** Effective GOOD-window half-width as a fraction (0–1).
+     *  Used to size the visual target zones. Defaults to 0.20 (BEAT_GOOD_WINDOW). */
     beatZoneWidth?: number;
 }
 
@@ -315,9 +354,9 @@ interface BeatBarProps {
 export function BeatBar({ containerRef, beatZoneWidth = 0.20 }: BeatBarProps) {
     const zonePct = `${Math.min(beatZoneWidth * 100, 50)}%`;
     return (
-        <div ref={containerRef} className={styles.beatBar} style={{ '--beat-zone-width': zonePct } as React.CSSProperties}>
-            <div className={styles.beatTargetLeft} />
-            <div className={styles.beatTargetRight} />
+        <div ref={containerRef} className={styles.beatBar}>
+            <div className={styles.beatTargetLeft} style={{ width: zonePct }} />
+            <div className={styles.beatTargetRight} style={{ width: zonePct }} />
             <div className={styles.beatCursor} />
         </div>
     );

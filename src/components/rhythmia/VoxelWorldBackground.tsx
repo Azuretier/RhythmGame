@@ -627,9 +627,18 @@ interface SceneState {
   towerGroup: THREE.Group | null;
   turret: THREE.Group | null;
   muzzleFlash: THREE.Mesh | null;
-  enemyMesh: THREE.InstancedMesh | null;
-  enemyGeo: THREE.BoxGeometry;
-  enemyMat: THREE.MeshStandardMaterial;
+  /** Enemy body (torso) instanced mesh */
+  enemyBodyMesh: THREE.InstancedMesh | null;
+  enemyBodyGeo: THREE.CylinderGeometry;
+  enemyBodyMat: THREE.MeshStandardMaterial;
+  /** Enemy head instanced mesh */
+  enemyHeadMesh: THREE.InstancedMesh | null;
+  enemyHeadGeo: THREE.SphereGeometry;
+  enemyHeadMat: THREE.MeshStandardMaterial;
+  /** Enemy glowing eye visor instanced mesh */
+  enemyEyeMesh: THREE.InstancedMesh | null;
+  enemyEyeGeo: THREE.BoxGeometry;
+  enemyEyeMat: THREE.MeshStandardMaterial;
   bulletMesh: THREE.InstancedMesh | null;
   bulletGeo: THREE.SphereGeometry;
   bulletMat: THREE.MeshStandardMaterial;
@@ -790,12 +799,16 @@ export default function VoxelWorldBackground({
       ss.towerOrbLight = towerGroup.getObjectByName('towerOrbLight') as THREE.PointLight || null;
 
       // Show enemy, bullet, and impact meshes
-      if (ss.enemyMesh) ss.enemyMesh.visible = true;
+      if (ss.enemyBodyMesh) ss.enemyBodyMesh.visible = true;
+      if (ss.enemyHeadMesh) ss.enemyHeadMesh.visible = true;
+      if (ss.enemyEyeMesh) ss.enemyEyeMesh.visible = true;
       if (ss.bulletMesh) ss.bulletMesh.visible = true;
       if (ss.impactMesh) ss.impactMesh.visible = true;
     } else {
       // Dig phase: hide enemy, bullet, and impact meshes
-      if (ss.enemyMesh) ss.enemyMesh.visible = false;
+      if (ss.enemyBodyMesh) ss.enemyBodyMesh.visible = false;
+      if (ss.enemyHeadMesh) ss.enemyHeadMesh.visible = false;
+      if (ss.enemyEyeMesh) ss.enemyEyeMesh.visible = false;
       if (ss.bulletMesh) ss.bulletMesh.visible = false;
       if (ss.impactMesh) ss.impactMesh.visible = false;
       ss.turret = null;
@@ -854,19 +867,53 @@ export default function VoxelWorldBackground({
       roughnessMap: roughnessMap,
     });
 
-    // Enemy instanced mesh — bright and visible
-    const enemyGeo = new THREE.BoxGeometry(1.5, 2.2, 1.5);
-    const enemyMat = new THREE.MeshStandardMaterial({
-      color: 0xFF3333,
-      roughness: 0.4,
-      metalness: 0.3,
+    // Enemy instanced meshes — 3-part detailed creature model:
+    // Body (armored torso), Head (rounded), Eye visor (glowing)
+
+    // Procedural armor texture for the body
+    const enemyArmorMap = createEnemyArmorTexture();
+
+    // Body: tapered hexagonal cylinder — armored torso
+    const enemyBodyGeo = new THREE.CylinderGeometry(0.52, 0.64, 1.3, 6, 1, false);
+    const enemyBodyMat = new THREE.MeshStandardMaterial({
+      color: 0x330055,
+      roughness: 0.55,
+      metalness: 0.35,
       flatShading: true,
-      emissive: 0xFF0000,
-      emissiveIntensity: 0.6,
+      map: enemyArmorMap,
+      emissive: 0x220033,
+      emissiveIntensity: 0.4,
     });
-    const enemyMesh = new THREE.InstancedMesh(enemyGeo, enemyMat, MAX_ENEMIES);
-    enemyMesh.count = 0;
-    scene.add(enemyMesh);
+    const enemyBodyMesh = new THREE.InstancedMesh(enemyBodyGeo, enemyBodyMat, MAX_ENEMIES);
+    enemyBodyMesh.count = 0;
+    scene.add(enemyBodyMesh);
+
+    // Head: slightly flattened sphere sitting above the body
+    const enemyHeadGeo = new THREE.SphereGeometry(0.5, 8, 6);
+    const enemyHeadMat = new THREE.MeshStandardMaterial({
+      color: 0x4a1a7a,
+      roughness: 0.5,
+      metalness: 0.2,
+      flatShading: true,
+      emissive: 0x2a0050,
+      emissiveIntensity: 0.3,
+    });
+    const enemyHeadMesh = new THREE.InstancedMesh(enemyHeadGeo, enemyHeadMat, MAX_ENEMIES);
+    enemyHeadMesh.count = 0;
+    scene.add(enemyHeadMesh);
+
+    // Eye visor: a wide flat box on the face of the head — glows bright orange/red
+    const enemyEyeGeo = new THREE.BoxGeometry(0.52, 0.14, 0.10);
+    const enemyEyeMat = new THREE.MeshStandardMaterial({
+      color: 0xff6600,
+      roughness: 0.1,
+      metalness: 0.5,
+      emissive: 0xff4400,
+      emissiveIntensity: 3.0,
+    });
+    const enemyEyeMesh = new THREE.InstancedMesh(enemyEyeGeo, enemyEyeMat, MAX_ENEMIES);
+    enemyEyeMesh.count = 0;
+    scene.add(enemyEyeMesh);
 
     // Bullet instanced mesh — green glowing projectiles (tower defense style)
     const bulletGeo = new THREE.SphereGeometry(0.2, 12, 8);
@@ -926,7 +973,9 @@ export default function VoxelWorldBackground({
       towerGroup: null,
       turret: null,
       muzzleFlash: null,
-      enemyMesh, enemyGeo, enemyMat,
+      enemyBodyMesh, enemyBodyGeo, enemyBodyMat,
+      enemyHeadMesh, enemyHeadGeo, enemyHeadMat,
+      enemyEyeMesh, enemyEyeGeo, enemyEyeMat,
       bulletMesh, bulletGeo, bulletMat,
       impactMesh, impactGeo, impactMat,
       corruptMesh, corruptGeo, corruptMat,
@@ -956,6 +1005,8 @@ export default function VoxelWorldBackground({
     // Animation loop
     let lastTime = 0;
     const dummy = new THREE.Object3D();
+    const dummyHead = new THREE.Object3D();
+    const dummyEye = new THREE.Object3D();
     const enemyColor = new THREE.Color();
     const projVec = new THREE.Vector3();
 
@@ -1033,22 +1084,27 @@ export default function VoxelWorldBackground({
           }
         }
 
-        // Update enemy instances — grounded on terrain, smooth block-by-block walk
-        if (ss?.enemyMesh) {
+        // Update enemy instances — 3-part model (body, head, eye visor)
+        if (ss?.enemyBodyMesh && ss.enemyHeadMesh && ss.enemyEyeMesh) {
           const currentEnemies = enemiesRef.current.filter(e => e.alive);
-          ss.enemyMesh.count = currentEnemies.length;
+          ss.enemyBodyMesh.count = currentEnemies.length;
+          ss.enemyHeadMesh.count = currentEnemies.length;
+          ss.enemyEyeMesh.count = currentEnemies.length;
 
           const terrainRotY = ss.instancedMesh?.rotation.y ?? 0;
           const cosR = Math.cos(terrainRotY);
           const sinR = Math.sin(terrainRotY);
 
-          // Enemy ground Y: top of terrain block (0.95 box at y=0, top surface = 0.475)
-          // Enemy geometry is 2.2 tall, center at 0.475 + 1.1 = 1.575
-          const groundY = 1.575;
+          // Body center Y: terrain surface (0.475) + half body height (0.65) = 1.125
+          // Head center Y: body top (1.125 + 0.65 = 1.775) + head radius (0.5) = 2.275
+          // Eye center Y: head center + 0.12 forward
+          const bodyY = 1.125;
+          const headOffsetY = 1.15; // above bodyY
+          const eyeOffsetY = 1.27; // above bodyY (on face surface)
 
           const lerpMap = enemyLerpRef.current;
           const currentIds = new Set<number>();
-          const LERP_SPEED = 6.0; // units per second — completes ~1 tile move in ~0.17s
+          const LERP_SPEED = 6.0;
 
           for (let i = 0; i < currentEnemies.length; i++) {
             const e = currentEnemies[i];
@@ -1057,12 +1113,10 @@ export default function VoxelWorldBackground({
             // Smooth interpolation between grid positions
             let lerp = lerpMap.get(e.id);
             if (!lerp) {
-              // New enemy — start at current position
               lerp = { fromX: e.x, fromZ: e.z, toX: e.x, toZ: e.z, t: 1 };
               lerpMap.set(e.id, lerp);
             }
 
-            // Detect new target position
             if (lerp.toX !== e.x || lerp.toZ !== e.z) {
               lerp.fromX = lerp.fromX + (lerp.toX - lerp.fromX) * lerp.t;
               lerp.fromZ = lerp.fromZ + (lerp.toZ - lerp.fromZ) * lerp.t;
@@ -1071,31 +1125,70 @@ export default function VoxelWorldBackground({
               lerp.t = 0;
             }
 
-            // Advance interpolation
             if (lerp.t < 1) {
               lerp.t = Math.min(1, lerp.t + delta * LERP_SPEED);
             }
 
-            // Smooth step easing
             const st = lerp.t * lerp.t * (3 - 2 * lerp.t);
             const lerpX = lerp.fromX + (lerp.toX - lerp.fromX) * st;
             const lerpZ = lerp.fromZ + (lerp.toZ - lerp.fromZ) * st;
 
-            // Rotate with terrain
+            // Apply terrain rotation
             const rx = lerpX * cosR - lerpZ * sinR;
             const rz = lerpX * sinR + lerpZ * cosR;
 
-            dummy.position.set(rx, groundY, rz);
+            // Subtle bob animation so enemies feel alive
+            const bobY = Math.sin(time * 0.003 + e.id * 1.3) * 0.06;
+
+            // Forward direction (normalized, from enemy toward tower origin)
+            const dist = Math.sqrt(rx * rx + rz * rz) || 1;
+            const fwdX = -rx / dist;
+            const fwdZ = -rz / dist;
+
+            // --- Body ---
+            dummy.position.set(rx, bodyY + bobY, rz);
             dummy.scale.set(1, 1, 1);
             dummy.rotation.set(0, 0, 0);
-            dummy.lookAt(new THREE.Vector3(0, groundY, 0));
+            dummy.lookAt(new THREE.Vector3(0, bodyY + bobY, 0));
             dummy.updateMatrix();
-            ss.enemyMesh.setMatrixAt(i, dummy.matrix);
+            ss.enemyBodyMesh.setMatrixAt(i, dummy.matrix);
 
-            // Color: red-orange spectrum by enemy id
+            // --- Head (above body, slight independent bob) ---
+            const headBobY = bobY + Math.sin(time * 0.004 + e.id * 2.1) * 0.03;
+            dummyHead.position.set(rx, bodyY + headOffsetY + headBobY, rz);
+            dummyHead.scale.set(1, 1, 1);
+            dummyHead.rotation.set(0, 0, 0);
+            dummyHead.lookAt(new THREE.Vector3(0, bodyY + headOffsetY + headBobY, 0));
+            dummyHead.updateMatrix();
+            ss.enemyHeadMesh.setMatrixAt(i, dummyHead.matrix);
+
+            // --- Eye visor (on the front face of the head, offset in forward direction) ---
+            const eyeForwardOffset = 0.46;
+            dummyEye.position.set(
+              rx + fwdX * eyeForwardOffset,
+              bodyY + eyeOffsetY + headBobY,
+              rz + fwdZ * eyeForwardOffset,
+            );
+            dummyEye.scale.set(1, 1, 1);
+            dummyEye.rotation.set(0, 0, 0);
+            dummyEye.lookAt(new THREE.Vector3(
+              rx + fwdX * (eyeForwardOffset + 1),
+              bodyY + eyeOffsetY + headBobY,
+              rz + fwdZ * (eyeForwardOffset + 1),
+            ));
+            dummyEye.updateMatrix();
+            ss.enemyEyeMesh.setMatrixAt(i, dummyEye.matrix);
+
+            // Per-instance tint: subtle hue variation on body/head (purple-red spectrum)
             const hue = (e.id * 0.07) % 1;
-            enemyColor.setHSL(hue * 0.08 + 0.0, 0.95, 0.5);
-            ss.enemyMesh.setColorAt(i, enemyColor);
+            enemyColor.setHSL(hue * 0.12 + 0.78, 0.85, 0.45);
+            ss.enemyBodyMesh.setColorAt(i, enemyColor);
+            // Head slightly lighter
+            enemyColor.setHSL(hue * 0.12 + 0.78, 0.75, 0.55);
+            ss.enemyHeadMesh.setColorAt(i, enemyColor);
+            // Eyes always orange-hot — no per-instance tint variation needed
+            enemyColor.set(0xffffff);
+            ss.enemyEyeMesh.setColorAt(i, enemyColor);
           }
 
           // Clean up stale lerp entries for dead enemies
@@ -1104,8 +1197,12 @@ export default function VoxelWorldBackground({
           }
 
           if (currentEnemies.length > 0) {
-            ss.enemyMesh.instanceMatrix.needsUpdate = true;
-            if (ss.enemyMesh.instanceColor) ss.enemyMesh.instanceColor.needsUpdate = true;
+            ss.enemyBodyMesh.instanceMatrix.needsUpdate = true;
+            ss.enemyHeadMesh.instanceMatrix.needsUpdate = true;
+            ss.enemyEyeMesh.instanceMatrix.needsUpdate = true;
+            if (ss.enemyBodyMesh.instanceColor) ss.enemyBodyMesh.instanceColor.needsUpdate = true;
+            if (ss.enemyHeadMesh.instanceColor) ss.enemyHeadMesh.instanceColor.needsUpdate = true;
+            if (ss.enemyEyeMesh.instanceColor) ss.enemyEyeMesh.instanceColor.needsUpdate = true;
           }
         }
 
@@ -1342,8 +1439,6 @@ export default function VoxelWorldBackground({
         const sinR = Math.sin(terrainRotY);
 
         for (const e of currentEnemies) {
-          // Only show HP bar if enemy has taken damage
-          if (e.health >= e.maxHealth) continue;
 
           // Use interpolated position for smooth HP bar tracking
           const lerpState = enemyLerpRef.current.get(e.id);
@@ -1353,8 +1448,8 @@ export default function VoxelWorldBackground({
           // Project enemy position to screen (with terrain rotation)
           const rx = dispX * cosR - dispZ * sinR;
           const rz = dispX * sinR + dispZ * cosR;
-          // Grounded enemy top: 1.575 (center) + 1.1 (half height) = 2.675
-          projVec.set(rx, 2.675 + 0.3, rz);
+          // New model top: bodyY (1.125) + headOffset (1.15) + headRadius (0.5) = 2.775 + margin
+          projVec.set(rx, 3.05, rz);
           projVec.project(camera);
 
           // Convert NDC to canvas pixels
@@ -1520,13 +1615,24 @@ export default function VoxelWorldBackground({
       bumpMap.dispose();
       roughnessMap.dispose();
       boxMat.dispose();
-      enemyGeo.dispose();
-      enemyMat.dispose();
+      enemyArmorMap.dispose();
+      enemyBodyGeo.dispose();
+      enemyBodyMat.dispose();
+      enemyHeadGeo.dispose();
+      enemyHeadMat.dispose();
+      enemyEyeGeo.dispose();
+      enemyEyeMat.dispose();
       if (sceneStateRef.current?.instancedMesh) {
         sceneStateRef.current.instancedMesh.dispose();
       }
-      if (sceneStateRef.current?.enemyMesh) {
-        sceneStateRef.current.enemyMesh.dispose();
+      if (sceneStateRef.current?.enemyBodyMesh) {
+        sceneStateRef.current.enemyBodyMesh.dispose();
+      }
+      if (sceneStateRef.current?.enemyHeadMesh) {
+        sceneStateRef.current.enemyHeadMesh.dispose();
+      }
+      if (sceneStateRef.current?.enemyEyeMesh) {
+        sceneStateRef.current.enemyEyeMesh.dispose();
       }
       if (sceneStateRef.current?.bulletMesh) {
         sceneStateRef.current.bulletMesh.dispose();

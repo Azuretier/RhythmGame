@@ -1139,6 +1139,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "硬币收集者",
+      "desc": "总计获得100金币"
+    },
+    "gold_1000": {
+      "name": "硬币囤积者",
+      "desc": "总计获得1,000金币"
+    },
+    "gold_5000": {
+      "name": "寻宝者",
+      "desc": "总计获得5,000金币"
+    },
+    "gold_25000": {
+      "name": "黄金之王",
+      "desc": "总计获得25,000金币"
+    },
+    "gold_100000": {
+      "name": "传奇富豪",
+      "desc": "总计获得100,000金币"
+    },
+    "treasure_10": {
+      "name": "发现宝藏",
+      "desc": "收集10个宝藏"
+    },
+    "treasure_50": {
+      "name": "寻宝探险家",
+      "desc": "收集50个宝藏"
+    },
+    "treasure_200": {
+      "name": "宝藏大师",
+      "desc": "收集200个宝藏"
+    },
+    "treasure_500": {
+      "name": "宝藏守护者",
+      "desc": "收集500个宝藏"
+    },
+    "treasure_1000": {
+      "name": "财富之主",
+      "desc": "收集1,000个宝藏"
     }
   },
   "updates": {
@@ -1293,8 +1333,16 @@
     "gameTitle": "对战竞技场",
     "subtitle": "实时1v1对战",
     "description": "通过WebSocket进行实时1v1对战。",
-    "features": "实时对战|垃圾行系统|排位赛",
-    "stats": "1v1 对战|8秒 匹配|AI 替补"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "排位赛"
+    },
+    "stats": {
+      "mode": "模式",
+      "battle": "战斗",
+      "status": "状态"
+    }
   },
   "uiTheme": {
     "selectTheme": "选择主题",
