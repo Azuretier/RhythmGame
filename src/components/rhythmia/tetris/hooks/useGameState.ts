@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, TreasureBox, TreasureBoxTier, TreasureBoxReward, TreasureBoxBoostEffect } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, ,TDEnemyType TreasureBox, TreasureBoxTier, TreasureBoxReward, TreasureBoxBoostEffect } from '../types';
 import type { ElementType, ReactionType, ElementalState, ElementOrb, ActiveReaction, ReactionResult } from '@/lib/elements/types';
 import { DEFAULT_ELEMENTAL_STATE } from '@/lib/elements/types';
 import {
@@ -912,6 +912,7 @@ export function useGameState() {
             const worldZ = cell.gz * GRID_TILE_SIZE;
             occupied.add(`${cell.gx},${cell.gz}`);
 
+            const enemyTypes: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
             newEnemies.push({
                 id: nextEnemyId++,
                 x: worldX,
@@ -924,6 +925,7 @@ export function useGameState() {
                 maxHealth: ENEMY_HP,
                 alive: true,
                 spawnTime: Date.now(),
+                enemyType: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
             });
         }
         setEnemies(prev => [...prev, ...newEnemies]);
@@ -1175,6 +1177,7 @@ export function useGameState() {
         const worldX = gx * GRID_TILE_SIZE;
         const worldZ = gz * GRID_TILE_SIZE;
 
+        const enemyTypes: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
         const enemy: Enemy = {
             id: nextEnemyId++,
             x: worldX, y: 0.5, z: worldZ,
@@ -1184,6 +1187,7 @@ export function useGameState() {
             maxHealth: ENEMY_HP,
             alive: true,
             spawnTime: Date.now(),
+            enemyType: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
         };
         setEnemies(prev => [...prev, enemy]);
         enemiesRef.current = [...enemiesRef.current, enemy];
