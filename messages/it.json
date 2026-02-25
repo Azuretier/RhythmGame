@@ -1139,6 +1139,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Collezionista di monete",
+      "desc": "Guadagna 100 oro in totale"
+    },
+    "gold_1000": {
+      "name": "Accumulatore di monete",
+      "desc": "Guadagna 1.000 oro in totale"
+    },
+    "gold_5000": {
+      "name": "Cacciatore di tesori",
+      "desc": "Guadagna 5.000 oro in totale"
+    },
+    "gold_25000": {
+      "name": "Re dell'oro",
+      "desc": "Guadagna 25.000 oro in totale"
+    },
+    "gold_100000": {
+      "name": "Magnate leggendario",
+      "desc": "Guadagna 100.000 oro in totale"
+    },
+    "treasure_10": {
+      "name": "Tesoro trovato",
+      "desc": "Raccogli 10 tesori"
+    },
+    "treasure_50": {
+      "name": "Cercatore di tesori",
+      "desc": "Raccogli 50 tesori"
+    },
+    "treasure_200": {
+      "name": "Maestro dei tesori",
+      "desc": "Raccogli 200 tesori"
+    },
+    "treasure_500": {
+      "name": "Guardiano dei tesori",
+      "desc": "Raccogli 500 tesori"
+    },
+    "treasure_1000": {
+      "name": "Signore delle ricchezze",
+      "desc": "Raccogli 1.000 tesori"
     }
   },
   "updates": {
@@ -1293,8 +1333,16 @@
     "gameTitle": "Arena di Battaglia",
     "subtitle": "Battaglie 1v1 in tempo reale",
     "description": "Battaglie 1v1 in tempo reale via WebSocket.",
-    "features": "Tempo Reale|Sistema Linee Spazzatura|Classificato",
-    "stats": "1v1 Battaglia|8s Matchmaking|Fallback IA"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Classificata"
+    },
+    "stats": {
+      "mode": "Modalità",
+      "battle": "Battaglia",
+      "status": "Stato"
+    }
   },
   "uiTheme": {
     "selectTheme": "Seleziona Tema",

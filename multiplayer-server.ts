@@ -4,6 +4,7 @@ import type { IncomingMessage } from 'http';
 import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
+import { EoEManager, isEoEMessage } from './src/lib/echoes/EoEManager';
 import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
@@ -21,6 +22,7 @@ import {
   ARENA_MAX_PLAYERS,
   ARENA_QUEUE_TIMEOUT,
 } from './src/types/arena';
+import type { EoEClientMessage, EoEServerMessage } from './src/types/echoes';
 
 // Environment configuration
 const PORT = parseInt(process.env.PORT || '3001', 10);
@@ -328,6 +330,28 @@ function sendMCBoardRoomState(roomCode: string): void {
   const roomState = mcBoardManager.getRoomState(roomCode);
   if (roomState) {
     broadcastToMCBoard(roomCode, { type: 'mc_room_state', roomState } as ServerMessage);
+  }
+}
+
+// ===== Echoes of Eternity System =====
+
+const eoeManager = new EoEManager({
+  onBroadcast: (roomCode, message) => {
+    broadcastToEoE(roomCode, message);
+  },
+  onSendToPlayer: (playerId, message) => {
+    sendToPlayer(playerId, message as unknown as ServerMessage);
+  },
+  onSessionEnd: (roomCode) => {
+    console.log(`[EOE] Session ended in room ${roomCode}`);
+  },
+});
+
+function broadcastToEoE(roomCode: string, message: EoEServerMessage): void {
+  const room = eoeManager.getRoomByCode(roomCode);
+  if (!room) return;
+  for (const playerId of room.players.keys()) {
+    sendToPlayer(playerId, message as unknown as ServerMessage);
   }
 }
 
@@ -1310,8 +1334,99 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
-    default:
+    default: {
+      // Echoes of Eternity messages
+      if (isEoEMessage(message.type)) {
+        const conn = playerConnections.get(playerId);
+        const eoeMessage = message as unknown as EoEClientMessage;
+
+        // Inject profile info for create/join operations
+        if (eoeMessage.type === 'eoe_set_profile') {
+          // Profile is set via the main set_profile handler
+          break;
+        }
+
+        if (eoeMessage.type === 'eoe_create_party') {
+          const { roomCode } = eoeManager.createRoom(
+            playerId,
+            conn?.profileName || 'Player',
+            conn?.profileIcon || '',
+            eoeMessage.gameMode,
+            eoeMessage.maxSize
+          );
+          sendToPlayer(playerId, {
+            type: 'eoe_party_created',
+            partyCode: roomCode,
+            party: {
+              id: roomCode,
+              members: [{
+                playerId,
+                playerName: conn?.profileName || 'Player',
+                character: null as never,
+                role: 'leader',
+                isReady: false,
+                isOnline: true,
+              }],
+              maxSize: eoeMessage.maxSize || 4,
+              currentActivity: eoeMessage.gameMode,
+              isPublic: true,
+            },
+          } as unknown as ServerMessage);
+          break;
+        }
+
+        if (eoeMessage.type === 'eoe_join_party') {
+          const result = eoeManager.joinRoom(
+            eoeMessage.partyCode,
+            playerId,
+            conn?.profileName || 'Player',
+            conn?.profileIcon || ''
+          );
+          if (!result.success) {
+            sendToPlayer(playerId, {
+              type: 'eoe_error',
+              code: 'JOIN_FAILED',
+              message: result.error || 'Failed to join party',
+            } as unknown as ServerMessage);
+          } else if (result.room) {
+            sendToPlayer(playerId, {
+              type: 'eoe_party_joined',
+              party: {
+                id: result.room.id,
+                members: [...result.room.players.entries()].map(([id, p]) => ({
+                  playerId: id,
+                  playerName: p.name,
+                  character: p.character!,
+                  role: p.isHost ? 'leader' : 'member',
+                  isReady: p.isReady,
+                  isOnline: true,
+                })),
+                maxSize: result.room.maxPlayers,
+                currentActivity: result.room.gameMode,
+                isPublic: true,
+              },
+            } as unknown as ServerMessage);
+          }
+          break;
+        }
+
+        if (eoeMessage.type === 'eoe_queue') {
+          eoeManager.queuePlayer(
+            playerId,
+            conn?.profileName || 'Player',
+            conn?.profileIcon || '',
+            eoeMessage.gameMode
+          );
+          break;
+        }
+
+        // All other EoE messages go through the manager's handleMessage
+        eoeManager.handleMessage(playerId, eoeMessage);
+        break;
+      }
+
       sendError(playerId, `Unknown message type`, 'UNKNOWN_TYPE');
+    }
   }
 }
 
@@ -1340,6 +1455,10 @@ function handleDisconnect(playerId: string, reason: string): void {
   if (mcResult.roomCode) {
     sendMCBoardRoomState(mcResult.roomCode);
   }
+
+  // Handle EoE disconnect
+  eoeManager.removePlayer(playerId);
+  eoeManager.dequeuePlayer(playerId);
 
   const result = roomManager.markPlayerDisconnected(playerId);
   playerConnections.delete(playerId);

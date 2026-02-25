@@ -1139,6 +1139,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Muntverzamelaar",
+      "desc": "Verdien in totaal 100 goud"
+    },
+    "gold_1000": {
+      "name": "Muntspaarder",
+      "desc": "Verdien in totaal 1.000 goud"
+    },
+    "gold_5000": {
+      "name": "Schatjager",
+      "desc": "Verdien in totaal 5.000 goud"
+    },
+    "gold_25000": {
+      "name": "Goudkoning",
+      "desc": "Verdien in totaal 25.000 goud"
+    },
+    "gold_100000": {
+      "name": "Legendarische magnaat",
+      "desc": "Verdien in totaal 100.000 goud"
+    },
+    "treasure_10": {
+      "name": "Schat gevonden",
+      "desc": "Verzamel 10 schatten"
+    },
+    "treasure_50": {
+      "name": "Schatzzoeker",
+      "desc": "Verzamel 50 schatten"
+    },
+    "treasure_200": {
+      "name": "Schatzmeester",
+      "desc": "Verzamel 200 schatten"
+    },
+    "treasure_500": {
+      "name": "Schatwachter",
+      "desc": "Verzamel 500 schatten"
+    },
+    "treasure_1000": {
+      "name": "Heer der rijkdommen",
+      "desc": "Verzamel 1.000 schatten"
     }
   },
   "updates": {
@@ -1293,8 +1333,16 @@
     "gameTitle": "Strijdarena",
     "subtitle": "Realtime 1v1-gevechten",
     "description": "Realtime 1v1-gevechten via WebSocket.",
-    "features": "Realtime|Vuilnisregel-systeem|Gerangschikt",
-    "stats": "1v1 Gevecht|8s Matchmaking|AI-terugval"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Gerangschikt"
+    },
+    "stats": {
+      "mode": "Modus",
+      "battle": "Strijd",
+      "status": "Status"
+    }
   },
   "uiTheme": {
     "selectTheme": "Selecteer thema",
