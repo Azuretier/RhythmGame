@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION, BEAT_GOOD_WINDOW } from './constants';
 import type { Piece, GameMode, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import { getModifiers } from './protocol';
@@ -65,6 +65,7 @@ import {
   FloatingItems,
   ItemSlots,
   CardSelectUI,
+  TreasureBoxUI,
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
@@ -306,6 +307,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     tdBeatsRemaining,
     // Dragon gauge
     dragonGauge,
+    // Treasure box
+    currentTreasureBox,
+    showTreasureBox,
     // Tower defense
     enemies,
     bullets,
@@ -380,6 +384,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     triggerDragonBreath,
     endDragonBreath,
     dragonGaugeRef,
+    // Treasure box actions
+    openTreasureBox,
+    finishTreasureBox,
+    // Elemental actions
+    spawnElementOrbs,
+    tryTriggerReaction,
     // Terrain phase actions
     enterCheckpoint,
     completeWave,
@@ -903,8 +913,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         spawnItemDrops(killCount, center.x, center.y);
       } else {
         // === DIG PHASE: Destroy terrain blocks ===
-        // terrain_surge bonus only applies on beat
-        const surgeBonus = onBeat ? activeEffectsRef.current.terrainSurgeBonus : 0;
+        // terrain_surge bonus only applies on perfect beats
+        const surgeBonus = timing === 'perfect' ? activeEffectsRef.current.terrainSurgeBonus : 0;
         const damage = Math.ceil(clearedLines * TERRAIN_DAMAGE_PER_LINE * mult * amplifiedCombo * (1 + surgeBonus));
         const remaining = destroyTerrain(damage);
 
@@ -944,6 +954,23 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       // Particle effects (both modes)
       spawnTerrainParticles(center.x, center.y, clearedLines * TERRAIN_PARTICLES_PER_LINE);
 
+      // ===== Elemental Orb Spawning =====
+      const orbVfxEvents = spawnElementOrbs(piece.type, clearedLines, onBeat, center.x, center.y);
+      for (const orbEvt of orbVfxEvents) {
+        vfxRef.current.emit({ type: 'elementOrbSpawn', element: orbEvt.element, boardX: orbEvt.boardX, boardY: orbEvt.boardY });
+      }
+
+      // Try to trigger an elemental reaction
+      const reactionResult = tryTriggerReaction();
+      if (reactionResult) {
+        vfxRef.current.emit({ type: 'reactionTrigger', reaction: reactionResult.reactionType, intensity: 1.0 });
+
+        if (!reactionResult.success) {
+          // Corruption backfire
+          vfxRef.current.emit({ type: 'corruptionBackfire' });
+        }
+      }
+
       playLineClear(clearedLines, worldIdxRef.current);
       triggerBoardShake();
     }
@@ -968,6 +995,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     getBoardCenter, spawnTerrainParticles, spawnItemDrops, pushLiveAdvancementCheck,
     consumeComboGuard, consumeShield, showActionMessage,
     chargeDragonFury, chargeDragonMight, isDragonBreathReady, triggerDragonBreath, endDragonBreath,
+    spawnElementOrbs, tryTriggerReaction,
   ]);
 
   // Stable ref for handlePieceLock — used in game loop to avoid dep churn
@@ -1292,8 +1320,10 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           }
         }
 
-        // Throttled React state update (~30fps) for Board fever rainbow effect
-        if (now - lastStateUpdate > 33) {
+        // Throttled React state update (~30fps) — only needed during fever mode
+        // (combo >= 10) for the rainbow hue-shift effect. During normal play,
+        // skip the state update to avoid ~30 re-renders/second on the entire tree.
+        if (comboRef.current >= 10 && now - lastStateUpdate > 33) {
           setBeatPhase(phase);
           lastStateUpdate = now;
         }
@@ -1304,7 +1334,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     animFrame = requestAnimationFrame(updateBeat);
 
     return () => cancelAnimationFrame(animFrame);
-  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, setBeatPhase]);
+  }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, comboRef, setBeatPhase]);
 
   // Main game loop
   useEffect(() => {
@@ -1366,8 +1396,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
-      // Don't process game inputs while card select is showing
-      if (showCardSelect) return;
+      // Don't process game inputs while card select or treasure box is showing
+      if (showCardSelect || showTreasureBox) return;
 
       const currentTime = performance.now();
 
@@ -1474,7 +1504,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
+  }, [isPlaying, isPaused, gameOver, showCardSelect, showTreasureBox, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
   // Mouse input handlers — move piece by hovering over board columns,
   // hold left/right button to soft drop (driven by game loop via mouseHeldRef),
@@ -1599,7 +1629,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       boardEl.removeEventListener('wheel', handleWheel);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
+  }, [isPlaying, gameOver, showCardSelect, showTreasureBox, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
 
   // Clean up action toasts on unmount
   useEffect(() => {
@@ -1795,7 +1825,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                 </div>
               )}
               </div>
-              {featureSettings.beatBar && <BeatBar containerRef={beatBarRef} />}
+              {featureSettings.beatBar && (
+                <BeatBar
+                  containerRef={beatBarRef}
+                  beatZoneWidth={(BEAT_GOOD_WINDOW + activeEffects.beatExtendBonus) * protocolMods.beatWindowMultiplier}
+                />
+              )}
               <StatsPanel lines={lines} level={level} />
             </div>
 
@@ -1833,6 +1868,15 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           isPlaying={isPlaying && !gameOver}
           onStart={vfx.start}
           onStop={vfx.stop}
+        />
+      )}
+
+      {/* Treasure box overlay */}
+      {showTreasureBox && currentTreasureBox && (
+        <TreasureBoxUI
+          box={currentTreasureBox}
+          onOpen={openTreasureBox}
+          onFinish={finishTreasureBox}
         />
       )}
 

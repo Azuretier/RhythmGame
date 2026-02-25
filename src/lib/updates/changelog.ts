@@ -22,9 +22,9 @@ export interface PRUpdate {
 export function getLocalizedPRContent(update: PRUpdate, locale: string) {
   const isJapanese = locale === 'ja';
   return {
-    title: isJapanese ? update.titleJa : update.title,
-    description: isJapanese ? update.descriptionJa : update.description,
-    highlights: isJapanese ? update.highlightsJa : update.highlights,
+    title: isJapanese ? (update.titleJa || update.title) : update.title,
+    description: isJapanese ? (update.descriptionJa || update.description) : update.description,
+    highlights: isJapanese ? (update.highlightsJa || update.highlights) : update.highlights,
   };
 }
 
