@@ -143,6 +143,14 @@ export const DEFAULT_SDF = 50;   // Soft Drop Factor - soft drop speed in ms
 export const LOCK_DELAY = 500;     // Grace period (ms) after piece lands before locking
 export const MAX_LOCK_MOVES = 15;  // Max moves/rotations on ground before forced lock
 
+// ===== Beat Timing Windows =====
+// Half-window distance from the beat centre (distFromBeat = phase <= 0.5 ? phase : 1 - phase).
+// 0.0 = exactly on the beat, 0.5 = furthest from the beat.
+// card beat_extend bonus and the protocol beatWindowMultiplier are applied on top.
+export const BEAT_PERFECT_WINDOW = 0.06; // ±6%  → 12% total  → "PERFECT!"
+export const BEAT_GREAT_WINDOW   = 0.12; // ±12% → 24% total  → "GREAT!"
+export const BEAT_GOOD_WINDOW    = 0.20; // ±20% → 40% total  → "GOOD"
+
 // ===== Terrain Settings =====
 // Number of terrains (stages) to clear before advancing to the next world
 export const TERRAINS_PER_WORLD = 4;
@@ -150,21 +158,29 @@ export const TERRAINS_PER_WORLD = 4;
 export const TERRAIN_DAMAGE_PER_LINE = 4;
 
 // ===== Item Definitions =====
-import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState } from './types';
+// Items are now defined in the shared registry at @/lib/items/registry.
+// These re-exports maintain backward compatibility for game-specific code.
+import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState, TreasureBoxTier } from './types';
+import { MATERIAL_ITEMS, ITEM_REGISTRY, TOTAL_DROP_WEIGHT as _TOTAL_DROP_WEIGHT } from '@/lib/items/registry';
 
-export const ITEMS: ItemType[] = [
-    { id: 'stone',    name: 'Stone Fragment',  nameJa: '石片',     icon: '🪨', color: '#8B8B8B', glowColor: '#A0A0A0', rarity: 'common',    dropWeight: 40 },
-    { id: 'iron',     name: 'Iron Ore',        nameJa: '鉄鉱石',   icon: '⛏️', color: '#B87333', glowColor: '#D4956B', rarity: 'common',    dropWeight: 30 },
-    { id: 'crystal',  name: 'Crystal Shard',   nameJa: '水晶片',   icon: '💎', color: '#4FC3F7', glowColor: '#81D4FA', rarity: 'uncommon',  dropWeight: 15 },
-    { id: 'gold',     name: 'Gold Nugget',     nameJa: '金塊',     icon: '✨', color: '#FFD700', glowColor: '#FFECB3', rarity: 'rare',      dropWeight: 8 },
-    { id: 'obsidian', name: 'Obsidian Core',   nameJa: '黒曜核',   icon: '🔮', color: '#9C27B0', glowColor: '#CE93D8', rarity: 'epic',      dropWeight: 5 },
-    { id: 'star',     name: 'Star Fragment',   nameJa: '星の欠片', icon: '⭐', color: '#E0E0E0', glowColor: '#FFFFFF', rarity: 'legendary', dropWeight: 2 },
-];
+export const ITEMS: ItemType[] = MATERIAL_ITEMS.map(item => ({
+    id: item.id,
+    name: item.name,
+    nameJa: item.nameJa,
+    icon: ({ stone: '🪨', iron: '⛏️', crystal: '💎', gold: '✨', obsidian: '🔮', star: '⭐' }[item.id]) || '❓',
+    color: item.color,
+    glowColor: item.glowColor,
+    rarity: item.rarity,
+    dropWeight: item.dropWeight ?? 0,
+}));
 
 export const ITEM_MAP: Record<string, ItemType> = Object.fromEntries(ITEMS.map(i => [i.id, i]));
 
 // Total drop weight for probability calculation
-export const TOTAL_DROP_WEIGHT = ITEMS.reduce((sum, item) => sum + item.dropWeight, 0);
+export const TOTAL_DROP_WEIGHT = _TOTAL_DROP_WEIGHT;
+
+// Re-export shared registry for direct access
+export { ITEM_REGISTRY } from '@/lib/items/registry';
 
 // ===== Rogue-Like Card Definitions =====
 export const ROGUE_CARDS: RogueCard[] = [
@@ -319,7 +335,7 @@ export const RARITY_OFFER_WEIGHTS: Record<string, number> = {
 // Default (zero) active effects
 export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
     comboGuardUsesRemaining: 0,
-    shieldActive: false,
+    shieldUsesRemaining: 0,
     terrainSurgeBonus: 0,
     beatExtendBonus: 0,
     scoreBoostMultiplier: 1,
@@ -328,6 +344,16 @@ export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
     comboAmplifyFactor: 1,
     dragonBoostEnabled: false,
     dragonBoostChargeMultiplier: 1,
+    // Equipment defaults (zeroed until gear equipped)
+    equipmentScoreBonus: 0,
+    equipmentComboDuration: 0,
+    equipmentBeatWindow: 0,
+    equipmentTerrainDamage: 0,
+    equipmentDropRate: 0,
+    equipmentGravityReduce: 0,
+    equipmentComboAmplify: 0,
+    equipmentReactionPower: 0,
+    equipmentEnchantments: [],
 };
 
 // Max cards to offer per selection
@@ -370,6 +396,80 @@ export const DEFAULT_DRAGON_GAUGE: DragonGaugeState = {
     isBreathing: false,
     breathStartTime: 0,
     enabled: false,
+};
+
+// ===== Treasure Box Settings =====
+// Treasure box spawns every N stages (guaranteed)
+export const TREASURE_BOX_STAGE_INTERVAL = 3;
+// Random chance to spawn a treasure box on non-guaranteed stages (15%)
+export const TREASURE_BOX_RANDOM_CHANCE = 0.15;
+// Combo streak threshold — bonus treasure box awarded at this combo count
+export const TREASURE_BOX_COMBO_THRESHOLD = 15;
+
+// Tier appearance weights by world index (later worlds = rarer boxes)
+export const TREASURE_BOX_TIER_WEIGHTS: Record<TreasureBoxTier, number[]> = {
+    wooden:  [50, 40, 30, 20, 15],
+    iron:    [35, 35, 35, 30, 25],
+    golden:  [12, 20, 25, 30, 35],
+    crystal: [3,  5,  10, 20, 25],
+};
+
+// Tier visual configuration
+export const TREASURE_BOX_TIERS: Record<TreasureBoxTier, {
+    name: string;
+    nameJa: string;
+    icon: string;
+    color: string;
+    glowColor: string;
+    materialRewardMultiplier: number;
+    scoreRewardBase: number;
+    freeCardChance: number;
+    effectBoostChance: number;
+}> = {
+    wooden: {
+        name: 'Wooden Chest',
+        nameJa: '木の宝箱',
+        icon: '📦',
+        color: '#8B6914',
+        glowColor: '#D4A543',
+        materialRewardMultiplier: 1,
+        scoreRewardBase: 500,
+        freeCardChance: 0,
+        effectBoostChance: 0,
+    },
+    iron: {
+        name: 'Iron Chest',
+        nameJa: '鉄の宝箱',
+        icon: '🗃️',
+        color: '#71797E',
+        glowColor: '#A9B2B8',
+        materialRewardMultiplier: 1.5,
+        scoreRewardBase: 1500,
+        freeCardChance: 0.1,
+        effectBoostChance: 0.05,
+    },
+    golden: {
+        name: 'Golden Chest',
+        nameJa: '黄金の宝箱',
+        icon: '📀',
+        color: '#FFD700',
+        glowColor: '#FFECB3',
+        materialRewardMultiplier: 2.5,
+        scoreRewardBase: 3000,
+        freeCardChance: 0.25,
+        effectBoostChance: 0.15,
+    },
+    crystal: {
+        name: 'Crystal Chest',
+        nameJa: '水晶の宝箱',
+        icon: '💎',
+        color: '#4FC3F7',
+        glowColor: '#E1F5FE',
+        materialRewardMultiplier: 4,
+        scoreRewardBase: 6000,
+        freeCardChance: 0.5,
+        effectBoostChance: 0.3,
+    },
 };
 
 // ===== Tower Defense Settings =====
@@ -511,6 +611,10 @@ export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
 
 // ===== Piece Type Array =====
 export const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
+// ===== Elemental System Settings =====
+export const ELEMENT_ORB_FLOAT_DURATION = 600;   // ms for orb float animation
+export const MAX_FLOATING_ORBS = 8;              // Max orb particles on screen
 
 // ===== Color Theme Helper =====
 // Get color for a piece type based on theme and world

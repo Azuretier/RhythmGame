@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "جامع العملات",
+      "desc": "اكسب 100 ذهب إجمالاً"
+    },
+    "gold_1000": {
+      "name": "مكتنز العملات",
+      "desc": "اكسب 1,000 ذهب إجمالاً"
+    },
+    "gold_5000": {
+      "name": "صائد الكنوز",
+      "desc": "اكسب 5,000 ذهب إجمالاً"
+    },
+    "gold_25000": {
+      "name": "ملك الذهب",
+      "desc": "اكسب 25,000 ذهب إجمالاً"
+    },
+    "gold_100000": {
+      "name": "المقتني الأسطوري",
+      "desc": "اكسب 100,000 ذهب إجمالاً"
+    },
+    "treasure_10": {
+      "name": "اكتشاف الكنز",
+      "desc": "اجمع 10 كنوز"
+    },
+    "treasure_50": {
+      "name": "باحث الكنوز",
+      "desc": "اجمع 50 كنزاً"
+    },
+    "treasure_200": {
+      "name": "خبير الكنوز",
+      "desc": "اجمع 200 كنز"
+    },
+    "treasure_500": {
+      "name": "حارس الكنوز",
+      "desc": "اجمع 500 كنز"
+    },
+    "treasure_1000": {
+      "name": "سيد الثروات",
+      "desc": "اجمع 1,000 كنز"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "ساحة المعارك",
     "subtitle": "معارك 1v1 في الوقت الفعلي",
     "description": "معارك 1v1 في الوقت الفعلي عبر WebSocket.",
-    "features": "الوقت الفعلي|نظام الخطوط|مصنّف",
-    "stats": "1v1 معركة|8 ثوانٍ مطابقة|بديل الذكاء الاصطناعي"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "مصنّف"
+    },
+    "stats": {
+      "mode": "الوضع",
+      "battle": "معركة",
+      "status": "الحالة"
+    }
   },
   "uiTheme": {
     "selectTheme": "اختر الثيم",

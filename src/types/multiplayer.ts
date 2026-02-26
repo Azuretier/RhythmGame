@@ -96,6 +96,7 @@ export interface CancelRankedMessage {
 // Arena client messages (re-exported from arena types for the unified union)
 import type { ArenaClientMessage, ArenaServerMessage } from './arena';
 import type { MCClientMessage, MCServerMessage as MCBoardServerMessage } from './minecraft-board';
+import type { EoEClientMessage } from './echoes';
 
 export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage };
 
@@ -114,6 +115,7 @@ export type ClientMessage =
   | CancelRankedMessage
   | ArenaClientMessage
   | MCClientMessage
+  | EoEClientMessage
   | SetProfileMessage
   | GetOnlineUsersMessage;
 
@@ -306,11 +308,19 @@ export interface KOPayload {
   loserId: string;
 }
 
+export interface ElementalGarbagePayload {
+  event: 'elemental_garbage';
+  lines: number;
+  element: string;
+  reaction?: string;
+}
+
 export type RelayPayload =
   | BoardUpdatePayload
   | GarbagePayload
   | GameOverPayload
-  | KOPayload;
+  | KOPayload
+  | ElementalGarbagePayload;
 
 // ===== Shared Game Types =====
 

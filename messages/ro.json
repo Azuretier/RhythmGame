@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Colecționar de monede",
+      "desc": "Câștigă 100 de aur în total"
+    },
+    "gold_1000": {
+      "name": "Agonisitor de monede",
+      "desc": "Câștigă 1.000 de aur în total"
+    },
+    "gold_5000": {
+      "name": "Vânător de comori",
+      "desc": "Câștigă 5.000 de aur în total"
+    },
+    "gold_25000": {
+      "name": "Regele aurului",
+      "desc": "Câștigă 25.000 de aur în total"
+    },
+    "gold_100000": {
+      "name": "Magnat legendar",
+      "desc": "Câștigă 100.000 de aur în total"
+    },
+    "treasure_10": {
+      "name": "Comoară găsită",
+      "desc": "Colectează 10 comori"
+    },
+    "treasure_50": {
+      "name": "Căutător de comori",
+      "desc": "Colectează 50 de comori"
+    },
+    "treasure_200": {
+      "name": "Maestru al comorilor",
+      "desc": "Colectează 200 de comori"
+    },
+    "treasure_500": {
+      "name": "Gardian al comorilor",
+      "desc": "Colectează 500 de comori"
+    },
+    "treasure_1000": {
+      "name": "Stăpânul bogățiilor",
+      "desc": "Colectează 1.000 de comori"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "Arena de Luptă",
     "subtitle": "Lupte 1v1 în timp real",
     "description": "Lupte 1v1 în timp real prin WebSocket.",
-    "features": "Timp Real|Sistem Linii Gunoi|Clasificat",
-    "stats": "1v1 Luptă|8s Potrivire|AI de rezervă"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Clasificat"
+    },
+    "stats": {
+      "mode": "Mod",
+      "battle": "Luptă",
+      "status": "Stare"
+    }
   },
   "uiTheme": {
     "selectTheme": "Selectează temă",

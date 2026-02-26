@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "सिक्का संग्रहकर्ता",
+      "desc": "कुल 100 सोना अर्जित करें"
+    },
+    "gold_1000": {
+      "name": "सिक्का संचयकर्ता",
+      "desc": "कुल 1,000 सोना अर्जित करें"
+    },
+    "gold_5000": {
+      "name": "खजाना शिकारी",
+      "desc": "कुल 5,000 सोना अर्जित करें"
+    },
+    "gold_25000": {
+      "name": "सोने का राजा",
+      "desc": "कुल 25,000 सोना अर्जित करें"
+    },
+    "gold_100000": {
+      "name": "पौराणिक धनकुबेर",
+      "desc": "कुल 100,000 सोना अर्जित करें"
+    },
+    "treasure_10": {
+      "name": "खजाना मिला",
+      "desc": "10 खजाने एकत्र करें"
+    },
+    "treasure_50": {
+      "name": "खजाना खोजी",
+      "desc": "50 खजाने एकत्र करें"
+    },
+    "treasure_200": {
+      "name": "खजाना उस्ताद",
+      "desc": "200 खजाने एकत्र करें"
+    },
+    "treasure_500": {
+      "name": "खजाना संरक्षक",
+      "desc": "500 खजाने एकत्र करें"
+    },
+    "treasure_1000": {
+      "name": "धन के स्वामी",
+      "desc": "1,000 खजाने एकत्र करें"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "बैटल एरीना",
     "subtitle": "रियल-टाइम 1v1 लड़ाइयाँ",
     "description": "WebSocket के ज़रिए रियल-टाइम 1v1 लड़ाइयाँ।",
-    "features": "रियल-टाइम|गार्बेज लाइन सिस्टम|रैंकड",
-    "stats": "1v1 लड़ाई|8 सेकंड मैचमेकिंग|AI फ़ॉलबैक"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "रैंक्ड"
+    },
+    "stats": {
+      "mode": "मोड",
+      "battle": "युद्ध",
+      "status": "स्थिति"
+    }
   },
   "uiTheme": {
     "selectTheme": "थीम चुनें",

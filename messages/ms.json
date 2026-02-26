@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Pengumpul Syiling",
+      "desc": "Dapatkan 100 emas secara keseluruhan"
+    },
+    "gold_1000": {
+      "name": "Penimbun Syiling",
+      "desc": "Dapatkan 1,000 emas secara keseluruhan"
+    },
+    "gold_5000": {
+      "name": "Pemburu Harta",
+      "desc": "Dapatkan 5,000 emas secara keseluruhan"
+    },
+    "gold_25000": {
+      "name": "Raja Emas",
+      "desc": "Dapatkan 25,000 emas secara keseluruhan"
+    },
+    "gold_100000": {
+      "name": "Konglomerat Lagenda",
+      "desc": "Dapatkan 100,000 emas secara keseluruhan"
+    },
+    "treasure_10": {
+      "name": "Harta Ditemui",
+      "desc": "Kumpulkan 10 harta karun"
+    },
+    "treasure_50": {
+      "name": "Pencari Harta",
+      "desc": "Kumpulkan 50 harta karun"
+    },
+    "treasure_200": {
+      "name": "Pakar Harta",
+      "desc": "Kumpulkan 200 harta karun"
+    },
+    "treasure_500": {
+      "name": "Penjaga Harta",
+      "desc": "Kumpulkan 500 harta karun"
+    },
+    "treasure_1000": {
+      "name": "Tuan Kekayaan",
+      "desc": "Kumpulkan 1,000 harta karun"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "Arena Pertarungan",
     "subtitle": "Pertarungan 1v1 masa nyata",
     "description": "Pertarungan 1v1 masa nyata melalui WebSocket.",
-    "features": "Masa Nyata|Sistem Baris Sampah|Bertangga",
-    "stats": "1v1 Pertarungan|8s Pemadanan|Sandaran AI"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Bertaraf"
+    },
+    "stats": {
+      "mode": "Mod",
+      "battle": "Pertempuran",
+      "status": "Status"
+    }
   },
   "uiTheme": {
     "selectTheme": "Pilih Tema",

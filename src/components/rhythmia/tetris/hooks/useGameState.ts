@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, MiniTower, TDLineClearAura, TDGarbageArc, TDEnemyType, MiniTowerType } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, MiniTower, TDLineClearAura, TDGarbageArc, TDEnemyType, MiniTowerType, TreasureBox, TreasureBoxTier, TreasureBoxReward, TreasureBoxBoostEffect } from '../types';
+import type { ElementType, ReactionType, ElementalState, ElementOrb, ActiveReaction, ReactionResult } from '@/lib/elements/types';
+import { DEFAULT_ELEMENTAL_STATE } from '@/lib/elements/types';
+import {
+    rollElementOrb, calculateOrbCount, findBestReaction,
+    consumeOrbs, applyReactionEffect, createActiveReaction,
+    pruneExpiredReactions, addOrbs, createFreshElementalState,
+} from '@/lib/elements/engine';
+import { REACTION_DEFINITIONS } from '@/lib/elements/definitions';
+import { useEquipment } from '@/lib/equipment/context';
 import {
     BOARD_WIDTH, BUFFER_ZONE, DEFAULT_DAS, DEFAULT_ARR, DEFAULT_SDF, ColorTheme,
     ITEMS, TOTAL_DROP_WEIGHT, ROGUE_CARDS, ROGUE_CARD_MAP, WORLDS,
@@ -20,10 +29,14 @@ import {
     DEFAULT_DRAGON_GAUGE, DRAGON_FURY_MAX, DRAGON_MIGHT_MAX,
     DRAGON_BREATH_DURATION, DRAGON_BREATH_SCORE_BONUS,
     DRAGON_FURY_CHARGE, DRAGON_MIGHT_CHARGE,
+    TREASURE_BOX_STAGE_INTERVAL, TREASURE_BOX_RANDOM_CHANCE,
+    TREASURE_BOX_TIER_WEIGHTS, TREASURE_BOX_TIERS,
+    MAX_FLOATING_ORBS, ELEMENT_ORB_FLOAT_DURATION,
 } from '../constants';
 import type { ProtocolModifiers } from '../protocol';
 import { DEFAULT_PROTOCOL_MODIFIERS } from '../protocol';
 import { createEmptyBoard, shuffleBag, getShape, isValidPosition, createSpawnPiece } from '../utils/boardUtils';
+import { computeActiveEffects as computeActiveEffectsImpl, rollItem } from '../utils/cardEffects';
 
 let nextFloatingId = 0;
 let nextParticleId = 0;
@@ -32,29 +45,7 @@ let nextBulletId = 0;
 let nextMiniTowerId = 0;
 let nextAuraId = 0;
 let nextArcId = 0;
-
-/**
- * Roll a random item based on drop weights.
- * luckyBonus shifts probability toward rarer items.
- */
-function rollItem(luckyBonus: number = 0): string {
-    const adjustedWeights = ITEMS.map(item => {
-        let w = item.dropWeight;
-        if (item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary') {
-            w *= (1 + luckyBonus * 3);
-        } else if (item.rarity === 'common') {
-            w *= Math.max(0.5, 1 - luckyBonus);
-        }
-        return w;
-    });
-    const total = adjustedWeights.reduce((s, w) => s + w, 0);
-    let roll = Math.random() * total;
-    for (let i = 0; i < ITEMS.length; i++) {
-        roll -= adjustedWeights[i];
-        if (roll <= 0) return ITEMS[i].id;
-    }
-    return ITEMS[0].id;
-}
+let nextTreasureBoxId = 0;
 
 /**
  * Custom hook for managing game state with synchronized refs
@@ -129,6 +120,20 @@ export function useGameState() {
     // ===== Mandarin Fever Dragon Gauge =====
     const [dragonGauge, setDragonGauge] = useState<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
     const dragonGaugeRef = useRef<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
+
+    // ===== Elemental System =====
+    const [elementalState, setElementalState] = useState<ElementalState>(DEFAULT_ELEMENTAL_STATE);
+    const elementalStateRef = useRef<ElementalState>(DEFAULT_ELEMENTAL_STATE);
+    const [floatingOrbs, setFloatingOrbs] = useState<ElementOrb[]>([]);
+    const nextOrbIdRef = useRef(0);
+    const reactionCooldownsRef = useRef<{ type: ReactionType; time: number }[]>([]);
+
+    // ===== Treasure Box System =====
+    const [currentTreasureBox, setCurrentTreasureBox] = useState<TreasureBox | null>(null);
+    const [showTreasureBox, setShowTreasureBox] = useState(false);
+
+    // ===== Equipment System =====
+    const { getBonuses: getEquipmentBonuses } = useEquipment();
 
     // ===== Tower Defense =====
     const [enemies, setEnemies] = useState<Enemy[]>([]);
@@ -231,6 +236,7 @@ export function useGameState() {
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
     useEffect(() => { equippedCardsRef.current = equippedCards; }, [equippedCards]);
     useEffect(() => { dragonGaugeRef.current = dragonGauge; }, [dragonGauge]);
+    useEffect(() => { elementalStateRef.current = elementalState; }, [elementalState]);
 
     // Get next piece from seven-bag system
     const getNextFromBag = useCallback((): string => {
@@ -315,50 +321,10 @@ export function useGameState() {
 
     // ===== Rogue-Like Card System =====
 
-    // Compute active effects from all equipped cards
+    // Compute active effects from all equipped cards (delegated to pure utility)
     const computeActiveEffects = useCallback((cards: EquippedCard[]): ActiveEffects => {
-        const effects = { ...DEFAULT_ACTIVE_EFFECTS };
-
-        for (const ec of cards) {
-            const card = ROGUE_CARD_MAP[ec.cardId];
-            if (!card) continue;
-
-            const totalValue = card.attributeValue * ec.stackCount;
-
-            switch (card.attribute) {
-                case 'combo_guard':
-                    effects.comboGuardUsesRemaining += totalValue;
-                    break;
-                case 'shield':
-                    effects.shieldActive = true;
-                    break;
-                case 'terrain_surge':
-                    effects.terrainSurgeBonus += totalValue;
-                    break;
-                case 'beat_extend':
-                    effects.beatExtendBonus += totalValue;
-                    break;
-                case 'score_boost':
-                    effects.scoreBoostMultiplier += totalValue;
-                    break;
-                case 'gravity_slow':
-                    effects.gravitySlowFactor = Math.max(0.1, effects.gravitySlowFactor - totalValue);
-                    break;
-                case 'lucky_drops':
-                    effects.luckyDropsBonus += totalValue;
-                    break;
-                case 'combo_amplify':
-                    effects.comboAmplifyFactor *= Math.pow(card.attributeValue, ec.stackCount);
-                    break;
-                case 'dragon_boost':
-                    effects.dragonBoostEnabled = true;
-                    effects.dragonBoostChargeMultiplier *= Math.pow(1 + card.attributeValue * 0.5, ec.stackCount);
-                    break;
-            }
-        }
-
-        return effects;
-    }, []);
+        return computeActiveEffectsImpl(cards, getEquipmentBonuses());
+    }, [getEquipmentBonuses]);
 
     // Generate card offers for CARD_SELECT phase
     const generateCardOffers = useCallback((currentWorldIdx: number): CardOffer[] => {
@@ -558,10 +524,13 @@ export function useGameState() {
         return false;
     }, []);
 
-    // Consume shield (one-time per stage)
+    // Consume a shield use
     const consumeShield = useCallback((): boolean => {
-        if (activeEffectsRef.current.shieldActive) {
-            setActiveEffects(prev => ({ ...prev, shieldActive: false }));
+        if (activeEffectsRef.current.shieldUsesRemaining > 0) {
+            setActiveEffects(prev => ({
+                ...prev,
+                shieldUsesRemaining: prev.shieldUsesRemaining - 1,
+            }));
             return true;
         }
         return false;
@@ -657,6 +626,196 @@ export function useGameState() {
             enabled: dragonGaugeRef.current.enabled,
         };
     }, []);
+
+    // ===== Treasure Box System =====
+
+    // Roll a random treasure box tier based on current world index
+    const rollTreasureBoxTier = useCallback((currentWorldIdx: number): TreasureBoxTier => {
+        const tiers: TreasureBoxTier[] = ['wooden', 'iron', 'golden', 'crystal'];
+        const worldSlot = Math.min(currentWorldIdx, 4);
+        const weights = tiers.map(t => TREASURE_BOX_TIER_WEIGHTS[t][worldSlot]);
+        const total = weights.reduce((s, w) => s + w, 0);
+        let roll = Math.random() * total;
+        for (let i = 0; i < tiers.length; i++) {
+            roll -= weights[i];
+            if (roll <= 0) return tiers[i];
+        }
+        return 'wooden';
+    }, []);
+
+    // Generate rewards for a treasure box based on its tier
+    const generateTreasureBoxRewards = useCallback((tier: TreasureBoxTier, currentWorldIdx: number): TreasureBoxReward[] => {
+        const config = TREASURE_BOX_TIERS[tier];
+        const rewards: TreasureBoxReward[] = [];
+
+        // Always give materials
+        const materialCount = Math.ceil(2 * config.materialRewardMultiplier);
+        const materialItems: { itemId: string; count: number }[] = [];
+        for (let i = 0; i < materialCount; i++) {
+            const itemId = rollItem(tier === 'crystal' ? 0.5 : tier === 'golden' ? 0.3 : 0);
+            const existing = materialItems.find(m => m.itemId === itemId);
+            if (existing) {
+                existing.count++;
+            } else {
+                materialItems.push({ itemId, count: 1 });
+            }
+        }
+        rewards.push({ type: 'materials', items: materialItems });
+
+        // Score bonus
+        const scoreBonus = Math.floor(config.scoreRewardBase * (1 + currentWorldIdx * 0.5));
+        rewards.push({ type: 'score_bonus', amount: scoreBonus });
+
+        // Chance for free card (no cost)
+        if (Math.random() < config.freeCardChance) {
+            const card = ROGUE_CARDS[Math.floor(Math.random() * ROGUE_CARDS.length)];
+            rewards.push({ type: 'free_card', card });
+        }
+
+        // Chance for temporary effect boost
+        if (Math.random() < config.effectBoostChance) {
+            const boostOptions: Array<{ effect: TreasureBoxBoostEffect; value: number }> = [
+                { effect: 'score_boost', value: 0.25 },
+                { effect: 'terrain_surge', value: 0.2 },
+                { effect: 'lucky_drops', value: 0.2 },
+                { effect: 'gravity_slow', value: 0.15 },
+            ];
+            const chosen = boostOptions[Math.floor(Math.random() * boostOptions.length)];
+            rewards.push({
+                type: 'effect_boost',
+                effect: chosen.effect,
+                value: chosen.value,
+                duration: 1, // lasts for next stage
+            });
+        }
+
+        return rewards;
+    }, []);
+
+    // Check if a treasure box should spawn for the given stage
+    const shouldSpawnTreasureBox = useCallback((stage: number): boolean => {
+        // Guaranteed on interval stages (3, 6, 9, ...)
+        if (stage > 1 && stage % TREASURE_BOX_STAGE_INTERVAL === 0) return true;
+        // Random chance on other stages (skip stage 1)
+        if (stage > 1 && Math.random() < TREASURE_BOX_RANDOM_CHANCE) return true;
+        return false;
+    }, []);
+
+    // Generate and enter treasure box phase
+    const enterTreasureBox = useCallback(() => {
+        const tier = rollTreasureBoxTier(worldIdxRef.current);
+        const rewards = generateTreasureBoxRewards(tier, worldIdxRef.current);
+        const box: TreasureBox = {
+            id: nextTreasureBoxId++,
+            tier,
+            rewards,
+            opened: false,
+            spawnStage: stageNumberRef.current,
+        };
+        setCurrentTreasureBox(box);
+        setShowTreasureBox(true);
+        setGamePhase('TREASURE_BOX');
+        gamePhaseRef.current = 'TREASURE_BOX';
+        setIsPaused(true);
+    }, [rollTreasureBoxTier, generateTreasureBoxRewards]);
+
+    // Open the treasure box and collect rewards
+    const openTreasureBox = useCallback(() => {
+        const box = currentTreasureBox;
+        if (!box || box.opened) return;
+
+        // Mark as opened
+        setCurrentTreasureBox(prev => prev ? { ...prev, opened: true } : null);
+
+        // Apply material and score rewards
+        for (const reward of box.rewards) {
+            if (reward.type === 'materials') {
+                setInventory(prev => {
+                    const updated = [...prev];
+                    for (const item of reward.items) {
+                        const existing = updated.find(i => i.itemId === item.itemId);
+                        if (existing) {
+                            existing.count += item.count;
+                        } else {
+                            updated.push({ itemId: item.itemId, count: item.count });
+                        }
+                    }
+                    return updated;
+                });
+            } else if (reward.type === 'score_bonus') {
+                updateScore(scoreRef.current + reward.amount);
+            }
+        }
+
+        // Process free card rewards via functional updater for safe state derivation
+        const freeCardRewards = box.rewards.filter(r => r.type === 'free_card');
+        let newCardsSnapshot: EquippedCard[] | null = null;
+
+        if (freeCardRewards.length > 0) {
+            setEquippedCards(prev => {
+                let cards = prev;
+                for (const reward of freeCardRewards) {
+                    if (reward.type !== 'free_card') continue;
+                    const cardId = reward.card.id;
+                    const existing = cards.find(ec => ec.cardId === cardId);
+                    if (existing && existing.stackCount < 3) {
+                        cards = cards.map(ec =>
+                            ec.cardId === cardId
+                                ? { ...ec, stackCount: ec.stackCount + 1 }
+                                : ec
+                        );
+                    } else if (!existing) {
+                        cards = [...cards, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+                    }
+                }
+                newCardsSnapshot = cards;
+                return cards;
+            });
+        }
+
+        // Helper to apply effect boosts to an effects object
+        const applyBoosts = (effects: ActiveEffects): ActiveEffects => {
+            const result = { ...effects };
+            for (const reward of box.rewards) {
+                if (reward.type !== 'effect_boost') continue;
+                switch (reward.effect) {
+                    case 'score_boost':
+                        result.scoreBoostMultiplier += reward.value;
+                        break;
+                    case 'terrain_surge':
+                        result.terrainSurgeBonus += reward.value;
+                        break;
+                    case 'lucky_drops':
+                        result.luckyDropsBonus += reward.value;
+                        break;
+                    case 'gravity_slow':
+                        result.gravitySlowFactor = Math.max(0.1, result.gravitySlowFactor - reward.value);
+                        break;
+                }
+            }
+            return result;
+        };
+
+        const hasEffectBoosts = box.rewards.some(r => r.type === 'effect_boost');
+
+        if (newCardsSnapshot !== null) {
+            // Cards changed: recompute base effects from new cards, then layer boosts
+            const effects = applyBoosts(computeActiveEffects(newCardsSnapshot));
+            setActiveEffects(effects);
+        } else if (hasEffectBoosts) {
+            // Only boosts, no card changes: use functional updater for safe derivation
+            setActiveEffects(prev => applyBoosts(prev));
+        }
+        // Ref sync handled by existing useEffect hooks
+    }, [currentTreasureBox, computeActiveEffects, updateScore]);
+
+    // Finish treasure box phase and proceed to card select
+    const finishTreasureBox = useCallback(() => {
+        setShowTreasureBox(false);
+        setCurrentTreasureBox(null);
+        // Proceed to card select
+        enterCardSelect();
+    }, [enterCardSelect]);
 
     // ===== Item System Actions =====
 
@@ -1057,17 +1216,16 @@ export function useGameState() {
     }, []);
 
     // Add garbage rows to the bottom of the board (used by TD: enemy reach + corruption raids)
+    // boardRef is updated SYNCHRONOUSLY so handlePieceLock always sees the latest board.
     const addGarbageRows = useCallback((count: number) => {
-        setBoard(prev => {
-            const rows: (string | null)[][] = [];
-            for (let g = 0; g < count; g++) {
-                const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
-                rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
-            }
-            const newBoard = [...prev.slice(count), ...rows];
-            boardRef.current = newBoard;
-            return newBoard;
-        });
+        const rows: (string | null)[][] = [];
+        for (let g = 0; g < count; g++) {
+            const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+            rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
+        }
+        const newBoard = [...boardRef.current.slice(count), ...rows];
+        boardRef.current = newBoard;
+        setBoard(newBoard);
     }, []);
 
     // Spawn an enemy at a specific grid cell (used by corruption system)
@@ -1079,6 +1237,7 @@ export function useGameState() {
         const worldX = gx * GRID_TILE_SIZE;
         const worldZ = gz * GRID_TILE_SIZE;
 
+        const enemyTypes: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
         const enemy: Enemy = {
             id: nextEnemyId++,
             x: worldX, y: 0.5, z: worldZ,
@@ -1400,10 +1559,132 @@ export function useGameState() {
             // Abort transition if player died during collapse
             if (gameOverRef.current) return;
 
-            // Enter card select directly — stage transition effects play after selection
-            enterCardSelect();
+            // Check for treasure box spawn before card select
+            if (shouldSpawnTreasureBox(stageNumberRef.current)) {
+                enterTreasureBox();
+            } else {
+                enterCardSelect();
+            }
         }, 1200);
-    }, [enterCardSelect]);
+    }, [enterCardSelect, shouldSpawnTreasureBox, enterTreasureBox]);
+
+    // ===== Elemental System Actions =====
+
+    /**
+     * Spawn elemental orbs from a line clear event.
+     * Returns VFX events to emit.
+     */
+    const spawnElementOrbs = useCallback((
+        pieceType: string,
+        lineCount: number,
+        onBeat: boolean,
+        originX: number,
+        originY: number,
+    ): { element: ElementType; boardX: number; boardY: number }[] => {
+        const orbCount = calculateOrbCount(lineCount, onBeat, comboRef.current);
+        const now = Date.now();
+        const vfxEvents: { element: ElementType; boardX: number; boardY: number }[] = [];
+        let currentOrbs = { ...elementalStateRef.current.orbs };
+
+        for (let i = 0; i < orbCount; i++) {
+            const element = rollElementOrb(pieceType, worldIdxRef.current);
+            currentOrbs = addOrbs(currentOrbs, element, 1);
+
+            // Create floating orb visual
+            const newOrb: ElementOrb = {
+                id: nextOrbIdRef.current++,
+                element,
+                x: originX + (Math.random() - 0.5) * 150,
+                y: originY + (Math.random() - 0.5) * 80,
+                targetX: originX,
+                targetY: originY + 250,
+                startTime: now + i * 100,
+                duration: ELEMENT_ORB_FLOAT_DURATION + Math.random() * 150,
+                collected: false,
+            };
+
+            setFloatingOrbs(prev => [...prev, newOrb].slice(-MAX_FLOATING_ORBS * 2));
+            vfxEvents.push({ element, boardX: originX, boardY: originY });
+        }
+
+        // Update elemental state with new orb counts
+        setElementalState(prev => ({
+            ...prev,
+            orbs: currentOrbs,
+        }));
+        elementalStateRef.current = { ...elementalStateRef.current, orbs: currentOrbs };
+
+        // Schedule orb collection animation
+        setTimeout(() => {
+            const cleanupTime = Date.now();
+            setFloatingOrbs(prev => prev.filter(o => (cleanupTime - o.startTime) < o.duration + 500));
+        }, ELEMENT_ORB_FLOAT_DURATION + 300);
+
+        return vfxEvents;
+    }, []);
+
+    /**
+     * Try to auto-trigger the best available reaction.
+     * Returns the ReactionResult if triggered, null otherwise.
+     */
+    const tryTriggerReaction = useCallback((): ReactionResult | null => {
+        const state = elementalStateRef.current;
+        const now = Date.now();
+
+        // Prune expired active reactions
+        const prunedReactions = pruneExpiredReactions(state.activeReactions, now);
+
+        const bestReaction = findBestReaction(
+            state.orbs,
+            reactionCooldownsRef.current,
+            now,
+        );
+
+        if (!bestReaction) return null;
+
+        // Consume orbs
+        const newOrbs = consumeOrbs(state.orbs, bestReaction);
+
+        // Apply reaction effect
+        const result = applyReactionEffect(bestReaction, {
+            currentDamage: 0,
+            terrainRemaining: terrainTotalRef.current - terrainDestroyedCountRef.current,
+            combo: comboRef.current,
+            worldIdx: worldIdxRef.current,
+            score: scoreRef.current,
+        });
+
+        // Create active reaction for duration-based effects
+        const activeReaction = createActiveReaction(bestReaction, 1.0);
+
+        // Update cooldowns — replace entry for this reaction and prune any expired entries
+        reactionCooldownsRef.current = [
+            ...reactionCooldownsRef.current.filter(r => {
+                if (r.type === bestReaction) return false; // replaced below
+                const def = REACTION_DEFINITIONS[r.type];
+                return def ? (now - r.time) < def.cooldown : false;
+            }),
+            { type: bestReaction, time: now },
+        ];
+
+        // Update state
+        const newReactionCounts = { ...state.reactionCounts };
+        newReactionCounts[bestReaction] = (newReactionCounts[bestReaction] || 0) + 1;
+
+        const newState: ElementalState = {
+            orbs: newOrbs,
+            activeReactions: activeReaction.duration > 0
+                ? [...prunedReactions, activeReaction]
+                : prunedReactions,
+            totalReactions: state.totalReactions + 1,
+            reactionCounts: newReactionCounts,
+        };
+
+        setElementalState(newState);
+        elementalStateRef.current = newState;
+
+        return result;
+    }, []);
 
     // Initialize/reset game
     const initGame = useCallback((mode: GameMode = 'vanilla', protocolModifiers?: ProtocolModifiers) => {
@@ -1455,6 +1736,10 @@ export function useGameState() {
         // Reset dragon gauge
         setDragonGauge(DEFAULT_DRAGON_GAUGE);
         dragonGaugeRef.current = { ...DEFAULT_DRAGON_GAUGE };
+
+        // Reset treasure box state
+        setCurrentTreasureBox(null);
+        setShowTreasureBox(false);
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -1561,6 +1846,17 @@ export function useGameState() {
         // Dragon gauge
         dragonGauge,
 
+        // Elemental system
+        elementalState,
+        elementalStateRef,
+        floatingOrbs,
+        spawnElementOrbs,
+        tryTriggerReaction,
+
+        // Treasure box
+        currentTreasureBox,
+        showTreasureBox,
+
         // Tower defense
         enemies,
         bullets,
@@ -1661,6 +1957,9 @@ export function useGameState() {
         triggerDragonBreath,
         endDragonBreath,
         dragonGaugeRef,
+        // Treasure box actions
+        openTreasureBox,
+        finishTreasureBox,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,

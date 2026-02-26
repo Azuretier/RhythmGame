@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './VanillaGame.module.css';
 import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
+import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
 
 // Tetromino definitions with all 4 rotation states (0, R, 2, L)
 // Using SRS (Super Rotation System) - the standard Tetris rotation system
@@ -389,15 +390,21 @@ export default function Rhythmia() {
     
     // Beat judgment
     const currentBeatPhase = beatPhaseRef.current;
-    const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
-    let mult = 1;
-    
-    if (onBeat) {
-      mult = 2;
+    const timing = getBeatJudgment(currentBeatPhase);
+    const mult = getBeatMultiplier(timing);
+
+    if (timing !== 'miss') {
       const newCombo = comboRef.current + 1;
       setCombo(newCombo);
-      showJudgment('PERFECT!', '#FFD700');
-      playTone(1047, 0.2, 'triangle');
+      const judgmentConfig = {
+        perfect: { text: 'PERFECT!', color: '#FFD700' },
+        great:   { text: 'GREAT!',   color: '#00E5FF' },
+        good:    { text: 'GOOD',     color: '#76FF03' },
+      } as const;
+      showJudgment(judgmentConfig[timing].text, judgmentConfig[timing].color);
+      if (timing === 'perfect') playTone(1047, 0.2, 'triangle');
+      else if (timing === 'great') playTone(880, 0.15, 'triangle');
+      else playTone(660, 0.1, 'triangle');
     } else {
       setCombo(0);
     }
@@ -452,15 +459,21 @@ export default function Rhythmia() {
     } else {
       // Beat judgment on lock
       const currentBeatPhase = beatPhaseRef.current;
-      const onBeat = currentBeatPhase > 0.75 || currentBeatPhase < 0.15;
-      let mult = 1;
-      
-      if (onBeat) {
-        mult = 2;
+      const timing = getBeatJudgment(currentBeatPhase);
+      const mult = getBeatMultiplier(timing);
+
+      if (timing !== 'miss') {
         const newCombo = comboRef.current + 1;
         setCombo(newCombo);
-        showJudgment('PERFECT!', '#FFD700');
-        playTone(1047, 0.2, 'triangle');
+        const judgmentConfig = {
+          perfect: { text: 'PERFECT!', color: '#FFD700' },
+          great:   { text: 'GREAT!',   color: '#00E5FF' },
+          good:    { text: 'GOOD',     color: '#76FF03' },
+        } as const;
+        showJudgment(judgmentConfig[timing].text, judgmentConfig[timing].color);
+        if (timing === 'perfect') playTone(1047, 0.2, 'triangle');
+        else if (timing === 'great') playTone(880, 0.15, 'triangle');
+        else playTone(660, 0.1, 'triangle');
       } else {
         setCombo(0);
       }
@@ -695,6 +708,7 @@ export default function Rhythmia() {
 
   const displayBoard = renderBoard();
   const world = WORLDS[worldIdx];
+  const beatZone = getBeatJudgment(beatPhase);
 
   return (
     <div className={`${styles.body} ${styles[`w${worldIdx}`]}`}>
@@ -769,7 +783,8 @@ export default function Rhythmia() {
             <div className={styles.beatTargetLeft} />
             <div className={styles.beatTargetRight} />
             <div
-              className={`${styles.beatCursor} ${(beatPhase > 0.75 || beatPhase < 0.15) ? styles.onBeat : ''}`}
+              className={styles.beatCursor}
+              data-onbeat={beatZone !== 'miss' ? beatZone : undefined}
               style={{ left: `${beatPhase * 100}%` }}
             />
           </div>

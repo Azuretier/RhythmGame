@@ -427,7 +427,6 @@
 
 .board {
   display: grid;
-  gap: 1px;
   background: #111;
   border: 3px solid #444;
   position: relative;
@@ -1244,7 +1243,6 @@
 
 .sideBoardGrid {
   display: grid;
-  gap: 1px;
   background: #0a000f;
 }
 
