@@ -172,6 +172,46 @@ export const ADVANCEMENTS: Advancement[] = [
   { id: 'treasure_200', category: 'treasure', icon: 'chest', threshold: 200, statKey: 'totalTreasuresCollected' },
   { id: 'treasure_500', category: 'treasure', icon: 'chest', threshold: 500, statKey: 'totalTreasuresCollected' },
   { id: 'treasure_1000', category: 'treasure', icon: 'chest', threshold: 1000, statKey: 'totalTreasuresCollected' },
+
+  // === Elemental Reactions (Total) ===
+  { id: 'reaction_1', category: 'elemental', icon: 'element', threshold: 1, statKey: 'totalReactionsTriggered' },
+  { id: 'reaction_10', category: 'elemental', icon: 'element', threshold: 10, statKey: 'totalReactionsTriggered' },
+  { id: 'reaction_50', category: 'elemental', icon: 'element', threshold: 50, statKey: 'totalReactionsTriggered' },
+  { id: 'reaction_100', category: 'elemental', icon: 'element', threshold: 100, statKey: 'totalReactionsTriggered' },
+  { id: 'reaction_500', category: 'elemental', icon: 'element', threshold: 500, statKey: 'totalReactionsTriggered' },
+
+  // === Vaporize Reactions ===
+  { id: 'vaporize_5', category: 'elemental', icon: 'steam', threshold: 5, statKey: 'totalVaporizeReactions' },
+  { id: 'vaporize_25', category: 'elemental', icon: 'steam', threshold: 25, statKey: 'totalVaporizeReactions' },
+  { id: 'vaporize_100', category: 'elemental', icon: 'steam', threshold: 100, statKey: 'totalVaporizeReactions' },
+
+  // === Corruption (Success & Backfire) ===
+  { id: 'corruption_success_3', category: 'elemental', icon: 'dark', threshold: 3, statKey: 'totalCorruptionSuccesses' },
+  { id: 'corruption_success_10', category: 'elemental', icon: 'dark', threshold: 10, statKey: 'totalCorruptionSuccesses' },
+  { id: 'corruption_success_50', category: 'elemental', icon: 'dark', threshold: 50, statKey: 'totalCorruptionSuccesses' },
+  { id: 'corruption_backfire_3', category: 'elemental', icon: 'skull', threshold: 3, statKey: 'totalCorruptionBackfires' },
+  { id: 'corruption_backfire_10', category: 'elemental', icon: 'skull', threshold: 10, statKey: 'totalCorruptionBackfires' },
+
+  // === Best Reactions Per Game ===
+  { id: 'best_reactions_5', category: 'elemental', icon: 'spark', threshold: 5, statKey: 'bestReactionsPerGame' },
+  { id: 'best_reactions_10', category: 'elemental', icon: 'spark', threshold: 10, statKey: 'bestReactionsPerGame' },
+  { id: 'best_reactions_20', category: 'elemental', icon: 'spark', threshold: 20, statKey: 'bestReactionsPerGame' },
+
+  // === Equipment Obtained (Total) ===
+  { id: 'equipment_1', category: 'equipment', icon: 'gear', threshold: 1, statKey: 'totalEquipmentObtained' },
+  { id: 'equipment_10', category: 'equipment', icon: 'gear', threshold: 10, statKey: 'totalEquipmentObtained' },
+  { id: 'equipment_50', category: 'equipment', icon: 'gear', threshold: 50, statKey: 'totalEquipmentObtained' },
+  { id: 'equipment_100', category: 'equipment', icon: 'gear', threshold: 100, statKey: 'totalEquipmentObtained' },
+
+  // === Legendary Equipment ===
+  { id: 'legendary_equip_1', category: 'equipment', icon: 'star', threshold: 1, statKey: 'legendaryEquipmentObtained' },
+  { id: 'legendary_equip_3', category: 'equipment', icon: 'star', threshold: 3, statKey: 'legendaryEquipmentObtained' },
+  { id: 'legendary_equip_5', category: 'equipment', icon: 'star', threshold: 5, statKey: 'legendaryEquipmentObtained' },
+
+  // === Equipment Scrapped ===
+  { id: 'scrap_10', category: 'equipment', icon: 'recycle', threshold: 10, statKey: 'totalEquipmentScrapped' },
+  { id: 'scrap_50', category: 'equipment', icon: 'recycle', threshold: 50, statKey: 'totalEquipmentScrapped' },
+  { id: 'scrap_100', category: 'equipment', icon: 'recycle', threshold: 100, statKey: 'totalEquipmentScrapped' },
 ];
 
 export const BATTLE_ARENA_REQUIRED_ADVANCEMENTS = 3;

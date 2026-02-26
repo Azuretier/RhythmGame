@@ -112,10 +112,9 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
       setConnectionStatus('disconnected');
       wsRef.current = null;
 
-      // Auto-reconnect if we were in a room
-      if (reconnectTokenRef.current) {
-        scheduleReconnect();
-      }
+      // Always reconnect — the WebSocket is needed for heartbeat
+      // even in modes without a server room (e.g., ranked AI matches)
+      scheduleReconnect();
     };
 
     ws.onerror = () => {
