@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, TDEnemyType, TreasureBox, TreasureBoxTier, TreasureBoxReward, TreasureBoxBoostEffect } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, MiniTower, TDLineClearAura, TDGarbageArc, TDEnemyType, MiniTowerType, TreasureBox, TreasureBoxTier, TreasureBoxReward, TreasureBoxBoostEffect } from '../types';
 import type { ElementType, ReactionType, ElementalState, ElementOrb, ActiveReaction, ReactionResult } from '@/lib/elements/types';
 import { DEFAULT_ELEMENTAL_STATE } from '@/lib/elements/types';
 import {
@@ -18,7 +18,12 @@ import {
     ENEMY_SPAWN_DISTANCE, ENEMY_BASE_SPEED, ENEMY_TOWER_RADIUS,
     ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE,
     MAX_HEALTH, ENEMY_REACH_DAMAGE, ENEMY_HP,
+    WALKER_HP, RUNNER_HP, TANK_HP, GARBAGE_THROWER_HP, BOSS_HP,
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
+    MINI_TOWER_HP, MINI_TOWER_RANGE, MINI_TOWER_FIRE_INTERVAL, MINI_TOWER_MAX_COUNT, MINI_TOWER_BULLET_DAMAGE,
+    TOWER_DEFS,
+    LINE_CLEAR_AURA_BASE_DAMAGE, LINE_CLEAR_AURA_DURATION, LINE_CLEAR_AURA_RADIUS,
+    GARBAGE_THROW_INTERVAL, GARBAGE_ARC_DURATION, GARBAGE_THROW_LINES,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
     DEFAULT_ACTIVE_EFFECTS, RARITY_OFFER_WEIGHTS, CARDS_OFFERED,
     DEFAULT_DRAGON_GAUGE, DRAGON_FURY_MAX, DRAGON_MIGHT_MAX,
@@ -37,6 +42,9 @@ let nextFloatingId = 0;
 let nextParticleId = 0;
 let nextEnemyId = 0;
 let nextBulletId = 0;
+let nextMiniTowerId = 0;
+let nextAuraId = 0;
+let nextArcId = 0;
 let nextTreasureBoxId = 0;
 
 /**
@@ -132,6 +140,22 @@ export function useGameState() {
     const [bullets, setBullets] = useState<Bullet[]>([]);
     const [towerHealth, setTowerHealth] = useState(MAX_HEALTH);
 
+    // Mini-towers (player-placed helper towers)
+    const [miniTowers, setMiniTowers] = useState<MiniTower[]>([]);
+    const miniTowersRef = useRef<MiniTower[]>([]);
+
+    // Line-clear aura bursts (visual + damage)
+    const [lineClearAuras, setLineClearAuras] = useState<TDLineClearAura[]>([]);
+    const lineClearAurasRef = useRef<TDLineClearAura[]>([]);
+
+    // Garbage-arc projectiles (from garbage_thrower enemies)
+    const [garbageArcs, setGarbageArcs] = useState<TDGarbageArc[]>([]);
+    const garbageArcsRef = useRef<TDGarbageArc[]>([]);
+
+    // TD setup overlay (shown during CHECKPOINT phase)
+    const [tdSetupActive, setTdSetupActive] = useState(false);
+    const tdSetupActiveRef = useRef(false);
+
     // Refs for accessing current values in callbacks (avoids stale closures)
     const gameLoopRef = useRef<number | null>(null);
     const beatTimerRef = useRef<number | null>(null);
@@ -203,6 +227,10 @@ export function useGameState() {
     useEffect(() => { towerHealthRef.current = towerHealth; }, [towerHealth]);
     useEffect(() => { gameModeRef.current = gameMode; }, [gameMode]);
     useEffect(() => { terrainPhaseRef.current = terrainPhase; }, [terrainPhase]);
+    useEffect(() => { miniTowersRef.current = miniTowers; }, [miniTowers]);
+    useEffect(() => { lineClearAurasRef.current = lineClearAuras; }, [lineClearAuras]);
+    useEffect(() => { garbageArcsRef.current = garbageArcs; }, [garbageArcs]);
+    useEffect(() => { tdSetupActiveRef.current = tdSetupActive; }, [tdSetupActive]);
     useEffect(() => { tdBeatsRemainingRef.current = tdBeatsRemaining; }, [tdBeatsRemaining]);
     useEffect(() => { gamePhaseRef.current = gamePhase; }, [gamePhase]);
     useEffect(() => { inventoryRef.current = inventory; }, [inventory]);
@@ -887,10 +915,39 @@ export function useGameState() {
         return set;
     }, []);
 
-    // Spawn enemies on the grid perimeter
+    // Spawn enemies on the grid perimeter — assigns enemy types with varied HP
     const spawnEnemies = useCallback((count: number) => {
         const occupied = getOccupiedCells();
         const newEnemies: Enemy[] = [];
+
+        // Enemy type weights — each enemy gets an independently rolled type
+        function pickEnemyType(): TDEnemyType {
+            const r = Math.random();
+            if (r < 0.05) return 'boss';
+            if (r < 0.18) return 'garbage_thrower';
+            if (r < 0.32) return 'tank';
+            if (r < 0.50) return 'runner';
+            return 'walker';
+        }
+
+        function hpForType(t: TDEnemyType): number {
+            switch (t) {
+                case 'runner':          return RUNNER_HP;
+                case 'tank':            return TANK_HP;
+                case 'garbage_thrower': return GARBAGE_THROWER_HP;
+                case 'boss':            return BOSS_HP;
+                default:                return WALKER_HP;
+            }
+        }
+
+        function speedForType(t: TDEnemyType): number {
+            switch (t) {
+                case 'runner': return 2;
+                case 'boss':   return 1;
+                case 'tank':   return 1;
+                default:       return 1;
+            }
+        }
 
         for (let i = 0; i < count; i++) {
             const candidates: { gx: number; gz: number }[] = [];
@@ -912,7 +969,9 @@ export function useGameState() {
             const worldZ = cell.gz * GRID_TILE_SIZE;
             occupied.add(`${cell.gx},${cell.gz}`);
 
-            const enemyTypes: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
+            const type = pickEnemyType();
+            const hp = hpForType(type);
+
             newEnemies.push({
                 id: nextEnemyId++,
                 x: worldX,
@@ -920,12 +979,13 @@ export function useGameState() {
                 z: worldZ,
                 gridX: cell.gx,
                 gridZ: cell.gz,
-                speed: 1,
-                health: ENEMY_HP,
-                maxHealth: ENEMY_HP,
+                speed: speedForType(type),
+                health: hp,
+                maxHealth: hp,
                 alive: true,
                 spawnTime: Date.now(),
-                enemyType: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
+                enemyType: type,
+                lastGarbageAt: 0,
             });
         }
         setEnemies(prev => [...prev, ...newEnemies]);
@@ -1079,7 +1139,7 @@ export function useGameState() {
                     e => e.id === b.targetEnemyId && e.alive
                 );
                 if (targetEnemy && !damagedEnemyIds.has(targetEnemy.id)) {
-                    targetEnemy.health -= BULLET_DAMAGE;
+                    targetEnemy.health -= b.damage ?? BULLET_DAMAGE;
                     damagedEnemyIds.add(targetEnemy.id);
                     if (targetEnemy.health <= 0) {
                         targetEnemy.alive = false;
@@ -1097,7 +1157,7 @@ export function useGameState() {
                     (targetEnemy.x - newX) ** 2 + (targetEnemy.y - newY) ** 2 + (targetEnemy.z - newZ) ** 2
                 );
                 if (targetDist < BULLET_KILL_RADIUS) {
-                    targetEnemy.health -= BULLET_DAMAGE;
+                    targetEnemy.health -= b.damage ?? BULLET_DAMAGE;
                     damagedEnemyIds.add(targetEnemy.id);
                     if (targetEnemy.health <= 0) {
                         targetEnemy.alive = false;
@@ -1123,7 +1183,7 @@ export function useGameState() {
                     }
                 }
                 if (hitEnemy && bestDist < BULLET_KILL_RADIUS) {
-                    hitEnemy.health -= BULLET_DAMAGE;
+                    hitEnemy.health -= b.damage ?? BULLET_DAMAGE;
                     damagedEnemyIds.add(hitEnemy.id);
                     if (hitEnemy.health <= 0) {
                         hitEnemy.alive = false;
@@ -1183,11 +1243,12 @@ export function useGameState() {
             x: worldX, y: 0.5, z: worldZ,
             gridX: gx, gridZ: gz,
             speed: 1,
-            health: ENEMY_HP,
-            maxHealth: ENEMY_HP,
+            health: WALKER_HP,
+            maxHealth: WALKER_HP,
             alive: true,
             spawnTime: Date.now(),
-            enemyType: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
+            enemyType: 'walker',
+            lastGarbageAt: 0,
         };
         setEnemies(prev => [...prev, enemy]);
         enemiesRef.current = [...enemiesRef.current, enemy];
@@ -1196,6 +1257,223 @@ export function useGameState() {
     // Set phase to PLAYING (after world creation animation)
     const enterPlayPhase = useCallback(() => {
         setGamePhase('PLAYING');
+    }, []);
+
+    // ===== Mini-Tower Actions =====
+
+    // Place a mini-tower at a grid cell
+    const placeMiniTower = useCallback((gx: number, gz: number, towerType: MiniTowerType = 'mini_tower') => {
+        // Don't allow placement at the main tower origin or if at max count
+        if (Math.abs(gx) + Math.abs(gz) <= GRID_TOWER_RADIUS) return;
+        if (miniTowersRef.current.length >= MINI_TOWER_MAX_COUNT) return;
+        // Don't stack on existing mini-tower
+        if (miniTowersRef.current.some(t => t.gridX === gx && t.gridZ === gz)) return;
+
+        const tower: MiniTower = {
+            id: nextMiniTowerId++,
+            gridX: gx,
+            gridZ: gz,
+            hp: MINI_TOWER_HP,
+            maxHp: MINI_TOWER_HP,
+            lastShotAt: 0,
+            towerType,
+        };
+        const next = [...miniTowersRef.current, tower];
+        setMiniTowers(next);
+        miniTowersRef.current = next;
+    }, []);
+
+    // Remove a mini-tower by id
+    const removeMiniTower = useCallback((id: number) => {
+        const next = miniTowersRef.current.filter(t => t.id !== id);
+        setMiniTowers(next);
+        miniTowersRef.current = next;
+    }, []);
+
+    // Clear all mini-towers (e.g. on new game)
+    const clearMiniTowers = useCallback(() => {
+        setMiniTowers([]);
+        miniTowersRef.current = [];
+    }, []);
+
+    // Fire bullets from all mini-towers toward nearest enemy in range each beat
+    const fireMiniTowerBullets = useCallback((): number => {
+        const alive = enemiesRef.current.filter(e => e.alive);
+        if (alive.length === 0) return 0;
+
+        const now = Date.now();
+        const newBullets: Bullet[] = [];
+        let fired = 0;
+
+        // Collect aura-tower grid positions for adjacent-boost logic
+        const auraCells = new Set<string>(
+            miniTowersRef.current
+                .filter(t => t.towerType === 'aura' && t.hp > 0)
+                .map(t => `${t.gridX},${t.gridZ}`)
+        );
+        const isAuraAdjacent = (gx: number, gz: number): boolean =>
+            auraCells.has(`${gx - 1},${gz}`) || auraCells.has(`${gx + 1},${gz}`) ||
+            auraCells.has(`${gx},${gz - 1}`) || auraCells.has(`${gx},${gz + 1}`);
+
+        for (const tower of miniTowersRef.current) {
+            if (tower.hp <= 0) continue;
+
+            // Per-type stats
+            const def = TOWER_DEFS[tower.towerType];
+            const effectiveInterval = isAuraAdjacent(tower.gridX, tower.gridZ)
+                ? def.fireInterval * 0.65   // 35% shorter interval = faster fire rate when adjacent to aura
+                : def.fireInterval;
+            const effectiveDamage = isAuraAdjacent(tower.gridX, tower.gridZ)
+                ? def.damage * 1.5          // +50% damage when adjacent to aura tower
+                : def.damage;
+
+            if (now - tower.lastShotAt < effectiveInterval) continue;
+
+            // Find nearest enemy in range
+            let target: Enemy | null = null;
+            let bestDist = Infinity;
+            for (const e of alive) {
+                const gDist = Math.abs(e.gridX - tower.gridX) + Math.abs(e.gridZ - tower.gridZ);
+                if (gDist <= def.range && gDist < bestDist) {
+                    bestDist = gDist;
+                    target = e;
+                }
+            }
+            if (!target) continue;
+
+            tower.lastShotAt = now;
+            fired++;
+
+            // Freeze towers deal AoE damage to all enemies in range
+            // Applied directly (not via bullet system) since this is AoE, not single-target
+            if (tower.towerType === 'freeze') {
+                const damagedIds = new Set<number>();
+                setEnemies(prev => {
+                    const next = prev.map(e => {
+                        if (!e.alive) return e;
+                        const gDist = Math.abs(e.gridX - tower.gridX) + Math.abs(e.gridZ - tower.gridZ);
+                        if (gDist > def.range || damagedIds.has(e.id)) return e;
+                        damagedIds.add(e.id);
+                        const newHp = e.health - effectiveDamage;
+                        return { ...e, health: newHp, alive: newHp > 0 };
+                    }).filter(e => e.alive);
+                    enemiesRef.current = next;
+                    return next;
+                });
+                continue;
+            }
+
+            const startX = tower.gridX * GRID_TILE_SIZE;
+            const startZ = tower.gridZ * GRID_TILE_SIZE;
+            const startY = 5;
+            const targetY = 1.5;
+            const dx = target.x - startX;
+            const dz = target.z - startZ;
+            const horizontalDist = Math.sqrt(dx * dx + dz * dz);
+            const T = Math.max(0.3, horizontalDist / BULLET_SPEED);
+            const vx = dx / T;
+            const vz = dz / T;
+            const vy = (targetY - startY + 0.5 * BULLET_GRAVITY * T * T) / T;
+
+            newBullets.push({
+                id: nextBulletId++,
+                x: startX, y: startY, z: startZ,
+                vx, vy, vz,
+                targetEnemyId: target.id,
+                alive: true,
+                fromMiniTower: true,
+                damage: effectiveDamage,
+            });
+        }
+
+        if (newBullets.length > 0) {
+            setBullets(prev => [...prev, ...newBullets]);
+        }
+        return fired;
+    }, []);
+
+    // ===== Line-Clear Aura =====
+
+    /**
+     * Trigger a line-clear aura burst — deals LINE_CLEAR_AURA_BASE_DAMAGE × linesCleared
+     * to ALL alive enemies instantly, then plays the ring expansion animation.
+     */
+    const triggerLineClearAura = useCallback((linesCleared: number): void => {
+        const damage = LINE_CLEAR_AURA_BASE_DAMAGE * linesCleared;
+
+        // Apply damage to all alive enemies immediately
+        setEnemies(prev => {
+            const next = prev.map(e => {
+                if (!e.alive) return e;
+                const newHealth = e.health - damage;
+                return { ...e, health: newHealth, alive: newHealth > 0 };
+            }).filter(e => e.alive);
+            enemiesRef.current = next;
+            return next;
+        });
+
+        // Add visual aura ring
+        const aura: TDLineClearAura = {
+            id: nextAuraId++,
+            startTime: Date.now(),
+            duration: LINE_CLEAR_AURA_DURATION,
+            maxRadius: LINE_CLEAR_AURA_RADIUS,
+            currentRadius: 0,
+        };
+        setLineClearAuras(prev => [...prev, aura]);
+        lineClearAurasRef.current = [...lineClearAurasRef.current, aura];
+
+        // Remove aura after animation completes
+        setTimeout(() => {
+            setLineClearAuras(prev => prev.filter(a => a.id !== aura.id));
+        }, LINE_CLEAR_AURA_DURATION + 100);
+    }, []);
+
+    // ===== Garbage-Arc Actions =====
+
+    /**
+     * Spawn a garbage arc projectile animation from a garbage_thrower or boss enemy.
+     * After GARBAGE_ARC_DURATION ms, adds garbage rows to the player's board.
+     */
+    const spawnGarbageArc = useCallback((enemyId: number, fromX: number, fromZ: number, lines: number) => {
+        const arc: TDGarbageArc = {
+            id: nextArcId++,
+            enemyId,
+            startX: fromX,
+            startZ: fromZ,
+            progress: 0,
+            startTime: Date.now(),
+            duration: GARBAGE_ARC_DURATION,
+            garbageLines: lines,
+        };
+        setGarbageArcs(prev => [...prev, arc]);
+        garbageArcsRef.current = [...garbageArcsRef.current, arc];
+
+        // Apply garbage after arc animation lands
+        const addRows = () => {
+            setBoard(prev => {
+                const rows: (string | null)[][] = [];
+                for (let g = 0; g < lines; g++) {
+                    const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
+                    rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
+                }
+                const next = [...prev.slice(lines), ...rows];
+                boardRef.current = next;
+                return next;
+            });
+            setGarbageArcs(prev => prev.filter(a => a.id !== arc.id));
+        };
+        setTimeout(addRows, GARBAGE_ARC_DURATION);
+    }, []);
+
+    // ===== TD Setup (CHECKPOINT phase grid editor) =====
+
+    const confirmTDSetup = useCallback(() => {
+        if (gamePhaseRef.current !== 'CHECKPOINT') return;
+        setTdSetupActive(false);
+        tdSetupActiveRef.current = false;
+        setGamePhase('PLAYING');
+        gamePhaseRef.current = 'PLAYING';
     }, []);
 
     // Trigger collapse phase when terrain fully destroyed
@@ -1213,7 +1491,7 @@ export function useGameState() {
         setGamePhase('WORLD_CREATION');
     }, []);
 
-    // Enter checkpoint — transition from dig phase to TD phase
+    // Enter checkpoint — transition from dig phase to TD phase with grid setup overlay
     const enterCheckpoint = useCallback(() => {
         // Guard against multiple calls during phase transitions
         if (gamePhaseRef.current !== 'PLAYING') return;
@@ -1232,23 +1510,34 @@ export function useGameState() {
             setTerrainPhase('td');
             terrainPhaseRef.current = 'td';
 
-            // Reset TD state
+            // Reset TD entities (keep mini-towers — they persist across waves)
             setEnemies([]);
             enemiesRef.current = [];
             setBullets([]);
             bulletsRef.current = [];
+            setLineClearAuras([]);
+            lineClearAurasRef.current = [];
+            setGarbageArcs([]);
+            garbageArcsRef.current = [];
             setTowerHealth(MAX_HEALTH);
             towerHealthRef.current = MAX_HEALTH;
             setTdBeatsRemaining(TD_WAVE_BEATS);
             tdBeatsRemainingRef.current = TD_WAVE_BEATS;
 
-            setTimeout(() => {
-                // Abort transition if player died during checkpoint
-                if (gameOverRef.current) return;
+            // Show TD setup overlay — confirmTDSetup() transitions to PLAYING
+            setTdSetupActive(true);
+            tdSetupActiveRef.current = true;
 
-                setGamePhase('PLAYING');
-                gamePhaseRef.current = 'PLAYING';
-            }, 1500);
+            // Auto-start after 15s if player doesn't confirm
+            setTimeout(() => {
+                if (gameOverRef.current) return;
+                if (gamePhaseRef.current === 'CHECKPOINT') {
+                    setTdSetupActive(false);
+                    tdSetupActiveRef.current = false;
+                    setGamePhase('PLAYING');
+                    gamePhaseRef.current = 'PLAYING';
+                }
+            }, 15000);
         }, 1200);
     }, []);
 
@@ -1457,6 +1746,14 @@ export function useGameState() {
         enemiesRef.current = [];
         setBullets([]);
         bulletsRef.current = [];
+        setMiniTowers([]);
+        miniTowersRef.current = [];
+        setLineClearAuras([]);
+        lineClearAurasRef.current = [];
+        setGarbageArcs([]);
+        garbageArcsRef.current = [];
+        setTdSetupActive(false);
+        tdSetupActiveRef.current = false;
         setTowerHealth(MAX_HEALTH);
         towerHealthRef.current = MAX_HEALTH;
         nextEnemyId = 0;
@@ -1564,6 +1861,10 @@ export function useGameState() {
         enemies,
         bullets,
         towerHealth,
+        miniTowers,
+        lineClearAuras,
+        garbageArcs,
+        tdSetupActive,
 
         // Setters
         setBoard,
@@ -1670,5 +1971,18 @@ export function useGameState() {
         towerHealthRef,
         addGarbageRows,
         spawnEnemyAtCell,
+        // Mini-tower actions
+        placeMiniTower,
+        removeMiniTower,
+        clearMiniTowers,
+        fireMiniTowerBullets,
+        miniTowersRef,
+        // Aura & garbage arc
+        triggerLineClearAura,
+        spawnGarbageArc,
+        garbageArcsRef,
+        // TD setup
+        confirmTDSetup,
+        tdSetupActiveRef,
     };
 }

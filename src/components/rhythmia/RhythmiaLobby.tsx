@@ -213,6 +213,9 @@ export default function RhythmiaLobby() {
             case 'stories':
                 router.push('/stories');
                 break;
+            case 'td':
+                router.push('/td');
+                break;
         }
     };
 
@@ -225,7 +228,7 @@ export default function RhythmiaLobby() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
             >
-                <VanillaGame onQuit={closeGame} />
+                <VanillaGame onQuit={closeGame} locale={locale} />
             </motion.div>
         );
     }

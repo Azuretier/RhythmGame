@@ -223,8 +223,11 @@ export type CardOffer = {
 // Grid position for block-based movement (orthogonal only, 1 tile per turn)
 export type GridPos = { gx: number; gz: number };
 
-// Minecraft-style enemy types for TD phase
-export type TDEnemyType = 'zombie' | 'skeleton' | 'creeper' | 'spider' | 'enderman';
+// Enemy types for the Rhythmia TD phase
+// TD gameplay types (determine HP, speed, special abilities) + Minecraft visual types
+export type TDEnemyType =
+    | 'walker' | 'runner' | 'tank' | 'garbage_thrower' | 'boss'
+    | 'zombie' | 'skeleton' | 'creeper' | 'spider' | 'enderman';
 
 export type Enemy = {
     id: number;
@@ -240,8 +243,10 @@ export type Enemy = {
     maxHealth: number;
     alive: boolean;
     spawnTime: number;
-    // Minecraft mob type for visual appearance
-    enemyType: TDEnemyType;
+    // Enemy type (determines HP, speed, and special abilities)
+    enemyType?: TDEnemyType;
+    // Timestamp of last garbage throw (for garbage_thrower type)
+    lastGarbageAt?: number;
 };
 
 export type Bullet = {
@@ -254,6 +259,45 @@ export type Bullet = {
     vz: number;
     targetEnemyId: number;
     alive: boolean;
+    /** Whether this bullet was fired from a mini-tower (for rendering tint) */
+    fromMiniTower?: boolean;
+    /** Per-bullet damage override (used by tower-type variants) */
+    damage?: number;
+};
+
+// ===== Mini-Tower =====
+/** Tower variant types for the TD grid setup */
+export type MiniTowerType = 'mini_tower' | 'archer' | 'cannon' | 'freeze' | 'aura';
+
+export type MiniTower = {
+    id: number;
+    gridX: number;
+    gridZ: number;
+    hp: number;
+    maxHp: number;
+    lastShotAt: number; // timestamp (ms)
+    towerType: MiniTowerType;
+};
+
+// ===== Line-Clear Aura Burst =====
+export type TDLineClearAura = {
+    id: number;
+    startTime: number;   // ms timestamp
+    duration: number;    // ms total animation
+    maxRadius: number;   // grid-tile radius at full expansion
+    currentRadius: number;
+};
+
+// ===== Garbage-Thrower Arc Projectile =====
+export type TDGarbageArc = {
+    id: number;
+    enemyId: number;
+    startX: number;  // world-space X
+    startZ: number;  // world-space Z
+    progress: number; // 0→1
+    startTime: number;
+    duration: number;
+    garbageLines: number;
 };
 
 // ===== Terrain Particle =====

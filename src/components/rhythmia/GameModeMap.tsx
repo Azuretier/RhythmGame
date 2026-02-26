@@ -463,6 +463,11 @@ function generateTerrainVoxels(overrides: TerrainOverrides = {}) {
       case 'stories':
         blocks.push(...mkRuins(bx, by, bz));
         break;
+      case 'td':
+        blocks.push(...mkTower(bx, by, bz, 7));
+        blocks.push(...mkTower(bx + 3, by, bz - 3, 5));
+        blocks.push(...mkTower(bx - 3, by, bz + 3, 5));
+        break;
     }
   }
 

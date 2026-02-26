@@ -19,7 +19,7 @@ export interface GameModeLocation {
   mapY: number;
   icon: string;
   accentColor: string;
-  action: 'vanilla' | 'multiplayer' | 'arena' | 'stories' | 'hub';
+  action: 'vanilla' | 'multiplayer' | 'arena' | 'stories' | 'hub' | 'td';
   requiresAdvancements?: number;
   features: { label: string; labelEn: string }[];
   stats: { label: string; labelEn: string; value: string }[];
@@ -542,6 +542,29 @@ export const GAMEMODE_LOCATIONS: GameModeLocation[] = [
       { label: 'マップ', labelEn: 'Maps', value: '4+' },
     ],
   },
+  {
+    id: 'td',
+    name: 'タワーディフェンス',
+    nameEn: 'Tower Defense',
+    description: 'グリッドレイアウトをカスタマイズし、ウェーブをしのげ。ラインを消すと敵を薙ぎ払うオーラが炸裂する。',
+    descriptionEn: 'Customize your grid, place towers, and survive the waves. Clear Tetris lines to release a massive aura that wipes out enemies.',
+    mapX: 45,
+    mapY: 55,
+    icon: '🏰',
+    accentColor: '#FF9800',
+    action: 'td',
+    requiresAdvancements: 1,
+    features: [
+      { label: 'タワー配置', labelEn: 'Tower Placement' },
+      { label: 'ウェーブ', labelEn: 'Waves' },
+      { label: 'オーラ', labelEn: 'Aura Burst' },
+    ],
+    stats: [
+      { label: 'ウェーブ', labelEn: 'Waves', value: '10' },
+      { label: 'タワー', labelEn: 'Towers', value: '6 types' },
+      { label: 'ステータス', labelEn: 'Status', value: 'NEW' },
+    ],
+  },
 ];
 
 // === Paths (longer waypoint sequences for 80×60) ===
@@ -578,6 +601,14 @@ export const GAMEMODE_PATHS: MapPath[] = [
       { x: 38, y: 42 }, { x: 35, y: 43 }, { x: 32, y: 44 },
       { x: 28, y: 45 }, { x: 24, y: 46 }, { x: 20, y: 47 },
       { x: 18, y: 48 }, { x: 16, y: 48 },
+    ],
+  },
+  {
+    from: 'hub', to: 'td',
+    waypoints: [
+      { x: 38, y: 42 }, { x: 39, y: 44 }, { x: 40, y: 46 },
+      { x: 41, y: 48 }, { x: 42, y: 50 }, { x: 43, y: 52 },
+      { x: 44, y: 54 }, { x: 45, y: 55 },
     ],
   },
 ];

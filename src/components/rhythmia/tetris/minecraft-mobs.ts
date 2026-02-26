@@ -181,6 +181,12 @@ const MOB_HEIGHTS: Record<TDEnemyType, number> = {
   creeper: 1.6,
   spider: 0.8,
   enderman: 2.8,
+  // TD gameplay types (mapped to sensible visual heights)
+  walker: 1.9,
+  runner: 0.8,
+  tank: 2.8,
+  garbage_thrower: 1.9,
+  boss: 2.8,
 };
 
 // ========== Procedural Mob Builders ==========
