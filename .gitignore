@@ -45,3 +45,8 @@ next-env.d.ts
 # generated files
 /public/sitemap.xml
 /public/sitemap-*.xml
+
+# claude-worker
+claude-worker.ps1
+tasks
+.claude
