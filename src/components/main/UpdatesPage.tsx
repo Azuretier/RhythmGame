@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { PR_UPDATES, getUpdateStats, getLocalizedPRContent, type PRUpdate } from '@/lib/updates/changelog';
+import { PR_UPDATES, getLocalizedPRContent, type PRUpdate } from '@/lib/updates/changelog';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import styles from './UpdatesPage.module.css';
 
@@ -16,6 +16,75 @@ const CATEGORY_COLORS: Record<string, string> = {
   docs: '#fbbf24',
   i18n: '#34d399',
 };
+
+const GITHUB_OWNER = 'Azuretier';
+const GITHUB_REPO = 'RhythmGame';
+const MAX_GITHUB_PR_PAGES = 10;
+
+type GitHubPullRequest = {
+  number: number;
+  title: string;
+  merged_at: string | null;
+};
+
+function inferCategory(title: string): PRUpdate['category'] {
+  const lower = title.toLowerCase();
+  if (lower.includes('fix') || lower.includes('bug') || lower.includes('hotfix')) return 'fix';
+  if (lower.includes('refactor') || lower.includes('chore') || lower.includes('cleanup')) return 'refactor';
+  if (lower.includes('doc')) return 'docs';
+  if (lower.includes('i18n') || lower.includes('translation') || lower.includes('locale')) return 'i18n';
+  if (lower.includes('enhance') || lower.includes('improve') || lower.includes('optimiz') || lower.includes('upgrade')) return 'enhancement';
+  return 'feature';
+}
+
+function getUpdateStatsFrom(updates: PRUpdate[]) {
+  const merged = updates.filter((pr) => pr.merged);
+  return {
+    merged: merged.length,
+    byCategory: {
+      feature: merged.filter((pr) => pr.category === 'feature').length,
+      enhancement: merged.filter((pr) => pr.category === 'enhancement').length,
+      fix: merged.filter((pr) => pr.category === 'fix').length,
+      refactor: merged.filter((pr) => pr.category === 'refactor').length,
+      docs: merged.filter((pr) => pr.category === 'docs').length,
+      i18n: merged.filter((pr) => pr.category === 'i18n').length,
+    },
+  };
+}
+
+async function fetchAllMergedPullRequests(): Promise<PRUpdate[]> {
+  const merged: PRUpdate[] = [];
+  for (let page = 1; page <= MAX_GITHUB_PR_PAGES; page += 1) {
+    const response = await fetch(
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/pulls?state=closed&sort=created&direction=desc&per_page=100&page=${page}`
+    );
+    if (!response.ok) {
+      console.warn(`Failed to fetch merged PR page ${page}: ${response.status} ${response.statusText}`);
+      break;
+    }
+
+    const pulls = (await response.json()) as GitHubPullRequest[];
+    if (!Array.isArray(pulls) || pulls.length === 0) break;
+
+    const mergedPulls = pulls
+      .filter((pr) => pr.merged_at)
+      .map<PRUpdate>((pr) => ({
+        number: pr.number,
+        title: pr.title,
+        titleJa: '',
+        category: inferCategory(pr.title),
+        date: new Date(pr.merged_at!).toISOString().slice(0, 10),
+        merged: true,
+        description: pr.title,
+        descriptionJa: '',
+      }));
+
+    merged.push(...mergedPulls);
+    if (pulls.length < 100) break;
+  }
+
+  return merged;
+}
 
 
 
@@ -36,12 +105,40 @@ export default function UpdatesPage() {
   const router = useRouter();
   const t = useTranslations();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [updates, setUpdates] = useState<PRUpdate[]>(PR_UPDATES);
+  const dateLocale = Intl.getCanonicalLocales(locale)[0] ?? 'en-US';
 
-  const stats = getUpdateStats();
+  useEffect(() => {
+    let active = true;
+
+    fetchAllMergedPullRequests()
+      .then((remoteUpdates) => {
+        if (!active || remoteUpdates.length === 0) return;
+
+        const combinedByNumber = new Map(PR_UPDATES.map((update) => [update.number, update]));
+        for (const update of remoteUpdates) {
+          if (!combinedByNumber.has(update.number)) {
+            combinedByNumber.set(update.number, update);
+          }
+        }
+
+        setUpdates(Array.from(combinedByNumber.values()).sort((a, b) => b.number - a.number));
+      })
+      .catch((error) => {
+        console.warn('Failed to load merged PRs for updates page; using static fallback.', error);
+        // Keep static fallback when network requests fail.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const stats = getUpdateStatsFrom(updates);
 
   const filteredUpdates = selectedCategory
-    ? PR_UPDATES.filter((u) => u.merged && u.category === selectedCategory)
-    : PR_UPDATES.filter((u) => u.merged);
+    ? updates.filter((u) => u.merged && u.category === selectedCategory)
+    : updates.filter((u) => u.merged);
 
   const sortedUpdates = [...filteredUpdates].sort((a, b) => {
     const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -170,7 +267,7 @@ export default function UpdatesPage() {
                 <div className={styles.dateHeader}>
                   <div className={styles.dateDot} />
                   <span className={styles.dateText}>
-                    {new Date(date).toLocaleDateString({ ja: 'ja-JP', en: 'en-US', th: 'th-TH', es: 'es-ES', fr: 'fr-FR' }[locale] || 'en-US', {
+                    {new Date(date).toLocaleDateString(dateLocale, {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',
@@ -206,7 +303,7 @@ export default function UpdatesPage() {
                           </ul>
                         )}
                         <a
-                          href={`https://github.com/Azuretier/azuretier.net/pull/${update.number}`}
+                          href={`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/pull/${update.number}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className={styles.prLink}
@@ -225,7 +322,7 @@ export default function UpdatesPage() {
         {/* Footer link */}
         <div className={styles.footerLink}>
           <a
-            href="https://github.com/Azuretier/azuretier.net/pulls?q=is%3Apr+is%3Amerged"
+            href={`https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/pulls?q=is%3Apr+is%3Amerged`}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.viewAllBtn}

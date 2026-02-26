@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState } from '../types';
+import type { Piece, Board, KeyState, GamePhase, GameMode, TerrainPhase, InventoryItem, FloatingItem, EquippedCard, ActiveEffects, CardOffer, TerrainParticle, Enemy, Bullet, DragonGaugeState, TDEnemyType, TreasureBox, TreasureBoxTier, TreasureBoxReward, TreasureBoxBoostEffect } from '../types';
 import type { ElementType, ReactionType, ElementalState, ElementOrb, ActiveReaction, ReactionResult } from '@/lib/elements/types';
 import { DEFAULT_ELEMENTAL_STATE } from '@/lib/elements/types';
 import {
@@ -24,7 +24,9 @@ import {
     DEFAULT_DRAGON_GAUGE, DRAGON_FURY_MAX, DRAGON_MIGHT_MAX,
     DRAGON_BREATH_DURATION, DRAGON_BREATH_SCORE_BONUS,
     DRAGON_FURY_CHARGE, DRAGON_MIGHT_CHARGE,
-    ELEMENT_ORB_FLOAT_DURATION, MAX_FLOATING_ORBS,
+    TREASURE_BOX_STAGE_INTERVAL, TREASURE_BOX_RANDOM_CHANCE,
+    TREASURE_BOX_TIER_WEIGHTS, TREASURE_BOX_TIERS,
+    MAX_FLOATING_ORBS, ELEMENT_ORB_FLOAT_DURATION,
 } from '../constants';
 import type { ProtocolModifiers } from '../protocol';
 import { DEFAULT_PROTOCOL_MODIFIERS } from '../protocol';
@@ -35,7 +37,7 @@ let nextFloatingId = 0;
 let nextParticleId = 0;
 let nextEnemyId = 0;
 let nextBulletId = 0;
-let nextOrbId = 0;
+let nextTreasureBoxId = 0;
 
 /**
  * Custom hook for managing game state with synchronized refs
@@ -112,10 +114,15 @@ export function useGameState() {
     const dragonGaugeRef = useRef<DragonGaugeState>(DEFAULT_DRAGON_GAUGE);
 
     // ===== Elemental System =====
-    const [elementalState, setElementalState] = useState<ElementalState>(createFreshElementalState());
-    const elementalStateRef = useRef<ElementalState>(createFreshElementalState());
+    const [elementalState, setElementalState] = useState<ElementalState>(DEFAULT_ELEMENTAL_STATE);
+    const elementalStateRef = useRef<ElementalState>(DEFAULT_ELEMENTAL_STATE);
     const [floatingOrbs, setFloatingOrbs] = useState<ElementOrb[]>([]);
+    const nextOrbIdRef = useRef(0);
     const reactionCooldownsRef = useRef<{ type: ReactionType; time: number }[]>([]);
+
+    // ===== Treasure Box System =====
+    const [currentTreasureBox, setCurrentTreasureBox] = useState<TreasureBox | null>(null);
+    const [showTreasureBox, setShowTreasureBox] = useState(false);
 
     // ===== Equipment System =====
     const { getBonuses: getEquipmentBonuses } = useEquipment();
@@ -592,6 +599,196 @@ export function useGameState() {
         };
     }, []);
 
+    // ===== Treasure Box System =====
+
+    // Roll a random treasure box tier based on current world index
+    const rollTreasureBoxTier = useCallback((currentWorldIdx: number): TreasureBoxTier => {
+        const tiers: TreasureBoxTier[] = ['wooden', 'iron', 'golden', 'crystal'];
+        const worldSlot = Math.min(currentWorldIdx, 4);
+        const weights = tiers.map(t => TREASURE_BOX_TIER_WEIGHTS[t][worldSlot]);
+        const total = weights.reduce((s, w) => s + w, 0);
+        let roll = Math.random() * total;
+        for (let i = 0; i < tiers.length; i++) {
+            roll -= weights[i];
+            if (roll <= 0) return tiers[i];
+        }
+        return 'wooden';
+    }, []);
+
+    // Generate rewards for a treasure box based on its tier
+    const generateTreasureBoxRewards = useCallback((tier: TreasureBoxTier, currentWorldIdx: number): TreasureBoxReward[] => {
+        const config = TREASURE_BOX_TIERS[tier];
+        const rewards: TreasureBoxReward[] = [];
+
+        // Always give materials
+        const materialCount = Math.ceil(2 * config.materialRewardMultiplier);
+        const materialItems: { itemId: string; count: number }[] = [];
+        for (let i = 0; i < materialCount; i++) {
+            const itemId = rollItem(tier === 'crystal' ? 0.5 : tier === 'golden' ? 0.3 : 0);
+            const existing = materialItems.find(m => m.itemId === itemId);
+            if (existing) {
+                existing.count++;
+            } else {
+                materialItems.push({ itemId, count: 1 });
+            }
+        }
+        rewards.push({ type: 'materials', items: materialItems });
+
+        // Score bonus
+        const scoreBonus = Math.floor(config.scoreRewardBase * (1 + currentWorldIdx * 0.5));
+        rewards.push({ type: 'score_bonus', amount: scoreBonus });
+
+        // Chance for free card (no cost)
+        if (Math.random() < config.freeCardChance) {
+            const card = ROGUE_CARDS[Math.floor(Math.random() * ROGUE_CARDS.length)];
+            rewards.push({ type: 'free_card', card });
+        }
+
+        // Chance for temporary effect boost
+        if (Math.random() < config.effectBoostChance) {
+            const boostOptions: Array<{ effect: TreasureBoxBoostEffect; value: number }> = [
+                { effect: 'score_boost', value: 0.25 },
+                { effect: 'terrain_surge', value: 0.2 },
+                { effect: 'lucky_drops', value: 0.2 },
+                { effect: 'gravity_slow', value: 0.15 },
+            ];
+            const chosen = boostOptions[Math.floor(Math.random() * boostOptions.length)];
+            rewards.push({
+                type: 'effect_boost',
+                effect: chosen.effect,
+                value: chosen.value,
+                duration: 1, // lasts for next stage
+            });
+        }
+
+        return rewards;
+    }, []);
+
+    // Check if a treasure box should spawn for the given stage
+    const shouldSpawnTreasureBox = useCallback((stage: number): boolean => {
+        // Guaranteed on interval stages (3, 6, 9, ...)
+        if (stage > 1 && stage % TREASURE_BOX_STAGE_INTERVAL === 0) return true;
+        // Random chance on other stages (skip stage 1)
+        if (stage > 1 && Math.random() < TREASURE_BOX_RANDOM_CHANCE) return true;
+        return false;
+    }, []);
+
+    // Generate and enter treasure box phase
+    const enterTreasureBox = useCallback(() => {
+        const tier = rollTreasureBoxTier(worldIdxRef.current);
+        const rewards = generateTreasureBoxRewards(tier, worldIdxRef.current);
+        const box: TreasureBox = {
+            id: nextTreasureBoxId++,
+            tier,
+            rewards,
+            opened: false,
+            spawnStage: stageNumberRef.current,
+        };
+        setCurrentTreasureBox(box);
+        setShowTreasureBox(true);
+        setGamePhase('TREASURE_BOX');
+        gamePhaseRef.current = 'TREASURE_BOX';
+        setIsPaused(true);
+    }, [rollTreasureBoxTier, generateTreasureBoxRewards]);
+
+    // Open the treasure box and collect rewards
+    const openTreasureBox = useCallback(() => {
+        const box = currentTreasureBox;
+        if (!box || box.opened) return;
+
+        // Mark as opened
+        setCurrentTreasureBox(prev => prev ? { ...prev, opened: true } : null);
+
+        // Apply material and score rewards
+        for (const reward of box.rewards) {
+            if (reward.type === 'materials') {
+                setInventory(prev => {
+                    const updated = [...prev];
+                    for (const item of reward.items) {
+                        const existing = updated.find(i => i.itemId === item.itemId);
+                        if (existing) {
+                            existing.count += item.count;
+                        } else {
+                            updated.push({ itemId: item.itemId, count: item.count });
+                        }
+                    }
+                    return updated;
+                });
+            } else if (reward.type === 'score_bonus') {
+                updateScore(scoreRef.current + reward.amount);
+            }
+        }
+
+        // Process free card rewards via functional updater for safe state derivation
+        const freeCardRewards = box.rewards.filter(r => r.type === 'free_card');
+        let newCardsSnapshot: EquippedCard[] | null = null;
+
+        if (freeCardRewards.length > 0) {
+            setEquippedCards(prev => {
+                let cards = prev;
+                for (const reward of freeCardRewards) {
+                    if (reward.type !== 'free_card') continue;
+                    const cardId = reward.card.id;
+                    const existing = cards.find(ec => ec.cardId === cardId);
+                    if (existing && existing.stackCount < 3) {
+                        cards = cards.map(ec =>
+                            ec.cardId === cardId
+                                ? { ...ec, stackCount: ec.stackCount + 1 }
+                                : ec
+                        );
+                    } else if (!existing) {
+                        cards = [...cards, { cardId, equippedAt: Date.now(), stackCount: 1 }];
+                    }
+                }
+                newCardsSnapshot = cards;
+                return cards;
+            });
+        }
+
+        // Helper to apply effect boosts to an effects object
+        const applyBoosts = (effects: ActiveEffects): ActiveEffects => {
+            const result = { ...effects };
+            for (const reward of box.rewards) {
+                if (reward.type !== 'effect_boost') continue;
+                switch (reward.effect) {
+                    case 'score_boost':
+                        result.scoreBoostMultiplier += reward.value;
+                        break;
+                    case 'terrain_surge':
+                        result.terrainSurgeBonus += reward.value;
+                        break;
+                    case 'lucky_drops':
+                        result.luckyDropsBonus += reward.value;
+                        break;
+                    case 'gravity_slow':
+                        result.gravitySlowFactor = Math.max(0.1, result.gravitySlowFactor - reward.value);
+                        break;
+                }
+            }
+            return result;
+        };
+
+        const hasEffectBoosts = box.rewards.some(r => r.type === 'effect_boost');
+
+        if (newCardsSnapshot !== null) {
+            // Cards changed: recompute base effects from new cards, then layer boosts
+            const effects = applyBoosts(computeActiveEffects(newCardsSnapshot));
+            setActiveEffects(effects);
+        } else if (hasEffectBoosts) {
+            // Only boosts, no card changes: use functional updater for safe derivation
+            setActiveEffects(prev => applyBoosts(prev));
+        }
+        // Ref sync handled by existing useEffect hooks
+    }, [currentTreasureBox, computeActiveEffects, updateScore]);
+
+    // Finish treasure box phase and proceed to card select
+    const finishTreasureBox = useCallback(() => {
+        setShowTreasureBox(false);
+        setCurrentTreasureBox(null);
+        // Proceed to card select
+        enterCardSelect();
+    }, [enterCardSelect]);
+
     // ===== Item System Actions =====
 
     // Spawn floating items from terrain destruction
@@ -715,6 +912,7 @@ export function useGameState() {
             const worldZ = cell.gz * GRID_TILE_SIZE;
             occupied.add(`${cell.gx},${cell.gz}`);
 
+            const enemyTypes: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
             newEnemies.push({
                 id: nextEnemyId++,
                 x: worldX,
@@ -727,6 +925,7 @@ export function useGameState() {
                 maxHealth: ENEMY_HP,
                 alive: true,
                 spawnTime: Date.now(),
+                enemyType: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
             });
         }
         setEnemies(prev => [...prev, ...newEnemies]);
@@ -978,6 +1177,7 @@ export function useGameState() {
         const worldX = gx * GRID_TILE_SIZE;
         const worldZ = gz * GRID_TILE_SIZE;
 
+        const enemyTypes: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
         const enemy: Enemy = {
             id: nextEnemyId++,
             x: worldX, y: 0.5, z: worldZ,
@@ -987,6 +1187,7 @@ export function useGameState() {
             maxHealth: ENEMY_HP,
             alive: true,
             spawnTime: Date.now(),
+            enemyType: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
         };
         setEnemies(prev => [...prev, enemy]);
         enemiesRef.current = [...enemiesRef.current, enemy];
@@ -1069,10 +1270,14 @@ export function useGameState() {
             // Abort transition if player died during collapse
             if (gameOverRef.current) return;
 
-            // Enter card select directly — stage transition effects play after selection
-            enterCardSelect();
+            // Check for treasure box spawn before card select
+            if (shouldSpawnTreasureBox(stageNumberRef.current)) {
+                enterTreasureBox();
+            } else {
+                enterCardSelect();
+            }
         }, 1200);
-    }, [enterCardSelect]);
+    }, [enterCardSelect, shouldSpawnTreasureBox, enterTreasureBox]);
 
     // ===== Elemental System Actions =====
 
@@ -1098,7 +1303,7 @@ export function useGameState() {
 
             // Create floating orb visual
             const newOrb: ElementOrb = {
-                id: nextOrbId++,
+                id: nextOrbIdRef.current++,
                 element,
                 x: originX + (Math.random() - 0.5) * 150,
                 y: originY + (Math.random() - 0.5) * 80,
@@ -1243,13 +1448,9 @@ export function useGameState() {
         setDragonGauge(DEFAULT_DRAGON_GAUGE);
         dragonGaugeRef.current = { ...DEFAULT_DRAGON_GAUGE };
 
-        // Reset elemental state
-        const freshElemental = createFreshElementalState();
-        setElementalState(freshElemental);
-        elementalStateRef.current = freshElemental;
-        setFloatingOrbs([]);
-        reactionCooldownsRef.current = [];
-        nextOrbId = 0;
+        // Reset treasure box state
+        setCurrentTreasureBox(null);
+        setShowTreasureBox(false);
 
         // Reset tower defense state (always reset, only used in TD mode)
         setEnemies([]);
@@ -1350,7 +1551,14 @@ export function useGameState() {
 
         // Elemental system
         elementalState,
+        elementalStateRef,
         floatingOrbs,
+        spawnElementOrbs,
+        tryTriggerReaction,
+
+        // Treasure box
+        currentTreasureBox,
+        showTreasureBox,
 
         // Tower defense
         enemies,
@@ -1448,10 +1656,9 @@ export function useGameState() {
         triggerDragonBreath,
         endDragonBreath,
         dragonGaugeRef,
-        // Elemental system actions
-        spawnElementOrbs,
-        tryTriggerReaction,
-        elementalStateRef,
+        // Treasure box actions
+        openTreasureBox,
+        finishTreasureBox,
         // Tower defense actions
         spawnEnemies,
         updateEnemies,

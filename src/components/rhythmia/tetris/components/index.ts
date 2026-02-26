@@ -20,6 +20,7 @@ export { RhythmVFX } from './RhythmVFX';
 export { FloatingItems } from './FloatingItems';
 export { ItemSlots } from './ItemSlots';
 export { CardSelectUI } from './CardSelectUI';
+export { TreasureBoxUI } from './TreasureBoxUI';
 export { TerrainParticles } from './TerrainParticles';
 export { WorldTransition, GamePhaseIndicator } from './WorldTransition';
 export { HealthManaHUD } from './HealthManaHUD';

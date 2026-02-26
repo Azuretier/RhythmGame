@@ -23,6 +23,9 @@ interface AIMove {
 const W = 10;
 const H = 20;
 
+// Minimum score advantage the next/hold piece must have to justify saving the current piece
+const HOLD_ADVANTAGE_THRESHOLD = 0.5;
+
 const PIECE_TYPES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'L', 'J'];
 
 const COLORS: Record<PieceType, string> = {
@@ -70,6 +73,11 @@ const SHAPES: Record<PieceType, number[][][]> = {
   ],
 };
 
+// I-pieces start one row above the visible board to allow valid 4-wide placement
+function getInitialY(type: PieceType): number {
+  return type === 'I' ? -1 : 0;
+}
+
 // AI difficulty weights
 export interface AIDifficulty {
   // Heuristic weights
@@ -82,6 +90,10 @@ export interface AIDifficulty {
   moveDelay: number;
   // Probability of making a suboptimal move (0-1)
   mistakeRate: number;
+  // Whether to evaluate the next queued piece for each placement (look-ahead)
+  lookAhead: boolean;
+  // Whether to use the hold piece strategically
+  useHold: boolean;
 }
 
 export const AI_DIFFICULTIES: Record<string, AIDifficulty> = {
@@ -93,6 +105,8 @@ export const AI_DIFFICULTIES: Record<string, AIDifficulty> = {
     wellDepthWeight: 0.05,
     moveDelay: 800,
     mistakeRate: 0.3,
+    lookAhead: false,
+    useHold: false,
   },
   medium: {
     heightWeight: -0.51,
@@ -102,15 +116,30 @@ export const AI_DIFFICULTIES: Record<string, AIDifficulty> = {
     wellDepthWeight: 0.1,
     moveDelay: 500,
     mistakeRate: 0.1,
+    lookAhead: false,
+    useHold: false,
   },
   hard: {
-    heightWeight: -0.51,
-    holesWeight: -0.99,
-    bumpinessWeight: -0.18,
-    lineClearWeight: 0.76,
+    heightWeight: -0.55,
+    holesWeight: -1.0,
+    bumpinessWeight: -0.20,
+    lineClearWeight: 0.80,
     wellDepthWeight: 0.15,
-    moveDelay: 300,
-    mistakeRate: 0.02,
+    moveDelay: 250,
+    mistakeRate: 0.01,
+    lookAhead: true,
+    useHold: false,
+  },
+  expert: {
+    heightWeight: -0.66,
+    holesWeight: -1.2,
+    bumpinessWeight: -0.24,
+    lineClearWeight: 1.0,
+    wellDepthWeight: 0.20,
+    moveDelay: 180,
+    mistakeRate: 0.0,
+    lookAhead: true,
+    useHold: true,
   },
 };
 
@@ -118,7 +147,8 @@ export const AI_DIFFICULTIES: Record<string, AIDifficulty> = {
 export function getDifficultyForRank(points: number): AIDifficulty {
   if (points < 1500) return AI_DIFFICULTIES.easy;
   if (points < 5000) return AI_DIFFICULTIES.medium;
-  return AI_DIFFICULTIES.hard;
+  if (points < 10000) return AI_DIFFICULTIES.hard;
+  return AI_DIFFICULTIES.expert;
 }
 
 function getShape(type: PieceType, rotation: number): number[][] {
@@ -261,7 +291,7 @@ function getAllPossibleMoves(
 
     // Try all x positions
     for (let x = -2; x < W + 2; x++) {
-      const piece: Piece = { type: pieceType, rotation, x, y: pieceType === 'I' ? -1 : 0 };
+      const piece: Piece = { type: pieceType, rotation, x, y: getInitialY(pieceType) };
 
       if (!isValid(piece, board)) continue;
 
@@ -298,18 +328,40 @@ export function findBestMove(
   pieceType: PieceType,
   board: (BoardCell | null)[][],
   difficulty: AIDifficulty,
+  nextPieceType?: PieceType,
 ): AIMove | null {
   const moves = getAllPossibleMoves(pieceType, board);
   if (moves.length === 0) return null;
 
   // Score each move
   for (const move of moves) {
-    const piece: Piece = { type: pieceType, rotation: move.rotation, x: move.x, y: pieceType === 'I' ? -1 : 0 };
+    const piece: Piece = { type: pieceType, rotation: move.rotation, x: move.x, y: getInitialY(pieceType) };
     const landY = getGhostY(piece, board);
     const landedPiece: Piece = { ...piece, y: landY };
     const newBoard = lockPiece(landedPiece, board);
     const { board: clearedBoard, cleared } = clearLines(newBoard);
-    move.score = evaluateBoard(clearedBoard, cleared, difficulty);
+    let score = evaluateBoard(clearedBoard, cleared, difficulty);
+
+    // 1-piece look-ahead: blend in the best achievable score for the next piece
+    if (difficulty.lookAhead && nextPieceType) {
+      const nextMoves = getAllPossibleMoves(nextPieceType, clearedBoard);
+      if (nextMoves.length > 0) {
+        let bestNextScore = -Infinity;
+        for (const nextMove of nextMoves) {
+          const np: Piece = { type: nextPieceType, rotation: nextMove.rotation, x: nextMove.x, y: getInitialY(nextPieceType) };
+          const nLandY = getGhostY(np, clearedBoard);
+          const nLanded: Piece = { ...np, y: nLandY };
+          const nBoard = lockPiece(nLanded, clearedBoard);
+          const { board: nCleared, cleared: nLines } = clearLines(nBoard);
+          const nextScore = evaluateBoard(nCleared, nLines, difficulty);
+          if (nextScore > bestNextScore) bestNextScore = nextScore;
+        }
+        // Weighted blend: 60% current placement, 40% best follow-up
+        score = score * 0.6 + bestNextScore * 0.4;
+      }
+    }
+
+    move.score = score;
   }
 
   // Sort by score (highest first)
@@ -443,8 +495,49 @@ export class TetrisAIGame {
       this.pendingGarbage = 0;
     }
 
-    // Find best move
-    const bestMove = findBestMove(pieceType, this.board, this.difficulty);
+    // Determine the piece to actually play (may swap with hold)
+    let actualPieceType = pieceType;
+    let cachedBestMove: AIMove | null | undefined;
+    if (this.difficulty.useHold && !this.holdUsed) {
+      if (this.holdPiece !== null) {
+        // Swap with hold if the hold piece achieves a better score.
+        // Cache both evaluations so the winning result is reused directly at execution.
+        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0]);
+        const currentScore = cachedBestMove?.score ?? -Infinity;
+        const holdBestMove = findBestMove(this.holdPiece, this.board, this.difficulty, this.nextQueue[0]);
+        const holdScore = holdBestMove?.score ?? -Infinity;
+        if (holdScore > currentScore) {
+          const saved = this.holdPiece;
+          this.holdPiece = pieceType;
+          this.holdUsed = true;
+          actualPieceType = saved;
+          // Reuse the move evaluated during the decision — same board and look-ahead
+          cachedBestMove = holdBestMove;
+        }
+      } else if (this.nextQueue.length > 0) {
+        // No hold piece yet — save current if next piece gives a significantly better placement.
+        // Evaluate the next piece with nextQueue[1] as its look-ahead (the piece that follows it).
+        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0]);
+        const currentScore = cachedBestMove?.score ?? -Infinity;
+        const nextLookahead = this.nextQueue[1] ?? pieceType;
+        const nextBestMove = findBestMove(this.nextQueue[0], this.board, this.difficulty, nextLookahead);
+        const nextScore = nextBestMove?.score ?? -Infinity;
+        if (nextScore > currentScore + HOLD_ADVANTAGE_THRESHOLD) {
+          this.holdPiece = pieceType;
+          this.holdUsed = true;
+          actualPieceType = this.nextQueue.shift()!;
+          this.fillQueue();
+          // Reuse the move evaluated during the decision — same board and look-ahead.
+          // nextBestMove was computed with nextLookahead = nextQueue[1] before the shift;
+          // after shift nextQueue[0] becomes that same piece, but we skip the recompute
+          // entirely by reusing the cached result.
+          cachedBestMove = nextBestMove;
+        }
+      }
+    }
+
+    // Find best move, with look-ahead when enabled (reuse cached result if available)
+    const bestMove = cachedBestMove ?? findBestMove(actualPieceType, this.board, this.difficulty, this.nextQueue[0]);
 
     if (!bestMove) {
       // Game over - can't place
@@ -455,17 +548,17 @@ export class TetrisAIGame {
 
     // Create and place piece
     const piece: Piece = {
-      type: pieceType,
+      type: actualPieceType,
       rotation: bestMove.rotation,
       x: bestMove.x,
-      y: pieceType === 'I' ? -1 : 0,
+      y: getInitialY(actualPieceType),
     };
 
     const landY = getGhostY(piece, this.board);
     const landedPiece: Piece = { ...piece, y: landY };
 
     // Check if piece is above board
-    const shape = getShape(pieceType, bestMove.rotation);
+    const shape = getShape(actualPieceType, bestMove.rotation);
     let aboveBoard = true;
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
@@ -507,7 +600,7 @@ export class TetrisAIGame {
       this.score,
       this.lines,
       this.combo,
-      pieceType,
+      actualPieceType,
       this.holdPiece,
     );
 

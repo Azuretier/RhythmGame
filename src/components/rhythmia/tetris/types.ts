@@ -96,9 +96,29 @@ export type GamePhase =
     | 'PLAYING'
     | 'CARD_SELECT'
     | 'CARD_ABSORBING'
+    | 'TREASURE_BOX'
     | 'COLLAPSE'
     | 'TRANSITION'
     | 'CHECKPOINT';
+
+// ===== Treasure Box System =====
+export type TreasureBoxTier = 'wooden' | 'iron' | 'golden' | 'crystal';
+
+export type TreasureBoxBoostEffect = 'score_boost' | 'terrain_surge' | 'lucky_drops' | 'gravity_slow';
+
+export type TreasureBoxReward =
+    | { type: 'materials'; items: { itemId: string; count: number }[] }
+    | { type: 'score_bonus'; amount: number }
+    | { type: 'free_card'; card: RogueCard }
+    | { type: 'effect_boost'; effect: TreasureBoxBoostEffect; value: number; duration: number };
+
+export type TreasureBox = {
+    id: number;
+    tier: TreasureBoxTier;
+    rewards: TreasureBoxReward[];
+    opened: boolean;
+    spawnStage: number;
+};
 
 // ===== Item System =====
 // Shared types re-exported from @/lib/items for backward compatibility
@@ -203,6 +223,9 @@ export type CardOffer = {
 // Grid position for block-based movement (orthogonal only, 1 tile per turn)
 export type GridPos = { gx: number; gz: number };
 
+// Minecraft-style enemy types for TD phase
+export type TDEnemyType = 'zombie' | 'skeleton' | 'creeper' | 'spider' | 'enderman';
+
 export type Enemy = {
     id: number;
     // World-space position (derived from grid coords for rendering)
@@ -217,6 +240,8 @@ export type Enemy = {
     maxHealth: number;
     alive: boolean;
     spawnTime: number;
+    // Minecraft mob type for visual appearance
+    enemyType: TDEnemyType;
 };
 
 export type Bullet = {

@@ -65,6 +65,7 @@ import {
   FloatingItems,
   ItemSlots,
   CardSelectUI,
+  TreasureBoxUI,
   TerrainParticles,
   WorldTransition,
   GamePhaseIndicator,
@@ -306,9 +307,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     tdBeatsRemaining,
     // Dragon gauge
     dragonGauge,
-    // Elemental system
-    elementalState,
-    floatingOrbs,
+    // Treasure box
+    currentTreasureBox,
+    showTreasureBox,
     // Tower defense
     enemies,
     bullets,
@@ -383,10 +384,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     triggerDragonBreath,
     endDragonBreath,
     dragonGaugeRef,
-    // Elemental system actions
+    // Treasure box actions
+    openTreasureBox,
+    finishTreasureBox,
+    // Elemental actions
     spawnElementOrbs,
     tryTriggerReaction,
-    elementalStateRef,
     // Terrain phase actions
     enterCheckpoint,
     completeWave,
@@ -1393,8 +1396,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       if (!isPlaying || gameOver) return;
       if (e.repeat) return;
 
-      // Don't process game inputs while card select is showing
-      if (showCardSelect) return;
+      // Don't process game inputs while card select or treasure box is showing
+      if (showCardSelect || showTreasureBox) return;
 
       const currentTime = performance.now();
 
@@ -1501,7 +1504,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCardSelect, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
+  }, [isPlaying, isPaused, gameOver, showCardSelect, showTreasureBox, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
 
   // Mouse input handlers — move piece by hovering over board columns,
   // hold left/right button to soft drop (driven by game loop via mouseHeldRef),
@@ -1626,7 +1629,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       boardEl.removeEventListener('wheel', handleWheel);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isPlaying, gameOver, showCardSelect, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
+  }, [isPlaying, gameOver, showCardSelect, showTreasureBox, featureSettings.mouseControls, moveHorizontal, rotatePiece, isPausedRef, gameOverRef, currentPieceRef]);
 
   // Clean up action toasts on unmount
   useEffect(() => {
@@ -1865,6 +1868,15 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           isPlaying={isPlaying && !gameOver}
           onStart={vfx.start}
           onStop={vfx.stop}
+        />
+      )}
+
+      {/* Treasure box overlay */}
+      {showTreasureBox && currentTreasureBox && (
+        <TreasureBoxUI
+          box={currentTreasureBox}
+          onOpen={openTreasureBox}
+          onFinish={finishTreasureBox}
         />
       )}
 
