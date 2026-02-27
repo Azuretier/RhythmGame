@@ -46,8 +46,9 @@ next-env.d.ts
 /public/sitemap.xml
 /public/sitemap-*.xml
 
-# claude
-/tasks
+# claude-worker
+claude-worker.ps1
+tasks
 .claude
 .agent/
 .agents/
