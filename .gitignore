@@ -49,3 +49,6 @@ next-env.d.ts
 # claude
 /tasks
 .claude
+.agent/
+.agents/
+skills-lock.json
