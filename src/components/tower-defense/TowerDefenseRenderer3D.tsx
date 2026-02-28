@@ -104,20 +104,18 @@ function TerrainGrid({ grid, onCellClick, hoveredCell, canPlace }: {
 
 // ===== Path Visualization =====
 function PathLine({ waypoints }: { waypoints: Vec3[] }) {
-  const points = useMemo(() => {
-    return waypoints.map(wp => new THREE.Vector3(wp.x, 0.15, wp.z));
-  }, [waypoints]);
+  const ref = useRef<THREE.Line>(null);
 
   const lineGeo = useMemo(() => {
-    const geo = new THREE.BufferGeometry().setFromPoints(points);
-    return geo;
-  }, [points]);
+    const points = waypoints.map(wp => new THREE.Vector3(wp.x, 0.15, wp.z));
+    return new THREE.BufferGeometry().setFromPoints(points);
+  }, [waypoints]);
 
-  return (
-    <line geometry={lineGeo}>
-      <lineBasicMaterial color="#fbbf24" linewidth={2} transparent opacity={0.5} />
-    </line>
-  );
+  const lineMat = useMemo(() => {
+    return new THREE.LineBasicMaterial({ color: '#fbbf24', transparent: true, opacity: 0.5 });
+  }, []);
+
+  return <primitive ref={ref} object={new THREE.Line(lineGeo, lineMat)} />;
 }
 
 // ===== Towers =====
