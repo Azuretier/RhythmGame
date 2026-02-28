@@ -1,0 +1,172 @@
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+  cursor: default;
+}
+
+.container canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Loading screen */
+.loadingScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #2a1a0e;
+  z-index: 100;
+  gap: 24px;
+}
+
+.loadingTitle {
+  font-family: monospace;
+  font-size: 32px;
+  color: #f0e0c0;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.loadingBarOuter {
+  width: 320px;
+  height: 16px;
+  background: #3c2415;
+  border: 2px solid #5a3a20;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loadingBarInner {
+  height: 100%;
+  background: #5dbb3c;
+  transition: width 0.3s ease;
+}
+
+.loadingText {
+  font-family: monospace;
+  font-size: 14px;
+  color: #c0a878;
+}
+
+/* Overlay / start screen */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 50;
+  cursor: pointer;
+}
+
+.overlayContent {
+  text-align: center;
+  color: #fff;
+  font-family: monospace;
+}
+
+.overlayContent h2 {
+  font-size: 36px;
+  margin-bottom: 12px;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0 #000;
+  color: #f0e0c0;
+}
+
+.overlayContent p {
+  font-size: 18px;
+  margin-bottom: 24px;
+  color: #ccc;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: #aaa;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 16px 32px;
+  border-radius: 4px;
+}
+
+.controls p {
+  margin: 0;
+  font-size: 14px;
+  color: #aaa;
+}
+
+/* Crosshair */
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 24px;
+  font-family: monospace;
+  pointer-events: none;
+  z-index: 10;
+  mix-blend-mode: difference;
+  user-select: none;
+  line-height: 1;
+}
+
+/* HUD info */
+.hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-family: monospace;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  z-index: 10;
+  pointer-events: none;
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.coordLine {
+  opacity: 0.85;
+}
+
+/* Back button */
+.backButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 60;
+  font-family: monospace;
+  font-size: 13px;
+  color: #ccc;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.backButton:hover {
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
