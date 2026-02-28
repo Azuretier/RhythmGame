@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import type { GameState, TowerType, Tower } from '@/types/tower-defense';
-import { TOWER_DEFS, TOWER_DEFS as TD } from '@/types/tower-defense';
+import { TOWER_DEFS } from '@/types/tower-defense';
 import {
   createInitialState,
   updateGame,
@@ -14,6 +14,7 @@ import {
   canPlaceTower,
 } from '@/lib/tower-defense/engine';
 import { MAPS } from '@/lib/tower-defense/maps';
+import * as sfx from '@/lib/tower-defense/sounds';
 import styles from './TowerDefenseGame.module.css';
 
 // Dynamically import 3D renderer to avoid SSR issues
@@ -139,10 +140,23 @@ export default function TowerDefenseGame() {
   const [selectedMap, setSelectedMap] = useState(0);
   const [state, setState] = useState<GameState>(() => createInitialState(0));
   const [hoveredTower, setHoveredTower] = useState<TowerType | null>(null);
+  const [soundOn, setSoundOn] = useState(true);
   const frameRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
+  const prevStateRef = useRef<GameState | null>(null);
+  const audioInitRef = useRef(false);
+  // Throttle shooting sounds to avoid overwhelming audio
+  const lastShootSoundRef = useRef<number>(0);
 
-  // Game loop
+  // Init audio on first user interaction
+  const ensureAudio = useCallback(() => {
+    if (!audioInitRef.current) {
+      sfx.initAudio();
+      audioInitRef.current = true;
+    }
+  }, []);
+
+  // Game loop with sound event detection
   useEffect(() => {
     if (menuPhase !== 'playing') return;
 
@@ -151,13 +165,75 @@ export default function TowerDefenseGame() {
       const dt = Math.min((time - lastTimeRef.current) / 1000, 0.1); // cap at 100ms
       lastTimeRef.current = time;
 
-      setState(prev => updateGame(prev, dt));
+      setState(prev => {
+        const next = updateGame(prev, dt);
+
+        // Sound event detection — compare prev vs next
+        if (audioInitRef.current && !sfx.isMuted()) {
+          // New projectiles = tower firing
+          if (next.projectiles.length > prev.projectiles.length) {
+            const now = performance.now();
+            if (now - lastShootSoundRef.current > 80) {
+              lastShootSoundRef.current = now;
+              const newProj = next.projectiles[next.projectiles.length - 1];
+              if (newProj) sfx.playShoot(newProj.towerType);
+            }
+          }
+
+          // Enemy killed — fewer alive enemies (not from reaching base)
+          const prevAlive = prev.enemies.length;
+          const nextAlive = next.enemies.length;
+          if (nextAlive < prevAlive && next.lives === prev.lives) {
+            const killed = prevAlive - nextAlive;
+            // Check if a boss died
+            const prevBossIds = new Set(prev.enemies.filter(e => e.type === 'boss').map(e => e.id));
+            const nextBossIds = new Set(next.enemies.map(e => e.id));
+            const bossKilled = [...prevBossIds].some(id => !nextBossIds.has(id));
+            if (bossKilled) {
+              sfx.playBossKill();
+            } else if (killed > 0) {
+              sfx.playEnemyKill();
+            }
+          }
+
+          // Life lost
+          if (next.lives < prev.lives) {
+            sfx.playLifeLost();
+          }
+
+          // Phase transitions
+          if (prev.phase === 'build' && next.phase === 'wave') {
+            sfx.playWaveStart();
+          }
+          if (prev.phase === 'wave' && next.phase === 'build') {
+            sfx.playWaveComplete();
+          }
+          if (prev.phase !== 'won' && next.phase === 'won') {
+            sfx.playGameWon();
+          }
+          if (prev.phase !== 'lost' && next.phase === 'lost') {
+            sfx.playGameLost();
+          }
+        }
+
+        prevStateRef.current = prev;
+        return next;
+      });
       frameRef.current = requestAnimationFrame(loop);
     };
 
     frameRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frameRef.current);
   }, [menuPhase]);
+
+  const handleSoundToggle = useCallback(() => {
+    setSoundOn(prev => {
+      const next = !prev;
+      sfx.setMuted(!next);
+      if (next) sfx.playUIClick();
+      return next;
+    });
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -167,6 +243,8 @@ export default function TowerDefenseGame() {
       // Number keys 1-7 to select tower types
       const num = parseInt(e.key);
       if (num >= 1 && num <= TOWER_ORDER.length) {
+        ensureAudio();
+        sfx.playUIClick();
         const type = TOWER_ORDER[num - 1];
         setState(prev => ({
           ...prev,
@@ -186,6 +264,7 @@ export default function TowerDefenseGame() {
 
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
+        ensureAudio();
         setState(prev => {
           if (prev.phase === 'build') return startWave(prev);
           return prev;
@@ -193,47 +272,69 @@ export default function TowerDefenseGame() {
       }
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        ensureAudio();
         setState(prev => {
-          if (prev.selectedTowerId) return sellTower(prev, prev.selectedTowerId);
+          if (prev.selectedTowerId) {
+            sfx.playTowerSell();
+            return sellTower(prev, prev.selectedTowerId);
+          }
           return prev;
         });
       }
 
       if (e.key === 'u' || e.key === 'U') {
+        ensureAudio();
         setState(prev => {
-          if (prev.selectedTowerId) return upgradeTower(prev, prev.selectedTowerId);
+          if (prev.selectedTowerId) {
+            const next = upgradeTower(prev, prev.selectedTowerId);
+            if (next !== prev) sfx.playTowerUpgrade();
+            else sfx.playInvalid();
+            return next;
+          }
           return prev;
         });
+      }
+
+      if (e.key === 'm' || e.key === 'M') {
+        handleSoundToggle();
       }
     };
 
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [menuPhase]);
+  }, [menuPhase, ensureAudio, handleSoundToggle]);
 
   const handleCellClick = useCallback((x: number, z: number) => {
+    ensureAudio();
     setState(prev => {
       if (prev.selectedTowerType) {
         if (canPlaceTower(prev, x, z)) {
+          sfx.playTowerPlace();
           const newState = placeTower(prev, prev.selectedTowerType!, x, z);
           return { ...newState, selectedTowerType: null };
         }
+        sfx.playInvalid();
         return prev;
       }
       // Check if clicking on a tower
       const cell = prev.map.grid[z]?.[x];
       if (cell?.towerId) {
+        sfx.playUIClick();
         return { ...prev, selectedTowerId: cell.towerId, selectedTowerType: null };
       }
       return { ...prev, selectedTowerId: null };
     });
-  }, []);
+  }, [ensureAudio]);
 
   const handleSelectTower = useCallback((id: string) => {
+    ensureAudio();
+    sfx.playUIClick();
     setState(prev => ({ ...prev, selectedTowerId: id, selectedTowerType: null }));
-  }, []);
+  }, [ensureAudio]);
 
   const handleTowerTypeSelect = useCallback((type: TowerType) => {
+    ensureAudio();
+    sfx.playUIClick();
     setState(prev => {
       if (prev.gold < TOWER_DEFS[type].cost) return prev;
       return {
@@ -242,42 +343,53 @@ export default function TowerDefenseGame() {
         selectedTowerId: null,
       };
     });
-  }, []);
+  }, [ensureAudio]);
 
   const handleStartWave = useCallback(() => {
+    ensureAudio();
     setState(prev => startWave(prev));
-  }, []);
+  }, [ensureAudio]);
 
   const handleUpgrade = useCallback(() => {
+    ensureAudio();
     setState(prev => {
       if (!prev.selectedTowerId) return prev;
-      return upgradeTower(prev, prev.selectedTowerId);
+      const next = upgradeTower(prev, prev.selectedTowerId);
+      if (next !== prev) sfx.playTowerUpgrade();
+      else sfx.playInvalid();
+      return next;
     });
-  }, []);
+  }, [ensureAudio]);
 
   const handleSell = useCallback(() => {
+    ensureAudio();
     setState(prev => {
       if (!prev.selectedTowerId) return prev;
+      sfx.playTowerSell();
       return sellTower(prev, prev.selectedTowerId);
     });
-  }, []);
+  }, [ensureAudio]);
 
   const handleDeselect = useCallback(() => {
     setState(prev => ({ ...prev, selectedTowerId: null, selectedTowerType: null }));
   }, []);
 
   const handleSpeedToggle = useCallback(() => {
+    ensureAudio();
+    sfx.playUIClick();
     setState(prev => ({
       ...prev,
       gameSpeed: prev.gameSpeed === 1 ? 2 : prev.gameSpeed === 2 ? 3 : 1,
     }));
-  }, []);
+  }, [ensureAudio]);
 
   const handleStart = useCallback(() => {
+    ensureAudio();
+    sfx.playUIClick();
     lastTimeRef.current = 0;
     setState(createInitialState(selectedMap));
     setMenuPhase('playing');
-  }, [selectedMap]);
+  }, [selectedMap, ensureAudio]);
 
   const handleRestart = useCallback(() => {
     lastTimeRef.current = 0;
@@ -363,6 +475,13 @@ export default function TowerDefenseGame() {
 
         <div className={styles.hudRight}>
           <button
+            className={`${styles.speedBtn} ${soundOn ? styles.speedBtnActive : ''}`}
+            onClick={handleSoundToggle}
+            title={soundOn ? 'Mute sounds' : 'Unmute sounds'}
+          >
+            {soundOn ? 'SFX ON' : 'SFX OFF'}
+          </button>
+          <button
             className={`${styles.speedBtn} ${state.gameSpeed > 1 ? styles.speedBtnActive : ''}`}
             onClick={handleSpeedToggle}
           >
@@ -430,7 +549,7 @@ export default function TowerDefenseGame() {
       {/* Controls Hint */}
       <div className={styles.controlsHint}>
         <div>1-7: Select tower &middot; Space: Start wave</div>
-        <div>U: Upgrade &middot; Del: Sell &middot; Esc: Deselect</div>
+        <div>U: Upgrade &middot; Del: Sell &middot; Esc: Deselect &middot; M: Mute</div>
         <div>Drag: Rotate &middot; Scroll: Zoom &middot; Right-drag: Pan</div>
       </div>
 
