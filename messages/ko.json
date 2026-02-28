@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "동전 수집가",
+      "desc": "총 100 골드 획득"
+    },
+    "gold_1000": {
+      "name": "동전 비축자",
+      "desc": "총 1,000 골드 획득"
+    },
+    "gold_5000": {
+      "name": "보물 사냥꾼",
+      "desc": "총 5,000 골드 획득"
+    },
+    "gold_25000": {
+      "name": "골드 킹",
+      "desc": "총 25,000 골드 획득"
+    },
+    "gold_100000": {
+      "name": "전설의 거부",
+      "desc": "총 100,000 골드 획득"
+    },
+    "treasure_10": {
+      "name": "보물 발견",
+      "desc": "보물 10개 수집"
+    },
+    "treasure_50": {
+      "name": "보물 탐험가",
+      "desc": "보물 50개 수집"
+    },
+    "treasure_200": {
+      "name": "보물 마스터",
+      "desc": "보물 200개 수집"
+    },
+    "treasure_500": {
+      "name": "보물 수호자",
+      "desc": "보물 500개 수집"
+    },
+    "treasure_1000": {
+      "name": "부의 군주",
+      "desc": "보물 1,000개 수집"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "배틀 아레나",
     "subtitle": "실시간 1v1 배틀",
     "description": "WebSocket을 통한 실시간 1v1 배틀.",
-    "features": "실시간|방해 블록 시스템|랭크전",
-    "stats": "1v1 배틀|8초 매칭|AI 대전"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "랭크전"
+    },
+    "stats": {
+      "mode": "모드",
+      "battle": "배틀",
+      "status": "상태"
+    }
   },
   "uiTheme": {
     "selectTheme": "테마 선택",
@@ -1452,5 +1502,11 @@
     "pill": "알약형",
     "soft": "부드러운",
     "sharp": "날카로운"
+  },
+  "version": {
+    "selectVersion": "사이트 버전",
+    "accentColor": "강조 색상",
+    "latest": "최신",
+    "goHome": "홈페이지로 이동"
   }
 }

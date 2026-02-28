@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Colecionador de Moedas",
+      "desc": "Ganhe 100 de ouro no total"
+    },
+    "gold_1000": {
+      "name": "Acumulador de Moedas",
+      "desc": "Ganhe 1.000 de ouro no total"
+    },
+    "gold_5000": {
+      "name": "Caçador de Tesouros",
+      "desc": "Ganhe 5.000 de ouro no total"
+    },
+    "gold_25000": {
+      "name": "Rei do Ouro",
+      "desc": "Ganhe 25.000 de ouro no total"
+    },
+    "gold_100000": {
+      "name": "Magnata Lendário",
+      "desc": "Ganhe 100.000 de ouro no total"
+    },
+    "treasure_10": {
+      "name": "Tesouro Encontrado",
+      "desc": "Colete 10 tesouros"
+    },
+    "treasure_50": {
+      "name": "Buscador de Tesouros",
+      "desc": "Colete 50 tesouros"
+    },
+    "treasure_200": {
+      "name": "Mestre dos Tesouros",
+      "desc": "Colete 200 tesouros"
+    },
+    "treasure_500": {
+      "name": "Guardião dos Tesouros",
+      "desc": "Colete 500 tesouros"
+    },
+    "treasure_1000": {
+      "name": "Senhor das Riquezas",
+      "desc": "Colete 1.000 tesouros"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "Arena de Batalha",
     "subtitle": "Batalhas 1v1 em tempo real",
     "description": "Batalhas 1v1 em tempo real via WebSocket.",
-    "features": "Tempo Real|Sistema de Lixo|Ranked",
-    "stats": "1v1 Batalha|8s Matchmaking|Fallback de IA"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Ranqueado"
+    },
+    "stats": {
+      "mode": "Modo",
+      "battle": "Batalha",
+      "status": "Status"
+    }
   },
   "uiTheme": {
     "selectTheme": "Selecionar Tema",
@@ -1452,5 +1502,11 @@
     "pill": "Pílula",
     "soft": "Suave",
     "sharp": "Afiado"
+  },
+  "version": {
+    "selectVersion": "Versão do site",
+    "accentColor": "Cor de destaque",
+    "latest": "mais recente",
+    "goHome": "Ir para o início"
   }
 }

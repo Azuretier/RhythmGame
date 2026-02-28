@@ -259,6 +259,41 @@
     "onlineCount": "{count} オンライン",
     "loyalty": "ランキング"
   },
+  "home": {
+    "hero": {
+      "description": "リズムで動くパズルゲーム。ビートに合わせてブロックを落とし、友達とリアルタイムバトル。5つの音楽テーマワールドで実績を解除しよう。",
+      "play": "プレイ",
+      "wiki": "Wiki を見る"
+    },
+    "features": {
+      "title": "ゲームモード",
+      "subtitle": "体験を選ぼう",
+      "vanilla": {
+        "title": "シングルプレイヤー",
+        "description": "5つのワールドをソロでプレイ。地形を壊し、アイテムを集め、BPMが上がる中で武器をクラフト。"
+      },
+      "multiplayer": {
+        "title": "1v1 バトル",
+        "description": "WebSocketでリアルタイム対戦。お邪魔ラインを送り、ランクを上げよう。"
+      },
+      "arena": {
+        "title": "9人アリーナ",
+        "description": "9人で1つのテンポ。カオスギミック、テンポシフト、ランダムイベントを生き延びろ。"
+      },
+      "stories": {
+        "title": "ストーリー",
+        "description": "ナラティブチャプターとユニークなチャレンジのストーリードリブンリズムゲームプレイ。"
+      },
+      "minecraft": {
+        "title": "ボードゲーム",
+        "description": "マイクラ風マルチプレイヤーボードゲーム。採掘、クラフト、モブ討伐、勝利を目指せ。"
+      },
+      "advancements": {
+        "title": "実績",
+        "description": "全ゲームモードで実績を解除。進捗を追跡して報酬を獲得しよう。"
+      }
+    }
+  },
   "googleSync": {
     "sectionTitle": "Googleアカウント同期",
     "description": "Googleでサインインすると、プロフィール、アドバンスメント、ロイヤリティ進捗、スキン設定をデバイス間で同期できます。",
@@ -531,6 +566,8 @@
     "communityResourcesDesc": "RHYTHMIAコミュニティが厳選したチュートリアル、ガイド、動画でゲームプレイを向上させよう。",
     "updatesTitle": "バージョンアップデート",
     "updatesDesc": "最新バージョンの概要動画をチェックして、RHYTHMIAの新機能を確認しよう。",
+    "updateV002Title": "azuretier.net v0.0.2 アップデート概要",
+    "updateV001Title": "azuretier.net v0.0.1 ローンチトレーラー",
     "videoComingSoon": "近日公開",
     "watchVideo": "視聴する",
     "resourceVideosTitle": "動画",
@@ -1500,5 +1537,11 @@
     "pill": "ピル",
     "soft": "ソフト",
     "sharp": "シャープ"
+  },
+  "version": {
+    "selectVersion": "サイトバージョン",
+    "accentColor": "アクセントカラー",
+    "latest": "最新",
+    "goHome": "ホームページへ移動"
   }
 }

@@ -4,6 +4,11 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import type { Enemy, Bullet, TerrainPhase, CorruptionNode } from './tetris/types';
 import { BULLET_GRAVITY, BULLET_GROUND_Y, CORRUPTION_MAX_TERRAIN_NODES } from './tetris/constants';
+import {
+  createMobMesh, animateMob, resetMobPose, disposeMobGroup,
+  disposeSharedMobResources, loadMobGltfModels, getMobHeight,
+  type MobMeshData,
+} from './tetris/minecraft-mobs';
 
 // Simple seeded random for deterministic terrain
 function seededRandom(seed: number) {
@@ -235,6 +240,78 @@ function createBlockBumpMap(): THREE.CanvasTexture {
   const texture = new THREE.CanvasTexture(canvas);
   texture.magFilter = THREE.LinearFilter;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
+  return texture;
+}
+
+// Procedural enemy armor texture — dark panels with glowing energy veins
+function createEnemyArmorTexture(): THREE.CanvasTexture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const rng = seededRandom(77777);
+
+  // Dark base with slight variation
+  const imgData = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      let v = 0.12 + (smoothNoise(x * 0.07, y * 0.07, 3300) - 0.5) * 0.08;
+      v += (rng() - 0.5) * 0.03;
+      v = Math.max(0, Math.min(1, v));
+      imgData.data[idx]     = Math.round(v * 60);  // R — slightly purple-tinted
+      imgData.data[idx + 1] = Math.round(v * 30);  // G
+      imgData.data[idx + 2] = Math.round(v * 90);  // B
+      imgData.data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Armor plate grid lines
+  ctx.strokeStyle = 'rgba(80, 20, 140, 0.7)';
+  ctx.lineWidth = 1.5;
+  const plateSize = 32;
+  for (let y = 0; y < size; y += plateSize) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+  }
+  for (let x = 0; x < size; x += plateSize) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
+  }
+
+  // Glowing energy vein lines (purple/magenta)
+  const veinRng = seededRandom(88888);
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 8; i++) {
+    const alpha = 0.5 + veinRng() * 0.4;
+    ctx.strokeStyle = `rgba(180, 60, 255, ${alpha})`;
+    ctx.beginPath();
+    let px = veinRng() * size;
+    let py = veinRng() * size;
+    ctx.moveTo(px, py);
+    const segs = 3 + Math.floor(veinRng() * 4);
+    for (let j = 0; j < segs; j++) {
+      px += (veinRng() - 0.5) * 40;
+      py += (veinRng() - 0.5) * 40;
+      ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  // Subtle rivets/bolts at plate corners
+  ctx.fillStyle = 'rgba(140, 80, 200, 0.5)';
+  for (let y = plateSize; y < size; y += plateSize) {
+    for (let x = plateSize; x < size; x += plateSize) {
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 }
 
@@ -512,7 +589,6 @@ function createTowerModel(): THREE.Group {
   return tower;
 }
 
-const MAX_ENEMIES = 64;
 const MAX_BULLETS = 32;
 const MAX_IMPACT_PARTICLES = 80;
 
@@ -534,9 +610,6 @@ interface SceneState {
   towerGroup: THREE.Group | null;
   turret: THREE.Group | null;
   muzzleFlash: THREE.Mesh | null;
-  enemyMesh: THREE.InstancedMesh | null;
-  enemyGeo: THREE.BoxGeometry;
-  enemyMat: THREE.MeshStandardMaterial;
   bulletMesh: THREE.InstancedMesh | null;
   bulletGeo: THREE.SphereGeometry;
   bulletMat: THREE.MeshStandardMaterial;
@@ -598,6 +671,10 @@ export default function VoxelWorldBackground({
   const corruptedIndicesRef = useRef<Set<number>>(new Set());
   /** Enemy position interpolation state: id → {fromX, fromZ, toX, toZ, t} */
   const enemyLerpRef = useRef<Map<number, { fromX: number; fromZ: number; toX: number; toZ: number; t: number }>>(new Map());
+  /** Mob mesh groups — maps enemy ID to its articulated Minecraft-style mesh */
+  const mobMeshMapRef = useRef<Map<number, MobMeshData>>(new Map());
+  /** Free mob meshes available for reuse (by type) */
+  const freeMobsRef = useRef<MobMeshData[]>([]);
 
   // Build terrain mesh into the scene (called once)
   const buildTerrain = useCallback((terrainSeed: number, mode: TerrainPhase, wIdx: number = 0) => {
@@ -674,15 +751,20 @@ export default function VoxelWorldBackground({
       ss.turret = towerGroup.getObjectByName('turret') as THREE.Group || null;
       ss.muzzleFlash = ss.turret?.getObjectByName('muzzle') as THREE.Mesh || null;
 
-      // Show enemy, bullet, and impact meshes
-      if (ss.enemyMesh) ss.enemyMesh.visible = true;
+      // Show bullet and impact meshes; mob groups are managed per-frame
       if (ss.bulletMesh) ss.bulletMesh.visible = true;
       if (ss.impactMesh) ss.impactMesh.visible = true;
+      // Show all active mob groups
+      for (const mob of mobMeshMapRef.current.values()) {
+        mob.group.visible = true;
+      }
     } else {
-      // Dig phase: hide enemy, bullet, and impact meshes
-      if (ss.enemyMesh) ss.enemyMesh.visible = false;
+      // Dig phase: hide bullet, impact meshes and all mob groups
       if (ss.bulletMesh) ss.bulletMesh.visible = false;
       if (ss.impactMesh) ss.impactMesh.visible = false;
+      for (const mob of mobMeshMapRef.current.values()) {
+        mob.group.visible = false;
+      }
       ss.turret = null;
       ss.muzzleFlash = null;
     }
@@ -739,19 +821,8 @@ export default function VoxelWorldBackground({
       roughnessMap: roughnessMap,
     });
 
-    // Enemy instanced mesh — bright and visible
-    const enemyGeo = new THREE.BoxGeometry(1.5, 2.2, 1.5);
-    const enemyMat = new THREE.MeshStandardMaterial({
-      color: 0xFF3333,
-      roughness: 0.4,
-      metalness: 0.3,
-      flatShading: true,
-      emissive: 0xFF0000,
-      emissiveIntensity: 0.6,
-    });
-    const enemyMesh = new THREE.InstancedMesh(enemyGeo, enemyMat, MAX_ENEMIES);
-    enemyMesh.count = 0;
-    scene.add(enemyMesh);
+    // Load GLTF mob models (async — falls back to procedural if unavailable)
+    loadMobGltfModels();
 
     // Bullet instanced mesh — green glowing projectiles (tower defense style)
     const bulletGeo = new THREE.SphereGeometry(0.2, 12, 8);
@@ -797,7 +868,6 @@ export default function VoxelWorldBackground({
       towerGroup: null,
       turret: null,
       muzzleFlash: null,
-      enemyMesh, enemyGeo, enemyMat,
       bulletMesh, bulletGeo, bulletMat,
       impactMesh, impactGeo, impactMat,
       corruptMesh, corruptGeo, corruptMat,
@@ -824,7 +894,6 @@ export default function VoxelWorldBackground({
     // Animation loop
     let lastTime = 0;
     const dummy = new THREE.Object3D();
-    const enemyColor = new THREE.Color();
     const projVec = new THREE.Vector3();
 
     // Bullet tracking for muzzle flash and impact detection
@@ -876,36 +945,68 @@ export default function VoxelWorldBackground({
           ss.towerGroup.rotation.y = ss.instancedMesh.rotation.y;
         }
 
-        // Update enemy instances — grounded on terrain, smooth block-by-block walk
-        if (ss?.enemyMesh) {
+        // Update Minecraft-style mob groups — articulated walking mobs
+        if (ss) {
           const currentEnemies = enemiesRef.current.filter(e => e.alive);
-          ss.enemyMesh.count = currentEnemies.length;
-
           const terrainRotY = ss.instancedMesh?.rotation.y ?? 0;
           const cosR = Math.cos(terrainRotY);
           const sinR = Math.sin(terrainRotY);
 
-          // Enemy ground Y: top of terrain block (0.95 box at y=0, top surface = 0.475)
-          // Enemy geometry is 2.2 tall, center at 0.475 + 1.1 = 1.575
-          const groundY = 1.575;
+          // Ground Y: top of terrain block (0.95 box at y=0, top surface = 0.475)
+          const feetGroundY = 0.475;
 
           const lerpMap = enemyLerpRef.current;
+          const mobMap = mobMeshMapRef.current;
+          const freeMobs = freeMobsRef.current;
           const currentIds = new Set<number>();
-          const LERP_SPEED = 6.0; // units per second — completes ~1 tile move in ~0.17s
+          const LERP_SPEED = 6.0;
+          const timeSec = time * 0.001;
 
-          for (let i = 0; i < currentEnemies.length; i++) {
-            const e = currentEnemies[i];
+          // Assign mob meshes to new enemies, recycle dead ones
+          for (const e of currentEnemies) {
             currentIds.add(e.id);
+            if (!mobMap.has(e.id)) {
+              // Try to reuse a free mob of the same type
+              const freeIdx = freeMobs.findIndex(m => m.type === e.enemyType);
+              let mob: MobMeshData;
+              if (freeIdx >= 0) {
+                mob = freeMobs.splice(freeIdx, 1)[0];
+                resetMobPose(mob);
+              } else {
+                mob = createMobMesh(e.enemyType);
+                ss.scene.add(mob.group);
+              }
+              mob.group.visible = true;
+              mobMap.set(e.id, mob);
+            }
+          }
+
+          // Free mob meshes for dead enemies
+          for (const [id, mob] of mobMap) {
+            if (!currentIds.has(id)) {
+              mob.group.visible = false;
+              freeMobs.push(mob);
+              mobMap.delete(id);
+            }
+          }
+
+          // Clean up stale lerp entries
+          for (const id of lerpMap.keys()) {
+            if (!currentIds.has(id)) lerpMap.delete(id);
+          }
+
+          // Position and animate each active mob
+          for (const e of currentEnemies) {
+            const mob = mobMap.get(e.id);
+            if (!mob) continue;
 
             // Smooth interpolation between grid positions
             let lerp = lerpMap.get(e.id);
             if (!lerp) {
-              // New enemy — start at current position
               lerp = { fromX: e.x, fromZ: e.z, toX: e.x, toZ: e.z, t: 1 };
               lerpMap.set(e.id, lerp);
             }
 
-            // Detect new target position
             if (lerp.toX !== e.x || lerp.toZ !== e.z) {
               lerp.fromX = lerp.fromX + (lerp.toX - lerp.fromX) * lerp.t;
               lerp.fromZ = lerp.fromZ + (lerp.toZ - lerp.fromZ) * lerp.t;
@@ -914,41 +1015,27 @@ export default function VoxelWorldBackground({
               lerp.t = 0;
             }
 
-            // Advance interpolation
             if (lerp.t < 1) {
               lerp.t = Math.min(1, lerp.t + delta * LERP_SPEED);
             }
 
-            // Smooth step easing
             const st = lerp.t * lerp.t * (3 - 2 * lerp.t);
             const lerpX = lerp.fromX + (lerp.toX - lerp.fromX) * st;
             const lerpZ = lerp.fromZ + (lerp.toZ - lerp.fromZ) * st;
 
-            // Rotate with terrain
+            // Apply terrain rotation
             const rx = lerpX * cosR - lerpZ * sinR;
             const rz = lerpX * sinR + lerpZ * cosR;
 
-            dummy.position.set(rx, groundY, rz);
-            dummy.scale.set(1, 1, 1);
-            dummy.rotation.set(0, 0, 0);
-            dummy.lookAt(new THREE.Vector3(0, groundY, 0));
-            dummy.updateMatrix();
-            ss.enemyMesh.setMatrixAt(i, dummy.matrix);
+            // Position mob group (feet at ground level)
+            mob.group.position.set(rx, feetGroundY, rz);
 
-            // Color: red-orange spectrum by enemy id
-            const hue = (e.id * 0.07) % 1;
-            enemyColor.setHSL(hue * 0.08 + 0.0, 0.95, 0.5);
-            ss.enemyMesh.setColorAt(i, enemyColor);
-          }
+            // Face toward tower center (0, feetGroundY, 0)
+            mob.group.lookAt(0, feetGroundY, 0);
 
-          // Clean up stale lerp entries for dead enemies
-          for (const id of lerpMap.keys()) {
-            if (!currentIds.has(id)) lerpMap.delete(id);
-          }
-
-          if (currentEnemies.length > 0) {
-            ss.enemyMesh.instanceMatrix.needsUpdate = true;
-            if (ss.enemyMesh.instanceColor) ss.enemyMesh.instanceColor.needsUpdate = true;
+            // Walking animation when moving
+            const isMoving = lerp.t < 1;
+            animateMob(mob, timeSec + e.id * 0.5, isMoving);
           }
         }
 
@@ -1162,8 +1249,6 @@ export default function VoxelWorldBackground({
         const sinR = Math.sin(terrainRotY);
 
         for (const e of currentEnemies) {
-          // Only show HP bar if enemy has taken damage
-          if (e.health >= e.maxHealth) continue;
 
           // Use interpolated position for smooth HP bar tracking
           const lerpState = enemyLerpRef.current.get(e.id);
@@ -1173,8 +1258,9 @@ export default function VoxelWorldBackground({
           // Project enemy position to screen (with terrain rotation)
           const rx = dispX * cosR - dispZ * sinR;
           const rz = dispX * sinR + dispZ * cosR;
-          // Grounded enemy top: 1.575 (center) + 1.1 (half height) = 2.675
-          projVec.set(rx, 2.675 + 0.3, rz);
+          // HP bar above mob head: ground (0.475) + mob height + gap
+          const mobHeight = getMobHeight(e.enemyType);
+          projVec.set(rx, 0.475 + mobHeight + 0.3, rz);
           projVec.project(camera);
 
           // Convert NDC to canvas pixels
@@ -1202,6 +1288,17 @@ export default function VoxelWorldBackground({
           hpCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
           hpCtx.lineWidth = 0.5;
           hpCtx.strokeRect(sx - barW / 2, sy - barH / 2, barW, barH);
+
+          // HP number text
+          hpCtx.font = 'bold 9px monospace';
+          hpCtx.textAlign = 'center';
+          hpCtx.textBaseline = 'bottom';
+          hpCtx.fillStyle = '#ffffff';
+          hpCtx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+          hpCtx.lineWidth = 2;
+          const hpText = `${e.health}/${e.maxHealth}`;
+          hpCtx.strokeText(hpText, sx, sy - barH / 2 - 1);
+          hpCtx.fillText(hpText, sx, sy - barH / 2 - 1);
         }
       }
     };
@@ -1219,13 +1316,18 @@ export default function VoxelWorldBackground({
       bumpMap.dispose();
       roughnessMap.dispose();
       boxMat.dispose();
-      enemyGeo.dispose();
-      enemyMat.dispose();
+      // Dispose all active and pooled mob meshes
+      for (const mob of mobMeshMapRef.current.values()) {
+        disposeMobGroup(mob);
+      }
+      mobMeshMapRef.current.clear();
+      for (const mob of freeMobsRef.current) {
+        disposeMobGroup(mob);
+      }
+      freeMobsRef.current.length = 0;
+      disposeSharedMobResources();
       if (sceneStateRef.current?.instancedMesh) {
         sceneStateRef.current.instancedMesh.dispose();
-      }
-      if (sceneStateRef.current?.enemyMesh) {
-        sceneStateRef.current.enemyMesh.dispose();
       }
       if (sceneStateRef.current?.bulletMesh) {
         sceneStateRef.current.bulletMesh.dispose();

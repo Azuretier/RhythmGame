@@ -1137,6 +1137,8 @@
     "obsidianEdge": "Filo de Obsidiana",
     "materialHeader": "Material",
     "updatesDesc": "Mira los últimos resúmenes de versión y descubre las novedades de RHYTHMIA.",
+    "updateV002Title": "Resumen de actualización de azuretier.net v0.0.2",
+    "updateV001Title": "Tráiler de lanzamiento de azuretier.net v0.0.1",
     "tSpinExpert": "Experto en T-Spin",
     "crystalWand": "Varita de Cristal",
     "killsPerLine": "Muertes por Línea",
@@ -1500,5 +1502,11 @@
       "cndEncore": "Encore",
       "cndEncoreDesc": "Una vez por partida, revive tras ser noqueado con una explosión de beat"
     }
+  },
+  "version": {
+    "selectVersion": "Versión del sitio",
+    "accentColor": "Color de acento",
+    "latest": "última",
+    "goHome": "Ir al inicio"
   }
 }

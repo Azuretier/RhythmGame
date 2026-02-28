@@ -744,6 +744,8 @@
     "lineBeginner": "มือใหม่ไลน์",
     "scoreMaster": "ปรมาจารย์คะแนน",
     "updatesDesc": "ดูภาพรวมเวอร์ชันล่าสุดและดูว่ามีอะไรใหม่ใน RHYTHMIA",
+    "updateV002Title": "ภาพรวมอัปเดต azuretier.net v0.0.2",
+    "updateV001Title": "ตัวอย่างเปิดตัว azuretier.net v0.0.1",
     "rankedFeat": "จัดอันดับ",
     "tut8Step2Title": "Rotation Efficiency",
     "killsPerLine": "สังหารต่อไลน์",
@@ -1500,5 +1502,11 @@
       "cndEncore": "อองคอร์",
       "cndEncoreDesc": "ครั้งเดียวต่อเกม ฟื้นคืนจากการน็อกเอาต์ด้วยการระเบิดบีต"
     }
+  },
+  "version": {
+    "selectVersion": "เวอร์ชันเว็บไซต์",
+    "accentColor": "สีเน้น",
+    "latest": "ล่าสุด",
+    "goHome": "ไปหน้าแรก"
   }
 }

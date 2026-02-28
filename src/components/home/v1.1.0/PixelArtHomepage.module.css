@@ -1,0 +1,542 @@
+/* ============================================================
+   Pixel Art Homepage — 16-bit SNES game manual aesthetic
+   Leather & Ember palette, Press Start 2P / DotGothic16 fonts
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap');
+
+.page {
+    --pixel-charcoal: #1a1410;
+    --pixel-parchment: #fef3c7;
+    --pixel-leather: #2d2319;
+    --pixel-leather-light: #3a2e20;
+    --pixel-teal: #4a9d9e;
+    --pixel-rose: #f87171;
+    --pixel-gold: #f4a261;
+    --pixel-ember: #d97706;
+    --pixel-cream-dark: #f8ebb5;
+
+    position: fixed;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: var(--pixel-charcoal);
+    color: var(--pixel-parchment);
+    font-family: 'DotGothic16', 'Press Start 2P', monospace;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* ---- Dither Background ---- */
+.ditherBg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ---- CRT Scanline Overlay ---- */
+.page::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.08) 2px,
+        rgba(0, 0, 0, 0.08) 4px
+    );
+}
+
+/* ---- Loading ---- */
+.loadingOverlay {
+    position: fixed;
+    inset: 0;
+    background: var(--pixel-charcoal);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.loadingBar {
+    display: flex;
+    gap: 4px;
+}
+
+.loadingBlock {
+    width: 16px;
+    height: 16px;
+    background: var(--pixel-leather);
+    border: 2px solid var(--pixel-leather-light);
+}
+
+.loadingBlockFilled {
+    background: var(--pixel-ember);
+    border-color: var(--pixel-gold);
+}
+
+.loadingText {
+    margin-top: 16px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    color: var(--pixel-parchment);
+    opacity: 0.6;
+    text-transform: uppercase;
+}
+
+/* ---- Navbar ---- */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: var(--pixel-leather);
+    border-bottom: 3px solid var(--pixel-charcoal);
+    box-shadow: 0 4px 0px rgba(0, 0, 0, 0.6);
+}
+
+.navBorderInner {
+    position: absolute;
+    inset: 4px;
+    border: 2px solid var(--pixel-ember);
+    pointer-events: none;
+}
+
+/* Corner accent pixels */
+.navBorderInner::before,
+.navBorderInner::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--pixel-ember);
+}
+
+.navBorderInner::before {
+    top: -2px;
+    left: -2px;
+}
+
+.navBorderInner::after {
+    top: -2px;
+    right: -2px;
+}
+
+.navInner {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.navLogo {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    color: var(--pixel-parchment);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    user-select: none;
+}
+
+.navLogoAccent {
+    color: var(--pixel-ember);
+}
+
+.navLinks {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.navLink {
+    padding: 6px 10px;
+    font-family: 'DotGothic16', monospace;
+    font-size: 13px;
+    color: var(--pixel-parchment);
+    opacity: 0.7;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.navLink:hover {
+    opacity: 1;
+    color: var(--pixel-ember);
+}
+
+.navOnline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    font-family: 'DotGothic16', monospace;
+    font-size: 13px;
+    color: var(--pixel-parchment);
+    opacity: 0.7;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.navOnline:hover {
+    opacity: 1;
+}
+
+.onlineDot {
+    width: 6px;
+    height: 6px;
+    background: #43b581;
+    /* Square — pixel style */
+    animation: pixelBlink 2s steps(1) infinite;
+}
+
+@keyframes pixelBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.navDivider {
+    width: 2px;
+    height: 16px;
+    background: var(--pixel-charcoal);
+    margin: 0 4px;
+}
+
+/* ---- Content wrapper (above dither bg) ---- */
+.content {
+    position: relative;
+    z-index: 1;
+}
+
+/* ---- Hero Section ---- */
+.hero {
+    padding-top: 120px;
+    padding-bottom: 64px;
+    text-align: center;
+    max-width: 72rem;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+.heroPanel {
+    display: inline-block;
+    padding: 40px 56px;
+    background: var(--pixel-leather);
+    border: 3px solid var(--pixel-charcoal);
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+    position: relative;
+}
+
+/* Inner ember border on hero panel */
+.heroPanel::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 2px solid var(--pixel-ember);
+    pointer-events: none;
+}
+
+.heroTitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(1.8rem, 6vw, 3rem);
+    color: var(--pixel-ember);
+    text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.8);
+    margin-bottom: 16px;
+    line-height: 1.3;
+}
+
+.heroSubtitle {
+    font-family: 'DotGothic16', monospace;
+    font-size: clamp(14px, 2.5vw, 16px);
+    color: var(--pixel-parchment);
+    opacity: 0.7;
+    line-height: 1.8;
+    max-width: 480px;
+    margin: 0 auto 32px;
+}
+
+.heroCta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+/* ---- Pixel Buttons ---- */
+.pixelBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 28px;
+    min-height: 44px;
+    background: linear-gradient(180deg, var(--pixel-leather-light) 0%, var(--pixel-leather) 100%);
+    border: 3px solid;
+    border-color: #4a3d2e var(--pixel-charcoal) var(--pixel-charcoal) #4a3d2e;
+    color: var(--pixel-parchment);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    cursor: pointer;
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+    user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pixelBtn:hover {
+    border-color: var(--pixel-ember) #8b5e10 #8b5e10 var(--pixel-ember);
+    background: linear-gradient(180deg, #4a3d2e 0%, var(--pixel-leather-light) 100%);
+}
+
+.pixelBtn:active {
+    border-color: var(--pixel-charcoal) #4a3d2e #4a3d2e var(--pixel-charcoal);
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
+    transform: translateY(3px);
+}
+
+.pixelBtnPrimary {
+    composes: pixelBtn;
+    background: linear-gradient(180deg, var(--pixel-gold) 0%, var(--pixel-ember) 100%);
+    border-color: #fbbf24 #8b5e10 #8b5e10 #fbbf24;
+    color: var(--pixel-charcoal);
+    text-shadow: none;
+}
+
+.pixelBtnPrimary:hover {
+    background: linear-gradient(180deg, #fbbf24 0%, var(--pixel-gold) 100%);
+    border-color: #fde68a #a16207 #a16207 #fde68a;
+}
+
+.pixelBtnPrimary:active {
+    border-color: #8b5e10 #fbbf24 #fbbf24 #8b5e10;
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
+    transform: translateY(3px);
+}
+
+/* ---- Features Section ---- */
+.features {
+    padding: 48px 24px 80px;
+    max-width: 72rem;
+    margin: 0 auto;
+}
+
+.featuresHeader {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.featuresTitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: var(--pixel-gold);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.featuresSubtitle {
+    font-family: 'DotGothic16', monospace;
+    font-size: 14px;
+    color: var(--pixel-parchment);
+    opacity: 0.5;
+}
+
+.featureGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.featureCard {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px 20px;
+    background: var(--pixel-leather);
+    border: 3px solid var(--pixel-charcoal);
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+    cursor: pointer;
+    position: relative;
+}
+
+.featureCard:hover {
+    border-color: var(--pixel-ember);
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.8);
+}
+
+.featureCard:active {
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+    transform: translateY(2px);
+}
+
+.featureIcon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pixel-charcoal);
+    border: 2px solid var(--pixel-teal);
+}
+
+.featureTitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--pixel-parchment);
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+    text-transform: uppercase;
+}
+
+.featureDesc {
+    font-family: 'DotGothic16', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--pixel-parchment);
+    opacity: 0.6;
+}
+
+.featureBadge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 2px 6px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    background: var(--pixel-ember);
+    color: var(--pixel-charcoal);
+    border: 2px solid var(--pixel-gold);
+}
+
+.featureCardLocked {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.featureCardLocked:hover {
+    border-color: var(--pixel-charcoal);
+    box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.8);
+    transform: none;
+}
+
+/* ---- Footer ---- */
+.footer {
+    padding: 32px 24px;
+    text-align: center;
+    font-family: 'DotGothic16', monospace;
+    font-size: 12px;
+    color: var(--pixel-parchment);
+    opacity: 0.3;
+    border-top: 3px solid var(--pixel-charcoal);
+    max-width: 72rem;
+    margin: 0 auto;
+}
+
+/* ---- Overlays ---- */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(26, 20, 16, 0.9);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* ---- Game container ---- */
+.gameContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--pixel-charcoal);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 640px) {
+    .navLinks {
+        display: none;
+    }
+
+    .hero {
+        padding-top: 96px;
+        padding-bottom: 48px;
+    }
+
+    .heroPanel {
+        padding: 28px 20px;
+    }
+
+    .heroTitle {
+        font-size: 1.4rem;
+    }
+
+    .featureGrid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .featureCard {
+        padding: 20px 16px;
+    }
+
+    .features {
+        padding: 32px 16px 64px;
+    }
+
+    .heroCta {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .pixelBtn,
+    .pixelBtnPrimary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+    .featureGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hero {
+        padding-top: 110px;
+    }
+}
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+    .featureCard {
+        transition: none;
+    }
+
+    .onlineDot {
+        animation: none;
+        opacity: 1;
+    }
+}

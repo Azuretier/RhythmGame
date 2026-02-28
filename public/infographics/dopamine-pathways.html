@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>依存症におけるドーパミン経路 — ピクセルアート・インフォグラフィック</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1410;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .container { max-width: 960px; width: 100%; }
+  </style>
+</head>
+<body>
+<div class="container">
+<svg viewBox="0 0 960 960" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=DotGothic16&amp;display=swap');
+      text { font-family: 'DotGothic16', 'Press Start 2P', monospace; }
+    </style>
+
+    <!-- Dithering patterns -->
+    <pattern id="dither-brain" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#e8c9a0"/>
+      <rect x="0" y="0" width="8" height="8" fill="#d4b48c"/>
+      <rect x="8" y="8" width="8" height="8" fill="#d4b48c"/>
+    </pattern>
+
+    <pattern id="dither-panel" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#fef3c7"/>
+      <rect x="0" y="0" width="8" height="8" fill="#f8ebb5"/>
+      <rect x="8" y="8" width="8" height="8" fill="#f8ebb5"/>
+    </pattern>
+
+    <pattern id="dither-leather" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="#2d2319"/>
+      <rect x="0" y="0" width="8" height="8" fill="#231b13"/>
+      <rect x="8" y="8" width="8" height="8" fill="#231b13"/>
+    </pattern>
+
+    <!-- Arrow markers -->
+    <marker id="arrow-gold" viewBox="0 0 16 16" refX="14" refY="8"
+            markerWidth="10" markerHeight="10" orient="auto" overflow="visible">
+      <path d="M 0,2 L 12,8 L 0,14 Z" fill="#f4a261"/>
+    </marker>
+    <marker id="arrow-rose" viewBox="0 0 16 16" refX="14" refY="8"
+            markerWidth="10" markerHeight="10" orient="auto" overflow="visible">
+      <path d="M 0,2 L 12,8 L 0,14 Z" fill="#f87171"/>
+    </marker>
+  </defs>
+
+  <!-- ========== BACKGROUND ========== -->
+  <rect width="960" height="960" fill="#1a1410"/>
+
+  <!-- ========== TITLE BANNER ========== -->
+  <rect x="16" y="16" width="928" height="80" fill="#2d2319" stroke="#1a1410" stroke-width="4"/>
+  <rect x="24" y="24" width="912" height="64" fill="none" stroke="#d97706" stroke-width="2"/>
+  <!-- Corner pixels -->
+  <rect x="24" y="24" width="8" height="8" fill="#d97706"/>
+  <rect x="928" y="24" width="8" height="8" fill="#d97706"/>
+  <rect x="24" y="80" width="8" height="8" fill="#d97706"/>
+  <rect x="928" y="80" width="8" height="8" fill="#d97706"/>
+  <!-- Dopamine molecule icon (left) -->
+  <g transform="translate(48, 40)">
+    <rect x="0" y="8" width="8" height="8" fill="#f4a261"/>
+    <rect x="8" y="0" width="8" height="8" fill="#f4a261"/>
+    <rect x="8" y="16" width="8" height="8" fill="#f4a261"/>
+    <rect x="16" y="8" width="8" height="8" fill="#d97706"/>
+    <rect x="24" y="8" width="8" height="8" fill="#f4a261"/>
+    <rect x="32" y="0" width="8" height="8" fill="#f4a261"/>
+    <rect x="32" y="16" width="8" height="8" fill="#f4a261"/>
+  </g>
+  <!-- Dopamine molecule icon (right) -->
+  <g transform="translate(864, 40)">
+    <rect x="0" y="8" width="8" height="8" fill="#f4a261"/>
+    <rect x="8" y="0" width="8" height="8" fill="#f4a261"/>
+    <rect x="8" y="16" width="8" height="8" fill="#f4a261"/>
+    <rect x="16" y="8" width="8" height="8" fill="#d97706"/>
+    <rect x="24" y="8" width="8" height="8" fill="#f4a261"/>
+    <rect x="32" y="0" width="8" height="8" fill="#f4a261"/>
+    <rect x="32" y="16" width="8" height="8" fill="#f4a261"/>
+  </g>
+  <text x="480" y="56" text-anchor="middle" fill="#f4a261" font-size="20">ドーパミン経路</text>
+  <text x="480" y="78" text-anchor="middle" fill="#fef3c7" font-size="11">依存症のメカニズム</text>
+
+  <!-- ========== BRAIN DIAGRAM PANEL ========== -->
+  <rect x="16" y="104" width="928" height="496" fill="url(#dither-panel)" stroke="#1a1410" stroke-width="4"/>
+  <rect x="24" y="112" width="912" height="480" fill="none" stroke="#d4b48c" stroke-width="2"/>
+
+  <text x="480" y="136" text-anchor="middle" fill="#1a1410" font-size="8">矢状断面図 — 報酬系</text>
+
+  <!-- ========== BRAIN SHAPES ========== -->
+
+  <!-- === CEREBRUM (main dome) === -->
+  <path d="
+    M 232,480
+    H 224 V 464 H 216 V 440 H 208 V 408
+    H 200 V 376 H 208 V 344
+    H 216 V 320 H 224 V 296
+    H 232 V 280 H 248 V 264
+    H 272 V 256 H 304 V 248
+    H 336 V 240 H 384 V 232
+    H 440 V 224 H 496 V 232
+    H 536 V 240 H 568 V 248
+    H 592 V 256 H 616 V 272
+    H 632 V 288 H 648 V 312
+    H 656 V 344 H 664 V 384
+    H 656 V 416 H 648 V 440
+    H 640 V 456 H 624 V 464
+    H 600 V 472 H 568 V 480
+    Z"
+    fill="url(#dither-brain)" stroke="#1a1410" stroke-width="3"/>
+
+  <!-- Lateral fissure (Sylvian fissure) -->
+  <path d="M 248,408 H 272 V 416 H 304 V 408 H 336 V 416 H 368 V 408 H 400 V 416 H 432 V 408 H 464 V 416 H 496 V 408 H 528 V 416 H 560"
+    fill="none" stroke="#1a1410" stroke-width="2" opacity="0.6"/>
+
+  <!-- Central sulcus -->
+  <path d="M 432,232 V 248 H 424 V 272 H 432 V 296 H 424 V 320 H 432 V 344 H 424 V 368 H 432 V 392"
+    fill="none" stroke="#1a1410" stroke-width="2" opacity="0.5"/>
+
+  <!-- Frontal/parietal fold -->
+  <path d="M 328,240 V 256 H 320 V 272 H 328 V 288"
+    fill="none" stroke="#1a1410" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Occipital fold -->
+  <path d="M 560,256 V 272 H 568 V 296 H 560 V 320"
+    fill="none" stroke="#1a1410" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- === CEREBELLUM === -->
+  <path d="
+    M 584,480
+    H 608 V 472 H 640 V 480
+    H 656 V 496 H 664 V 520
+    H 656 V 536 H 648 V 552
+    H 624 V 560 H 600 V 552
+    H 584 V 536 H 576 V 512
+    H 568 V 496 H 576 V 480
+    Z"
+    fill="url(#dither-brain)" stroke="#1a1410" stroke-width="3"/>
+  <!-- Cerebellum folia (folds) -->
+  <line x1="580" y1="504" x2="660" y2="504" stroke="#1a1410" stroke-width="1.5" opacity="0.5"/>
+  <line x1="576" y1="520" x2="664" y2="520" stroke="#1a1410" stroke-width="1.5" opacity="0.5"/>
+  <line x1="584" y1="536" x2="652" y2="536" stroke="#1a1410" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- === BRAIN STEM === -->
+  <path d="
+    M 544,480
+    H 576 V 496 H 584 V 528
+    H 576 V 560 H 568 V 576
+    H 552 V 568 H 544 V 552
+    H 536 V 520 H 528 V 496
+    H 536 V 480
+    Z"
+    fill="#c4a882" stroke="#1a1410" stroke-width="3"/>
+
+  <!-- ========== BRAIN STRUCTURES (color-coded regions) ========== -->
+
+  <!-- PREFRONTAL CORTEX (PFC) — Teal -->
+  <rect x="232" y="280" width="88" height="104" rx="0" fill="#4a9d9e" stroke="#1a1410" stroke-width="2.5" opacity="0.88"/>
+  <!-- PFC dithering -->
+  <rect x="232" y="280" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+  <rect x="248" y="296" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+  <rect x="264" y="280" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+  <rect x="280" y="312" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+  <rect x="296" y="296" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+  <rect x="240" y="328" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+  <rect x="272" y="344" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+  <rect x="256" y="360" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+  <rect x="304" y="336" width="8" height="8" fill="#3a8080" opacity="0.7"/>
+
+  <!-- DORSAL STRIATUM — Muted Gold -->
+  <rect x="336" y="352" width="72" height="40" fill="#c89048" stroke="#1a1410" stroke-width="2" opacity="0.85"/>
+  <rect x="344" y="360" width="8" height="8" fill="#a87838" opacity="0.6"/>
+  <rect x="368" y="368" width="8" height="8" fill="#a87838" opacity="0.6"/>
+  <rect x="392" y="360" width="8" height="8" fill="#a87838" opacity="0.6"/>
+
+  <!-- NUCLEUS ACCUMBENS (NAc) — Amber -->
+  <rect x="296" y="408" width="64" height="40" fill="#f4a261" stroke="#1a1410" stroke-width="2.5" opacity="0.92"/>
+  <rect x="296" y="408" width="8" height="8" fill="#d97706" opacity="0.5"/>
+  <rect x="320" y="416" width="8" height="8" fill="#d97706" opacity="0.5"/>
+  <rect x="344" y="424" width="8" height="8" fill="#d97706" opacity="0.5"/>
+
+  <!-- AMYGDALA — Rose -->
+  <rect x="384" y="424" width="48" height="40" fill="#f87171" stroke="#1a1410" stroke-width="2" opacity="0.88"/>
+  <rect x="392" y="432" width="8" height="8" fill="#d85151" opacity="0.6"/>
+  <rect x="408" y="440" width="8" height="8" fill="#d85151" opacity="0.6"/>
+  <rect x="416" y="424" width="8" height="8" fill="#d85151" opacity="0.6"/>
+
+  <!-- HIPPOCAMPUS — Seafoam -->
+  <rect x="440" y="416" width="56" height="48" fill="#5cc8c9" stroke="#1a1410" stroke-width="2" opacity="0.88"/>
+  <rect x="448" y="424" width="8" height="8" fill="#48a8a9" opacity="0.6"/>
+  <rect x="472" y="432" width="8" height="8" fill="#48a8a9" opacity="0.6"/>
+  <rect x="464" y="448" width="8" height="8" fill="#48a8a9" opacity="0.6"/>
+  <rect x="480" y="416" width="8" height="8" fill="#48a8a9" opacity="0.6"/>
+
+  <!-- VTA (Ventral Tegmental Area) — Ember -->
+  <rect x="504" y="432" width="48" height="40" fill="#d97706" stroke="#1a1410" stroke-width="2.5" opacity="0.92"/>
+  <rect x="512" y="440" width="8" height="8" fill="#b86806" opacity="0.5"/>
+  <rect x="528" y="448" width="8" height="8" fill="#b86806" opacity="0.5"/>
+  <rect x="536" y="432" width="8" height="8" fill="#b86806" opacity="0.5"/>
+
+  <!-- ========== DOPAMINE PATHWAY ARROWS ========== -->
+
+  <!-- MESOLIMBIC: VTA → NAc (Reward Pathway) — main arrow -->
+  <line x1="504" y1="448" x2="368" y2="432"
+    stroke="#f4a261" stroke-width="5" stroke-dasharray="12,6"
+    marker-end="url(#arrow-gold)"/>
+
+  <!-- MESOCORTICAL: VTA → PFC (Control Pathway) — main arrow -->
+  <line x1="508" y1="432" x2="328" y2="332"
+    stroke="#f4a261" stroke-width="5" stroke-dasharray="12,6"
+    marker-end="url(#arrow-gold)"/>
+
+  <!-- VTA → Dorsal Striatum (Nigrostriatal) -->
+  <line x1="504" y1="444" x2="416" y2="376"
+    stroke="#c89048" stroke-width="3" stroke-dasharray="8,6"
+    marker-end="url(#arrow-gold)"/>
+
+  <!-- VTA → Amygdala -->
+  <line x1="504" y1="452" x2="440" y2="448"
+    stroke="#f87171" stroke-width="3" stroke-dasharray="8,6"
+    marker-end="url(#arrow-rose)"/>
+
+  <!-- VTA → Hippocampus (short connection) -->
+  <line x1="504" y1="444" x2="500" y2="440"
+    stroke="#5cc8c9" stroke-width="3"/>
+
+  <!-- ========== STRUCTURE LABELS ========== -->
+
+  <!-- PFC Label — LEFT SIDE -->
+  <line x1="232" y1="320" x2="168" y2="256" stroke="#1a1410" stroke-width="2"/>
+  <rect x="24" y="216" width="144" height="72" fill="#4a9d9e" stroke="#1a1410" stroke-width="3"/>
+  <text x="96" y="240" text-anchor="middle" fill="#fef3c7" font-size="7">前頭前皮質</text>
+  <text x="96" y="254" text-anchor="middle" fill="#fef3c7" font-size="7"></text>
+  <text x="96" y="268" text-anchor="middle" fill="#e0f0f0" font-size="6">(PFC)</text>
+  <text x="96" y="282" text-anchor="middle" fill="#1a1410" font-size="6">機能低下</text>
+
+  <!-- NAc Label — LEFT SIDE -->
+  <line x1="296" y1="424" x2="168" y2="368" stroke="#1a1410" stroke-width="2"/>
+  <rect x="24" y="320" width="144" height="72" fill="#f4a261" stroke="#1a1410" stroke-width="3"/>
+  <text x="96" y="344" text-anchor="middle" fill="#1a1410" font-size="7">側坐核</text>
+  <text x="96" y="358" text-anchor="middle" fill="#1a1410" font-size="7"></text>
+  <text x="96" y="372" text-anchor="middle" fill="#3d2200" font-size="6">(NAc)</text>
+  <text x="96" y="386" text-anchor="middle" fill="#1a1410" font-size="6">乗っ取られた</text>
+
+  <!-- Dorsal Striatum — small inline label -->
+  <text x="372" y="348" text-anchor="middle" fill="#1a1410" font-size="5">背側</text>
+  <text x="372" y="356" text-anchor="middle" fill="#1a1410" font-size="5">線条体</text>
+
+  <!-- VTA Label — RIGHT SIDE -->
+  <line x1="552" y1="448" x2="768" y2="272" stroke="#1a1410" stroke-width="2"/>
+  <rect x="768" y="224" width="168" height="72" fill="#d97706" stroke="#1a1410" stroke-width="3"/>
+  <text x="852" y="248" text-anchor="middle" fill="#fef3c7" font-size="6">腹側被蓋野</text>
+  <text x="852" y="262" text-anchor="middle" fill="#fef3c7" font-size="6"></text>
+  <text x="852" y="276" text-anchor="middle" fill="#fde9a0" font-size="6">(VTA)</text>
+  <text x="852" y="290" text-anchor="middle" fill="#1a1410" font-size="6">過剰活性化</text>
+
+  <!-- Hippocampus Label — RIGHT SIDE -->
+  <line x1="496" y1="456" x2="768" y2="384" stroke="#1a1410" stroke-width="2"/>
+  <rect x="768" y="336" width="168" height="72" fill="#5cc8c9" stroke="#1a1410" stroke-width="3"/>
+  <text x="852" y="360" text-anchor="middle" fill="#1a1410" font-size="7">海馬</text>
+  <text x="852" y="376" text-anchor="middle" fill="#1a1410" font-size="6">記憶の中枢</text>
+  <text x="852" y="390" text-anchor="middle" fill="#2d2319" font-size="6">薬物の手がかりを</text>
+  <text x="852" y="402" text-anchor="middle" fill="#1a1410" font-size="6">記憶する</text>
+
+  <!-- Amygdala Label — RIGHT SIDE -->
+  <line x1="432" y1="460" x2="768" y2="488" stroke="#1a1410" stroke-width="2"/>
+  <rect x="768" y="448" width="168" height="72" fill="#f87171" stroke="#1a1410" stroke-width="3"/>
+  <text x="852" y="472" text-anchor="middle" fill="#fef3c7" font-size="7">扁桃体</text>
+  <text x="852" y="488" text-anchor="middle" fill="#fef3c7" font-size="6">ストレス/感情</text>
+  <text x="852" y="512" text-anchor="middle" fill="#1a1410" font-size="6">過敏状態</text>
+
+  <!-- Cerebellum inline label -->
+  <text x="616" y="516" text-anchor="middle" fill="#1a1410" font-size="5">小脳</text>
+
+  <!-- Brain Stem inline label -->
+  <text x="556" y="548" text-anchor="middle" fill="#fef3c7" font-size="5">脳幹</text>
+
+  <!-- ========== PATHWAY LEGEND ========== -->
+  <rect x="16" y="608" width="928" height="80" fill="url(#dither-leather)" stroke="#1a1410" stroke-width="4"/>
+  <rect x="24" y="616" width="912" height="64" fill="none" stroke="#4a3520" stroke-width="1"/>
+
+  <text x="480" y="636" text-anchor="middle" fill="#f4a261" font-size="9">主要なドーパミン経路</text>
+
+  <!-- Mesolimbic key -->
+  <line x1="48" y1="660" x2="112" y2="660" stroke="#f4a261" stroke-width="4" stroke-dasharray="10,5"/>
+  <text x="128" y="656" fill="#fef3c7" font-size="6">中脳辺縁系 (VTA → NAc)</text>
+  <text x="128" y="668" fill="#9a8a70" font-size="5">報酬と動機付け</text>
+
+  <!-- Mesocortical key -->
+  <line x1="488" y1="660" x2="552" y2="660" stroke="#f4a261" stroke-width="4" stroke-dasharray="10,5"/>
+  <text x="568" y="656" fill="#fef3c7" font-size="6">中脳皮質系 (VTA → PFC)</text>
+  <text x="568" y="668" fill="#9a8a70" font-size="5">意思決定と衝動制御</text>
+
+  <!-- ========== COMPARISON: NORMAL vs ADDICTED ========== -->
+
+  <!-- NORMAL BRAIN panel -->
+  <rect x="16" y="696" width="456" height="192" fill="#fef3c7" stroke="#1a1410" stroke-width="4"/>
+  <rect x="24" y="704" width="440" height="24" fill="#4a9d9e"/>
+  <text x="244" y="722" text-anchor="middle" fill="#fef3c7" font-size="10">正常な脳</text>
+
+  <!-- Normal dopamine bars -->
+  <text x="40" y="752" fill="#1a1410" font-size="6">ドーパミン</text>
+
+  <!-- Baseline -->
+  <rect x="40" y="760" width="8" height="8" fill="#4a9d9e" stroke="#1a1410" stroke-width="1"/>
+  <text x="56" y="768" fill="#1a1410" font-size="5">基準値</text>
+  <rect x="144" y="760" width="120" height="16" fill="#4a9d9e" stroke="#1a1410" stroke-width="1.5"/>
+  <!-- Dithering in bar -->
+  <rect x="144" y="760" width="8" height="8" fill="#3a8080"/>
+  <rect x="160" y="768" width="8" height="8" fill="#3a8080"/>
+  <rect x="176" y="760" width="8" height="8" fill="#3a8080"/>
+  <rect x="192" y="768" width="8" height="8" fill="#3a8080"/>
+  <rect x="208" y="760" width="8" height="8" fill="#3a8080"/>
+  <rect x="224" y="768" width="8" height="8" fill="#3a8080"/>
+  <rect x="240" y="760" width="8" height="8" fill="#3a8080"/>
+
+  <!-- Natural reward -->
+  <rect x="40" y="784" width="8" height="8" fill="#f4a261" stroke="#1a1410" stroke-width="1"/>
+  <text x="56" y="792" fill="#1a1410" font-size="5">自然報酬（食事・運動）</text>
+  <rect x="144" y="784" width="176" height="16" fill="#f4a261" stroke="#1a1410" stroke-width="1.5"/>
+  <rect x="144" y="784" width="8" height="8" fill="#d97706"/>
+  <rect x="160" y="792" width="8" height="8" fill="#d97706"/>
+  <rect x="176" y="784" width="8" height="8" fill="#d97706"/>
+  <rect x="192" y="792" width="8" height="8" fill="#d97706"/>
+  <rect x="208" y="784" width="8" height="8" fill="#d97706"/>
+  <rect x="224" y="792" width="8" height="8" fill="#d97706"/>
+  <rect x="240" y="784" width="8" height="8" fill="#d97706"/>
+  <rect x="256" y="792" width="8" height="8" fill="#d97706"/>
+  <rect x="272" y="784" width="8" height="8" fill="#d97706"/>
+  <rect x="288" y="792" width="8" height="8" fill="#d97706"/>
+  <rect x="304" y="784" width="8" height="8" fill="#d97706"/>
+
+  <!-- Normal description -->
+  <text x="40" y="824" fill="#1a1410" font-size="5">PFCが衝動を制御</text>
+  <text x="40" y="838" fill="#1a1410" font-size="5">バランスのとれた報酬反応</text>
+  <text x="40" y="852" fill="#1a1410" font-size="5">自然な動機付けが正常</text>
+  <text x="40" y="866" fill="#1a1410" font-size="5">健全なストレス調節</text>
+
+  <!-- Normal pixel face -->
+  <g transform="translate(400, 816)">
+    <rect width="48" height="48" fill="#4a9d9e" stroke="#1a1410" stroke-width="2"/>
+    <rect x="8" y="12" width="8" height="8" fill="#1a1410"/>
+    <rect x="32" y="12" width="8" height="8" fill="#1a1410"/>
+    <rect x="12" y="32" width="4" height="4" fill="#1a1410"/>
+    <rect x="16" y="36" width="16" height="4" fill="#1a1410"/>
+    <rect x="32" y="32" width="4" height="4" fill="#1a1410"/>
+  </g>
+
+  <!-- ADDICTED BRAIN panel -->
+  <rect x="488" y="696" width="456" height="192" fill="#fef3c7" stroke="#1a1410" stroke-width="4"/>
+  <rect x="496" y="704" width="440" height="24" fill="#f87171"/>
+  <text x="716" y="722" text-anchor="middle" fill="#fef3c7" font-size="10">依存症の脳</text>
+
+  <!-- Addicted dopamine bars -->
+  <text x="512" y="752" fill="#1a1410" font-size="6">ドーパミン</text>
+
+  <!-- Depleted baseline -->
+  <rect x="512" y="760" width="8" height="8" fill="#c89048" stroke="#1a1410" stroke-width="1"/>
+  <text x="528" y="768" fill="#1a1410" font-size="5">基準値（枯渇）</text>
+  <rect x="616" y="760" width="48" height="16" fill="#c89048" stroke="#1a1410" stroke-width="1.5"/>
+  <rect x="616" y="760" width="8" height="8" fill="#a87838"/>
+  <rect x="632" y="768" width="8" height="8" fill="#a87838"/>
+  <rect x="648" y="760" width="8" height="8" fill="#a87838"/>
+
+  <!-- Drug surge -->
+  <rect x="512" y="784" width="8" height="8" fill="#f87171" stroke="#1a1410" stroke-width="1"/>
+  <text x="528" y="792" fill="#1a1410" font-size="5">薬物による急上昇</text>
+  <rect x="616" y="784" width="304" height="16" fill="#f87171" stroke="#1a1410" stroke-width="1.5"/>
+  <rect x="616" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="632" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="648" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="664" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="680" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="696" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="712" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="728" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="744" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="760" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="776" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="792" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="808" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="824" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="840" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="856" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="872" y="784" width="8" height="8" fill="#d85151"/>
+  <rect x="888" y="792" width="8" height="8" fill="#d85151"/>
+  <rect x="904" y="784" width="8" height="8" fill="#d85151"/>
+
+  <!-- Addicted description -->
+  <text x="512" y="824" fill="#1a1410" font-size="5">PFCの制御力が低下</text>
+  <text x="512" y="838" fill="#1a1410" font-size="5">報酬系が乗っ取られる</text>
+  <text x="512" y="852" fill="#1a1410" font-size="5">耐性：より多くの量が必要に</text>
+  <text x="512" y="866" fill="#1a1410" font-size="5">離脱：正常値以下に急降下</text>
+
+  <!-- Addicted pixel face -->
+  <g transform="translate(880, 816)">
+    <rect width="48" height="48" fill="#f87171" stroke="#1a1410" stroke-width="2"/>
+    <!-- X eyes -->
+    <rect x="8" y="10" width="4" height="4" fill="#1a1410"/>
+    <rect x="16" y="14" width="4" height="4" fill="#1a1410"/>
+    <rect x="16" y="10" width="4" height="4" fill="#1a1410"/>
+    <rect x="8" y="14" width="4" height="4" fill="#1a1410"/>
+    <rect x="28" y="10" width="4" height="4" fill="#1a1410"/>
+    <rect x="36" y="14" width="4" height="4" fill="#1a1410"/>
+    <rect x="36" y="10" width="4" height="4" fill="#1a1410"/>
+    <rect x="28" y="14" width="4" height="4" fill="#1a1410"/>
+    <!-- Frown -->
+    <rect x="12" y="36" width="4" height="4" fill="#1a1410"/>
+    <rect x="16" y="32" width="16" height="4" fill="#1a1410"/>
+    <rect x="32" y="36" width="4" height="4" fill="#1a1410"/>
+  </g>
+
+  <!-- ========== RECOVERY FOOTER ========== -->
+  <rect x="16" y="896" width="928" height="48" fill="#2d2319" stroke="#1a1410" stroke-width="4"/>
+  <rect x="24" y="904" width="912" height="32" fill="none" stroke="#4a9d9e" stroke-width="2"/>
+  <!-- Recovery star icons -->
+  <rect x="40" y="916" width="8" height="8" fill="#4a9d9e"/>
+  <rect x="48" y="908" width="8" height="8" fill="#4a9d9e"/>
+  <rect x="56" y="916" width="8" height="8" fill="#4a9d9e"/>
+  <rect x="888" y="916" width="8" height="8" fill="#4a9d9e"/>
+  <rect x="896" y="908" width="8" height="8" fill="#4a9d9e"/>
+  <rect x="904" y="916" width="8" height="8" fill="#4a9d9e"/>
+  <text x="480" y="926" text-anchor="middle" fill="#4a9d9e" font-size="8">回復は可能 — 脳は癒される</text>
+
+</svg>
+</div>
+</body>
+</html>

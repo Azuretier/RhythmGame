@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "Sběratel mincí",
+      "desc": "Celkem získej 100 zlata"
+    },
+    "gold_1000": {
+      "name": "Hromadič mincí",
+      "desc": "Celkem získej 1 000 zlata"
+    },
+    "gold_5000": {
+      "name": "Lovec pokladů",
+      "desc": "Celkem získej 5 000 zlata"
+    },
+    "gold_25000": {
+      "name": "Zlatý král",
+      "desc": "Celkem získej 25 000 zlata"
+    },
+    "gold_100000": {
+      "name": "Legendární magnát",
+      "desc": "Celkem získej 100 000 zlata"
+    },
+    "treasure_10": {
+      "name": "Nalezený poklad",
+      "desc": "Sbírej 10 pokladů"
+    },
+    "treasure_50": {
+      "name": "Hledač pokladů",
+      "desc": "Sbírej 50 pokladů"
+    },
+    "treasure_200": {
+      "name": "Mistr pokladů",
+      "desc": "Sbírej 200 pokladů"
+    },
+    "treasure_500": {
+      "name": "Strážce pokladů",
+      "desc": "Sbírej 500 pokladů"
+    },
+    "treasure_1000": {
+      "name": "Pán bohatství",
+      "desc": "Sbírej 1 000 pokladů"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "Bojová aréna",
     "subtitle": "Souboje 1v1 v reálném čase",
     "description": "Souboje 1v1 v reálném čase přes WebSocket.",
-    "features": "Reálný čas|Systém odpadních řádků|Hodnocený",
-    "stats": "1v1 Boj|8s Matchmaking|AI záloha"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "Hodnocená"
+    },
+    "stats": {
+      "mode": "Režim",
+      "battle": "Boj",
+      "status": "Stav"
+    }
   },
   "uiTheme": {
     "selectTheme": "Vybrat téma",
@@ -1452,5 +1502,11 @@
     "pill": "Pilulka",
     "soft": "Měkký",
     "sharp": "Ostrý"
+  },
+  "version": {
+    "selectVersion": "Verze webu",
+    "accentColor": "Barva akcentu",
+    "latest": "nejnovější",
+    "goHome": "Přejít na hlavní stránku"
   }
 }

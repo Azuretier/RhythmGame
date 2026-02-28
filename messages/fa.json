@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "جمع‌آور سکه",
+      "desc": "در مجموع ۱۰۰ طلا کسب کن"
+    },
+    "gold_1000": {
+      "name": "انباشت‌کننده سکه",
+      "desc": "در مجموع ۱,۰۰۰ طلا کسب کن"
+    },
+    "gold_5000": {
+      "name": "شکارچی گنج",
+      "desc": "در مجموع ۵,۰۰۰ طلا کسب کن"
+    },
+    "gold_25000": {
+      "name": "پادشاه طلا",
+      "desc": "در مجموع ۲۵,۰۰۰ طلا کسب کن"
+    },
+    "gold_100000": {
+      "name": "ثروتمند افسانه‌ای",
+      "desc": "در مجموع ۱۰۰,۰۰۰ طلا کسب کن"
+    },
+    "treasure_10": {
+      "name": "گنج یافت شد",
+      "desc": "۱۰ گنج جمع‌آوری کن"
+    },
+    "treasure_50": {
+      "name": "جستجوگر گنج",
+      "desc": "۵۰ گنج جمع‌آوری کن"
+    },
+    "treasure_200": {
+      "name": "استاد گنج",
+      "desc": "۲۰۰ گنج جمع‌آوری کن"
+    },
+    "treasure_500": {
+      "name": "نگهبان گنج",
+      "desc": "۵۰۰ گنج جمع‌آوری کن"
+    },
+    "treasure_1000": {
+      "name": "ارباب ثروت",
+      "desc": "۱,۰۰۰ گنج جمع‌آوری کن"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "عرصه نبرد",
     "subtitle": "نبردهای 1v1 در زمان واقعی",
     "description": "نبردهای 1v1 در زمان واقعی از طریق WebSocket.",
-    "features": "زمان واقعی|سیستم ردیف‌های زباله|رتبه‌بندی‌شده",
-    "stats": "1v1 نبرد|۸ ثانیه تطابق|هوش مصنوعی پشتیبان"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "رتبه‌بندی‌شده"
+    },
+    "stats": {
+      "mode": "حالت",
+      "battle": "نبرد",
+      "status": "وضعیت"
+    }
   },
   "uiTheme": {
     "selectTheme": "انتخاب موضوع",
@@ -1452,5 +1502,11 @@
     "pill": "قرص",
     "soft": "نرم",
     "sharp": "تیز"
+  },
+  "version": {
+    "selectVersion": "نسخه سایت",
+    "accentColor": "رنگ تاکیدی",
+    "latest": "آخرین",
+    "goHome": "رفتن به صفحه اصلی"
   }
 }

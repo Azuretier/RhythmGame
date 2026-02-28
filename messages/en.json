@@ -11,6 +11,41 @@
     "onlineCount": "{count} online",
     "loyalty": "Ranking"
   },
+  "home": {
+    "hero": {
+      "description": "A rhythm-powered puzzle game. Drop blocks to the beat, battle friends in real-time, and unlock achievements across 5 musically-themed worlds.",
+      "play": "Play Now",
+      "wiki": "View Wiki"
+    },
+    "features": {
+      "title": "Game Modes",
+      "subtitle": "Choose your experience",
+      "vanilla": {
+        "title": "Single Player",
+        "description": "Play solo through 5 worlds. Clear terrain, collect items, and craft weapons as the BPM rises."
+      },
+      "multiplayer": {
+        "title": "1v1 Battle",
+        "description": "Real-time battles via WebSocket. Send garbage lines and climb the ranked ladder."
+      },
+      "arena": {
+        "title": "9-Player Arena",
+        "description": "9 players, 1 shared tempo. Survive chaos gimmicks, tempo shifts, and random events."
+      },
+      "stories": {
+        "title": "Stories",
+        "description": "Story-driven rhythm gameplay with narrative chapters and unique challenges."
+      },
+      "minecraft": {
+        "title": "Board Game",
+        "description": "Minecraft-inspired multiplayer board game. Mine, craft, fight mobs, and race to victory."
+      },
+      "advancements": {
+        "title": "Advancements",
+        "description": "Unlock achievements across all game modes. Track your progress and earn rewards."
+      }
+    }
+  },
   "wiki": {
     "meta": {
       "title": "Wiki | RHYTHMIA - Azuretier",
@@ -219,6 +254,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1500,5 +1537,11 @@
     "pill": "Pill",
     "soft": "Soft",
     "sharp": "Sharp"
+  },
+  "version": {
+    "selectVersion": "Site Version",
+    "accentColor": "Accent Color",
+    "latest": "latest",
+    "goHome": "Go to Homepage"
   }
 }

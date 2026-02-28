@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Box } from 'lucide-react';
+import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Box, Grid3X3 } from 'lucide-react';
 import { useVersion } from '@/lib/version/context';
 import {
   VERSION_METADATA,
@@ -12,22 +11,28 @@ import {
   type UIVersion,
   type AccentColor,
 } from '@/lib/version/types';
+import { useToggle } from '@/hooks/useToggle';
+import { useEscapeClose } from '@/hooks/useEscapeClose';
+import { scaleHover, fadeOnly } from '@/lib/motion';
 
 const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
   current: <Gamepad2 size={20} />,
   '1.0.0': <MessageCircle size={20} />,
   '1.0.1': <Heart size={20} />,
   '1.0.2': <Box size={20} />,
+  '1.1.0': <Grid3X3 size={20} />,
 };
 
 export default function FloatingVersionSwitcher() {
   const { currentVersion, setVersion, accentColor, setAccentColor } = useVersion();
-  const [isOpen, setIsOpen] = useState(false);
+  const { value: isOpen, open, close } = useToggle(false);
+
+  useEscapeClose(isOpen, close);
 
   const handleVersionChange = (version: UIVersion) => {
     if (version === currentVersion) return;
     setVersion(version);
-    setIsOpen(false);
+    close();
 
     // Full reload to ensure clean state when switching versions
     window.location.href = '/';
@@ -44,9 +49,8 @@ export default function FloatingVersionSwitcher() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 20 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(true)}
+        {...scaleHover}
+        onClick={open}
         className="fixed bottom-6 right-6 z-40 h-10 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-2 text-white/70 hover:text-white hover:bg-white/20 transition-colors shadow-lg"
         aria-label="Site settings"
       >
@@ -62,10 +66,8 @@ export default function FloatingVersionSwitcher() {
           <>
             {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
+              {...fadeOnly}
+              onClick={close}
               className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
             />
 
@@ -82,7 +84,7 @@ export default function FloatingVersionSwitcher() {
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
                   <h3 className="text-lg font-bold text-white">Site Settings</h3>
                   <button
-                    onClick={() => setIsOpen(false)}
+                    onClick={close}
                     className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
                   >
                     <X size={18} />

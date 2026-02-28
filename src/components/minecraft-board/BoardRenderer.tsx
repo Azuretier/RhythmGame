@@ -11,7 +11,7 @@ import type {
   MCPlayerState, DayPhase, BlockType, Direction,
 } from '@/types/minecraft-board';
 import {
-  MC_BOARD_CONFIG, BLOCK_COLORS, BLOCK_ICONS,
+  MC_BOARD_CONFIG, BLOCK_COLORS, BLOCK_TEXTURES, BLOCK_ICONS,
   MOB_COLORS, MOB_ICONS, BLOCK_PROPERTIES,
 } from '@/types/minecraft-board';
 import styles from './MinecraftBoard.module.css';
@@ -197,6 +197,7 @@ export default function BoardRenderer({
         }
 
         const blockColor = BLOCK_COLORS[tile.block] || '#333';
+        const blockTexture = BLOCK_TEXTURES[tile.block];
         const blockIcon = BLOCK_ICONS[tile.block];
         const isWalkable = BLOCK_PROPERTIES[tile.block].walkable;
 
@@ -204,7 +205,7 @@ export default function BoardRenderer({
           <div
             key={`${vx}-${vy}`}
             className={`${styles.tile} ${isVisible ? '' : styles.tileFog} ${isMining ? styles.tileMining : ''}`}
-            style={{ backgroundColor: blockColor }}
+            style={{ backgroundColor: blockColor, backgroundImage: blockTexture }}
             onClick={() => {
               if (mobOnTile && mobOnTile.hostile) {
                 onMobClick(mobOnTile.id);

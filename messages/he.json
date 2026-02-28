@@ -219,6 +219,8 @@
     "communityResourcesDesc": "Tutorials, guides, and videos curated by the RHYTHMIA community to help you level up your gameplay.",
     "updatesTitle": "Version Updates",
     "updatesDesc": "Watch the latest version overviews and see what's new in RHYTHMIA.",
+    "updateV002Title": "azuretier.net v0.0.2 Update Overview",
+    "updateV001Title": "azuretier.net v0.0.1 Launch Trailer",
     "videoComingSoon": "Coming Soon",
     "watchVideo": "Watch",
     "resourceVideosTitle": "Videos",
@@ -1139,6 +1141,46 @@
     "loyalty_polls_50": {
       "name": "Voice of the People",
       "desc": "Vote in 50 polls"
+    },
+    "gold_100": {
+      "name": "אוסף מטבעות",
+      "desc": "הרוויח 100 זהב בסך הכל"
+    },
+    "gold_1000": {
+      "name": "מצבר מטבעות",
+      "desc": "הרוויח 1,000 זהב בסך הכל"
+    },
+    "gold_5000": {
+      "name": "ציד אוצרות",
+      "desc": "הרוויח 5,000 זהב בסך הכל"
+    },
+    "gold_25000": {
+      "name": "מלך הזהב",
+      "desc": "הרוויח 25,000 זהב בסך הכל"
+    },
+    "gold_100000": {
+      "name": "מגנט אגדי",
+      "desc": "הרוויח 100,000 זהב בסך הכל"
+    },
+    "treasure_10": {
+      "name": "אוצר נמצא",
+      "desc": "אסוף 10 אוצרות"
+    },
+    "treasure_50": {
+      "name": "מחפש אוצרות",
+      "desc": "אסוף 50 אוצרות"
+    },
+    "treasure_200": {
+      "name": "מומחה אוצרות",
+      "desc": "אסוף 200 אוצרות"
+    },
+    "treasure_500": {
+      "name": "שומר האוצרות",
+      "desc": "אסוף 500 אוצרות"
+    },
+    "treasure_1000": {
+      "name": "אדון העושר",
+      "desc": "אסוף 1,000 אוצרות"
     }
   },
   "updates": {
@@ -1293,8 +1335,16 @@
     "gameTitle": "זירת קרב",
     "subtitle": "קרבות 1v1 בזמן אמת",
     "description": "קרבות 1v1 בזמן אמת דרך WebSocket.",
-    "features": "זמן אמת|מערכת שורות זבל|מדורג",
-    "stats": "1v1 קרב|8 שניות מיקוד|גיבוי AI"
+    "features": {
+      "vs": "1v1",
+      "websocket": "WebSocket",
+      "ranked": "מדורגת"
+    },
+    "stats": {
+      "mode": "מצב",
+      "battle": "קרב",
+      "status": "סטטוס"
+    }
   },
   "uiTheme": {
     "selectTheme": "בחר ערכת נושא",
@@ -1452,5 +1502,11 @@
     "pill": "גלולה",
     "soft": "רך",
     "sharp": "חד"
+  },
+  "version": {
+    "selectVersion": "גרסת האתר",
+    "accentColor": "צבע הדגשה",
+    "latest": "אחרון",
+    "goHome": "עבור לדף הבית"
   }
 }

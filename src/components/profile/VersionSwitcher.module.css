@@ -1,0 +1,193 @@
+/* VersionSwitcher */
+.wrapper {
+  padding: 0 28px 24px;
+}
+
+.versionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Individual version row */
+.versionRow {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 2px solid transparent;
+  border-radius: var(--theme-radius, 10px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  color: inherit;
+}
+
+.versionRow:hover {
+  border-color: var(--skin-border-hover, rgba(255, 255, 255, 0.15));
+  background: var(--skin-accent-dim, rgba(255, 255, 255, 0.04));
+}
+
+.versionRowActive {
+  border-color: var(--skin-accent, #007FFF) !important;
+  background: var(--skin-accent-dim, rgba(0, 127, 255, 0.08)) !important;
+}
+
+/* Version icon box */
+.versionIcon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.05));
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.4));
+  transition: all 0.2s ease;
+}
+
+.versionIconActive {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--skin-foreground, #ffffff);
+}
+
+/* Version text */
+.versionInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.versionNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.versionName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--skin-foreground, #ffffff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.versionTag {
+  font-size: 0.6rem;
+  font-family: var(--font-mono), monospace;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.3));
+  white-space: nowrap;
+}
+
+.versionDesc {
+  font-size: 0.65rem;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.4));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Checkmark */
+.checkIcon {
+  flex-shrink: 0;
+  color: #10b981;
+}
+
+/* Go to Homepage button */
+.goHomeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 16px;
+  border: none;
+  border-radius: var(--theme-radius, 10px);
+  background: var(--skin-accent, #007FFF);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.goHomeButton:hover {
+  opacity: 0.85;
+}
+
+/* Accent color section */
+.accentSection {
+  margin-top: 16px;
+}
+
+.accentLabel {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.4));
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.accentSwatches {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.accentSwatch {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.accentSwatch:hover {
+  transform: scale(1.15);
+}
+
+.accentSwatchActive {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px var(--skin-background, #0a0a0a), 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.accentCheck {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #ffffff;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .wrapper {
+    padding: 0 20px 20px;
+  }
+
+  .versionRow {
+    padding: 8px 12px;
+  }
+
+  .versionIcon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .accentSwatch {
+    width: 28px;
+    height: 28px;
+  }
+}

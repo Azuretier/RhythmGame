@@ -279,16 +279,35 @@
     z-index: 200;
     gap: 24px;
     padding: 20px;
-    animation: fadeIn 0.4s ease-out;
+    animation: overlayFadeIn 0.6s ease-out;
 }
 
-@keyframes fadeIn {
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
     from {
         opacity: 0;
+        transform: translateY(-30px) scale(0.9);
+        filter: blur(8px);
     }
-
     to {
         opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -297,6 +316,7 @@
     font-weight: 200;
     color: #ffffff;
     letter-spacing: 0.2em;
+    animation: slideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .finalScores {
@@ -306,6 +326,7 @@
     font-size: 1.1rem;
     text-align: center;
     font-weight: 300;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
 }
 
 .finalScores div {
@@ -326,6 +347,7 @@
     cursor: pointer;
     letter-spacing: 0.15em;
     transition: all 0.25s;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
 }
 
 .backBtn:hover {
@@ -583,6 +605,18 @@
 .beatCursorPerfect {
     background: #00FFFF;
     box-shadow: 0 0 6px #00FFFF, 0 0 12px rgba(0, 255, 255, 0.4);
+    width: 4px;
+}
+
+.beatCursorGreat {
+    background: #76FF03;
+    box-shadow: 0 0 5px #76FF03, 0 0 10px rgba(118, 255, 3, 0.35);
+    width: 4px;
+}
+
+.beatCursorGood {
+    background: #FFD700;
+    box-shadow: 0 0 4px #FFD700, 0 0 8px rgba(255, 215, 0, 0.3);
     width: 4px;
 }
 

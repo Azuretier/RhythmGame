@@ -2,7 +2,7 @@
  * UI Version type definitions
  */
 
-export const UI_VERSIONS = ['current', '1.0.0', '1.0.1', '1.0.2'] as const;
+export const UI_VERSIONS = ['current', '1.0.0', '1.0.1', '1.0.2', '1.1.0'] as const;
 export type UIVersion = typeof UI_VERSIONS[number];
 
 // Alias for backward compatibility
@@ -36,6 +36,11 @@ export const VERSION_METADATA: Record<UIVersion, UIVersionMetadata> = {
     id: '1.0.2',
     name: 'Minecraft: Switch Edition',
     description: 'Classic console menu with rotating panorama',
+  },
+  '1.1.0': {
+    id: '1.1.0',
+    name: 'Pixel Art',
+    description: '16-bit retro game manual aesthetic',
   },
 };
 
