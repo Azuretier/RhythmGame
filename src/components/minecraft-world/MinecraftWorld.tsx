@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { Block } from './textures';
+import { Block, BlockType, BLOCK_TRANSPARENT } from './textures';
 import { createTextureAtlas } from './textures';
 import { generateWorld, WorldData, WORLD_WIDTH, WORLD_DEPTH, WORLD_HEIGHT, SEA_LEVEL, CHUNK_SIZE } from './terrain';
 import { buildChunkGeometry } from './chunk-builder';
 import { useMinecraftWorldSocket } from '@/hooks/useMinecraftWorldSocket';
 import type { MWPlayerPosition } from '@/types/minecraft-world';
+import { BlockInventory, PLACEABLE_BLOCKS } from './BlockInventory';
 import styles from './MinecraftWorld.module.css';
 
 const PLAYER_HEIGHT = 1.62;
@@ -36,6 +37,20 @@ export default function MinecraftWorld() {
   const [fps, setFps] = useState(0);
   const worldRef = useRef<WorldData | null>(null);
   const controlsRef = useRef<PointerLockControls | null>(null);
+
+  // Block inventory state
+  const [selectedSlot, setSelectedSlot] = useState(0);
+  const [hotbar, setHotbar] = useState<(BlockType | null)[]>([
+    Block.Grass, Block.Dirt, Block.Stone, Block.Cobblestone,
+    Block.OakPlanks, Block.OakLog, Block.Glass, Block.Sand, null,
+  ]);
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+
+  // Refs for chunk mesh management (used for rebuilding after block changes)
+  const chunkMeshesRef = useRef<Map<string, { solid: THREE.Mesh | null; water: THREE.Mesh | null }>>(new Map());
+  const solidMaterialRef = useRef<THREE.MeshLambertMaterial | null>(null);
+  const waterMaterialRef = useRef<THREE.MeshLambertMaterial | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
 
   // Menu state
   const [playerName, setPlayerName] = useState('');
@@ -128,6 +143,7 @@ export default function MinecraftWorld() {
     sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 300);
+    cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -147,6 +163,7 @@ export default function MinecraftWorld() {
       map: texture,
       side: THREE.FrontSide,
     });
+    solidMaterialRef.current = solidMaterial;
 
     const waterMaterial = new THREE.MeshLambertMaterial({
       map: texture,
@@ -155,6 +172,7 @@ export default function MinecraftWorld() {
       opacity: 0.65,
       depthWrite: false,
     });
+    waterMaterialRef.current = waterMaterial;
 
     // ====== Lighting ======
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
@@ -267,15 +285,19 @@ export default function MinecraftWorld() {
             for (let i = 0; i < batchSize && chunkQueue.length > 0; i++) {
               const [chX, chZ] = chunkQueue.shift()!;
               const { solid, water } = buildChunkGeometry(world, chX, chZ);
+              const key = `${chX},${chZ}`;
+              let solidMesh: THREE.Mesh | null = null;
+              let waterMesh: THREE.Mesh | null = null;
               if (solid) {
-                const mesh = new THREE.Mesh(solid, solidMaterial);
-                scene.add(mesh);
+                solidMesh = new THREE.Mesh(solid, solidMaterial);
+                scene.add(solidMesh);
               }
               if (water) {
-                const mesh = new THREE.Mesh(water, waterMaterial);
-                mesh.renderOrder = 1;
-                scene.add(mesh);
+                waterMesh = new THREE.Mesh(water, waterMaterial);
+                waterMesh.renderOrder = 1;
+                scene.add(waterMesh);
               }
+              chunkMeshesRef.current.set(key, { solid: solidMesh, water: waterMesh });
               built++;
             }
 
@@ -336,6 +358,147 @@ export default function MinecraftWorld() {
       return false;
     }
 
+    // ====== Block Raycast Helpers ======
+    const REACH = 6; // max reach distance in blocks
+    const RAY_STEPS = 120; // number of steps along ray
+
+    /** Cast a ray from camera and find the first solid block hit.
+     *  Returns { hitPos, prevPos } or null.
+     *  hitPos = the block that was hit, prevPos = the empty block just before it. */
+    function raycastBlock(): { hitPos: [number, number, number]; prevPos: [number, number, number] } | null {
+      if (!worldRef.current) return null;
+      const world = worldRef.current;
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      const origin = camera.position.clone();
+      const step = dir.clone().multiplyScalar(REACH / RAY_STEPS);
+
+      let prevBx = -999, prevBy = -999, prevBz = -999;
+      const pos = origin.clone();
+
+      for (let i = 0; i < RAY_STEPS; i++) {
+        const bx = Math.floor(pos.x);
+        const by = Math.floor(pos.y);
+        const bz = Math.floor(pos.z);
+
+        if (bx !== prevBx || by !== prevBy || bz !== prevBz) {
+          if (bx >= 0 && bx < WORLD_WIDTH && by >= 0 && by < WORLD_HEIGHT && bz >= 0 && bz < WORLD_DEPTH) {
+            const block = world.getBlock(bx, by, bz);
+            if (block !== Block.Air && block !== Block.Water) {
+              return { hitPos: [bx, by, bz], prevPos: [prevBx, prevBy, prevBz] };
+            }
+          }
+          prevBx = bx;
+          prevBy = by;
+          prevBz = bz;
+        }
+
+        pos.add(step);
+      }
+      return null;
+    }
+
+    /** Rebuild the chunk mesh containing block (bx, by, bz) */
+    function rebuildChunkAt(bx: number, _by: number, bz: number) {
+      if (!worldRef.current || !sceneRef.current) return;
+      const chX = Math.floor(bx / CHUNK_SIZE);
+      const chZ = Math.floor(bz / CHUNK_SIZE);
+      const key = `${chX},${chZ}`;
+
+      // Remove old meshes
+      const old = chunkMeshesRef.current.get(key);
+      if (old) {
+        if (old.solid) {
+          sceneRef.current.remove(old.solid);
+          old.solid.geometry.dispose();
+        }
+        if (old.water) {
+          sceneRef.current.remove(old.water);
+          old.water.geometry.dispose();
+        }
+      }
+
+      // Build new geometry
+      const { solid, water } = buildChunkGeometry(worldRef.current, chX, chZ);
+      let solidMesh: THREE.Mesh | null = null;
+      let waterMesh: THREE.Mesh | null = null;
+      if (solid && solidMaterialRef.current) {
+        solidMesh = new THREE.Mesh(solid, solidMaterialRef.current);
+        sceneRef.current.add(solidMesh);
+      }
+      if (water && waterMaterialRef.current) {
+        waterMesh = new THREE.Mesh(water, waterMaterialRef.current);
+        waterMesh.renderOrder = 1;
+        sceneRef.current.add(waterMesh);
+      }
+      chunkMeshesRef.current.set(key, { solid: solidMesh, water: waterMesh });
+
+      // Also rebuild adjacent chunks if block is at a chunk boundary
+      const localX = bx - chX * CHUNK_SIZE;
+      const localZ = bz - chZ * CHUNK_SIZE;
+      const adjacents: [number, number][] = [];
+      if (localX === 0 && chX > 0) adjacents.push([chX - 1, chZ]);
+      if (localX === CHUNK_SIZE - 1) adjacents.push([chX + 1, chZ]);
+      if (localZ === 0 && chZ > 0) adjacents.push([chX, chZ - 1]);
+      if (localZ === CHUNK_SIZE - 1) adjacents.push([chX, chZ + 1]);
+
+      for (const [adjX, adjZ] of adjacents) {
+        const adjKey = `${adjX},${adjZ}`;
+        const adjOld = chunkMeshesRef.current.get(adjKey);
+        if (adjOld) {
+          if (adjOld.solid) { sceneRef.current.remove(adjOld.solid); adjOld.solid.geometry.dispose(); }
+          if (adjOld.water) { sceneRef.current.remove(adjOld.water); adjOld.water.geometry.dispose(); }
+        }
+        const adj = buildChunkGeometry(worldRef.current, adjX, adjZ);
+        let aSolid: THREE.Mesh | null = null;
+        let aWater: THREE.Mesh | null = null;
+        if (adj.solid && solidMaterialRef.current) {
+          aSolid = new THREE.Mesh(adj.solid, solidMaterialRef.current);
+          sceneRef.current.add(aSolid);
+        }
+        if (adj.water && waterMaterialRef.current) {
+          aWater = new THREE.Mesh(adj.water, waterMaterialRef.current);
+          aWater.renderOrder = 1;
+          sceneRef.current.add(aWater);
+        }
+        chunkMeshesRef.current.set(adjKey, { solid: aSolid, water: aWater });
+      }
+    }
+
+    /** Break a block (left-click) */
+    function breakBlock() {
+      if (!worldRef.current) return;
+      const hit = raycastBlock();
+      if (!hit) return;
+      const [bx, by, bz] = hit.hitPos;
+      // Don't break bedrock
+      if (worldRef.current.getBlock(bx, by, bz) === Block.Bedrock) return;
+      worldRef.current.setBlock(bx, by, bz, Block.Air as BlockType);
+      rebuildChunkAt(bx, by, bz);
+    }
+
+    /** Place a block (right-click) */
+    function placeBlock(blockType: BlockType) {
+      if (!worldRef.current || blockType === Block.Air) return;
+      const hit = raycastBlock();
+      if (!hit) return;
+      const [px, py, pz] = hit.prevPos;
+      // Validate position
+      if (px < 0 || px >= WORLD_WIDTH || py < 0 || py >= WORLD_HEIGHT || pz < 0 || pz >= WORLD_DEPTH) return;
+      // Don't place a block where the player is standing
+      const camPos = camera.position;
+      const playerFeetY = camPos.y - PLAYER_HEIGHT;
+      if (Math.floor(camPos.x) === px && Math.floor(camPos.z) === pz) {
+        if (py === Math.floor(playerFeetY) || py === Math.floor(playerFeetY) + 1) return;
+      }
+      worldRef.current.setBlock(px, py, pz, blockType);
+      rebuildChunkAt(px, py, pz);
+    }
+
+    // Store placeBlock/breakBlock refs for event handlers
+    let currentSelectedBlock: BlockType | null = null;
+    function setCurrentSelectedBlock(b: BlockType | null) { currentSelectedBlock = b; }
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement) return;
       switch (e.code) {
@@ -364,10 +527,30 @@ export default function MinecraftWorld() {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    const handleClick = () => {
-      if (!controls.isLocked) controls.lock();
+    // Mouse events for block interaction
+    const handleMouseDown = (e: MouseEvent) => {
+      if (!controls.isLocked) {
+        controls.lock();
+        return;
+      }
+      if (e.button === 0) {
+        // Left-click = break block
+        breakBlock();
+      } else if (e.button === 2) {
+        // Right-click = place block
+        if (currentSelectedBlock !== null) {
+          placeBlock(currentSelectedBlock);
+        }
+      }
     };
-    container.addEventListener('click', handleClick);
+
+    // Prevent context menu on right-click
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    container.addEventListener('mousedown', handleMouseDown);
+    container.addEventListener('contextmenu', handleContextMenu);
 
     // ====== Finish Setup (called after chunks built) ======
     function finishSetup(world: WorldData) {
@@ -710,20 +893,39 @@ export default function MinecraftWorld() {
     };
     window.addEventListener('resize', handleResize);
 
+    // ====== Sync selected block into closure ======
+    // We use an interval to keep the selected block in sync with React state
+    const syncInterval = setInterval(() => {
+      // The hotbar & selectedSlot are React state; read via DOM data attribute
+      const hotbarEl = container.querySelector('[data-hotbar]');
+      if (hotbarEl) {
+        const blockId = hotbarEl.getAttribute('data-selected-block');
+        setCurrentSelectedBlock(blockId ? parseInt(blockId) as BlockType : null);
+      }
+    }, 100);
+
     // ====== Cleanup ======
     return () => {
       disposed = true;
       sceneRef.current = null;
+      cameraRef.current = null;
+      solidMaterialRef.current = null;
+      waterMaterialRef.current = null;
+      clearInterval(syncInterval);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
-      container.removeEventListener('click', handleClick);
+      container.removeEventListener('mousedown', handleMouseDown);
+      container.removeEventListener('contextmenu', handleContextMenu);
       cancelAnimationFrame(firstFrame);
 
       if (controlsRef.current) {
         controlsRef.current.dispose();
         controlsRef.current = null;
       }
+
+      // Clean up chunk meshes
+      chunkMeshesRef.current.clear();
 
       // Clean up remote player meshes
       for (const [, entry] of remotePlayerMeshes.current) {
@@ -890,9 +1092,9 @@ export default function MinecraftWorld() {
 
           <div className={styles.connectionStatus}>
             {mp.connectionStatus === 'connected' ? 'Connected' :
-             mp.connectionStatus === 'connecting' ? 'Connecting...' :
-             mp.connectionStatus === 'reconnecting' ? 'Reconnecting...' :
-             'Disconnected'}
+              mp.connectionStatus === 'connecting' ? 'Connecting...' :
+                mp.connectionStatus === 'reconnecting' ? 'Reconnecting...' :
+                  'Disconnected'}
           </div>
         </div>
 
@@ -956,9 +1158,8 @@ export default function MinecraftWorld() {
               </button>
             ) : (
               <button
-                className={`${styles.primaryButton} ${
-                  mp.roomState?.players.find(p => p.id === mp.playerId)?.ready ? styles.readyActive : ''
-                }`}
+                className={`${styles.primaryButton} ${mp.roomState?.players.find(p => p.id === mp.playerId)?.ready ? styles.readyActive : ''
+                  }`}
                 onClick={() => {
                   const me = mp.roomState?.players.find(p => p.id === mp.playerId);
                   mp.setReady(!me?.ready);
@@ -1011,6 +1212,10 @@ export default function MinecraftWorld() {
               <p>Shift - Sprint</p>
               <p>Space - Jump</p>
               <p>Mouse - Look around</p>
+              <p>Left Click - Break block</p>
+              <p>Right Click - Place block</p>
+              <p>1-9 / Scroll - Select block</p>
+              <p>E - Open inventory</p>
               <p>T - Chat</p>
               <p>ESC - Release cursor</p>
             </div>
@@ -1028,6 +1233,29 @@ export default function MinecraftWorld() {
               Players: {mp.roomState?.players.filter(p => p.connected).length || 1}
             </div>
           </div>
+
+          {/* Hidden element to sync selected block into the Three.js closure */}
+          <div
+            data-hotbar="true"
+            data-selected-block={hotbar[selectedSlot] ?? ''}
+            style={{ display: 'none' }}
+          />
+
+          {/* Block Inventory & Hotbar */}
+          <BlockInventory
+            selectedSlot={selectedSlot}
+            hotbar={hotbar}
+            onSelectSlot={setSelectedSlot}
+            onUpdateHotbar={setHotbar}
+            inventoryOpen={inventoryOpen}
+            onToggleInventory={() => {
+              setInventoryOpen(prev => !prev);
+              // Unlock pointer when opening inventory
+              if (!inventoryOpen && controlsRef.current?.isLocked) {
+                controlsRef.current.unlock();
+              }
+            }}
+          />
         </>
       )}
 
@@ -1066,16 +1294,44 @@ export default function MinecraftWorld() {
         )}
       </div>
 
-      {/* T key to open chat */}
+      {/* T key to open chat, E for inventory, 1-9 for slots, scroll for slot */}
       {!showChat && mp.phase === 'playing' && (
         <KeyListener
           onKey={(e) => {
+            if (e.target instanceof HTMLInputElement) return;
             if (e.key === 't' || e.key === 'T') {
-              if (!(e.target instanceof HTMLInputElement)) {
-                e.preventDefault();
-                setShowChat(true);
-              }
+              e.preventDefault();
+              setShowChat(true);
             }
+            if (e.key === 'e' || e.key === 'E') {
+              e.preventDefault();
+              setInventoryOpen(prev => {
+                const opening = !prev;
+                if (opening && controlsRef.current?.isLocked) {
+                  controlsRef.current.unlock();
+                }
+                return opening;
+              });
+            }
+            // 1-9 keys for hotbar selection
+            const digit = parseInt(e.key);
+            if (digit >= 1 && digit <= 9) {
+              setSelectedSlot(digit - 1);
+            }
+          }}
+        />
+      )}
+
+      {/* Scroll wheel for hotbar slot */}
+      {mp.phase === 'playing' && (
+        <ScrollListener
+          onScroll={(delta) => {
+            setSelectedSlot(prev => {
+              let next = prev + (delta > 0 ? 1 : -1);
+              if (next < 0) next = 8;
+              if (next > 8) next = 0;
+              return next;
+            });
           }}
         />
       )}
@@ -1091,11 +1347,27 @@ export default function MinecraftWorld() {
   );
 }
 
-// Small helper to listen for T key without polluting the main component
+// Small helper to listen for keyboard without polluting the main component
 function KeyListener({ onKey }: { onKey: (e: KeyboardEvent) => void }) {
   useEffect(() => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onKey]);
+  return null;
+}
+
+// Scroll wheel listener for hotbar slot cycling
+function ScrollListener({ onScroll }: { onScroll: (delta: number) => void }) {
+  const onScrollRef = useRef(onScroll);
+  onScrollRef.current = onScroll;
+
+  useEffect(() => {
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      onScrollRef.current(e.deltaY);
+    };
+    window.addEventListener('wheel', handler, { passive: false });
+    return () => window.removeEventListener('wheel', handler);
+  }, []);
   return null;
 }
