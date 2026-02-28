@@ -174,7 +174,7 @@ export function PropertiesPanel({
 
   if (!object) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center py-16">
         <p className="text-[11px]" style={{ color: '#555' }}>{t('selectObject')}</p>
       </div>
     );

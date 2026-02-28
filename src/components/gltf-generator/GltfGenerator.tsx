@@ -229,7 +229,7 @@ export default function GltfGenerator() {
   }, [selectedId, objects, deleteObject, duplicateObject, updateObject]);
 
   return (
-    <div className="flex flex-col h-screen select-none" style={{ background: '#1D1D1D', color: '#ccc' }}>
+    <div className="fixed inset-0 flex flex-col select-none" style={{ background: '#1D1D1D', color: '#ccc' }}>
       {/* Menu Bar */}
       <MenuBar
         onAdd={addObject}
@@ -243,7 +243,7 @@ export default function GltfGenerator() {
       />
 
       {/* Main workspace */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 overflow-hidden">
         {/* Left toolbar */}
         <Toolbar
           transformMode={transformMode}
@@ -251,20 +251,20 @@ export default function GltfGenerator() {
         />
 
         {/* 3D Viewport — takes up all remaining space */}
-        <div className="flex-1 flex flex-col min-w-0" style={{ background: '#1D1D1D' }}>
+        <div className="flex-1 flex flex-col overflow-hidden" style={{ background: '#1D1D1D' }}>
           <ViewportHeader
             shadingMode={shadingMode}
             onSetShadingMode={setShadingMode}
             showGrid={showGrid}
             onToggleGrid={() => setShowGrid(!showGrid)}
           />
-          <div className="flex-1 relative">
+          <div className="flex-1 relative overflow-hidden">
             <Canvas
               camera={{ position: [5, 3.5, 5], fov: 45 }}
               shadows
               onCreated={({ scene }) => { sceneRef.current = scene; }}
               onPointerMissed={() => setSelectedId(null)}
-              style={{ background: '#191919' }}
+              style={{ position: 'absolute', inset: 0, background: '#191919' }}
             >
               <Suspense fallback={null}>
                 <SceneContent
@@ -288,7 +288,7 @@ export default function GltfGenerator() {
         </div>
 
         {/* Right sidebar: Outliner + Properties */}
-        <div className="flex flex-col shrink-0" style={{ width: 280, background: '#303030', borderLeft: '1px solid #1a1a1a' }}>
+        <div className="flex flex-col shrink-0 overflow-hidden" style={{ width: 280, background: '#303030', borderLeft: '1px solid #1a1a1a' }}>
           {/* Tab headers */}
           <div className="flex shrink-0" style={{ background: '#2a2a2a', borderBottom: '1px solid #1a1a1a' }}>
             <button
@@ -316,7 +316,7 @@ export default function GltfGenerator() {
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {rightPanelTab === 'outliner' ? (
               <Outliner
                 objects={objects}
