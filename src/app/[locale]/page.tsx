@@ -50,7 +50,7 @@ export default function HomePage() {
                 {activeTab === 'homepage' ? (
                     <motion.div
                         key="homepage"
-                        initial={{ opacity: 0 }}
+                        initial={false}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.25 }}
@@ -60,7 +60,7 @@ export default function HomePage() {
                 ) : (
                     <motion.div
                         key="rhythmia"
-                        initial={{ opacity: 0 }}
+                        initial={false}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.25 }}

@@ -7,7 +7,7 @@ import { NotificationProvider } from '@/lib/notifications';
 
 export default function Provider({ children }: { children: React.ReactNode }) {
   return (
-    <AnimatePresence mode='wait'>
+    <AnimatePresence mode='wait' initial={false}>
       <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
         <NotificationProvider>
           {children}

@@ -43,24 +43,32 @@ function applyVersionCSS(version: AppVersion) {
 }
 
 export function VersionProvider({ children }: { children: ReactNode }) {
-  const [currentVersion, setCurrentVersion] = useState<AppVersion>(DEFAULT_VERSION);
-  const [isVersionSelected, setIsVersionSelected] = useState(false);
-  const [accentColor, setAccentColorState] = useState<AccentColor>(DEFAULT_ACCENT);
-
-  // Restore from storage on mount — useLayoutEffect prevents flash of wrong version
-  useIsomorphicLayoutEffect(() => {
-    const storedVersion = getSelectedVersion();
-    if (storedVersion) {
-      setCurrentVersion(storedVersion);
-      setIsVersionSelected(true);
-      applyVersionCSS(storedVersion);
-    } else {
-      applyVersionCSS(DEFAULT_VERSION);
+  // Eagerly read from localStorage during state initialization so the first
+  // client render already uses the correct version — eliminates the two-phase
+  // render that caused tree structure changes and black screen flashes.
+  const [currentVersion, setCurrentVersion] = useState<AppVersion>(() => {
+    if (typeof window !== 'undefined') {
+      return getSelectedVersion() || DEFAULT_VERSION;
     }
+    return DEFAULT_VERSION;
+  });
+  const [isVersionSelected, setIsVersionSelected] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !!getSelectedVersion();
+    }
+    return false;
+  });
+  const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
+    if (typeof window !== 'undefined') {
+      return getSelectedAccent();
+    }
+    return DEFAULT_ACCENT;
+  });
 
-    const storedAccent = getSelectedAccent();
-    setAccentColorState(storedAccent);
-    applyAccentCSS(storedAccent);
+  // Apply CSS attributes on mount (DOM attributes still need explicit application)
+  useIsomorphicLayoutEffect(() => {
+    applyVersionCSS(currentVersion);
+    applyAccentCSS(accentColor);
   }, []);
 
   const setVersion = (version: AppVersion) => {
