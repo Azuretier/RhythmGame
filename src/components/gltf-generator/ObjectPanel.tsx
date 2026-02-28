@@ -3,32 +3,36 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  Cube,
-  Sphere,
+  Box,
+  Circle,
   Cylinder,
   Cone,
-  Circle,
+  Donut,
+  Square,
+  Diamond,
+  Hexagon,
   Eye,
-  EyeSlash,
+  EyeOff,
   Copy,
-  Trash,
+  Trash2,
   Plus,
-  CaretDown,
-  CaretRight,
-} from '@phosphor-icons/react';
+  ChevronDown,
+  ChevronRight,
+  LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SceneObject } from './SceneObjectMesh';
 import { ShapeType } from './GltfGenerator';
 
-const SHAPE_ICONS: Record<ShapeType, typeof Cube> = {
-  box: Cube,
-  sphere: Sphere,
+const SHAPE_ICONS: Record<ShapeType, LucideIcon> = {
+  box: Box,
+  sphere: Circle,
   cylinder: Cylinder,
   cone: Cone,
-  torus: Circle,
-  plane: Cube,
-  icosahedron: Sphere,
-  octahedron: Sphere,
+  torus: Donut,
+  plane: Square,
+  icosahedron: Diamond,
+  octahedron: Hexagon,
 };
 
 const SHAPE_OPTIONS: ShapeType[] = [
@@ -70,9 +74,9 @@ export function ObjectPanel({
           onClick={() => setShowAddMenu(!showAddMenu)}
           className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded bg-azure-500 hover:bg-azure-600 text-white transition-colors"
         >
-          <Plus size={14} weight="bold" />
+          <Plus size={14} strokeWidth={2.5} />
           {t('addShape')}
-          {showAddMenu ? <CaretDown size={12} /> : <CaretRight size={12} />}
+          {showAddMenu ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </button>
 
         {showAddMenu && (
@@ -129,7 +133,7 @@ export function ObjectPanel({
                     className="p-0.5 rounded hover:bg-white/10"
                     title={obj.visible ? t('hide') : t('show')}
                   >
-                    {obj.visible ? <Eye size={12} /> : <EyeSlash size={12} />}
+                    {obj.visible ? <Eye size={12} /> : <EyeOff size={12} />}
                   </button>
                   <button
                     onClick={(e) => {
@@ -149,7 +153,7 @@ export function ObjectPanel({
                     className="p-0.5 rounded hover:bg-red-500/30 text-red-400"
                     title={t('delete')}
                   >
-                    <Trash size={12} />
+                    <Trash2 size={12} />
                   </button>
                 </div>
               </div>
