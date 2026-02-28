@@ -1,0 +1,489 @@
+/* ===== Inventory Panel ===== */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+}
+
+.panel {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    margin: 0 16px;
+    background: rgba(8, 8, 12, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── Header ── */
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.headerIcon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.headerTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.05em;
+}
+
+.headerSlots {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    font-family: var(--font-mono, monospace);
+}
+
+.closeButton {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.closeButton:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── Filters & Sort ── */
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.filterGroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filterBtn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.filterBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.filterBtnActive {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.separator {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sortGroup {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sortLabel {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-right: 2px;
+}
+
+.sortBtn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: none;
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.sortBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.sortBtnActive {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* ── Content Area ── */
+
+.content {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ── Item Grid ── */
+
+.gridArea {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.gridArea::-webkit-scrollbar {
+    width: 4px;
+}
+
+.gridArea::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.gridArea::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.itemButton {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 6px 8px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    transition: all 0.15s;
+    min-height: 88px;
+}
+
+.itemButton:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+}
+
+.itemButtonSelected {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
+}
+
+.itemName {
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    line-height: 1.2;
+    margin-top: 6px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    width: 100%;
+}
+
+.itemCount {
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: var(--font-mono, monospace);
+    margin-top: 2px;
+}
+
+.itemRarity {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* ── Empty State ── */
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 16px;
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.emptyIcon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.emptyTitle {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.emptyDesc {
+    font-size: 12px;
+}
+
+/* ── Detail Panel ── */
+
+.detailPanel {
+    width: 280px;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-shrink: 0;
+}
+
+.detailInner {
+    padding: 20px 16px;
+}
+
+.detailHeader {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.detailTexture {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.detailName {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.detailNameJa {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.detailBadges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.detailBadge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detailDescription {
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    margin-bottom: 16px;
+}
+
+.detailDescriptionJa {
+    font-size: 10px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 4px;
+}
+
+/* ── Detail Stats ── */
+
+.detailStatsBox {
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 12px;
+}
+
+.detailStatsTitle {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.25);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.detailStatRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.detailStatLabel {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.detailStatValue {
+    font-size: 11px;
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── Detail Actions ── */
+
+.detailActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.actionBtn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.actionBtnUse {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: rgb(96, 165, 250);
+}
+
+.actionBtnUse:hover {
+    background: rgba(59, 130, 246, 0.25);
+}
+
+.actionBtnDiscard {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: rgb(248, 113, 113);
+}
+
+.actionBtnDiscard:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* ── Summary Stats Bar ── */
+
+.summaryBar {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 10px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.summaryStat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.summaryStatValue {
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: var(--font-mono, monospace);
+}
+
+/* ── Toast ── */
+
+.toast {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    background: rgba(20, 83, 45, 0.8);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.toastContent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: rgb(134, 239, 172);
+}

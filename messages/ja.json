@@ -1543,5 +1543,55 @@
     "accentColor": "アクセントカラー",
     "latest": "最新",
     "goHome": "ホームページへ移動"
+  },
+  "inventory": {
+    "meta": {
+      "title": "インベントリ - Azuretia",
+      "description": "収集したアイテム、素材、消耗品を管理しましょう。"
+    },
+    "title": "インベントリ",
+    "button": "インベントリ",
+    "filter": {
+      "all": "すべて",
+      "material": "素材",
+      "consumable": "消耗品",
+      "equipment": "装備",
+      "relic": "遺物",
+      "currency": "通貨"
+    },
+    "sort": "並び替え",
+    "sortBy": {
+      "category": "カテゴリ",
+      "rarity": "レアリティ",
+      "count": "数量",
+      "name": "名前"
+    },
+    "empty": {
+      "title": "アイテムがありません",
+      "desc": "ゲームをプレイしてアイテムや素材を集めよう！"
+    },
+    "details": {
+      "info": "情報",
+      "owned": "所持数",
+      "maxStack": "最大スタック"
+    },
+    "actions": {
+      "use": "使う",
+      "discard": "捨てる"
+    },
+    "summary": {
+      "uniqueItems": "種類",
+      "totalItems": "合計",
+      "collected": "収集済み",
+      "consumed": "使用済み"
+    },
+    "discard": {
+      "title": "アイテムを捨てますか？",
+      "warning": "このアイテムを1つインベントリから削除します。",
+      "cancel": "キャンセル",
+      "confirm": "捨てる"
+    },
+    "usedItem": "{name}を使用しました",
+    "discardedItem": "{name}を捨てました"
   }
 }

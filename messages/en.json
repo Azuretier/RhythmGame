@@ -1543,5 +1543,55 @@
     "accentColor": "Accent Color",
     "latest": "latest",
     "goHome": "Go to Homepage"
+  },
+  "inventory": {
+    "meta": {
+      "title": "Inventory - Azuretia",
+      "description": "Manage your collected items, materials, and consumables."
+    },
+    "title": "INVENTORY",
+    "button": "Inventory",
+    "filter": {
+      "all": "All",
+      "material": "Materials",
+      "consumable": "Consumables",
+      "equipment": "Equipment",
+      "relic": "Relics",
+      "currency": "Currency"
+    },
+    "sort": "Sort",
+    "sortBy": {
+      "category": "Category",
+      "rarity": "Rarity",
+      "count": "Count",
+      "name": "Name"
+    },
+    "empty": {
+      "title": "No items yet",
+      "desc": "Play games to collect items and materials!"
+    },
+    "details": {
+      "info": "Info",
+      "owned": "Owned",
+      "maxStack": "Max Stack"
+    },
+    "actions": {
+      "use": "Use",
+      "discard": "Discard"
+    },
+    "summary": {
+      "uniqueItems": "Unique",
+      "totalItems": "Total",
+      "collected": "Collected",
+      "consumed": "Used"
+    },
+    "discard": {
+      "title": "Discard Item?",
+      "warning": "This will remove 1 of this item from your inventory.",
+      "cancel": "Cancel",
+      "confirm": "Discard"
+    },
+    "usedItem": "Used {name}",
+    "discardedItem": "Discarded {name}"
   }
 }

@@ -1508,5 +1508,55 @@
     "accentColor": "Couleur d'accent",
     "latest": "dernière",
     "goHome": "Aller à l'accueil"
+  },
+  "inventory": {
+    "meta": {
+      "title": "Inventaire - Azuretia",
+      "description": "Gérez vos objets, matériaux et consommables collectés."
+    },
+    "title": "INVENTAIRE",
+    "button": "Inventaire",
+    "filter": {
+      "all": "Tout",
+      "material": "Matériaux",
+      "consumable": "Consommables",
+      "equipment": "Équipement",
+      "relic": "Reliques",
+      "currency": "Monnaie"
+    },
+    "sort": "Trier",
+    "sortBy": {
+      "category": "Catégorie",
+      "rarity": "Rareté",
+      "count": "Quantité",
+      "name": "Nom"
+    },
+    "empty": {
+      "title": "Aucun objet",
+      "desc": "Jouez pour collecter des objets et matériaux !"
+    },
+    "details": {
+      "info": "Info",
+      "owned": "Possédé",
+      "maxStack": "Pile max."
+    },
+    "actions": {
+      "use": "Utiliser",
+      "discard": "Jeter"
+    },
+    "summary": {
+      "uniqueItems": "Uniques",
+      "totalItems": "Total",
+      "collected": "Collectés",
+      "consumed": "Utilisés"
+    },
+    "discard": {
+      "title": "Jeter l'objet ?",
+      "warning": "Cela supprimera 1 unité de cet objet de votre inventaire.",
+      "cancel": "Annuler",
+      "confirm": "Jeter"
+    },
+    "usedItem": "{name} utilisé",
+    "discardedItem": "{name} jeté"
   }
 }

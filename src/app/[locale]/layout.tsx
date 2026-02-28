@@ -14,6 +14,7 @@ import { UiThemeProvider } from '@/lib/theme/context';
 import { GoogleSyncProvider } from '@/lib/google-sync/context';
 import { SkillTreeProvider } from '@/lib/skill-tree/context';
 import { ShapeProvider } from '@/lib/shape/context';
+import { InventoryProvider } from '@/lib/inventory/context';
 
 // Vercel Analytics
 import { Analytics } from "@vercel/analytics/next"
@@ -135,11 +136,13 @@ export default async function LocaleLayout({ children, params }: Props) {
                             <ProfileProvider>
                                 <SkinProvider>
                                     <SkillTreeProvider>
-                                        <VersionProvider>
-                                            <Provider>
-                                                {children}
-                                            </Provider>
-                                        </VersionProvider>
+                                        <InventoryProvider>
+                                            <VersionProvider>
+                                                <Provider>
+                                                    {children}
+                                                </Provider>
+                                            </VersionProvider>
+                                        </InventoryProvider>
                                     </SkillTreeProvider>
                                 </SkinProvider>
                             </ProfileProvider>

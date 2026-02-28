@@ -26,6 +26,7 @@ import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 import GameModeMap from '@/components/rhythmia/GameModeMap';
+import InventoryPanel from '@/components/inventory/InventoryPanel';
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 
@@ -39,6 +40,7 @@ export default function RhythmiaLobby() {
     const [unlockedCount, setUnlockedCount] = useState(0);
     const [showSkinCustomizer, setShowSkinCustomizer] = useState(false);
     const [showSkillTree, setShowSkillTree] = useState(false);
+    const [showInventory, setShowInventory] = useState(false);
     const [showLogoAnimation, setShowLogoAnimation] = useState(false);
     const wsRef = useRef<WebSocket | null>(null);
     const profileSentRef = useRef(false);
@@ -59,7 +61,7 @@ export default function RhythmiaLobby() {
     const TOTAL_SLIDES = 3;
     const { currentSlide, goToSlide, containerRef, slideStyle } = useSlideScroll({
         totalSlides: TOTAL_SLIDES,
-        enabled: gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showSkillTree && !showOnlineUsers && !showLogoAnimation,
+        enabled: gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showSkillTree && !showInventory && !showOnlineUsers && !showLogoAnimation,
     });
 
     useEffect(() => {
@@ -244,7 +246,7 @@ export default function RhythmiaLobby() {
         );
     }
 
-    const slidesEnabled = gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showSkillTree && !showOnlineUsers && !showLogoAnimation;
+    const slidesEnabled = gameMode === 'lobby' && !isLoading && !showProfileSetup && !showAdvancements && !showSkinCustomizer && !showSkillTree && !showInventory && !showOnlineUsers && !showLogoAnimation;
 
     return (
         <>
@@ -327,6 +329,13 @@ export default function RhythmiaLobby() {
                         )}
                     </AnimatePresence>
 
+                    {/* Inventory panel */}
+                    <AnimatePresence>
+                        {showInventory && (
+                            <InventoryPanel onClose={() => setShowInventory(false)} />
+                        )}
+                    </AnimatePresence>
+
                     {/* Slide container */}
                     <div
                         className={styles.slideContainer}
@@ -354,6 +363,12 @@ export default function RhythmiaLobby() {
                                         onClick={() => setShowSkillTree(true)}
                                     >
                                         {t('skillTree.title')}
+                                    </button>
+                                    <button
+                                        className={styles.advButton}
+                                        onClick={() => setShowInventory(true)}
+                                    >
+                                        {t('inventory.button')}
                                     </button>
                                     <button
                                         className={onlineStyles.onlineButton}
