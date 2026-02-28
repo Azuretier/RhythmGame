@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { FaTwitter, FaDiscord, FaYoutube, FaInstagram, FaGithub } from 'react-icons/fa';
-import TwitterWidget from '@/components/sns-widgets/TwitterWidget';
-import DiscordWidget from '@/components/sns-widgets/DiscordWidget';
-import YouTubeWidget from '@/components/sns-widgets/YouTubeWidget';
-import InstagramWidget from '@/components/sns-widgets/InstagramWidget';
-import GitHubWidget from '@/components/sns-widgets/GitHubWidget';
+import TwitterWidget from '@/components/social-widgets/TwitterWidget';
+import DiscordWidget from '@/components/social-widgets/DiscordWidget';
+import YouTubeWidget from '@/components/social-widgets/YouTubeWidget';
+import InstagramWidget from '@/components/social-widgets/InstagramWidget';
+import GitHubWidget from '@/components/social-widgets/GitHubWidget';
 
 type WidgetType = 'twitter' | 'discord' | 'youtube' | 'instagram' | 'github';
 
@@ -85,7 +85,7 @@ export default function SNSWidgetsPage() {
         params.append(key, String(value));
       }
     });
-    return `<iframe src="${baseUrl}/sns-widgets/embed/${widget.id}?${params.toString()}" width="350" height="500" style="border: 0;" scrolling="no"></iframe>`;
+    return `<iframe src="${baseUrl}/social-widgets/embed/${widget.id}?${params.toString()}" width="350" height="500" style="border: 0;" scrolling="no"></iframe>`;
   };
 
   const renderWidget = (widget: WidgetConfig) => {

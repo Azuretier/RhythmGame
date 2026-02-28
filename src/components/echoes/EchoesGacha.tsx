@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import type { useEoESocket } from '@/hooks/useEoESocket';
+import type { useEchoesSocket } from '@/hooks/useEchoesSocket';
 import type { GachaPullResult } from '@/types/echoes';
 import { getCharacterDefinition, getAllCharacters } from '@/lib/echoes/characters';
 import { ELEMENT_COLORS } from '@/lib/echoes/elements';
 import { STANDARD_BANNER, getPityInfo } from '@/lib/echoes/gacha';
-import styles from './EoEGame.module.css';
+import styles from './EchoesGame.module.css';
 
 interface Props {
-  socket: ReturnType<typeof useEoESocket>;
+  socket: ReturnType<typeof useEchoesSocket>;
 }
 
-export function EoEGacha({ socket }: Props) {
+export function EchoesGacha({ socket }: Props) {
   const { gachaResults, gachaState } = socket;
   const [showResults, setShowResults] = useState(false);
   const [revealedIndex, setRevealedIndex] = useState(-1);

@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { useEoESocket } from '@/hooks/useEoESocket';
+import type { useEchoesSocket } from '@/hooks/useEchoesSocket';
 import type { CharacterInstance, EnemyInstance, CharacterSkill } from '@/types/echoes';
 import { ELEMENT_COLORS, ELEMENT_NAMES_JA } from '@/lib/echoes/elements';
 import { getCharacterDefinition } from '@/lib/echoes/characters';
-import styles from './EoEGame.module.css';
+import styles from './EchoesGame.module.css';
 
 interface Props {
-  socket: ReturnType<typeof useEoESocket>;
+  socket: ReturnType<typeof useEchoesSocket>;
 }
 
-export function EoEBattle({ socket }: Props) {
+export function EchoesBattle({ socket }: Props) {
   const { battleState, lastDamage, lastReaction, comboChain } = socket;
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);

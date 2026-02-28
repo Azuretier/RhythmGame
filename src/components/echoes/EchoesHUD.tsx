@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import type { useEoESocket } from '@/hooks/useEoESocket';
-import styles from './EoEGame.module.css';
+import type { useEchoesSocket } from '@/hooks/useEchoesSocket';
+import styles from './EchoesGame.module.css';
 
 interface Props {
-  socket: ReturnType<typeof useEoESocket>;
+  socket: ReturnType<typeof useEchoesSocket>;
 }
 
-export function EoEHUD({ socket }: Props) {
+export function EchoesHUD({ socket }: Props) {
   const [showChat, setShowChat] = useState(false);
   const [chatInput, setChatInput] = useState('');
 

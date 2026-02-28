@@ -1,19 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { useEoESocket } from '@/hooks/useEoESocket';
+import type { useEchoesSocket } from '@/hooks/useEchoesSocket';
 import type { RhythmNote, RhythmJudgement } from '@/types/echoes';
 import { scoreRhythmResult } from '@/lib/echoes/combat';
-import styles from './EoEGame.module.css';
+import styles from './EchoesGame.module.css';
 
 interface Props {
-  socket: ReturnType<typeof useEoESocket>;
+  socket: ReturnType<typeof useEchoesSocket>;
 }
 
 const LANE_KEYS = ['d', 'f', 'j', 'k'];
 const LANE_COLORS = ['#EF4444', '#3B82F6', '#22C55E', '#F59E0B'];
 
-export function EoERhythm({ socket }: Props) {
+export function EchoesRhythm({ socket }: Props) {
   const { rhythmSequence } = socket;
   const [judgements, setJudgements] = useState<RhythmJudgement[]>([]);
   const [combo, setCombo] = useState(0);

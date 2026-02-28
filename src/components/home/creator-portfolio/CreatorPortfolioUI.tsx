@@ -5,10 +5,10 @@ import { Heart, Instagram, Github, Youtube, Twitter, ExternalLink } from "lucide
 import { FaDiscord } from "react-icons/fa";
 
 /**
- * v1.0.1 UI - Patreon-style creator layout
+ * Creator Portfolio UI - Patreon-style creator layout
  * Features a profile card, content feed, and social links sidebar
  */
-export default function V1_0_1_UI() {
+export default function CreatorPortfolioUI() {
   const socialLinks = [
     { icon: <Twitter />, label: "X (Twitter)", url: "https://x.com/c2c546", color: "hover:text-blue-400" },
     { icon: <Youtube />, label: "YouTube", url: "https://www.youtube.com/@azuretya", color: "hover:text-red-500" },

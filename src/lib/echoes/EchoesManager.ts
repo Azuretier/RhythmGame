@@ -4,8 +4,8 @@
 // =============================================================================
 
 import type {
-  EoERoom,
-  EoERoomPlayer,
+  EchoesRoom,
+  EchoesRoomPlayer,
   GameMode,
   GameModeConfig,
   Party,
@@ -18,8 +18,8 @@ import type {
   MobaState,
   DungeonDefinition,
   DungeonDifficulty,
-  EoEServerMessage,
-  EoEClientMessage,
+  EchoesServerMessage,
+  EchoesClientMessage,
   RhythmResult,
   Position2D,
   BattleEndStats,
@@ -52,9 +52,9 @@ import { getCharacterDefinition, createCharacterInstance } from './characters';
 // Manager Callbacks (same pattern as ArenaManager, MinecraftBoardManager)
 // ---------------------------------------------------------------------------
 
-export interface EoEManagerCallbacks {
-  onBroadcast: (roomCode: string, message: EoEServerMessage) => void;
-  onSendToPlayer: (playerId: string, message: EoEServerMessage) => void;
+export interface EchoesManagerCallbacks {
+  onBroadcast: (roomCode: string, message: EchoesServerMessage) => void;
+  onSendToPlayer: (playerId: string, message: EchoesServerMessage) => void;
   onSessionEnd: (roomCode: string) => void;
 }
 
@@ -62,8 +62,8 @@ export interface EoEManagerCallbacks {
 // Internal room state
 // ---------------------------------------------------------------------------
 
-interface EoERoomInternal {
-  room: EoERoom;
+interface EchoesRoomInternal {
+  room: EchoesRoom;
   battleState: BattleState | null;
   brState: BattleRoyaleState | null;
   mobaState: MobaState | null;
@@ -87,16 +87,16 @@ interface DungeonRunState {
 }
 
 // ---------------------------------------------------------------------------
-// EoEManager Class
+// EchoesManager Class
 // ---------------------------------------------------------------------------
 
-export class EoEManager {
-  private rooms: Map<string, EoERoomInternal> = new Map();
+export class EchoesManager {
+  private rooms: Map<string, EchoesRoomInternal> = new Map();
   private playerToRoom: Map<string, string> = new Map();
   private queues: Map<GameMode, Map<string, { name: string; icon: string; joinedAt: number }>> = new Map();
   private cleanupInterval: NodeJS.Timeout;
 
-  constructor(private callbacks: EoEManagerCallbacks) {
+  constructor(private callbacks: EchoesManagerCallbacks) {
     // Cleanup stale rooms every 60 seconds
     this.cleanupInterval = setInterval(() => this.cleanupStaleRooms(), 60000);
   }
@@ -111,12 +111,12 @@ export class EoEManager {
     hostIcon: string,
     gameMode: GameMode,
     maxPlayers?: number
-  ): { roomCode: string; room: EoERoom } {
+  ): { roomCode: string; room: EchoesRoom } {
     const roomCode = this.generateRoomCode();
     const config = GAME_MODE_CONFIGS[gameMode];
     const effectiveMax = maxPlayers ?? config.maxPlayers;
 
-    const room: EoERoom = {
+    const room: EchoesRoom = {
       id: roomCode,
       code: roomCode,
       gameMode,
@@ -127,7 +127,7 @@ export class EoEManager {
       maxPlayers: effectiveMax,
     };
 
-    const hostPlayer: EoERoomPlayer = {
+    const hostPlayer: EchoesRoomPlayer = {
       id: hostId,
       name: hostName,
       icon: hostIcon,
@@ -139,7 +139,7 @@ export class EoEManager {
 
     room.players.set(hostId, hostPlayer);
 
-    const internal: EoERoomInternal = {
+    const internal: EchoesRoomInternal = {
       room,
       battleState: null,
       brState: null,
@@ -160,13 +160,13 @@ export class EoEManager {
     playerId: string,
     playerName: string,
     playerIcon: string
-  ): { success: boolean; error?: string; room?: EoERoom } {
+  ): { success: boolean; error?: string; room?: EchoesRoom } {
     const internal = this.rooms.get(roomCode);
     if (!internal) return { success: false, error: 'Room not found' };
     if (internal.room.state !== 'lobby') return { success: false, error: 'Game already in progress' };
     if (internal.room.players.size >= internal.room.maxPlayers) return { success: false, error: 'Room is full' };
 
-    const player: EoERoomPlayer = {
+    const player: EchoesRoomPlayer = {
       id: playerId,
       name: playerName,
       icon: playerIcon,
@@ -971,7 +971,7 @@ export class EoEManager {
   // Message Handler
   // =========================================================================
 
-  handleMessage(playerId: string, message: EoEClientMessage): void {
+  handleMessage(playerId: string, message: EchoesClientMessage): void {
     switch (message.type) {
       case 'eoe_create_party':
         this.createRoom(playerId, '', '', message.gameMode, message.maxSize);
@@ -1183,13 +1183,13 @@ export class EoEManager {
     }
   }
 
-  getRoomByPlayerId(playerId: string): EoERoom | null {
+  getRoomByPlayerId(playerId: string): EchoesRoom | null {
     const roomCode = this.playerToRoom.get(playerId);
     if (!roomCode) return null;
     return this.rooms.get(roomCode)?.room ?? null;
   }
 
-  getRoomByCode(roomCode: string): EoERoom | null {
+  getRoomByCode(roomCode: string): EchoesRoom | null {
     return this.rooms.get(roomCode)?.room ?? null;
   }
 
@@ -1209,6 +1209,6 @@ export class EoEManager {
 // Type guard for message routing
 // ---------------------------------------------------------------------------
 
-export function isEoEMessage(type: string): boolean {
+export function isEchoesMessage(type: string): boolean {
   return type.startsWith('eoe_');
 }

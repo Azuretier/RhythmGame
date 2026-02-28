@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type {
-  EoEClientMessage,
-  EoEServerMessage,
-  EoEConnectionStatus,
+  EchoesClientMessage,
+  EchoesServerMessage,
+  EchoesConnectionStatus,
   GameMode,
   Party,
   BattleState,
@@ -36,7 +36,7 @@ import type {
 // Types
 // ---------------------------------------------------------------------------
 
-export type EoEPhase =
+export type EchoesPhase =
   | 'menu'
   | 'lobby'
   | 'character_select'
@@ -65,17 +65,17 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useEoESocket() {
+export function useEchoesSocket() {
   // Connection
   const wsRef = useRef<WebSocket | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<EoEConnectionStatus>('disconnected');
+  const [connectionStatus, setConnectionStatus] = useState<EchoesConnectionStatus>('disconnected');
   const playerIdRef = useRef<string>('');
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingMessagesRef = useRef<EoEClientMessage[]>([]);
+  const pendingMessagesRef = useRef<EchoesClientMessage[]>([]);
 
   // Phase state
-  const [phase, setPhase] = useState<EoEPhase>('menu');
+  const [phase, setPhase] = useState<EchoesPhase>('menu');
   const [error, setError] = useState<string | null>(null);
 
   // Party state
@@ -161,7 +161,7 @@ export function useEoESocket() {
 
       ws.onmessage = (event) => {
         try {
-          const message = JSON.parse(event.data) as EoEServerMessage | { type: string; playerId?: string };
+          const message = JSON.parse(event.data) as EchoesServerMessage | { type: string; playerId?: string };
 
           // Handle system messages
           if ('playerId' in message && message.type === 'welcome') {
@@ -169,7 +169,7 @@ export function useEoESocket() {
             return;
           }
 
-          handleServerMessage(message as EoEServerMessage);
+          handleServerMessage(message as EchoesServerMessage);
         } catch {
           // Ignore parse errors
         }
@@ -211,7 +211,7 @@ export function useEoESocket() {
   // Message Sending
   // =========================================================================
 
-  const sendMessage = useCallback((message: EoEClientMessage) => {
+  const sendMessage = useCallback((message: EchoesClientMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {
@@ -223,7 +223,7 @@ export function useEoESocket() {
   // Server Message Handler
   // =========================================================================
 
-  const handleServerMessage = useCallback((message: EoEServerMessage) => {
+  const handleServerMessage = useCallback((message: EchoesServerMessage) => {
     switch (message.type) {
       // Party
       case 'eoe_party_created':
@@ -442,10 +442,10 @@ export function useEoESocket() {
   const placeBlock = useCallback((block: string, position: { x: number; y: number; z: number }, rotation: number) => {
     sendMessage({
       type: 'eoe_place_block',
-      block: block as EoEClientMessage extends { type: 'eoe_place_block' } ? EoEClientMessage['block'] : never,
+      block: block as EchoesClientMessage extends { type: 'eoe_place_block' } ? EchoesClientMessage['block'] : never,
       position,
       rotation,
-    } as EoEClientMessage);
+    } as EchoesClientMessage);
   }, [sendMessage]);
 
   const removeBlock = useCallback((position: { x: number; y: number; z: number }) => {

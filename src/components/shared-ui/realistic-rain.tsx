@@ -1,7 +1,7 @@
 // ============================================
 // FIXED realistic-rain.tsx
 // Fixes: GL_INVALID_OPERATION: glTexStorage2D: Texture is immutable
-// Location: @/components/main/realistic-rain.tsx
+// Location: @/components/shared-ui/realistic-rain.tsx
 // ============================================
 
 "use client";

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useTheme } from 'next-themes';
 
-import { Button } from '@/components/main/ui/button';
+import { Button } from '@/components/shared-ui/ui/button';
 import { FiMoon, FiSun } from 'react-icons/fi';
 
 export function ThemeToggle() {

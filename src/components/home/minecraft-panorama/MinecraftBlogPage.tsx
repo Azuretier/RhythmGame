@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import styles from "./V1_0_2_UI.module.css";
+import styles from "./MinecraftPanoramaUI.module.css";
 
 interface BlogPost {
   id: number;

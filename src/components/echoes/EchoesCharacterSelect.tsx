@@ -1,16 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import type { useEoESocket } from '@/hooks/useEoESocket';
+import type { useEchoesSocket } from '@/hooks/useEchoesSocket';
 import { getAllCharacters, analyzeParty } from '@/lib/echoes/characters';
 import { ELEMENT_COLORS, ELEMENT_NAMES_JA } from '@/lib/echoes/elements';
-import styles from './EoEGame.module.css';
+import styles from './EchoesGame.module.css';
 
 interface Props {
-  socket: ReturnType<typeof useEoESocket>;
+  socket: ReturnType<typeof useEchoesSocket>;
 }
 
-export function EoECharacterSelect({ socket }: Props) {
+export function EchoesCharacterSelect({ socket }: Props) {
   const characters = getAllCharacters();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedChar = selectedId ? characters.find((c) => c.id === selectedId) : null;

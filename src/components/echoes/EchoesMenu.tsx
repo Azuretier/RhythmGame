@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { useEoESocket } from '@/hooks/useEoESocket';
+import type { useEchoesSocket } from '@/hooks/useEchoesSocket';
 import type { GameMode } from '@/types/echoes';
 import { GAME_MODE_CONFIGS } from '@/lib/echoes/game-modes';
-import styles from './EoEGame.module.css';
+import styles from './EchoesGame.module.css';
 
 interface Props {
-  socket: ReturnType<typeof useEoESocket>;
+  socket: ReturnType<typeof useEchoesSocket>;
 }
 
 const gameModes: { mode: GameMode; available: boolean }[] = [
@@ -23,7 +23,7 @@ const gameModes: { mode: GameMode; available: boolean }[] = [
   { mode: 'creative', available: true },
 ];
 
-export function EoEMenu({ socket }: Props) {
+export function EchoesMenu({ socket }: Props) {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);

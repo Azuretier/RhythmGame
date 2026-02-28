@@ -1,19 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useEoESocket, type EoEPhase } from '@/hooks/useEoESocket';
-import { EoEMenu } from './EoEMenu';
-import { EoELobby } from './EoELobby';
-import { EoEBattle } from './EoEBattle';
-import { EoERhythm } from './EoERhythm';
-import { EoEResults } from './EoEResults';
-import { EoECharacterSelect } from './EoECharacterSelect';
-import { EoEGacha } from './EoEGacha';
-import { EoEHUD } from './EoEHUD';
-import styles from './EoEGame.module.css';
+import { useEchoesSocket, type EchoesPhase } from '@/hooks/useEchoesSocket';
+import { EchoesMenu } from './EchoesMenu';
+import { EchoesLobby } from './EchoesLobby';
+import { EchoesBattle } from './EchoesBattle';
+import { EchoesRhythm } from './EchoesRhythm';
+import { EchoesResults } from './EchoesResults';
+import { EchoesCharacterSelect } from './EchoesCharacterSelect';
+import { EchoesGacha } from './EchoesGacha';
+import { EchoesHUD } from './EchoesHUD';
+import styles from './EchoesGame.module.css';
 
-export default function EoEGame() {
-  const socket = useEoESocket();
+export default function EchoesGame() {
+  const socket = useEchoesSocket();
   const [isConnecting, setIsConnecting] = useState(false);
 
   // Auto-connect on mount
@@ -33,11 +33,11 @@ export default function EoEGame() {
   const renderPhase = () => {
     switch (socket.phase) {
       case 'menu':
-        return <EoEMenu socket={socket} />;
+        return <EchoesMenu socket={socket} />;
       case 'lobby':
-        return <EoELobby socket={socket} />;
+        return <EchoesLobby socket={socket} />;
       case 'character_select':
-        return <EoECharacterSelect socket={socket} />;
+        return <EchoesCharacterSelect socket={socket} />;
       case 'queue':
         return (
           <div className={styles.queueScreen}>
@@ -57,13 +57,13 @@ export default function EoEGame() {
           </div>
         );
       case 'battle':
-        return <EoEBattle socket={socket} />;
+        return <EchoesBattle socket={socket} />;
       case 'rhythm':
-        return <EoERhythm socket={socket} />;
+        return <EchoesRhythm socket={socket} />;
       case 'results':
-        return <EoEResults socket={socket} />;
+        return <EchoesResults socket={socket} />;
       case 'gacha':
-        return <EoEGacha socket={socket} />;
+        return <EchoesGacha socket={socket} />;
       case 'dungeon':
       case 'battle_royale':
       case 'moba':
@@ -85,7 +85,7 @@ export default function EoEGame() {
           </div>
         );
       default:
-        return <EoEMenu socket={socket} />;
+        return <EchoesMenu socket={socket} />;
     }
   };
 
@@ -110,7 +110,7 @@ export default function EoEGame() {
 
       {/* HUD overlay (during gameplay) */}
       {['battle', 'rhythm', 'dungeon', 'battle_royale', 'moba'].includes(socket.phase) && (
-        <EoEHUD socket={socket} />
+        <EchoesHUD socket={socket} />
       )}
 
       {/* Level up notification */}

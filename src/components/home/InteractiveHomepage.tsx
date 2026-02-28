@@ -14,9 +14,9 @@ import {
   setSelectedVersion,
   hasVersionSelection,
 } from "@/lib/version/storage";
-import V1_0_0_UI from "./v1.0.0/V1_0_0_UI";
-import V1_0_1_UI from "./v1.0.1/V1_0_1_UI";
-import V1_0_2_UI from "./v1.0.2/V1_0_2_UI";
+import DiscordMessengerUI from "./discord-messenger/DiscordMessengerUI";
+import CreatorPortfolioUI from "./creator-portfolio/CreatorPortfolioUI";
+import MinecraftPanoramaUI from "./minecraft-panorama/MinecraftPanoramaUI";
 
 // Dynamically import background to avoid SSR issues
 const WebGLBackground = dynamic(() => import("./WebGLBackground"), {
@@ -50,21 +50,21 @@ export default function InteractiveHomepage() {
       setProgress(20);
 
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       if (!mounted) return;
 
       setStatus("Loading experience");
       setProgress(40);
 
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       if (!mounted) return;
 
       setProgress(60);
       setStatus("Preparing interface");
 
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       if (!mounted) return;
 
       setProgress(80);
@@ -104,7 +104,7 @@ export default function InteractiveHomepage() {
     setVersion(version);
     // Hide the selector
     setShowVersionSelector(false);
-    
+
     // Route to appropriate page based on version
     if (version === '1.0.1') {
       router.push('/current');
@@ -120,11 +120,11 @@ export default function InteractiveHomepage() {
   const renderVersionUI = () => {
     switch (selectedVersion) {
       case "1.0.0":
-        return <V1_0_0_UI />;
+        return <DiscordMessengerUI />;
       case "1.0.1":
-        return <V1_0_1_UI />;
+        return <CreatorPortfolioUI />;
       case "1.0.2":
-        return <V1_0_2_UI />;
+        return <MinecraftPanoramaUI />;
       default:
         return null;
     }

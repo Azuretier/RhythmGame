@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getMessages } from 'next-intl/server';
-import UpdatesPage from '@/components/main/UpdatesPage';
+import UpdatesPage from '@/components/shared-ui/UpdatesPage';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;

@@ -1,7 +1,7 @@
 'use client';
 
-import EoEGame from '@/components/echoes/EoEGame';
+import EchoesGame from '@/components/echoes/EchoesGame';
 
 export default function EchoesPage() {
-  return <EoEGame />;
+  return <EchoesGame />;
 }

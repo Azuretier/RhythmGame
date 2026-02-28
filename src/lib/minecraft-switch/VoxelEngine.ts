@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { db } from '@/lib/MNSW/firebase';
+import { db } from '@/lib/minecraft-switch/firebase';
 import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
 import { createTextureAtlas, BLOCK_FACE_TEXTURES, TOTAL_TEXTURES } from './TextureUtils';
 

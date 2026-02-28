@@ -765,7 +765,7 @@ export interface PlayerProgression {
   achievements: string[]; // unlocked achievement IDs
   titles: string[]; // unlocked title IDs
   activeTitle?: string;
-  stats: EoEPlayerStats;
+  stats: EchoesPlayerStats;
   dailyMissions: SeasonMission[];
   weeklyMissions: SeasonMission[];
   lastLogin: number;
@@ -773,7 +773,7 @@ export interface PlayerProgression {
   totalPlaytime: number; // seconds
 }
 
-export interface EoEPlayerStats {
+export interface EchoesPlayerStats {
   totalBattles: number;
   totalWins: number;
   totalDeaths: number;
@@ -1026,7 +1026,7 @@ export interface KillFeedEntry {
 // ---------------------------------------------------------------------------
 
 // Client → Server messages
-export type EoEClientMessage =
+export type EchoesClientMessage =
   // Connection & Lobby
   | { type: 'eoe_set_profile'; playerName: string; icon: string }
   | { type: 'eoe_create_party'; gameMode: GameMode; maxSize: number }
@@ -1077,7 +1077,7 @@ export type EoEClientMessage =
   | { type: 'eoe_dequeue' };
 
 // Server → Client messages
-export type EoEServerMessage =
+export type EchoesServerMessage =
   // Connection & Lobby
   | { type: 'eoe_party_created'; partyCode: string; party: Party }
   | { type: 'eoe_party_joined'; party: Party }
@@ -1264,20 +1264,20 @@ export const EOE_CONFIG = {
 // 21. UTILITY TYPES
 // ---------------------------------------------------------------------------
 
-export type EoEConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error';
+export type EchoesConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected' | 'error';
 
-export interface EoERoom {
+export interface EchoesRoom {
   id: string;
   code: string;
   gameMode: GameMode;
-  players: Map<string, EoERoomPlayer>;
+  players: Map<string, EchoesRoomPlayer>;
   state: 'lobby' | 'character_select' | 'loading' | 'active' | 'paused' | 'ended';
   settings: GameModeConfig;
   createdAt: number;
   maxPlayers: number;
 }
 
-export interface EoERoomPlayer {
+export interface EchoesRoomPlayer {
   id: string;
   name: string;
   icon: string;

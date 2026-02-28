@@ -2,9 +2,9 @@
 
 import { useVersion } from '@/lib/version/context';
 import RhythmiaLobby from '@/components/rhythmia/RhythmiaLobby';
-import V1_0_0_UI from '@/components/home/v1.0.0/V1_0_0_UI';
-import V1_0_1_UI from '@/components/home/v1.0.1/V1_0_1_UI';
-import V1_0_2_UI from '@/components/home/v1.0.2/V1_0_2_UI';
+import DiscordMessengerUI from '@/components/home/discord-messenger/DiscordMessengerUI';
+import CreatorPortfolioUI from '@/components/home/creator-portfolio/CreatorPortfolioUI';
+import MinecraftPanoramaUI from '@/components/home/minecraft-panorama/MinecraftPanoramaUI';
 import FloatingVersionSwitcher from '@/components/version/FloatingVersionSwitcher';
 
 export default function HomePage() {
@@ -13,11 +13,11 @@ export default function HomePage() {
     const renderPage = () => {
         switch (currentVersion) {
             case '1.0.0':
-                return <V1_0_0_UI />;
+                return <DiscordMessengerUI />;
             case '1.0.1':
-                return <V1_0_1_UI />;
+                return <CreatorPortfolioUI />;
             case '1.0.2':
-                return <V1_0_2_UI />;
+                return <MinecraftPanoramaUI />;
             case 'current':
             default:
                 return <RhythmiaLobby />;

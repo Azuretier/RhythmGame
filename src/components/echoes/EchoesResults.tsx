@@ -1,13 +1,13 @@
 'use client';
 
-import type { useEoESocket } from '@/hooks/useEoESocket';
-import styles from './EoEGame.module.css';
+import type { useEchoesSocket } from '@/hooks/useEchoesSocket';
+import styles from './EchoesGame.module.css';
 
 interface Props {
-  socket: ReturnType<typeof useEoESocket>;
+  socket: ReturnType<typeof useEchoesSocket>;
 }
 
-export function EoEResults({ socket }: Props) {
+export function EchoesResults({ socket }: Props) {
   const { battleEnd } = socket;
 
   if (!battleEnd) return null;

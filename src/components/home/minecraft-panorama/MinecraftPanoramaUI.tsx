@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home } from "lucide-react";
 import { useVersion } from "@/lib/version/context";
-import styles from "./V1_0_2_UI.module.css";
+import styles from "./MinecraftPanoramaUI.module.css";
 import MinecraftBlogPage from "./MinecraftBlogPage";
 
 const MinecraftPanorama = dynamic(() => import("./MinecraftPanorama"), {
@@ -26,11 +26,11 @@ const SPLASH_TEXTS = [
 ];
 
 /**
- * v1.0.2 UI - Minecraft: Switch Edition style menu
+ * Minecraft Panorama UI - Minecraft: Switch Edition style menu
  * Features the classic rotating panorama background with console edition button layout.
  * Sub-screens (blog, etc.) render as in-app panels over the panorama.
  */
-export default function V1_0_2_UI() {
+export default function MinecraftPanoramaUI() {
   const { setVersion } = useVersion();
   const [screen, setScreen] = useState<Screen>("main");
   const [splash] = useState(
