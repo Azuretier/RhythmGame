@@ -6,7 +6,6 @@ import RhythmiaLobby from '@/components/rhythmia/RhythmiaLobby';
 import V1_0_0_UI from '@/components/home/v1.0.0/V1_0_0_UI';
 import V1_0_1_UI from '@/components/home/v1.0.1/V1_0_1_UI';
 import V1_0_2_UI from '@/components/home/v1.0.2/V1_0_2_UI';
-import V1_1_0_UI from '@/components/home/v1.1.0/V1_1_0_UI';
 import FloatingVersionSwitcher from '@/components/version/FloatingVersionSwitcher';
 
 export default function HomePage() {
@@ -20,8 +19,6 @@ export default function HomePage() {
                 return <V1_0_1_UI />;
             case '1.0.2':
                 return <V1_0_2_UI />;
-            case '1.1.0':
-                return <V1_1_0_UI />;
             case 'current':
             default:
                 return <Homepage />;

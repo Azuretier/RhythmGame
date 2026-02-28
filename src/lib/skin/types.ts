@@ -155,6 +155,22 @@ export const SKIN_PRESETS: Skin[] = [
       borderHover: 'rgba(255, 240, 200, 0.18)',
     },
   },
+  {
+    id: 'pixel',
+    name: 'Pixel',
+    nameJa: 'ピクセル',
+    colors: {
+      accent: '#4a9d9e',
+      accentLight: '#5fb8b9',
+      accentDim: 'rgba(74, 157, 158, 0.15)',
+      background: '#1a1410',
+      surface: 'rgba(45, 35, 25, 0.6)',
+      foreground: '#fef3c7',
+      subtext: 'rgba(254, 243, 199, 0.5)',
+      border: 'rgba(244, 162, 97, 0.15)',
+      borderHover: 'rgba(244, 162, 97, 0.3)',
+    },
+  },
 ];
 
 export function getSkinById(id: string): Skin | undefined {

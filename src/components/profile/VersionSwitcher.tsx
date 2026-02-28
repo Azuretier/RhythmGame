@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Gamepad2, MessageCircle, Heart, Box, Grid3X3, Check, Home } from 'lucide-react';
+import { Gamepad2, MessageCircle, Heart, Box, Check, Home } from 'lucide-react';
 import { useVersion } from '@/lib/version/context';
 import {
   VERSION_METADATA,
@@ -20,7 +20,6 @@ const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
   '1.0.0': <MessageCircle size={18} />,
   '1.0.1': <Heart size={18} />,
   '1.0.2': <Box size={18} />,
-  '1.1.0': <Grid3X3 size={18} />,
 };
 
 export default function VersionSwitcher() {
