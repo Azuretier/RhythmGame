@@ -5,6 +5,7 @@ import { MultiplayerRoomManager } from './src/lib/multiplayer/RoomManager';
 import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
 import { EoEManager, isEoEMessage } from './src/lib/echoes/EoEManager';
+import { MinecraftWorldManager } from './src/lib/minecraft-world/MinecraftWorldManager';
 import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
@@ -306,6 +307,10 @@ function isMCBoardMessage(type: string): boolean {
   return type.startsWith('mc_');
 }
 
+function isMWMessage(type: string): boolean {
+  return type.startsWith('mw_');
+}
+
 // ===== Minecraft Board Game System =====
 
 const mcBoardManager = new MinecraftBoardManager({
@@ -331,6 +336,49 @@ function sendMCBoardRoomState(roomCode: string): void {
   if (roomState) {
     broadcastToMCBoard(roomCode, { type: 'mc_room_state', roomState } as ServerMessage);
   }
+}
+
+// ===== Minecraft World System =====
+
+const mwManager = new MinecraftWorldManager({
+  onSendToPlayer: (playerId, message) => {
+    sendToPlayer(playerId, message);
+  },
+  onBroadcastToRoom: (roomCode, message, excludePlayerId) => {
+    broadcastToMW(roomCode, message, excludePlayerId);
+  },
+});
+
+function broadcastToMW(roomCode: string, message: ServerMessage, excludePlayerId?: string): void {
+  const playerIds = mwManager.getPlayerIdsInRoom(roomCode);
+  for (const pid of playerIds) {
+    if (pid !== excludePlayerId) {
+      sendToPlayer(pid, message);
+    }
+  }
+}
+
+function sendMWRoomState(roomCode: string): void {
+  const roomState = mwManager.getRoomState(roomCode);
+  if (roomState) {
+    broadcastToMW(roomCode, { type: 'mw_room_state', roomState } as unknown as ServerMessage);
+  }
+}
+
+function startMWCountdown(roomCode: string, gameSeed: number): void {
+  let count = COUNTDOWN_SECONDS;
+  const tick = () => {
+    if (count > 0) {
+      broadcastToMW(roomCode, { type: 'mw_countdown', count } as unknown as ServerMessage);
+      count--;
+      setTimeout(tick, 1000);
+    } else {
+      broadcastToMW(roomCode, { type: 'mw_game_started', seed: gameSeed } as unknown as ServerMessage);
+      mwManager.beginPlaying(roomCode);
+      console.log(`[MW] Game started in room ${roomCode} with seed ${gameSeed}`);
+    }
+  };
+  tick();
 }
 
 // ===== Echoes of Eternity System =====
@@ -741,31 +789,54 @@ function handleMessage(playerId: string, raw: string): void {
       if (!room) {
         // Check MC Board rooms as fallback
         const mcRoom = mcBoardManager.getRoomByPlayerId(oldPlayerId);
-        if (!mcRoom) {
-          sendError(playerId, 'Room no longer exists', 'ROOM_GONE');
+        if (mcRoom) {
+          // Handle MC Board reconnection
+          mcBoardManager.transferPlayer(oldPlayerId, playerId);
+          mcBoardManager.markReconnected(playerId);
           reconnectTokens.delete(message.reconnectToken);
+
+          const newToken = issueReconnectToken(playerId);
+          const mcRoomState = mcBoardManager.getRoomState(mcRoom.code);
+
+          sendToPlayer(playerId, {
+            type: 'mc_reconnected',
+            roomCode: mcRoom.code,
+            playerId,
+            roomState: mcRoomState,
+            reconnectToken: newToken,
+            status: mcRoom.status,
+          } as unknown as ServerMessage);
+
+          sendMCBoardRoomState(mcRoom.code);
+          console.log(`[MC_BOARD] Player reconnected to room ${mcRoom.code}`);
           break;
         }
 
-        // Handle MC Board reconnection
-        mcBoardManager.transferPlayer(oldPlayerId, playerId);
-        mcBoardManager.markReconnected(playerId);
+        // Check Minecraft World rooms as fallback
+        const mwRoom = mwManager.getRoomByPlayerId(oldPlayerId);
+        if (mwRoom) {
+          mwManager.transferPlayer(oldPlayerId, playerId);
+          mwManager.markReconnected(playerId);
+          reconnectTokens.delete(message.reconnectToken);
+
+          const newToken = issueReconnectToken(playerId);
+          const mwRoomState = mwManager.getRoomState(mwRoom.code);
+
+          sendToPlayer(playerId, {
+            type: 'mw_reconnected',
+            roomCode: mwRoom.code,
+            playerId,
+            roomState: mwRoomState,
+            reconnectToken: newToken,
+          } as unknown as ServerMessage);
+
+          sendMWRoomState(mwRoom.code);
+          console.log(`[MW] Player reconnected to room ${mwRoom.code}`);
+          break;
+        }
+
+        sendError(playerId, 'Room no longer exists', 'ROOM_GONE');
         reconnectTokens.delete(message.reconnectToken);
-
-        const newToken = issueReconnectToken(playerId);
-        const mcRoomState = mcBoardManager.getRoomState(mcRoom.code);
-
-        sendToPlayer(playerId, {
-          type: 'mc_reconnected',
-          roomCode: mcRoom.code,
-          playerId,
-          roomState: mcRoomState,
-          reconnectToken: newToken,
-          status: mcRoom.status,
-        } as unknown as ServerMessage);
-
-        sendMCBoardRoomState(mcRoom.code);
-        console.log(`[MC_BOARD] Player reconnected to room ${mcRoom.code}`);
         break;
       }
 
@@ -1334,6 +1405,139 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
+    // ===== Minecraft World Messages =====
+
+    case 'mw_create_room': {
+      const existing = mwManager.getRoomByPlayerId(playerId);
+      if (existing) {
+        const oldCode = existing.code;
+        mwManager.removePlayer(playerId);
+        broadcastToMW(oldCode, { type: 'mw_player_left', playerId } as unknown as ServerMessage);
+        sendMWRoomState(oldCode);
+      }
+
+      const { roomCode, player } = mwManager.createRoom(
+        playerId,
+        (message.playerName || 'Player').slice(0, 16),
+        message.roomName,
+      );
+
+      const mwReconnectToken = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'mw_room_created',
+        roomCode,
+        playerId: player.id,
+        reconnectToken: mwReconnectToken,
+      } as unknown as ServerMessage);
+
+      sendMWRoomState(roomCode);
+      console.log(`[MW] Room ${roomCode} created by ${player.name}`);
+      break;
+    }
+
+    case 'mw_join_room': {
+      const existing = mwManager.getRoomByPlayerId(playerId);
+      if (existing) {
+        const oldCode = existing.code;
+        mwManager.removePlayer(playerId);
+        broadcastToMW(oldCode, { type: 'mw_player_left', playerId } as unknown as ServerMessage);
+        sendMWRoomState(oldCode);
+      }
+
+      const result = mwManager.joinRoom(message.roomCode, playerId, (message.playerName || 'Player').slice(0, 16));
+      if (!result.success || !result.player) {
+        sendError(playerId, result.error || 'Failed to join', 'MW_JOIN_FAILED');
+        break;
+      }
+
+      const mwRoomState = mwManager.getRoomState(message.roomCode.toUpperCase());
+      if (!mwRoomState) {
+        sendError(playerId, 'Room not found', 'MW_ROOM_NOT_FOUND');
+        break;
+      }
+
+      const mwJoinToken = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'mw_joined_room',
+        roomCode: message.roomCode.toUpperCase().trim(),
+        playerId: result.player.id,
+        roomState: mwRoomState,
+        reconnectToken: mwJoinToken,
+      } as unknown as ServerMessage);
+
+      broadcastToMW(message.roomCode.toUpperCase(), {
+        type: 'mw_player_joined',
+        player: result.player,
+      } as unknown as ServerMessage, playerId);
+
+      sendMWRoomState(message.roomCode.toUpperCase());
+      console.log(`[MW] ${result.player.name} joined room ${message.roomCode}`);
+      break;
+    }
+
+    case 'mw_get_rooms': {
+      const rooms = mwManager.getPublicRooms();
+      sendToPlayer(playerId, { type: 'mw_room_list', rooms } as unknown as ServerMessage);
+      break;
+    }
+
+    case 'mw_leave': {
+      const mwLeaveResult = mwManager.removePlayer(playerId);
+      if (conn?.reconnectToken) {
+        reconnectTokens.delete(conn.reconnectToken);
+      }
+      if (mwLeaveResult.roomCode) {
+        broadcastToMW(mwLeaveResult.roomCode, { type: 'mw_player_left', playerId } as unknown as ServerMessage);
+        if (mwLeaveResult.room) {
+          sendMWRoomState(mwLeaveResult.roomCode);
+        }
+        console.log(`[MW] Player ${playerId} left room ${mwLeaveResult.roomCode}`);
+      }
+      break;
+    }
+
+    case 'mw_ready': {
+      const mwReadyResult = mwManager.setPlayerReady(playerId, message.ready);
+      if (!mwReadyResult.success) {
+        sendError(playerId, mwReadyResult.error || 'Failed to set ready');
+        break;
+      }
+      const mwRoom = mwManager.getRoomByPlayerId(playerId);
+      if (mwRoom) {
+        broadcastToMW(mwRoom.code, {
+          type: 'mw_player_ready',
+          playerId,
+          ready: message.ready,
+        } as unknown as ServerMessage);
+        sendMWRoomState(mwRoom.code);
+      }
+      break;
+    }
+
+    case 'mw_start': {
+      const mwStartResult = mwManager.startGame(playerId);
+      if (!mwStartResult.success || !mwStartResult.gameSeed) {
+        sendError(playerId, mwStartResult.error || 'Failed to start', 'MW_START_FAILED');
+        break;
+      }
+      const mwStartRoom = mwManager.getRoomByPlayerId(playerId);
+      if (mwStartRoom) {
+        sendMWRoomState(mwStartRoom.code);
+        startMWCountdown(mwStartRoom.code, mwStartResult.gameSeed);
+      }
+      break;
+    }
+
+    case 'mw_position': {
+      mwManager.handlePosition(playerId, message.x, message.y, message.z, message.rx, message.ry);
+      break;
+    }
+
+    case 'mw_chat': {
+      mwManager.handleChat(playerId, message.message);
+      break;
+    }
+
     default: {
       // Echoes of Eternity messages
       if (isEoEMessage(message.type)) {
@@ -1456,6 +1660,12 @@ function handleDisconnect(playerId: string, reason: string): void {
     sendMCBoardRoomState(mcResult.roomCode);
   }
 
+  // Handle Minecraft World disconnect
+  const mwResult = mwManager.markDisconnected(playerId);
+  if (mwResult.roomCode) {
+    sendMWRoomState(mwResult.roomCode);
+  }
+
   // Handle EoE disconnect
   eoeManager.removePlayer(playerId);
   eoeManager.dequeuePlayer(playerId);
@@ -1540,6 +1750,7 @@ const server = createServer((req, res) => {
       rooms: roomManager.getRoomCount(),
       arenas: arenaManager.getRoomCount(),
       mcBoards: mcBoardManager.getRoomCount(),
+      mcWorlds: mwManager.getRoomCount(),
     }));
   } else if (req.url === '/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1548,6 +1759,7 @@ const server = createServer((req, res) => {
       rooms: roomManager.getRoomCount(),
       arenas: arenaManager.getRoomCount(),
       mcBoards: mcBoardManager.getRoomCount(),
+      mcWorlds: mwManager.getRoomCount(),
       arenaQueue: arenaQueue.size,
       uptime: process.uptime(),
       memory: process.memoryUsage(),
@@ -1705,6 +1917,7 @@ function shutdown(signal: string) {
       roomManager.destroy();
       arenaManager.destroy();
       mcBoardManager.destroy();
+      mwManager.destroy();
       console.log('[SHUTDOWN] Complete');
       process.exit(0);
     });
