@@ -4,7 +4,7 @@
 
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useLayoutEffect, ReactNode } from 'react';
 import type { AppVersion, AccentColor } from './types';
 import { DEFAULT_VERSION, DEFAULT_ACCENT, ACCENT_COLOR_METADATA } from './types';
 import {
@@ -13,6 +13,9 @@ import {
   getSelectedAccent,
   setSelectedAccent as persistAccent,
 } from './storage';
+
+// useLayoutEffect on client (prevents flash of wrong version), useEffect on server (avoids SSR warning)
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 interface VersionContextType {
   currentVersion: AppVersion;
@@ -44,8 +47,8 @@ export function VersionProvider({ children }: { children: ReactNode }) {
   const [isVersionSelected, setIsVersionSelected] = useState(false);
   const [accentColor, setAccentColorState] = useState<AccentColor>(DEFAULT_ACCENT);
 
-  // Restore from storage on mount
-  useEffect(() => {
+  // Restore from storage on mount — useLayoutEffect prevents flash of wrong version
+  useIsomorphicLayoutEffect(() => {
     const storedVersion = getSelectedVersion();
     if (storedVersion) {
       setCurrentVersion(storedVersion);
