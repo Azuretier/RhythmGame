@@ -82,6 +82,7 @@ export default function MinecraftPanoramaUI() {
 
               {/* Splash text */}
               <motion.span
+                suppressHydrationWarning
                 initial={false}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.6, duration: 0.4, type: "spring" }}
