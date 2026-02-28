@@ -1,0 +1,75 @@
+/* ===== GunSlot ===== */
+
+.slot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    cursor: default;
+}
+
+.slot:hover {
+    transform: translateY(-1px);
+}
+
+.slotClickable {
+    cursor: pointer;
+}
+
+.slotClickable:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.slotSelected {
+    border-color: var(--slot-color, rgba(255, 255, 255, 0.4));
+    box-shadow: 0 0 8px var(--slot-glow, rgba(255, 255, 255, 0.2)),
+                inset 0 0 12px var(--slot-glow, rgba(255, 255, 255, 0.05));
+}
+
+/* Skin grade border glow */
+.gradeConsumer    { border-color: rgba(176, 190, 197, 0.25); }
+.gradeIndustrial  { border-color: rgba(93, 156, 236, 0.30); box-shadow: 0 0 3px rgba(93, 156, 236, 0.1); }
+.gradeMilSpec     { border-color: rgba(65, 105, 225, 0.35); box-shadow: 0 0 4px rgba(65, 105, 225, 0.15); }
+.gradeRestricted  { border-color: rgba(136, 71, 255, 0.35); box-shadow: 0 0 5px rgba(136, 71, 255, 0.15); }
+.gradeClassified  { border-color: rgba(211, 44, 230, 0.4);  box-shadow: 0 0 6px rgba(211, 44, 230, 0.2); }
+.gradeCovert      { border-color: rgba(235, 75, 75, 0.4);   box-shadow: 0 0 8px rgba(235, 75, 75, 0.2); }
+.gradeContraband  { border-color: rgba(228, 174, 57, 0.45);  box-shadow: 0 0 10px rgba(228, 174, 57, 0.25); }
+
+/* Empty slot */
+.slotEmpty {
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.06);
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* Accent line at top */
+.accentLine {
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1.5px;
+    border-radius: 0 0 2px 2px;
+}
+
+/* Weapon name label */
+.nameLabel {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    font-size: 8px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    padding: 0 2px;
+}

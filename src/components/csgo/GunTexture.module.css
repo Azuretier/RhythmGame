@@ -1,0 +1,33 @@
+/* ===== GunTexture Animations ===== */
+
+.textureWrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+/* Contraband shimmer animation */
+.shimmer {
+    animation: gunShimmer 2.5s ease-in-out infinite;
+}
+
+@keyframes gunShimmer {
+    0%, 100% { filter: brightness(1) drop-shadow(0 0 2px var(--glow-color, transparent)); }
+    50%      { filter: brightness(1.3) drop-shadow(0 0 8px var(--glow-color, transparent)); }
+}
+
+/* Covert / Classified pulse animation */
+.pulse {
+    animation: gunPulse 2s ease-in-out infinite;
+}
+
+@keyframes gunPulse {
+    0%, 100% { filter: drop-shadow(0 0 2px var(--glow-color, transparent)); }
+    50%      { filter: drop-shadow(0 0 6px var(--glow-color, transparent)); }
+}
+
+/* Restricted / Mil-Spec soft glow */
+.glow {
+    filter: drop-shadow(0 0 3px var(--glow-color, transparent));
+}

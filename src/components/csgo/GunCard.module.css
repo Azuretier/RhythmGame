@@ -1,0 +1,188 @@
+/* ===== GunCard ===== */
+
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Accent line at top */
+.accentLine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+}
+
+/* Header row: texture + name/grade */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.textureWrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nameJa {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+    line-height: 1.2;
+}
+
+.badges {
+    display: flex;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.categoryTag {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.teamTag {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.teamT {
+    color: #FFD54F;
+    background: rgba(255, 213, 79, 0.1);
+}
+
+.teamCT {
+    color: #42A5F5;
+    background: rgba(66, 165, 245, 0.1);
+}
+
+.teamBoth {
+    color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Price display */
+.price {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 14px;
+    font-weight: 800;
+    color: rgba(76, 175, 80, 0.8);
+    font-family: var(--font-mono, monospace);
+    line-height: 1;
+}
+
+.pricePrefix {
+    font-size: 10px;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+/* Stats section */
+.stats {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Description */
+.description {
+    font-size: 11px;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+}
+
+/* Compact variant */
+.compact {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 10px;
+    gap: 8px;
+}
+
+.compact .textureWrap {
+    width: 28px;
+    height: 28px;
+}
+
+.compact .info {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+.compact .name {
+    font-size: 12px;
+}
+
+.compact .nameJa,
+.compact .badges,
+.compact .description,
+.compact .stats {
+    display: none;
+}
+
+.compact .price {
+    position: static;
+    font-size: 13px;
+    margin-left: auto;
+}
