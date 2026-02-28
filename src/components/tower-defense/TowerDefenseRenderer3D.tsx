@@ -9,6 +9,22 @@ import type {
   GameState, Tower, Enemy, Projectile, GridCell, TowerType, Vec3,
 } from '@/types/tower-defense';
 import { TOWER_DEFS, ENEMY_DEFS } from '@/types/tower-defense';
+import { createMobMesh, animateMob, disposeMobGroup, disposeSharedMobResources } from '@/components/rhythmia/tetris/minecraft-mobs';
+import type { MobMeshData } from '@/components/rhythmia/tetris/minecraft-mobs';
+import type { TDEnemyType } from '@/components/rhythmia/tetris/types';
+
+// ===== Tower-to-Minecraft-Mob mapping =====
+const TOWER_MOB_MAP: Record<TowerType, TDEnemyType> = {
+  archer: 'skeleton',
+  cannon: 'creeper',
+  frost: 'spider',
+  lightning: 'enderman',
+  sniper: 'skeleton',
+  flame: 'zombie',
+  arcane: 'enderman',
+};
+
+const TOWER_MOB_SCALE = 0.4;
 
 // ===== Error Boundary =====
 interface ErrorBoundaryState { hasError: boolean; error: string | null }
@@ -462,67 +478,72 @@ function PathLine({ waypoints }: { waypoints: Vec3[] }) {
   return <primitive ref={ref} object={new THREE.Line(lineGeo, lineMat)} />;
 }
 
-// ===== Towers =====
+// ===== Towers (Minecraft Character Models) =====
 function TowerMesh({ tower, isSelected, onClick }: {
   tower: Tower;
   isSelected: boolean;
   onClick: () => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const mobRef = useRef<MobMeshData | null>(null);
   const def = TOWER_DEFS[tower.type];
+  const mobType = TOWER_MOB_MAP[tower.type];
+
+  const mobData = useMemo(() => {
+    const data = createMobMesh(mobType);
+    data.group.scale.setScalar(TOWER_MOB_SCALE);
+    return data;
+  }, [mobType]);
+
+  useEffect(() => {
+    mobRef.current = mobData;
+    return () => {
+      disposeMobGroup(mobData);
+      mobRef.current = null;
+    };
+  }, [mobData]);
 
   useFrame((state) => {
     if (!groupRef.current) return;
+    const t = state.clock.elapsedTime;
     if (isSelected) {
-      groupRef.current.position.y = 0.3 + Math.sin(state.clock.elapsedTime * 3) * 0.05;
+      groupRef.current.position.y = 0.15 + Math.sin(t * 3) * 0.05;
     } else {
-      groupRef.current.position.y = 0.3;
+      groupRef.current.position.y = 0.15;
+    }
+    // Idle animation
+    if (mobRef.current) {
+      animateMob(mobRef.current, t, true);
     }
   });
 
-  const towerShape = useMemo(() => {
-    switch (tower.type) {
-      case 'archer':
-        return { baseH: 0.6, topH: 0.2, topScale: 0.6, baseR: 0.25 };
-      case 'cannon':
-        return { baseH: 0.4, topH: 0.35, topScale: 0.9, baseR: 0.3 };
-      case 'frost':
-        return { baseH: 0.5, topH: 0.3, topScale: 0.5, baseR: 0.22 };
-      case 'lightning':
-        return { baseH: 0.7, topH: 0.15, topScale: 0.4, baseR: 0.2 };
-      case 'sniper':
-        return { baseH: 0.8, topH: 0.1, topScale: 0.3, baseR: 0.18 };
-      case 'flame':
-        return { baseH: 0.4, topH: 0.3, topScale: 0.7, baseR: 0.28 };
-      case 'arcane':
-        return { baseH: 0.6, topH: 0.25, topScale: 0.5, baseR: 0.24 };
-      default:
-        return { baseH: 0.5, topH: 0.2, topScale: 0.6, baseR: 0.25 };
-    }
-  }, [tower.type]);
-
   const levelScale = 1 + (tower.level - 1) * 0.1;
+  const charHeight = mobData.height * TOWER_MOB_SCALE;
 
   return (
     <group
       ref={groupRef}
-      position={[tower.gridX, 0.3, tower.gridZ]}
+      position={[tower.gridX, 0.15, tower.gridZ]}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       scale={levelScale}
     >
-      {/* Base cylinder */}
-      <mesh position={[0, towerShape.baseH / 2, 0]} castShadow>
-        <cylinderGeometry args={[towerShape.baseR * 0.8, towerShape.baseR, towerShape.baseH, 8]} />
+      {/* Colored platform base */}
+      <mesh position={[0, 0.05, 0]} castShadow>
+        <cylinderGeometry args={[0.35, 0.4, 0.1, 8]} />
         <meshStandardMaterial color={def.color} roughness={0.4} metalness={0.3} />
       </mesh>
-      {/* Top section */}
-      <mesh position={[0, towerShape.baseH + towerShape.topH / 2, 0]} castShadow>
-        <cylinderGeometry args={[towerShape.baseR * towerShape.topScale * 1.2, towerShape.baseR * towerShape.topScale, towerShape.topH, 8]} />
-        <meshStandardMaterial color={def.accentColor} roughness={0.3} metalness={0.5} />
+      {/* Accent ring on platform */}
+      <mesh position={[0, 0.11, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.28, 0.35, 8]} />
+        <meshStandardMaterial color={def.accentColor} emissive={def.accentColor} emissiveIntensity={0.3} side={THREE.DoubleSide} />
       </mesh>
+      {/* Minecraft character model */}
+      <group position={[0, 0.1, 0]}>
+        <primitive object={mobData.group} />
+      </group>
       {/* Level indicators */}
       {Array.from({ length: tower.level }).map((_, i) => (
-        <mesh key={i} position={[(i - (tower.level - 1) / 2) * 0.12, towerShape.baseH + towerShape.topH + 0.08, 0]}>
+        <mesh key={i} position={[(i - (tower.level - 1) / 2) * 0.12, charHeight + 0.2, 0]}>
           <sphereGeometry args={[0.04, 6, 6]} />
           <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} />
         </mesh>
@@ -790,34 +811,83 @@ function SpawnMarker({ position }: { position: Vec3 }) {
   );
 }
 
-// ===== Tower Placement Preview =====
+// ===== Tower Placement Preview (Minecraft Character Ghost) =====
 function PlacementPreview({ x, z, towerType, canPlace }: {
   x: number;
   z: number;
   towerType: TowerType;
   canPlace: boolean;
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const mobType = TOWER_MOB_MAP[towerType];
   const def = TOWER_DEFS[towerType];
+  const canPlaceRef = useRef(canPlace);
+  canPlaceRef.current = canPlace;
+
+  const { mobData, clonedMats } = useMemo(() => {
+    const data = createMobMesh(mobType);
+    data.group.scale.setScalar(TOWER_MOB_SCALE);
+    // Clone materials with transparency for ghost preview
+    const mats: { mat: THREE.MeshStandardMaterial; origColor: THREE.Color; origEmissive: THREE.Color; origEmissiveI: number }[] = [];
+    data.group.traverse((child: THREE.Object3D) => {
+      if (child instanceof THREE.Mesh && child.material) {
+        const orig = child.material as THREE.MeshStandardMaterial;
+        const cloned = orig.clone();
+        cloned.transparent = true;
+        cloned.opacity = 0.5;
+        child.material = cloned;
+        mats.push({
+          mat: cloned,
+          origColor: cloned.color.clone(),
+          origEmissive: cloned.emissive.clone(),
+          origEmissiveI: cloned.emissiveIntensity,
+        });
+      }
+    });
+    return { mobData: data, clonedMats: mats };
+  }, [mobType]);
+
+  // Update tint based on canPlace
+  useEffect(() => {
+    for (const item of clonedMats) {
+      if (!canPlace) {
+        item.mat.color.set('#ef4444');
+        item.mat.emissive.set('#ef4444');
+        item.mat.emissiveIntensity = 0.5;
+      } else {
+        item.mat.color.copy(item.origColor);
+        item.mat.emissive.copy(item.origEmissive);
+        item.mat.emissiveIntensity = item.origEmissiveI;
+      }
+    }
+  }, [canPlace, clonedMats]);
 
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.position.y = 0.5 + Math.sin(state.clock.elapsedTime * 4) * 0.05;
+    if (groupRef.current) {
+      groupRef.current.position.y = 0.15 + Math.sin(state.clock.elapsedTime * 4) * 0.05;
     }
+    // Slowly rotate the preview character
+    mobData.group.rotation.y = state.clock.elapsedTime * 2;
   });
 
+  useEffect(() => {
+    return () => {
+      // Dispose cloned materials
+      for (const item of clonedMats) {
+        item.mat.dispose();
+      }
+      disposeMobGroup(mobData);
+    };
+  }, [mobData, clonedMats]);
+
   return (
-    <group position={[x, 0, z]}>
-      <mesh ref={meshRef} position={[0, 0.5, 0]}>
-        <cylinderGeometry args={[0.2, 0.25, 0.5, 8]} />
-        <meshStandardMaterial
-          color={canPlace ? def.color : '#ef4444'}
-          transparent
-          opacity={0.6}
-        />
-      </mesh>
+    <group ref={groupRef} position={[x, 0.15, z]}>
+      {/* Ghost character */}
+      <group position={[0, 0.1, 0]}>
+        <primitive object={mobData.group} />
+      </group>
       {/* Range ring */}
-      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -0.13, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[def.range - 0.05, def.range, 32]} />
         <meshBasicMaterial
           color={canPlace ? '#22d3ee' : '#ef4444'}
@@ -901,6 +971,13 @@ function GameScene({ state, onCellClick, onSelectTower, onSelectEnemy, hoveredCe
 }) {
   const planeRef = useRef<THREE.Mesh>(null);
   const { raycaster, camera, pointer } = useThree();
+
+  // Cleanup shared mob resources on unmount
+  useEffect(() => {
+    return () => {
+      disposeSharedMobResources();
+    };
+  }, []);
 
   // Raycast for cell hover
   useFrame(() => {
