@@ -101,7 +101,7 @@ export default function MinecraftBlogPage({ onBack }: MinecraftBlogPageProps) {
         {/* Bottom button bar */}
         <div className={styles.mcPanelFooter}>
           <button
-            className={styles.mcButton}
+            className={styles.switchBtn}
             onClick={onBack}
             style={{ minWidth: 200 }}
           >

@@ -1,163 +1,130 @@
-/* Minecraft Console Edition Button Styles */
+/* =============================================
+   Minecraft: Nintendo Switch Edition — Title Screen
+   Faithful recreation of the console edition UI
+   ============================================= */
 
-.mcButton {
+/* ========================
+   Layout
+   ======================== */
+
+.titleScreen {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.mainScreen {
   position: relative;
+  z-index: 10;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 24px;
-  min-height: 44px;
-  background: linear-gradient(180deg, #8b8b8b 0%, #737373 50%, #6b6b6b 100%);
-  border: 3px solid;
-  border-color: #aaaaaa #555555 #555555 #aaaaaa;
-  color: #ffffff;
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
-  font-size: 14px;
-  letter-spacing: 1px;
-  text-shadow: 2px 2px 0px #3f3f3f;
-  cursor: pointer;
-  transition: filter 0.1s;
-  image-rendering: pixelated;
-  user-select: none;
+  height: 100%;
+  padding-bottom: 64px;
 }
 
-.mcButton:hover {
-  background: linear-gradient(180deg, #a0a0a0 0%, #8b8b8b 50%, #7e7e7e 100%);
-  border-color: #c0c0c0 #666666 #666666 #c0c0c0;
-}
+/* ========================
+   Panorama Overlays
+   ======================== */
 
-.mcButton:active {
-  background: linear-gradient(180deg, #6b6b6b 0%, #5e5e5e 50%, #555555 100%);
-  border-color: #555555 #aaaaaa #aaaaaa #555555;
-  padding-top: 10px;
-  padding-bottom: 6px;
-}
-
-.mcButton:disabled {
-  background: linear-gradient(180deg, #5a5a5a 0%, #4a4a4a 50%, #424242 100%);
-  border-color: #6a6a6a #3a3a3a #3a3a3a #6a6a6a;
-  color: #a0a0a0;
-  text-shadow: 2px 2px 0px #2a2a2a;
-  cursor: not-allowed;
-}
-
-.mcButtonPrimary {
-  composes: mcButton;
-  background: linear-gradient(180deg, #5a9e3e 0%, #4c8c34 50%, #3e7a2a 100%);
-  border-color: #6eb852 #2e5a1e #2e5a1e #6eb852;
-}
-
-.mcButtonPrimary:hover {
-  background: linear-gradient(180deg, #6eb852 0%, #5a9e3e 50%, #4c8c34 100%);
-  border-color: #82cc66 #3a6e28 #3a6e28 #82cc66;
-}
-
-.mcButtonPrimary:active {
-  background: linear-gradient(180deg, #3e7a2a 0%, #346a22 50%, #2e5a1e 100%);
-  border-color: #2e5a1e #6eb852 #6eb852 #2e5a1e;
-}
-
-/* Minecraft title text styling */
-.mcTitle {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
-  font-size: clamp(36px, 6vw, 72px);
-  color: #ffffff;
-  text-shadow:
-    3px 3px 0px #3f3f3f,
-    -1px -1px 0px #3f3f3f,
-    1px -1px 0px #3f3f3f,
-    -1px 1px 0px #3f3f3f;
-  letter-spacing: 4px;
-  image-rendering: pixelated;
-  user-select: none;
-}
-
-.mcSubtitle {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
-  font-size: clamp(10px, 2vw, 18px);
-  color: #ffff00;
-  text-shadow: 2px 2px 0px #3f3f3f;
-  letter-spacing: 2px;
-  user-select: none;
-}
-
-/* Vignette overlay for panorama */
 .vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    ellipse at center,
-    transparent 40%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
+  box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.85);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
-/* Dark gradient overlay at top and bottom */
 .gradientOverlay {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, transparent 20%),
-    linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, transparent 25%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, transparent 15%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.7) 0%, transparent 20%);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
-/* Bottom info bar */
-.bottomBar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
-  z-index: 10;
-}
+/* ========================
+   Logo Section
+   ======================== */
 
-.bottomBarText {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.6);
-  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
-  user-select: none;
-}
-
-/* Home button in bottom bar */
-.homeButton {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.7);
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
-  font-size: 10px;
-  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-  user-select: none;
-}
-
-.homeButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: #ffffff;
-}
-
-/* Menu container */
-.menuContainer {
+.logoSection {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-bottom: 28px;
+  animation: logoFloat 4s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* MINECRAFT logo — 3D stone-carved block letters */
+.minecraftLogo {
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: clamp(36px, 6.5vw, 72px);
+  color: #dcdcdc;
+  text-shadow:
+    0px 4px 0px #555555,
+    0px 8px 0px #333333,
+    4px 8px 0px #111111;
+  letter-spacing: clamp(2px, 0.5vw, 6px);
+  margin: 0;
+  line-height: 1;
+  user-select: none;
+  image-rendering: pixelated;
+}
+
+/* Edition subtitle — yellow text below logo */
+.editionSubtitle {
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: clamp(8px, 1.4vw, 14px);
+  color: #ffff00;
+  text-shadow: 2px 2px 0px #3f3f00;
+  letter-spacing: 1px;
+  margin: 8px 0 0 0;
+  user-select: none;
+}
+
+/* Splash text — yellow, rotated, bouncing */
+.splashText {
+  position: absolute;
+  bottom: -5px;
+  right: -80px;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: clamp(9px, 1.2vw, 14px);
+  color: #ffff55;
+  text-shadow: 2px 2px 0px #3f3f00;
+  transform: rotate(-20deg);
+  animation: splashBounce 0.6s infinite alternate;
+  user-select: none;
+  white-space: nowrap;
+  z-index: 15;
+  width: 240px;
+  text-align: center;
+}
+
+@keyframes splashBounce {
+  from { transform: scale(1) rotate(-20deg); }
+  to { transform: scale(1.1) rotate(-20deg); }
+}
+
+/* ========================
+   Console Edition Buttons
+   ======================== */
+
+.menuContainer {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   padding: 0 16px;
 }
 
@@ -171,25 +138,148 @@
   flex: 1;
 }
 
-/* Splash text */
-.splashText {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
-  font-size: clamp(10px, 1.5vw, 16px);
-  color: #ffff00;
-  text-shadow: 1px 1px 0px #3f3f3f;
-  transform: rotate(-15deg);
-  animation: splashPulse 1.5s ease-in-out infinite;
+/* Base console button — gray stone-like appearance */
+.switchBtn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  min-height: 48px;
+  background: #757575;
+  border: 2px solid #000000;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.3),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.3);
+  color: #e0e0e0;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: clamp(10px, 1.3vw, 14px);
+  text-shadow: 2px 2px 0px #333333;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, box-shadow 0.1s, transform 0.05s;
   user-select: none;
-  white-space: nowrap;
+  image-rendering: pixelated;
+  outline: none;
 }
 
-@keyframes splashPulse {
-  0%, 100% { transform: rotate(-15deg) scale(1); }
-  50% { transform: rotate(-15deg) scale(1.08); }
+/* Hover — turns Minecraft green (authentic console edition behavior) */
+.switchBtn:hover:not(:disabled) {
+  background: #5fa53f;
+  color: #ffffff;
+  border-color: #ffffff;
+  text-shadow: 2px 2px 0px #2a5018;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.4),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.2),
+    0 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.switchBtn:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.switchBtn:disabled {
+  background: #3a3a3a;
+  border-color: #555555;
+  color: #999999;
+  text-shadow: 2px 2px 0px #1a1a1a;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Primary button — pre-highlighted green (Play Game) */
+.switchBtnPrimary {
+  background: #5fa53f;
+  color: #ffffff;
+  border-color: #ffffff;
+  text-shadow: 2px 2px 0px #2a5018;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.4),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.2);
+  width: 100%;
+}
+
+.switchBtnPrimary:hover:not(:disabled) {
+  background: #6ebb4a;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.5),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(0, 0, 0, 0.5),
+    0 0 12px rgba(95, 165, 63, 0.3);
 }
 
 /* ========================
-   Sub-screen panel (Console Edition style)
+   Bottom Bar & Controller Hints
+   ======================== */
+
+.bottomBar {
+  position: absolute;
+  bottom: 28px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.bottomText {
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.7);
+  user-select: none;
+}
+
+/* Controller button hints (A Select, B Back) */
+.controllerHints {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.hintItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnIcon {
+  width: 28px;
+  height: 28px;
+  background: #333333;
+  border-radius: 50%;
+  border: 2px solid #bbbbbb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 12px;
+  color: #ffffff;
+  box-shadow: 0 3px 0 #000000;
+  user-select: none;
+}
+
+.hintLabel {
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.7);
+  user-select: none;
+}
+
+/* ========================
+   Sub-screen Panel (How to Play)
    ======================== */
 
 .mcPanel {
@@ -215,7 +305,7 @@
 }
 
 .mcPanelTitle {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
   font-size: 18px;
   color: #ffffff;
   text-shadow: 2px 2px 0px #1a1a1a;
@@ -261,7 +351,7 @@
 }
 
 /* ========================
-   Blog post cards (within panel)
+   Blog Post Cards
    ======================== */
 
 .mcBlogPost {
@@ -285,7 +375,7 @@
 }
 
 .mcBlogTag {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
   font-size: 9px;
   color: #5ae65a;
   text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
@@ -298,7 +388,7 @@
 }
 
 .mcBlogDate {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
   font-size: 9px;
   color: rgba(255, 255, 255, 0.4);
   text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
@@ -306,7 +396,7 @@
 }
 
 .mcBlogPostTitle {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
   font-size: 13px;
   color: #ffffff;
   text-shadow: 1px 1px 0px #2a2a2a;
@@ -315,7 +405,7 @@
 }
 
 .mcBlogPostDesc {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-family: 'Press Start 2P', 'Silkscreen', monospace;
   font-size: 10px;
   color: rgba(255, 255, 255, 0.55);
   text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.4);
