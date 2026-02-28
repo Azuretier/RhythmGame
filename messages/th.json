@@ -1508,5 +1508,55 @@
     "accentColor": "สีเน้น",
     "latest": "ล่าสุด",
     "goHome": "ไปหน้าแรก"
+  },
+  "inventory": {
+    "meta": {
+      "title": "คลังไอเทม - Azuretia",
+      "description": "จัดการไอเทม วัสดุ และของใช้สิ้นเปลืองที่สะสมไว้"
+    },
+    "title": "คลังไอเทม",
+    "button": "คลังไอเทม",
+    "filter": {
+      "all": "ทั้งหมด",
+      "material": "วัสดุ",
+      "consumable": "ของใช้สิ้นเปลือง",
+      "equipment": "อุปกรณ์",
+      "relic": "วัตถุโบราณ",
+      "currency": "สกุลเงิน"
+    },
+    "sort": "เรียงลำดับ",
+    "sortBy": {
+      "category": "หมวดหมู่",
+      "rarity": "ความหายาก",
+      "count": "จำนวน",
+      "name": "ชื่อ"
+    },
+    "empty": {
+      "title": "ยังไม่มีไอเทม",
+      "desc": "เล่นเกมเพื่อสะสมไอเทมและวัสดุ!"
+    },
+    "details": {
+      "info": "ข้อมูล",
+      "owned": "จำนวนที่มี",
+      "maxStack": "สูงสุดต่อช่อง"
+    },
+    "actions": {
+      "use": "ใช้",
+      "discard": "ทิ้ง"
+    },
+    "summary": {
+      "uniqueItems": "ชนิด",
+      "totalItems": "รวม",
+      "collected": "สะสมแล้ว",
+      "consumed": "ใช้แล้ว"
+    },
+    "discard": {
+      "title": "ทิ้งไอเทม?",
+      "warning": "จะลบไอเทมนี้ 1 ชิ้นออกจากคลัง",
+      "cancel": "ยกเลิก",
+      "confirm": "ทิ้ง"
+    },
+    "usedItem": "ใช้ {name} แล้ว",
+    "discardedItem": "ทิ้ง {name} แล้ว"
   }
 }
