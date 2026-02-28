@@ -1508,5 +1508,40 @@
     "accentColor": "Akzentfarbe",
     "latest": "neueste",
     "goHome": "Zur Startseite"
+  },
+  "home": {
+    "hero": {
+      "description": "Ein rhythmusgesteuertes Puzzlespiel. Lass Blöcke im Takt fallen, kämpfe in Echtzeit gegen Freunde und schalte Erfolge in 5 musikalischen Welten frei.",
+      "play": "Jetzt spielen",
+      "wiki": "Wiki ansehen"
+    },
+    "features": {
+      "title": "Spielmodi",
+      "subtitle": "Wähle dein Erlebnis",
+      "vanilla": {
+        "title": "Einzelspieler",
+        "description": "Spiele solo durch 5 Welten. Räume Terrain, sammle Gegenstände und stelle Waffen her, während das BPM steigt."
+      },
+      "multiplayer": {
+        "title": "1v1-Kampf",
+        "description": "Echtzeit-Kämpfe über WebSocket. Sende Müllzeilen und klettere die Rangliste hoch."
+      },
+      "arena": {
+        "title": "9-Spieler-Arena",
+        "description": "9 Spieler, 1 gemeinsames Tempo. Überlebe Chaos-Gimmicks, Tempowechsel und Zufallsereignisse."
+      },
+      "stories": {
+        "title": "Geschichten",
+        "description": "Story-getriebenes Rhythmus-Gameplay mit narrativen Kapiteln und einzigartigen Herausforderungen."
+      },
+      "minecraft": {
+        "title": "Brettspiel",
+        "description": "Minecraft-inspiriertes Mehrspieler-Brettspiel. Abbauen, herstellen, Mobs bekämpfen und zum Sieg rasen."
+      },
+      "advancements": {
+        "title": "Erfolge",
+        "description": "Schalte Erfolge in allen Spielmodi frei. Verfolge deinen Fortschritt und verdiene Belohnungen."
+      }
+    }
   }
 }

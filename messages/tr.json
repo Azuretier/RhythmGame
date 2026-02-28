@@ -1508,5 +1508,40 @@
     "accentColor": "Vurgu Rengi",
     "latest": "en son",
     "goHome": "Ana sayfaya git"
+  },
+  "home": {
+    "hero": {
+      "description": "Ritim tabanlı bir bulmaca oyunu. Ritme göre blok düşür, arkadaşlarınla gerçek zamanlı savaş ve 5 müzik temalı dünyada başarıları aç.",
+      "play": "Şimdi Oyna",
+      "wiki": "Wiki Gör"
+    },
+    "features": {
+      "title": "Oyun Modları",
+      "subtitle": "Deneyimini seç",
+      "vanilla": {
+        "title": "Tek Oyuncu",
+        "description": "5 dünyada tek başına oyna. Araziyi temizle, eşya topla ve BPM yükseldikçe silah üret."
+      },
+      "multiplayer": {
+        "title": "1v1 Savaş",
+        "description": "WebSocket üzerinden gerçek zamanlı savaşlar. Çöp satırları gönder ve sıralamada yüksel."
+      },
+      "arena": {
+        "title": "9 Oyunculu Arena",
+        "description": "9 oyuncu, 1 ortak tempo. Kaos hileleri, tempo değişimleri ve rastgele olaylardan hayatta kal."
+      },
+      "stories": {
+        "title": "Hikayeler",
+        "description": "Anlatı bölümleri ve benzersiz meydan okumalarla hikaye odaklı ritim oynanışı."
+      },
+      "minecraft": {
+        "title": "Masa Oyunu",
+        "description": "Minecraft ilhamlı çok oyunculu masa oyunu. Kazmak, üretmek, mob savaşı ve zafere yarış."
+      },
+      "advancements": {
+        "title": "Başarılar",
+        "description": "Tüm oyun modlarında başarıları aç. İlerlemeni takip et ve ödüller kazan."
+      }
+    }
   }
 }

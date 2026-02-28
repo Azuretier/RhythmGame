@@ -41,7 +41,7 @@ src/
 │   ├── globals.css         # Global styles
 │   ├── [locale]/           # Locale-based routing (next-intl)
 │   │   ├── layout.tsx      # Main layout (providers, SEO metadata, JSON-LD, Google Analytics)
-│   │   ├── page.tsx        # Home page (version-switched: v1.0.0/v1.0.1/v1.0.2/RhythmiaLobby)
+│   │   ├── page.tsx        # Home page (version-switched: discord-messenger/creator-portfolio/minecraft-panorama/RhythmiaLobby)
 │   │   ├── arena/          # Arena game mode route
 │   │   ├── chapter/        # Story chapter route
 │   │   ├── loyalty/        # Loyalty dashboard route
@@ -54,14 +54,15 @@ src/
 │   │   └── site-entry/     # Discord webhook for new player profile notifications
 │   ├── blog/               # Blog route
 │   ├── shader-demo/        # WebGL shader demo route
-│   ├── sns-widgets/        # Social media widgets route
-│   ├── sunphase/           # WebGPU heartbeat demo route
+│   ├── social-widgets/     # Social media widgets route
+│   ├── webgpu-demo/        # WebGPU heartbeat demo route
 │   └── fonts/              # Local font files (Geist Sans + Mono)
 ├── components/             # React components organized by feature
 │   ├── home/               # Homepage components
-│   │   ├── v1.0.0/         # Discord UI variant
-│   │   ├── v1.0.1/         # Patreon UI variant
-│   │   ├── v1.0.2/         # Minecraft panorama variant
+│   │   ├── discord-messenger/ # Discord UI variant
+│   │   ├── creator-portfolio/ # Patreon UI variant
+│   │   ├── minecraft-panorama/ # Minecraft panorama variant
+│   │   ├── pixel-art/      # Pixel art UI variant
 │   │   ├── InteractiveHomepage.tsx
 │   │   ├── LoadingScreen.tsx
 │   │   ├── MessengerUI.tsx
@@ -77,26 +78,26 @@ src/
 │   │   └── Heartbeat.tsx, ParticleSystem.tsx, PixelIcon.tsx
 │   ├── arena/              # 9-player arena game (ArenaGame.tsx)
 │   ├── minecraft-board/    # Minecraft board game (MinecraftBoardGame, BoardRenderer, CraftingPanel, PlayerHUD)
-│   ├── game/               # Multiplayer game UI (lobby, leaderboard, room creation)
-│   ├── effects/            # Visual effects (floating particles)
+│   ├── multiplayer-lobby/  # Multiplayer game UI (lobby, leaderboard, room creation)
+│   ├── floating-particles/ # Floating particle effects
 │   ├── portfolio/          # Portfolio display (WindowFrame, ModelViewer)
 │   ├── rank-card/          # Discord rank card components
 │   ├── blog/               # Blog components (navbar, profile, post-card)
-│   ├── MNSW/               # Voxel engine UI (panorama background)
-│   ├── sns-widgets/        # Social widgets (Discord, GitHub, YouTube, Twitter, Instagram)
+│   ├── minecraft-switch/   # Voxel engine UI (panorama background)
+│   ├── social-widgets/     # Social widgets (Discord, GitHub, YouTube, Twitter, Instagram)
 │   ├── version/            # Version selector UI (VersionSelector, FloatingVersionSwitcher)
 │   ├── loyalty/            # Loyalty system (LoyaltyDashboard, LoyaltyWidget)
 │   ├── profile/            # Player profile (ProfileSetup, SkinCustomizer, ThemeSwitcher, OnlineUsers)
 │   ├── stories/            # Story viewer (StoryViewer)
 │   ├── wiki/               # Wiki page (WikiPage)
-│   ├── main/               # Shared UI (NotificationCenter, UpdatesPage, UpdatesPanel, WhatsNewBanner, animations)
+│   ├── shared-ui/          # Shared UI (NotificationCenter, UpdatesPage, UpdatesPanel, WhatsNewBanner, animations)
 │   ├── LocaleSwitcher.tsx  # Language switcher component
 │   └── ModelViewer.tsx     # 3D model viewer
 ├── data/                   # Static data files
 │   ├── chapters/           # Story chapter data
 │   └── stories/            # Story content data
 ├── lib/                    # Business logic and utilities
-│   ├── game/               # GameManager (Socket.IO room/player management)
+│   ├── socket-rooms/       # GameManager (Socket.IO room/player management)
 │   ├── multiplayer/        # RoomManager + FirestoreRoomService (WebSocket rooms)
 │   ├── ranked/             # Ranked matchmaking (TetrisAI, tiers, queue management)
 │   ├── arena/              # ArenaManager (9-player arena room logic)
@@ -114,7 +115,7 @@ src/
 │   ├── rank-card/          # Rank card generation (firebase, firebase-admin, utils)
 │   ├── rhythmia/           # Game-specific logic (firebase)
 │   ├── portfolio/          # Portfolio data (firebase)
-│   ├── MNSW/               # Voxel engine (TextureUtils, VoxelEngine, firebase)
+│   ├── minecraft-switch/   # Voxel engine (TextureUtils, VoxelEngine, firebase)
 │   ├── firebase/           # Shared Firebase utilities (initAppCheck)
 │   ├── updates/            # Changelog data and update entries
 │   ├── version/            # Version selection context, types, storage persistence
@@ -124,9 +125,10 @@ src/
 │   ├── useGameSocket.ts    # Socket.IO connection hook
 │   ├── useArenaSocket.ts   # Arena WebSocket connection hook
 │   ├── useMinecraftBoardSocket.ts  # Minecraft board WebSocket hook
+│   ├── useEchoesSocket.ts # Echoes of Eternity WebSocket hook
 │   ├── useSlideScroll.ts   # Slide-based scroll navigation
-│   ├── use-mobile.ts       # Mobile detection
-│   ├── use-kv.ts           # Key-value storage
+│   ├── useIsMobile.ts      # Mobile detection
+│   ├── useKeyValue.ts      # Key-value localStorage persistence
 │   └── useLocalStorage.ts  # Local storage persistence
 ├── i18n/                   # Internationalization configuration
 │   ├── routing.ts          # Locale routing (ja default, en/th/es/fr secondary, as-needed prefix)
@@ -140,7 +142,7 @@ src/
 │   └── community.ts        # Discord community types (RuleProgress)
 ├── styles/                 # Global and module CSS
 │   ├── Home.module.css
-│   ├── MNSW/               # MNSW-specific styles
+│   ├── minecraft-switch/   # Minecraft Switch Edition styles
 │   └── blog/               # Blog-specific styles
 └── middleware.ts           # next-intl middleware for locale detection/routing
 
@@ -251,7 +253,7 @@ The project runs two separate servers:
 - Plus "current" version (RhythmiaLobby — the main game experience)
 - Version selector with FloatingVersionSwitcher component
 
-**Updates System** (`lib/updates/` + `components/main/`):
+**Updates System** (`lib/updates/` + `components/shared-ui/`):
 - Changelog data with update entries
 - UpdatesPage, UpdatesPanel, and WhatsNewBanner components
 - Notification center for in-app updates
@@ -302,7 +304,7 @@ The project uses multiple Firebase configurations for isolated feature backends.
 | Prefix / Key | Purpose |
 |--------------|---------|
 | `NEXT_PUBLIC_AZURE_SUPPORTER_*` | Discord community Firebase |
-| `NEXT_PUBLIC_MNSW_*` | Voxel engine Firebase |
+| `NEXT_PUBLIC_MNSW_*` | Minecraft Switch Edition voxel engine Firebase |
 | `NEXT_PUBLIC_PORTFOLIO_*` | Portfolio Firebase |
 | `NEXT_PUBLIC_RANKCARD_*` | Rank card Firebase |
 | `NEXT_PUBLIC_RHYTHMIA_*` | Rhythmia game Firebase |

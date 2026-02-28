@@ -6,6 +6,15 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const nextConfig = {
   // Empty turbopack config to silence build warnings about webpack config
   turbopack: {},
+  async redirects() {
+    return [
+      {
+        source: '/sns-widgets/:path*',
+        destination: '/social-widgets/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

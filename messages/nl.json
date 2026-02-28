@@ -1508,5 +1508,40 @@
     "accentColor": "Accentkleur",
     "latest": "nieuwste",
     "goHome": "Naar startpagina"
+  },
+  "home": {
+    "hero": {
+      "description": "Een op ritme gebaseerd puzzelspel. Laat blokken vallen op de maat, vecht tegen vrienden in real-time en ontgrendel prestaties in 5 muzikale werelden.",
+      "play": "Nu spelen",
+      "wiki": "Wiki bekijken"
+    },
+    "features": {
+      "title": "Spelmodi",
+      "subtitle": "Kies je ervaring",
+      "vanilla": {
+        "title": "Eén speler",
+        "description": "Speel solo door 5 werelden. Ruim terrein op, verzamel items en maak wapens terwijl het BPM stijgt."
+      },
+      "multiplayer": {
+        "title": "1v1-gevecht",
+        "description": "Real-time gevechten via WebSocket. Stuur afvalrijen en klim in de ranglijst."
+      },
+      "arena": {
+        "title": "9-speler arena",
+        "description": "9 spelers, 1 gedeeld tempo. Overleef chaosgimmicks, tempowisselingen en willekeurige events."
+      },
+      "stories": {
+        "title": "Verhalen",
+        "description": "Verhaalgedreven ritmische gameplay met narratieve hoofdstukken en unieke uitdagingen."
+      },
+      "minecraft": {
+        "title": "Bordspel",
+        "description": "Minecraft-geïnspireerd multiplayer bordspel. Mijn, maak, vecht tegen mobs en race naar de overwinning."
+      },
+      "advancements": {
+        "title": "Prestaties",
+        "description": "Ontgrendel prestaties in alle spelmodi. Volg je voortgang en verdien beloningen."
+      }
+    }
   }
 }

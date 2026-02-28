@@ -187,6 +187,79 @@
 }
 
 /* ─────────────────────────────────────────────────
+   PIXEL — Dither Background & CRT Effects
+   ───────────────────────────────────────────────── */
+
+/* SVG dither background — faithful to original PixelDitherBackground */
+.pixelDitherBg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* CRT monitor vignette — darker edges for authentic CRT look */
+.pixelCrtVignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(0, 0, 0, 0.25) 80%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+  animation: crtVignettePulse 6s ease-in-out infinite;
+}
+
+.pixelCrtVignetteActive {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.3) 75%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+}
+
+@keyframes crtVignettePulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Corner ember accents — matching the original navbar corner pixel decorations */
+.pixelCornerTL,
+.pixelCornerTR,
+.pixelCornerBL,
+.pixelCornerBR {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #d97706;
+  opacity: 0.4;
+}
+
+.pixelCornerTL {
+  top: 8px;
+  left: 8px;
+}
+
+.pixelCornerTR {
+  top: 8px;
+  right: 8px;
+}
+
+.pixelCornerBL {
+  bottom: 8px;
+  left: 8px;
+}
+
+.pixelCornerBR {
+  bottom: 8px;
+  right: 8px;
+}
+
+/* ─────────────────────────────────────────────────
    SUNSET — Ember & Ray Effects
    ───────────────────────────────────────────────── */
 
@@ -463,7 +536,8 @@
   .sakuraAmbientGlow2,
   .sunsetHorizonGlow,
   .sunsetOrbGlow,
-  .heatHaze {
+  .heatHaze,
+  .pixelCrtVignette {
     animation: none !important;
   }
 

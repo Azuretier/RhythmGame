@@ -67,6 +67,46 @@ function SakuraEffects({ intensity }: { intensity: Intensity }) {
   );
 }
 
+/* ─── Pixel: Dither background + CRT vignette glow ─── */
+function PixelEffects({ intensity }: { intensity: Intensity }) {
+  const playing = intensity === 'playing' || intensity === 'intense';
+
+  return (
+    <>
+      {/* SVG dither background — faithful to original PixelDitherBackground */}
+      <svg
+        className={styles.pixelDitherBg}
+        xmlns="http://www.w3.org/2000/svg"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <pattern id="dither-skin-bg" width="16" height="16" patternUnits="userSpaceOnUse">
+            <rect width="16" height="16" fill="#1a1410" />
+            <rect x="0" y="0" width="8" height="8" fill="#1e1812" />
+            <rect x="8" y="8" width="8" height="8" fill="#1e1812" />
+          </pattern>
+          <pattern id="dither-skin-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+            <rect width="32" height="32" fill="transparent" />
+            <line x1="0" y1="32" x2="32" y2="32" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
+            <line x1="32" y1="0" x2="32" y2="32" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dither-skin-bg)" />
+        <rect width="100%" height="100%" fill="url(#dither-skin-grid)" />
+      </svg>
+
+      {/* CRT screen vignette — darker edges like a real CRT monitor */}
+      <div className={`${styles.pixelCrtVignette} ${playing ? styles.pixelCrtVignetteActive : ''}`} />
+
+      {/* Corner ember accents — matching the original navbar corner pixels */}
+      <div className={styles.pixelCornerTL} />
+      <div className={styles.pixelCornerTR} />
+      <div className={styles.pixelCornerBL} />
+      <div className={styles.pixelCornerBR} />
+    </>
+  );
+}
+
 /* ─── Sunset (orange): Rising embers + sweeping rays + horizon glow ─── */
 function SunsetEffects({ intensity }: { intensity: Intensity }) {
   const intense = intensity === 'intense';
@@ -110,7 +150,7 @@ function SunsetEffects({ intensity }: { intensity: Intensity }) {
 export default function SkinAmbientEffects({ intensity = 'idle' }: SkinAmbientEffectsProps) {
   const { currentSkin } = useSkin();
 
-  if (currentSkin.id !== 'sakura' && currentSkin.id !== 'sunset') {
+  if (currentSkin.id !== 'sakura' && currentSkin.id !== 'sunset' && currentSkin.id !== 'pixel') {
     return null;
   }
 
@@ -118,6 +158,7 @@ export default function SkinAmbientEffects({ intensity = 'idle' }: SkinAmbientEf
     <div className={styles.ambientContainer} aria-hidden="true">
       {currentSkin.id === 'sakura' && <SakuraEffects intensity={intensity} />}
       {currentSkin.id === 'sunset' && <SunsetEffects intensity={intensity} />}
+      {currentSkin.id === 'pixel' && <PixelEffects intensity={intensity} />}
     </div>
   );
 }

@@ -1508,5 +1508,40 @@
     "accentColor": "Kolor akcentu",
     "latest": "najnowsza",
     "goHome": "Przejdź na stronę główną"
+  },
+  "home": {
+    "hero": {
+      "description": "Gra logiczna oparta na rytmie. Upuszczaj klocki w rytm, walcz z przyjaciółmi w czasie rzeczywistym i odblokuj osiągnięcia w 5 muzycznych światach.",
+      "play": "Graj teraz",
+      "wiki": "Zobacz Wiki"
+    },
+    "features": {
+      "title": "Tryby gry",
+      "subtitle": "Wybierz swoje doświadczenie",
+      "vanilla": {
+        "title": "Pojedynczy gracz",
+        "description": "Graj solo przez 5 światów. Oczyszczaj teren, zbieraj przedmioty i twórz broń, gdy BPM rośnie."
+      },
+      "multiplayer": {
+        "title": "Bitwa 1v1",
+        "description": "Walki w czasie rzeczywistym przez WebSocket. Wysyłaj śmieciowe linie i wspinaj się w rankingu."
+      },
+      "arena": {
+        "title": "Arena 9 graczy",
+        "description": "9 graczy, 1 wspólne tempo. Przetrwaj chaotyczne triki, zmiany tempa i losowe wydarzenia."
+      },
+      "stories": {
+        "title": "Historie",
+        "description": "Rozgrywka rytmiczna oparta na fabule z rozdziałami narracyjnymi i unikalnymi wyzwaniami."
+      },
+      "minecraft": {
+        "title": "Gra planszowa",
+        "description": "Planszówka wieloosobowa inspirowana Minecraftem. Kop, twórz, walcz z mobami i pędź po zwycięstwo."
+      },
+      "advancements": {
+        "title": "Osiągnięcia",
+        "description": "Odblokuj osiągnięcia we wszystkich trybach gry. Śledź swoje postępy i zdobywaj nagrody."
+      }
+    }
   }
 }

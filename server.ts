@@ -3,7 +3,7 @@ import { parse } from 'url';
 import next from 'next';
 import { Server as SocketIOServer } from 'socket.io';
 import type { Socket } from 'socket.io';
-import { gameManager } from './src/lib/game/GameManager';
+import { gameManager } from './src/lib/socket-rooms/GameManager';
 import {
   GAME_CONFIG,
   type ServerToClientEvents,

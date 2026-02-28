@@ -18,7 +18,7 @@ Located in `src/lib/updates/changelog.ts`, the system maintains a comprehensive 
 
 ### 2. Updates Panel Component
 
-`src/components/main/UpdatesPanel.tsx` provides a rich UI for browsing updates:
+`src/components/shared-ui/UpdatesPanel.tsx` provides a rich UI for browsing updates:
 
 - **Category filtering**: Filter by feature type with badge counters
 - **Animated transitions**: Smooth animations with Framer Motion
@@ -28,7 +28,7 @@ Located in `src/lib/updates/changelog.ts`, the system maintains a comprehensive 
 
 ### 3. What's New Banner
 
-`src/components/main/WhatsNewBanner.tsx` shows a dismissible banner for new updates:
+`src/components/shared-ui/WhatsNewBanner.tsx` shows a dismissible banner for new updates:
 
 - **Auto-show on new updates**: Appears when new PRs are merged
 - **Local storage persistence**: Remembers dismissed updates
@@ -48,7 +48,7 @@ Located at `/[locale]/updates`, provides a dedicated view for browsing all updat
 ### Displaying the Updates Panel
 
 ```tsx
-import UpdatesPanel from '@/components/main/UpdatesPanel';
+import UpdatesPanel from '@/components/shared-ui/UpdatesPanel';
 
 // Default usage (10 recent updates with category filtering)
 <UpdatesPanel />
@@ -60,7 +60,7 @@ import UpdatesPanel from '@/components/main/UpdatesPanel';
 ### Integrating What's New Banner
 
 ```tsx
-import WhatsNewBanner from '@/components/main/WhatsNewBanner';
+import WhatsNewBanner from '@/components/shared-ui/WhatsNewBanner';
 
 // Auto-show banner (appears once per new update)
 <WhatsNewBanner autoShow={true} dismissible={true} />
@@ -226,10 +226,10 @@ Potential improvements:
 
 - `src/lib/updates/changelog.ts` - Data and helper functions
 - `src/lib/updates/index.ts` - Barrel export
-- `src/components/main/UpdatesPanel.tsx` - Main panel component
-- `src/components/main/UpdatesPanel.module.css` - Panel styles
-- `src/components/main/WhatsNewBanner.tsx` - Banner component
-- `src/components/main/WhatsNewBanner.module.css` - Banner styles
+- `src/components/shared-ui/UpdatesPanel.tsx` - Main panel component
+- `src/components/shared-ui/UpdatesPanel.module.css` - Panel styles
+- `src/components/shared-ui/WhatsNewBanner.tsx` - Banner component
+- `src/components/shared-ui/WhatsNewBanner.module.css` - Banner styles
 - `src/app/[locale]/updates/page.tsx` - Dedicated updates page
 - `messages/ja.json` - Japanese translations
 - `messages/en.json` - English translations

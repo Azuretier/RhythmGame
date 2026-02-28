@@ -9,8 +9,8 @@ export { CHARACTER_DEFINITIONS, getCharacterDefinition, getAllCharacters, getCha
 export { GAME_MODE_CONFIGS, getAvailableGameModes, isGameModeUnlocked } from './game-modes';
 export { STANDARD_BANNER, createLimitedBanner, performPull, createInitialGachaState, getPityInfo, createBattlePassSeason, generateRandomLoot, calculateGoldReward, calculateExpReward } from './gacha';
 export { generateDungeonFloor, WORLD_REGIONS, DUNGEON_PRESETS, revealTiles, isWalkable, calculateDungeonStats, getRegionById, getDungeonPreset, getRegionsForLevel } from './dungeons';
-export { EOE_ADVANCEMENTS, checkAdvancements, getAdvancementsByCategory, getAdvancementProgress, calculateAchievementScore } from './advancements';
-export { EoEManager, isEoEMessage } from './EoEManager';
+export { ECHOES_ADVANCEMENTS, checkAdvancements, getAdvancementsByCategory, getAdvancementProgress, calculateAchievementScore } from './advancements';
+export { EchoesManager, isEchoesMessage } from './EchoesManager';
 
 // Re-export core types
 export type {
@@ -23,11 +23,11 @@ export type {
   BattleState, EnemyInstance, FieldElement, ComboChain, BattleLogEntry, BattleEnvironment, TerrainType, WeatherType, LootEntry,
   BiomeType, WorldRegion, SubRegion, DungeonDefinition, DungeonFloor, DungeonDifficulty, DungeonReward, DungeonStats,
   GachaBanner, GachaPullResult, PlayerGachaState, BattlePassSeason, BattlePassReward, SeasonMission,
-  GameMode, GameModeConfig, PlayerRank, PlayerProgression, EoEPlayerStats,
+  GameMode, GameModeConfig, PlayerRank, PlayerProgression, EchoesPlayerStats,
   BuildBlockType, BuildBlock, Blueprint, BuildingState,
   BattleRoyaleState, MobaState,
   PartyMember, Party,
-  EoEClientMessage, EoEServerMessage, EoEConnectionStatus, EoERoom, EoERoomPlayer,
+  EchoesClientMessage, EchoesServerMessage, EchoesConnectionStatus, EchoesRoom, EchoesRoomPlayer,
   BattleEndStats, MobaEndStats,
   Position2D, Position3D, ItemRarity,
 } from '@/types/echoes';

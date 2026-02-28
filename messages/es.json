@@ -1508,5 +1508,44 @@
     "accentColor": "Color de acento",
     "latest": "última",
     "goHome": "Ir al inicio"
+  },
+  "home": {
+    "hero": {
+      "description": "Un juego de puzles con ritmo. Deja caer bloques al compás, lucha contra amigos en tiempo real y desbloquea logros en 5 mundos musicales.",
+      "play": "Jugar ahora",
+      "wiki": "Ver Wiki"
+    },
+    "features": {
+      "title": "Modos de juego",
+      "subtitle": "Elige tu experiencia",
+      "vanilla": {
+        "title": "Un jugador",
+        "description": "Juega en solitario a través de 5 mundos. Despeja terreno, recoge objetos y fabrica armas mientras sube el BPM."
+      },
+      "multiplayer": {
+        "title": "Batalla 1v1",
+        "description": "Batallas en tiempo real por WebSocket. Envía líneas basura y sube en el ranking."
+      },
+      "arena": {
+        "title": "Arena de 9 jugadores",
+        "description": "9 jugadores, 1 tempo compartido. Sobrevive a trucos caóticos, cambios de tempo y eventos aleatorios."
+      },
+      "stories": {
+        "title": "Historias",
+        "description": "Gameplay rítmico narrativo con capítulos y desafíos únicos."
+      },
+      "minecraft": {
+        "title": "Juego de mesa",
+        "description": "Juego de mesa multijugador inspirado en Minecraft. Mina, fabrica, lucha contra mobs y corre hacia la victoria."
+      },
+      "advancements": {
+        "title": "Logros",
+        "description": "Desbloquea logros en todos los modos de juego. Sigue tu progreso y gana recompensas."
+      }
+    }
+  },
+  "pageTab": {
+    "home": "Inicio",
+    "rhythmia": "Rhythmia"
   }
 }

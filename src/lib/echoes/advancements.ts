@@ -3,13 +3,13 @@
 // 実績システム
 // =============================================================================
 
-import type { EoEPlayerStats } from '@/types/echoes';
+import type { EchoesPlayerStats } from '@/types/echoes';
 
 // ---------------------------------------------------------------------------
 // Achievement Categories
 // ---------------------------------------------------------------------------
 
-export type EoEAdvancementCategory =
+export type EchoesAdvancementCategory =
   | 'combat'         // Battle-related
   | 'rhythm'         // Rhythm game performance
   | 'exploration'    // World exploration
@@ -25,16 +25,16 @@ export type EoEAdvancementCategory =
 // Achievement Definition
 // ---------------------------------------------------------------------------
 
-export interface EoEAdvancement {
+export interface EchoesAdvancement {
   id: string;
   name: string;
   nameJa: string;
   description: string;
   descriptionJa: string;
-  category: EoEAdvancementCategory;
+  category: EchoesAdvancementCategory;
   icon: string;
   threshold: number;
-  statKey: keyof EoEPlayerStats;
+  statKey: keyof EchoesPlayerStats;
   reward?: { type: 'currency' | 'title' | 'item'; id: string; quantity: number };
   isSecret: boolean;
 }
@@ -43,7 +43,7 @@ export interface EoEAdvancement {
 // Achievement Definitions
 // ---------------------------------------------------------------------------
 
-export const EOE_ADVANCEMENTS: EoEAdvancement[] = [
+export const ECHOES_ADVANCEMENTS: EchoesAdvancement[] = [
   // ===== Combat =====
   {
     id: 'eoe_first_blood', name: 'First Blood', nameJa: 'ファーストブラッド',
@@ -297,12 +297,12 @@ export const EOE_ADVANCEMENTS: EoEAdvancement[] = [
  * Check which achievements are newly unlocked based on current stats
  */
 export function checkAdvancements(
-  stats: EoEPlayerStats,
+  stats: EchoesPlayerStats,
   alreadyUnlocked: string[]
-): EoEAdvancement[] {
-  const newlyUnlocked: EoEAdvancement[] = [];
+): EchoesAdvancement[] {
+  const newlyUnlocked: EchoesAdvancement[] = [];
 
-  for (const adv of EOE_ADVANCEMENTS) {
+  for (const adv of ECHOES_ADVANCEMENTS) {
     if (alreadyUnlocked.includes(adv.id)) continue;
 
     const statValue = stats[adv.statKey];
@@ -317,16 +317,16 @@ export function checkAdvancements(
 /**
  * Get all advancements in a category
  */
-export function getAdvancementsByCategory(category: EoEAdvancementCategory): EoEAdvancement[] {
-  return EOE_ADVANCEMENTS.filter((a) => a.category === category);
+export function getAdvancementsByCategory(category: EchoesAdvancementCategory): EchoesAdvancement[] {
+  return ECHOES_ADVANCEMENTS.filter((a) => a.category === category);
 }
 
 /**
  * Get advancement progress for display
  */
 export function getAdvancementProgress(
-  advancement: EoEAdvancement,
-  stats: EoEPlayerStats
+  advancement: EchoesAdvancement,
+  stats: EchoesPlayerStats
 ): { current: number; target: number; percent: number; isComplete: boolean } {
   const current = stats[advancement.statKey] as number ?? 0;
   const target = advancement.threshold;
@@ -340,7 +340,7 @@ export function getAdvancementProgress(
 export function calculateAchievementScore(unlockedIds: string[]): number {
   let score = 0;
   for (const id of unlockedIds) {
-    const adv = EOE_ADVANCEMENTS.find((a) => a.id === id);
+    const adv = ECHOES_ADVANCEMENTS.find((a) => a.id === id);
     if (adv) {
       // Higher threshold = more points
       score += Math.floor(Math.log10(adv.threshold + 1) * 100);

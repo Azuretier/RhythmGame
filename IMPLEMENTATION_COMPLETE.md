@@ -20,7 +20,7 @@ Successfully implemented a comprehensive update notification system for RHYTHMIA
 - `getUpdateStats()` - Get comprehensive statistics
 - `getUpdatesByDateRange()` - Filter by date range
 
-### 2. UI Components (`src/components/main/`)
+### 2. UI Components (`src/components/shared-ui/`)
 
 **UpdatesPanel.tsx** - 187 lines
 - Rich card-based layout with glass-morphism effects
@@ -139,7 +139,7 @@ src/
 │   ├── changelog.ts       # Data and API
 │   ├── index.ts          # Barrel export
 │   └── example.ts        # Usage examples
-├── components/main/
+├── components/shared-ui/
 │   ├── UpdatesPanel.tsx           # Main panel component
 │   ├── UpdatesPanel.module.css    # Panel styles
 │   ├── WhatsNewBanner.tsx         # Banner component
@@ -181,14 +181,14 @@ Full support for Japanese and English:
 
 ### Display Updates Panel
 ```tsx
-import UpdatesPanel from '@/components/main/UpdatesPanel';
+import UpdatesPanel from '@/components/shared-ui/UpdatesPanel';
 
 <UpdatesPanel maxItems={20} showCategories={true} />
 ```
 
 ### Show What's New Banner
 ```tsx
-import WhatsNewBanner from '@/components/main/WhatsNewBanner';
+import WhatsNewBanner from '@/components/shared-ui/WhatsNewBanner';
 
 <WhatsNewBanner autoShow={true} dismissible={true} />
 ```
@@ -227,10 +227,10 @@ Potential improvements documented for future PRs:
 1. `src/lib/updates/changelog.ts`
 2. `src/lib/updates/index.ts`
 3. `src/lib/updates/example.ts`
-4. `src/components/main/UpdatesPanel.tsx`
-5. `src/components/main/UpdatesPanel.module.css`
-6. `src/components/main/WhatsNewBanner.tsx`
-7. `src/components/main/WhatsNewBanner.module.css`
+4. `src/components/shared-ui/UpdatesPanel.tsx`
+5. `src/components/shared-ui/UpdatesPanel.module.css`
+6. `src/components/shared-ui/WhatsNewBanner.tsx`
+7. `src/components/shared-ui/WhatsNewBanner.module.css`
 8. `src/app/[locale]/updates/page.tsx`
 9. `UPDATES_SYSTEM.md`
 10. `PR_UPDATES_SUMMARY.md`

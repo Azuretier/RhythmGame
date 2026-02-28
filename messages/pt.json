@@ -1508,5 +1508,40 @@
     "accentColor": "Cor de destaque",
     "latest": "mais recente",
     "goHome": "Ir para o início"
+  },
+  "home": {
+    "hero": {
+      "description": "Um jogo de puzzle rítmico. Solte blocos no ritmo, lute contra amigos em tempo real e desbloqueie conquistas em 5 mundos musicais.",
+      "play": "Jogar agora",
+      "wiki": "Ver Wiki"
+    },
+    "features": {
+      "title": "Modos de jogo",
+      "subtitle": "Escolha sua experiência",
+      "vanilla": {
+        "title": "Um jogador",
+        "description": "Jogue solo através de 5 mundos. Limpe o terreno, colete itens e fabrique armas conforme o BPM sobe."
+      },
+      "multiplayer": {
+        "title": "Batalha 1v1",
+        "description": "Batalhas em tempo real via WebSocket. Envie linhas de lixo e suba no ranking."
+      },
+      "arena": {
+        "title": "Arena de 9 jogadores",
+        "description": "9 jogadores, 1 tempo compartilhado. Sobreviva a truques caóticos, mudanças de tempo e eventos aleatórios."
+      },
+      "stories": {
+        "title": "Histórias",
+        "description": "Gameplay rítmico narrativo com capítulos e desafios únicos."
+      },
+      "minecraft": {
+        "title": "Jogo de tabuleiro",
+        "description": "Jogo de tabuleiro multiplayer inspirado em Minecraft. Minere, fabrique, lute contra mobs e corra para a vitória."
+      },
+      "advancements": {
+        "title": "Conquistas",
+        "description": "Desbloqueie conquistas em todos os modos de jogo. Acompanhe seu progresso e ganhe recompensas."
+      }
+    }
   }
 }

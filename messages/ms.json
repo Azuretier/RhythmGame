@@ -1508,5 +1508,40 @@
     "accentColor": "Warna Aksen",
     "latest": "terkini",
     "goHome": "Ke Laman Utama"
+  },
+  "home": {
+    "hero": {
+      "description": "Permainan teka-teki berasaskan irama. Jatuhkan blok mengikut rentak, lawan kawan secara masa nyata, dan buka pencapaian di 5 dunia bertema muzik.",
+      "play": "Main Sekarang",
+      "wiki": "Lihat Wiki"
+    },
+    "features": {
+      "title": "Mod Permainan",
+      "subtitle": "Pilih pengalaman anda",
+      "vanilla": {
+        "title": "Pemain Tunggal",
+        "description": "Main solo melalui 5 dunia. Bersihkan rupa bumi, kumpul item dan buat senjata apabila BPM meningkat."
+      },
+      "multiplayer": {
+        "title": "Pertempuran 1v1",
+        "description": "Pertempuran masa nyata melalui WebSocket. Hantar barisan sampah dan naik dalam kedudukan."
+      },
+      "arena": {
+        "title": "Arena 9 Pemain",
+        "description": "9 pemain, 1 tempo dikongsi. Bertahan daripada gimik kacau, perubahan tempo dan peristiwa rawak."
+      },
+      "stories": {
+        "title": "Cerita",
+        "description": "Gameplay irama berasaskan cerita dengan bab naratif dan cabaran unik."
+      },
+      "minecraft": {
+        "title": "Permainan Papan",
+        "description": "Permainan papan berbilang pemain diilhamkan Minecraft. Lombong, kraf, lawan mob dan berlumba ke kemenangan."
+      },
+      "advancements": {
+        "title": "Pencapaian",
+        "description": "Buka pencapaian dalam semua mod permainan. Jejak kemajuan anda dan peroleh ganjaran."
+      }
+    }
   }
 }

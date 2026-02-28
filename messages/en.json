@@ -1543,5 +1543,9 @@
     "accentColor": "Accent Color",
     "latest": "latest",
     "goHome": "Go to Homepage"
+  },
+  "pageTab": {
+    "home": "Home",
+    "rhythmia": "Rhythmia"
   }
 }

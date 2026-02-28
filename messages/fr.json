@@ -1508,5 +1508,44 @@
     "accentColor": "Couleur d'accent",
     "latest": "dernière",
     "goHome": "Aller à l'accueil"
+  },
+  "home": {
+    "hero": {
+      "description": "Un jeu de puzzle rythmique. Lâchez des blocs en rythme, combattez vos amis en temps réel et débloquez des succès dans 5 mondes musicaux.",
+      "play": "Jouer",
+      "wiki": "Voir le Wiki"
+    },
+    "features": {
+      "title": "Modes de jeu",
+      "subtitle": "Choisissez votre expérience",
+      "vanilla": {
+        "title": "Solo",
+        "description": "Jouez en solo à travers 5 mondes. Dégagez le terrain, collectez des objets et fabriquez des armes avec le BPM qui monte."
+      },
+      "multiplayer": {
+        "title": "Combat 1v1",
+        "description": "Combats en temps réel via WebSocket. Envoyez des lignes poubelles et grimpez dans le classement."
+      },
+      "arena": {
+        "title": "Arène 9 joueurs",
+        "description": "9 joueurs, 1 tempo partagé. Survivez aux gimmicks du chaos, aux changements de tempo et aux événements aléatoires."
+      },
+      "stories": {
+        "title": "Histoires",
+        "description": "Gameplay rythmique narratif avec des chapitres et des défis uniques."
+      },
+      "minecraft": {
+        "title": "Jeu de plateau",
+        "description": "Jeu de plateau multijoueur inspiré de Minecraft. Minez, fabriquez, combattez des mobs et foncez vers la victoire."
+      },
+      "advancements": {
+        "title": "Succès",
+        "description": "Débloquez des succès dans tous les modes de jeu. Suivez votre progression et gagnez des récompenses."
+      }
+    }
+  },
+  "pageTab": {
+    "home": "Accueil",
+    "rhythmia": "Rhythmia"
   }
 }

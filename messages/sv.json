@@ -1508,5 +1508,40 @@
     "accentColor": "Accentfärg",
     "latest": "senaste",
     "goHome": "Gå till startsidan"
+  },
+  "home": {
+    "hero": {
+      "description": "Ett rytmbaserat pusselspel. Släpp block i takt, kämpa mot vänner i realtid och lås upp prestationer i 5 musikvärldar.",
+      "play": "Spela nu",
+      "wiki": "Visa Wiki"
+    },
+    "features": {
+      "title": "Spellägen",
+      "subtitle": "Välj din upplevelse",
+      "vanilla": {
+        "title": "Enspelare",
+        "description": "Spela solo genom 5 världar. Rensa terräng, samla föremål och tillverka vapen när BPM stiger."
+      },
+      "multiplayer": {
+        "title": "1v1-strid",
+        "description": "Strider i realtid via WebSocket. Skicka skräprader och klättra i rankingen."
+      },
+      "arena": {
+        "title": "9-spelar arena",
+        "description": "9 spelare, 1 delat tempo. Överlev kaosgimmicks, tempobyten och slumpmässiga händelser."
+      },
+      "stories": {
+        "title": "Berättelser",
+        "description": "Berättelsedrivet rytmiskt spelande med narrativa kapitel och unika utmaningar."
+      },
+      "minecraft": {
+        "title": "Brädspel",
+        "description": "Minecraft-inspirerat flerspelar-brädspel. Bryt, tillverka, slåss mot mobbar och tävla mot vinst."
+      },
+      "advancements": {
+        "title": "Prestationer",
+        "description": "Lås upp prestationer i alla spellägen. Följ dina framsteg och tjäna belöningar."
+      }
+    }
   }
 }
