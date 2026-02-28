@@ -117,7 +117,7 @@ function layerColor(y: number, maxY: number, p: Pal): THREE.Color {
 // ────────────────────────────────────────────
 
 const SEED = 12345;
-interface VB { x: number; y: number; z: number; color: THREE.Color }
+interface VoxelBlock { x: number; y: number; z: number; color: THREE.Color }
 
 function terrainHeight(tile: { x: number; y: number; terrain: string; elevation: number }): number {
   const n = fractalNoise(tile.x * 0.1, tile.y * 0.1, SEED, 4);
@@ -197,8 +197,8 @@ function treeType(x: number, y: number): TT {
 
 const C = (hex: string) => new THREE.Color(hex);
 
-function mkHut(bx: number, by: number, bz: number): VB[] {
-  const b: VB[] = [];
+function mkHut(bx: number, by: number, bz: number): VoxelBlock[] {
+  const b: VoxelBlock[] = [];
   const w = '#8a6030', d = '#5a3818';
   for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
     b.push({ x: bx + dx, y: by, z: bz + dz, color: C(d) });
@@ -212,8 +212,8 @@ function mkHut(bx: number, by: number, bz: number): VB[] {
   return b;
 }
 
-function mkTower(bx: number, by: number, bz: number, h: number): VB[] {
-  const b: VB[] = [];
+function mkTower(bx: number, by: number, bz: number, h: number): VoxelBlock[] {
+  const b: VoxelBlock[] = [];
   const s = '#7a7870', ds = '#5a5850';
   for (let dy = 0; dy < h; dy++) {
     for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
@@ -229,8 +229,8 @@ function mkTower(bx: number, by: number, bz: number, h: number): VB[] {
   return b;
 }
 
-function mkCastle(bx: number, by: number, bz: number): VB[] {
-  const b: VB[] = [];
+function mkCastle(bx: number, by: number, bz: number): VoxelBlock[] {
+  const b: VoxelBlock[] = [];
   const s = '#706860', ds = '#585048';
   for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) {
     if (Math.abs(dx) < 4 && Math.abs(dz) < 4) continue;
@@ -254,8 +254,8 @@ function mkCastle(bx: number, by: number, bz: number): VB[] {
   return b;
 }
 
-function mkColosseum(bx: number, by: number, bz: number): VB[] {
-  const b: VB[] = [];
+function mkColosseum(bx: number, by: number, bz: number): VoxelBlock[] {
+  const b: VoxelBlock[] = [];
   const s = '#c8a868', ds = '#a08040';
   for (let a = 0; a < 16; a++) {
     const dx = Math.round(Math.cos(a * Math.PI / 8) * 4);
@@ -274,8 +274,8 @@ function mkColosseum(bx: number, by: number, bz: number): VB[] {
   return b;
 }
 
-function mkRuins(bx: number, by: number, bz: number): VB[] {
-  const b: VB[] = [];
+function mkRuins(bx: number, by: number, bz: number): VoxelBlock[] {
+  const b: VoxelBlock[] = [];
   const s = '#6a6460', m = '#4a6838';
   for (let dx = -2; dx <= 2; dx++) {
     if (Math.abs(dx) === 2) {
@@ -295,8 +295,8 @@ function mkRuins(bx: number, by: number, bz: number): VB[] {
   return b;
 }
 
-function mkCampfire(bx: number, by: number, bz: number): VB[] {
-  const b: VB[] = [];
+function mkCampfire(bx: number, by: number, bz: number): VoxelBlock[] {
+  const b: VoxelBlock[] = [];
   b.push({ x: bx, y: by, z: bz, color: C('#e88520') });
   b.push({ x: bx, y: by + 1, z: bz, color: C('#f0a030') });
   for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as [number, number][]) {
@@ -310,7 +310,7 @@ function mkCampfire(bx: number, by: number, bz: number): VB[] {
 // ────────────────────────────────────────────
 
 function generateTerrainVoxels(overrides: TerrainOverrides = {}) {
-  const blocks: VB[] = [];
+  const blocks: VoxelBlock[] = [];
   const hx = GAMEMODE_MAP_WIDTH / 2;
   const hz = GAMEMODE_MAP_HEIGHT / 2;
 
@@ -506,7 +506,7 @@ function generateTerrainVoxels(overrides: TerrainOverrides = {}) {
 
 // Path blocks
 function generateTrackVoxels(statuses: Record<string, GameModeStatus>) {
-  const blocks: VB[] = [];
+  const blocks: VoxelBlock[] = [];
   const hx = GAMEMODE_MAP_WIDTH / 2, hz = GAMEMODE_MAP_HEIGHT / 2;
 
   for (const path of GAMEMODE_PATHS) {

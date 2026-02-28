@@ -78,8 +78,8 @@ src/
 │   │   └── Heartbeat.tsx, ParticleSystem.tsx, PixelIcon.tsx
 │   ├── arena/              # 9-player arena game (ArenaGame.tsx)
 │   ├── minecraft-board/    # Minecraft board game (MinecraftBoardGame, BoardRenderer, CraftingPanel, PlayerHUD)
-│   ├── game/               # Multiplayer game UI (lobby, leaderboard, room creation)
-│   ├── effects/            # Visual effects (floating particles)
+│   ├── multiplayer-lobby/  # Multiplayer game UI (lobby, leaderboard, room creation)
+│   ├── floating-particles/ # Floating particle effects
 │   ├── portfolio/          # Portfolio display (WindowFrame, ModelViewer)
 │   ├── rank-card/          # Discord rank card components
 │   ├── blog/               # Blog components (navbar, profile, post-card)
@@ -97,7 +97,7 @@ src/
 │   ├── chapters/           # Story chapter data
 │   └── stories/            # Story content data
 ├── lib/                    # Business logic and utilities
-│   ├── game/               # GameManager (Socket.IO room/player management)
+│   ├── socket-rooms/       # GameManager (Socket.IO room/player management)
 │   ├── multiplayer/        # RoomManager + FirestoreRoomService (WebSocket rooms)
 │   ├── ranked/             # Ranked matchmaking (TetrisAI, tiers, queue management)
 │   ├── arena/              # ArenaManager (9-player arena room logic)
@@ -127,8 +127,8 @@ src/
 │   ├── useMinecraftBoardSocket.ts  # Minecraft board WebSocket hook
 │   ├── useEchoesSocket.ts # Echoes of Eternity WebSocket hook
 │   ├── useSlideScroll.ts   # Slide-based scroll navigation
-│   ├── use-mobile.ts       # Mobile detection
-│   ├── use-kv.ts           # Key-value storage
+│   ├── useIsMobile.ts      # Mobile detection
+│   ├── useKeyValue.ts      # Key-value localStorage persistence
 │   └── useLocalStorage.ts  # Local storage persistence
 ├── i18n/                   # Internationalization configuration
 │   ├── routing.ts          # Locale routing (ja default, en/th/es/fr secondary, as-needed prefix)

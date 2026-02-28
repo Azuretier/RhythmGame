@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react'
  * @param initialValue - The initial value if no stored value exists
  * @returns A tuple of [state, setState] similar to useState
  */
-export function useKV<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
+export function useKeyValue<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void] {
   const [state, setState] = useState<T>(() => {
     try {
       const item = localStorage.getItem(key)

@@ -11,7 +11,7 @@ A reusable component that creates animated particle effects that float away from
 #### As a React Component
 
 ```tsx
-import { FloatingParticle } from '@/components/effects';
+import { FloatingParticle } from '@/components/floating-particles';
 
 function MyComponent() {
   return (
@@ -33,7 +33,7 @@ function MyComponent() {
 For quick particle spawning without React components:
 
 ```tsx
-import { spawnFloatingParticles } from '@/components/effects';
+import { spawnFloatingParticles } from '@/components/floating-particles';
 
 function handleClick(event: MouseEvent) {
   spawnFloatingParticles(
