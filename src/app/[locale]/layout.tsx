@@ -117,7 +117,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     };
 
     return (
-        <html lang={locale}>
+        <html lang={locale} suppressHydrationWarning>
             <head>
                 <meta name="theme-color" content="#ffbd43" />
                 <link rel="icon" href="/favicon.ico" />
@@ -127,7 +127,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                 />
                 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet" />
             </head>
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }}>
+            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }} suppressHydrationWarning>
                 <NextIntlClientProvider messages={messages}>
                     <UiThemeProvider>
                         <ShapeProvider>
