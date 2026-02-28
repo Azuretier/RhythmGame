@@ -1508,5 +1508,40 @@
     "accentColor": "Warna Aksen",
     "latest": "terbaru",
     "goHome": "Ke Beranda"
+  },
+  "home": {
+    "hero": {
+      "description": "Game puzzle berbasis ritme. Jatuhkan blok sesuai irama, lawan teman secara real-time, dan buka pencapaian di 5 dunia bertema musik.",
+      "play": "Main Sekarang",
+      "wiki": "Lihat Wiki"
+    },
+    "features": {
+      "title": "Mode Permainan",
+      "subtitle": "Pilih pengalamanmu",
+      "vanilla": {
+        "title": "Pemain Tunggal",
+        "description": "Main solo melalui 5 dunia. Bersihkan medan, kumpulkan item, dan buat senjata saat BPM naik."
+      },
+      "multiplayer": {
+        "title": "Pertarungan 1v1",
+        "description": "Pertarungan real-time melalui WebSocket. Kirim baris sampah dan naiki tangga peringkat."
+      },
+      "arena": {
+        "title": "Arena 9 Pemain",
+        "description": "9 pemain, 1 tempo bersama. Bertahan dari gimmick kacau, perubahan tempo, dan event acak."
+      },
+      "stories": {
+        "title": "Cerita",
+        "description": "Gameplay ritme berbasis cerita dengan bab naratif dan tantangan unik."
+      },
+      "minecraft": {
+        "title": "Board Game",
+        "description": "Board game multiplayer terinspirasi Minecraft. Tambang, buat, lawan mob, dan berlomba menuju kemenangan."
+      },
+      "advancements": {
+        "title": "Pencapaian",
+        "description": "Buka pencapaian di semua mode permainan. Lacak progresmu dan dapatkan hadiah."
+      }
+    }
   }
 }

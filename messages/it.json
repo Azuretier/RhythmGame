@@ -1508,5 +1508,40 @@
     "accentColor": "Colore accento",
     "latest": "ultima",
     "goHome": "Vai alla home"
+  },
+  "home": {
+    "hero": {
+      "description": "Un gioco puzzle a ritmo. Fai cadere blocchi a tempo, combatti amici in tempo reale e sblocca obiettivi in 5 mondi musicali.",
+      "play": "Gioca ora",
+      "wiki": "Vedi Wiki"
+    },
+    "features": {
+      "title": "Modalità di gioco",
+      "subtitle": "Scegli la tua esperienza",
+      "vanilla": {
+        "title": "Giocatore singolo",
+        "description": "Gioca da solo attraverso 5 mondi. Pulisci il terreno, raccogli oggetti e crea armi mentre il BPM sale."
+      },
+      "multiplayer": {
+        "title": "Battaglia 1v1",
+        "description": "Battaglie in tempo reale via WebSocket. Invia righe spazzatura e scala la classifica."
+      },
+      "arena": {
+        "title": "Arena 9 giocatori",
+        "description": "9 giocatori, 1 tempo condiviso. Sopravvivi a trucchi caotici, cambi di tempo ed eventi casuali."
+      },
+      "stories": {
+        "title": "Storie",
+        "description": "Gameplay ritmico narrativo con capitoli e sfide uniche."
+      },
+      "minecraft": {
+        "title": "Gioco da tavolo",
+        "description": "Gioco da tavolo multiplayer ispirato a Minecraft. Scava, crea, combatti mob e corri verso la vittoria."
+      },
+      "advancements": {
+        "title": "Obiettivi",
+        "description": "Sblocca obiettivi in tutte le modalità di gioco. Monitora i tuoi progressi e guadagna ricompense."
+      }
+    }
   }
 }

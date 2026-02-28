@@ -1508,5 +1508,40 @@
     "accentColor": "主题色",
     "latest": "最新",
     "goHome": "前往首页"
+  },
+  "home": {
+    "hero": {
+      "description": "节奏驱动的益智游戏。跟着节拍放置方块，与朋友实时对战，在5个音乐主题世界中解锁成就。",
+      "play": "立即游玩",
+      "wiki": "查看百科"
+    },
+    "features": {
+      "title": "游戏模式",
+      "subtitle": "选择你的体验",
+      "vanilla": {
+        "title": "单人模式",
+        "description": "独自闯荡5个世界。清除地形、收集物品、在BPM升高时制作武器。"
+      },
+      "multiplayer": {
+        "title": "1v1对战",
+        "description": "通过WebSocket实时对战。发送垃圾行并攀登排行榜。"
+      },
+      "arena": {
+        "title": "9人竞技场",
+        "description": "9名玩家，1个共享节奏。在混乱机关、节奏变化和随机事件中生存。"
+      },
+      "stories": {
+        "title": "故事",
+        "description": "以故事驱动的节奏游戏玩法，包含叙事章节和独特挑战。"
+      },
+      "minecraft": {
+        "title": "桌游",
+        "description": "受Minecraft启发的多人桌游。挖矿、合成、与怪物战斗、冲向胜利。"
+      },
+      "advancements": {
+        "title": "成就",
+        "description": "在所有游戏模式中解锁成就。追踪你的进度并获得奖励。"
+      }
+    }
   }
 }

@@ -1508,5 +1508,40 @@
     "accentColor": "Culoare accent",
     "latest": "cea mai recentă",
     "goHome": "Mergi la pagina principală"
+  },
+  "home": {
+    "hero": {
+      "description": "Un joc puzzle bazat pe ritm. Aruncă blocuri pe ritm, luptă cu prietenii în timp real și deblochează realizări în 5 lumi muzicale.",
+      "play": "Joacă acum",
+      "wiki": "Vezi Wiki"
+    },
+    "features": {
+      "title": "Moduri de joc",
+      "subtitle": "Alege-ți experiența",
+      "vanilla": {
+        "title": "Un jucător",
+        "description": "Joacă solo prin 5 lumi. Curăță terenul, colectează obiecte și creează arme pe măsură ce BPM-ul crește."
+      },
+      "multiplayer": {
+        "title": "Luptă 1v1",
+        "description": "Lupte în timp real prin WebSocket. Trimite linii de gunoi și urcă în clasament."
+      },
+      "arena": {
+        "title": "Arenă cu 9 jucători",
+        "description": "9 jucători, 1 tempo comun. Supraviețuiește trucurilor haotice, schimbărilor de tempo și evenimentelor aleatorii."
+      },
+      "stories": {
+        "title": "Povești",
+        "description": "Gameplay ritmic bazat pe poveste cu capitole narative și provocări unice."
+      },
+      "minecraft": {
+        "title": "Joc de masă",
+        "description": "Joc de masă multiplayer inspirat de Minecraft. Minerit, crafting, luptă cu mobi și cursă spre victorie."
+      },
+      "advancements": {
+        "title": "Realizări",
+        "description": "Deblochează realizări în toate modurile de joc. Urmărește-ți progresul și câștigă recompense."
+      }
+    }
   }
 }

@@ -1508,5 +1508,40 @@
     "accentColor": "Barva akcentu",
     "latest": "nejnovější",
     "goHome": "Přejít na hlavní stránku"
+  },
+  "home": {
+    "hero": {
+      "description": "Rytmická puzzle hra. Shazuj bloky do rytmu, bojuj s přáteli v reálném čase a odemykej úspěchy v 5 hudebních světech.",
+      "play": "Hrát",
+      "wiki": "Zobrazit Wiki"
+    },
+    "features": {
+      "title": "Herní režimy",
+      "subtitle": "Vyber si svůj zážitek",
+      "vanilla": {
+        "title": "Jeden hráč",
+        "description": "Hraj sólo přes 5 světů. Odstraňuj terén, sbírej předměty a vyrábej zbraně s rostoucím BPM."
+      },
+      "multiplayer": {
+        "title": "Souboj 1v1",
+        "description": "Souboje v reálném čase přes WebSocket. Posílej odpadkové řádky a stoupej v žebříčku."
+      },
+      "arena": {
+        "title": "Aréna pro 9 hráčů",
+        "description": "9 hráčů, 1 sdílené tempo. Přežij chaotické triky, změny tempa a náhodné události."
+      },
+      "stories": {
+        "title": "Příběhy",
+        "description": "Příběhový rytmický gameplay s narativními kapitolami a unikátními výzvami."
+      },
+      "minecraft": {
+        "title": "Desková hra",
+        "description": "Minecraft inspirovaná desková hra pro více hráčů. Těž, vyrábej, bojuj s moby a závoď o vítězství."
+      },
+      "advancements": {
+        "title": "Úspěchy",
+        "description": "Odemykej úspěchy ve všech herních režimech. Sleduj svůj pokrok a získávej odměny."
+      }
+    }
   }
 }

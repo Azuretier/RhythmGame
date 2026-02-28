@@ -1508,5 +1508,40 @@
     "accentColor": "Màu nhấn",
     "latest": "mới nhất",
     "goHome": "Về trang chủ"
+  },
+  "home": {
+    "hero": {
+      "description": "Trò chơi xếp hình theo nhịp. Thả khối theo nhịp, chiến đấu với bạn bè theo thời gian thực và mở khóa thành tựu trong 5 thế giới âm nhạc.",
+      "play": "Chơi ngay",
+      "wiki": "Xem Wiki"
+    },
+    "features": {
+      "title": "Chế độ chơi",
+      "subtitle": "Chọn trải nghiệm của bạn",
+      "vanilla": {
+        "title": "Một người chơi",
+        "description": "Chơi solo qua 5 thế giới. Dọn địa hình, thu thập vật phẩm và chế tạo vũ khí khi BPM tăng."
+      },
+      "multiplayer": {
+        "title": "Đấu 1v1",
+        "description": "Đấu thời gian thực qua WebSocket. Gửi hàng rác và leo bảng xếp hạng."
+      },
+      "arena": {
+        "title": "Đấu trường 9 người",
+        "description": "9 người chơi, 1 nhịp chung. Sống sót qua chiêu trò hỗn loạn, thay đổi nhịp và sự kiện ngẫu nhiên."
+      },
+      "stories": {
+        "title": "Câu chuyện",
+        "description": "Lối chơi nhịp điệu theo cốt truyện với các chương tường thuật và thử thách độc đáo."
+      },
+      "minecraft": {
+        "title": "Trò chơi bàn cờ",
+        "description": "Board game nhiều người chơi lấy cảm hứng từ Minecraft. Đào, chế tạo, chiến đấu với mob và đua đến chiến thắng."
+      },
+      "advancements": {
+        "title": "Thành tựu",
+        "description": "Mở khóa thành tựu trong tất cả chế độ chơi. Theo dõi tiến trình và nhận phần thưởng."
+      }
+    }
   }
 }
