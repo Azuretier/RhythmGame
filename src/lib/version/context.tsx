@@ -43,32 +43,30 @@ function applyVersionCSS(version: AppVersion) {
 }
 
 export function VersionProvider({ children }: { children: ReactNode }) {
-  // Eagerly read from localStorage during state initialization so the first
-  // client render already uses the correct version — eliminates the two-phase
-  // render that caused tree structure changes and black screen flashes.
-  const [currentVersion, setCurrentVersion] = useState<AppVersion>(() => {
-    if (typeof window !== 'undefined') {
-      return getSelectedVersion() || DEFAULT_VERSION;
-    }
-    return DEFAULT_VERSION;
-  });
-  const [isVersionSelected, setIsVersionSelected] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return !!getSelectedVersion();
-    }
-    return false;
-  });
-  const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
-    if (typeof window !== 'undefined') {
-      return getSelectedAccent();
-    }
-    return DEFAULT_ACCENT;
-  });
+  // Always initialize with defaults so server and client produce identical
+  // initial renders — this prevents React hydration mismatches that caused
+  // the component tree to tear down and rebuild (black screen flash).
+  const [currentVersion, setCurrentVersion] = useState<AppVersion>(DEFAULT_VERSION);
+  const [isVersionSelected, setIsVersionSelected] = useState(false);
+  const [accentColor, setAccentColorState] = useState<AccentColor>(DEFAULT_ACCENT);
 
-  // Apply CSS attributes on mount (DOM attributes still need explicit application)
+  // Read persisted values in a layout effect — runs after hydration commit but
+  // BEFORE the browser paints, so the user never sees the default version flash.
+  // State updates here trigger a synchronous re-render before paint.
   useIsomorphicLayoutEffect(() => {
-    applyVersionCSS(currentVersion);
-    applyAccentCSS(accentColor);
+    const storedVersion = getSelectedVersion();
+    const storedAccent = getSelectedAccent();
+
+    if (storedVersion) {
+      setCurrentVersion(storedVersion);
+      setIsVersionSelected(true);
+    }
+    if (storedAccent !== DEFAULT_ACCENT) {
+      setAccentColorState(storedAccent);
+    }
+
+    applyVersionCSS(storedVersion || DEFAULT_VERSION);
+    applyAccentCSS(storedAccent);
   }, []);
 
   const setVersion = (version: AppVersion) => {
