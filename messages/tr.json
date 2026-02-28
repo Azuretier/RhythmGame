@@ -1508,5 +1508,47 @@
     "accentColor": "Vurgu Rengi",
     "latest": "en son",
     "goHome": "Ana sayfaya git"
+  },
+  "gltfGenerator": {
+    "meta": {
+      "title": "GLTF Model Generator",
+      "description": "Create and export 3D models in GLTF/GLB format with an interactive scene editor"
+    },
+    "title": "GLTF Generator",
+    "objectCount": "objects",
+    "exportGltf": "Export .gltf",
+    "exportGlb": "Export .glb",
+    "exporting": "Exporting...",
+    "addShape": "Add Shape",
+    "sceneObjects": "Scene Objects",
+    "noObjects": "No objects in scene",
+    "emptyScene": "Add shapes to start building your model",
+    "selectObject": "Select an object to edit",
+    "hide": "Hide",
+    "show": "Show",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "shapes": {
+      "box": "Box",
+      "sphere": "Sphere",
+      "cylinder": "Cylinder",
+      "cone": "Cone",
+      "torus": "Torus",
+      "plane": "Plane",
+      "icosahedron": "Icosahedron",
+      "octahedron": "Octahedron"
+    },
+    "properties": {
+      "name": "Name",
+      "transform": "Transform",
+      "position": "Position",
+      "rotation": "Rotation",
+      "scale": "Scale",
+      "material": "Material",
+      "color": "Color",
+      "metalness": "Metalness",
+      "roughness": "Roughness",
+      "wireframe": "Wireframe"
+    }
   }
 }
