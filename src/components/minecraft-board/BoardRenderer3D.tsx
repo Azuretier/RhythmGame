@@ -216,15 +216,21 @@ function PlayerEntity({
     );
   }
 
+  // 2-block-tall Minecraft character proportions (32px total):
+  // Legs:  0.75 blocks (12px), bottom at y=0, center y=0.375
+  // Body:  0.75 blocks (12px), bottom at y=0.75, center y=1.125
+  // Head:  0.50 blocks (8px),  bottom at y=1.5, center y=1.75
+  // Arms:  0.75 blocks (12px), alongside body, center y=1.125
   const bodyColor = new THREE.Color(player.color);
   const headColor = bodyColor.clone().lerp(new THREE.Color('#f5cba7'), 0.55);
   const legColor = bodyColor.clone().lerp(new THREE.Color('#2c3e50'), 0.5);
+  const armColor = bodyColor.clone().lerp(new THREE.Color('#000'), 0.1);
 
   return (
     <group ref={groupRef} position={[player.x, topY, player.y]}>
-      {/* Body */}
-      <mesh position={[0, 0.35, 0]} castShadow>
-        <boxGeometry args={[0.5, 0.6, 0.28]} />
+      {/* Body — 0.5 wide × 0.75 tall × 0.25 deep */}
+      <mesh position={[0, 1.125, 0]} castShadow>
+        <boxGeometry args={[0.5, 0.75, 0.25]} />
         <meshStandardMaterial
           color={bodyColor}
           emissive={isSelf ? bodyColor : undefined}
@@ -233,36 +239,36 @@ function PlayerEntity({
           flatShading
         />
       </mesh>
-      {/* Head */}
-      <mesh position={[0, 0.82, 0]} castShadow>
-        <boxGeometry args={[0.42, 0.42, 0.42]} />
+      {/* Head — 0.5 × 0.5 × 0.5 */}
+      <mesh position={[0, 1.75, 0]} castShadow>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
         <meshStandardMaterial color={headColor} roughness={0.45} flatShading />
       </mesh>
-      {/* Left arm */}
-      <mesh position={[-0.33, 0.32, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.52, 0.2]} />
-        <meshStandardMaterial color={bodyColor.clone().lerp(new THREE.Color('#000'), 0.1)} roughness={0.6} flatShading />
+      {/* Left arm — 0.25 wide × 0.75 tall × 0.25 deep */}
+      <mesh position={[-0.375, 1.125, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.75, 0.25]} />
+        <meshStandardMaterial color={armColor} roughness={0.6} flatShading />
       </mesh>
       {/* Right arm */}
-      <mesh position={[0.33, 0.32, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.52, 0.2]} />
-        <meshStandardMaterial color={bodyColor.clone().lerp(new THREE.Color('#000'), 0.1)} roughness={0.6} flatShading />
+      <mesh position={[0.375, 1.125, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.75, 0.25]} />
+        <meshStandardMaterial color={armColor} roughness={0.6} flatShading />
       </mesh>
-      {/* Left leg */}
-      <mesh position={[-0.13, -0.14, 0]} castShadow>
-        <boxGeometry args={[0.2, 0.46, 0.22]} />
+      {/* Left leg — 0.25 wide × 0.75 tall × 0.25 deep */}
+      <mesh position={[-0.125, 0.375, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.75, 0.25]} />
         <meshStandardMaterial color={legColor} roughness={0.65} flatShading />
       </mesh>
       {/* Right leg */}
-      <mesh position={[0.13, -0.14, 0]} castShadow>
-        <boxGeometry args={[0.2, 0.46, 0.22]} />
+      <mesh position={[0.125, 0.375, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.75, 0.25]} />
         <meshStandardMaterial color={legColor} roughness={0.65} flatShading />
       </mesh>
       {isSelf && (
-        <pointLight position={[0, 1.5, 0]} color={player.color} intensity={2} distance={4} />
+        <pointLight position={[0, 2.5, 0]} color={player.color} intensity={2} distance={5} />
       )}
       {!isSelf && (
-        <Html position={[0, 1.6, 0]} center style={{ pointerEvents: 'none' }}>
+        <Html position={[0, 2.3, 0]} center style={{ pointerEvents: 'none' }}>
           <div className={styles.entityHp3d}>
             <span className={styles.entityName3d}>{player.name.slice(0, 6)}</span>
             <div className={styles.hpBar3d}>
@@ -550,7 +556,7 @@ function FPSCameraController({
 
   // Sync target position from grid coords
   useEffect(() => {
-    const eyeY = (heightMap.get(`${targetX},${targetZ}`) ?? 2) + 1.45;
+    const eyeY = (heightMap.get(`${targetX},${targetZ}`) ?? 2) + 1.62;
     targetPos.current.set(targetX, eyeY, targetZ);
   }, [targetX, targetZ, heightMap]);
 
