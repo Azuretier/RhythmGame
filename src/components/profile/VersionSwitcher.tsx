@@ -29,7 +29,7 @@ export default function VersionSwitcher() {
   const handleVersionChange = (version: UIVersion) => {
     if (version === currentVersion) return;
     setVersion(version);
-    window.location.href = '/';
+    window.location.reload();
   };
 
   const handleAccentChange = (color: AccentColor) => {
