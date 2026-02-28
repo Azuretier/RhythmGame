@@ -1502,5 +1502,11 @@
     "pill": "גלולה",
     "soft": "רך",
     "sharp": "חד"
+  },
+  "version": {
+    "selectVersion": "גרסת האתר",
+    "accentColor": "צבע הדגשה",
+    "latest": "אחרון",
+    "goHome": "עבור לדף הבית"
   }
 }

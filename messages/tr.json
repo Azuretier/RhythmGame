@@ -1502,5 +1502,11 @@
     "pill": "Oval",
     "soft": "Yumuşak",
     "sharp": "Keskin"
+  },
+  "version": {
+    "selectVersion": "Site Sürümü",
+    "accentColor": "Vurgu Rengi",
+    "latest": "en son",
+    "goHome": "Ana sayfaya git"
   }
 }

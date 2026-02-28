@@ -1502,5 +1502,11 @@
     "pill": "Piller",
     "soft": "Mjuk",
     "sharp": "Skarp"
+  },
+  "version": {
+    "selectVersion": "Webbplatsversion",
+    "accentColor": "Accentfärg",
+    "latest": "senaste",
+    "goHome": "Gå till startsidan"
   }
 }

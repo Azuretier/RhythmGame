@@ -1502,5 +1502,11 @@
     "pill": "पिल",
     "soft": "मुलायम",
     "sharp": "तीखा"
+  },
+  "version": {
+    "selectVersion": "साइट संस्करण",
+    "accentColor": "एक्सेंट रंग",
+    "latest": "नवीनतम",
+    "goHome": "होमपेज पर जाएं"
   }
 }

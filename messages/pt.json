@@ -1502,5 +1502,11 @@
     "pill": "Pílula",
     "soft": "Suave",
     "sharp": "Afiado"
+  },
+  "version": {
+    "selectVersion": "Versão do site",
+    "accentColor": "Cor de destaque",
+    "latest": "mais recente",
+    "goHome": "Ir para o início"
   }
 }

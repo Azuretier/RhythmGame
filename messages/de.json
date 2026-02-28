@@ -1502,5 +1502,11 @@
     "pill": "Pille",
     "soft": "Weich",
     "sharp": "Scharf"
+  },
+  "version": {
+    "selectVersion": "Site-Version",
+    "accentColor": "Akzentfarbe",
+    "latest": "neueste",
+    "goHome": "Zur Startseite"
   }
 }

@@ -17,9 +17,9 @@ import VanillaGame from '@/components/rhythmia/tetris';
 import MultiplayerGame from '@/components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
 import AnimatedLogo from '@/components/rhythmia/AnimatedLogo';
-import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 import { useRouter } from '@/i18n/navigation';
-import styles from './homepage.module.css';
+import PixelDitherBackground from './PixelDitherBackground';
+import styles from './PixelArtHomepage.module.css';
 
 const FEATURES = [
     { id: 'vanilla', icon: Music, action: 'vanilla' },
@@ -30,7 +30,9 @@ const FEATURES = [
     { id: 'advancements', icon: Trophy, action: 'advancements' },
 ] as const;
 
-export default function Homepage() {
+const LOADING_BLOCKS = 8;
+
+export default function PixelArtHomepage() {
     const {
         gameMode,
         isLoading,
@@ -94,7 +96,7 @@ export default function Homepage() {
             </AnimatePresence>
 
             <div className={styles.page}>
-                <SkinAmbientEffects intensity="idle" />
+                <PixelDitherBackground />
 
                 {/* Profile setup overlay */}
                 <AnimatePresence>
@@ -110,7 +112,17 @@ export default function Homepage() {
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.4 }}
                         >
-                            <div className={styles.loader} />
+                            <div className={styles.loadingBar}>
+                                {Array.from({ length: LOADING_BLOCKS }).map((_, i) => (
+                                    <motion.div
+                                        key={i}
+                                        className={`${styles.loadingBlock} ${styles.loadingBlockFilled}`}
+                                        initial={{ opacity: 0.2 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: i * 0.08, duration: 0.15 }}
+                                    />
+                                ))}
+                            </div>
                             <div className={styles.loadingText}>{t('lobby.loading')}</div>
                         </motion.div>
                     )}
@@ -169,8 +181,8 @@ export default function Homepage() {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? -20 : 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
-                    data-theme-nav
                 >
+                    <div className={styles.navBorderInner} />
                     <div className={styles.navInner}>
                         <div className={styles.navLogo}>
                             azuretier<span className={styles.navLogoAccent}>.net</span>
@@ -204,94 +216,95 @@ export default function Homepage() {
                     </div>
                 </motion.nav>
 
-                {/* ---- Hero ---- */}
-                <motion.section
-                    className={styles.hero}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
-                    transition={{ duration: 0.7, delay: 0.2 }}
-                >
-                    <h1 className={styles.heroTitle}>
-                        <span className={styles.heroAccent}>RHYTHMIA</span>
-                    </h1>
-                    <p className={styles.heroSubtitle}>
-                        {t('home.hero.description')}
-                    </p>
-                    <div className={styles.heroCta}>
-                        <button
-                            className={styles.btnPrimary}
-                            onClick={() => launchGame('vanilla')}
-                        >
-                            <Play size={18} />
-                            {t('home.hero.play')}
-                        </button>
-                        <button
-                            className={styles.btnSecondary}
-                            onClick={() => router.push('/wiki')}
-                        >
-                            <ExternalLink size={16} />
-                            {t('home.hero.wiki')}
-                        </button>
-                    </div>
-                </motion.section>
-
-                {/* ---- Features ---- */}
-                <motion.section
-                    className={styles.features}
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
-                    transition={{ duration: 0.7, delay: 0.35 }}
-                >
-                    <div className={styles.featuresHeader}>
-                        <h2 className={styles.featuresTitle}>{t('home.features.title')}</h2>
-                        <p className={styles.featuresSubtitle}>{t('home.features.subtitle')}</p>
-                    </div>
-
-                    <div className={styles.featureGrid}>
-                        {FEATURES.map((feature) => {
-                            const Icon = feature.icon;
-                            const isLocked = feature.id === 'multiplayer' && isArenaLocked;
-
-                            return (
-                                <motion.div
-                                    key={feature.id}
-                                    className={`${styles.featureCard} ${isLocked ? styles.featureCardLocked : ''}`}
-                                    onClick={() => !isLocked && handleFeatureClick(feature.action)}
-                                    whileHover={isLocked ? {} : { scale: 1.01 }}
-                                    whileTap={isLocked ? {} : { scale: 0.98 }}
+                {/* ---- Content (above dither bg) ---- */}
+                <div className={styles.content}>
+                    {/* ---- Hero ---- */}
+                    <motion.section
+                        className={styles.hero}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
+                        transition={{ duration: 0.7, delay: 0.2 }}
+                    >
+                        <div className={styles.heroPanel}>
+                            <h1 className={styles.heroTitle}>RHYTHMIA</h1>
+                            <p className={styles.heroSubtitle}>
+                                {t('home.hero.description')}
+                            </p>
+                            <div className={styles.heroCta}>
+                                <button
+                                    className={styles.pixelBtnPrimary}
+                                    onClick={() => launchGame('vanilla')}
                                 >
-                                    <div className={styles.featureIcon}>
-                                        <Icon size={24} />
-                                    </div>
-                                    {feature.id === 'arena' && (
-                                        <span className={styles.featureBadge}>9P</span>
-                                    )}
-                                    <div className={styles.featureTitle}>
-                                        {t(`home.features.${feature.id}.title`)}
-                                    </div>
-                                    <div className={styles.featureDesc}>
-                                        {t(`home.features.${feature.id}.description`)}
-                                    </div>
-                                    {isLocked && (
-                                        <div className={styles.featureDesc} style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
-                                            {t('advancements.lockMessage', { current: unlockedCount, required: BATTLE_ARENA_REQUIRED_ADVANCEMENTS })}
-                                        </div>
-                                    )}
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                </motion.section>
+                                    <Play size={16} />
+                                    {t('home.hero.play')}
+                                </button>
+                                <button
+                                    className={styles.pixelBtn}
+                                    onClick={() => router.push('/wiki')}
+                                >
+                                    <ExternalLink size={14} />
+                                    {t('home.hero.wiki')}
+                                </button>
+                            </div>
+                        </div>
+                    </motion.section>
 
-                {/* ---- Footer ---- */}
-                <motion.footer
-                    className={styles.footer}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: isLoading ? 0 : 1 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                >
-                    {t('footer.copyright')}
-                </motion.footer>
+                    {/* ---- Features ---- */}
+                    <motion.section
+                        className={styles.features}
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 40 : 0 }}
+                        transition={{ duration: 0.7, delay: 0.35 }}
+                    >
+                        <div className={styles.featuresHeader}>
+                            <h2 className={styles.featuresTitle}>{t('home.features.title')}</h2>
+                            <p className={styles.featuresSubtitle}>{t('home.features.subtitle')}</p>
+                        </div>
+
+                        <div className={styles.featureGrid}>
+                            {FEATURES.map((feature) => {
+                                const Icon = feature.icon;
+                                const isLocked = feature.id === 'multiplayer' && isArenaLocked;
+
+                                return (
+                                    <div
+                                        key={feature.id}
+                                        className={`${styles.featureCard} ${isLocked ? styles.featureCardLocked : ''}`}
+                                        onClick={() => !isLocked && handleFeatureClick(feature.action)}
+                                    >
+                                        <div className={styles.featureIcon}>
+                                            <Icon size={24} strokeWidth={2} color="#4a9d9e" />
+                                        </div>
+                                        {feature.id === 'arena' && (
+                                            <span className={styles.featureBadge}>9P</span>
+                                        )}
+                                        <div className={styles.featureTitle}>
+                                            {t(`home.features.${feature.id}.title`)}
+                                        </div>
+                                        <div className={styles.featureDesc}>
+                                            {t(`home.features.${feature.id}.description`)}
+                                        </div>
+                                        {isLocked && (
+                                            <div className={styles.featureDesc} style={{ fontStyle: 'italic', fontSize: '10px' }}>
+                                                {t('advancements.lockMessage', { count: BATTLE_ARENA_REQUIRED_ADVANCEMENTS })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </motion.section>
+
+                    {/* ---- Footer ---- */}
+                    <motion.footer
+                        className={styles.footer}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: isLoading ? 0 : 1 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                    >
+                        {t('footer.copyright')}
+                    </motion.footer>
+                </div>
             </div>
         </>
     );

@@ -1537,5 +1537,11 @@
     "pill": "ピル",
     "soft": "ソフト",
     "sharp": "シャープ"
+  },
+  "version": {
+    "selectVersion": "サイトバージョン",
+    "accentColor": "アクセントカラー",
+    "latest": "最新",
+    "goHome": "ホームページへ移動"
   }
 }

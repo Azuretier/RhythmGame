@@ -1502,5 +1502,11 @@
     "pill": "Pil",
     "soft": "Zacht",
     "sharp": "Scherp"
+  },
+  "version": {
+    "selectVersion": "Siteversie",
+    "accentColor": "Accentkleur",
+    "latest": "nieuwste",
+    "goHome": "Naar startpagina"
   }
 }

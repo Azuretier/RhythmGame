@@ -1502,5 +1502,11 @@
     "pill": "Pil",
     "soft": "Lembut",
     "sharp": "Tajam"
+  },
+  "version": {
+    "selectVersion": "Versi Situs",
+    "accentColor": "Warna Aksen",
+    "latest": "terbaru",
+    "goHome": "Ke Beranda"
   }
 }

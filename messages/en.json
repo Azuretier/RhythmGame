@@ -1537,5 +1537,11 @@
     "pill": "Pill",
     "soft": "Soft",
     "sharp": "Sharp"
+  },
+  "version": {
+    "selectVersion": "Site Version",
+    "accentColor": "Accent Color",
+    "latest": "latest",
+    "goHome": "Go to Homepage"
   }
 }

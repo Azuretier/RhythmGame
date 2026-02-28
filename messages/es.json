@@ -1502,5 +1502,11 @@
       "cndEncore": "Encore",
       "cndEncoreDesc": "Una vez por partida, revive tras ser noqueado con una explosión de beat"
     }
+  },
+  "version": {
+    "selectVersion": "Versión del sitio",
+    "accentColor": "Color de acento",
+    "latest": "última",
+    "goHome": "Ir al inicio"
   }
 }
