@@ -2,8 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import type { GameState, TowerType, Tower } from '@/types/tower-defense';
-import { TOWER_DEFS } from '@/types/tower-defense';
+import type { GameState, TowerType, Tower, Enemy, EnemyType } from '@/types/tower-defense';
+import { TOWER_DEFS, ENEMY_DEFS } from '@/types/tower-defense';
 import {
   createInitialState,
   updateGame,
@@ -130,6 +130,150 @@ function SelectedTowerInfo({ tower, gold, onUpgrade, onSell, onDeselect }: {
           Sell ({sellValue}g)
         </button>
       </div>
+    </div>
+  );
+}
+
+// ===== Effect Labels =====
+const EFFECT_LABELS: Record<string, { label: string; color: string; icon: string }> = {
+  slow: { label: 'Slowed', color: '#7dd3fc', icon: '🧊' },
+  burn: { label: 'Burning', color: '#f97316', icon: '🔥' },
+  stun: { label: 'Stunned', color: '#fbbf24', icon: '💫' },
+  poison: { label: 'Poisoned', color: '#a3e635', icon: '☠️' },
+  amplify: { label: 'Amplified', color: '#c084fc', icon: '🔮' },
+};
+
+const ABILITY_LABELS: Record<string, { label: string; description: string; color: string }> = {
+  heal_aura: { label: 'Heal Aura', description: 'Heals nearby allies 2% HP/s', color: '#86efac' },
+  shield_aura: { label: 'Shield Aura', description: 'Reduces damage for nearby allies', color: '#60a5fa' },
+  split: { label: 'Split', description: 'Splits into smaller enemies on death', color: '#d8b4fe' },
+  teleport: { label: 'Teleport', description: 'Periodically blinks forward', color: '#67e8f9' },
+  stealth: { label: 'Stealth', description: 'Invisible until attacked', color: '#94a3b8' },
+};
+
+const ENEMY_ICONS: Record<EnemyType, string> = {
+  grunt: '👹',
+  fast: '💨',
+  tank: '🛡️',
+  flying: '🛸',
+  healer: '💚',
+  boss: '👑',
+  swarm: '🐝',
+  shield: '🔰',
+};
+
+// ===== Enemy Info Panel =====
+function EnemyInfoPanel({ enemy, onDeselect }: {
+  enemy: Enemy;
+  onDeselect: () => void;
+}) {
+  const def = ENEMY_DEFS[enemy.type];
+  const hpPercent = enemy.hp / enemy.maxHp;
+  const hpColor = hpPercent > 0.5 ? '#22c55e' : hpPercent > 0.25 ? '#eab308' : '#ef4444';
+  const effectiveSpeed = (() => {
+    let speed = enemy.speed;
+    for (const eff of enemy.effects) {
+      if (eff.type === 'slow') speed *= (1 - eff.magnitude);
+      if (eff.type === 'stun') speed = 0;
+    }
+    return Math.max(speed, 0);
+  })();
+
+  return (
+    <div className={styles.enemyInfoPanel}>
+      <h3 className={styles.enemyInfoHeader}>
+        <span className={styles.enemyInfoIcon}>{ENEMY_ICONS[enemy.type]}</span>
+        <span style={{ color: def.color }}>{def.name}</span>
+        <span className={styles.enemyInfoClose} onClick={onDeselect}>✕</span>
+      </h3>
+
+      {/* HP bar */}
+      <div className={styles.enemyHpBarWrap}>
+        <div className={styles.enemyHpBar}>
+          <div
+            className={styles.enemyHpFill}
+            style={{ width: `${hpPercent * 100}%`, background: hpColor }}
+          />
+        </div>
+        <span className={styles.enemyHpText}>
+          {Math.ceil(enemy.hp)} / {enemy.maxHp}
+        </span>
+      </div>
+
+      {/* Stats grid */}
+      <div className={styles.enemyStatsGrid}>
+        <div className={styles.enemyStatItem}>
+          <span className={styles.enemyStatLabel}>Speed</span>
+          <span className={styles.enemyStatVal}>
+            {effectiveSpeed.toFixed(1)}
+            {effectiveSpeed < enemy.speed && (
+              <span style={{ color: '#7dd3fc', fontSize: '10px', marginLeft: '3px' }}>
+                ({enemy.speed.toFixed(1)})
+              </span>
+            )}
+          </span>
+        </div>
+        <div className={styles.enemyStatItem}>
+          <span className={styles.enemyStatLabel}>Armor</span>
+          <span className={styles.enemyStatVal}>{enemy.armor}</span>
+        </div>
+        <div className={styles.enemyStatItem}>
+          <span className={styles.enemyStatLabel}>Reward</span>
+          <span className={styles.enemyStatVal} style={{ color: '#fbbf24' }}>{def.reward}g</span>
+        </div>
+        <div className={styles.enemyStatItem}>
+          <span className={styles.enemyStatLabel}>Type</span>
+          <span className={styles.enemyStatVal}>{enemy.flying ? 'Flying' : 'Ground'}</span>
+        </div>
+      </div>
+
+      {/* Active effects */}
+      {enemy.effects.length > 0 && (
+        <div className={styles.enemySection}>
+          <div className={styles.enemySectionTitle}>Active Effects</div>
+          <div className={styles.enemyEffects}>
+            {enemy.effects.map((eff, i) => {
+              const info = EFFECT_LABELS[eff.type];
+              return (
+                <div key={i} className={styles.enemyEffect} style={{ borderColor: info?.color ?? '#64748b' }}>
+                  <span className={styles.enemyEffectIcon}>{info?.icon ?? '?'}</span>
+                  <div className={styles.enemyEffectInfo}>
+                    <span style={{ color: info?.color ?? '#e2e8f0' }}>{info?.label ?? eff.type}</span>
+                    <span className={styles.enemyEffectDetail}>
+                      {eff.type === 'slow' && `${Math.round(eff.magnitude * 100)}% slow`}
+                      {eff.type === 'burn' && `${eff.magnitude} DPS`}
+                      {eff.type === 'amplify' && `+${Math.round(eff.magnitude * 100)}% dmg taken`}
+                      {eff.type === 'stun' && 'Cannot move'}
+                      {eff.type === 'poison' && `${eff.magnitude} DPS`}
+                      {' · '}{eff.remaining.toFixed(1)}s
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Abilities */}
+      {def.abilities && def.abilities.length > 0 && (
+        <div className={styles.enemySection}>
+          <div className={styles.enemySectionTitle}>Abilities</div>
+          <div className={styles.enemyAbilities}>
+            {def.abilities.map((ability, i) => {
+              const info = ABILITY_LABELS[ability];
+              return (
+                <div key={i} className={styles.enemyAbility}>
+                  <span className={styles.enemyAbilityName} style={{ color: info?.color ?? '#e2e8f0' }}>
+                    {info?.label ?? ability}
+                  </span>
+                  <span className={styles.enemyAbilityDesc}>{info?.description ?? ''}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -329,8 +473,18 @@ export default function TowerDefenseGame() {
   const handleSelectTower = useCallback((id: string) => {
     ensureAudio();
     sfx.playUIClick();
-    setState(prev => ({ ...prev, selectedTowerId: id, selectedTowerType: null }));
+    setState(prev => ({ ...prev, selectedTowerId: id, selectedTowerType: null, selectedEnemyId: null }));
   }, [ensureAudio]);
+
+  const handleSelectEnemy = useCallback((id: string) => {
+    ensureAudio();
+    sfx.playUIClick();
+    setState(prev => ({ ...prev, selectedEnemyId: prev.selectedEnemyId === id ? null : id, selectedTowerId: null, selectedTowerType: null }));
+  }, [ensureAudio]);
+
+  const handleDeselectEnemy = useCallback(() => {
+    setState(prev => ({ ...prev, selectedEnemyId: null }));
+  }, []);
 
   const handleTowerTypeSelect = useCallback((type: TowerType) => {
     ensureAudio();
@@ -405,6 +559,11 @@ export default function TowerDefenseGame() {
     return state.towers.find(t => t.id === state.selectedTowerId) ?? null;
   }, [state.selectedTowerId, state.towers]);
 
+  const selectedEnemy = useMemo(() => {
+    if (!state.selectedEnemyId) return null;
+    return state.enemies.find(e => e.id === state.selectedEnemyId) ?? null;
+  }, [state.selectedEnemyId, state.enemies]);
+
   // ===== Menu Screen =====
   if (menuPhase === 'menu') {
     return (
@@ -443,6 +602,7 @@ export default function TowerDefenseGame() {
           state={state}
           onCellClick={handleCellClick}
           onSelectTower={handleSelectTower}
+          onSelectEnemy={handleSelectEnemy}
         />
       </div>
 
@@ -546,11 +706,19 @@ export default function TowerDefenseGame() {
         />
       )}
 
+      {/* Enemy Info Panel */}
+      {selectedEnemy && !selectedTower && (
+        <EnemyInfoPanel
+          enemy={selectedEnemy}
+          onDeselect={handleDeselectEnemy}
+        />
+      )}
+
       {/* Controls Hint */}
       <div className={styles.controlsHint}>
         <div>1-7: Select tower &middot; Space: Start wave</div>
         <div>U: Upgrade &middot; Del: Sell &middot; Esc: Deselect &middot; M: Mute</div>
-        <div>Drag: Rotate &middot; Scroll: Zoom &middot; Right-drag: Pan</div>
+        <div>Click enemy: View stats &middot; Drag: Rotate &middot; Scroll: Zoom</div>
       </div>
 
       {/* Win/Lose Overlay */}

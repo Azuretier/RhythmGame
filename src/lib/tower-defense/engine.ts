@@ -52,6 +52,7 @@ export function createInitialState(mapIndex: number = 0): GameState {
     map: JSON.parse(JSON.stringify(map)),
     selectedTowerType: null,
     selectedTowerId: null,
+    selectedEnemyId: null,
     waveCountdown: WAVE_PREP_TIME,
     enemiesRemaining: 0,
     autoStart: false,
@@ -633,7 +634,11 @@ function cleanupDead(state: GameState): GameState {
     const target = enemies.find(e => e.id === p.targetId);
     return !!target;
   });
-  return { ...state, enemies, projectiles };
+  // Clear selected enemy if it died
+  const selectedEnemyId = state.selectedEnemyId && enemies.some(e => e.id === state.selectedEnemyId)
+    ? state.selectedEnemyId
+    : null;
+  return { ...state, enemies, projectiles, selectedEnemyId };
 }
 
 function checkWaveComplete(state: GameState): GameState {

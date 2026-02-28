@@ -151,6 +151,7 @@ export interface GameState {
   map: GameMap;
   selectedTowerType: TowerType | null;
   selectedTowerId: string | null;
+  selectedEnemyId: string | null;
   waveCountdown: number;
   enemiesRemaining: number;
   autoStart: boolean;

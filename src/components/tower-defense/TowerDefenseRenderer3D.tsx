@@ -214,7 +214,7 @@ function TowersGroup({ towers, selectedTowerId, onSelectTower }: {
 }
 
 // ===== Enemies =====
-function EnemyMesh({ enemy }: { enemy: Enemy }) {
+function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: boolean; onClick: () => void }) {
   const groupRef = useRef<THREE.Group>(null);
   const def = ENEMY_DEFS[enemy.type];
   const hpPercent = enemy.hp / enemy.maxHp;
@@ -222,6 +222,7 @@ function EnemyMesh({ enemy }: { enemy: Enemy }) {
   const isSlow = enemy.effects.some(e => e.type === 'slow');
   const isBurning = enemy.effects.some(e => e.type === 'burn');
   const isAmplified = enemy.effects.some(e => e.type === 'amplify');
+  const isStunned = enemy.effects.some(e => e.type === 'stun');
 
   useFrame((state) => {
     if (!groupRef.current) return;
@@ -238,7 +239,7 @@ function EnemyMesh({ enemy }: { enemy: Enemy }) {
   }, [def.color, isBurning, isSlow]);
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} onClick={(e) => { e.stopPropagation(); onClick(); }}>
       {/* Body */}
       {enemy.type === 'boss' ? (
         <mesh castShadow>
@@ -248,28 +249,36 @@ function EnemyMesh({ enemy }: { enemy: Enemy }) {
             roughness={0.3}
             metalness={0.4}
             emissive={bodyColor}
-            emissiveIntensity={0.2}
+            emissiveIntensity={isSelected ? 0.6 : 0.2}
           />
         </mesh>
       ) : enemy.type === 'tank' || enemy.type === 'shield' ? (
         <mesh castShadow>
           <boxGeometry args={[def.scale * 1.2, def.scale, def.scale * 1.2]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.6} metalness={0.3} />
+          <meshStandardMaterial color={bodyColor} roughness={0.6} metalness={0.3} emissive={isSelected ? bodyColor : '#000000'} emissiveIntensity={isSelected ? 0.4 : 0} />
         </mesh>
       ) : enemy.type === 'flying' ? (
         <mesh castShadow>
           <coneGeometry args={[def.scale * 0.6, def.scale, 4]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.2} metalness={0.6} />
+          <meshStandardMaterial color={bodyColor} roughness={0.2} metalness={0.6} emissive={isSelected ? bodyColor : '#000000'} emissiveIntensity={isSelected ? 0.4 : 0} />
         </mesh>
       ) : enemy.type === 'swarm' ? (
         <mesh castShadow>
           <tetrahedronGeometry args={[def.scale * 0.8]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.5} metalness={0.2} />
+          <meshStandardMaterial color={bodyColor} roughness={0.5} metalness={0.2} emissive={isSelected ? bodyColor : '#000000'} emissiveIntensity={isSelected ? 0.4 : 0} />
         </mesh>
       ) : (
         <mesh castShadow>
           <sphereGeometry args={[def.scale, 8, 8]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.5} metalness={0.2} />
+          <meshStandardMaterial color={bodyColor} roughness={0.5} metalness={0.2} emissive={isSelected ? bodyColor : '#000000'} emissiveIntensity={isSelected ? 0.4 : 0} />
+        </mesh>
+      )}
+
+      {/* Selection ring */}
+      {isSelected && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -def.scale * 0.4, 0]}>
+          <ringGeometry args={[def.scale * 1.1, def.scale * 1.3, 24]} />
+          <meshBasicMaterial color="#fbbf24" transparent opacity={0.6} side={THREE.DoubleSide} />
         </mesh>
       )}
 
@@ -297,6 +306,14 @@ function EnemyMesh({ enemy }: { enemy: Enemy }) {
         </mesh>
       )}
 
+      {/* Stun marker — spinning stars */}
+      {isStunned && (
+        <mesh position={[0, def.scale + 0.35, 0]}>
+          <octahedronGeometry args={[0.1, 0]} />
+          <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={1} />
+        </mesh>
+      )}
+
       {/* HP bar */}
       {hpPercent < 1 && (
         <group position={[0, def.scale + 0.2, 0]}>
@@ -319,11 +336,20 @@ function EnemyMesh({ enemy }: { enemy: Enemy }) {
   );
 }
 
-function EnemiesGroup({ enemies }: { enemies: Enemy[] }) {
+function EnemiesGroup({ enemies, selectedEnemyId, onSelectEnemy }: {
+  enemies: Enemy[];
+  selectedEnemyId: string | null;
+  onSelectEnemy: (id: string) => void;
+}) {
   return (
     <group>
       {enemies.map(enemy => (
-        <EnemyMesh key={enemy.id} enemy={enemy} />
+        <EnemyMesh
+          key={enemy.id}
+          enemy={enemy}
+          isSelected={enemy.id === selectedEnemyId}
+          onClick={() => onSelectEnemy(enemy.id)}
+        />
       ))}
     </group>
   );
@@ -521,10 +547,11 @@ function CameraSetup({ mapWidth, mapHeight }: { mapWidth: number; mapHeight: num
 }
 
 // ===== Main Scene =====
-function GameScene({ state, onCellClick, onSelectTower, hoveredCell, setHoveredCell }: {
+function GameScene({ state, onCellClick, onSelectTower, onSelectEnemy, hoveredCell, setHoveredCell }: {
   state: GameState;
   onCellClick: (x: number, z: number) => void;
   onSelectTower: (id: string) => void;
+  onSelectEnemy: (id: string) => void;
   hoveredCell: { x: number; z: number } | null;
   setHoveredCell: (cell: { x: number; z: number } | null) => void;
 }) {
@@ -586,7 +613,11 @@ function GameScene({ state, onCellClick, onSelectTower, hoveredCell, setHoveredC
         selectedTowerId={state.selectedTowerId}
         onSelectTower={onSelectTower}
       />
-      <EnemiesGroup enemies={state.enemies} />
+      <EnemiesGroup
+        enemies={state.enemies}
+        selectedEnemyId={state.selectedEnemyId}
+        onSelectEnemy={onSelectEnemy}
+      />
       <ProjectilesGroup projectiles={state.projectiles} />
 
       <BaseMarker position={state.map.basePosition} />
@@ -614,9 +645,10 @@ export interface TowerDefenseRenderer3DProps {
   state: GameState;
   onCellClick: (x: number, z: number) => void;
   onSelectTower: (id: string) => void;
+  onSelectEnemy: (id: string) => void;
 }
 
-export default function TowerDefenseRenderer3D({ state, onCellClick, onSelectTower }: TowerDefenseRenderer3DProps) {
+export default function TowerDefenseRenderer3D({ state, onCellClick, onSelectTower, onSelectEnemy }: TowerDefenseRenderer3DProps) {
   const [hoveredCell, setHoveredCell] = useState<{ x: number; z: number } | null>(null);
 
   const fallback = (
@@ -642,6 +674,7 @@ export default function TowerDefenseRenderer3D({ state, onCellClick, onSelectTow
             state={state}
             onCellClick={onCellClick}
             onSelectTower={onSelectTower}
+            onSelectEnemy={onSelectEnemy}
             hoveredCell={hoveredCell}
             setHoveredCell={setHoveredCell}
           />
