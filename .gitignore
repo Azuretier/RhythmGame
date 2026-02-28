@@ -48,6 +48,8 @@ next-env.d.ts
 
 # claude-worker
 claude-worker.ps1
+claude-launcher.ps1
+claude-worker-single.ps1
 tasks
 .claude
 .agent/
