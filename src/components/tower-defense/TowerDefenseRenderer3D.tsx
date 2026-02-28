@@ -6,7 +6,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Sky } from '@react-three/drei';
 import * as THREE from 'three';
 import type {
-  GameState, Tower, Enemy, Projectile, GridCell, TowerType, Vec3,
+  GameState, Tower, Enemy, Projectile, GridCell, TowerType, EnemyType, Vec3,
 } from '@/types/tower-defense';
 import { TOWER_DEFS, ENEMY_DEFS } from '@/types/tower-defense';
 import { createMobMesh, animateMob, disposeMobGroup, disposeSharedMobResources } from '@/components/rhythmia/tetris/minecraft-mobs';
@@ -19,11 +19,34 @@ import type { ProjectileMeshData } from './td-projectiles';
 const TOWER_MOB_MAP: Record<TowerType, TDEnemyType> = {
   archer: 'skeleton',
   cannon: 'creeper',
-  frost: 'spider',
+  frost: 'slime',
   lightning: 'enderman',
   sniper: 'skeleton',
   flame: 'zombie',
   arcane: 'enderman',
+};
+
+// ===== Enemy-to-Animal-Mob mapping =====
+const ENEMY_MOB_MAP: Record<EnemyType, TDEnemyType> = {
+  grunt: 'pig',
+  fast: 'chicken',
+  tank: 'cow',
+  flying: 'bee',
+  healer: 'cat',
+  boss: 'horse',
+  swarm: 'rabbit',
+  shield: 'wolf',
+};
+
+const ENEMY_MOB_SCALE: Record<EnemyType, number> = {
+  grunt: 0.45,
+  fast: 0.4,
+  tank: 0.5,
+  flying: 0.45,
+  healer: 0.45,
+  boss: 0.7,
+  swarm: 0.3,
+  shield: 0.5,
 };
 
 const TOWER_MOB_SCALE = 0.4;
@@ -481,6 +504,47 @@ function PathLine({ waypoints }: { waypoints: Vec3[] }) {
 }
 
 // ===== Towers (Minecraft Character Models) =====
+// ===== Frost Tower Radiating Slow AoE Ring =====
+function FrostAoERing({ range }: { range: number }) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const pulseRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    // Pulsing outer ring
+    if (pulseRef.current) {
+      const pulse = 0.9 + Math.sin(t * 2) * 0.1;
+      pulseRef.current.scale.set(pulse, pulse, 1);
+      const mat = pulseRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.08 + Math.sin(t * 2) * 0.04;
+    }
+    // Rotating inner ring
+    if (ringRef.current) {
+      ringRef.current.rotation.z = t * 0.3;
+    }
+  });
+
+  return (
+    <group position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Filled frost circle */}
+      <mesh ref={pulseRef}>
+        <circleGeometry args={[range, 32]} />
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.08} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Inner rotating ring */}
+      <mesh ref={ringRef}>
+        <ringGeometry args={[range * 0.5, range * 0.55, 32]} />
+        <meshBasicMaterial color="#7dd3fc" transparent opacity={0.12} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Outer ring border */}
+      <mesh>
+        <ringGeometry args={[range - 0.06, range, 32]} />
+        <meshBasicMaterial color="#38bdf8" transparent opacity={0.2} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+}
+
 function TowerMesh({ tower, isSelected, onClick }: {
   tower: Tower;
   isSelected: boolean;
@@ -521,6 +585,7 @@ function TowerMesh({ tower, isSelected, onClick }: {
 
   const levelScale = 1 + (tower.level - 1) * 0.1;
   const charHeight = mobData.height * TOWER_MOB_SCALE;
+  const towerRange = def.rangePerLevel[tower.level - 1] ?? def.range;
 
   return (
     <group
@@ -543,6 +608,10 @@ function TowerMesh({ tower, isSelected, onClick }: {
       <group position={[0, 0.1, 0]}>
         <primitive object={mobData.group} />
       </group>
+      {/* Frost tower: always-visible radiating slow AoE */}
+      {tower.type === 'frost' && (
+        <FrostAoERing range={towerRange} />
+      )}
       {/* Level indicators */}
       {Array.from({ length: tower.level }).map((_, i) => (
         <mesh key={i} position={[(i - (tower.level - 1) / 2) * 0.12, charHeight + 0.2, 0]}>
@@ -553,7 +622,7 @@ function TowerMesh({ tower, isSelected, onClick }: {
       {/* Range indicator when selected */}
       {isSelected && (
         <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[def.rangePerLevel[tower.level - 1] - 0.05, def.rangePerLevel[tower.level - 1], 32]} />
+          <ringGeometry args={[towerRange - 0.05, towerRange, 32]} />
           <meshBasicMaterial color="#22d3ee" transparent opacity={0.2} side={THREE.DoubleSide} />
         </mesh>
       )}
@@ -580,86 +649,91 @@ function TowersGroup({ towers, selectedTowerId, onSelectTower }: {
   );
 }
 
-// ===== Enemies =====
+// ===== Enemies (Animal Mob Models) =====
 function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: boolean; onClick: () => void }) {
   const groupRef = useRef<THREE.Group>(null);
+  const mobRef = useRef<MobMeshData | null>(null);
   const def = ENEMY_DEFS[enemy.type];
   const hpPercent = enemy.hp / enemy.maxHp;
+  const mobType = ENEMY_MOB_MAP[enemy.type];
+  const mobScale = ENEMY_MOB_SCALE[enemy.type];
 
   const isSlow = enemy.effects.some(e => e.type === 'slow');
   const isBurning = enemy.effects.some(e => e.type === 'burn');
   const isAmplified = enemy.effects.some(e => e.type === 'amplify');
   const isStunned = enemy.effects.some(e => e.type === 'stun');
 
+  const mobData = useMemo(() => {
+    const data = createMobMesh(mobType);
+    data.group.scale.setScalar(mobScale);
+    return data;
+  }, [mobType, mobScale]);
+
+  useEffect(() => {
+    mobRef.current = mobData;
+    return () => {
+      disposeMobGroup(mobData);
+      mobRef.current = null;
+    };
+  }, [mobData]);
+
+  // Apply tint for status effects
+  useEffect(() => {
+    if (mobData.isGltf) return;
+    mobData.group.traverse((child: THREE.Object3D) => {
+      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+        if (isBurning) {
+          child.material.emissive.set(0xff4400);
+          child.material.emissiveIntensity = 0.4;
+        } else if (isSlow) {
+          child.material.emissive.set(0x38bdf8);
+          child.material.emissiveIntensity = 0.3;
+        } else {
+          child.material.emissive.set(0x000000);
+          child.material.emissiveIntensity = 0;
+        }
+      }
+    });
+  }, [mobData, isBurning, isSlow]);
+
   useFrame((state) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
-    // Bobbing animation
     const bobHeight = enemy.flying ? 1.5 + Math.sin(t * 2) * 0.15 : Math.sin(t * 4 + parseFloat(enemy.id.slice(1)) * 0.5) * 0.03;
-    groupRef.current.position.set(enemy.position.x, enemy.position.y + bobHeight + def.scale * 0.5, enemy.position.z);
+    groupRef.current.position.set(enemy.position.x, enemy.position.y + bobHeight, enemy.position.z);
+    // Animate mob
+    if (mobRef.current) {
+      const isMoving = !isStunned;
+      animateMob(mobRef.current, t, isMoving);
+    }
   });
 
-  const bodyColor = useMemo(() => {
-    if (isBurning) return '#ff6b35';
-    if (isSlow) return '#7dd3fc';
-    return def.color;
-  }, [def.color, isBurning, isSlow]);
+  const charHeight = mobData.height * mobScale;
 
   return (
     <group ref={groupRef} onClick={(e) => { e.stopPropagation(); onClick(); }}>
-      {/* Body */}
-      {enemy.type === 'boss' ? (
-        <mesh castShadow>
-          <dodecahedronGeometry args={[def.scale, 1]} />
-          <meshStandardMaterial
-            color={bodyColor}
-            roughness={0.3}
-            metalness={0.4}
-            emissive={bodyColor}
-            emissiveIntensity={isSelected ? 0.6 : 0.2}
-          />
-        </mesh>
-      ) : enemy.type === 'tank' || enemy.type === 'shield' ? (
-        <mesh castShadow>
-          <boxGeometry args={[def.scale * 1.2, def.scale, def.scale * 1.2]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.6} metalness={0.3} emissive={isSelected ? bodyColor : '#000000'} emissiveIntensity={isSelected ? 0.4 : 0} />
-        </mesh>
-      ) : enemy.type === 'flying' ? (
-        <mesh castShadow>
-          <coneGeometry args={[def.scale * 0.6, def.scale, 4]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.2} metalness={0.6} emissive={isSelected ? bodyColor : '#000000'} emissiveIntensity={isSelected ? 0.4 : 0} />
-        </mesh>
-      ) : enemy.type === 'swarm' ? (
-        <mesh castShadow>
-          <tetrahedronGeometry args={[def.scale * 0.8]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.5} metalness={0.2} emissive={isSelected ? bodyColor : '#000000'} emissiveIntensity={isSelected ? 0.4 : 0} />
-        </mesh>
-      ) : (
-        <mesh castShadow>
-          <sphereGeometry args={[def.scale, 8, 8]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.5} metalness={0.2} emissive={isSelected ? bodyColor : '#000000'} emissiveIntensity={isSelected ? 0.4 : 0} />
-        </mesh>
-      )}
+      {/* Animal mob model */}
+      <primitive object={mobData.group} />
 
       {/* Selection ring */}
       {isSelected && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -def.scale * 0.4, 0]}>
-          <ringGeometry args={[def.scale * 1.1, def.scale * 1.3, 24]} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+          <ringGeometry args={[mobScale * 1.1, mobScale * 1.3, 24]} />
           <meshBasicMaterial color="#fbbf24" transparent opacity={0.6} side={THREE.DoubleSide} />
         </mesh>
       )}
 
-      {/* Shield aura */}
+      {/* Shield aura (wolf) */}
       {enemy.type === 'shield' && (
-        <mesh>
-          <sphereGeometry args={[def.scale * 1.8, 12, 8]} />
+        <mesh position={[0, charHeight * 0.5, 0]}>
+          <sphereGeometry args={[mobScale * 2.5, 12, 8]} />
           <meshStandardMaterial color="#60a5fa" transparent opacity={0.15} side={THREE.DoubleSide} />
         </mesh>
       )}
 
-      {/* Healer aura */}
+      {/* Healer aura (cat) */}
       {enemy.type === 'healer' && (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -def.scale * 0.4, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
           <ringGeometry args={[1.5, 2, 16]} />
           <meshBasicMaterial color="#86efac" transparent opacity={0.15} side={THREE.DoubleSide} />
         </mesh>
@@ -667,15 +741,15 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
 
       {/* Amplify marker */}
       {isAmplified && (
-        <mesh>
-          <sphereGeometry args={[def.scale * 1.3, 8, 8]} />
+        <mesh position={[0, charHeight * 0.5, 0]}>
+          <sphereGeometry args={[mobScale * 2, 8, 8]} />
           <meshStandardMaterial color="#c084fc" transparent opacity={0.2} wireframe />
         </mesh>
       )}
 
-      {/* Stun marker — spinning stars */}
+      {/* Stun marker */}
       {isStunned && (
-        <mesh position={[0, def.scale + 0.35, 0]}>
+        <mesh position={[0, charHeight + 0.15, 0]}>
           <octahedronGeometry args={[0.1, 0]} />
           <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={1} />
         </mesh>
@@ -683,13 +757,11 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
 
       {/* HP bar */}
       {hpPercent < 1 && (
-        <group position={[0, def.scale + 0.2, 0]}>
-          {/* Background */}
+        <group position={[0, charHeight + 0.1, 0]}>
           <mesh position={[0, 0, 0]}>
             <planeGeometry args={[0.6, 0.08]} />
             <meshBasicMaterial color="#1f2937" side={THREE.DoubleSide} />
           </mesh>
-          {/* Fill */}
           <mesh position={[(hpPercent - 1) * 0.3, 0, 0.001]}>
             <planeGeometry args={[0.6 * hpPercent, 0.06]} />
             <meshBasicMaterial
