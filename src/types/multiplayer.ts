@@ -97,8 +97,9 @@ export interface CancelRankedMessage {
 import type { ArenaClientMessage, ArenaServerMessage } from './arena';
 import type { MCClientMessage, MCServerMessage as MCBoardServerMessage } from './minecraft-board';
 import type { EoEClientMessage } from './echoes';
+import type { MWClientMessage } from './minecraft-world';
 
-export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage };
+export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, MWClientMessage };
 
 export type ClientMessage =
   | CreateRoomMessage
@@ -115,6 +116,7 @@ export type ClientMessage =
   | CancelRankedMessage
   | ArenaClientMessage
   | MCClientMessage
+  | MWClientMessage
   | EoEClientMessage
   | SetProfileMessage
   | GetOnlineUsersMessage;

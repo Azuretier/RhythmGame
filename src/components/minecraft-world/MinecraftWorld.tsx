@@ -4,9 +4,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Block } from './textures';
-import { createTextureAtlas, BLOCK_FACES } from './textures';
+import { createTextureAtlas } from './textures';
 import { generateWorld, WorldData, WORLD_WIDTH, WORLD_DEPTH, WORLD_HEIGHT, SEA_LEVEL, CHUNK_SIZE } from './terrain';
 import { buildChunkGeometry } from './chunk-builder';
+import { useMinecraftWorldSocket } from '@/hooks/useMinecraftWorldSocket';
+import type { MWPlayerPosition } from '@/types/minecraft-world';
 import styles from './MinecraftWorld.module.css';
 
 const PLAYER_HEIGHT = 1.62;
@@ -17,6 +19,7 @@ const JUMP_SPEED = 7.5;
 const GRAVITY = -22;
 const FOG_NEAR = 20;
 const FOG_FAR = 120;
+const POSITION_SEND_INTERVAL = 100; // 10Hz
 
 // Sky colors for day cycle
 const SKY_DAY = new THREE.Color(0x87ceeb);
@@ -25,7 +28,7 @@ const SKY_NIGHT = new THREE.Color(0x0a0a2e);
 
 export default function MinecraftWorld() {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState('Initializing...');
   const [progressPct, setProgressPct] = useState(0);
   const [showOverlay, setShowOverlay] = useState(true);
@@ -34,20 +37,95 @@ export default function MinecraftWorld() {
   const worldRef = useRef<WorldData | null>(null);
   const controlsRef = useRef<PointerLockControls | null>(null);
 
-  const handleBack = useCallback(() => {
-    window.history.back();
+  // Menu state
+  const [playerName, setPlayerName] = useState('');
+  const [roomCode, setRoomCode] = useState('');
+  const [roomName, setRoomName] = useState('');
+  const [menuTab, setMenuTab] = useState<'create' | 'join' | 'browse'>('create');
+  const [chatInput, setChatInput] = useState('');
+  const [showChat, setShowChat] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Multiplayer hook
+  const mp = useMinecraftWorldSocket();
+
+  // Auto-connect on mount
+  useEffect(() => {
+    mp.connectWebSocket();
+    return () => mp.disconnect();
   }, []);
 
+  // Load name from localStorage
   useEffect(() => {
-    if (!mountRef.current) return;
+    const saved = localStorage.getItem('mw_playerName');
+    if (saved) setPlayerName(saved);
+  }, []);
+
+  // Scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [mp.chatMessages]);
+
+  // Refresh rooms when browse tab selected
+  useEffect(() => {
+    if (menuTab === 'browse') {
+      mp.getRooms();
+    }
+  }, [menuTab]);
+
+  // Remote player mesh management
+  const remotePlayerMeshes = useRef<Map<string, { group: THREE.Group; lastUpdate: number }>>(new Map());
+  const sceneRef = useRef<THREE.Scene | null>(null);
+
+  const handleCreateRoom = useCallback(() => {
+    if (!playerName.trim()) return;
+    localStorage.setItem('mw_playerName', playerName.trim());
+    mp.createRoom(playerName.trim(), roomName.trim() || undefined);
+  }, [playerName, roomName, mp]);
+
+  const handleJoinRoom = useCallback(() => {
+    if (!playerName.trim() || !roomCode.trim()) return;
+    localStorage.setItem('mw_playerName', playerName.trim());
+    mp.joinRoom(roomCode.trim(), playerName.trim());
+  }, [playerName, roomCode, mp]);
+
+  const handleJoinFromBrowse = useCallback((code: string) => {
+    if (!playerName.trim()) return;
+    localStorage.setItem('mw_playerName', playerName.trim());
+    mp.joinRoom(code, playerName.trim());
+  }, [playerName, mp]);
+
+  const handleSendChat = useCallback(() => {
+    if (!chatInput.trim()) return;
+    mp.sendChat(chatInput.trim());
+    setChatInput('');
+  }, [chatInput, mp]);
+
+  const handleBack = useCallback(() => {
+    if (mp.phase !== 'menu') {
+      mp.leaveRoom();
+    } else {
+      window.history.back();
+    }
+  }, [mp]);
+
+  // ====== 3D World Rendering (playing phase) ======
+  useEffect(() => {
+    if (mp.phase !== 'playing' || !mountRef.current) return;
 
     const container = mountRef.current;
     let disposed = false;
+
+    setLoading(true);
+    setProgress('Initializing...');
+    setProgressPct(0);
+    setShowOverlay(true);
 
     // ====== Scene Setup ======
     const scene = new THREE.Scene();
     scene.background = SKY_DAY.clone();
     scene.fog = new THREE.Fog(SKY_DAY.clone(), FOG_NEAR, FOG_FAR);
+    sceneRef.current = scene;
 
     const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 300);
 
@@ -105,10 +183,8 @@ export default function MinecraftWorld() {
     cloudCanvas.width = 256;
     cloudCanvas.height = 256;
     const cloudCtx = cloudCanvas.getContext('2d')!;
-    // Generate simple cloud pattern
     const cloudImageData = cloudCtx.createImageData(256, 256);
     const cData = cloudImageData.data;
-    // Simple noise-based clouds
     let cSeed = 999;
     const cRng = () => {
       cSeed = (cSeed * 16807) % 2147483647;
@@ -117,7 +193,6 @@ export default function MinecraftWorld() {
     for (let cy = 0; cy < 256; cy++) {
       for (let cx = 0; cx < 256; cx++) {
         const i = (cy * 256 + cx) * 4;
-        // Large-scale noise for cloud shapes
         const nx = cx / 32;
         const ny = cy / 32;
         const v1 = Math.sin(nx * 1.5) * Math.cos(ny * 1.3) * 0.5 + 0.5;
@@ -154,7 +229,8 @@ export default function MinecraftWorld() {
     scene.add(cloudMesh);
 
     // ====== Deferred World Generation ======
-    // Use setTimeout to allow loading screen to render first
+    const seed = mp.gameSeed || 42069;
+
     setTimeout(() => {
       if (disposed) return;
 
@@ -164,7 +240,7 @@ export default function MinecraftWorld() {
       setTimeout(() => {
         if (disposed) return;
 
-        const world = generateWorld(42069);
+        const world = generateWorld(seed);
         worldRef.current = world;
 
         setProgress('Building chunk meshes...');
@@ -178,11 +254,10 @@ export default function MinecraftWorld() {
           const totalChunks = chunksX * chunksZ;
           let built = 0;
 
-          // Build chunks in batches for smoother loading
           const chunkQueue: [number, number][] = [];
-          for (let cx = 0; cx < chunksX; cx++) {
-            for (let cz = 0; cz < chunksZ; cz++) {
-              chunkQueue.push([cx, cz]);
+          for (let chX = 0; chX < chunksX; chX++) {
+            for (let chZ = 0; chZ < chunksZ; chZ++) {
+              chunkQueue.push([chX, chZ]);
             }
           }
 
@@ -190,15 +265,15 @@ export default function MinecraftWorld() {
             if (disposed) return;
             const batchSize = 8;
             for (let i = 0; i < batchSize && chunkQueue.length > 0; i++) {
-              const [cx, cz] = chunkQueue.shift()!;
-              const { solid, water } = buildChunkGeometry(world, cx, cz);
+              const [chX, chZ] = chunkQueue.shift()!;
+              const { solid, water } = buildChunkGeometry(world, chX, chZ);
               if (solid) {
                 const mesh = new THREE.Mesh(solid, solidMaterial);
                 scene.add(mesh);
               }
               if (water) {
                 const mesh = new THREE.Mesh(water, waterMaterial);
-                mesh.renderOrder = 1; // render after solid
+                mesh.renderOrder = 1;
                 scene.add(mesh);
               }
               built++;
@@ -244,7 +319,7 @@ export default function MinecraftWorld() {
       const by = Math.floor(y);
       const bz = Math.floor(z);
       if (!worldRef.current) return false;
-      if (bx < 0 || bx >= WORLD_WIDTH || bz < 0 || bz >= WORLD_DEPTH) return true; // world border
+      if (bx < 0 || bx >= WORLD_WIDTH || bz < 0 || bz >= WORLD_DEPTH) return true;
       if (by < 0) return true;
       if (by >= WORLD_HEIGHT) return false;
       const block = worldRef.current.getBlock(bx, by, bz);
@@ -252,17 +327,17 @@ export default function MinecraftWorld() {
     }
 
     function checkCollision(x: number, y: number, z: number): boolean {
-      // Check AABB corners
       for (const dx of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
         for (const dz of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
           if (isSolid(x + dx, y, z + dz)) return true;
-          if (isSolid(x + dx, y + 1, z + dz)) return true; // head
+          if (isSolid(x + dx, y + 1, z + dz)) return true;
         }
       }
       return false;
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement) return;
       switch (e.code) {
         case 'KeyW': moveState.forward = true; break;
         case 'KeyS': moveState.backward = true; break;
@@ -298,19 +373,18 @@ export default function MinecraftWorld() {
     function finishSetup(world: WorldData) {
       if (disposed) return;
 
-      // Find spawn point: center of world, highest solid block
-      const cx = Math.floor(WORLD_WIDTH / 2);
-      const cz = Math.floor(WORLD_DEPTH / 2);
+      const spawnX = Math.floor(WORLD_WIDTH / 2);
+      const spawnZ = Math.floor(WORLD_DEPTH / 2);
       let spawnY = SEA_LEVEL + 5;
       for (let y = WORLD_HEIGHT - 1; y >= 0; y--) {
-        const b = world.getBlock(cx, y, cz);
+        const b = world.getBlock(spawnX, y, spawnZ);
         if (b !== Block.Air && b !== Block.Water) {
           spawnY = y + 1 + PLAYER_HEIGHT;
           break;
         }
       }
 
-      camera.position.set(cx + 0.5, spawnY, cz + 0.5);
+      camera.position.set(spawnX + 0.5, spawnY, spawnZ + 0.5);
 
       setProgress('Ready!');
       setProgressPct(100);
@@ -320,15 +394,124 @@ export default function MinecraftWorld() {
       }, 300);
     }
 
+    // ====== Remote Player Rendering ======
+    function createPlayerMesh(color: string): THREE.Group {
+      const group = new THREE.Group();
+
+      // Body (0.6 x 1.5 x 0.3)
+      const bodyGeo = new THREE.BoxGeometry(0.6, 1.5, 0.3);
+      const bodyMat = new THREE.MeshLambertMaterial({ color });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 0.75;
+      group.add(body);
+
+      // Head (0.5 x 0.5 x 0.5)
+      const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+      const headMat = new THREE.MeshLambertMaterial({ color: 0xf5d6b8 });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.y = 1.75;
+      group.add(head);
+
+      // Name tag - will be set later via userData
+      const nameCanvas = document.createElement('canvas');
+      nameCanvas.width = 256;
+      nameCanvas.height = 64;
+      const nameTexture = new THREE.CanvasTexture(nameCanvas);
+      nameTexture.magFilter = THREE.LinearFilter;
+      const nameGeo = new THREE.PlaneGeometry(2, 0.5);
+      const nameMat = new THREE.MeshBasicMaterial({
+        map: nameTexture,
+        transparent: true,
+        depthTest: false,
+      });
+      const nameMesh = new THREE.Mesh(nameGeo, nameMat);
+      nameMesh.position.y = 2.2;
+      group.add(nameMesh);
+
+      group.userData.nameCanvas = nameCanvas;
+      group.userData.nameTexture = nameTexture;
+
+      return group;
+    }
+
+    function updateNameTag(group: THREE.Group, name: string) {
+      const canvas = group.userData.nameCanvas as HTMLCanvasElement;
+      const ctx = canvas.getContext('2d')!;
+      ctx.clearRect(0, 0, 256, 64);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, 0, 256, 64);
+      ctx.font = 'bold 28px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(name, 128, 32);
+      (group.userData.nameTexture as THREE.CanvasTexture).needsUpdate = true;
+    }
+
+    function updateRemotePlayers(remotePlayers: MWPlayerPosition[], playerColors: Map<string, string>, playerNames: Map<string, string>) {
+      const currentIds = new Set(remotePlayers.map(p => p.id));
+
+      // Remove old meshes
+      for (const [id, entry] of remotePlayerMeshes.current) {
+        if (!currentIds.has(id)) {
+          scene.remove(entry.group);
+          entry.group.traverse(obj => {
+            if (obj instanceof THREE.Mesh) {
+              obj.geometry.dispose();
+              if (Array.isArray(obj.material)) {
+                obj.material.forEach(m => m.dispose());
+              } else {
+                obj.material.dispose();
+              }
+            }
+          });
+          remotePlayerMeshes.current.delete(id);
+        }
+      }
+
+      // Add/update meshes
+      for (const rp of remotePlayers) {
+        let entry = remotePlayerMeshes.current.get(rp.id);
+        if (!entry) {
+          const color = playerColors.get(rp.id) || '#FF4444';
+          const group = createPlayerMesh(color);
+          const name = playerNames.get(rp.id) || 'Player';
+          updateNameTag(group, name);
+          scene.add(group);
+          entry = { group, lastUpdate: Date.now() };
+          remotePlayerMeshes.current.set(rp.id, entry);
+        }
+
+        // Lerp position for smooth movement
+        const targetX = rp.x;
+        const targetY = rp.y;
+        const targetZ = rp.z;
+        const group = entry.group;
+        group.position.x += (targetX - group.position.x) * 0.3;
+        group.position.y += (targetY - group.position.y) * 0.3;
+        group.position.z += (targetZ - group.position.z) * 0.3;
+        group.rotation.y = rp.ry;
+
+        // Make name tag face camera
+        const nameTag = group.children[2];
+        if (nameTag) {
+          nameTag.lookAt(camera.position);
+        }
+
+        entry.lastUpdate = Date.now();
+      }
+    }
+
     // ====== Animation Loop ======
     let prevTime = performance.now();
     let frameCount = 0;
     let fpsTimer = 0;
-    let dayTime = 0; // 0-1, 0=noon, 0.5=midnight
+    let dayTime = 0;
+    let lastPositionSend = 0;
 
     function animate() {
       if (disposed) return;
-      const animId = requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
 
       const now = performance.now();
       const dt = Math.min((now - prevTime) / 1000, 0.1);
@@ -350,25 +533,19 @@ export default function MinecraftWorld() {
       const sunAngle = dayTime * Math.PI * 2;
       let skyColor: THREE.Color;
       if (dayTime < 0.25) {
-        // Day
         skyColor = SKY_DAY.clone();
       } else if (dayTime < 0.35) {
-        // Day → Sunset
         const t = (dayTime - 0.25) / 0.1;
         skyColor = SKY_DAY.clone().lerp(SKY_SUNSET, t);
       } else if (dayTime < 0.4) {
-        // Sunset → Night
         const t = (dayTime - 0.35) / 0.05;
         skyColor = SKY_SUNSET.clone().lerp(SKY_NIGHT, t);
       } else if (dayTime < 0.6) {
-        // Night
         skyColor = SKY_NIGHT.clone();
       } else if (dayTime < 0.65) {
-        // Night → Sunrise
         const t = (dayTime - 0.6) / 0.05;
         skyColor = SKY_NIGHT.clone().lerp(SKY_SUNSET, t);
       } else if (dayTime < 0.75) {
-        // Sunrise → Day
         const t = (dayTime - 0.65) / 0.1;
         skyColor = SKY_SUNSET.clone().lerp(SKY_DAY, t);
       } else {
@@ -388,7 +565,6 @@ export default function MinecraftWorld() {
       moonMesh.position.set(WORLD_WIDTH - sunX + WORLD_WIDTH / 2, -sunY + 40, sunZ);
       moonMesh.visible = sunY < 20;
 
-      // Update sun light direction and intensity
       sunLight.position.set(sunX, Math.max(sunY + 40, 10), sunZ);
       const dayFactor = Math.max(0, Math.sin((1 - dayTime) * Math.PI));
       sunLight.intensity = 0.2 + dayFactor * 0.65;
@@ -399,7 +575,6 @@ export default function MinecraftWorld() {
       if (cloudMesh.position.x > WORLD_WIDTH * 2) cloudMesh.position.x = -WORLD_WIDTH;
 
       // ====== Player Physics ======
-      // Uses "move then resolve" approach: apply forces, move, then fix penetrations.
       if (controls.isLocked && worldRef.current) {
         const direction = new THREE.Vector3();
         const right = new THREE.Vector3();
@@ -439,17 +614,15 @@ export default function MinecraftWorld() {
         velocityY += GRAVITY * dt;
         pos.y += velocityY * dt;
 
-        // Resolve ground collision by checking all AABB foot corners
         feetY = pos.y - PLAYER_HEIGHT;
         onGround = false;
 
         for (const dx of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
           for (const dz of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
-            const cx = pos.x + dx;
-            const cz = pos.z + dz;
+            const colX = pos.x + dx;
+            const colZ = pos.z + dz;
 
-            if (isSolid(cx, feetY, cz)) {
-              // Feet are inside a solid block — push up to block top
+            if (isSolid(colX, feetY, colZ)) {
               const blockTop = Math.floor(feetY) + 1;
               const resolveY = blockTop + PLAYER_HEIGHT;
               if (pos.y < resolveY) {
@@ -458,8 +631,7 @@ export default function MinecraftWorld() {
               }
               if (velocityY < 0) velocityY = 0;
               onGround = true;
-            } else if (velocityY <= 0 && isSolid(cx, feetY - 0.06, cz)) {
-              // Feet are resting just above a solid block (within tolerance)
+            } else if (velocityY <= 0 && isSolid(colX, feetY - 0.06, colZ)) {
               const blockTop = Math.floor(feetY - 0.06) + 1;
               const gap = feetY - blockTop;
               if (gap >= 0 && gap < 0.06) {
@@ -472,7 +644,7 @@ export default function MinecraftWorld() {
           }
         }
 
-        // Jump (only after ground resolution confirms we're grounded)
+        // Jump
         if (onGround && moveState.jump) {
           velocityY = JUMP_SPEED;
           onGround = false;
@@ -497,7 +669,7 @@ export default function MinecraftWorld() {
           velocityY = 0;
         }
 
-        // Update coords display (throttled by FPS counter)
+        // Update coords
         if (fpsTimer < 0.05) {
           setCoords({
             x: Math.floor(pos.x),
@@ -505,7 +677,25 @@ export default function MinecraftWorld() {
             z: Math.floor(pos.z),
           });
         }
+
+        // Send position to server at 10Hz
+        if (now - lastPositionSend >= POSITION_SEND_INTERVAL) {
+          const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
+          mp.sendPosition(pos.x, pos.y - PLAYER_HEIGHT, pos.z, euler.x, euler.y);
+          lastPositionSend = now;
+        }
       }
+
+      // Update remote players
+      const playerColors = new Map<string, string>();
+      const playerNames = new Map<string, string>();
+      if (mp.roomState) {
+        for (const p of mp.roomState.players) {
+          playerColors.set(p.id, p.color);
+          playerNames.set(p.id, p.name);
+        }
+      }
+      updateRemotePlayers(mp.remotePlayerList, playerColors, playerNames);
 
       renderer.render(scene, camera);
     }
@@ -523,6 +713,7 @@ export default function MinecraftWorld() {
     // ====== Cleanup ======
     return () => {
       disposed = true;
+      sceneRef.current = null;
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
@@ -533,6 +724,21 @@ export default function MinecraftWorld() {
         controlsRef.current.dispose();
         controlsRef.current = null;
       }
+
+      // Clean up remote player meshes
+      for (const [, entry] of remotePlayerMeshes.current) {
+        entry.group.traverse(obj => {
+          if (obj instanceof THREE.Mesh) {
+            obj.geometry?.dispose();
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach(m => m.dispose());
+            } else {
+              obj.material?.dispose();
+            }
+          }
+        });
+      }
+      remotePlayerMeshes.current.clear();
 
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
@@ -553,8 +759,236 @@ export default function MinecraftWorld() {
         container.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [mp.phase, mp.gameSeed]);
 
+  // ====== Menu Phase ======
+  if (mp.phase === 'menu') {
+    return (
+      <div className={styles.menuContainer}>
+        <div className={styles.menuPanel}>
+          <h1 className={styles.menuTitle}>Minecraft World</h1>
+          <p className={styles.menuSubtitle}>Multiplayer Exploration</p>
+
+          {mp.gameMessage && (
+            <div className={styles.gameMessage}>{mp.gameMessage}</div>
+          )}
+
+          <div className={styles.nameInput}>
+            <label>Player Name</label>
+            <input
+              type="text"
+              value={playerName}
+              onChange={e => setPlayerName(e.target.value.slice(0, 16))}
+              placeholder="Enter your name..."
+              maxLength={16}
+            />
+          </div>
+
+          <div className={styles.tabBar}>
+            <button
+              className={`${styles.tab} ${menuTab === 'create' ? styles.tabActive : ''}`}
+              onClick={() => setMenuTab('create')}
+            >
+              Create
+            </button>
+            <button
+              className={`${styles.tab} ${menuTab === 'join' ? styles.tabActive : ''}`}
+              onClick={() => setMenuTab('join')}
+            >
+              Join
+            </button>
+            <button
+              className={`${styles.tab} ${menuTab === 'browse' ? styles.tabActive : ''}`}
+              onClick={() => setMenuTab('browse')}
+            >
+              Browse
+            </button>
+          </div>
+
+          {menuTab === 'create' && (
+            <div className={styles.tabContent}>
+              <input
+                type="text"
+                value={roomName}
+                onChange={e => setRoomName(e.target.value.slice(0, 32))}
+                placeholder="Room name (optional)"
+                maxLength={32}
+                className={styles.textInput}
+              />
+              <button
+                className={styles.primaryButton}
+                onClick={handleCreateRoom}
+                disabled={!playerName.trim() || mp.connectionStatus !== 'connected'}
+              >
+                Create Room
+              </button>
+            </div>
+          )}
+
+          {menuTab === 'join' && (
+            <div className={styles.tabContent}>
+              <input
+                type="text"
+                value={roomCode}
+                onChange={e => setRoomCode(e.target.value.toUpperCase().slice(0, 5))}
+                placeholder="Room code (e.g. ABC12)"
+                maxLength={5}
+                className={styles.textInput}
+                style={{ textTransform: 'uppercase', letterSpacing: '4px', textAlign: 'center' }}
+              />
+              <button
+                className={styles.primaryButton}
+                onClick={handleJoinRoom}
+                disabled={!playerName.trim() || roomCode.length < 5 || mp.connectionStatus !== 'connected'}
+              >
+                Join Room
+              </button>
+            </div>
+          )}
+
+          {menuTab === 'browse' && (
+            <div className={styles.tabContent}>
+              <div className={styles.roomList}>
+                {[...mp.publicRooms, ...mp.firestoreRooms.filter(fr =>
+                  !mp.publicRooms.some(pr => pr.code === fr.code)
+                ).map(fr => ({
+                  code: fr.code,
+                  name: fr.name,
+                  hostName: fr.hostName,
+                  playerCount: fr.playerCount,
+                  maxPlayers: fr.maxPlayers,
+                  status: fr.status === 'open' ? 'waiting' as const : 'playing' as const,
+                }))].map(room => (
+                  <div key={room.code} className={styles.roomCard}>
+                    <div className={styles.roomInfo}>
+                      <div className={styles.roomCardName}>{room.name}</div>
+                      <div className={styles.roomCardMeta}>
+                        {room.code} &middot; {room.hostName} &middot; {room.playerCount}/{room.maxPlayers}
+                      </div>
+                    </div>
+                    <button
+                      className={styles.joinButton}
+                      onClick={() => handleJoinFromBrowse(room.code)}
+                      disabled={!playerName.trim() || room.status !== 'waiting'}
+                    >
+                      {room.status === 'waiting' ? 'Join' : 'In Game'}
+                    </button>
+                  </div>
+                ))}
+                {mp.publicRooms.length === 0 && mp.firestoreRooms.length === 0 && (
+                  <div className={styles.emptyRooms}>No rooms available</div>
+                )}
+              </div>
+              <button
+                className={styles.secondaryButton}
+                onClick={() => mp.getRooms()}
+              >
+                Refresh
+              </button>
+            </div>
+          )}
+
+          <div className={styles.connectionStatus}>
+            {mp.connectionStatus === 'connected' ? 'Connected' :
+             mp.connectionStatus === 'connecting' ? 'Connecting...' :
+             mp.connectionStatus === 'reconnecting' ? 'Reconnecting...' :
+             'Disconnected'}
+          </div>
+        </div>
+
+        <button className={styles.menuBackButton} onClick={() => window.history.back()}>
+          Back
+        </button>
+      </div>
+    );
+  }
+
+  // ====== Lobby Phase ======
+  if (mp.phase === 'lobby') {
+    return (
+      <div className={styles.menuContainer}>
+        <div className={styles.lobbyPanel}>
+          <h2 className={styles.lobbyTitle}>
+            {mp.roomState?.name || 'Lobby'}
+          </h2>
+          <div className={styles.lobbyCode}>
+            Room Code: <span>{mp.roomState?.code}</span>
+          </div>
+
+          {mp.gameMessage && (
+            <div className={styles.gameMessage}>{mp.gameMessage}</div>
+          )}
+
+          <div className={styles.playerList}>
+            {mp.roomState?.players.map(p => (
+              <div key={p.id} className={styles.playerItem}>
+                <div
+                  className={styles.playerColor}
+                  style={{ backgroundColor: p.color }}
+                />
+                <div className={styles.playerInfo}>
+                  <span className={styles.playerName}>
+                    {p.name}
+                    {p.id === mp.roomState?.hostId && (
+                      <span className={styles.hostBadge}>HOST</span>
+                    )}
+                  </span>
+                  <span className={`${styles.playerStatus} ${!p.connected ? styles.disconnected : p.ready ? styles.ready : ''}`}>
+                    {!p.connected ? 'Disconnected' : p.id === mp.roomState?.hostId ? '' : p.ready ? 'Ready' : 'Not Ready'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.lobbyActions}>
+            {mp.playerId === mp.roomState?.hostId ? (
+              <button
+                className={styles.primaryButton}
+                onClick={() => mp.startGame()}
+                disabled={
+                  !mp.roomState?.players.every(p =>
+                    p.id === mp.roomState?.hostId || p.ready || !p.connected
+                  )
+                }
+              >
+                Start Game
+              </button>
+            ) : (
+              <button
+                className={`${styles.primaryButton} ${
+                  mp.roomState?.players.find(p => p.id === mp.playerId)?.ready ? styles.readyActive : ''
+                }`}
+                onClick={() => {
+                  const me = mp.roomState?.players.find(p => p.id === mp.playerId);
+                  mp.setReady(!me?.ready);
+                }}
+              >
+                {mp.roomState?.players.find(p => p.id === mp.playerId)?.ready ? 'Unready' : 'Ready'}
+              </button>
+            )}
+            <button className={styles.secondaryButton} onClick={() => mp.leaveRoom()}>
+              Leave
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ====== Countdown Phase ======
+  if (mp.phase === 'countdown') {
+    return (
+      <div className={styles.countdownContainer}>
+        <div className={styles.countdownNumber}>
+          {mp.countdownCount}
+        </div>
+        <div className={styles.countdownText}>Get ready to explore!</div>
+      </div>
+    );
+  }
+
+  // ====== Playing Phase ======
   return (
     <div ref={mountRef} className={styles.container}>
       {loading && (
@@ -577,6 +1011,7 @@ export default function MinecraftWorld() {
               <p>Shift - Sprint</p>
               <p>Space - Jump</p>
               <p>Mouse - Look around</p>
+              <p>T - Chat</p>
               <p>ESC - Release cursor</p>
             </div>
           </div>
@@ -589,13 +1024,78 @@ export default function MinecraftWorld() {
           <div className={styles.hud}>
             <div className={styles.coordLine}>XYZ: {coords.x} / {coords.y} / {coords.z}</div>
             <div className={styles.coordLine}>{fps} FPS</div>
+            <div className={styles.coordLine}>
+              Players: {mp.roomState?.players.filter(p => p.connected).length || 1}
+            </div>
           </div>
         </>
       )}
 
+      {/* Chat UI */}
+      <div className={`${styles.chatContainer} ${showChat ? styles.chatOpen : ''}`}>
+        <div className={styles.chatMessages}>
+          {mp.chatMessages.slice(-20).map((msg, i) => (
+            <div key={i} className={styles.chatMsg}>
+              <span className={styles.chatSender}>{msg.playerName}</span>
+              <span>{msg.message}</span>
+            </div>
+          ))}
+          <div ref={chatEndRef} />
+        </div>
+        {showChat && (
+          <div className={styles.chatInputRow}>
+            <input
+              type="text"
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value.slice(0, 200))}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  handleSendChat();
+                  setShowChat(false);
+                }
+                if (e.key === 'Escape') {
+                  setShowChat(false);
+                  setChatInput('');
+                }
+              }}
+              placeholder="Type a message..."
+              autoFocus
+              className={styles.chatInputField}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* T key to open chat */}
+      {!showChat && mp.phase === 'playing' && (
+        <KeyListener
+          onKey={(e) => {
+            if (e.key === 't' || e.key === 'T') {
+              if (!(e.target instanceof HTMLInputElement)) {
+                e.preventDefault();
+                setShowChat(true);
+              }
+            }
+          }}
+        />
+      )}
+
+      {mp.gameMessage && (
+        <div className={styles.gameToast}>{mp.gameMessage}</div>
+      )}
+
       <button className={styles.backButton} onClick={handleBack}>
-        Back
+        Leave
       </button>
     </div>
   );
+}
+
+// Small helper to listen for T key without polluting the main component
+function KeyListener({ onKey }: { onKey: (e: KeyboardEvent) => void }) {
+  useEffect(() => {
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onKey]);
+  return null;
 }

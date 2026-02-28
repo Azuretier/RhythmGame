@@ -1,3 +1,4 @@
+/* ===== Playing Phase - Container ===== */
 .container {
   position: fixed;
   top: 0;
@@ -15,7 +16,7 @@
   height: 100%;
 }
 
-/* Loading screen */
+/* ===== Loading Screen ===== */
 .loadingScreen {
   position: absolute;
   top: 0;
@@ -60,7 +61,7 @@
   color: #c0a878;
 }
 
-/* Overlay / start screen */
+/* ===== Overlay / Start Screen ===== */
 .overlay {
   position: absolute;
   top: 0;
@@ -112,7 +113,7 @@
   color: #aaa;
 }
 
-/* Crosshair */
+/* ===== Crosshair ===== */
 .crosshair {
   position: absolute;
   top: 50%;
@@ -128,7 +129,7 @@
   line-height: 1;
 }
 
-/* HUD info */
+/* ===== HUD ===== */
 .hud {
   position: absolute;
   top: 12px;
@@ -149,7 +150,7 @@
   opacity: 0.85;
 }
 
-/* Back button */
+/* ===== Back Button (in-game) ===== */
 .backButton {
   position: absolute;
   top: 12px;
@@ -169,4 +170,523 @@
 .backButton:hover {
   background: rgba(0, 0, 0, 0.7);
   color: #fff;
+}
+
+/* ===== Menu Phase ===== */
+.menuContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a3a2a 0%, #0a1a0e 50%, #1a2a3a 100%);
+  font-family: monospace;
+  overflow: hidden;
+}
+
+.menuPanel {
+  width: 420px;
+  max-width: 90vw;
+  background: rgba(30, 20, 10, 0.95);
+  border: 2px solid #5a3a20;
+  border-radius: 8px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.menuTitle {
+  font-size: 28px;
+  color: #f0e0c0;
+  text-align: center;
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0 #000;
+  margin: 0;
+}
+
+.menuSubtitle {
+  font-size: 14px;
+  color: #8a7a5a;
+  text-align: center;
+  margin: -12px 0 0 0;
+}
+
+.gameMessage {
+  background: rgba(255, 80, 80, 0.2);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  color: #ff8888;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.nameInput {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nameInput label {
+  font-size: 12px;
+  color: #8a7a5a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.nameInput input {
+  background: #2a1a0e;
+  border: 1px solid #5a3a20;
+  color: #f0e0c0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.nameInput input:focus {
+  border-color: #8a6a40;
+}
+
+/* ===== Tab Bar ===== */
+.tabBar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #3a2a15;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  color: #8a7a5a;
+  font-family: monospace;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab:hover {
+  color: #c0a878;
+}
+
+.tabActive {
+  color: #f0e0c0;
+  border-bottom-color: #5dbb3c;
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.textInput {
+  background: #2a1a0e;
+  border: 1px solid #5a3a20;
+  color: #f0e0c0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.textInput:focus {
+  border-color: #8a6a40;
+}
+
+/* ===== Buttons ===== */
+.primaryButton {
+  background: #3a7a2a;
+  border: 2px solid #5dbb3c;
+  color: #f0f0f0;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #4a9a3a;
+  transform: translateY(-1px);
+}
+
+.primaryButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.readyActive {
+  background: #7a3a2a;
+  border-color: #bb5d3c;
+}
+
+.readyActive:hover:not(:disabled) {
+  background: #9a4a3a;
+}
+
+.secondaryButton {
+  background: transparent;
+  border: 1px solid #5a3a20;
+  color: #c0a878;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.secondaryButton:hover {
+  background: rgba(90, 58, 32, 0.3);
+}
+
+.joinButton {
+  background: #3a7a2a;
+  border: 1px solid #5dbb3c;
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.joinButton:hover:not(:disabled) {
+  background: #4a9a3a;
+}
+
+.joinButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== Room Browser ===== */
+.roomList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.roomCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(42, 26, 14, 0.6);
+  border: 1px solid #3a2a15;
+  border-radius: 4px;
+  padding: 10px 12px;
+  gap: 12px;
+}
+
+.roomInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.roomCardName {
+  font-size: 14px;
+  color: #f0e0c0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roomCardMeta {
+  font-size: 11px;
+  color: #8a7a5a;
+  margin-top: 2px;
+}
+
+.emptyRooms {
+  text-align: center;
+  color: #5a4a3a;
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+.connectionStatus {
+  text-align: center;
+  font-size: 11px;
+  color: #5a5a3a;
+  opacity: 0.7;
+}
+
+.menuBackButton {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #8a7a5a;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.menuBackButton:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #c0a878;
+}
+
+/* ===== Lobby Phase ===== */
+.lobbyPanel {
+  width: 440px;
+  max-width: 90vw;
+  background: rgba(30, 20, 10, 0.95);
+  border: 2px solid #5a3a20;
+  border-radius: 8px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lobbyTitle {
+  font-size: 22px;
+  color: #f0e0c0;
+  text-align: center;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.lobbyCode {
+  text-align: center;
+  font-size: 13px;
+  color: #8a7a5a;
+}
+
+.lobbyCode span {
+  color: #5dbb3c;
+  font-size: 18px;
+  letter-spacing: 3px;
+  font-weight: bold;
+}
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.playerItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(42, 26, 14, 0.5);
+  border: 1px solid #3a2a15;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.playerColor {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.playerInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.playerName {
+  font-size: 14px;
+  color: #f0e0c0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hostBadge {
+  font-size: 9px;
+  background: #8a6a40;
+  color: #f0e0c0;
+  padding: 1px 5px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+.playerStatus {
+  font-size: 12px;
+  color: #8a7a5a;
+}
+
+.playerStatus.ready {
+  color: #5dbb3c;
+}
+
+.playerStatus.disconnected {
+  color: #bb5d3c;
+}
+
+.lobbyActions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.lobbyActions .primaryButton {
+  flex: 1;
+}
+
+.lobbyActions .secondaryButton {
+  flex: 0 0 auto;
+}
+
+/* ===== Countdown Phase ===== */
+.countdownContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a3a2a 0%, #0a1a0e 50%, #1a2a3a 100%);
+  font-family: monospace;
+  gap: 16px;
+}
+
+.countdownNumber {
+  font-size: 120px;
+  color: #5dbb3c;
+  text-shadow: 0 0 40px rgba(93, 187, 60, 0.4), 2px 2px 0 #000;
+  animation: countdownPulse 1s ease-in-out infinite;
+  font-weight: bold;
+}
+
+@keyframes countdownPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.countdownText {
+  font-size: 18px;
+  color: #8a7a5a;
+  letter-spacing: 2px;
+}
+
+/* ===== Chat UI ===== */
+.chatContainer {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  width: 360px;
+  max-width: 50vw;
+  z-index: 40;
+  font-family: monospace;
+  pointer-events: none;
+}
+
+.chatOpen {
+  pointer-events: auto;
+}
+
+.chatMessages {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0;
+  scrollbar-width: none;
+}
+
+.chatMessages::-webkit-scrollbar {
+  display: none;
+}
+
+.chatMsg {
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2px 6px;
+  border-radius: 2px;
+  line-height: 1.4;
+}
+
+.chatSender {
+  color: #aaddff;
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+.chatSender::after {
+  content: ':';
+}
+
+.chatInputRow {
+  margin-top: 4px;
+}
+
+.chatInputField {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 2px;
+  font-family: monospace;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.chatInputField:focus {
+  border-color: rgba(93, 187, 60, 0.6);
+}
+
+/* ===== Game Toast ===== */
+.gameToast {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  color: #ff8888;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 14px;
+  z-index: 60;
+  pointer-events: none;
+  animation: toastFade 3s ease-out forwards;
+}
+
+@keyframes toastFade {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
 }
