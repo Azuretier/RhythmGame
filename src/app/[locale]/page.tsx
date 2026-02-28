@@ -14,11 +14,17 @@ import FloatingVersionSwitcher from '@/components/version/FloatingVersionSwitche
 type PageTab = 'homepage' | 'rhythmia';
 
 export default function HomePage() {
-    const { currentVersion } = useVersion();
+    const { currentVersion, isHydrated } = useVersion();
     const [activeTab, setActiveTab] = useState<PageTab>('homepage');
     const t = useTranslations('pageTab');
 
     const hasHomepage = currentVersion !== 'current';
+
+    // Wait for version context to hydrate from storage before rendering,
+    // preventing a flash of the wrong UI version on initial load
+    if (!isHydrated) {
+        return <div className="fixed inset-0 bg-black" />;
+    }
 
     const renderHomepage = () => {
         switch (currentVersion) {

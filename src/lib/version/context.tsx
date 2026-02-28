@@ -4,7 +4,7 @@
 
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useLayoutEffect, ReactNode } from 'react';
 import type { AppVersion, AccentColor } from './types';
 import { DEFAULT_VERSION, DEFAULT_ACCENT, ACCENT_COLOR_METADATA } from './types';
 import {
@@ -14,10 +14,13 @@ import {
   setSelectedAccent as persistAccent,
 } from './storage';
 
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
 interface VersionContextType {
   currentVersion: AppVersion;
   setVersion: (version: AppVersion) => void;
   isVersionSelected: boolean;
+  isHydrated: boolean;
   accentColor: AccentColor;
   setAccentColor: (color: AccentColor) => void;
 }
@@ -42,10 +45,11 @@ function applyVersionCSS(version: AppVersion) {
 export function VersionProvider({ children }: { children: ReactNode }) {
   const [currentVersion, setCurrentVersion] = useState<AppVersion>(DEFAULT_VERSION);
   const [isVersionSelected, setIsVersionSelected] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [accentColor, setAccentColorState] = useState<AccentColor>(DEFAULT_ACCENT);
 
-  // Restore from storage on mount
-  useEffect(() => {
+  // Restore from storage on mount — useLayoutEffect prevents flash of wrong version
+  useIsomorphicLayoutEffect(() => {
     const storedVersion = getSelectedVersion();
     if (storedVersion) {
       setCurrentVersion(storedVersion);
@@ -58,6 +62,7 @@ export function VersionProvider({ children }: { children: ReactNode }) {
     const storedAccent = getSelectedAccent();
     setAccentColorState(storedAccent);
     applyAccentCSS(storedAccent);
+    setIsHydrated(true);
   }, []);
 
   const setVersion = (version: AppVersion) => {
@@ -75,7 +80,7 @@ export function VersionProvider({ children }: { children: ReactNode }) {
 
   return (
     <VersionContext.Provider
-      value={{ currentVersion, setVersion, isVersionSelected, accentColor, setAccentColor }}
+      value={{ currentVersion, setVersion, isVersionSelected, isHydrated, accentColor, setAccentColor }}
     >
       {children}
     </VersionContext.Provider>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 /**
@@ -10,6 +10,7 @@ import * as THREE from "three";
  */
 export default function MinecraftPanorama() {
   const mountRef = useRef<HTMLDivElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -33,14 +34,17 @@ export default function MinecraftPanorama() {
     // Minecraft panorama order: 0=right, 1=left, 2=top, 3=bottom, 4=front, 5=back
     const cubeLoader = new THREE.CubeTextureLoader();
     cubeLoader.setPath("/media/");
-    const cubeTexture = cubeLoader.load([
-      "panorama_1.png", // +x (right)
-      "panorama_3.png", // -x (left)
-      "panorama_4.png", // +y (top)
-      "panorama_5.png", // -y (bottom)
-      "panorama_0.png", // +z (front)
-      "panorama_2.png", // -z (back)
-    ]);
+    const cubeTexture = cubeLoader.load(
+      [
+        "panorama_1.png", // +x (right)
+        "panorama_3.png", // -x (left)
+        "panorama_4.png", // +y (top)
+        "panorama_5.png", // -y (bottom)
+        "panorama_0.png", // +z (front)
+        "panorama_2.png", // -z (back)
+      ],
+      () => setIsLoaded(true)
+    );
 
     scene.background = cubeTexture;
 
@@ -83,7 +87,11 @@ export default function MinecraftPanorama() {
     <div
       ref={mountRef}
       className="absolute inset-0 z-0"
-      style={{ filter: "blur(2px) brightness(0.7)" }}
+      style={{
+        filter: "blur(2px) brightness(0.7)",
+        opacity: isLoaded ? 1 : 0,
+        transition: "opacity 0.6s ease-in",
+      }}
     />
   );
 }

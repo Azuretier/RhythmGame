@@ -9,6 +9,7 @@ import MinecraftBlogPage from "./MinecraftBlogPage";
 
 const MinecraftPanorama = dynamic(() => import("./MinecraftPanorama"), {
   ssr: false,
+  loading: () => <div className="absolute inset-0 z-0 bg-black" />,
 });
 
 type Screen = "main" | "blog";
@@ -67,6 +68,7 @@ export default function MinecraftPanoramaUI() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className={styles.mainScreen}
+            style={{ height: "100%" }}
           >
             {/* Logo section */}
             <motion.div
