@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "../globals.css";
 import React from 'react';
+import { cookies } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
@@ -102,6 +103,11 @@ export default async function LocaleLayout({ children, params }: Props) {
 
     const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
+    // Read stored version from cookie so the server renders the correct UI
+    // version on first paint — prevents a flash of the default version.
+    const cookieStore = await cookies();
+    const initialVersion = cookieStore.get('azuret_app_version')?.value;
+
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
@@ -141,7 +147,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                             <ProfileProvider>
                                 <SkinProvider>
                                     <SkillTreeProvider>
-                                        <VersionProvider>
+                                        <VersionProvider initialVersion={initialVersion}>
                                             <Provider>
                                                 {children}
                                             </Provider>

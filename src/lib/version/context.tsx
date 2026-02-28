@@ -12,6 +12,7 @@ import {
   setStoredVersion,
   getSelectedAccent,
   setSelectedAccent as persistAccent,
+  isValidUIVersion,
 } from './storage';
 
 // useLayoutEffect on client (prevents flash of wrong version), useEffect on server (avoids SSR warning)
@@ -42,22 +43,27 @@ function applyVersionCSS(version: AppVersion) {
   }
 }
 
-export function VersionProvider({ children }: { children: ReactNode }) {
-  // Always initialize with defaults so server and client produce identical
-  // initial renders — this prevents React hydration mismatches that caused
-  // the component tree to tear down and rebuild (black screen flash).
-  const [currentVersion, setCurrentVersion] = useState<AppVersion>(DEFAULT_VERSION);
-  const [isVersionSelected, setIsVersionSelected] = useState(false);
+export function VersionProvider({ children, initialVersion }: { children: ReactNode; initialVersion?: string }) {
+  // Initialize from the server-provided cookie value when available.
+  // This ensures server and client produce identical initial renders for the
+  // stored version, preventing the component tree from rebuilding on hydration
+  // (which caused the title logo to briefly appear then disappear into a black screen).
+  const resolvedInitial = initialVersion && isValidUIVersion(initialVersion)
+    ? (initialVersion as AppVersion)
+    : DEFAULT_VERSION;
+
+  const [currentVersion, setCurrentVersion] = useState<AppVersion>(resolvedInitial);
+  const [isVersionSelected, setIsVersionSelected] = useState(resolvedInitial !== DEFAULT_VERSION);
   const [accentColor, setAccentColorState] = useState<AccentColor>(DEFAULT_ACCENT);
 
-  // Read persisted values in a layout effect — runs after hydration commit but
-  // BEFORE the browser paints, so the user never sees the default version flash.
-  // State updates here trigger a synchronous re-render before paint.
+  // Read persisted values in a layout effect as a fallback — handles cases where
+  // the cookie is missing but localStorage has the version (e.g., cookie expired).
+  // Runs after hydration commit but BEFORE the browser paints.
   useIsomorphicLayoutEffect(() => {
     const storedVersion = getSelectedVersion();
     const storedAccent = getSelectedAccent();
 
-    if (storedVersion) {
+    if (storedVersion && storedVersion !== resolvedInitial) {
       setCurrentVersion(storedVersion);
       setIsVersionSelected(true);
     }
@@ -65,7 +71,7 @@ export function VersionProvider({ children }: { children: ReactNode }) {
       setAccentColorState(storedAccent);
     }
 
-    applyVersionCSS(storedVersion || DEFAULT_VERSION);
+    applyVersionCSS(storedVersion || resolvedInitial);
     applyAccentCSS(storedAccent);
   }, []);
 
