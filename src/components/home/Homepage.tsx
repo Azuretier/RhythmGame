@@ -427,7 +427,7 @@ export default function Homepage() {
                                     </div>
                                     {isLocked && (
                                         <div className={styles.featureDesc} style={{ fontStyle: 'italic', fontSize: '0.75rem' }}>
-                                            {t('advancements.lockMessage', { count: BATTLE_ARENA_REQUIRED_ADVANCEMENTS })}
+                                            {t('advancements.lockMessage', { current: unlockedCount, required: BATTLE_ARENA_REQUIRED_ADVANCEMENTS })}
                                         </div>
                                     )}
                                 </motion.div>
