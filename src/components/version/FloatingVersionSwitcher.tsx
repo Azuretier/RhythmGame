@@ -1,7 +1,8 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Box } from 'lucide-react';
+import { Gamepad2, MessageCircle, Heart, Box, Palette, Check } from 'lucide-react';
+import { useState } from 'react';
 import { useVersion } from '@/lib/version/context';
 import {
   VERSION_METADATA,
@@ -11,29 +12,21 @@ import {
   type UIVersion,
   type AccentColor,
 } from '@/lib/version/types';
-import { useToggle } from '@/hooks/useToggle';
-import { useEscapeClose } from '@/hooks/useEscapeClose';
-import { scaleHover, fadeOnly } from '@/lib/motion';
 
 const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
-  current: <Gamepad2 size={20} />,
-  '1.0.0': <MessageCircle size={20} />,
-  '1.0.1': <Heart size={20} />,
-  '1.0.2': <Box size={20} />,
+  current: <Gamepad2 size={14} />,
+  '1.0.0': <MessageCircle size={14} />,
+  '1.0.1': <Heart size={14} />,
+  '1.0.2': <Box size={14} />,
 };
 
 export default function FloatingVersionSwitcher() {
   const { currentVersion, setVersion, accentColor, setAccentColor } = useVersion();
-  const { value: isOpen, open, close } = useToggle(false);
-
-  useEscapeClose(isOpen, close);
+  const [showColors, setShowColors] = useState(false);
 
   const handleVersionChange = (version: UIVersion) => {
     if (version === currentVersion) return;
     setVersion(version);
-    close();
-
-    // Full reload to ensure clean state when switching versions
     window.location.href = '/';
   };
 
@@ -42,148 +35,101 @@ export default function FloatingVersionSwitcher() {
   };
 
   return (
-    <>
-      {/* Floating trigger button */}
-      <motion.button
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 1.2, type: 'spring', stiffness: 260, damping: 20 }}
-        {...scaleHover}
-        onClick={open}
-        className="fixed bottom-6 right-6 z-40 h-10 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center gap-2 text-white/70 hover:text-white hover:bg-white/20 transition-colors shadow-lg"
-        aria-label="Site settings"
-      >
-        <Settings size={16} />
-        <span className="text-xs font-medium tracking-wide hidden sm:inline">
-          {VERSION_METADATA[currentVersion].name}
-        </span>
-      </motion.button>
+    <motion.div
+      initial={{ y: 16, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.5, duration: 0.35, ease: 'easeOut' }}
+      className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none"
+    >
+      <div className="mx-auto max-w-xl px-3 pb-3 pointer-events-auto">
+        <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-2xl">
+          {/* Main bar: version tabs + accent dot */}
+          <div className="flex items-center gap-0.5 px-1.5 py-1.5">
+            {/* Version tabs */}
+            {UI_VERSIONS.map((versionId) => {
+              const meta = VERSION_METADATA[versionId];
+              const isActive = currentVersion === versionId;
 
-      {/* Panel */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              {...fadeOnly}
-              onClick={close}
-              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-            />
+              return (
+                <button
+                  key={versionId}
+                  onClick={() => handleVersionChange(versionId)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-medium whitespace-nowrap transition-all ${
+                    isActive
+                      ? 'bg-white/[0.12] text-white shadow-sm'
+                      : 'text-white/35 hover:text-white/60 hover:bg-white/[0.04]'
+                  }`}
+                >
+                  <span className={`flex-shrink-0 ${isActive ? 'opacity-100' : 'opacity-50'}`}>
+                    {VERSION_ICONS[versionId]}
+                  </span>
+                  <span className="hidden sm:inline">{meta.name}</span>
+                  <span className="sm:hidden">
+                    {versionId === 'current' ? 'Latest' : meta.name.split(':')[0].split(' ')[0]}
+                  </span>
+                </button>
+              );
+            })}
 
-            {/* Settings drawer — slides up on mobile, centered modal on desktop */}
-            <motion.div
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="fixed bottom-0 left-0 right-0 z-50 md:fixed md:bottom-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md md:right-auto"
+            {/* Divider */}
+            <div className="w-px h-5 bg-white/[0.08] mx-1 flex-shrink-0" />
+
+            {/* Accent color button */}
+            <button
+              onClick={() => setShowColors((prev) => !prev)}
+              className="flex items-center gap-1 px-2 py-2 rounded-xl text-white/35 hover:text-white/60 hover:bg-white/[0.04] transition-all flex-shrink-0"
+              aria-label="Accent color"
             >
-              <div className="bg-[#1a1b1e] rounded-t-2xl md:rounded-2xl border-t border-white/10 md:border shadow-2xl max-h-[85vh] overflow-y-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-                  <h3 className="text-lg font-bold text-white">Site Settings</h3>
-                  <button
-                    onClick={close}
-                    className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
-                  >
-                    <X size={18} />
-                  </button>
+              <Palette size={13} className="opacity-60" />
+              <div
+                className="w-3.5 h-3.5 rounded-full ring-1 ring-white/20"
+                style={{ backgroundColor: ACCENT_COLOR_METADATA[accentColor].value }}
+              />
+            </button>
+          </div>
+
+          {/* Accent color picker — collapsible */}
+          <AnimatePresence>
+            {showColors && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center justify-center gap-2.5 px-4 pb-2.5 pt-1">
+                  {ACCENT_COLORS.map((colorId) => {
+                    const meta = ACCENT_COLOR_METADATA[colorId];
+                    const isActive = accentColor === colorId;
+
+                    return (
+                      <button
+                        key={colorId}
+                        onClick={() => handleAccentChange(colorId)}
+                        title={meta.name}
+                        className={`relative w-7 h-7 rounded-full transition-all ${
+                          isActive
+                            ? 'ring-2 ring-white/50 ring-offset-2 ring-offset-black/60 scale-110'
+                            : 'hover:scale-110 opacity-70 hover:opacity-100'
+                        }`}
+                        style={{ backgroundColor: meta.value }}
+                      >
+                        {isActive && (
+                          <Check
+                            size={13}
+                            className="absolute inset-0 m-auto text-white drop-shadow-md"
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-
-                <div className="p-6 space-y-6">
-                  {/* ── Version Section ── */}
-                  <section>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-white/40 mb-3">
-                      Site Version
-                    </h4>
-                    <div className="space-y-2">
-                      {UI_VERSIONS.map((versionId) => {
-                        const meta = VERSION_METADATA[versionId];
-                        const isActive = currentVersion === versionId;
-
-                        return (
-                          <button
-                            key={versionId}
-                            onClick={() => handleVersionChange(versionId)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
-                              isActive
-                                ? 'bg-white/10 border-white/20'
-                                : 'bg-white/[0.03] border-transparent hover:bg-white/[0.06] hover:border-white/10'
-                            }`}
-                          >
-                            <div
-                              className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
-                                isActive ? 'bg-white/15 text-white' : 'bg-white/5 text-white/40'
-                              }`}
-                            >
-                              {VERSION_ICONS[versionId]}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-semibold text-white truncate">
-                                  {meta.name}
-                                </span>
-                                <span className="text-[10px] font-mono text-white/30">
-                                  {versionId === 'current' ? 'latest' : `v${versionId}`}
-                                </span>
-                              </div>
-                              <p className="text-xs text-white/40 truncate">{meta.description}</p>
-                            </div>
-                            {isActive && (
-                              <Check size={16} className="flex-shrink-0 text-emerald-400" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  {/* ── Appearance Section ── */}
-                  <section>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Palette size={14} className="text-white/40" />
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-white/40">
-                        Accent Color
-                      </h4>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {ACCENT_COLORS.map((colorId) => {
-                        const meta = ACCENT_COLOR_METADATA[colorId];
-                        const isActive = accentColor === colorId;
-
-                        return (
-                          <button
-                            key={colorId}
-                            onClick={() => handleAccentChange(colorId)}
-                            title={meta.name}
-                            className={`relative w-10 h-10 rounded-full transition-all ${
-                              isActive
-                                ? 'ring-2 ring-white/60 ring-offset-2 ring-offset-[#1a1b1e] scale-110'
-                                : 'hover:scale-110'
-                            }`}
-                            style={{ backgroundColor: meta.value }}
-                          >
-                            {isActive && (
-                              <Check size={16} className="absolute inset-0 m-auto text-white drop-shadow-md" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                </div>
-
-                {/* Footer */}
-                <div className="px-6 py-3 border-t border-white/5">
-                  <p className="text-[11px] text-white/25 text-center">
-                    Settings are saved locally in your browser.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.div>
   );
 }
