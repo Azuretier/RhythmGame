@@ -186,7 +186,7 @@ function PlayerEntity({
     const t = clock.elapsedTime;
     const bob = Math.sin(t * 2 + player.x) * 0.08;
     // Framerate-independent lerp to new tile position
-    const alpha = 1 - Math.exp(-12 * delta);
+    const alpha = 1 - Math.exp(-18 * delta);
     const prevX = groupRef.current.position.x;
     const prevZ = groupRef.current.position.z;
     groupRef.current.position.x = THREE.MathUtils.lerp(prevX, posRef.current.x, alpha);
@@ -521,7 +521,7 @@ function BoardCameraController({ targetX, targetZ }: { targetX: number; targetZ:
   useFrame((_, delta) => {
     const target = targetRef.current;
     const desiredPos = new THREE.Vector3(target.x + 20, 28, target.z + 20);
-    const alpha = 1 - Math.exp(-6 * delta);
+    const alpha = 1 - Math.exp(-10 * delta);
     camera.position.lerp(desiredPos, alpha);
     camera.lookAt(target.x, 0, target.z);
     camera.updateProjectionMatrix();
@@ -575,11 +575,11 @@ function FPSCameraController({
     }
 
     // Smoothly interpolate look direction (prevents jarring camera snaps when turning)
-    const lookAlpha = 1 - Math.exp(-10 * delta);
+    const lookAlpha = 1 - Math.exp(-14 * delta);
     currentLookOffset.current.lerp(targetLookOffset.current, lookAlpha);
 
     // Smooth camera position with delta-time
-    const posAlpha = 1 - Math.exp(-8 * delta);
+    const posAlpha = 1 - Math.exp(-12 * delta);
     camera.position.lerp(targetPos.current, posAlpha);
 
     // Look at smoothly interpolated direction
@@ -795,23 +795,15 @@ export default function BoardRenderer3D({
   // Track last movement direction for FPS camera
   const facingRef = useRef<Direction>('up');
 
+  // Continuous key polling — eliminates browser keyboard repeat delay
+  const pressedInputs = useRef(new Set<'forward' | 'backward' | 'left' | 'right'>());
+  const lastMoveInputRef = useRef<'forward' | 'backward' | 'left' | 'right' | null>(null);
+  const lastMoveTimeRef = useRef(0);
+  const MOVE_POLL_MS = 100;
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-      // Determine raw input
-      let rawInput: 'forward' | 'backward' | 'left' | 'right' | null = null;
-      switch (e.key) {
-        case 'ArrowUp': case 'w': case 'W': rawInput = 'forward'; break;
-        case 'ArrowDown': case 's': case 'S': rawInput = 'backward'; break;
-        case 'ArrowLeft': case 'a': case 'A': rawInput = 'left'; break;
-        case 'ArrowRight': case 'd': case 'D': rawInput = 'right'; break;
-      }
-      if (!rawInput) return;
-      e.preventDefault();
-
+    const fireMove = (rawInput: 'forward' | 'backward' | 'left' | 'right') => {
       if (cameraMode === 'fps') {
-        // FPS mode: translate input relative to current facing direction
         const facing = facingRef.current;
         let worldDir: Direction;
         switch (rawInput) {
@@ -820,21 +812,73 @@ export default function BoardRenderer3D({
           case 'left':     worldDir = TURN_LEFT[facing]; break;
           case 'right':    worldDir = TURN_RIGHT[facing]; break;
         }
-        // Update facing for forward/left/right (not backward — keep looking forward when backing up)
         if (rawInput !== 'backward') {
           facingRef.current = worldDir;
         }
         onMove(worldDir);
       } else {
-        // Board mode: absolute direction mapping
         const dirMap: Record<string, Direction> = { forward: 'up', backward: 'down', left: 'left', right: 'right' };
         const dir = dirMap[rawInput];
         facingRef.current = dir;
         onMove(dir);
       }
+      lastMoveInputRef.current = rawInput;
+      lastMoveTimeRef.current = performance.now();
     };
+
+    const keyToInput = (key: string): 'forward' | 'backward' | 'left' | 'right' | null => {
+      switch (key) {
+        case 'ArrowUp': case 'w': case 'W': return 'forward';
+        case 'ArrowDown': case 's': case 'S': return 'backward';
+        case 'ArrowLeft': case 'a': case 'A': return 'left';
+        case 'ArrowRight': case 'd': case 'D': return 'right';
+        default: return null;
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const rawInput = keyToInput(e.key);
+      if (!rawInput) return;
+      e.preventDefault();
+      const wasEmpty = pressedInputs.current.size === 0;
+      pressedInputs.current.add(rawInput);
+      // Fire immediately on fresh press or direction change (no waiting for poll interval)
+      if (wasEmpty || rawInput !== lastMoveInputRef.current) {
+        const now = performance.now();
+        if (now - lastMoveTimeRef.current >= MOVE_POLL_MS) {
+          fireMove(rawInput);
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const rawInput = keyToInput(e.key);
+      if (rawInput) pressedInputs.current.delete(rawInput);
+    };
+
+    const handleBlur = () => {
+      pressedInputs.current.clear();
+    };
+
+    const pollInterval = setInterval(() => {
+      if (pressedInputs.current.size === 0) return;
+      const now = performance.now();
+      if (now - lastMoveTimeRef.current < MOVE_POLL_MS) return;
+      let input: 'forward' | 'backward' | 'left' | 'right' | null = null;
+      for (const i of pressedInputs.current) input = i;
+      if (input) fireMove(input);
+    }, 16);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
   }, [onMove, cameraMode]);
 
   const handleTouchMove = useCallback((rawDir: Direction) => {
@@ -862,6 +906,19 @@ export default function BoardRenderer3D({
       onMove(rawDir);
     }
   }, [onMove, cameraMode]);
+
+  const dpadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearDpadInterval = useCallback(() => {
+    if (dpadIntervalRef.current) { clearInterval(dpadIntervalRef.current); dpadIntervalRef.current = null; }
+  }, []);
+  const startDpadHold = useCallback((dir: Direction) => {
+    handleTouchMove(dir);
+    clearDpadInterval();
+    dpadIntervalRef.current = setInterval(() => handleTouchMove(dir), MOVE_POLL_MS);
+  }, [handleTouchMove, clearDpadInterval]);
+  useEffect(() => {
+    return () => { clearDpadInterval(); };
+  }, [clearDpadInterval]);
 
   const bgColor = DAY_NIGHT_PRESETS[dayPhase]?.bgColor || '#1e1812';
 
@@ -925,12 +982,21 @@ export default function BoardRenderer3D({
         X: {selfState.x} Y: {selfState.y} | {dayPhase.toUpperCase()} | {cameraMode === 'fps' ? 'FPS' : 'BOARD'}
       </div>
 
-      {/* Mobile D-pad */}
+      {/* Mobile D-pad with hold-to-move */}
       <div className={styles.dpad3d}>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadUp3d}`} onClick={() => handleTouchMove('up')}>W</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadLeft3d}`} onClick={() => handleTouchMove('left')}>A</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadDown3d}`} onClick={() => handleTouchMove('down')}>S</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadRight3d}`} onClick={() => handleTouchMove('right')}>D</button>
+        {(['up', 'left', 'down', 'right'] as const).map(dir => (
+          <button
+            key={dir}
+            className={`${styles.dpadBtn3d} ${styles[`dpad${dir.charAt(0).toUpperCase() + dir.slice(1)}3d` as keyof typeof styles]}`}
+            onPointerDown={e => { e.preventDefault(); startDpadHold(dir); }}
+            onPointerUp={clearDpadInterval}
+            onPointerCancel={clearDpadInterval}
+            onPointerLeave={clearDpadInterval}
+            onContextMenu={e => e.preventDefault()}
+          >
+            {{ up: 'W', left: 'A', down: 'S', right: 'D' }[dir]}
+          </button>
+        ))}
       </div>
     </div>
   );

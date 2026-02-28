@@ -1388,6 +1388,24 @@ function handleMessage(playerId: string, raw: string): void {
               code: 'JOIN_FAILED',
               message: result.error || 'Failed to join party',
             } as unknown as ServerMessage);
+          } else if (result.room) {
+            sendToPlayer(playerId, {
+              type: 'eoe_party_joined',
+              party: {
+                id: result.room.id,
+                members: [...result.room.players.entries()].map(([id, p]) => ({
+                  playerId: id,
+                  playerName: p.name,
+                  character: p.character!,
+                  role: p.isHost ? 'leader' : 'member',
+                  isReady: p.isReady,
+                  isOnline: true,
+                })),
+                maxSize: result.room.maxPlayers,
+                currentActivity: result.room.gameMode,
+                isPublic: true,
+              },
+            } as unknown as ServerMessage);
           }
           break;
         }

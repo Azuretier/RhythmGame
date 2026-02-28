@@ -78,21 +78,69 @@ export default function BoardRenderer({
     return map;
   }, [visibleMobs]);
 
-  // Keyboard controls
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  // Continuous key polling — eliminates browser keyboard repeat delay
+  const pressedDirs = useRef(new Set<Direction>());
+  const lastMoveTimeRef = useRef(0);
+  const MOVE_POLL_MS = 100;
 
-      switch (e.key) {
-        case 'ArrowUp': case 'w': case 'W': e.preventDefault(); onMove('up'); break;
-        case 'ArrowDown': case 's': case 'S': e.preventDefault(); onMove('down'); break;
-        case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); onMove('left'); break;
-        case 'ArrowRight': case 'd': case 'D': e.preventDefault(); onMove('right'); break;
+  useEffect(() => {
+    const keyToDir = (key: string): Direction | null => {
+      switch (key) {
+        case 'ArrowUp': case 'w': case 'W': return 'up';
+        case 'ArrowDown': case 's': case 'S': return 'down';
+        case 'ArrowLeft': case 'a': case 'A': return 'left';
+        case 'ArrowRight': case 'd': case 'D': return 'right';
+        default: return null;
       }
     };
 
+    const fireMove = (dir: Direction) => {
+      onMove(dir);
+      lastMoveTimeRef.current = performance.now();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const dir = keyToDir(e.key);
+      if (!dir) return;
+      e.preventDefault();
+      const wasEmpty = pressedDirs.current.size === 0;
+      pressedDirs.current.add(dir);
+      if (wasEmpty) {
+        const now = performance.now();
+        if (now - lastMoveTimeRef.current >= MOVE_POLL_MS) {
+          fireMove(dir);
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const dir = keyToDir(e.key);
+      if (dir) pressedDirs.current.delete(dir);
+    };
+
+    const handleBlur = () => {
+      pressedDirs.current.clear();
+    };
+
+    const pollInterval = setInterval(() => {
+      if (pressedDirs.current.size === 0) return;
+      const now = performance.now();
+      if (now - lastMoveTimeRef.current < MOVE_POLL_MS) return;
+      let dir: Direction | null = null;
+      for (const d of pressedDirs.current) dir = d;
+      if (dir) fireMove(dir);
+    }, 16);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
   }, [onMove]);
 
   // Night overlay opacity
@@ -250,10 +298,23 @@ export default function BoardRenderer({
     return cells;
   }, [visibleTileMap, exploredTilesRef, playerMap, mobMap, selfState, playerId, onTileClick, onMobClick, onPlayerClick, activeAnomaly]);
 
-  // Mobile touch controls
+  // Mobile touch controls with hold-to-move
   const handleTouchMove = useCallback((dir: Direction) => {
     onMove(dir);
   }, [onMove]);
+
+  const dpadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearDpadInterval = useCallback(() => {
+    if (dpadIntervalRef.current) { clearInterval(dpadIntervalRef.current); dpadIntervalRef.current = null; }
+  }, []);
+  const startDpadHold = useCallback((dir: Direction) => {
+    handleTouchMove(dir);
+    clearDpadInterval();
+    dpadIntervalRef.current = setInterval(() => handleTouchMove(dir), MOVE_POLL_MS);
+  }, [handleTouchMove, clearDpadInterval]);
+  useEffect(() => {
+    return () => { clearDpadInterval(); };
+  }, [clearDpadInterval]);
 
   return (
     <div className={`${styles.boardWrapper} ${activeAnomaly ? styles.boardAnomaly : ''}`}>
@@ -278,12 +339,21 @@ export default function BoardRenderer({
         X: {selfState.x} Y: {selfState.y} | {dayPhase.toUpperCase()}
       </div>
 
-      {/* Mobile D-pad */}
+      {/* Mobile D-pad with hold-to-move */}
       <div className={styles.dpad}>
-        <button className={`${styles.dpadBtn} ${styles.dpadUp}`} onClick={() => handleTouchMove('up')}>W</button>
-        <button className={`${styles.dpadBtn} ${styles.dpadLeft}`} onClick={() => handleTouchMove('left')}>A</button>
-        <button className={`${styles.dpadBtn} ${styles.dpadDown}`} onClick={() => handleTouchMove('down')}>S</button>
-        <button className={`${styles.dpadBtn} ${styles.dpadRight}`} onClick={() => handleTouchMove('right')}>D</button>
+        {(['up', 'left', 'down', 'right'] as const).map(dir => (
+          <button
+            key={dir}
+            className={`${styles.dpadBtn} ${styles[`dpad${dir.charAt(0).toUpperCase() + dir.slice(1)}` as keyof typeof styles]}`}
+            onPointerDown={e => { e.preventDefault(); startDpadHold(dir); }}
+            onPointerUp={clearDpadInterval}
+            onPointerCancel={clearDpadInterval}
+            onPointerLeave={clearDpadInterval}
+            onContextMenu={e => e.preventDefault()}
+          >
+            {{ up: 'W', left: 'A', down: 'S', right: 'D' }[dir]}
+          </button>
+        ))}
       </div>
     </div>
   );

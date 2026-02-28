@@ -232,6 +232,7 @@ export function useEoESocket() {
         setPhase('lobby');
         break;
       case 'eoe_party_joined':
+        setPartyCode(message.party.id);
         setParty(message.party);
         setPhase('lobby');
         break;
