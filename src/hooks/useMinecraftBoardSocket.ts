@@ -11,6 +11,7 @@ import type {
   MCVisiblePlayer, MCMobState, MCPlayerState, DayPhase, ItemType,
   SideBoardVisibleState, AnomalyAlert,
 } from '@/types/minecraft-board';
+import { BLOCK_PROPERTIES, MC_BOARD_CONFIG } from '@/types/minecraft-board';
 
 const MULTIPLAYER_URL = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -412,6 +413,44 @@ export function useMinecraftBoardSocket() {
 
   const move = useCallback((direction: Direction) => {
     send({ type: 'mc_move', direction });
+
+    // Client-side prediction: optimistically update local position
+    setSelfState(prev => {
+      if (!prev || prev.dead) return prev;
+      const dx = direction === 'left' ? -1 : direction === 'right' ? 1 : 0;
+      const dy = direction === 'up' ? -1 : direction === 'down' ? 1 : 0;
+      const nx = prev.x + dx;
+      const ny = prev.y + dy;
+      // Bounds check
+      if (nx < 0 || nx >= MC_BOARD_CONFIG.WORLD_SIZE || ny < 0 || ny >= MC_BOARD_CONFIG.WORLD_SIZE) return prev;
+      // Walkability check using explored tiles
+      const tile = exploredTilesRef.current.get(`${nx},${ny}`);
+      if (tile) {
+        const blockProps = BLOCK_PROPERTIES[tile.block];
+        if (blockProps && !blockProps.walkable && blockProps.solid) return prev;
+      }
+      return { ...prev, x: nx, y: ny };
+    });
+    // Also update self in visible players for 3D renderer
+    const pid = playerIdRef.current;
+    if (pid) {
+      setVisiblePlayers(prev => {
+        const dx = direction === 'left' ? -1 : direction === 'right' ? 1 : 0;
+        const dy = direction === 'up' ? -1 : direction === 'down' ? 1 : 0;
+        return prev.map(p => {
+          if (p.id !== pid) return p;
+          const nx = p.x + dx;
+          const ny = p.y + dy;
+          if (nx < 0 || nx >= MC_BOARD_CONFIG.WORLD_SIZE || ny < 0 || ny >= MC_BOARD_CONFIG.WORLD_SIZE) return p;
+          const tile = exploredTilesRef.current.get(`${nx},${ny}`);
+          if (tile) {
+            const blockProps = BLOCK_PROPERTIES[tile.block];
+            if (blockProps && !blockProps.walkable && blockProps.solid) return p;
+          }
+          return { ...p, x: nx, y: ny };
+        });
+      });
+    }
   }, [send]);
 
   const mine = useCallback((x: number, y: number) => {

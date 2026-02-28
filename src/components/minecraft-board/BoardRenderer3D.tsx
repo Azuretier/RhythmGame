@@ -186,7 +186,7 @@ function PlayerEntity({
     const t = clock.elapsedTime;
     const bob = Math.sin(t * 2 + player.x) * 0.08;
     // Framerate-independent lerp to new tile position
-    const alpha = 1 - Math.exp(-12 * delta);
+    const alpha = 1 - Math.exp(-18 * delta);
     const prevX = groupRef.current.position.x;
     const prevZ = groupRef.current.position.z;
     groupRef.current.position.x = THREE.MathUtils.lerp(prevX, posRef.current.x, alpha);
@@ -216,15 +216,21 @@ function PlayerEntity({
     );
   }
 
+  // 2-block-tall Minecraft character proportions (32px total):
+  // Legs:  0.75 blocks (12px), bottom at y=0, center y=0.375
+  // Body:  0.75 blocks (12px), bottom at y=0.75, center y=1.125
+  // Head:  0.50 blocks (8px),  bottom at y=1.5, center y=1.75
+  // Arms:  0.75 blocks (12px), alongside body, center y=1.125
   const bodyColor = new THREE.Color(player.color);
   const headColor = bodyColor.clone().lerp(new THREE.Color('#f5cba7'), 0.55);
   const legColor = bodyColor.clone().lerp(new THREE.Color('#2c3e50'), 0.5);
+  const armColor = bodyColor.clone().lerp(new THREE.Color('#000'), 0.1);
 
   return (
     <group ref={groupRef} position={[player.x, topY, player.y]}>
-      {/* Body */}
-      <mesh position={[0, 0.35, 0]} castShadow>
-        <boxGeometry args={[0.5, 0.6, 0.28]} />
+      {/* Body — 0.5 wide × 0.75 tall × 0.25 deep */}
+      <mesh position={[0, 1.125, 0]} castShadow>
+        <boxGeometry args={[0.5, 0.75, 0.25]} />
         <meshStandardMaterial
           color={bodyColor}
           emissive={isSelf ? bodyColor : undefined}
@@ -233,36 +239,36 @@ function PlayerEntity({
           flatShading
         />
       </mesh>
-      {/* Head */}
-      <mesh position={[0, 0.82, 0]} castShadow>
-        <boxGeometry args={[0.42, 0.42, 0.42]} />
+      {/* Head — 0.5 × 0.5 × 0.5 */}
+      <mesh position={[0, 1.75, 0]} castShadow>
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
         <meshStandardMaterial color={headColor} roughness={0.45} flatShading />
       </mesh>
-      {/* Left arm */}
-      <mesh position={[-0.33, 0.32, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.52, 0.2]} />
-        <meshStandardMaterial color={bodyColor.clone().lerp(new THREE.Color('#000'), 0.1)} roughness={0.6} flatShading />
+      {/* Left arm — 0.25 wide × 0.75 tall × 0.25 deep */}
+      <mesh position={[-0.375, 1.125, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.75, 0.25]} />
+        <meshStandardMaterial color={armColor} roughness={0.6} flatShading />
       </mesh>
       {/* Right arm */}
-      <mesh position={[0.33, 0.32, 0]} castShadow>
-        <boxGeometry args={[0.18, 0.52, 0.2]} />
-        <meshStandardMaterial color={bodyColor.clone().lerp(new THREE.Color('#000'), 0.1)} roughness={0.6} flatShading />
+      <mesh position={[0.375, 1.125, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.75, 0.25]} />
+        <meshStandardMaterial color={armColor} roughness={0.6} flatShading />
       </mesh>
-      {/* Left leg */}
-      <mesh position={[-0.13, -0.14, 0]} castShadow>
-        <boxGeometry args={[0.2, 0.46, 0.22]} />
+      {/* Left leg — 0.25 wide × 0.75 tall × 0.25 deep */}
+      <mesh position={[-0.125, 0.375, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.75, 0.25]} />
         <meshStandardMaterial color={legColor} roughness={0.65} flatShading />
       </mesh>
       {/* Right leg */}
-      <mesh position={[0.13, -0.14, 0]} castShadow>
-        <boxGeometry args={[0.2, 0.46, 0.22]} />
+      <mesh position={[0.125, 0.375, 0]} castShadow>
+        <boxGeometry args={[0.25, 0.75, 0.25]} />
         <meshStandardMaterial color={legColor} roughness={0.65} flatShading />
       </mesh>
       {isSelf && (
-        <pointLight position={[0, 1.5, 0]} color={player.color} intensity={2} distance={4} />
+        <pointLight position={[0, 2.5, 0]} color={player.color} intensity={2} distance={5} />
       )}
       {!isSelf && (
-        <Html position={[0, 1.6, 0]} center style={{ pointerEvents: 'none' }}>
+        <Html position={[0, 2.3, 0]} center style={{ pointerEvents: 'none' }}>
           <div className={styles.entityHp3d}>
             <span className={styles.entityName3d}>{player.name.slice(0, 6)}</span>
             <div className={styles.hpBar3d}>
@@ -521,7 +527,7 @@ function BoardCameraController({ targetX, targetZ }: { targetX: number; targetZ:
   useFrame((_, delta) => {
     const target = targetRef.current;
     const desiredPos = new THREE.Vector3(target.x + 20, 28, target.z + 20);
-    const alpha = 1 - Math.exp(-6 * delta);
+    const alpha = 1 - Math.exp(-10 * delta);
     camera.position.lerp(desiredPos, alpha);
     camera.lookAt(target.x, 0, target.z);
     camera.updateProjectionMatrix();
@@ -550,7 +556,7 @@ function FPSCameraController({
 
   // Sync target position from grid coords
   useEffect(() => {
-    const eyeY = (heightMap.get(`${targetX},${targetZ}`) ?? 2) + 1.45;
+    const eyeY = (heightMap.get(`${targetX},${targetZ}`) ?? 2) + 1.62;
     targetPos.current.set(targetX, eyeY, targetZ);
   }, [targetX, targetZ, heightMap]);
 
@@ -575,11 +581,11 @@ function FPSCameraController({
     }
 
     // Smoothly interpolate look direction (prevents jarring camera snaps when turning)
-    const lookAlpha = 1 - Math.exp(-10 * delta);
+    const lookAlpha = 1 - Math.exp(-14 * delta);
     currentLookOffset.current.lerp(targetLookOffset.current, lookAlpha);
 
     // Smooth camera position with delta-time
-    const posAlpha = 1 - Math.exp(-8 * delta);
+    const posAlpha = 1 - Math.exp(-12 * delta);
     camera.position.lerp(targetPos.current, posAlpha);
 
     // Look at smoothly interpolated direction
@@ -795,23 +801,15 @@ export default function BoardRenderer3D({
   // Track last movement direction for FPS camera
   const facingRef = useRef<Direction>('up');
 
+  // Continuous key polling — eliminates browser keyboard repeat delay
+  const pressedInputs = useRef(new Set<'forward' | 'backward' | 'left' | 'right'>());
+  const lastMoveInputRef = useRef<'forward' | 'backward' | 'left' | 'right' | null>(null);
+  const lastMoveTimeRef = useRef(0);
+  const MOVE_POLL_MS = 100;
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
-      // Determine raw input
-      let rawInput: 'forward' | 'backward' | 'left' | 'right' | null = null;
-      switch (e.key) {
-        case 'ArrowUp': case 'w': case 'W': rawInput = 'forward'; break;
-        case 'ArrowDown': case 's': case 'S': rawInput = 'backward'; break;
-        case 'ArrowLeft': case 'a': case 'A': rawInput = 'left'; break;
-        case 'ArrowRight': case 'd': case 'D': rawInput = 'right'; break;
-      }
-      if (!rawInput) return;
-      e.preventDefault();
-
+    const fireMove = (rawInput: 'forward' | 'backward' | 'left' | 'right') => {
       if (cameraMode === 'fps') {
-        // FPS mode: translate input relative to current facing direction
         const facing = facingRef.current;
         let worldDir: Direction;
         switch (rawInput) {
@@ -820,21 +818,73 @@ export default function BoardRenderer3D({
           case 'left':     worldDir = TURN_LEFT[facing]; break;
           case 'right':    worldDir = TURN_RIGHT[facing]; break;
         }
-        // Update facing for forward/left/right (not backward — keep looking forward when backing up)
         if (rawInput !== 'backward') {
           facingRef.current = worldDir;
         }
         onMove(worldDir);
       } else {
-        // Board mode: absolute direction mapping
         const dirMap: Record<string, Direction> = { forward: 'up', backward: 'down', left: 'left', right: 'right' };
         const dir = dirMap[rawInput];
         facingRef.current = dir;
         onMove(dir);
       }
+      lastMoveInputRef.current = rawInput;
+      lastMoveTimeRef.current = performance.now();
     };
+
+    const keyToInput = (key: string): 'forward' | 'backward' | 'left' | 'right' | null => {
+      switch (key) {
+        case 'ArrowUp': case 'w': case 'W': return 'forward';
+        case 'ArrowDown': case 's': case 'S': return 'backward';
+        case 'ArrowLeft': case 'a': case 'A': return 'left';
+        case 'ArrowRight': case 'd': case 'D': return 'right';
+        default: return null;
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const rawInput = keyToInput(e.key);
+      if (!rawInput) return;
+      e.preventDefault();
+      const wasEmpty = pressedInputs.current.size === 0;
+      pressedInputs.current.add(rawInput);
+      // Fire immediately on fresh press or direction change (no waiting for poll interval)
+      if (wasEmpty || rawInput !== lastMoveInputRef.current) {
+        const now = performance.now();
+        if (now - lastMoveTimeRef.current >= MOVE_POLL_MS) {
+          fireMove(rawInput);
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const rawInput = keyToInput(e.key);
+      if (rawInput) pressedInputs.current.delete(rawInput);
+    };
+
+    const handleBlur = () => {
+      pressedInputs.current.clear();
+    };
+
+    const pollInterval = setInterval(() => {
+      if (pressedInputs.current.size === 0) return;
+      const now = performance.now();
+      if (now - lastMoveTimeRef.current < MOVE_POLL_MS) return;
+      let input: 'forward' | 'backward' | 'left' | 'right' | null = null;
+      for (const i of pressedInputs.current) input = i;
+      if (input) fireMove(input);
+    }, 16);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    return () => {
+      clearInterval(pollInterval);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+    };
   }, [onMove, cameraMode]);
 
   const handleTouchMove = useCallback((rawDir: Direction) => {
@@ -862,6 +912,19 @@ export default function BoardRenderer3D({
       onMove(rawDir);
     }
   }, [onMove, cameraMode]);
+
+  const dpadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearDpadInterval = useCallback(() => {
+    if (dpadIntervalRef.current) { clearInterval(dpadIntervalRef.current); dpadIntervalRef.current = null; }
+  }, []);
+  const startDpadHold = useCallback((dir: Direction) => {
+    handleTouchMove(dir);
+    clearDpadInterval();
+    dpadIntervalRef.current = setInterval(() => handleTouchMove(dir), MOVE_POLL_MS);
+  }, [handleTouchMove, clearDpadInterval]);
+  useEffect(() => {
+    return () => { clearDpadInterval(); };
+  }, [clearDpadInterval]);
 
   const bgColor = DAY_NIGHT_PRESETS[dayPhase]?.bgColor || '#1e1812';
 
@@ -925,12 +988,21 @@ export default function BoardRenderer3D({
         X: {selfState.x} Y: {selfState.y} | {dayPhase.toUpperCase()} | {cameraMode === 'fps' ? 'FPS' : 'BOARD'}
       </div>
 
-      {/* Mobile D-pad */}
+      {/* Mobile D-pad with hold-to-move */}
       <div className={styles.dpad3d}>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadUp3d}`} onClick={() => handleTouchMove('up')}>W</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadLeft3d}`} onClick={() => handleTouchMove('left')}>A</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadDown3d}`} onClick={() => handleTouchMove('down')}>S</button>
-        <button className={`${styles.dpadBtn3d} ${styles.dpadRight3d}`} onClick={() => handleTouchMove('right')}>D</button>
+        {(['up', 'left', 'down', 'right'] as const).map(dir => (
+          <button
+            key={dir}
+            className={`${styles.dpadBtn3d} ${styles[`dpad${dir.charAt(0).toUpperCase() + dir.slice(1)}3d` as keyof typeof styles]}`}
+            onPointerDown={e => { e.preventDefault(); startDpadHold(dir); }}
+            onPointerUp={clearDpadInterval}
+            onPointerCancel={clearDpadInterval}
+            onPointerLeave={clearDpadInterval}
+            onContextMenu={e => e.preventDefault()}
+          >
+            {{ up: 'W', left: 'A', down: 'S', right: 'D' }[dir]}
+          </button>
+        ))}
       </div>
     </div>
   );

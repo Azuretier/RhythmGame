@@ -398,6 +398,80 @@ export const DEFAULT_DRAGON_GAUGE: DragonGaugeState = {
     enabled: false,
 };
 
+// ===== Tower Defense Settings =====
+export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn (world units)
+export const ENEMY_BASE_SPEED = 0.5;     // Legacy — grid system uses 1 tile/turn
+export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower (world units)
+export const ENEMIES_PER_BEAT = 1;       // Enemies spawned per beat
+export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
+
+// ===== TD Wave Settings (within vanilla mode alternation) =====
+export const TD_WAVE_BEATS = 12;       // Beats of enemy spawning per TD phase
+
+// ===== Block Grid System =====
+// Enemies move on a discrete grid, 1 tile per turn, orthogonal only (no diagonals).
+// The tower sits at grid origin (0, 0). Grid extends from -GRID_HALF to +GRID_HALF.
+export const GRID_TILE_SIZE = 1;         // World units per grid tile
+export const GRID_HALF = 18;             // Grid extends ±18 tiles from center
+export const GRID_SPAWN_RING = 18;       // Manhattan distance from center for spawn perimeter
+export const GRID_TOWER_RADIUS = 1;      // Grid tiles — enemy reaches tower at Manhattan dist ≤ this
+
+// ===== Tower Defense HUD =====
+export const MAX_HEALTH = 100;
+export const ENEMY_REACH_DAMAGE = 15;    // Damage when an enemy reaches the tower
+export const ENEMY_HP = 3;              // Default HP for each enemy
+export const BULLET_SPEED = 18;         // Horizontal launch speed (units/sec)
+export const BULLET_GRAVITY = 9.8;      // Gravity acceleration (units/sec²) — matches Earth gravity
+export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
+export const BULLET_DAMAGE = 1;         // Damage per bullet hit
+export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
+export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
+
+// ===== Corruption & Anomaly Settings =====
+// Side board minimap dimensions
+export const SIDE_BOARD_COLS = 9;
+export const SIDE_BOARD_ROWS = 18;
+export const SIDE_BOARD_CELL_SIZE = 8;   // Small minimap cells
+
+// Terrain corruption (runs during TD phase only)
+export const CORRUPTION_CHANCE_PER_SECOND = 0.15;   // 15% chance per second to infect a block
+export const CORRUPTION_GROWTH_INTERVAL = 10000;     // 10s per growth tick (ms)
+export const CORRUPTION_MAX_LEVEL = 5;
+export const CORRUPTION_MAX_TERRAIN_NODES = 20;      // Max corrupted cells on terrain
+export const CORRUPTION_SPREAD_CHANCE = 0.25;
+export const CORRUPTION_ENEMY_SPAWN_CHANCE = 0.3;    // 30% chance per beat for mature cell to spawn enemy
+export const CORRUPTION_ANOMALY_THRESHOLD = 12;      // Cells needed to trigger anomaly state
+export const TERRAIN_RADIUS = 18;                    // Matches GRID_HALF
+
+// ===== Helper Constants =====
+export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
+
+// ===== Piece Type Array =====
+export const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+
+// ===== Color Theme Helper =====
+// Get color for a piece type based on theme and world
+export const getThemedColor = (
+    pieceType: string,
+    theme: ColorTheme,
+    worldIdx: number
+): string => {
+    switch (theme) {
+        case 'standard':
+            return STANDARD_COLORS[pieceType] || COLORS[pieceType];
+        case 'monochrome':
+            return MONOCHROME_COLORS[pieceType] || '#FFFFFF';
+        case 'stage':
+        default:
+            // Use world colors based on piece index
+            const pieceIndex = PIECE_TYPES.indexOf(pieceType);
+            if (pieceIndex >= 0 && WORLDS[worldIdx]) {
+                return WORLDS[worldIdx].colors[pieceIndex] || COLORS[pieceType];
+            }
+            return COLORS[pieceType];
+    }
+};
+
 // ===== Treasure Box Settings =====
 // Treasure box spawns every N stages (guaranteed)
 export const TREASURE_BOX_STAGE_INTERVAL = 3;
@@ -472,80 +546,6 @@ export const TREASURE_BOX_TIERS: Record<TreasureBoxTier, {
     },
 };
 
-// ===== Tower Defense Settings =====
-export const ENEMY_SPAWN_DISTANCE = 18;  // Distance from center where enemies spawn (world units)
-export const ENEMY_BASE_SPEED = 0.5;     // Legacy — grid system uses 1 tile/turn
-export const ENEMY_TOWER_RADIUS = 3;     // Distance at which enemy "reaches" tower (world units)
-export const ENEMIES_PER_BEAT = 1;       // Enemies spawned per beat
-export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
-
-// ===== TD Wave Settings (within vanilla mode alternation) =====
-export const TD_WAVE_BEATS = 12;       // Beats of enemy spawning per TD phase
-
-// ===== Block Grid System =====
-// Enemies move on a discrete grid, 1 tile per turn, orthogonal only (no diagonals).
-// The tower sits at grid origin (0, 0). Grid extends from -GRID_HALF to +GRID_HALF.
-export const GRID_TILE_SIZE = 1;         // World units per grid tile
-export const GRID_HALF = 18;             // Grid extends ±18 tiles from center
-export const GRID_SPAWN_RING = 18;       // Manhattan distance from center for spawn perimeter
-export const GRID_TOWER_RADIUS = 1;      // Grid tiles — enemy reaches tower at Manhattan dist ≤ this
-
-// ===== Tower Defense HUD =====
-export const MAX_HEALTH = 100;
-export const ENEMY_REACH_DAMAGE = 15;    // Damage when an enemy reaches the tower
-export const ENEMY_HP = 3;              // Default HP for each enemy
-export const BULLET_SPEED = 18;         // Horizontal launch speed (units/sec)
-export const BULLET_GRAVITY = 9.8;      // Gravity acceleration (units/sec²) — matches Earth gravity
-export const BULLET_KILL_RADIUS = 1.5;  // Distance at which bullet hits enemy
-export const BULLET_DAMAGE = 1;         // Damage per bullet hit
-export const BULLET_FIRE_INTERVAL = 1000; // Auto-fire interval in ms
-export const BULLET_GROUND_Y = 0.3;     // Y level at which bullet is considered landed
-
-// ===== Corruption & Anomaly Settings =====
-// Side board minimap dimensions
-export const SIDE_BOARD_COLS = 9;
-export const SIDE_BOARD_ROWS = 18;
-export const SIDE_BOARD_CELL_SIZE = 8;   // Small minimap cells
-
-// Terrain corruption (runs during TD phase only)
-export const CORRUPTION_CHANCE_PER_SECOND = 0.15;   // 15% chance per second to infect a block
-export const CORRUPTION_GROWTH_INTERVAL = 10000;     // 10s per growth tick (ms)
-export const CORRUPTION_MAX_LEVEL = 5;
-export const CORRUPTION_MAX_TERRAIN_NODES = 20;      // Max corrupted cells on terrain
-export const CORRUPTION_SPREAD_CHANCE = 0.25;
-export const CORRUPTION_ENEMY_SPAWN_CHANCE = 0.3;    // 30% chance per beat for mature cell to spawn enemy
-export const CORRUPTION_ANOMALY_THRESHOLD = 12;      // Cells needed to trigger anomaly state
-export const TERRAIN_RADIUS = 18;                    // Matches GRID_HALF
-
-// ===== Helper Constants =====
-export const ROTATION_NAMES = ['0', 'R', '2', 'L'];
-
-// ===== Piece Type Array =====
-export const PIECE_TYPES = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-
-// ===== Elemental System Settings =====
+// ===== Elemental Orb Settings =====
 export const ELEMENT_ORB_FLOAT_DURATION = 600;   // ms for orb float animation
 export const MAX_FLOATING_ORBS = 8;              // Max orb particles on screen
-
-// ===== Color Theme Helper =====
-// Get color for a piece type based on theme and world
-export const getThemedColor = (
-    pieceType: string,
-    theme: ColorTheme,
-    worldIdx: number
-): string => {
-    switch (theme) {
-        case 'standard':
-            return STANDARD_COLORS[pieceType] || COLORS[pieceType];
-        case 'monochrome':
-            return MONOCHROME_COLORS[pieceType] || '#FFFFFF';
-        case 'stage':
-        default:
-            // Use world colors based on piece index
-            const pieceIndex = PIECE_TYPES.indexOf(pieceType);
-            if (pieceIndex >= 0 && WORLDS[worldIdx]) {
-                return WORLDS[worldIdx].colors[pieceIndex] || COLORS[pieceType];
-            }
-            return COLORS[pieceType];
-    }
-};
