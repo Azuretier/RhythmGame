@@ -59,7 +59,7 @@ export default function MinecraftPanoramaUI() {
       <div className={styles.gradientOverlay} />
 
       {/* Screen content */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         {screen === "main" && (
           <motion.div
             key="main"

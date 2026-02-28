@@ -46,7 +46,7 @@ export default function HomePage() {
     // For other versions, offer both the version-specific Homepage and RhythmiaLobby
     return (
         <>
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
                 {activeTab === 'homepage' ? (
                     <motion.div
                         key="homepage"
