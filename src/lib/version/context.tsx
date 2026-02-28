@@ -33,6 +33,12 @@ function applyAccentCSS(color: AccentColor) {
   }
 }
 
+function applyVersionCSS(version: AppVersion) {
+  if (typeof document !== 'undefined') {
+    document.documentElement.setAttribute('data-version', version);
+  }
+}
+
 export function VersionProvider({ children }: { children: ReactNode }) {
   const [currentVersion, setCurrentVersion] = useState<AppVersion>(DEFAULT_VERSION);
   const [isVersionSelected, setIsVersionSelected] = useState(false);
@@ -44,6 +50,9 @@ export function VersionProvider({ children }: { children: ReactNode }) {
     if (storedVersion) {
       setCurrentVersion(storedVersion);
       setIsVersionSelected(true);
+      applyVersionCSS(storedVersion);
+    } else {
+      applyVersionCSS(DEFAULT_VERSION);
     }
 
     const storedAccent = getSelectedAccent();
@@ -55,6 +64,7 @@ export function VersionProvider({ children }: { children: ReactNode }) {
     setCurrentVersion(version);
     setStoredVersion(version);
     setIsVersionSelected(true);
+    applyVersionCSS(version);
   };
 
   const setAccentColor = (color: AccentColor) => {

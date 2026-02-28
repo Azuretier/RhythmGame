@@ -231,15 +231,15 @@ body {
     --theme-pixel-rendering: pixelated;
 }
 
-/* Pixel Nostalgia: global font override */
-.theme-pixel-nostalgia {
+/* Pixel Nostalgia: global font override (only on current/Rhythmia version) */
+.theme-pixel-nostalgia[data-version="current"] {
     font-family: var(--theme-font-body);
     image-rendering: pixelated;
     -ms-interpolation-mode: nearest-neighbor;
 }
 
-/* Pixel Nostalgia: CRT scanline overlay */
-.theme-pixel-nostalgia::after {
+/* Pixel Nostalgia: CRT scanline overlay (only on current/Rhythmia version) */
+.theme-pixel-nostalgia[data-version="current"]::after {
     content: '';
     position: fixed;
     top: 0;
@@ -413,9 +413,9 @@ body {
     -webkit-backdrop-filter: none;
 }
 
-/* Pixel Nostalgia: pixel art image rendering */
-.theme-pixel-nostalgia img,
-.theme-pixel-nostalgia [data-theme-icon] {
+/* Pixel Nostalgia: pixel art image rendering (only on current/Rhythmia version) */
+.theme-pixel-nostalgia[data-version="current"] img,
+.theme-pixel-nostalgia[data-version="current"] [data-theme-icon] {
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     -ms-interpolation-mode: nearest-neighbor;
@@ -512,6 +512,52 @@ body {
 .theme-pixel-nostalgia .pixel-override-btn:active {
     transform: translateY(2px) !important;
     box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* ============================================================
+   VERSION-SPECIFIC CSS
+   Applied via data-version attribute on <html> by VersionProvider
+   ============================================================ */
+
+/* Current (Rhythmia) — uses skin CSS variables for background */
+[data-version="current"] body {
+    background: var(--skin-background, #000000);
+    color: var(--skin-foreground, #ffffff);
+}
+
+/* v1.0.0 (Discord UI) — Discord dark theme background */
+[data-version="1.0.0"] body {
+    background: #313338;
+    color: #dbdee1;
+}
+
+/* v1.0.1 (Creator Portfolio) — dark gradient base */
+[data-version="1.0.1"] body {
+    background: #111827;
+    color: #ffffff;
+}
+
+/* v1.0.2 (Minecraft: Switch Edition) — solid black for panorama */
+[data-version="1.0.2"] body {
+    background: #000000;
+    color: #ffffff;
+}
+
+/* Disable skin/theme overrides for non-current versions */
+[data-version="1.0.0"] .theme-pixel-nostalgia [data-theme-panel],
+[data-version="1.0.0"] .theme-pixel-nostalgia [data-theme-btn],
+[data-version="1.0.0"] .theme-pixel-nostalgia [data-theme-card],
+[data-version="1.0.1"] .theme-pixel-nostalgia [data-theme-panel],
+[data-version="1.0.1"] .theme-pixel-nostalgia [data-theme-btn],
+[data-version="1.0.1"] .theme-pixel-nostalgia [data-theme-card],
+[data-version="1.0.2"] .theme-pixel-nostalgia [data-theme-panel],
+[data-version="1.0.2"] .theme-pixel-nostalgia [data-theme-btn],
+[data-version="1.0.2"] .theme-pixel-nostalgia [data-theme-card] {
+    font-family: inherit;
+    border-radius: inherit;
+    border-width: inherit;
+    box-shadow: inherit;
+    transition: inherit;
 }
 
 /* Existing CSS content below */
