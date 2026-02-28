@@ -90,10 +90,26 @@ function SunsetDecoration() {
   );
 }
 
+function PixelDecoration() {
+  return (
+    <div className={styles.decorationOverlay}>
+      {/* CRT scanline effect */}
+      <div className={styles.pixelScanlines} />
+      {/* Corner accent pixels — matching original navbar decorations */}
+      <div className={styles.pixelCornerAccentTL} />
+      <div className={styles.pixelCornerAccentTR} />
+      <div className={styles.pixelCornerAccentBL} />
+      <div className={styles.pixelCornerAccentBR} />
+      {/* Dither pattern overlay */}
+      <div className={styles.pixelDitherOverlay} />
+    </div>
+  );
+}
+
 function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolean; onSelect: () => void }) {
   return (
     <motion.button
-      className={`${styles.skinCard} ${isActive ? styles.skinCardActive : ''}`}
+      className={`${styles.skinCard} ${isActive ? styles.skinCardActive : ''} ${skin.id === 'pixel' ? styles.skinCardPixel : ''}`}
       onClick={onSelect}
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
@@ -109,6 +125,7 @@ function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolea
         <div className={styles.swatchBg}>
           {skin.id === 'sakura' && <SakuraDecoration />}
           {skin.id === 'sunset' && <SunsetDecoration />}
+          {skin.id === 'pixel' && <PixelDecoration />}
           <div className={styles.swatchHeader} />
           <div className={styles.swatchCards}>
             <div className={styles.swatchCard} />

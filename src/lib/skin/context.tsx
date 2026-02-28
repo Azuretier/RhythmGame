@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import type { Skin, SkinColors } from './types';
+import type { Skin } from './types';
 import { SKIN_PRESETS, DEFAULT_SKIN_ID, getSkinById } from './types';
 import { getStoredSkinId, setStoredSkinId } from './storage';
 import { syncUserDataToFirestore } from '@/lib/google-sync/firestore';
@@ -16,8 +16,11 @@ interface SkinContextType {
 
 const SkinContext = createContext<SkinContextType | undefined>(undefined);
 
-function applySkinToDocument(colors: SkinColors) {
+function applySkinToDocument(skin: Skin, prevSkin?: Skin) {
   const root = document.documentElement;
+  const colors = skin.colors;
+
+  // Apply color CSS variables
   root.style.setProperty('--skin-accent', colors.accent);
   root.style.setProperty('--skin-accent-light', colors.accentLight);
   root.style.setProperty('--skin-accent-dim', colors.accentDim);
@@ -33,6 +36,26 @@ function applySkinToDocument(colors: SkinColors) {
   root.style.setProperty('--foreground', colors.foreground);
   root.style.setProperty('--border', colors.border);
   root.style.setProperty('--subtext', colors.subtext);
+
+  // Remove previous skin's style overrides and CSS class
+  if (prevSkin?.styleOverrides) {
+    for (const key of Object.keys(prevSkin.styleOverrides)) {
+      root.style.removeProperty(key);
+    }
+  }
+  if (prevSkin?.cssClass) {
+    root.classList.remove(prevSkin.cssClass);
+  }
+
+  // Apply new skin's style overrides and CSS class
+  if (skin.styleOverrides) {
+    for (const [key, value] of Object.entries(skin.styleOverrides)) {
+      root.style.setProperty(key, value);
+    }
+  }
+  if (skin.cssClass) {
+    root.classList.add(skin.cssClass);
+  }
 }
 
 export function SkinProvider({ children }: { children: ReactNode }) {
@@ -45,9 +68,9 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     const skin = storedId ? getSkinById(storedId) : null;
     if (skin) {
       setCurrentSkin(skin);
-      applySkinToDocument(skin.colors);
+      applySkinToDocument(skin);
     } else {
-      applySkinToDocument(currentSkin.colors);
+      applySkinToDocument(currentSkin);
     }
   }, []);
 
@@ -56,8 +79,10 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     const handleSkinRestored = (event: CustomEvent<string>) => {
       const skin = getSkinById(event.detail);
       if (skin) {
-        setCurrentSkin(skin);
-        applySkinToDocument(skin.colors);
+        setCurrentSkin((prev) => {
+          applySkinToDocument(skin, prev);
+          return skin;
+        });
       }
     };
 
@@ -70,9 +95,11 @@ export function SkinProvider({ children }: { children: ReactNode }) {
   const setSkin = useCallback((skinId: string) => {
     const skin = getSkinById(skinId);
     if (!skin) return;
-    setCurrentSkin(skin);
+    setCurrentSkin((prev) => {
+      applySkinToDocument(skin, prev);
+      return skin;
+    });
     setStoredSkinId(skinId);
-    applySkinToDocument(skin.colors);
 
     // Sync to Firestore if Google account is linked
     if (auth?.currentUser && isGoogleLinked(auth.currentUser)) {

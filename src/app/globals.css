@@ -476,12 +476,225 @@ body {
 }
 
 /* ============================================================
-   SkinCustomizer Panel — Theme-Aware Overrides
-   These override the CSS module styles when pixel theme is active
+   SKIN: Pixel — Structural UI overrides
+   Applied via .skin-pixel class on <html> when pixel skin is active.
+   Faithfully restores the old pixel-art homepage look via the skin
+   system (not just colors but fonts, borders, shadows, scanlines).
    ============================================================ */
 
-/* Pixel Nostalgia: override SkinCustomizer panel */
-.theme-pixel-nostalgia .pixel-override-panel {
+/* Pixel skin: global font + image rendering (only on current/Rhythmia version) */
+.skin-pixel[data-version="current"] {
+    font-family: var(--theme-font-body);
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Pixel skin: CRT scanline overlay (only on current/Rhythmia version) */
+.skin-pixel[data-version="current"]::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+    opacity: var(--theme-scanline-opacity);
+}
+
+/* Pixel skin: panels with thick borders and hard shadows */
+.skin-pixel .neo-panel,
+.skin-pixel [data-theme-panel] {
+    background: var(--skin-background);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    border-radius: var(--theme-radius);
+    box-shadow: var(--theme-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: none;
+}
+
+.skin-pixel [data-theme-panel]:hover {
+    border-color: var(--skin-accent);
+    box-shadow: var(--theme-shadow-hover);
+}
+
+/* Pixel skin: buttons with retro press effect */
+.skin-pixel [data-theme-btn] {
+    font-family: var(--theme-font-body);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    border-radius: var(--theme-radius);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    background: var(--skin-background);
+    color: var(--skin-foreground);
+    box-shadow: var(--theme-shadow);
+    cursor: pointer;
+    transition: none;
+    position: relative;
+    text-transform: uppercase;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.skin-pixel [data-theme-btn]:hover {
+    background: var(--skin-accent-dim);
+    border-color: var(--skin-accent);
+    color: var(--skin-accent);
+    box-shadow: var(--theme-shadow);
+}
+
+.skin-pixel [data-theme-btn]:active {
+    transform: var(--theme-btn-transform-active);
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
+}
+
+/* Pixel skin: primary button */
+.skin-pixel [data-theme-btn-primary] {
+    font-family: var(--theme-font-body);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    border-radius: var(--theme-radius);
+    border: var(--theme-border-width) solid var(--skin-accent);
+    background: var(--skin-accent);
+    color: var(--skin-background);
+    box-shadow: var(--theme-shadow);
+    cursor: pointer;
+    transition: none;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.skin-pixel [data-theme-btn-primary]:hover {
+    background: var(--skin-accent-light);
+    border-color: var(--skin-accent-light);
+}
+
+.skin-pixel [data-theme-btn-primary]:active {
+    transform: var(--theme-btn-transform-active);
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8);
+}
+
+/* Pixel skin: dialog */
+.skin-pixel [data-theme-dialog] {
+    background: var(--skin-background);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    border-radius: var(--theme-radius);
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.8);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Pixel skin: dialog title bar (retro window) */
+.skin-pixel [data-theme-dialog-header] {
+    background: var(--skin-accent);
+    color: var(--skin-background);
+    font-family: var(--theme-font-heading);
+    font-size: 0.6rem;
+    padding: 6px 10px;
+    border-bottom: var(--theme-border-width) solid var(--skin-foreground);
+    letter-spacing: 0.1em;
+}
+
+/* Pixel skin: input fields */
+.skin-pixel [data-theme-input] {
+    font-family: var(--theme-font-body);
+    font-size: 1rem;
+    border-radius: var(--theme-radius);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    background: rgba(0, 0, 0, 0.9);
+    color: var(--skin-accent);
+    box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.5);
+    transition: none;
+}
+
+.skin-pixel [data-theme-input]:focus {
+    outline: none;
+    border-color: var(--skin-accent);
+    box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* Pixel skin: cards */
+.skin-pixel [data-theme-card] {
+    background: var(--skin-background);
+    border: var(--theme-border-width) solid var(--skin-foreground);
+    border-radius: var(--theme-radius);
+    box-shadow: var(--theme-shadow);
+    transition: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.skin-pixel [data-theme-card]:hover {
+    border-color: var(--skin-accent);
+    box-shadow: var(--theme-shadow-hover);
+    transform: none;
+}
+
+/* Pixel skin: headings with pixel font and text shadow */
+.skin-pixel [data-theme-heading] {
+    font-family: var(--theme-font-heading);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: var(--skin-accent);
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
+}
+
+/* Pixel skin: text */
+.skin-pixel [data-theme-text] {
+    font-family: var(--theme-font-body);
+    font-size: 1.1rem;
+    color: var(--skin-foreground);
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+}
+
+/* Pixel skin: navigation/toolbar */
+.skin-pixel [data-theme-nav] {
+    background: var(--skin-background);
+    border-bottom: var(--theme-border-width) solid var(--skin-foreground);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Pixel skin: pixel art image rendering (only on current/Rhythmia version) */
+.skin-pixel[data-version="current"] img,
+.skin-pixel[data-version="current"] [data-theme-icon] {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+
+/* Pixel skin: dithered background pattern */
+.skin-pixel [data-theme-dithered] {
+    background-image:
+        radial-gradient(var(--skin-accent-dim) 1px, transparent 1px);
+    background-size: 4px 4px;
+}
+
+/* Pixel skin: pixel grid background */
+.skin-pixel [data-theme-grid-bg] {
+    background-image:
+        linear-gradient(var(--skin-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--skin-border) 1px, transparent 1px);
+    background-size: 16px 16px;
+}
+
+/* ============================================================
+   SkinCustomizer Panel — Theme-Aware Overrides
+   These override the CSS module styles when pixel theme/skin is active
+   ============================================================ */
+
+/* Pixel Nostalgia theme OR Pixel skin: override SkinCustomizer panel */
+.theme-pixel-nostalgia .pixel-override-panel,
+.skin-pixel .pixel-override-panel {
     border-radius: 0 !important;
     border-width: 3px !important;
     border-color: var(--skin-foreground) !important;
@@ -490,18 +703,21 @@ body {
     -webkit-backdrop-filter: none !important;
 }
 
-.theme-pixel-nostalgia .pixel-override-panel * {
+.theme-pixel-nostalgia .pixel-override-panel *,
+.skin-pixel .pixel-override-panel * {
     font-family: var(--theme-font-body) !important;
 }
 
-.theme-pixel-nostalgia .pixel-override-panel h2 {
+.theme-pixel-nostalgia .pixel-override-panel h2,
+.skin-pixel .pixel-override-panel h2 {
     font-family: var(--theme-font-heading) !important;
     font-size: 0.7rem !important;
     letter-spacing: 0.08em !important;
 }
 
-/* Pixel Nostalgia: SkinCustomizer buttons */
-.theme-pixel-nostalgia .pixel-override-btn {
+/* Pixel Nostalgia theme OR Pixel skin: SkinCustomizer buttons */
+.theme-pixel-nostalgia .pixel-override-btn,
+.skin-pixel .pixel-override-btn {
     border-radius: 0 !important;
     border-width: 2px !important;
     border-color: var(--skin-foreground) !important;
@@ -509,7 +725,8 @@ body {
     transition: none !important;
 }
 
-.theme-pixel-nostalgia .pixel-override-btn:active {
+.theme-pixel-nostalgia .pixel-override-btn:active,
+.skin-pixel .pixel-override-btn:active {
     transform: translateY(2px) !important;
     box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.8) !important;
 }
@@ -552,7 +769,16 @@ body {
 [data-version="1.0.1"] .theme-pixel-nostalgia [data-theme-card],
 [data-version="1.0.2"] .theme-pixel-nostalgia [data-theme-panel],
 [data-version="1.0.2"] .theme-pixel-nostalgia [data-theme-btn],
-[data-version="1.0.2"] .theme-pixel-nostalgia [data-theme-card] {
+[data-version="1.0.2"] .theme-pixel-nostalgia [data-theme-card],
+[data-version="1.0.0"] .skin-pixel [data-theme-panel],
+[data-version="1.0.0"] .skin-pixel [data-theme-btn],
+[data-version="1.0.0"] .skin-pixel [data-theme-card],
+[data-version="1.0.1"] .skin-pixel [data-theme-panel],
+[data-version="1.0.1"] .skin-pixel [data-theme-btn],
+[data-version="1.0.1"] .skin-pixel [data-theme-card],
+[data-version="1.0.2"] .skin-pixel [data-theme-panel],
+[data-version="1.0.2"] .skin-pixel [data-theme-btn],
+[data-version="1.0.2"] .skin-pixel [data-theme-card] {
     font-family: inherit;
     border-radius: inherit;
     border-width: inherit;

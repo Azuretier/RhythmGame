@@ -19,11 +19,18 @@ export interface SkinColors {
   borderHover: string;
 }
 
+/** CSS custom property overrides applied beyond colors (e.g. fonts, borders, shadows) */
+export type SkinStyleOverrides = Record<string, string>;
+
 export interface Skin {
   id: string;
   name: string;
   nameJa: string;
   colors: SkinColors;
+  /** CSS custom property overrides for structural styling (fonts, borders, shadows, etc.) */
+  styleOverrides?: SkinStyleOverrides;
+  /** CSS class added to <html> for qualified selector overrides */
+  cssClass?: string;
 }
 
 export const SKIN_PRESETS: Skin[] = [
@@ -159,6 +166,24 @@ export const SKIN_PRESETS: Skin[] = [
     id: 'pixel',
     name: 'Pixel',
     nameJa: 'ピクセル',
+    cssClass: 'skin-pixel',
+    styleOverrides: {
+      '--theme-font-heading': "'Press Start 2P', 'Silkscreen', monospace",
+      '--theme-font-body': "'VT323', 'Pixelify Sans', monospace",
+      '--theme-font-mono': "'VT323', 'Press Start 2P', monospace",
+      '--theme-radius': '0px',
+      '--theme-radius-sm': '0px',
+      '--theme-radius-lg': '0px',
+      '--theme-border-width': '3px',
+      '--theme-transition': '0s',
+      '--theme-shadow': '4px 4px 0px rgba(0, 0, 0, 0.8)',
+      '--theme-shadow-hover': '6px 6px 0px rgba(0, 0, 0, 0.8)',
+      '--theme-glass-bg': 'rgba(0, 0, 0, 0.9)',
+      '--theme-glass-blur': '0px',
+      '--theme-btn-transform-active': 'translateY(3px)',
+      '--theme-scanline-opacity': '1',
+      '--theme-pixel-rendering': 'pixelated',
+    },
     colors: {
       accent: '#4a9d9e',
       accentLight: '#5fb8b9',

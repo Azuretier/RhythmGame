@@ -338,6 +338,90 @@
   50% { opacity: 1; transform: scale(1.15); }
 }
 
+/* Pixel — CRT scanlines, dither pattern, corner accents */
+.skinCardPixel {
+  border-radius: 0 !important;
+}
+
+.skinCardPixel .swatchPreview {
+  border-radius: 0;
+}
+
+.skinCardPixel .swatchBg {
+  image-rendering: pixelated;
+}
+
+.skinCardPixel .swatchHeader {
+  border-radius: 0;
+  height: 3px;
+}
+
+.skinCardPixel .swatchCard {
+  border-radius: 0;
+  border-width: 2px;
+}
+
+.skinCardPixel .swatchButton {
+  border-radius: 0;
+  height: 5px;
+}
+
+/* CRT scanline overlay on pixel swatch */
+.pixelScanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  z-index: 3;
+}
+
+/* Corner accent pixels — matching the original pixel art navbar decorations */
+.pixelCornerAccentTL,
+.pixelCornerAccentTR,
+.pixelCornerAccentBL,
+.pixelCornerAccentBR {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #d97706;
+  z-index: 4;
+}
+
+.pixelCornerAccentTL {
+  top: 2px;
+  left: 2px;
+}
+
+.pixelCornerAccentTR {
+  top: 2px;
+  right: 2px;
+}
+
+.pixelCornerAccentBL {
+  bottom: 2px;
+  left: 2px;
+}
+
+.pixelCornerAccentBR {
+  bottom: 2px;
+  right: 2px;
+}
+
+/* Dither pattern overlay */
+.pixelDitherOverlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(217, 119, 6, 0.12) 1px, transparent 1px);
+  background-size: 4px 4px;
+  z-index: 2;
+}
+
 /* Sunset (orange) — radiant sun with light rays */
 .sunsetOrb {
   position: absolute;
