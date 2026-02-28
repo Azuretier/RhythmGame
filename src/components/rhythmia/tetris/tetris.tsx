@@ -1795,7 +1795,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
                 boardBeat={boardBeat}
                 boardShake={boardShake}
                 gameOver={gameOver}
-                isPaused={isPaused && !showCardSelect}
+                isPaused={isPaused && !showCardSelect && !showTreasureBox}
                 score={score}
                 onRestart={() => startGame()}
                 onResume={() => setIsPaused(false)}
