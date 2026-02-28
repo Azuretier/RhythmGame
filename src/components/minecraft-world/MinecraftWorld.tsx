@@ -262,15 +262,6 @@ export default function MinecraftWorld() {
       return false;
     }
 
-    function checkGrounded(x: number, y: number, z: number): boolean {
-      for (const dx of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
-        for (const dz of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
-          if (isSolid(x + dx, y - 0.05, z + dz)) return true;
-        }
-      }
-      return false;
-    }
-
     const onKeyDown = (e: KeyboardEvent) => {
       switch (e.code) {
         case 'KeyW': moveState.forward = true; break;
@@ -408,6 +399,7 @@ export default function MinecraftWorld() {
       if (cloudMesh.position.x > WORLD_WIDTH * 2) cloudMesh.position.x = -WORLD_WIDTH;
 
       // ====== Player Physics ======
+      // Uses "move then resolve" approach: apply forces, move, then fix penetrations.
       if (controls.isLocked && worldRef.current) {
         const direction = new THREE.Vector3();
         const right = new THREE.Vector3();
@@ -429,9 +421,10 @@ export default function MinecraftWorld() {
         }
 
         const pos = camera.position;
-        const feetY = pos.y - PLAYER_HEIGHT;
 
-        // Horizontal movement with collision (X and Z separately)
+        // --- Horizontal movement with per-axis collision ---
+        let feetY = pos.y - PLAYER_HEIGHT;
+
         const newX = pos.x + move.x;
         if (!checkCollision(newX, feetY, pos.z)) {
           pos.x = newX;
@@ -442,37 +435,58 @@ export default function MinecraftWorld() {
           pos.z = newZ;
         }
 
-        // Gravity
-        onGround = checkGrounded(pos.x, feetY, pos.z);
-
-        if (onGround && velocityY <= 0) {
-          velocityY = 0;
-          // Snap to ground
-          const groundY = Math.floor(feetY + 0.05) + 1;
-          if (pos.y < groundY + PLAYER_HEIGHT) {
-            pos.y = groundY + PLAYER_HEIGHT;
-          }
-          if (moveState.jump) {
-            velocityY = JUMP_SPEED;
-            onGround = false;
-          }
-        } else {
-          velocityY += GRAVITY * dt;
-        }
-
+        // --- Vertical: apply gravity, move, then resolve ground/ceiling ---
+        velocityY += GRAVITY * dt;
         pos.y += velocityY * dt;
 
-        // Check floor after falling
-        const newFeetY = pos.y - PLAYER_HEIGHT;
-        if (velocityY < 0 && checkGrounded(pos.x, newFeetY, pos.z)) {
-          const snapY = Math.floor(newFeetY + 0.1) + 1 + PLAYER_HEIGHT;
-          pos.y = snapY;
-          velocityY = 0;
+        // Resolve ground collision by checking all AABB foot corners
+        feetY = pos.y - PLAYER_HEIGHT;
+        onGround = false;
+
+        for (const dx of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
+          for (const dz of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
+            const cx = pos.x + dx;
+            const cz = pos.z + dz;
+
+            if (isSolid(cx, feetY, cz)) {
+              // Feet are inside a solid block — push up to block top
+              const blockTop = Math.floor(feetY) + 1;
+              const resolveY = blockTop + PLAYER_HEIGHT;
+              if (pos.y < resolveY) {
+                pos.y = resolveY;
+                feetY = pos.y - PLAYER_HEIGHT;
+              }
+              if (velocityY < 0) velocityY = 0;
+              onGround = true;
+            } else if (velocityY <= 0 && isSolid(cx, feetY - 0.06, cz)) {
+              // Feet are resting just above a solid block (within tolerance)
+              const blockTop = Math.floor(feetY - 0.06) + 1;
+              const gap = feetY - blockTop;
+              if (gap >= 0 && gap < 0.06) {
+                pos.y = blockTop + PLAYER_HEIGHT;
+                feetY = pos.y - PLAYER_HEIGHT;
+                if (velocityY < 0) velocityY = 0;
+                onGround = true;
+              }
+            }
+          }
         }
 
-        // Ceiling check
-        if (velocityY > 0 && isSolid(pos.x, pos.y + 0.1, pos.z)) {
-          velocityY = 0;
+        // Jump (only after ground resolution confirms we're grounded)
+        if (onGround && moveState.jump) {
+          velocityY = JUMP_SPEED;
+          onGround = false;
+        }
+
+        // Ceiling collision
+        if (velocityY > 0) {
+          for (const dx of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
+            for (const dz of [-PLAYER_WIDTH, PLAYER_WIDTH]) {
+              if (isSolid(pos.x + dx, pos.y + 0.1, pos.z + dz)) {
+                velocityY = 0;
+              }
+            }
+          }
         }
 
         // World bounds
