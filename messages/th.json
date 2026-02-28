@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "เวอร์ชันเว็บไซต์",
     "accentColor": "สีเน้น",
-    "latest": "ล่าสุด"
+    "latest": "ล่าสุด",
+    "goHome": "ไปหน้าแรก"
   }
 }

@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "साइट संस्करण",
     "accentColor": "एक्सेंट रंग",
-    "latest": "नवीनतम"
+    "latest": "नवीनतम",
+    "goHome": "होमपेज पर जाएं"
   }
 }

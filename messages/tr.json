@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "Site Sürümü",
     "accentColor": "Vurgu Rengi",
-    "latest": "en son"
+    "latest": "en son",
+    "goHome": "Ana sayfaya git"
   }
 }

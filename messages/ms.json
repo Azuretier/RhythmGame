@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "Versi Laman",
     "accentColor": "Warna Aksen",
-    "latest": "terkini"
+    "latest": "terkini",
+    "goHome": "Ke Laman Utama"
   }
 }

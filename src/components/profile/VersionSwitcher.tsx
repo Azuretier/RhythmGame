@@ -1,8 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
-import { Gamepad2, MessageCircle, Heart, Box, Grid3X3, Check } from 'lucide-react';
+import { Gamepad2, MessageCircle, Heart, Box, Grid3X3, Check, Home } from 'lucide-react';
 import { useVersion } from '@/lib/version/context';
 import {
   VERSION_METADATA,
@@ -25,15 +26,20 @@ const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
 export default function VersionSwitcher() {
   const t = useTranslations('version');
   const { currentVersion, setVersion, accentColor, setAccentColor } = useVersion();
+  const [switched, setSwitched] = useState(false);
 
   const handleVersionChange = (version: UIVersion) => {
     if (version === currentVersion) return;
     setVersion(version);
-    window.location.reload();
+    setSwitched(true);
   };
 
   const handleAccentChange = (color: AccentColor) => {
     setAccentColor(color);
+  };
+
+  const handleGoHome = () => {
+    window.location.href = '/';
   };
 
   return (
@@ -70,6 +76,22 @@ export default function VersionSwitcher() {
           );
         })}
       </div>
+
+      <AnimatePresence>
+        {switched && (
+          <motion.button
+            className={styles.goHomeButton}
+            onClick={handleGoHome}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Home size={14} />
+            {t('goHome')}
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <div className={styles.accentSection}>
         <div className={styles.accentLabel}>{t('accentColor')}</div>

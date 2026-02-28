@@ -1541,6 +1541,7 @@
   "version": {
     "selectVersion": "Site Version",
     "accentColor": "Accent Color",
-    "latest": "latest"
+    "latest": "latest",
+    "goHome": "Go to Homepage"
   }
 }

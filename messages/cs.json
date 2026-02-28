@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "Verze webu",
     "accentColor": "Barva akcentu",
-    "latest": "nejnovější"
+    "latest": "nejnovější",
+    "goHome": "Přejít na hlavní stránku"
   }
 }

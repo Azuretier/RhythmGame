@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "Version du site",
     "accentColor": "Couleur d'accent",
-    "latest": "dernière"
+    "latest": "dernière",
+    "goHome": "Aller à l'accueil"
   }
 }

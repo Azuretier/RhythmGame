@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "Versi Situs",
     "accentColor": "Warna Aksen",
-    "latest": "terbaru"
+    "latest": "terbaru",
+    "goHome": "Ke Beranda"
   }
 }

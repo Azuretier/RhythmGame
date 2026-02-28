@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "网站版本",
     "accentColor": "主题色",
-    "latest": "最新"
+    "latest": "最新",
+    "goHome": "前往首页"
   }
 }

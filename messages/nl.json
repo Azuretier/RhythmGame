@@ -1506,6 +1506,7 @@
   "version": {
     "selectVersion": "Siteversie",
     "accentColor": "Accentkleur",
-    "latest": "nieuwste"
+    "latest": "nieuwste",
+    "goHome": "Naar startpagina"
   }
 }
