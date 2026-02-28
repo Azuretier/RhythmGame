@@ -72,7 +72,7 @@ export default function HomePage() {
 
             {/* Page tab switcher — toggle between Homepage and Rhythmia */}
             <motion.nav
-                initial={{ opacity: 0, y: -12 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.4 }}
                 className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 bg-black/60 backdrop-blur-md rounded-full p-1 border border-white/10 shadow-lg"
