@@ -73,11 +73,15 @@ export function PauseMenu({
         setUnlockedCount(state.unlockedIds.length);
     }, []);
 
-    // Handle keybind rebinding
+    // Handle keybind rebinding — Escape cancels without rebinding
     const handleKeyCapture = useCallback((e: KeyboardEvent) => {
         if (!rebindingAction) return;
         e.preventDefault();
         e.stopPropagation();
+        if (e.key === 'Escape') {
+            setRebindingAction(null);
+            return;
+        }
         onKeybindChange(rebindingAction, e.key);
         setRebindingAction(null);
     }, [rebindingAction, onKeybindChange]);

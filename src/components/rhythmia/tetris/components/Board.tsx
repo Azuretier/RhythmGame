@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, ColorTheme, getThemedColor } from '../constants';
 import { getShape, getGhostY } from '../utils/boardUtils';
 import { PauseMenu } from './PauseMenu';
@@ -203,8 +204,8 @@ export const Board = React.memo(function Board({
                 )}
             </div>
 
-            {/* Overlay for Game Over */}
-            {gameOver && (
+            {/* Overlay for Game Over — rendered via portal to escape will-change:transform containing block */}
+            {gameOver && typeof document !== 'undefined' && createPortal(
                 <div className={styles.gameover} style={{ display: 'flex' }}>
                     <h2>GAME OVER</h2>
                     <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
@@ -221,11 +222,12 @@ export const Board = React.memo(function Board({
                             </button>
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
-            {/* Pause Menu with side navigation tabs */}
-            {isPaused && !gameOver && (
+            {/* Pause Menu with side navigation tabs — rendered via portal to escape will-change:transform containing block */}
+            {isPaused && !gameOver && typeof document !== 'undefined' && createPortal(
                 <PauseMenu
                     score={score}
                     onResume={onResume || onRestart}
@@ -244,7 +246,8 @@ export const Board = React.memo(function Board({
                     defaultKeybinds={defaultKeybinds || fallbackKeybinds}
                     featureSettings={featureSettings}
                     onFeatureSettingsUpdate={onFeatureSettingsUpdate}
-                />
+                />,
+                document.body
             )}
         </div>
     );

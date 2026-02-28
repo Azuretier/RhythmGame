@@ -1180,8 +1180,18 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     }
   }, [gameOver, onGameEnd]);
 
-  // Reset beat timing when unpausing to avoid desync
+  // Clear key states on pause to prevent ghost movement on unpause,
+  // and reset beat timing when unpausing to avoid desync
   useEffect(() => {
+    if (isPaused && isPlaying) {
+      // Clear all held key states so DAS/ARR/soft drop don't fire on unpause
+      const emptyKeyState = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+      keyStatesRef.current.left = { ...emptyKeyState };
+      keyStatesRef.current.right = { ...emptyKeyState };
+      keyStatesRef.current.down = { ...emptyKeyState };
+      // Also clear mouse hold state
+      mouseHeldRef.current = false;
+    }
     if (!isPaused && isPlaying && !gameOver) {
       lastBeatRef.current = Date.now();
       // Reset lock delay timer on unpause to prevent instant lock from elapsed time
@@ -1189,7 +1199,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         lockStartTimeRef.current = performance.now();
       }
     }
-  }, [isPaused, isPlaying, gameOver, lastBeatRef]);
+  }, [isPaused, isPlaying, gameOver, lastBeatRef, keyStatesRef]);
 
   // Beat timer for rhythm game — branches by terrain phase via terrainPhaseRef
   // Uses refs for vfx.emit/spawnEnemies/updateEnemies to keep deps stable
