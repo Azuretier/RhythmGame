@@ -1508,5 +1508,80 @@
     "accentColor": "สีเน้น",
     "latest": "ล่าสุด",
     "goHome": "ไปหน้าแรก"
+  },
+  "gltfGenerator": {
+    "meta": {
+      "title": "GLTF Model Generator",
+      "description": "Create and export 3D models in GLTF/GLB format with an interactive scene editor"
+    },
+    "title": "GLTF Generator",
+    "objectCount": "objects",
+    "exportGltf": "Export .gltf",
+    "exportGlb": "Export .glb",
+    "exporting": "Exporting...",
+    "addShape": "Add Shape",
+    "sceneObjects": "Scene Objects",
+    "sceneCollection": "Scene Collection",
+    "noObjects": "No objects in scene",
+    "emptyScene": "Add shapes to start building your model",
+    "shortcutHint": "Use the Add menu or Shift+A",
+    "selectObject": "Select an object to edit",
+    "hide": "Hide",
+    "show": "Show",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "outliner": "Outliner",
+    "propertiesTab": "Properties",
+    "viewport": "3D Viewport",
+    "grid": "Grid",
+    "toggleGrid": "Toggle Grid",
+    "menu": {
+      "file": "File",
+      "edit": "Edit",
+      "add": "Add",
+      "newScene": "New Scene",
+      "selectAll": "Select All"
+    },
+    "shading": {
+      "wireframe": "Wireframe",
+      "solid": "Solid",
+      "material": "Material Preview",
+      "rendered": "Rendered"
+    },
+    "status": {
+      "objects": "Objects",
+      "location": "Location",
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "hideToggle": "Hide/Show",
+      "mode": {
+        "cursor": "Cursor",
+        "grab": "Move",
+        "rotate": "Rotate",
+        "scale": "Scale"
+      }
+    },
+    "shapes": {
+      "box": "Cube",
+      "sphere": "UV Sphere",
+      "cylinder": "Cylinder",
+      "cone": "Cone",
+      "torus": "Torus",
+      "plane": "Plane",
+      "icosahedron": "Ico Sphere",
+      "octahedron": "Octahedron"
+    },
+    "properties": {
+      "name": "Name",
+      "transform": "Transform",
+      "position": "Location",
+      "rotation": "Rotation",
+      "scale": "Scale",
+      "material": "Material",
+      "color": "Base Color",
+      "metalness": "Metallic",
+      "roughness": "Roughness",
+      "wireframe": "Wireframe"
+    }
   }
 }
