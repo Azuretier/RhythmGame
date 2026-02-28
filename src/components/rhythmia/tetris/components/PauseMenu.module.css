@@ -460,6 +460,8 @@
     flex-direction: column;
     width: 95vw;
     height: 90vh;
+    height: 90dvh;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 20px);
   }
 
   .sidebar {

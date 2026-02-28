@@ -7,6 +7,7 @@
 
 .container {
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
   background: #000000;
   color: white;

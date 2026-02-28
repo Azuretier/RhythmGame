@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "../globals.css";
 import React from 'react';
@@ -39,6 +39,12 @@ type Props = {
 export function generateStaticParams() {
     return routing.locales.map((locale) => ({ locale }));
 }
+
+// Viewport configuration — viewport-fit: cover enables safe area inset CSS env vars
+// so game touch controls aren't hidden behind device notches/home indicators
+export const viewport: Viewport = {
+    viewportFit: 'cover',
+};
 
 // Generate localized metadata for SEO
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

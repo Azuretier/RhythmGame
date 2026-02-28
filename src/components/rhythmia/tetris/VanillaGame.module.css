@@ -10,6 +10,7 @@
 
 .body {
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   touch-action: manipulation;
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
@@ -56,20 +57,25 @@
 .game {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   gap: 10px;
   position: relative;
   z-index: 1;
 }
 
-/* All game UI children render above the Galaxy TD 3D ring (position: fixed, z-index: 2) */
+/* Game UI children render above the Galaxy TD 3D ring (position: fixed, z-index: 2).
+   Using pointer-events: auto ensures children remain interactive even if a
+   full-screen canvas overlay sits between them and the game container. */
 .game > * {
   position: relative;
   z-index: 3;
+  pointer-events: auto;
 }
 
 /* Score display */
@@ -494,6 +500,7 @@
   grid-template-rows: repeat(2, 1fr);
   gap: 8px;
   width: min(280px, 85vw);
+  z-index: 10;
   padding: 12px;
   background: rgba(0, 0, 0, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -2145,8 +2152,8 @@
 
   .controls {
     position: fixed;
-    bottom: 5px;
-    right: 5px;
+    bottom: calc(5px + env(safe-area-inset-bottom, 0px));
+    right: calc(5px + env(safe-area-inset-right, 0px));
     width: 140px;
     grid-template-columns: repeat(3, 1fr);
     padding: 6px;
@@ -2212,8 +2219,8 @@
 
   .controls {
     position: fixed;
-    bottom: 10px;
-    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
     width: 180px;
   }
 

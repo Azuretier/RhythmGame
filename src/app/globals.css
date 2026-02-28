@@ -14,6 +14,7 @@ body {
     max-width: 100vw;
     overflow: hidden;
     height: 100%;
+    height: 100dvh;
 }
 
 /* Skin CSS variables — defaults (Azure theme) */

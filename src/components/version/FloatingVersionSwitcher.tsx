@@ -39,7 +39,7 @@ export default function FloatingVersionSwitcher() {
       initial={{ y: 16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.5, duration: 0.35, ease: 'easeOut' }}
-      className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none"
+      className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none pb-[env(safe-area-inset-bottom)]"
     >
       <div className="mx-auto max-w-xl px-3 pb-3 pointer-events-auto">
         <div className="bg-black/60 backdrop-blur-xl rounded-2xl border border-white/[0.08] shadow-2xl">
