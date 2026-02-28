@@ -331,7 +331,7 @@ function VoxelBackgroundStage({ mapWidth, mapHeight }: { mapWidth: number; mapHe
       castShadow
       receiveShadow
     >
-      <boxGeometry args={[0.95, 0.95, 0.95]} />
+      <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial roughness={0.75} metalness={0.05} flatShading />
     </instancedMesh>
   );
@@ -433,7 +433,7 @@ function TerrainGrid({ grid, onCellClick, hoveredCell, canPlace }: {
             onClick={(e) => { e.stopPropagation(); onCellClick(cell.x, cell.z); }}
             onPointerEnter={(e) => e.stopPropagation()}
           >
-            <boxGeometry args={[CELL_SIZE * 0.98, height, CELL_SIZE * 0.98]} />
+            <boxGeometry args={[CELL_SIZE, height, CELL_SIZE]} />
             <meshStandardMaterial
               color={color}
               roughness={cell.terrain === 'water' ? 0.2 : 0.8}
