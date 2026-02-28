@@ -1543,5 +1543,9 @@
         "description": "Desbloquea logros en todos los modos de juego. Sigue tu progreso y gana recompensas."
       }
     }
+  },
+  "pageTab": {
+    "home": "Inicio",
+    "rhythmia": "Rhythmia"
   }
 }

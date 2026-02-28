@@ -1543,5 +1543,9 @@
         "description": "Débloquez des succès dans tous les modes de jeu. Suivez votre progression et gagnez des récompenses."
       }
     }
+  },
+  "pageTab": {
+    "home": "Accueil",
+    "rhythmia": "Rhythmia"
   }
 }
