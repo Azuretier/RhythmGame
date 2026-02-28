@@ -1502,5 +1502,10 @@
     "pill": "Pilulă",
     "soft": "Moale",
     "sharp": "Ascuțit"
+  },
+  "version": {
+    "selectVersion": "Versiunea site-ului",
+    "accentColor": "Culoare accent",
+    "latest": "cea mai recentă"
   }
 }

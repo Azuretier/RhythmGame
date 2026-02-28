@@ -1502,5 +1502,10 @@
     "pill": "Pillola",
     "soft": "Morbido",
     "sharp": "Nitido"
+  },
+  "version": {
+    "selectVersion": "Versione del sito",
+    "accentColor": "Colore accento",
+    "latest": "ultima"
   }
 }

@@ -1502,5 +1502,10 @@
     "pill": "Pilulka",
     "soft": "Měkký",
     "sharp": "Ostrý"
+  },
+  "version": {
+    "selectVersion": "Verze webu",
+    "accentColor": "Barva akcentu",
+    "latest": "nejnovější"
   }
 }

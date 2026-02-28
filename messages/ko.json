@@ -1502,5 +1502,10 @@
     "pill": "알약형",
     "soft": "부드러운",
     "sharp": "날카로운"
+  },
+  "version": {
+    "selectVersion": "사이트 버전",
+    "accentColor": "강조 색상",
+    "latest": "최신"
   }
 }

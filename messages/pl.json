@@ -1502,5 +1502,10 @@
     "pill": "Pigułka",
     "soft": "Miękki",
     "sharp": "Ostry"
+  },
+  "version": {
+    "selectVersion": "Wersja strony",
+    "accentColor": "Kolor akcentu",
+    "latest": "najnowsza"
   }
 }

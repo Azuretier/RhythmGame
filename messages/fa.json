@@ -1502,5 +1502,10 @@
     "pill": "قرص",
     "soft": "نرم",
     "sharp": "تیز"
+  },
+  "version": {
+    "selectVersion": "نسخه سایت",
+    "accentColor": "رنگ تاکیدی",
+    "latest": "آخرین"
   }
 }

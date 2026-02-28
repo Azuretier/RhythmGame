@@ -1502,5 +1502,10 @@
       "cndEncore": "Rappel",
       "cndEncoreDesc": "Une fois par partie, revenez d'un KO avec une explosion de beat"
     }
+  },
+  "version": {
+    "selectVersion": "Version du site",
+    "accentColor": "Couleur d'accent",
+    "latest": "dernière"
   }
 }

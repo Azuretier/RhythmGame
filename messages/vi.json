@@ -1502,5 +1502,10 @@
     "pill": "Viên thuốc",
     "soft": "Mềm mại",
     "sharp": "Sắc nét"
+  },
+  "version": {
+    "selectVersion": "Phiên bản trang",
+    "accentColor": "Màu nhấn",
+    "latest": "mới nhất"
   }
 }

@@ -1502,5 +1502,10 @@
     "pill": "椭圆",
     "soft": "柔和",
     "sharp": "锐利"
+  },
+  "version": {
+    "selectVersion": "网站版本",
+    "accentColor": "主题色",
+    "latest": "最新"
   }
 }
