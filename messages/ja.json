@@ -1556,21 +1556,54 @@
     "exporting": "エクスポート中...",
     "addShape": "シェイプを追加",
     "sceneObjects": "シーンオブジェクト",
+    "sceneCollection": "シーンコレクション",
     "noObjects": "シーンにオブジェクトがありません",
     "emptyScene": "シェイプを追加してモデルの構築を開始",
+    "shortcutHint": "追加メニューまたは Shift+A を使用",
     "selectObject": "編集するオブジェクトを選択",
     "hide": "非表示",
     "show": "表示",
     "duplicate": "複製",
     "delete": "削除",
+    "outliner": "アウトライナー",
+    "propertiesTab": "プロパティ",
+    "viewport": "3Dビューポート",
+    "grid": "グリッド",
+    "toggleGrid": "グリッド切替",
+    "menu": {
+      "file": "ファイル",
+      "edit": "編集",
+      "add": "追加",
+      "newScene": "新規シーン",
+      "selectAll": "全選択"
+    },
+    "shading": {
+      "wireframe": "ワイヤーフレーム",
+      "solid": "ソリッド",
+      "material": "マテリアルプレビュー",
+      "rendered": "レンダー"
+    },
+    "status": {
+      "objects": "オブジェクト",
+      "location": "位置",
+      "delete": "削除",
+      "duplicate": "複製",
+      "hideToggle": "表示切替",
+      "mode": {
+        "cursor": "カーソル",
+        "grab": "移動",
+        "rotate": "回転",
+        "scale": "スケール"
+      }
+    },
     "shapes": {
-      "box": "ボックス",
-      "sphere": "球体",
+      "box": "キューブ",
+      "sphere": "UV球",
       "cylinder": "シリンダー",
       "cone": "コーン",
       "torus": "トーラス",
       "plane": "プレーン",
-      "icosahedron": "正二十面体",
+      "icosahedron": "ICO球",
       "octahedron": "正八面体"
     },
     "properties": {
@@ -1580,8 +1613,8 @@
       "rotation": "回転",
       "scale": "スケール",
       "material": "マテリアル",
-      "color": "カラー",
-      "metalness": "メタルネス",
+      "color": "ベースカラー",
+      "metalness": "メタリック",
       "roughness": "ラフネス",
       "wireframe": "ワイヤーフレーム"
     }
