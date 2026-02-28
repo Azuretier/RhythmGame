@@ -127,6 +127,29 @@
   user-select: none;
 }
 
+/* Home button in bottom bar */
+.homeButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 10px;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.homeButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+}
+
 /* Menu container */
 .menuContainer {
   display: flex;

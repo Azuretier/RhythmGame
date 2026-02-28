@@ -46,9 +46,10 @@ export default function MinecraftPanorama() {
 
     // Slow rotation angle
     let rotationY = 0;
+    let animationId: number;
 
     const animate = () => {
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
       rotationY += 0.0004;
 
       // Rotate camera around the Y axis for panorama rotation
@@ -68,6 +69,7 @@ export default function MinecraftPanorama() {
     window.addEventListener("resize", handleResize);
 
     return () => {
+      cancelAnimationFrame(animationId);
       window.removeEventListener("resize", handleResize);
       if (mountRef.current) {
         mountRef.current.removeChild(renderer.domElement);

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
+import { Home } from "lucide-react";
+import { useVersion } from "@/lib/version/context";
 import styles from "./V1_0_2_UI.module.css";
 import MinecraftBlogPage from "./MinecraftBlogPage";
 
@@ -29,10 +31,16 @@ const SPLASH_TEXTS = [
  * Sub-screens (blog, etc.) render as in-app panels over the panorama.
  */
 export default function V1_0_2_UI() {
+  const { setVersion } = useVersion();
   const [screen, setScreen] = useState<Screen>("main");
   const [splash] = useState(
     () => SPLASH_TEXTS[Math.floor(Math.random() * SPLASH_TEXTS.length)]
   );
+
+  const handleGoToHomepage = () => {
+    setVersion("current");
+    window.location.href = "/";
+  };
 
   const handleNavigate = (href: string, disabled?: boolean) => {
     if (disabled) return;
@@ -100,11 +108,11 @@ export default function V1_0_2_UI() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className={styles.menuContainer}
             >
-              {/* Play Game - full width primary button */}
+              {/* Play Game - full width primary button → switches to Rhythmia lobby */}
               <button
                 className={styles.mcButtonPrimary}
                 style={{ width: "100%" }}
-                onClick={() => handleNavigate("/rhythmia")}
+                onClick={handleGoToHomepage}
               >
                 Play Game
               </button>
@@ -113,7 +121,7 @@ export default function V1_0_2_UI() {
               <div className={styles.menuRow}>
                 <button
                   className={styles.mcButton}
-                  onClick={() => handleNavigate("/rhythmia")}
+                  onClick={handleGoToHomepage}
                 >
                   Minigames
                 </button>
@@ -154,6 +162,14 @@ export default function V1_0_2_UI() {
 
       {/* Bottom info bar */}
       <div className={styles.bottomBar}>
+        <button
+          className={styles.homeButton}
+          onClick={handleGoToHomepage}
+          aria-label="Go to Homepage"
+        >
+          <Home size={14} />
+          <span>Go to Homepage</span>
+        </button>
         <span className={styles.bottomBarText}>
           azuretier.net v1.0.2
         </span>
