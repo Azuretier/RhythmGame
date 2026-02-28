@@ -231,40 +231,46 @@ export default function GltfGenerator() {
   return (
     <div className="fixed inset-0 flex flex-col select-none" style={{ background: '#1D1D1D', color: '#ccc' }}>
       {/* Menu Bar */}
-      <MenuBar
-        onAdd={addObject}
-        onExportGltf={() => exportGltf(false)}
-        onExportGlb={() => exportGltf(true)}
-        onClearScene={clearScene}
-        onDelete={selectedId ? () => deleteObject(selectedId) : undefined}
-        onDuplicate={selectedId ? () => duplicateObject(selectedId) : undefined}
-        canExport={objects.length > 0 && !exporting}
-        exporting={exporting}
-      />
+      <div className="relative z-20 shrink-0">
+        <MenuBar
+          onAdd={addObject}
+          onExportGltf={() => exportGltf(false)}
+          onExportGlb={() => exportGltf(true)}
+          onClearScene={clearScene}
+          onDelete={selectedId ? () => deleteObject(selectedId) : undefined}
+          onDuplicate={selectedId ? () => duplicateObject(selectedId) : undefined}
+          canExport={objects.length > 0 && !exporting}
+          exporting={exporting}
+        />
+      </div>
 
       {/* Main workspace */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0">
         {/* Left toolbar */}
-        <Toolbar
-          transformMode={transformMode}
-          onSetTransformMode={setTransformMode}
-        />
+        <div className="relative z-10 shrink-0">
+          <Toolbar
+            transformMode={transformMode}
+            onSetTransformMode={setTransformMode}
+          />
+        </div>
 
         {/* 3D Viewport — takes up all remaining space */}
-        <div className="flex-1 flex flex-col overflow-hidden" style={{ background: '#1D1D1D' }}>
-          <ViewportHeader
-            shadingMode={shadingMode}
-            onSetShadingMode={setShadingMode}
-            showGrid={showGrid}
-            onToggleGrid={() => setShowGrid(!showGrid)}
-          />
-          <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
+          <div className="relative z-10 shrink-0">
+            <ViewportHeader
+              shadingMode={shadingMode}
+              onSetShadingMode={setShadingMode}
+              showGrid={showGrid}
+              onToggleGrid={() => setShowGrid(!showGrid)}
+            />
+          </div>
+          <div className="flex-1 min-h-0 relative">
             <Canvas
               camera={{ position: [5, 3.5, 5], fov: 45 }}
               shadows
               onCreated={({ scene }) => { sceneRef.current = scene; }}
               onPointerMissed={() => setSelectedId(null)}
-              style={{ position: 'absolute', inset: 0, background: '#191919' }}
+              style={{ background: '#191919' }}
             >
               <Suspense fallback={null}>
                 <SceneContent
@@ -277,7 +283,7 @@ export default function GltfGenerator() {
               </Suspense>
             </Canvas>
             {objects.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <div className="text-center">
                   <p className="text-[#555] text-sm">{t('emptyScene')}</p>
                   <p className="text-[#444] text-xs mt-1">{t('shortcutHint')}</p>
@@ -288,7 +294,7 @@ export default function GltfGenerator() {
         </div>
 
         {/* Right sidebar: Outliner + Properties */}
-        <div className="flex flex-col shrink-0 overflow-hidden" style={{ width: 280, background: '#303030', borderLeft: '1px solid #1a1a1a' }}>
+        <div className="relative z-10 flex flex-col shrink-0" style={{ width: 280, background: '#303030', borderLeft: '1px solid #1a1a1a' }}>
           {/* Tab headers */}
           <div className="flex shrink-0" style={{ background: '#2a2a2a', borderBottom: '1px solid #1a1a1a' }}>
             <button
@@ -342,11 +348,13 @@ export default function GltfGenerator() {
       </div>
 
       {/* Status bar */}
-      <StatusBar
-        objectCount={objects.length}
-        selectedObject={selectedObject}
-        transformMode={transformMode}
-      />
+      <div className="relative z-20 shrink-0">
+        <StatusBar
+          objectCount={objects.length}
+          selectedObject={selectedObject}
+          transformMode={transformMode}
+        />
+      </div>
     </div>
   );
 }
