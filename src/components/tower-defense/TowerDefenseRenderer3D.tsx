@@ -12,6 +12,8 @@ import { TOWER_DEFS, ENEMY_DEFS } from '@/types/tower-defense';
 import { createMobMesh, animateMob, disposeMobGroup, disposeSharedMobResources } from '@/components/rhythmia/tetris/minecraft-mobs';
 import type { MobMeshData } from '@/components/rhythmia/tetris/minecraft-mobs';
 import type { TDEnemyType } from '@/components/rhythmia/tetris/types';
+import { createProjectileMesh, animateProjectile, disposeProjectileGroup, disposeSharedProjectileResources } from './td-projectiles';
+import type { ProjectileMeshData } from './td-projectiles';
 
 // ===== Tower-to-Minecraft-Mob mapping =====
 const TOWER_MOB_MAP: Record<TowerType, TDEnemyType> = {
@@ -720,30 +722,45 @@ function EnemiesGroup({ enemies, selectedEnemyId, onSelectEnemy }: {
   );
 }
 
-// ===== Projectiles =====
+// ===== Projectiles (Minecraft-themed) =====
 function ProjectileMesh({ projectile }: { projectile: Projectile }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const def = TOWER_DEFS[projectile.towerType];
+  const groupRef = useRef<THREE.Group>(null);
+  const projRef = useRef<ProjectileMeshData | null>(null);
+  const prevPos = useRef(new THREE.Vector3(projectile.position.x, projectile.position.y, projectile.position.z));
+  const velocity = useRef(new THREE.Vector3());
 
-  useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.position.set(projectile.position.x, projectile.position.y, projectile.position.z);
+  const projData = useMemo(() => {
+    const data = createProjectileMesh(projectile.towerType);
+    return data;
+  }, [projectile.towerType]);
+
+  useEffect(() => {
+    projRef.current = projData;
+    return () => {
+      disposeProjectileGroup(projData);
+      projRef.current = null;
+    };
+  }, [projData]);
+
+  useFrame((state) => {
+    if (!groupRef.current || !projRef.current) return;
+    const { x, y, z } = projectile.position;
+    groupRef.current.position.set(x, y, z);
+
+    // Compute velocity direction for arrow orientation
+    velocity.current.set(x - prevPos.current.x, y - prevPos.current.y, z - prevPos.current.z);
+    if (velocity.current.lengthSq() > 0.0001) {
+      velocity.current.normalize();
     }
+    prevPos.current.set(x, y, z);
+
+    animateProjectile(projRef.current, state.clock.elapsedTime, velocity.current);
   });
 
-  const size = projectile.towerType === 'cannon' ? 0.12 :
-               projectile.towerType === 'lightning' ? 0.06 :
-               projectile.towerType === 'sniper' ? 0.05 : 0.08;
-
   return (
-    <mesh ref={meshRef} position={[projectile.position.x, projectile.position.y, projectile.position.z]}>
-      <sphereGeometry args={[size, 6, 6]} />
-      <meshStandardMaterial
-        color={def.color}
-        emissive={def.color}
-        emissiveIntensity={2}
-      />
-    </mesh>
+    <group ref={groupRef} position={[projectile.position.x, projectile.position.y, projectile.position.z]}>
+      <primitive object={projData.group} />
+    </group>
   );
 }
 
@@ -972,10 +989,11 @@ function GameScene({ state, onCellClick, onSelectTower, onSelectEnemy, hoveredCe
   const planeRef = useRef<THREE.Mesh>(null);
   const { raycaster, camera, pointer } = useThree();
 
-  // Cleanup shared mob resources on unmount
+  // Cleanup shared mob + projectile resources on unmount
   useEffect(() => {
     return () => {
       disposeSharedMobResources();
+      disposeSharedProjectileResources();
     };
   }, []);
 
