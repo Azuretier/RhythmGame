@@ -796,15 +796,37 @@ export default function BoardRenderer3D({
   const facingRef = useRef<Direction>('up');
 
   // Continuous key polling — eliminates browser keyboard repeat delay
-  type RawInput = 'forward' | 'backward' | 'left' | 'right';
-  const pressedDirs = useRef(new Set<RawInput>());
-  const lastMoveDirRef = useRef<RawInput | null>(null);
+  const pressedInputs = useRef(new Set<'forward' | 'backward' | 'left' | 'right'>());
+  const lastMoveInputRef = useRef<'forward' | 'backward' | 'left' | 'right' | null>(null);
   const lastMoveTimeRef = useRef(0);
-  const MOVE_POLL_MS = 100; // match server cooldown (1 tick = 100ms)
+  const MOVE_POLL_MS = 100;
 
   useEffect(() => {
-    // Map keyboard key to raw input direction
-    const keyToRawInput = (key: string): 'forward' | 'backward' | 'left' | 'right' | null => {
+    const fireMove = (rawInput: 'forward' | 'backward' | 'left' | 'right') => {
+      if (cameraMode === 'fps') {
+        const facing = facingRef.current;
+        let worldDir: Direction;
+        switch (rawInput) {
+          case 'forward':  worldDir = facing; break;
+          case 'backward': worldDir = OPPOSITE[facing]; break;
+          case 'left':     worldDir = TURN_LEFT[facing]; break;
+          case 'right':    worldDir = TURN_RIGHT[facing]; break;
+        }
+        if (rawInput !== 'backward') {
+          facingRef.current = worldDir;
+        }
+        onMove(worldDir);
+      } else {
+        const dirMap: Record<string, Direction> = { forward: 'up', backward: 'down', left: 'left', right: 'right' };
+        const dir = dirMap[rawInput];
+        facingRef.current = dir;
+        onMove(dir);
+      }
+      lastMoveInputRef.current = rawInput;
+      lastMoveTimeRef.current = performance.now();
+    };
+
+    const keyToInput = (key: string): 'forward' | 'backward' | 'left' | 'right' | null => {
       switch (key) {
         case 'ArrowUp': case 'w': case 'W': return 'forward';
         case 'ArrowDown': case 's': case 'S': return 'backward';
@@ -814,69 +836,38 @@ export default function BoardRenderer3D({
       }
     };
 
-    // Translate raw input to world direction (FPS-relative or absolute)
-    const resolveDir = (raw: 'forward' | 'backward' | 'left' | 'right'): Direction => {
-      if (cameraMode === 'fps') {
-        const facing = facingRef.current;
-        switch (raw) {
-          case 'forward':  return facing;
-          case 'backward': return OPPOSITE[facing];
-          case 'left':     return TURN_LEFT[facing];
-          case 'right':    return TURN_RIGHT[facing];
-        }
-      }
-      // Board mode: absolute direction
-      const dirMap: Record<string, Direction> = { forward: 'up', backward: 'down', left: 'left', right: 'right' };
-      return dirMap[raw];
-    };
-
-    const fireMove = (rawInput: 'forward' | 'backward' | 'left' | 'right') => {
-      const worldDir = resolveDir(rawInput);
-      // In FPS mode, update facing for forward/left/right (not backward)
-      if (cameraMode === 'fps' && rawInput !== 'backward') {
-        facingRef.current = worldDir;
-      } else {
-        facingRef.current = worldDir;
-      }
-      lastMoveDirRef.current = rawInput;
-      onMove(worldDir);
-      lastMoveTimeRef.current = performance.now();
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      const raw = keyToRawInput(e.key);
-      if (!raw) return;
+      const rawInput = keyToInput(e.key);
+      if (!rawInput) return;
       e.preventDefault();
-      const wasEmpty = pressedDirs.current.size === 0;
-      pressedDirs.current.add(raw);
-      // Fire immediately on fresh press (no waiting for poll interval)
-      if (wasEmpty || raw !== lastMoveDirRef.current) {
+      const wasEmpty = pressedInputs.current.size === 0;
+      pressedInputs.current.add(rawInput);
+      // Fire immediately on fresh press or direction change (no waiting for poll interval)
+      if (wasEmpty || rawInput !== lastMoveInputRef.current) {
         const now = performance.now();
         if (now - lastMoveTimeRef.current >= MOVE_POLL_MS) {
-          fireMove(raw);
+          fireMove(rawInput);
         }
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      const raw = keyToRawInput(e.key);
-      if (raw) pressedDirs.current.delete(raw);
+      const rawInput = keyToInput(e.key);
+      if (rawInput) pressedInputs.current.delete(rawInput);
     };
 
     const handleBlur = () => {
-      pressedDirs.current.clear();
+      pressedInputs.current.clear();
     };
 
-    // Poll pressed keys at ~60fps, send move when cooldown allows
     const pollInterval = setInterval(() => {
-      if (pressedDirs.current.size === 0) return;
+      if (pressedInputs.current.size === 0) return;
       const now = performance.now();
       if (now - lastMoveTimeRef.current < MOVE_POLL_MS) return;
-      // Use the most recently pressed raw input (last in set)
-      let raw: 'forward' | 'backward' | 'left' | 'right' | null = null;
-      for (const d of pressedDirs.current) raw = d;
-      if (raw) fireMove(raw);
+      let input: 'forward' | 'backward' | 'left' | 'right' | null = null;
+      for (const i of pressedInputs.current) input = i;
+      if (input) fireMove(input);
     }, 16);
 
     window.addEventListener('keydown', handleKeyDown);
@@ -916,7 +907,6 @@ export default function BoardRenderer3D({
     }
   }, [onMove, cameraMode]);
 
-  // D-pad hold-to-move refs
   const dpadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const clearDpadInterval = useCallback(() => {
     if (dpadIntervalRef.current) { clearInterval(dpadIntervalRef.current); dpadIntervalRef.current = null; }
