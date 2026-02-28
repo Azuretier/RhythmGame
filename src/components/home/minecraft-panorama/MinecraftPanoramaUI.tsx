@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVersion } from "@/lib/version/context";
@@ -44,6 +44,15 @@ export default function MinecraftPanoramaUI() {
     () => SPLASH_TEXTS[Math.floor(Math.random() * SPLASH_TEXTS.length)]
   );
 
+  // Track whether the main screen has been shown before.
+  // On first mount, skip entrance animations so content is visible immediately
+  // (prevents a black screen flash while animations run from opacity: 0).
+  // On re-mount (returning from blog), the entrance animations play normally.
+  const hasRenderedOnce = useRef(false);
+  useEffect(() => {
+    hasRenderedOnce.current = true;
+  }, []);
+
   const handlePlayGame = () => {
     setVersion("current");
     window.location.href = "/";
@@ -72,7 +81,7 @@ export default function MinecraftPanoramaUI() {
           >
             {/* Logo section */}
             <motion.div
-              initial={{ y: -30, opacity: 0 }}
+              initial={hasRenderedOnce.current ? { y: -30, opacity: 0 } : false}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
               className={styles.logoSection}
@@ -82,7 +91,7 @@ export default function MinecraftPanoramaUI() {
 
               {/* Splash text */}
               <motion.span
-                initial={{ scale: 0, opacity: 0 }}
+                initial={hasRenderedOnce.current ? { scale: 0, opacity: 0 } : false}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.6, duration: 0.4, type: "spring" }}
                 className={styles.splashText}
@@ -93,7 +102,7 @@ export default function MinecraftPanoramaUI() {
 
             {/* Console edition menu buttons */}
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
+              initial={hasRenderedOnce.current ? { y: 20, opacity: 0 } : false}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               className={styles.menuContainer}
