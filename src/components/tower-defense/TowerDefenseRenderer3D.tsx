@@ -50,10 +50,8 @@ const ENEMY_MOB_SCALE: Record<EnemyType, number> = {
 };
 
 const TOWER_MOB_SCALE = 0.4;
-// Frost slime model (0.7 wide) scaled down to match magma cube base (0.55 wide)
-const TOWER_MOB_SCALE_OVERRIDES: Partial<Record<TowerType, number>> = {
-  frost: 0.4 * (0.55 / 0.7), // ≈ 0.314
-};
+// Slime model now matches magma cube dimensions — no overrides needed
+const TOWER_MOB_SCALE_OVERRIDES: Partial<Record<TowerType, number>> = {};
 
 // ===== Error Boundary =====
 interface ErrorBoundaryState { hasError: boolean; error: string | null }
@@ -610,17 +608,17 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
   const facingAngleRef = useRef<number>(0);
   const def = TOWER_DEFS[tower.type];
   const mobType = TOWER_MOB_MAP[tower.type];
-  const isMagma = tower.type === 'cannon';
+  const isStackable = tower.type === 'cannon' || tower.type === 'frost';
   const mobScale = TOWER_MOB_SCALE_OVERRIDES[tower.type] ?? TOWER_MOB_SCALE;
 
-  // Magma cube: segments = tower level (1→1 cube, 2→2 segments, 3→full 3-segment)
+  // Stackable mobs (magma cube, slime): segments = tower level (1→1, 2→2, 3→3)
   const mobData = useMemo(() => {
-    const data = isMagma
+    const data = isStackable
       ? createMobMesh(mobType, { segments: tower.level })
       : createMobMesh(mobType);
     data.group.scale.setScalar(mobScale);
     return data;
-  }, [mobType, isMagma, tower.level, mobScale]);
+  }, [mobType, isStackable, tower.level, mobScale]);
 
   useEffect(() => {
     mobRef.current = mobData;
