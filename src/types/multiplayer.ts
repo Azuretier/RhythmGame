@@ -98,8 +98,10 @@ import type { ArenaClientMessage, ArenaServerMessage } from './arena';
 import type { MCClientMessage, MCServerMessage as MCBoardServerMessage } from './minecraft-board';
 import type { EoEClientMessage } from './echoes';
 import type { MWClientMessage } from './minecraft-world';
+import type { FPSClientMessage } from './fps-arena';
+import type { MSClientMessage } from './minecraft-switch';
 
-export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, MWClientMessage };
+export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, MWClientMessage, FPSClientMessage, MSClientMessage };
 
 export type ClientMessage =
   | CreateRoomMessage
@@ -118,6 +120,8 @@ export type ClientMessage =
   | MCClientMessage
   | MWClientMessage
   | EoEClientMessage
+  | FPSClientMessage
+  | MSClientMessage
   | SetProfileMessage
   | GetOnlineUsersMessage;
 

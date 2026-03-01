@@ -1,0 +1,613 @@
+/* ===== FPS Arena — Full Screen Container ===== */
+.container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+    cursor: none;
+}
+
+.container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* ===== Crosshair ===== */
+.crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 10;
+    user-select: none;
+}
+
+.crosshairInner {
+    position: relative;
+    width: 24px;
+    height: 24px;
+}
+
+.crosshairInner::before,
+.crosshairInner::after {
+    content: '';
+    position: absolute;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1px;
+}
+
+.crosshairInner::before {
+    /* horizontal */
+    top: 11px;
+    left: 0;
+    width: 24px;
+    height: 2px;
+}
+
+.crosshairInner::after {
+    /* vertical */
+    left: 11px;
+    top: 0;
+    width: 2px;
+    height: 24px;
+}
+
+/* dot center */
+.crosshairDot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 3px;
+    background: #ff4444;
+    border-radius: 50%;
+}
+
+/* ===== HUD ===== */
+.hud {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    z-index: 10;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.hudBottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 20px 16px 20px;
+}
+
+/* Left: health + armor */
+.healthPanel {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 10px 18px;
+}
+
+.healthIcon {
+    font-size: 20px;
+}
+
+.healthValue {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.healthOk {
+    color: #4ade80;
+}
+
+.healthLow {
+    color: #f59e0b;
+}
+
+.healthCrit {
+    color: #ef4444;
+}
+
+.armorValue {
+    font-size: 28px;
+    font-weight: 800;
+    color: #60a5fa;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Center: ammo */
+.ammoPanel {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 10px 18px;
+}
+
+.ammoCurrent {
+    font-size: 36px;
+    font-weight: 800;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+.ammoDivider {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.3);
+    font-weight: 300;
+}
+
+.ammoReserve {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Right: weapon info */
+.weaponPanel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 10px 18px;
+}
+
+.weaponName {
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.5px;
+}
+
+.weaponMoney {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4ade80;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ===== Top HUD: Score, FPS ===== */
+.hudTop {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    gap: 12px;
+    z-index: 10;
+    pointer-events: none;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.statBox {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 5px;
+    padding: 6px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.statLabel {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.statValue {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ===== Weapon Hotbar ===== */
+.hotbar {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.hotbarSlot {
+    width: 56px;
+    height: 56px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    position: relative;
+}
+
+.hotbarSlot:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.hotbarSlotActive {
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.hotbarKey {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.3);
+    font-family: monospace;
+}
+
+.hotbarName {
+    font-size: 7px;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+    margin-top: 1px;
+    max-width: 50px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ===== Kill Feed ===== */
+.killFeed {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 10;
+    pointer-events: none;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.killEntry {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: killSlide 0.3s ease-out;
+}
+
+@keyframes killSlide {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.killWeapon {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 10px;
+}
+
+.killVictim {
+    color: #ef4444;
+}
+
+/* ===== Hit Marker ===== */
+.hitMarker {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 11;
+    opacity: 0;
+}
+
+.hitMarkerActive {
+    animation: hitFlash 0.2s ease-out forwards;
+}
+
+@keyframes hitFlash {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.3);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.hitMarkerSvg line {
+    stroke: #fff;
+    stroke-width: 2;
+}
+
+/* ===== Damage Vignette ===== */
+.damageVignette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9;
+    opacity: 0;
+    transition: opacity 0.15s;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(200, 0, 0, 0.4) 100%);
+}
+
+.damageVignetteActive {
+    opacity: 1;
+    animation: damageFlash 0.5s ease-out forwards;
+}
+
+@keyframes damageFlash {
+    0% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+/* ===== Loading Screen ===== */
+.loadingScreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f23 100%);
+    z-index: 100;
+    gap: 24px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.loadingTitle {
+    font-size: 36px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.loadingSubtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.loadingBarOuter {
+    width: 320px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loadingBarInner {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #22d3ee);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.loadingText {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* ===== Overlay / Start Screen ===== */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    cursor: pointer;
+}
+
+.overlayContent {
+    text-align: center;
+    color: #fff;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.overlayContent h2 {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.overlayContent p {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.overlayControls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 16px 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.overlayControls p {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.overlayControls kbd {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Muzzle Flash ===== */
+.muzzleFlash {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 8;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255, 200, 50, 0.6) 0%, rgba(255, 150, 0, 0.3) 30%, transparent 70%);
+    opacity: 0;
+}
+
+.muzzleFlashActive {
+    animation: muzzle 0.06s ease-out forwards;
+}
+
+@keyframes muzzle {
+    0% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.2);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.8);
+    }
+}
+
+/* ===== Reload Indicator ===== */
+.reloadBar {
+    position: absolute;
+    bottom: 68px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    z-index: 12;
+}
+
+.reloadBarFill {
+    height: 100%;
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+    transition: width 0.05s linear;
+    border-radius: 2px;
+}
+
+.reloadText {
+    position: absolute;
+    bottom: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-weight: 700;
+    color: #fbbf24;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 12;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ===== Gun ViewModel (bottom center) ===== */
+.gunViewModel {
+    position: absolute;
+    bottom: -10px;
+    right: 40px;
+    z-index: 7;
+    pointer-events: none;
+    transform-origin: bottom right;
+    transition: transform 0.1s ease;
+}
+
+.gunViewModelBob {
+    animation: gunBob 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes gunBob {
+    0% {
+        transform: translateY(0) rotate(0);
+    }
+
+    100% {
+        transform: translateY(-3px) rotate(-0.5deg);
+    }
+}
+
+.gunViewModelRecoil {
+    animation: gunRecoil 0.08s ease-out;
+}
+
+@keyframes gunRecoil {
+    0% {
+        transform: translateY(-8px) rotate(-3deg);
+    }
+
+    100% {
+        transform: translateY(0) rotate(0);
+    }
+}

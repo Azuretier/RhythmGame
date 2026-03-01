@@ -1,0 +1,154 @@
+.container {
+  width: 100vw;
+  height: 100vh;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  position: relative;
+  overflow: hidden;
+  font-family: var(--font-theme-body, sans-serif);
+}
+
+.roleView {
+  width: 100%;
+  height: 100%;
+}
+
+/* Placeholder for unimplemented role views */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+}
+
+.placeholder h2 {
+  font-size: 2rem;
+  color: #007fff;
+}
+
+.placeholder p {
+  font-size: 1rem;
+  color: #666;
+}
+
+.hint {
+  font-size: 0.85rem !important;
+  color: #444 !important;
+  font-style: italic;
+}
+
+/* Countdown */
+.countdownOverlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.countdownNumber {
+  font-size: 8rem;
+  font-weight: bold;
+  color: #007fff;
+  text-shadow: 0 0 40px rgba(0, 127, 255, 0.5);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.countdownLabel {
+  font-size: 1.5rem;
+  color: #888;
+}
+
+.roleLabel {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.roleName {
+  color: #007fff;
+  font-weight: bold;
+}
+
+/* End screen */
+.endScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.victory {
+  font-size: 4rem;
+  color: #22c55e;
+  text-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
+}
+
+.defeat {
+  font-size: 4rem;
+  color: #ef4444;
+  text-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+}
+
+.endReason {
+  font-size: 1.2rem;
+  color: #888;
+  letter-spacing: 2px;
+}
+
+.endStats {
+  margin: 16px 0;
+}
+
+.teamScore {
+  font-size: 1.5rem;
+  color: #007fff;
+}
+
+.rankings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.rankRow {
+  display: flex;
+  gap: 16px;
+  font-size: 1rem;
+}
+
+.rankRole {
+  color: #888;
+  width: 100px;
+  text-align: right;
+}
+
+.rankName {
+  color: #e0e0e0;
+}
+
+.backButton {
+  margin-top: 32px;
+  padding: 12px 32px;
+  background: #007fff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.backButton:hover {
+  background: #0066cc;
+}

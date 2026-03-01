@@ -1,0 +1,386 @@
+.container {
+  width: 100vw;
+  height: 100vh;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  overflow-y: auto;
+  font-family: var(--font-theme-body, sans-serif);
+}
+
+.header {
+  text-align: center;
+  padding: 32px 16px 16px;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #007fff;
+  letter-spacing: 8px;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+.connectionStatus {
+  font-size: 0.85rem;
+  color: #22c55e;
+  margin-top: 8px;
+}
+
+.roomCodeDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 1.1rem;
+  color: #888;
+  margin-top: 8px;
+}
+
+.code {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #007fff;
+  letter-spacing: 4px;
+  font-family: var(--font-theme-mono, monospace);
+}
+
+.modeBadge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  background: rgba(0, 127, 255, 0.15);
+  color: #007fff;
+  border-radius: 4px;
+  letter-spacing: 1px;
+}
+
+/* Menu Content */
+.menuContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 16px 48px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.lobbyContent {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px 16px 48px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* Cards */
+.card {
+  background: #14141f;
+  border: 1px solid #222;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  color: #999;
+  margin: 0 0 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Inputs */
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #007fff;
+}
+
+/* Mode Selector */
+.modeSelector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.modeButton {
+  flex: 1;
+  padding: 10px;
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #888;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.modeActive {
+  border-color: #007fff;
+  color: #007fff;
+  background: rgba(0, 127, 255, 0.1);
+}
+
+/* Buttons */
+.primaryButton {
+  width: 100%;
+  padding: 12px;
+  background: #007fff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.primaryButton:hover { background: #0066cc; }
+.primaryButton:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.secondaryButton {
+  padding: 10px 24px;
+  background: transparent;
+  color: #888;
+  border: 1px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.readyButton {
+  padding: 10px 32px;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.unreadyButton {
+  padding: 10px 32px;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.startButton {
+  padding: 10px 32px;
+  background: #007fff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.startButton:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.joinButton {
+  padding: 6px 16px;
+  background: #007fff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.joinButton:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Room List */
+.roomList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roomItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #1a1a2e;
+  border-radius: 8px;
+}
+
+.roomInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.roomName {
+  font-size: 0.95rem;
+  color: #e0e0e0;
+}
+
+.roomMeta {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Role Grid */
+.roleGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.roleCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.roleCard:hover { border-color: #555; }
+
+.roleSelected {
+  border-color: #007fff !important;
+  background: rgba(0, 127, 255, 0.08);
+}
+
+.roleIcon {
+  font-size: 1.5rem;
+}
+
+.roleLabel {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #e0e0e0;
+}
+
+.roleDesc {
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.3;
+}
+
+/* Team Selector */
+.teamSelector {
+  display: flex;
+  gap: 12px;
+}
+
+.teamCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px;
+  background: #1a1a2e;
+  border: 2px solid #333;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.teamSelected {
+  background: rgba(0, 127, 255, 0.08);
+}
+
+.teamName {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.teamCount {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.teamPlayerList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.teamPlayerName {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+/* Player List */
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.playerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #1a1a2e;
+  border-radius: 6px;
+}
+
+.playerName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e0e0e0;
+}
+
+.hostBadge {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  background: #f59e0b;
+  color: #000;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.playerRole {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.readyYes {
+  font-size: 0.8rem;
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.readyNo {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 0;
+}

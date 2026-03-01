@@ -1,0 +1,141 @@
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Timer */
+.timer {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #e0e0e0;
+  font-family: var(--font-theme-mono, monospace);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 16px;
+  border-radius: 8px;
+}
+
+/* Team Scores */
+.teamScores {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.teamScore {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border-left: 3px solid;
+  border-radius: 4px;
+}
+
+.myTeam {
+  background: rgba(0, 127, 255, 0.15);
+}
+
+.teamName {
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.territoryCount {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #e0e0e0;
+}
+
+/* Minimap */
+.minimap {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  pointer-events: auto;
+}
+
+.minimapGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 24px);
+  grid-template-rows: repeat(4, 24px);
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.minimapCell {
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  transition: background-color 0.3s;
+}
+
+.fortIcon {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.45rem;
+}
+
+/* Resources */
+.resources {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 6px 16px;
+  border-radius: 8px;
+  pointer-events: auto;
+}
+
+.resourceItem {
+  font-size: 0.85rem;
+  color: #e0e0e0;
+  white-space: nowrap;
+}
+
+/* Effect Feed */
+.effectFeed {
+  position: absolute;
+  top: 60px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 250px;
+}
+
+.effectItem {
+  padding: 4px 10px;
+  background: rgba(0, 127, 255, 0.2);
+  border-left: 2px solid #007fff;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.75rem;
+  color: #88bbff;
+  animation: fadeIn 0.3s ease;
+}
+
+.effectType {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
