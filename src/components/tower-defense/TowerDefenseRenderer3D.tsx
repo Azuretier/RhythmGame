@@ -3,7 +3,7 @@
 import { Component, Suspense, useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Html, Sky, Billboard } from '@react-three/drei';
+import { OrbitControls, Html, Sky, Billboard, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type {
   GameState, Tower, Enemy, Projectile, GridCell, TowerType, EnemyType, Vec3,
@@ -801,13 +801,27 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
         </mesh>
       )}
 
-      {/* HP bar (billboarded to always face camera) */}
+      {/* HP bar with name and HP label (billboarded to always face camera) */}
       {hpPercent < 1 && (
         <Billboard position={[0, charHeight + 0.1, 0]} follow lockX={false} lockY={false} lockZ={false}>
+          {/* Name HP ♡ label above the gauge */}
+          <Text
+            position={[0, 0.1, 0.001]}
+            fontSize={0.07}
+            color="#ffffff"
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.004}
+            outlineColor="#000000"
+          >
+            {def.name} {Math.ceil(enemy.hp)} ♡
+          </Text>
+          {/* Background bar */}
           <mesh position={[0, 0, 0]}>
             <planeGeometry args={[0.6, 0.08]} />
             <meshBasicMaterial color="#1f2937" side={THREE.DoubleSide} />
           </mesh>
+          {/* Fill bar */}
           <mesh position={[(hpPercent - 1) * 0.3, 0, 0.001]}>
             <planeGeometry args={[0.6 * hpPercent, 0.06]} />
             <meshBasicMaterial
