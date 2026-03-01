@@ -7,7 +7,7 @@ import { Block, BlockType, BLOCK_TRANSPARENT } from './textures';
 import { createTextureAtlas } from './textures';
 import { generateWorld, WorldData, WORLD_WIDTH, WORLD_DEPTH, WORLD_HEIGHT, SEA_LEVEL, CHUNK_SIZE } from './terrain';
 import { buildChunkGeometry } from './chunk-builder';
-import { useMinecraftWorldSocket } from '@/hooks/useMinecraftWorldSocket';
+import { useMinecraftWorldSocket, BlockChangeEvent } from '@/hooks/useMinecraftWorldSocket';
 import type { MWPlayerPosition } from '@/types/minecraft-world';
 import { BlockInventory, PLACEABLE_BLOCKS } from './BlockInventory';
 import styles from './MinecraftWorld.module.css';
@@ -469,7 +469,15 @@ export default function MinecraftWorld() {
       }
     }
 
-    /** Break a block (left-click) */
+    /** Apply a block change to the local world (called from server broadcast) */
+    function applyBlockChange(x: number, y: number, z: number, blockType: number) {
+      if (!worldRef.current) return;
+      if (x < 0 || x >= WORLD_WIDTH || y < 0 || y >= WORLD_HEIGHT || z < 0 || z >= WORLD_DEPTH) return;
+      worldRef.current.setBlock(x, y, z, blockType as BlockType);
+      rebuildChunkAt(x, y, z);
+    }
+
+    /** Break a block (left-click) — sends to server, server broadcasts back */
     function breakBlock() {
       if (!worldRef.current) return;
       const hit = raycastBlock();
@@ -477,11 +485,11 @@ export default function MinecraftWorld() {
       const [bx, by, bz] = hit.hitPos;
       // Don't break bedrock
       if (worldRef.current.getBlock(bx, by, bz) === Block.Bedrock) return;
-      worldRef.current.setBlock(bx, by, bz, Block.Air as BlockType);
-      rebuildChunkAt(bx, by, bz);
+      // Send to server — the server will broadcast mw_block_changed to all clients (including us)
+      mp.sendBreakBlock(bx, by, bz);
     }
 
-    /** Place a block (right-click) */
+    /** Place a block (right-click) — sends to server, server broadcasts back */
     function placeBlock(blockType: BlockType) {
       if (!worldRef.current || blockType === Block.Air) return;
       const hit = raycastBlock();
@@ -495,9 +503,14 @@ export default function MinecraftWorld() {
       if (Math.floor(camPos.x) === px && Math.floor(camPos.z) === pz) {
         if (py === Math.floor(playerFeetY) || py === Math.floor(playerFeetY) + 1) return;
       }
-      worldRef.current.setBlock(px, py, pz, blockType);
-      rebuildChunkAt(px, py, pz);
+      // Send to server — the server will broadcast mw_block_changed to all clients (including us)
+      mp.sendPlaceBlock(px, py, pz, blockType);
     }
+
+    // Register block change callback so server-broadcast changes update the 3D world
+    mp.onBlockChange((event: BlockChangeEvent) => {
+      applyBlockChange(event.x, event.y, event.z, event.blockType);
+    });
 
     // Store placeBlock/breakBlock refs for event handlers
     let currentSelectedBlock: BlockType | null = null;
@@ -559,6 +572,46 @@ export default function MinecraftWorld() {
     // ====== Finish Setup (called after chunks built) ======
     function finishSetup(world: WorldData) {
       if (disposed) return;
+
+      // Replay any pending block changes from reconnection
+      const pendingChanges = mp.consumePendingBlockChanges();
+      if (pendingChanges.length > 0) {
+        for (const change of pendingChanges) {
+          if (change.x >= 0 && change.x < WORLD_WIDTH &&
+              change.y >= 0 && change.y < WORLD_HEIGHT &&
+              change.z >= 0 && change.z < WORLD_DEPTH) {
+            world.setBlock(change.x, change.y, change.z, change.blockType as BlockType);
+          }
+        }
+        // Rebuild all affected chunks
+        const affectedChunks = new Set<string>();
+        for (const change of pendingChanges) {
+          const chX = Math.floor(change.x / CHUNK_SIZE);
+          const chZ = Math.floor(change.z / CHUNK_SIZE);
+          affectedChunks.add(`${chX},${chZ}`);
+        }
+        for (const key of affectedChunks) {
+          const [chX, chZ] = key.split(',').map(Number);
+          const old = chunkMeshesRef.current.get(key);
+          if (old) {
+            if (old.solid) { scene.remove(old.solid); old.solid.geometry.dispose(); }
+            if (old.water) { scene.remove(old.water); old.water.geometry.dispose(); }
+          }
+          const { solid, water } = buildChunkGeometry(world, chX, chZ);
+          let sMesh: THREE.Mesh | null = null;
+          let wMesh: THREE.Mesh | null = null;
+          if (solid && solidMaterialRef.current) {
+            sMesh = new THREE.Mesh(solid, solidMaterialRef.current);
+            scene.add(sMesh);
+          }
+          if (water && waterMaterialRef.current) {
+            wMesh = new THREE.Mesh(water, waterMaterialRef.current);
+            wMesh.renderOrder = 1;
+            scene.add(wMesh);
+          }
+          chunkMeshesRef.current.set(key, { solid: sMesh, water: wMesh });
+        }
+      }
 
       const spawnX = Math.floor(WORLD_WIDTH / 2);
       const spawnZ = Math.floor(WORLD_DEPTH / 2);
@@ -693,7 +746,6 @@ export default function MinecraftWorld() {
     let prevTime = performance.now();
     let frameCount = 0;
     let fpsTimer = 0;
-    let dayTime = 0;
     let lastPositionSend = 0;
 
     function animate() {
@@ -713,8 +765,8 @@ export default function MinecraftWorld() {
         fpsTimer = 0;
       }
 
-      // Day/night cycle (1 full day = 240 seconds)
-      dayTime = (dayTime + dt / 240) % 1;
+      // Day/night cycle — synced from server (1 full day = 240 seconds)
+      const dayTime = mp.getSyncedDayTime();
 
       // Update sky color
       const sunAngle = dayTime * Math.PI * 2;
@@ -920,6 +972,7 @@ export default function MinecraftWorld() {
       cameraRef.current = null;
       solidMaterialRef.current = null;
       waterMaterialRef.current = null;
+      mp.onBlockChange(null); // Unregister block change callback
       clearInterval(syncInterval);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', onKeyDown);
