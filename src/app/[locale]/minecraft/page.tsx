@@ -8,7 +8,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useRouter } from '@/i18n/navigation';
 import styles from '@/components/home/v1.0.2/V1_0_2_UI.module.css';
 import type { GameMode, Difficulty } from '@/types/minecraft-switch';
@@ -233,11 +233,8 @@ export default function MinecraftTitlePage() {
   const router = useRouter();
   const [screen, setScreen] = useState<Screen>('main');
   const [splash, setSplash] = useState('');
-  // Track client mount to avoid SSR rendering motion elements with opacity:0
-  const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setSplash(SPLASHES[Math.floor(Math.random() * SPLASHES.length)]);
-    setMounted(true);
   }, []);
 
   const handleCreateWorld = useCallback((config: WorldConfig) => {
@@ -275,103 +272,82 @@ export default function MinecraftTitlePage() {
       <div className={styles.gradientOverlay} />
 
       {/* Screen content */}
-      <AnimatePresence mode="wait">
-        {screen === 'main' && (
-          <motion.div
-            key="main"
-            initial={mounted ? { opacity: 0 } : false}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="relative flex flex-col items-center justify-center h-full"
-            style={{ zIndex: 10 }}
-          >
-            {/* Title */}
-            <motion.div
-              initial={mounted ? { y: -40, opacity: 0 } : false}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="flex flex-col items-center mb-8"
-            >
-              <h1 className={styles.mcTitle}>MINECRAFT</h1>
-              <div className="relative mt-1">
-                <span className={styles.mcSubtitle}>Switch Edition</span>
-                {/* Splash text */}
-                <motion.span
-                  initial={mounted ? { scale: 0, opacity: 0 } : false}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.4, type: 'spring' }}
-                  className={styles.splashText}
-                  style={{
-                    position: 'absolute',
-                    left: '110%',
-                    top: '-12px',
-                  }}
-                >
-                  {splash}
-                </motion.span>
-              </div>
-            </motion.div>
+      {screen === 'main' && (
+        <div
+          className="relative flex flex-col items-center justify-center h-full"
+          style={{ zIndex: 10 }}
+        >
+          {/* Title */}
+          <div className="flex flex-col items-center mb-8">
+            <h1 className={styles.mcTitle}>MINECRAFT</h1>
+            <div className="relative mt-1">
+              <span className={styles.mcSubtitle}>Switch Edition</span>
+              {/* Splash text */}
+              <span
+                className={styles.splashText}
+                style={{
+                  position: 'absolute',
+                  left: '110%',
+                  top: '-12px',
+                }}
+              >
+                {splash}
+              </span>
+            </div>
+          </div>
 
-            {/* Menu buttons */}
-            <motion.div
-              initial={mounted ? { y: 20, opacity: 0 } : false}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className={styles.menuContainer}
+          {/* Menu buttons */}
+          <div className={styles.menuContainer}>
+            {/* Play — primary, full width */}
+            <button
+              className={styles.mcButtonPrimary}
+              style={{ width: '100%' }}
+              onClick={() => setScreen('createWorld')}
             >
-              {/* Play — primary, full width */}
+              Play
+            </button>
+
+            {/* Create New World | Load World */}
+            <div className={styles.menuRow}>
               <button
-                className={styles.mcButtonPrimary}
-                style={{ width: '100%' }}
+                className={styles.mcButton}
                 onClick={() => setScreen('createWorld')}
               >
-                Play
+                Create New World
               </button>
+              <button
+                className={styles.mcButton}
+                disabled
+              >
+                Load World
+              </button>
+            </div>
 
-              {/* Create New World | Load World */}
-              <div className={styles.menuRow}>
-                <button
-                  className={styles.mcButton}
-                  onClick={() => setScreen('createWorld')}
-                >
-                  Create New World
-                </button>
-                <button
-                  className={styles.mcButton}
-                  disabled
-                >
-                  Load World
-                </button>
-              </div>
+            {/* Multiplayer | Mini-Games */}
+            <div className={styles.menuRow}>
+              <button
+                className={styles.mcButton}
+                disabled
+              >
+                Multiplayer
+              </button>
+              <button
+                className={styles.mcButton}
+                disabled
+              >
+                Mini-Games
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Multiplayer | Mini-Games */}
-              <div className={styles.menuRow}>
-                <button
-                  className={styles.mcButton}
-                  disabled
-                >
-                  Multiplayer
-                </button>
-                <button
-                  className={styles.mcButton}
-                  disabled
-                >
-                  Mini-Games
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {screen === 'createWorld' && (
-          <WorldCreationPanel
-            key="createWorld"
-            onCancel={() => setScreen('main')}
-            onCreateWorld={handleCreateWorld}
-          />
-        )}
-      </AnimatePresence>
+      {screen === 'createWorld' && (
+        <WorldCreationPanel
+          onCancel={() => setScreen('main')}
+          onCreateWorld={handleCreateWorld}
+        />
+      )}
 
       {/* Bottom info bar */}
       <div className={styles.bottomBar}>
