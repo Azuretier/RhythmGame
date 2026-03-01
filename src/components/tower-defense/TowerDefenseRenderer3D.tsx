@@ -683,13 +683,6 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       {tower.type === 'frost' && (
         <FrostAoERing range={towerRange} />
       )}
-      {/* Level indicators */}
-      {Array.from({ length: tower.level }).map((_, i) => (
-        <mesh key={i} position={[(i - (tower.level - 1) / 2) * 0.12, charHeight + 0.2, 0]}>
-          <sphereGeometry args={[0.04, 6, 6]} />
-          <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} />
-        </mesh>
-      ))}
       {/* Range indicator when selected */}
       {isSelected && (
         <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
