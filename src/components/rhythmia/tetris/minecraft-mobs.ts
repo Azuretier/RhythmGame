@@ -182,7 +182,7 @@ const MOB_HEIGHTS: Record<TDEnemyType, number> = {
   spider: 0.8,
   enderman: 2.8,
   slime: 0.9,
-  magma_cube: 1.43,
+  magma_cube: 1.03,
   pig: 0.9,
   chicken: 0.7,
   cow: 1.2,
@@ -498,35 +498,36 @@ function createMagmaCube(segments = 3): MobMeshData {
   const magmaYellow = 0xffaa00; // Hottest parts of seams
   const eyeColor = 0xff8800;    // Orange-yellow eyes
 
-  // Each segment is a proper cube (width = height = depth)
-  const sizes = [0.55, 0.45, 0.35]; // bottom, middle, top
+  // Segment widths and heights — squished cubes (height ≈ 70% of width)
+  const widths  = [0.55, 0.45, 0.35]; // bottom, middle, top
+  const heights = [0.38, 0.32, 0.25]; // squished to avoid being too tall
   const seamH = 0.04;
   let y = 0; // running Y position (bottom of current segment)
 
   // --- Segment 1 (bottom, always present) ---
-  const s1 = sizes[0];
-  const bottom = mbox(s1, s1, s1, shellDark, magmaGlow, 0.15);
-  bottom.position.set(0, y + s1 / 2, 0);
+  const w1 = widths[0], h1 = heights[0];
+  const bottom = mbox(w1, h1, w1, shellDark, magmaGlow, 0.15);
+  bottom.position.set(0, y + h1 / 2, 0);
   group.add(bottom);
 
   // Bottom face glow
-  const bottomGlow = mbox(s1 * 0.6, 0.01, s1 * 0.6, magma, magma, 2.0);
+  const bottomGlow = mbox(w1 * 0.6, 0.01, w1 * 0.6, magma, magma, 2.0);
   bottomGlow.position.set(0, 0.005, 0);
   group.add(bottomGlow);
 
   // Cracks on bottom segment
-  const btmCrackF = mbox(0.03, s1 * 0.6, 0.005, magma, magma, 2.0);
-  btmCrackF.position.set(0.08, y + s1 / 2, -(s1 / 2 + 0.001));
+  const btmCrackF = mbox(0.03, h1 * 0.6, 0.005, magma, magma, 2.0);
+  btmCrackF.position.set(0.08, y + h1 / 2, -(w1 / 2 + 0.001));
   group.add(btmCrackF);
-  const btmCrackR = mbox(0.005, s1 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
-  btmCrackR.position.set(s1 / 2 + 0.001, y + s1 * 0.45, -0.06);
+  const btmCrackR = mbox(0.005, h1 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
+  btmCrackR.position.set(w1 / 2 + 0.001, y + h1 * 0.45, -0.06);
   group.add(btmCrackR);
 
-  y += s1;
+  y += h1;
 
   if (segments >= 2) {
     // --- Seam 1 ---
-    const seamW1 = sizes[0] * 0.9;
+    const seamW1 = widths[0] * 0.9;
     const seam1 = mbox(seamW1, seamH, seamW1, magma, magma, 2.5);
     seam1.position.set(0, y + seamH / 2, 0);
     group.add(seam1);
@@ -539,34 +540,34 @@ function createMagmaCube(segments = 3): MobMeshData {
     y += seamH;
 
     // --- Segment 2 (middle) ---
-    const s2 = sizes[1];
-    const middle = mbox(s2, s2, s2, shell, magmaGlow, 0.12);
-    middle.position.set(0, y + s2 / 2, 0);
+    const w2 = widths[1], h2 = heights[1];
+    const middle = mbox(w2, h2, w2, shell, magmaGlow, 0.12);
+    middle.position.set(0, y + h2 / 2, 0);
     group.add(middle);
 
     // Cracks on middle segment
-    const midCrackF = mbox(0.03, s2 * 0.7, 0.005, magma, magma, 2.0);
-    midCrackF.position.set(0.06, y + s2 / 2, -(s2 / 2 + 0.001));
+    const midCrackF = mbox(0.03, h2 * 0.7, 0.005, magma, magma, 2.0);
+    midCrackF.position.set(0.06, y + h2 / 2, -(w2 / 2 + 0.001));
     group.add(midCrackF);
-    const midCrackF2 = mbox(0.03, s2 * 0.5, 0.005, magmaYellow, magmaYellow, 2.5);
-    midCrackF2.position.set(-0.1, y + s2 * 0.4, -(s2 / 2 + 0.001));
+    const midCrackF2 = mbox(0.03, h2 * 0.5, 0.005, magmaYellow, magmaYellow, 2.5);
+    midCrackF2.position.set(-0.1, y + h2 * 0.4, -(w2 / 2 + 0.001));
     group.add(midCrackF2);
-    const midCrackB = mbox(0.03, s2 * 0.55, 0.005, magma, magma, 2.0);
-    midCrackB.position.set(-0.05, y + s2 / 2, s2 / 2 + 0.001);
+    const midCrackB = mbox(0.03, h2 * 0.55, 0.005, magma, magma, 2.0);
+    midCrackB.position.set(-0.05, y + h2 / 2, w2 / 2 + 0.001);
     group.add(midCrackB);
-    const midCrackL = mbox(0.005, s2 * 0.6, 0.03, magma, magma, 2.0);
-    midCrackL.position.set(-(s2 / 2 + 0.001), y + s2 * 0.45, 0.08);
+    const midCrackL = mbox(0.005, h2 * 0.6, 0.03, magma, magma, 2.0);
+    midCrackL.position.set(-(w2 / 2 + 0.001), y + h2 * 0.45, 0.08);
     group.add(midCrackL);
-    const midCrackR = mbox(0.005, s2 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
-    midCrackR.position.set(s2 / 2 + 0.001, y + s2 / 2, -0.06);
+    const midCrackR = mbox(0.005, h2 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
+    midCrackR.position.set(w2 / 2 + 0.001, y + h2 / 2, -0.06);
     group.add(midCrackR);
 
-    y += s2;
+    y += h2;
   }
 
   if (segments >= 3) {
     // --- Seam 2 ---
-    const seamW2 = sizes[1] * 0.9;
+    const seamW2 = widths[1] * 0.9;
     const seam2 = mbox(seamW2, seamH, seamW2, magma, magma, 2.5);
     seam2.position.set(0, y + seamH / 2, 0);
     group.add(seam2);
@@ -579,26 +580,27 @@ function createMagmaCube(segments = 3): MobMeshData {
     y += seamH;
 
     // --- Segment 3 (top — the "head") ---
-    const s3 = sizes[2];
-    const top = mbox(s3, s3, s3, shell, magmaGlow, 0.1);
-    top.position.set(0, y + s3 / 2, 0);
+    const w3 = widths[2], h3 = heights[2];
+    const top = mbox(w3, h3, w3, shell, magmaGlow, 0.1);
+    top.position.set(0, y + h3 / 2, 0);
     group.add(top);
 
     // Cracks on top segment
-    const topCrackF = mbox(0.03, s3 * 0.65, 0.005, magma, magma, 1.8);
-    topCrackF.position.set(-0.04, y + s3 / 2, -(s3 / 2 + 0.001));
+    const topCrackF = mbox(0.03, h3 * 0.65, 0.005, magma, magma, 1.8);
+    topCrackF.position.set(-0.04, y + h3 / 2, -(w3 / 2 + 0.001));
     group.add(topCrackF);
-    const topCrackR = mbox(0.005, s3 * 0.55, 0.03, magma, magma, 1.8);
-    topCrackR.position.set(s3 / 2 + 0.001, y + s3 * 0.45, 0.04);
+    const topCrackR = mbox(0.005, h3 * 0.55, 0.03, magma, magma, 1.8);
+    topCrackR.position.set(w3 / 2 + 0.001, y + h3 * 0.45, 0.04);
     group.add(topCrackR);
 
-    y += s3;
+    y += h3;
   }
 
   // --- Eyes (always on the topmost segment) ---
-  const topSeg = sizes[segments - 1];
-  const eyeY = y - topSeg / 2 + topSeg * 0.15;
-  const eyeZ = -(topSeg / 2 + 0.01);
+  const topW = widths[segments - 1];
+  const topH = heights[segments - 1];
+  const eyeY = y - topH / 2 + topH * 0.15;
+  const eyeZ = -(topW / 2 + 0.01);
   const le = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
   le.position.set(-0.08, eyeY, eyeZ);
   group.add(le);
