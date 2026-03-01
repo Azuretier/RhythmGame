@@ -118,7 +118,7 @@ export async function loadMobGltfModels(): Promise<void> {
   }
 
   const loader = new GLTFLoaderClass();
-  const types: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
+  const types: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman', 'slime', 'pig', 'chicken', 'cow', 'bee', 'cat', 'horse', 'rabbit', 'wolf'];
 
   for (const type of types) {
     if (gltfAttempted.has(type)) continue;
@@ -181,6 +181,15 @@ const MOB_HEIGHTS: Record<TDEnemyType, number> = {
   creeper: 1.6,
   spider: 0.8,
   enderman: 2.8,
+  slime: 0.9,
+  pig: 0.9,
+  chicken: 0.7,
+  cow: 1.2,
+  bee: 0.5,
+  cat: 0.6,
+  horse: 1.4,
+  rabbit: 0.5,
+  wolf: 0.8,
 };
 
 // ========== Procedural Mob Builders ==========
@@ -434,6 +443,589 @@ function createEnderman(): MobMeshData {
   };
 }
 
+// ========== Slime ==========
+
+function createSlime(): MobMeshData {
+  const group = new THREE.Group();
+  const slimeGreen = 0x5cb85c;
+  const slimeDark = 0x3d8b3d;
+  const slimeCore = 0x2e6b2e;
+  const eyeColor = 0x111111;
+
+  // Outer body (gelatinous cube, slightly squished)
+  const body = mbox(0.7, 0.6, 0.7, slimeGreen, slimeGreen, 0.3);
+  body.position.set(0, 0.3, 0);
+  // Make it semi-transparent looking with emissive glow
+  const bodyMat = body.material as THREE.MeshStandardMaterial;
+  bodyMat.transparent = true;
+  bodyMat.opacity = 0.75;
+  group.add(body);
+
+  // Inner core (darker, smaller cube visible inside)
+  const core = mbox(0.35, 0.3, 0.35, slimeCore, slimeCore, 0.2);
+  core.position.set(0, 0.25, 0);
+  group.add(core);
+
+  // Eyes (on the front face)
+  const le = mbox(0.08, 0.08, 0.02, eyeColor);
+  le.position.set(-0.12, 0.38, -0.36);
+  group.add(le);
+  const re = mbox(0.08, 0.08, 0.02, eyeColor);
+  re.position.set(0.12, 0.38, -0.36);
+  group.add(re);
+
+  // Mouth (wide line)
+  const mouth = mbox(0.2, 0.04, 0.02, eyeColor);
+  mouth.position.set(0, 0.28, -0.36);
+  group.add(mouth);
+
+  return {
+    group, type: 'slime',
+    height: 0.9, isGltf: false,
+  };
+}
+
+// ========== Animal Mobs ==========
+
+function createPig(): MobMeshData {
+  const group = new THREE.Group();
+  const pink = 0xf0a0a0;
+  const darkPink = 0xd08888;
+  const snout = 0xe8c0c0;
+
+  // Head
+  const head = mbox(0.4, 0.35, 0.35, pink);
+  head.position.set(0, 0.65, -0.3);
+  group.add(head);
+
+  // Snout
+  const nose = mbox(0.2, 0.15, 0.1, snout);
+  nose.position.set(0, 0.6, -0.52);
+  group.add(nose);
+
+  // Nostrils
+  const nl = mbox(0.04, 0.04, 0.02, darkPink);
+  nl.position.set(-0.04, 0.6, -0.58);
+  group.add(nl);
+  const nr = mbox(0.04, 0.04, 0.02, darkPink);
+  nr.position.set(0.04, 0.6, -0.58);
+  group.add(nr);
+
+  // Eyes
+  const le = mbox(0.06, 0.06, 0.02, 0x111111);
+  le.position.set(-0.1, 0.7, -0.48);
+  group.add(le);
+  const re = mbox(0.06, 0.06, 0.02, 0x111111);
+  re.position.set(0.1, 0.7, -0.48);
+  group.add(re);
+
+  // Body
+  const body = mbox(0.45, 0.4, 0.6, pink);
+  body.position.set(0, 0.5, 0.05);
+  group.add(body);
+
+  // Legs
+  const frontLeftLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, -0.15, -0.15);
+  group.add(frontLeftLeg);
+  const frontRightLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, 0.15, -0.15);
+  group.add(frontRightLeg);
+  const backLeftLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, -0.15, 0.25);
+  group.add(backLeftLeg);
+  const backRightLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, 0.15, 0.25);
+  group.add(backRightLeg);
+
+  return {
+    group, type: 'pig',
+    frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg,
+    height: 0.9, isGltf: false,
+  };
+}
+
+function createChicken(): MobMeshData {
+  const group = new THREE.Group();
+  const white = 0xf5f5f0;
+  const beak = 0xe8a020;
+  const wattle = 0xcc3333;
+  const legColor = 0xd0a030;
+
+  // Head
+  const head = mbox(0.2, 0.22, 0.2, white);
+  head.position.set(0, 0.58, -0.15);
+  group.add(head);
+
+  // Beak
+  const beakMesh = mbox(0.08, 0.06, 0.1, beak);
+  beakMesh.position.set(0, 0.54, -0.3);
+  group.add(beakMesh);
+
+  // Wattle (red bit under beak)
+  const wattleMesh = mbox(0.06, 0.08, 0.04, wattle);
+  wattleMesh.position.set(0, 0.48, -0.27);
+  group.add(wattleMesh);
+
+  // Comb (red on top)
+  const comb = mbox(0.04, 0.08, 0.1, wattle);
+  comb.position.set(0, 0.72, -0.15);
+  group.add(comb);
+
+  // Eyes
+  const le = mbox(0.04, 0.04, 0.02, 0x111111);
+  le.position.set(-0.08, 0.6, -0.26);
+  group.add(le);
+  const re = mbox(0.04, 0.04, 0.02, 0x111111);
+  re.position.set(0.08, 0.6, -0.26);
+  group.add(re);
+
+  // Body (round and plump)
+  const body = mbox(0.3, 0.3, 0.4, white);
+  body.position.set(0, 0.35, 0.05);
+  group.add(body);
+
+  // Wings
+  const lw = mbox(0.04, 0.2, 0.25, 0xe0e0d8);
+  lw.position.set(-0.18, 0.38, 0.05);
+  group.add(lw);
+  const rw = mbox(0.04, 0.2, 0.25, 0xe0e0d8);
+  rw.position.set(0.18, 0.38, 0.05);
+  group.add(rw);
+
+  // Tail feathers
+  const tail = mbox(0.1, 0.15, 0.08, white);
+  tail.position.set(0, 0.45, 0.28);
+  tail.rotation.x = -0.3;
+  group.add(tail);
+
+  // Legs (thin)
+  const leftLeg = limb(0.06, 0.2, 0.06, legColor, 0.2, -0.08);
+  group.add(leftLeg);
+  const rightLeg = limb(0.06, 0.2, 0.06, legColor, 0.2, 0.08);
+  group.add(rightLeg);
+
+  return {
+    group, type: 'chicken',
+    leftLeg, rightLeg,
+    height: 0.7, isGltf: false,
+  };
+}
+
+function createCow(): MobMeshData {
+  const group = new THREE.Group();
+  const white = 0xf0f0e8;
+  const brown = 0x4a3728;
+  const skin = 0xc0a888;
+  const horn = 0xe8dcc0;
+
+  // Head
+  const head = mbox(0.4, 0.35, 0.35, white);
+  head.position.set(0, 0.95, -0.45);
+  group.add(head);
+
+  // Snout
+  const snoutMesh = mbox(0.25, 0.15, 0.1, skin);
+  snoutMesh.position.set(0, 0.88, -0.66);
+  group.add(snoutMesh);
+
+  // Horns
+  const lh = mbox(0.06, 0.15, 0.06, horn);
+  lh.position.set(-0.18, 1.18, -0.42);
+  lh.rotation.z = 0.3;
+  group.add(lh);
+  const rh = mbox(0.06, 0.15, 0.06, horn);
+  rh.position.set(0.18, 1.18, -0.42);
+  rh.rotation.z = -0.3;
+  group.add(rh);
+
+  // Eyes
+  const le = mbox(0.06, 0.06, 0.02, 0x111111);
+  le.position.set(-0.1, 1.0, -0.63);
+  group.add(le);
+  const re = mbox(0.06, 0.06, 0.02, 0x111111);
+  re.position.set(0.1, 1.0, -0.63);
+  group.add(re);
+
+  // Body (large)
+  const body = mbox(0.55, 0.5, 0.8, white);
+  body.position.set(0, 0.7, 0.0);
+  group.add(body);
+
+  // Brown patches on body
+  const patch1 = mbox(0.3, 0.25, 0.35, brown);
+  patch1.position.set(-0.14, 0.78, -0.1);
+  group.add(patch1);
+  const patch2 = mbox(0.25, 0.2, 0.3, brown);
+  patch2.position.set(0.12, 0.65, 0.15);
+  group.add(patch2);
+
+  // Legs
+  const frontLeftLeg = limb(0.15, 0.45, 0.15, white, 0.45, -0.2, -0.25);
+  group.add(frontLeftLeg);
+  const frontRightLeg = limb(0.15, 0.45, 0.15, white, 0.45, 0.2, -0.25);
+  group.add(frontRightLeg);
+  const backLeftLeg = limb(0.15, 0.45, 0.15, white, 0.45, -0.2, 0.25);
+  group.add(backLeftLeg);
+  const backRightLeg = limb(0.15, 0.45, 0.15, white, 0.45, 0.2, 0.25);
+  group.add(backRightLeg);
+
+  return {
+    group, type: 'cow',
+    frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg,
+    height: 1.2, isGltf: false,
+  };
+}
+
+function createBee(): MobMeshData {
+  const group = new THREE.Group();
+  const yellow = 0xf0c830;
+  const black = 0x222222;
+  const wing = 0xc0e0ff;
+
+  // Body (striped)
+  const bodyFront = mbox(0.2, 0.2, 0.15, yellow);
+  bodyFront.position.set(0, 0.3, -0.08);
+  group.add(bodyFront);
+  const bodyStripe = mbox(0.21, 0.21, 0.08, black);
+  bodyStripe.position.set(0, 0.3, 0.02);
+  group.add(bodyStripe);
+  const bodyBack = mbox(0.2, 0.2, 0.15, yellow);
+  bodyBack.position.set(0, 0.3, 0.12);
+  group.add(bodyBack);
+
+  // Stinger
+  const stinger = mbox(0.04, 0.04, 0.08, 0x333333);
+  stinger.position.set(0, 0.28, 0.24);
+  group.add(stinger);
+
+  // Head
+  const head = mbox(0.18, 0.18, 0.12, yellow);
+  head.position.set(0, 0.32, -0.2);
+  group.add(head);
+
+  // Eyes
+  const le = mbox(0.06, 0.06, 0.02, 0x111111);
+  le.position.set(-0.06, 0.34, -0.27);
+  group.add(le);
+  const re = mbox(0.06, 0.06, 0.02, 0x111111);
+  re.position.set(0.06, 0.34, -0.27);
+  group.add(re);
+
+  // Antennae
+  const la = mbox(0.02, 0.1, 0.02, black);
+  la.position.set(-0.05, 0.46, -0.22);
+  la.rotation.z = 0.3;
+  group.add(la);
+  const ra = mbox(0.02, 0.1, 0.02, black);
+  ra.position.set(0.05, 0.46, -0.22);
+  ra.rotation.z = -0.3;
+  group.add(ra);
+
+  // Wings (semi-transparent look via emissive)
+  const leftArm = new THREE.Group();
+  leftArm.position.set(-0.12, 0.42, 0.0);
+  const lwMesh = mbox(0.18, 0.02, 0.12, wing, wing, 0.5);
+  const lwMat = lwMesh.material as THREE.MeshStandardMaterial;
+  lwMat.transparent = true;
+  lwMat.opacity = 0.5;
+  lwMesh.position.set(-0.09, 0, 0);
+  leftArm.add(lwMesh);
+  group.add(leftArm);
+
+  const rightArm = new THREE.Group();
+  rightArm.position.set(0.12, 0.42, 0.0);
+  const rwMesh = mbox(0.18, 0.02, 0.12, wing, wing, 0.5);
+  const rwMat = rwMesh.material as THREE.MeshStandardMaterial;
+  rwMat.transparent = true;
+  rwMat.opacity = 0.5;
+  rwMesh.position.set(0.09, 0, 0);
+  rightArm.add(rwMesh);
+  group.add(rightArm);
+
+  return {
+    group, type: 'bee',
+    leftArm, rightArm,
+    height: 0.5, isGltf: false,
+  };
+}
+
+function createCat(): MobMeshData {
+  const group = new THREE.Group();
+  const orange = 0xe8a050;
+  const darkOrange = 0xc08040;
+  const belly = 0xf0d8b0;
+
+  // Head
+  const head = mbox(0.25, 0.2, 0.2, orange);
+  head.position.set(0, 0.5, -0.2);
+  group.add(head);
+
+  // Ears (triangular via small boxes rotated)
+  const learBox = mbox(0.06, 0.1, 0.04, darkOrange);
+  learBox.position.set(-0.1, 0.65, -0.2);
+  learBox.rotation.z = 0.2;
+  group.add(learBox);
+  const rearBox = mbox(0.06, 0.1, 0.04, darkOrange);
+  rearBox.position.set(0.1, 0.65, -0.2);
+  rearBox.rotation.z = -0.2;
+  group.add(rearBox);
+
+  // Eyes
+  const le = mbox(0.05, 0.04, 0.02, 0x22cc44);
+  le.position.set(-0.06, 0.52, -0.31);
+  group.add(le);
+  const re = mbox(0.05, 0.04, 0.02, 0x22cc44);
+  re.position.set(0.06, 0.52, -0.31);
+  group.add(re);
+
+  // Nose
+  const nose = mbox(0.04, 0.03, 0.02, 0xdd7788);
+  nose.position.set(0, 0.47, -0.31);
+  group.add(nose);
+
+  // Body
+  const body = mbox(0.22, 0.2, 0.45, orange);
+  body.position.set(0, 0.35, 0.1);
+  group.add(body);
+
+  // Belly stripe
+  const bellyMesh = mbox(0.16, 0.12, 0.35, belly);
+  bellyMesh.position.set(0, 0.28, 0.1);
+  group.add(bellyMesh);
+
+  // Tail (series of small boxes)
+  const tailBase = mbox(0.06, 0.06, 0.15, orange);
+  tailBase.position.set(0, 0.4, 0.4);
+  tailBase.rotation.x = -0.5;
+  group.add(tailBase);
+  const tailTip = mbox(0.05, 0.05, 0.12, darkOrange);
+  tailTip.position.set(0, 0.5, 0.5);
+  tailTip.rotation.x = -1.0;
+  group.add(tailTip);
+
+  // Legs
+  const frontLeftLeg = limb(0.08, 0.2, 0.08, orange, 0.25, -0.08, -0.1);
+  group.add(frontLeftLeg);
+  const frontRightLeg = limb(0.08, 0.2, 0.08, orange, 0.25, 0.08, -0.1);
+  group.add(frontRightLeg);
+  const backLeftLeg = limb(0.08, 0.2, 0.08, orange, 0.25, -0.08, 0.25);
+  group.add(backLeftLeg);
+  const backRightLeg = limb(0.08, 0.2, 0.08, orange, 0.25, 0.08, 0.25);
+  group.add(backRightLeg);
+
+  return {
+    group, type: 'cat',
+    frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg,
+    height: 0.6, isGltf: false,
+  };
+}
+
+function createHorse(): MobMeshData {
+  const group = new THREE.Group();
+  const brown = 0x8b5e3c;
+  const darkBrown = 0x5c3a24;
+  const mane = 0x2a1a10;
+
+  // Head
+  const head = mbox(0.25, 0.35, 0.55, brown);
+  head.position.set(0, 1.15, -0.5);
+  head.rotation.x = 0.3;
+  group.add(head);
+
+  // Ears
+  const lear = mbox(0.06, 0.12, 0.06, brown);
+  lear.position.set(-0.08, 1.42, -0.4);
+  group.add(lear);
+  const rear = mbox(0.06, 0.12, 0.06, brown);
+  rear.position.set(0.08, 1.42, -0.4);
+  group.add(rear);
+
+  // Eyes
+  const le = mbox(0.06, 0.06, 0.02, 0x111111);
+  le.position.set(-0.12, 1.18, -0.72);
+  group.add(le);
+  const re = mbox(0.06, 0.06, 0.02, 0x111111);
+  re.position.set(0.12, 1.18, -0.72);
+  group.add(re);
+
+  // Mane (along neck/back)
+  const maneMesh = mbox(0.06, 0.3, 0.3, mane);
+  maneMesh.position.set(0, 1.32, -0.3);
+  group.add(maneMesh);
+
+  // Body (large barrel)
+  const body = mbox(0.5, 0.5, 0.75, brown);
+  body.position.set(0, 0.85, 0.1);
+  group.add(body);
+
+  // Tail
+  const tail = mbox(0.06, 0.35, 0.06, mane);
+  tail.position.set(0, 0.85, 0.5);
+  tail.rotation.x = 0.4;
+  group.add(tail);
+
+  // Legs (long)
+  const frontLeftLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, -0.18, -0.2);
+  group.add(frontLeftLeg);
+  const frontRightLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, 0.18, -0.2);
+  group.add(frontRightLeg);
+  const backLeftLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, -0.18, 0.35);
+  group.add(backLeftLeg);
+  const backRightLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, 0.18, 0.35);
+  group.add(backRightLeg);
+
+  return {
+    group, type: 'horse',
+    frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg,
+    height: 1.4, isGltf: false,
+  };
+}
+
+function createRabbit(): MobMeshData {
+  const group = new THREE.Group();
+  const fur = 0xc8a878;
+  const belly = 0xf0e0c8;
+  const earInner = 0xe8b0b0;
+
+  // Head
+  const head = mbox(0.2, 0.18, 0.18, fur);
+  head.position.set(0, 0.38, -0.12);
+  group.add(head);
+
+  // Ears (tall)
+  const learOuter = mbox(0.06, 0.2, 0.04, fur);
+  learOuter.position.set(-0.06, 0.58, -0.1);
+  learOuter.rotation.z = 0.15;
+  group.add(learOuter);
+  const learInner = mbox(0.04, 0.16, 0.02, earInner);
+  learInner.position.set(-0.06, 0.58, -0.11);
+  learInner.rotation.z = 0.15;
+  group.add(learInner);
+  const rearOuter = mbox(0.06, 0.2, 0.04, fur);
+  rearOuter.position.set(0.06, 0.58, -0.1);
+  rearOuter.rotation.z = -0.15;
+  group.add(rearOuter);
+  const rearInner = mbox(0.04, 0.16, 0.02, earInner);
+  rearInner.position.set(0.06, 0.58, -0.11);
+  rearInner.rotation.z = -0.15;
+  group.add(rearInner);
+
+  // Eyes
+  const le = mbox(0.04, 0.04, 0.02, 0xcc2222);
+  le.position.set(-0.06, 0.4, -0.22);
+  group.add(le);
+  const re = mbox(0.04, 0.04, 0.02, 0xcc2222);
+  re.position.set(0.06, 0.4, -0.22);
+  group.add(re);
+
+  // Nose
+  const nose = mbox(0.04, 0.03, 0.02, 0xdd8888);
+  nose.position.set(0, 0.36, -0.22);
+  group.add(nose);
+
+  // Body
+  const body = mbox(0.2, 0.2, 0.3, fur);
+  body.position.set(0, 0.25, 0.08);
+  group.add(body);
+
+  // Belly
+  const bellyMesh = mbox(0.14, 0.1, 0.2, belly);
+  bellyMesh.position.set(0, 0.18, 0.08);
+  group.add(bellyMesh);
+
+  // Tail (fluffy puff)
+  const tail = mbox(0.1, 0.1, 0.08, belly);
+  tail.position.set(0, 0.28, 0.28);
+  group.add(tail);
+
+  // Legs (short back legs, tiny front)
+  const frontLeftLeg = limb(0.06, 0.12, 0.06, fur, 0.15, -0.06, -0.05);
+  group.add(frontLeftLeg);
+  const frontRightLeg = limb(0.06, 0.12, 0.06, fur, 0.15, 0.06, -0.05);
+  group.add(frontRightLeg);
+  const backLeftLeg = limb(0.08, 0.15, 0.1, fur, 0.15, -0.08, 0.18);
+  group.add(backLeftLeg);
+  const backRightLeg = limb(0.08, 0.15, 0.1, fur, 0.15, 0.08, 0.18);
+  group.add(backRightLeg);
+
+  return {
+    group, type: 'rabbit',
+    frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg,
+    height: 0.5, isGltf: false,
+  };
+}
+
+function createWolf(): MobMeshData {
+  const group = new THREE.Group();
+  const gray = 0x9e9e9e;
+  const darkGray = 0x606060;
+  const belly = 0xd0d0d0;
+
+  // Head
+  const head = mbox(0.28, 0.22, 0.28, gray);
+  head.position.set(0, 0.62, -0.28);
+  group.add(head);
+
+  // Snout
+  const snout = mbox(0.14, 0.1, 0.15, belly);
+  snout.position.set(0, 0.56, -0.48);
+  group.add(snout);
+
+  // Nose
+  const nose = mbox(0.05, 0.04, 0.02, 0x222222);
+  nose.position.set(0, 0.58, -0.56);
+  group.add(nose);
+
+  // Ears
+  const lear = mbox(0.08, 0.12, 0.06, darkGray);
+  lear.position.set(-0.1, 0.78, -0.25);
+  group.add(lear);
+  const rear = mbox(0.08, 0.12, 0.06, darkGray);
+  rear.position.set(0.1, 0.78, -0.25);
+  group.add(rear);
+
+  // Eyes
+  const le = mbox(0.05, 0.04, 0.02, 0x884400);
+  le.position.set(-0.08, 0.65, -0.42);
+  group.add(le);
+  const re = mbox(0.05, 0.04, 0.02, 0x884400);
+  re.position.set(0.08, 0.65, -0.42);
+  group.add(re);
+
+  // Body
+  const body = mbox(0.3, 0.28, 0.5, gray);
+  body.position.set(0, 0.45, 0.05);
+  group.add(body);
+
+  // Belly
+  const bellyMesh = mbox(0.2, 0.14, 0.35, belly);
+  bellyMesh.position.set(0, 0.35, 0.05);
+  group.add(bellyMesh);
+
+  // Tail (bushy, angled up)
+  const tail = mbox(0.08, 0.08, 0.25, gray);
+  tail.position.set(0, 0.55, 0.4);
+  tail.rotation.x = -0.6;
+  group.add(tail);
+  const tailTip = mbox(0.06, 0.06, 0.1, belly);
+  tailTip.position.set(0, 0.65, 0.5);
+  tailTip.rotation.x = -0.8;
+  group.add(tailTip);
+
+  // Legs
+  const frontLeftLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, -0.1, -0.15);
+  group.add(frontLeftLeg);
+  const frontRightLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, 0.1, -0.15);
+  group.add(frontRightLeg);
+  const backLeftLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, -0.1, 0.22);
+  group.add(backLeftLeg);
+  const backRightLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, 0.1, 0.22);
+  group.add(backRightLeg);
+
+  return {
+    group, type: 'wolf',
+    frontLeftLeg, frontRightLeg, backLeftLeg, backRightLeg,
+    height: 0.8, isGltf: false,
+  };
+}
+
 // ========== Public API ==========
 
 /**
@@ -459,6 +1051,15 @@ export function createMobMesh(type: TDEnemyType): MobMeshData {
     case 'creeper': return createCreeper();
     case 'spider': return createSpider();
     case 'enderman': return createEnderman();
+    case 'slime': return createSlime();
+    case 'pig': return createPig();
+    case 'chicken': return createChicken();
+    case 'cow': return createCow();
+    case 'bee': return createBee();
+    case 'cat': return createCat();
+    case 'horse': return createHorse();
+    case 'rabbit': return createRabbit();
+    case 'wolf': return createWolf();
     default: return createZombie();
   }
 }
@@ -521,6 +1122,44 @@ export function animateMob(mob: MobMeshData, time: number, isMoving: boolean): v
       if (mob.leftLeg) mob.leftLeg.rotation.x = -swing * 0.7;
       if (mob.rightLeg) mob.rightLeg.rotation.x = swing * 0.7;
       break;
+
+    case 'slime': {
+      // Slime bounces up and down with a squish effect
+      const bounce = isMoving ? Math.abs(Math.sin(time * 6)) * 0.15 : Math.sin(time * 2) * 0.05;
+      mob.group.position.y = bounce;
+      const squish = isMoving ? 1 + Math.sin(time * 6) * 0.1 : 1;
+      mob.group.scale.y = squish;
+      break;
+    }
+
+    case 'pig':
+    case 'cow':
+    case 'horse':
+    case 'cat':
+    case 'wolf':
+    case 'rabbit':
+      // Quadruped diagonal leg swing
+      if (mob.frontLeftLeg) mob.frontLeftLeg.rotation.x = swing;
+      if (mob.backRightLeg) mob.backRightLeg.rotation.x = swing;
+      if (mob.frontRightLeg) mob.frontRightLeg.rotation.x = -swing;
+      if (mob.backLeftLeg) mob.backLeftLeg.rotation.x = -swing;
+      break;
+
+    case 'chicken':
+      // Bipedal waddle walk
+      if (mob.leftLeg) mob.leftLeg.rotation.x = swing;
+      if (mob.rightLeg) mob.rightLeg.rotation.x = -swing;
+      break;
+
+    case 'bee': {
+      // Buzzing wing flap
+      const wingFlap = Math.sin(time * 30) * 0.8;
+      if (mob.leftArm) mob.leftArm.rotation.z = -0.3 + wingFlap;
+      if (mob.rightArm) mob.rightArm.rotation.z = 0.3 - wingFlap;
+      // Gentle bob
+      mob.group.position.y = (mob.group.position.y || 0) + Math.sin(time * 4) * 0.03;
+      break;
+    }
   }
 }
 
@@ -561,6 +1200,29 @@ export function resetMobPose(mob: MobMeshData): void {
       if (mob.spiderLegs) {
         for (const leg of mob.spiderLegs) leg.rotation.x = 0;
       }
+      break;
+    case 'slime':
+      mob.group.position.y = 0;
+      mob.group.scale.y = 1;
+      break;
+    case 'pig':
+    case 'cow':
+    case 'horse':
+    case 'cat':
+    case 'wolf':
+    case 'rabbit':
+      if (mob.frontLeftLeg) mob.frontLeftLeg.rotation.x = 0;
+      if (mob.frontRightLeg) mob.frontRightLeg.rotation.x = 0;
+      if (mob.backLeftLeg) mob.backLeftLeg.rotation.x = 0;
+      if (mob.backRightLeg) mob.backRightLeg.rotation.x = 0;
+      break;
+    case 'chicken':
+      if (mob.leftLeg) mob.leftLeg.rotation.x = 0;
+      if (mob.rightLeg) mob.rightLeg.rotation.x = 0;
+      break;
+    case 'bee':
+      if (mob.leftArm) mob.leftArm.rotation.z = 0;
+      if (mob.rightArm) mob.rightArm.rotation.z = 0;
       break;
   }
 }
