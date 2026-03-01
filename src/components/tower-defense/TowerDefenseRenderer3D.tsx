@@ -672,6 +672,18 @@ function TowersGroup({ towers, enemies, selectedTowerId, onSelectTower }: {
   );
 }
 
+// ===== Font Preloader =====
+// Renders a hidden Text element at scene init so troika loads the default font
+// during the initial Suspense phase, preventing a black-screen flash when the
+// first EnemyHpDisplay mounts later.
+function FontPreloader() {
+  return (
+    <Text fontSize={0.01} position={[0, -100, 0]} visible={false}>
+      {' '}
+    </Text>
+  );
+}
+
 // ===== Enemy HP Display =====
 function getHpBarColor(hpPercent: number): string {
   if (hpPercent > 0.5) return '#22c55e';
@@ -1193,6 +1205,7 @@ function GameScene({ state, onCellClick, onSelectTower, onSelectEnemy, hoveredCe
     <>
       <color attach="background" args={['#0f172a']} />
       <fog attach="fog" args={['#0f172a', 25, 55]} />
+      <FontPreloader />
       <Lights />
       <Ground />
       <VoxelBackgroundStage mapWidth={state.map.width} mapHeight={state.map.height} />
