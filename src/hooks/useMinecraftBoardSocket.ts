@@ -9,9 +9,10 @@ import type {
   MCServerMessage, MCGameStateUpdate, MCRoomState, MCLobbyPlayer,
   MCPublicRoom, MCGamePhase, Direction, MCTileUpdate, WorldTile,
   MCVisiblePlayer, MCMobState, MCPlayerState, DayPhase, ItemType,
-  SideBoardVisibleState, AnomalyAlert,
+  SideBoardVisibleState, AnomalyAlert, InventoryItem, BlockType,
 } from '@/types/minecraft-board';
-import { BLOCK_PROPERTIES, MC_BOARD_CONFIG } from '@/types/minecraft-board';
+import { BLOCK_PROPERTIES, ITEM_PROPERTIES, TOOL_TIER_LEVEL, MC_BOARD_CONFIG } from '@/types/minecraft-board';
+import { getRecipeById, canCraft } from '@/lib/minecraft-board/recipes';
 
 const MULTIPLAYER_URL = process.env.NEXT_PUBLIC_MULTIPLAYER_URL || 'ws://localhost:3001';
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -268,21 +269,63 @@ export function useMinecraftBoardSocket() {
         break;
       }
 
+      case 'mc_mining_started': {
+        // Server confirmed mining — update the mining state for accurate progress sync
+        if (msg.playerId === playerIdRef.current) {
+          setSelfState(prev => {
+            if (!prev) return prev;
+            return { ...prev, mining: { x: msg.x, y: msg.y, progress: 0, total: msg.totalTicks } };
+          });
+        }
+        // Update other players' mining state for their rendering
+        setVisiblePlayers(prev =>
+          prev.map(p => p.id === msg.playerId
+            ? { ...p, mining: { x: msg.x, y: msg.y, progress: 0, total: msg.totalTicks } }
+            : p
+          )
+        );
+        break;
+      }
+
+      case 'mc_mining_cancelled': {
+        if (msg.playerId === playerIdRef.current) {
+          setSelfState(prev => {
+            if (!prev) return prev;
+            return { ...prev, mining: null };
+          });
+        }
+        setVisiblePlayers(prev =>
+          prev.map(p => p.id === msg.playerId ? { ...p, mining: null } : p)
+        );
+        break;
+      }
+
       case 'mc_tile_mined': {
-        // Update explored tiles cache
+        // Update explored tiles cache immediately
         const key = `${msg.x},${msg.y}`;
         const existing = exploredTilesRef.current.get(key);
         if (existing) {
           exploredTilesRef.current.set(key, { ...existing, block: msg.newBlock });
         }
+        // Clear mining state for the player who mined
+        if (msg.playerId === playerIdRef.current) {
+          setSelfState(prev => {
+            if (!prev) return prev;
+            return { ...prev, mining: null, blocksMined: prev.blocksMined + 1 };
+          });
+        }
+        setVisiblePlayers(prev =>
+          prev.map(p => p.id === msg.playerId ? { ...p, mining: null } : p)
+        );
         break;
       }
 
       case 'mc_block_placed': {
-        const key = `${msg.x},${msg.y}`;
-        const existing = exploredTilesRef.current.get(key);
-        if (existing) {
-          exploredTilesRef.current.set(key, { ...existing, block: msg.block });
+        // Immediately update explored tiles cache
+        const bpKey = `${msg.x},${msg.y}`;
+        const bpExisting = exploredTilesRef.current.get(bpKey);
+        if (bpExisting) {
+          exploredTilesRef.current.set(bpKey, { ...bpExisting, block: msg.block });
         }
         break;
       }
@@ -294,15 +337,59 @@ export function useMinecraftBoardSocket() {
       }
 
       case 'mc_damage': {
-        // Could add damage flash effect
+        // Immediately reflect damage on client for the local player
+        if (msg.targetId === playerIdRef.current) {
+          setSelfState(prev => {
+            if (!prev) return prev;
+            return { ...prev, health: Math.max(0, msg.targetHp) };
+          });
+        }
+        // Update visible players' health
+        setVisiblePlayers(prev =>
+          prev.map(p => p.id === msg.targetId ? { ...p, health: Math.max(0, msg.targetHp) } : p)
+        );
+        // Update visible mobs' health
+        setVisibleMobs(prev =>
+          prev.map(m => m.id === msg.targetId ? { ...m, health: Math.max(0, msg.targetHp) } : m)
+        );
         break;
       }
 
       case 'mc_player_died': {
         if (msg.playerId === playerIdRef.current) {
+          setSelfState(prev => {
+            if (!prev) return prev;
+            return { ...prev, dead: true, health: 0, mining: null };
+          });
           setGameMessage('You died! Respawning...');
           setTimeout(() => setGameMessage(null), 3000);
         }
+        setVisiblePlayers(prev =>
+          prev.map(p => p.id === msg.playerId ? { ...p, dead: true, health: 0, mining: null } : p)
+        );
+        break;
+      }
+
+      case 'mc_player_respawned': {
+        if (msg.playerId === playerIdRef.current) {
+          setSelfState(prev => {
+            if (!prev) return prev;
+            return { ...prev, dead: false, health: prev.maxHealth, x: msg.x, y: msg.y, mining: null };
+          });
+        }
+        setVisiblePlayers(prev =>
+          prev.map(p => p.id === msg.playerId ? { ...p, dead: false, health: p.maxHealth, x: msg.x, y: msg.y } : p)
+        );
+        break;
+      }
+
+      case 'mc_mob_died': {
+        setVisibleMobs(prev => prev.filter(m => m.id !== msg.mobId));
+        break;
+      }
+
+      case 'mc_mob_spawned': {
+        setVisibleMobs(prev => [...prev, msg.mob]);
         break;
       }
 
@@ -455,14 +542,119 @@ export function useMinecraftBoardSocket() {
 
   const mine = useCallback((x: number, y: number) => {
     send({ type: 'mc_mine', x, y });
+
+    // Client-side prediction: optimistically start mining animation
+    setSelfState(prev => {
+      if (!prev || prev.dead) return prev;
+      // Range check
+      const dist = Math.abs(prev.x - x) + Math.abs(prev.y - y);
+      if (dist > 1) return prev;
+      // Bounds check
+      if (x < 0 || x >= MC_BOARD_CONFIG.WORLD_SIZE || y < 0 || y >= MC_BOARD_CONFIG.WORLD_SIZE) return prev;
+      // Check block is mineable
+      const tile = exploredTilesRef.current.get(`${x},${y}`);
+      if (!tile) return prev;
+      const blockProps = BLOCK_PROPERTIES[tile.block];
+      if (!blockProps.mineable) return prev;
+      // Tool tier check
+      const equippedItem = prev.inventory[prev.selectedSlot];
+      const toolTier = equippedItem ? (ITEM_PROPERTIES[equippedItem.type].tier || 'hand') : 'hand';
+      if (TOOL_TIER_LEVEL[toolTier] < TOOL_TIER_LEVEL[blockProps.requiredTier]) return prev;
+      // Calculate mining time (same logic as server)
+      let miningTicks = blockProps.hardness;
+      if (equippedItem) {
+        const itemProps = ITEM_PROPERTIES[equippedItem.type];
+        if (itemProps.toolType === blockProps.preferredTool) {
+          miningTicks = Math.ceil(miningTicks / itemProps.miningSpeed);
+        } else if (itemProps.miningSpeed > 1) {
+          miningTicks = Math.ceil(miningTicks / (itemProps.miningSpeed * 0.5));
+        }
+      }
+      if (miningTicks <= 0) return prev;
+      return { ...prev, mining: { x, y, progress: 0, total: miningTicks } };
+    });
   }, [send]);
 
   const cancelMine = useCallback(() => {
     send({ type: 'mc_cancel_mine' });
+
+    // Client-side prediction: immediately clear mining state
+    setSelfState(prev => {
+      if (!prev || !prev.mining) return prev;
+      return { ...prev, mining: null };
+    });
   }, [send]);
 
   const craft = useCallback((recipeId: string) => {
     send({ type: 'mc_craft', recipeId });
+
+    // Client-side prediction: optimistically update inventory
+    setSelfState(prev => {
+      if (!prev || prev.dead) return prev;
+      const recipe = getRecipeById(recipeId);
+      if (!recipe) return prev;
+
+      // Check proximity to crafting stations using explored tiles
+      let nearCraftingTable = false;
+      let nearFurnace = false;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const tile = exploredTilesRef.current.get(`${prev.x + dx},${prev.y + dy}`);
+          if (tile) {
+            if (tile.block === 'crafting_table') nearCraftingTable = true;
+            if (tile.block === 'furnace') nearFurnace = true;
+          }
+        }
+      }
+
+      if (!canCraft(recipe, prev.inventory, nearCraftingTable, nearFurnace)) return prev;
+
+      // Clone inventory for mutation
+      const newInventory: (InventoryItem | null)[] = prev.inventory.map(
+        slot => slot ? { ...slot } : null
+      );
+
+      // Remove inputs
+      for (const input of recipe.inputs) {
+        let remaining = input.quantity;
+        for (let i = 0; i < newInventory.length && remaining > 0; i++) {
+          const slot = newInventory[i];
+          if (slot && slot.type === input.item) {
+            const take = Math.min(slot.quantity, remaining);
+            slot.quantity -= take;
+            remaining -= take;
+            if (slot.quantity <= 0) newInventory[i] = null;
+          }
+        }
+        if (remaining > 0) return prev; // Safety: shouldn't happen if canCraft passed
+      }
+
+      // Add output
+      const outputItem = recipe.output.item;
+      const outputQty = recipe.output.quantity;
+      const maxStack = ITEM_PROPERTIES[outputItem].maxStack;
+      let toAdd = outputQty;
+
+      // Try stacking into existing slots first
+      for (let i = 0; i < newInventory.length && toAdd > 0; i++) {
+        const slot = newInventory[i];
+        if (slot && slot.type === outputItem && slot.quantity < maxStack) {
+          const add = Math.min(toAdd, maxStack - slot.quantity);
+          slot.quantity += add;
+          toAdd -= add;
+        }
+      }
+      // Then fill empty slots
+      for (let i = 0; i < newInventory.length && toAdd > 0; i++) {
+        if (!newInventory[i]) {
+          const add = Math.min(toAdd, maxStack);
+          newInventory[i] = { type: outputItem, quantity: add };
+          toAdd -= add;
+        }
+      }
+
+      return { ...prev, inventory: newInventory };
+    });
   }, [send]);
 
   const attack = useCallback((targetId: string) => {
@@ -471,14 +663,83 @@ export function useMinecraftBoardSocket() {
 
   const placeBlock = useCallback((x: number, y: number, itemIndex: number) => {
     send({ type: 'mc_place_block', x, y, itemIndex });
+
+    // Client-side prediction: optimistically place block and consume item
+    setSelfState(prev => {
+      if (!prev || prev.dead) return prev;
+      // Range check (adjacent, not on self)
+      const dist = Math.abs(prev.x - x) + Math.abs(prev.y - y);
+      if (dist > 1 || dist === 0) return prev;
+      if (x < 0 || x >= MC_BOARD_CONFIG.WORLD_SIZE || y < 0 || y >= MC_BOARD_CONFIG.WORLD_SIZE) return prev;
+      if (itemIndex < 0 || itemIndex >= MC_BOARD_CONFIG.INVENTORY_SIZE) return prev;
+      const item = prev.inventory[itemIndex];
+      if (!item) return prev;
+      const itemProps = ITEM_PROPERTIES[item.type];
+      if (!itemProps.placeable || !itemProps.placeBlock) return prev;
+
+      // Check target tile is replaceable
+      const tile = exploredTilesRef.current.get(`${x},${y}`);
+      if (tile) {
+        const allowedTargets: BlockType[] = ['air', 'grass', 'tall_grass', 'flower_red', 'flower_yellow', 'mushroom_red', 'mushroom_brown'];
+        if (!allowedTargets.includes(tile.block)) return prev;
+      }
+
+      // Consume item from inventory
+      const newInventory = prev.inventory.map(
+        (slot, i) => i === itemIndex && slot ? { ...slot } : slot
+      );
+      const slot = newInventory[itemIndex]!;
+      slot.quantity--;
+      if (slot.quantity <= 0) newInventory[itemIndex] = null;
+
+      // Update the explored tiles cache with the new block
+      const blockType = itemProps.placeBlock;
+      if (tile) {
+        exploredTilesRef.current.set(`${x},${y}`, { ...tile, block: blockType });
+      }
+
+      return { ...prev, inventory: newInventory };
+    });
   }, [send]);
 
   const eat = useCallback((itemIndex: number) => {
     send({ type: 'mc_eat', itemIndex });
+
+    // Client-side prediction: optimistically consume food and restore stats
+    setSelfState(prev => {
+      if (!prev || prev.dead) return prev;
+      if (itemIndex < 0 || itemIndex >= MC_BOARD_CONFIG.INVENTORY_SIZE) return prev;
+      const item = prev.inventory[itemIndex];
+      if (!item) return prev;
+      const itemProps = ITEM_PROPERTIES[item.type];
+      if (!itemProps.edible) return prev;
+
+      const newInventory = prev.inventory.map(
+        (slot, i) => i === itemIndex && slot ? { ...slot } : slot
+      );
+      const slot = newInventory[itemIndex]!;
+      slot.quantity--;
+      if (slot.quantity <= 0) newInventory[itemIndex] = null;
+
+      return {
+        ...prev,
+        inventory: newInventory,
+        hunger: Math.min(prev.maxHunger, prev.hunger + (itemProps.hungerRestore || 0)),
+        health: Math.min(prev.maxHealth, prev.health + (itemProps.healthRestore || 0)),
+      };
+    });
   }, [send]);
 
   const selectSlot = useCallback((slot: number) => {
     send({ type: 'mc_select_slot', slot });
+
+    // Client-side prediction: immediately update selected slot
+    setSelfState(prev => {
+      if (!prev) return prev;
+      if (slot < 0 || slot >= MC_BOARD_CONFIG.HOTBAR_SIZE) return prev;
+      if (prev.selectedSlot === slot) return prev;
+      return { ...prev, selectedSlot: slot };
+    });
   }, [send]);
 
   const sendChat = useCallback((message: string) => {
