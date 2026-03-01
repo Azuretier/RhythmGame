@@ -586,10 +586,6 @@ function FrostAoERing({ range }: { range: number }) {
   );
 }
 
-// Magma tower stacking: scales per tier (bottom=largest, top=smallest)
-const MAGMA_STACK_SCALES = [0.4, 0.32, 0.26];
-const MAGMA_STACK_GAP = 0.06; // gap between stacked cubes for glowing seam
-
 function TowerMesh({ tower, isSelected, enemies, onClick }: {
   tower: Tower;
   isSelected: boolean;
@@ -599,29 +595,19 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
   const groupRef = useRef<THREE.Group>(null);
   const mobWrapperRef = useRef<THREE.Group>(null);
   const mobRef = useRef<MobMeshData | null>(null);
-  const extraMobsRef = useRef<MobMeshData[]>([]);
   const facingAngleRef = useRef<number>(0);
   const def = TOWER_DEFS[tower.type];
   const mobType = TOWER_MOB_MAP[tower.type];
   const isMagma = tower.type === 'cannon';
 
+  // Magma cube: segments = tower level (1→1 cube, 2→2 segments, 3→full 3-segment)
   const mobData = useMemo(() => {
-    const data = createMobMesh(mobType);
-    data.group.scale.setScalar(isMagma ? MAGMA_STACK_SCALES[0] : TOWER_MOB_SCALE);
+    const data = isMagma
+      ? createMobMesh(mobType, { segments: tower.level })
+      : createMobMesh(mobType);
+    data.group.scale.setScalar(TOWER_MOB_SCALE);
     return data;
-  }, [mobType, isMagma]);
-
-  // Extra stacked magma cubes for levels 2+
-  const extraMobs = useMemo(() => {
-    if (!isMagma || tower.level <= 1) return [];
-    const extras: MobMeshData[] = [];
-    for (let i = 1; i < tower.level; i++) {
-      const data = createMobMesh('magma_cube');
-      data.group.scale.setScalar(MAGMA_STACK_SCALES[i] ?? 0.24);
-      extras.push(data);
-    }
-    return extras;
-  }, [isMagma, tower.level]);
+  }, [mobType, isMagma, tower.level]);
 
   useEffect(() => {
     mobRef.current = mobData;
@@ -630,14 +616,6 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       mobRef.current = null;
     };
   }, [mobData]);
-
-  useEffect(() => {
-    extraMobsRef.current = extraMobs;
-    return () => {
-      extraMobs.forEach(m => disposeMobGroup(m));
-      extraMobsRef.current = [];
-    };
-  }, [extraMobs]);
 
   useFrame((state) => {
     if (!groupRef.current) return;
@@ -669,33 +647,11 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
     if (mobRef.current) {
       animateMob(mobRef.current, t, true);
     }
-    for (const em of extraMobsRef.current) {
-      animateMob(em, t, true);
-    }
   });
 
-  const levelScale = isMagma ? 1 : 1 + (tower.level - 1) * 0.1;
-  const baseHeight = mobData.height * (isMagma ? MAGMA_STACK_SCALES[0] : TOWER_MOB_SCALE);
+  const levelScale = 1 + (tower.level - 1) * 0.1;
+  const charHeight = mobData.height * TOWER_MOB_SCALE;
   const towerRange = def.rangePerLevel[tower.level - 1] ?? def.range;
-
-  // Calculate stacked heights for magma cubes
-  const magmaStackYOffsets: number[] = [];
-  if (isMagma) {
-    let y = 0.1; // base position
-    magmaStackYOffsets.push(y);
-    for (let i = 1; i < tower.level; i++) {
-      const prevScale = MAGMA_STACK_SCALES[i - 1] ?? 0.24;
-      const curScale = MAGMA_STACK_SCALES[i] ?? 0.24;
-      const prevH = mobData.height * prevScale;
-      const curH = mobData.height * curScale;
-      y += prevH * 0.75 + curH * 0.25 + MAGMA_STACK_GAP;
-      magmaStackYOffsets.push(y);
-    }
-  }
-
-  const totalStackHeight = isMagma && magmaStackYOffsets.length > 0
-    ? magmaStackYOffsets[magmaStackYOffsets.length - 1] + mobData.height * (MAGMA_STACK_SCALES[tower.level - 1] ?? 0.24)
-    : baseHeight;
 
   return (
     <group
@@ -715,17 +671,11 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
         <meshStandardMaterial color={def.accentColor} emissive={def.accentColor} emissiveIntensity={0.3} side={THREE.DoubleSide} />
       </mesh>
       {/* Minecraft character model (rotates toward target) */}
-      <group ref={mobWrapperRef} position={[0, isMagma ? magmaStackYOffsets[0] : 0.1, 0]}>
+      <group ref={mobWrapperRef} position={[0, 0.1, 0]}>
         <primitive object={mobData.group} />
-        {/* Stacked magma cubes for levels 2+ */}
-        {isMagma && extraMobs.map((em, i) => (
-          <group key={i} position={[0, magmaStackYOffsets[i + 1] - magmaStackYOffsets[0], 0]}>
-            <primitive object={em.group} />
-          </group>
-        ))}
       </group>
       {/* Magma tower: always-visible aura ring */}
-      {isMagma && (
+      {tower.type === 'cannon' && (
         <MagmaAuraRing range={towerRange} />
       )}
       {/* Frost tower: always-visible radiating slow AoE */}
@@ -734,7 +684,7 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       )}
       {/* Level indicators */}
       {Array.from({ length: tower.level }).map((_, i) => (
-        <mesh key={i} position={[(i - (tower.level - 1) / 2) * 0.12, totalStackHeight + 0.15, 0]}>
+        <mesh key={i} position={[(i - (tower.level - 1) / 2) * 0.12, charHeight + 0.2, 0]}>
           <sphereGeometry args={[0.04, 6, 6]} />
           <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.5} />
         </mesh>

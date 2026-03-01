@@ -488,7 +488,7 @@ function createSlime(): MobMeshData {
 
 // ========== Magma Cube ==========
 
-function createMagmaCube(): MobMeshData {
+function createMagmaCube(segments = 3): MobMeshData {
   const group = new THREE.Group();
   // Minecraft magma cube palette
   const shell = 0x2a1a0a;       // Dark charred shell
@@ -498,92 +498,109 @@ function createMagmaCube(): MobMeshData {
   const magmaYellow = 0xffaa00; // Hottest parts of seams
   const eyeColor = 0xff8800;    // Orange-yellow eyes
 
-  // --- Segmented body: 3 layers (bottom, middle, top) with magma seams ---
+  // Segment definitions: each layer has position, size, shell color
+  // Heights are cumulative so segments stack naturally
+  let topY = 0;
 
-  // Bottom segment (largest)
+  // --- Segment 1 (bottom, always present) ---
   const bottom = mbox(0.7, 0.2, 0.7, shellDark, magmaGlow, 0.15);
   bottom.position.set(0, 0.1, 0);
   group.add(bottom);
+  topY = 0.2;
 
-  // Magma seam 1 (between bottom and middle) — visible glowing gap
-  const seam1 = mbox(0.62, 0.04, 0.62, magma, magma, 2.5);
-  seam1.position.set(0, 0.22, 0);
-  group.add(seam1);
-  // Cross crack on seam 1
-  const seam1Cross = mbox(0.66, 0.04, 0.04, magmaYellow, magmaYellow, 3.0);
-  seam1Cross.position.set(0, 0.22, 0);
-  group.add(seam1Cross);
-  const seam1CrossZ = mbox(0.04, 0.04, 0.66, magmaYellow, magmaYellow, 3.0);
-  seam1CrossZ.position.set(0, 0.22, 0);
-  group.add(seam1CrossZ);
-
-  // Middle segment
-  const middle = mbox(0.64, 0.22, 0.64, shell, magmaGlow, 0.12);
-  middle.position.set(0, 0.35, 0);
-  group.add(middle);
-
-  // Vertical cracks on middle segment (all 4 faces)
-  const midCrackF = mbox(0.03, 0.18, 0.005, magma, magma, 2.0);
-  midCrackF.position.set(0.08, 0.35, -0.321);
-  group.add(midCrackF);
-  const midCrackF2 = mbox(0.03, 0.12, 0.005, magmaYellow, magmaYellow, 2.5);
-  midCrackF2.position.set(-0.14, 0.33, -0.321);
-  group.add(midCrackF2);
-  const midCrackB = mbox(0.03, 0.15, 0.005, magma, magma, 2.0);
-  midCrackB.position.set(-0.06, 0.36, 0.321);
-  group.add(midCrackB);
-  const midCrackL = mbox(0.005, 0.16, 0.03, magma, magma, 2.0);
-  midCrackL.position.set(-0.321, 0.34, 0.1);
-  group.add(midCrackL);
-  const midCrackR = mbox(0.005, 0.14, 0.03, magmaYellow, magmaYellow, 2.0);
-  midCrackR.position.set(0.321, 0.35, -0.08);
-  group.add(midCrackR);
-
-  // Magma seam 2 (between middle and top)
-  const seam2 = mbox(0.56, 0.04, 0.56, magma, magma, 2.5);
-  seam2.position.set(0, 0.48, 0);
-  group.add(seam2);
-  const seam2Cross = mbox(0.6, 0.04, 0.04, magmaYellow, magmaYellow, 3.0);
-  seam2Cross.position.set(0, 0.48, 0);
-  group.add(seam2Cross);
-  const seam2CrossZ = mbox(0.04, 0.04, 0.6, magmaYellow, magmaYellow, 3.0);
-  seam2CrossZ.position.set(0, 0.48, 0);
-  group.add(seam2CrossZ);
-
-  // Top segment (smallest — the "head")
-  const top = mbox(0.5, 0.26, 0.5, shell, magmaGlow, 0.1);
-  top.position.set(0, 0.63, 0);
-  group.add(top);
-
-  // Vertical cracks on top segment
-  const topCrackF = mbox(0.03, 0.2, 0.005, magma, magma, 1.8);
-  topCrackF.position.set(-0.05, 0.63, -0.251);
-  group.add(topCrackF);
-  const topCrackR = mbox(0.005, 0.18, 0.03, magma, magma, 1.8);
-  topCrackR.position.set(0.251, 0.64, 0.06);
-  group.add(topCrackR);
-
-  // --- Eyes (on the front of the top segment, menacing orange glow) ---
-  const le = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
-  le.position.set(-0.1, 0.66, -0.26);
-  group.add(le);
-  const re = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
-  re.position.set(0.1, 0.66, -0.26);
-  group.add(re);
-
-  // --- Inner core (glowing magma visible through seams and cracks) ---
-  const core = mbox(0.3, 0.5, 0.3, magmaGlow, magmaGlow, 1.2);
-  core.position.set(0, 0.35, 0);
-  group.add(core);
-
-  // --- Bottom face glow (magma dripping from underside) ---
+  // Bottom face glow
   const bottomGlow = mbox(0.4, 0.01, 0.4, magma, magma, 2.0);
   bottomGlow.position.set(0, 0.005, 0);
   group.add(bottomGlow);
 
+  if (segments >= 2) {
+    // --- Seam 1 (between bottom and middle) ---
+    const seam1 = mbox(0.62, 0.04, 0.62, magma, magma, 2.5);
+    seam1.position.set(0, 0.22, 0);
+    group.add(seam1);
+    const seam1Cross = mbox(0.66, 0.04, 0.04, magmaYellow, magmaYellow, 3.0);
+    seam1Cross.position.set(0, 0.22, 0);
+    group.add(seam1Cross);
+    const seam1CrossZ = mbox(0.04, 0.04, 0.66, magmaYellow, magmaYellow, 3.0);
+    seam1CrossZ.position.set(0, 0.22, 0);
+    group.add(seam1CrossZ);
+
+    // --- Segment 2 (middle) ---
+    const middle = mbox(0.64, 0.22, 0.64, shell, magmaGlow, 0.12);
+    middle.position.set(0, 0.35, 0);
+    group.add(middle);
+
+    // Vertical cracks on middle segment
+    const midCrackF = mbox(0.03, 0.18, 0.005, magma, magma, 2.0);
+    midCrackF.position.set(0.08, 0.35, -0.321);
+    group.add(midCrackF);
+    const midCrackF2 = mbox(0.03, 0.12, 0.005, magmaYellow, magmaYellow, 2.5);
+    midCrackF2.position.set(-0.14, 0.33, -0.321);
+    group.add(midCrackF2);
+    const midCrackB = mbox(0.03, 0.15, 0.005, magma, magma, 2.0);
+    midCrackB.position.set(-0.06, 0.36, 0.321);
+    group.add(midCrackB);
+    const midCrackL = mbox(0.005, 0.16, 0.03, magma, magma, 2.0);
+    midCrackL.position.set(-0.321, 0.34, 0.1);
+    group.add(midCrackL);
+    const midCrackR = mbox(0.005, 0.14, 0.03, magmaYellow, magmaYellow, 2.0);
+    midCrackR.position.set(0.321, 0.35, -0.08);
+    group.add(midCrackR);
+
+    topY = 0.46;
+  }
+
+  if (segments >= 3) {
+    // --- Seam 2 (between middle and top) ---
+    const seam2 = mbox(0.56, 0.04, 0.56, magma, magma, 2.5);
+    seam2.position.set(0, 0.48, 0);
+    group.add(seam2);
+    const seam2Cross = mbox(0.6, 0.04, 0.04, magmaYellow, magmaYellow, 3.0);
+    seam2Cross.position.set(0, 0.48, 0);
+    group.add(seam2Cross);
+    const seam2CrossZ = mbox(0.04, 0.04, 0.6, magmaYellow, magmaYellow, 3.0);
+    seam2CrossZ.position.set(0, 0.48, 0);
+    group.add(seam2CrossZ);
+
+    // --- Segment 3 (top — the "head") ---
+    const top = mbox(0.5, 0.26, 0.5, shell, magmaGlow, 0.1);
+    top.position.set(0, 0.63, 0);
+    group.add(top);
+
+    // Vertical cracks on top segment
+    const topCrackF = mbox(0.03, 0.2, 0.005, magma, magma, 1.8);
+    topCrackF.position.set(-0.05, 0.63, -0.251);
+    group.add(topCrackF);
+    const topCrackR = mbox(0.005, 0.18, 0.03, magma, magma, 1.8);
+    topCrackR.position.set(0.251, 0.64, 0.06);
+    group.add(topCrackR);
+
+    topY = 0.76;
+  }
+
+  // --- Eyes (always on the topmost segment) ---
+  // Position eyes based on how many segments we have
+  const eyeY = segments === 1 ? 0.14 : segments === 2 ? 0.38 : 0.66;
+  const eyeZ = segments === 1 ? -0.36 : segments === 2 ? -0.321 : -0.26;
+  const le = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
+  le.position.set(-0.1, eyeY, eyeZ);
+  group.add(le);
+  const re = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
+  re.position.set(0.1, eyeY, eyeZ);
+  group.add(re);
+
+  // --- Inner core (glowing magma visible through seams and cracks) ---
+  const coreH = topY * 0.65;
+  const core = mbox(0.3, coreH, 0.3, magmaGlow, magmaGlow, 1.2);
+  core.position.set(0, topY * 0.45, 0);
+  group.add(core);
+
+  // Height table: 1 seg=0.3, 2 seg=0.55, 3 seg=0.9
+  const height = segments === 1 ? 0.3 : segments === 2 ? 0.55 : 0.9;
+
   return {
     group, type: 'magma_cube',
-    height: 0.9, isGltf: false,
+    height, isGltf: false,
   };
 }
 
@@ -1134,7 +1151,7 @@ function createWolf(): MobMeshData {
  * Create a mob mesh for the given enemy type.
  * Uses GLTF model if available, otherwise builds procedural geometry.
  */
-export function createMobMesh(type: TDEnemyType): MobMeshData {
+export function createMobMesh(type: TDEnemyType, options?: { segments?: number }): MobMeshData {
   // Try GLTF model first
   const gltfModel = getGltfModel(type);
   if (gltfModel) {
@@ -1154,7 +1171,7 @@ export function createMobMesh(type: TDEnemyType): MobMeshData {
     case 'spider': return createSpider();
     case 'enderman': return createEnderman();
     case 'slime': return createSlime();
-    case 'magma_cube': return createMagmaCube();
+    case 'magma_cube': return createMagmaCube(options?.segments);
     case 'pig': return createPig();
     case 'chicken': return createChicken();
     case 'cow': return createCow();
