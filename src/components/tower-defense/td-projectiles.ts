@@ -7,7 +7,7 @@
  * Projectile types:
  *   - arrow       (skeleton towers: archer, sniper)
  *   - cobweb      (spider tower: frost)
- *   - tnt         (creeper tower: cannon)
+ *   - tnt         (magma cube tower: cannon — unused, tower uses aura)
  *   - ender_pearl (enderman towers: lightning, arcane)
  *   - fireball    (zombie tower: flame)
  */

@@ -18,7 +18,7 @@ import type { ProjectileMeshData } from './td-projectiles';
 // ===== Tower-to-Minecraft-Mob mapping =====
 const TOWER_MOB_MAP: Record<TowerType, TDEnemyType> = {
   archer: 'skeleton',
-  cannon: 'creeper',
+  cannon: 'magma_cube',
   frost: 'slime',
   lightning: 'enderman',
   sniper: 'skeleton',
@@ -504,6 +504,47 @@ function PathLine({ waypoints }: { waypoints: Vec3[] }) {
 }
 
 // ===== Towers (Minecraft Character Models) =====
+// ===== Magma Tower Aura Ring =====
+function MagmaAuraRing({ range }: { range: number }) {
+  const ringRef = useRef<THREE.Mesh>(null);
+  const pulseRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    // Pulsing aura fill
+    if (pulseRef.current) {
+      const pulse = 0.85 + Math.sin(t * 3) * 0.15;
+      pulseRef.current.scale.set(pulse, pulse, 1);
+      const mat = pulseRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.1 + Math.sin(t * 3) * 0.05;
+    }
+    // Rotating inner ring
+    if (ringRef.current) {
+      ringRef.current.rotation.z = t * 0.5;
+    }
+  });
+
+  return (
+    <group position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Filled magma circle */}
+      <mesh ref={pulseRef}>
+        <circleGeometry args={[range, 32]} />
+        <meshBasicMaterial color="#ff6600" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Inner rotating ring */}
+      <mesh ref={ringRef}>
+        <ringGeometry args={[range * 0.5, range * 0.55, 32]} />
+        <meshBasicMaterial color="#ff8800" transparent opacity={0.15} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Outer ring border */}
+      <mesh>
+        <ringGeometry args={[range - 0.06, range, 32]} />
+        <meshBasicMaterial color="#f97316" transparent opacity={0.25} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+}
+
 // ===== Frost Tower Radiating Slow AoE Ring =====
 function FrostAoERing({ range }: { range: number }) {
   const ringRef = useRef<THREE.Mesh>(null);
@@ -629,6 +670,10 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       <group ref={mobWrapperRef} position={[0, 0.1, 0]}>
         <primitive object={mobData.group} />
       </group>
+      {/* Magma tower: always-visible aura ring */}
+      {tower.type === 'cannon' && (
+        <MagmaAuraRing range={towerRange} />
+      )}
       {/* Frost tower: always-visible radiating slow AoE */}
       {tower.type === 'frost' && (
         <FrostAoERing range={towerRange} />

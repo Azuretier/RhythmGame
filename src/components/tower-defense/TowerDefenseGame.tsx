@@ -25,7 +25,7 @@ const TowerDefenseRenderer3D = dynamic(
 
 const TOWER_ICONS: Record<TowerType, string> = {
   archer: '🏹',
-  cannon: '💣',
+  cannon: '🌋',
   frost: '❄️',
   lightning: '⚡',
   sniper: '🎯',

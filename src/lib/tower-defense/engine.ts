@@ -254,6 +254,7 @@ export function updateGame(state: GameState, dt: number): GameState {
   s = tickSpawning(s, effectiveDt);
   s = tickEnemyMovement(s, effectiveDt);
   s = tickTowerTargeting(s);
+  s = tickAuraDamage(s, effectiveDt);
   s = tickTowerFiring(s, effectiveDt);
   s = tickProjectiles(s, effectiveDt);
   s = tickStatusEffects(s, effectiveDt);
@@ -386,12 +387,57 @@ function tickTowerTargeting(state: GameState): GameState {
   return { ...state, towers };
 }
 
+function tickAuraDamage(state: GameState, dt: number): GameState {
+  const auraTowers = state.towers.filter(t => t.type === 'cannon');
+  if (auraTowers.length === 0) return state;
+
+  let enemies = [...state.enemies];
+  let towers = [...state.towers];
+  let gold = state.gold;
+  let score = state.score;
+
+  for (const tower of auraTowers) {
+    const range = getTowerRange(tower);
+    const dps = getTowerDamage(tower);
+    const towerPos = getTowerPos(tower);
+    const dmgThisTick = dps * dt;
+
+    enemies = enemies.map(e => {
+      if (e.dead) return e;
+      const d = dist2d(towerPos, e.position);
+      if (d > range) return e;
+
+      const amplify = hasAmplify(e);
+      const armor = e.armor;
+      const damage = Math.max(0.5, (dmgThisTick - armor * dt) * amplify);
+
+      const tIdx = towers.findIndex(t => t.id === tower.id);
+      if (tIdx >= 0) towers[tIdx] = { ...towers[tIdx], totalDamage: towers[tIdx].totalDamage + damage };
+
+      const newHp = e.hp - damage;
+      if (newHp <= 0 && !e.dead) {
+        const reward = ENEMY_DEFS[e.type].reward;
+        gold += reward;
+        score += reward * 2;
+        if (tIdx >= 0) towers[tIdx] = { ...towers[tIdx], kills: towers[tIdx].kills + 1 };
+        return { ...e, hp: 0, dead: true };
+      }
+      return { ...e, hp: newHp };
+    });
+  }
+
+  return { ...state, enemies, towers, gold, score };
+}
+
 function tickTowerFiring(state: GameState, dt: number): GameState {
   const newProjectiles: Projectile[] = [];
   const towers = state.towers.map(tower => {
     const newTower = { ...tower, cooldown: Math.max(0, tower.cooldown - dt) };
 
     if (newTower.cooldown > 0 || !newTower.targetId) return newTower;
+
+    // Cannon (magma) tower deals aura damage — no projectiles
+    if (tower.type === 'cannon') return newTower;
 
     const target = state.enemies.find(e => e.id === newTower.targetId && !e.dead);
     if (!target) return newTower;
@@ -424,7 +470,7 @@ function tickTowerFiring(state: GameState, dt: number): GameState {
       position: { ...towerPos },
       damage,
       speed: def.projectileSpeed,
-      aoe: tower.type === 'cannon' ? 1.5 : 0,
+      aoe: 0,
       effects: effects.length > 0 ? effects : undefined,
     };
     newProjectiles.push(projectile);

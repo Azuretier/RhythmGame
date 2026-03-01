@@ -182,6 +182,7 @@ const MOB_HEIGHTS: Record<TDEnemyType, number> = {
   spider: 0.8,
   enderman: 2.8,
   slime: 0.9,
+  magma_cube: 0.9,
   pig: 0.9,
   chicken: 0.7,
   cow: 1.2,
@@ -481,6 +482,67 @@ function createSlime(): MobMeshData {
 
   return {
     group, type: 'slime',
+    height: 0.9, isGltf: false,
+  };
+}
+
+// ========== Magma Cube ==========
+
+function createMagmaCube(): MobMeshData {
+  const group = new THREE.Group();
+  const magmaOrange = 0xff6600;
+  const magmaDark = 0x330000;
+  const magmaCore = 0xff2200;
+  const magmaYellow = 0xffaa00;
+
+  // Outer body (cube, slightly squished like slime)
+  const body = mbox(0.7, 0.6, 0.7, magmaDark, magmaOrange, 0.4);
+  body.position.set(0, 0.3, 0);
+  group.add(body);
+
+  // Magma cracks — bright orange/yellow lines on faces
+  // Front face cracks
+  const crackH1 = mbox(0.3, 0.03, 0.005, magmaOrange, magmaOrange, 2.0);
+  crackH1.position.set(0.05, 0.35, -0.351);
+  group.add(crackH1);
+  const crackV1 = mbox(0.03, 0.25, 0.005, magmaYellow, magmaYellow, 2.5);
+  crackV1.position.set(-0.1, 0.28, -0.351);
+  group.add(crackV1);
+  const crackH2 = mbox(0.2, 0.03, 0.005, magmaYellow, magmaYellow, 2.0);
+  crackH2.position.set(0.15, 0.2, -0.351);
+  group.add(crackH2);
+
+  // Side cracks
+  const crackS1 = mbox(0.005, 0.2, 0.25, magmaOrange, magmaOrange, 2.0);
+  crackS1.position.set(-0.351, 0.3, 0.05);
+  group.add(crackS1);
+  const crackS2 = mbox(0.005, 0.03, 0.3, magmaYellow, magmaYellow, 2.0);
+  crackS2.position.set(0.351, 0.25, -0.05);
+  group.add(crackS2);
+
+  // Top face cracks
+  const crackT1 = mbox(0.25, 0.005, 0.03, magmaOrange, magmaOrange, 2.0);
+  crackT1.position.set(0.05, 0.601, 0.1);
+  group.add(crackT1);
+  const crackT2 = mbox(0.03, 0.005, 0.2, magmaYellow, magmaYellow, 2.0);
+  crackT2.position.set(-0.12, 0.601, -0.05);
+  group.add(crackT2);
+
+  // Inner core (bright glowing center visible through cracks)
+  const core = mbox(0.35, 0.3, 0.35, magmaCore, magmaCore, 1.5);
+  core.position.set(0, 0.25, 0);
+  group.add(core);
+
+  // Eyes (bright yellow-orange, menacing)
+  const le = mbox(0.1, 0.08, 0.02, magmaYellow, magmaYellow, 3.0);
+  le.position.set(-0.12, 0.4, -0.36);
+  group.add(le);
+  const re = mbox(0.1, 0.08, 0.02, magmaYellow, magmaYellow, 3.0);
+  re.position.set(0.12, 0.4, -0.36);
+  group.add(re);
+
+  return {
+    group, type: 'magma_cube',
     height: 0.9, isGltf: false,
   };
 }
@@ -1052,6 +1114,7 @@ export function createMobMesh(type: TDEnemyType): MobMeshData {
     case 'spider': return createSpider();
     case 'enderman': return createEnderman();
     case 'slime': return createSlime();
+    case 'magma_cube': return createMagmaCube();
     case 'pig': return createPig();
     case 'chicken': return createChicken();
     case 'cow': return createCow();
@@ -1132,6 +1195,15 @@ export function animateMob(mob: MobMeshData, time: number, isMoving: boolean): v
       break;
     }
 
+    case 'magma_cube': {
+      // Magma cube bounces like slime but with a pulsing squish
+      const mgBounce = isMoving ? Math.abs(Math.sin(time * 5)) * 0.15 : Math.sin(time * 2) * 0.05;
+      mob.group.position.y = mgBounce;
+      const mgSquish = isMoving ? 1 + Math.sin(time * 5) * 0.12 : 1;
+      mob.group.scale.y = mgSquish;
+      break;
+    }
+
     case 'pig':
     case 'cow':
     case 'horse':
@@ -1202,6 +1274,7 @@ export function resetMobPose(mob: MobMeshData): void {
       }
       break;
     case 'slime':
+    case 'magma_cube':
       mob.group.position.y = 0;
       mob.group.scale.y = 1;
       break;
