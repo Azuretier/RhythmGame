@@ -3,7 +3,7 @@
 import { Component, Suspense, useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Html, Sky } from '@react-three/drei';
+import { OrbitControls, Html, Sky, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import type {
   GameState, Tower, Enemy, Projectile, GridCell, TowerType, EnemyType, Vec3,
@@ -663,6 +663,10 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
   const isAmplified = enemy.effects.some(e => e.type === 'amplify');
   const isStunned = enemy.effects.some(e => e.type === 'stun');
 
+  // Track previous position and current facing for smooth rotation
+  const prevPosRef = useRef<{ x: number; z: number }>({ x: enemy.position.x, z: enemy.position.z });
+  const facingAngleRef = useRef<number>(0);
+
   const mobData = useMemo(() => {
     const data = createMobMesh(mobType);
     data.group.scale.setScalar(mobScale);
@@ -701,6 +705,24 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
     const t = state.clock.elapsedTime;
     const bobHeight = enemy.flying ? 1.5 + Math.sin(t * 2) * 0.15 : Math.sin(t * 4 + parseFloat(enemy.id.slice(1)) * 0.5) * 0.03;
     groupRef.current.position.set(enemy.position.x, enemy.position.y + bobHeight, enemy.position.z);
+
+    // Compute facing direction from movement delta
+    const dx = enemy.position.x - prevPosRef.current.x;
+    const dz = enemy.position.z - prevPosRef.current.z;
+    const moved = dx * dx + dz * dz;
+    if (moved > 0.00001) {
+      // atan2(dx, dz) gives rotation where positive-Z is forward (0 radians)
+      const targetAngle = Math.atan2(dx, dz);
+      // Smooth rotation to avoid snapping at waypoint corners
+      let delta = targetAngle - facingAngleRef.current;
+      // Normalize to [-PI, PI]
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      facingAngleRef.current += delta * 0.25;
+    }
+    prevPosRef.current = { x: enemy.position.x, z: enemy.position.z };
+    groupRef.current.rotation.y = facingAngleRef.current;
+
     // Animate mob
     if (mobRef.current) {
       const isMoving = !isStunned;
@@ -755,9 +777,9 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
         </mesh>
       )}
 
-      {/* HP bar */}
+      {/* HP bar (billboarded to always face camera) */}
       {hpPercent < 1 && (
-        <group position={[0, charHeight + 0.1, 0]}>
+        <Billboard position={[0, charHeight + 0.1, 0]} follow lockX={false} lockY={false} lockZ={false}>
           <mesh position={[0, 0, 0]}>
             <planeGeometry args={[0.6, 0.08]} />
             <meshBasicMaterial color="#1f2937" side={THREE.DoubleSide} />
@@ -769,7 +791,7 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
               side={THREE.DoubleSide}
             />
           </mesh>
-        </group>
+        </Billboard>
       )}
     </group>
   );
