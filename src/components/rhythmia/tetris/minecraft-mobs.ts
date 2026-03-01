@@ -182,6 +182,7 @@ const MOB_HEIGHTS: Record<TDEnemyType, number> = {
   spider: 0.8,
   enderman: 2.8,
   slime: 0.9,
+  magma_cube: 0.78,
   pig: 0.9,
   chicken: 0.7,
   cow: 1.2,
@@ -482,6 +483,143 @@ function createSlime(): MobMeshData {
   return {
     group, type: 'slime',
     height: 0.9, isGltf: false,
+  };
+}
+
+// ========== Magma Cube ==========
+
+function createMagmaCube(segments = 3): MobMeshData {
+  const group = new THREE.Group();
+  // Minecraft magma cube palette
+  const shell = 0x2a1a0a;       // Dark charred shell
+  const shellDark = 0x1a0e04;   // Darker variation for bottom segments
+  const magma = 0xff6600;       // Bright orange magma in seams
+  const magmaGlow = 0xff4400;   // Inner glow
+  const magmaYellow = 0xffaa00; // Hottest parts of seams
+  const eyeColor = 0xff8800;    // Orange-yellow eyes
+
+  // Segment widths and heights — flat slabs (height ≈ 50% of width)
+  const widths  = [0.55, 0.45, 0.35]; // bottom, middle, top
+  const heights = [0.28, 0.24, 0.18]; // flat enough to stack next to each other
+  const seamH = 0.04;
+  let y = 0; // running Y position (bottom of current segment)
+
+  // --- Segment 1 (bottom, always present) ---
+  const w1 = widths[0], h1 = heights[0];
+  const bottom = mbox(w1, h1, w1, shellDark, magmaGlow, 0.15);
+  bottom.position.set(0, y + h1 / 2, 0);
+  group.add(bottom);
+
+  // Bottom face glow
+  const bottomGlow = mbox(w1 * 0.6, 0.01, w1 * 0.6, magma, magma, 2.0);
+  bottomGlow.position.set(0, 0.005, 0);
+  group.add(bottomGlow);
+
+  // Cracks on bottom segment
+  const btmCrackF = mbox(0.03, h1 * 0.6, 0.005, magma, magma, 2.0);
+  btmCrackF.position.set(0.08, y + h1 / 2, -(w1 / 2 + 0.001));
+  group.add(btmCrackF);
+  const btmCrackR = mbox(0.005, h1 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
+  btmCrackR.position.set(w1 / 2 + 0.001, y + h1 * 0.45, -0.06);
+  group.add(btmCrackR);
+
+  y += h1;
+
+  if (segments >= 2) {
+    // --- Seam 1 ---
+    const seamW1 = widths[0] * 0.9;
+    const seam1 = mbox(seamW1, seamH, seamW1, magma, magma, 2.5);
+    seam1.position.set(0, y + seamH / 2, 0);
+    group.add(seam1);
+    const seam1X = mbox(seamW1 * 1.05, seamH, 0.04, magmaYellow, magmaYellow, 3.0);
+    seam1X.position.set(0, y + seamH / 2, 0);
+    group.add(seam1X);
+    const seam1Z = mbox(0.04, seamH, seamW1 * 1.05, magmaYellow, magmaYellow, 3.0);
+    seam1Z.position.set(0, y + seamH / 2, 0);
+    group.add(seam1Z);
+    y += seamH;
+
+    // --- Segment 2 (middle) ---
+    const w2 = widths[1], h2 = heights[1];
+    const middle = mbox(w2, h2, w2, shell, magmaGlow, 0.12);
+    middle.position.set(0, y + h2 / 2, 0);
+    group.add(middle);
+
+    // Cracks on middle segment
+    const midCrackF = mbox(0.03, h2 * 0.7, 0.005, magma, magma, 2.0);
+    midCrackF.position.set(0.06, y + h2 / 2, -(w2 / 2 + 0.001));
+    group.add(midCrackF);
+    const midCrackF2 = mbox(0.03, h2 * 0.5, 0.005, magmaYellow, magmaYellow, 2.5);
+    midCrackF2.position.set(-0.1, y + h2 * 0.4, -(w2 / 2 + 0.001));
+    group.add(midCrackF2);
+    const midCrackB = mbox(0.03, h2 * 0.55, 0.005, magma, magma, 2.0);
+    midCrackB.position.set(-0.05, y + h2 / 2, w2 / 2 + 0.001);
+    group.add(midCrackB);
+    const midCrackL = mbox(0.005, h2 * 0.6, 0.03, magma, magma, 2.0);
+    midCrackL.position.set(-(w2 / 2 + 0.001), y + h2 * 0.45, 0.08);
+    group.add(midCrackL);
+    const midCrackR = mbox(0.005, h2 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
+    midCrackR.position.set(w2 / 2 + 0.001, y + h2 / 2, -0.06);
+    group.add(midCrackR);
+
+    y += h2;
+  }
+
+  if (segments >= 3) {
+    // --- Seam 2 ---
+    const seamW2 = widths[1] * 0.9;
+    const seam2 = mbox(seamW2, seamH, seamW2, magma, magma, 2.5);
+    seam2.position.set(0, y + seamH / 2, 0);
+    group.add(seam2);
+    const seam2X = mbox(seamW2 * 1.05, seamH, 0.04, magmaYellow, magmaYellow, 3.0);
+    seam2X.position.set(0, y + seamH / 2, 0);
+    group.add(seam2X);
+    const seam2Z = mbox(0.04, seamH, seamW2 * 1.05, magmaYellow, magmaYellow, 3.0);
+    seam2Z.position.set(0, y + seamH / 2, 0);
+    group.add(seam2Z);
+    y += seamH;
+
+    // --- Segment 3 (top — the "head") ---
+    const w3 = widths[2], h3 = heights[2];
+    const top = mbox(w3, h3, w3, shell, magmaGlow, 0.1);
+    top.position.set(0, y + h3 / 2, 0);
+    group.add(top);
+
+    // Cracks on top segment
+    const topCrackF = mbox(0.03, h3 * 0.65, 0.005, magma, magma, 1.8);
+    topCrackF.position.set(-0.04, y + h3 / 2, -(w3 / 2 + 0.001));
+    group.add(topCrackF);
+    const topCrackR = mbox(0.005, h3 * 0.55, 0.03, magma, magma, 1.8);
+    topCrackR.position.set(w3 / 2 + 0.001, y + h3 * 0.45, 0.04);
+    group.add(topCrackR);
+
+    y += h3;
+  }
+
+  // --- Eyes (always on the topmost segment) ---
+  const topW = widths[segments - 1];
+  const topH = heights[segments - 1];
+  const eyeY = y - topH / 2 + topH * 0.15;
+  const eyeZ = -(topW / 2 + 0.01);
+  const le = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
+  le.position.set(-0.08, eyeY, eyeZ);
+  group.add(le);
+  const re = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
+  re.position.set(0.08, eyeY, eyeZ);
+  group.add(re);
+
+  // --- Inner core (glowing magma visible through seams and cracks) ---
+  const coreH = y * 0.6;
+  const core = mbox(0.2, coreH, 0.2, magmaGlow, magmaGlow, 1.2);
+  core.position.set(0, y * 0.45, 0);
+  group.add(core);
+
+  // Height: seg1=0.28, seg2=0.28+0.04+0.24=0.56, seg3=0.56+0.04+0.18=0.78
+  const height = y;
+
+  return {
+    group, type: 'magma_cube',
+    height, isGltf: false,
   };
 }
 
@@ -1032,7 +1170,7 @@ function createWolf(): MobMeshData {
  * Create a mob mesh for the given enemy type.
  * Uses GLTF model if available, otherwise builds procedural geometry.
  */
-export function createMobMesh(type: TDEnemyType): MobMeshData {
+export function createMobMesh(type: TDEnemyType, options?: { segments?: number }): MobMeshData {
   // Try GLTF model first
   const gltfModel = getGltfModel(type);
   if (gltfModel) {
@@ -1052,6 +1190,7 @@ export function createMobMesh(type: TDEnemyType): MobMeshData {
     case 'spider': return createSpider();
     case 'enderman': return createEnderman();
     case 'slime': return createSlime();
+    case 'magma_cube': return createMagmaCube(options?.segments);
     case 'pig': return createPig();
     case 'chicken': return createChicken();
     case 'cow': return createCow();
@@ -1132,6 +1271,15 @@ export function animateMob(mob: MobMeshData, time: number, isMoving: boolean): v
       break;
     }
 
+    case 'magma_cube': {
+      // Magma cube bounces like slime but with a pulsing squish
+      const mgBounce = isMoving ? Math.abs(Math.sin(time * 5)) * 0.15 : Math.sin(time * 2) * 0.05;
+      mob.group.position.y = mgBounce;
+      const mgSquish = isMoving ? 1 + Math.sin(time * 5) * 0.12 : 1;
+      mob.group.scale.y = mgSquish;
+      break;
+    }
+
     case 'pig':
     case 'cow':
     case 'horse':
@@ -1202,6 +1350,7 @@ export function resetMobPose(mob: MobMeshData): void {
       }
       break;
     case 'slime':
+    case 'magma_cube':
       mob.group.position.y = 0;
       mob.group.scale.y = 1;
       break;

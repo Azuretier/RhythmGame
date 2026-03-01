@@ -224,7 +224,7 @@ export type CardOffer = {
 export type GridPos = { gx: number; gz: number };
 
 // Minecraft-style enemy types for TD phase
-export type TDEnemyType = 'zombie' | 'skeleton' | 'creeper' | 'spider' | 'enderman' | 'slime' | 'pig' | 'chicken' | 'cow' | 'bee' | 'cat' | 'horse' | 'rabbit' | 'wolf';
+export type TDEnemyType = 'zombie' | 'skeleton' | 'creeper' | 'spider' | 'enderman' | 'slime' | 'magma_cube' | 'pig' | 'chicken' | 'cow' | 'bee' | 'cat' | 'horse' | 'rabbit' | 'wolf';
 
 export type Enemy = {
     id: number;

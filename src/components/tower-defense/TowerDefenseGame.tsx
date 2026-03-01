@@ -25,7 +25,7 @@ const TowerDefenseRenderer3D = dynamic(
 
 const TOWER_ICONS: Record<TowerType, string> = {
   archer: '🏹',
-  cannon: '💣',
+  cannon: '🌋',
   frost: '❄️',
   lightning: '⚡',
   sniper: '🎯',
@@ -322,6 +322,11 @@ export default function TowerDefenseGame() {
               const newProj = next.projectiles[next.projectiles.length - 1];
               if (newProj) sfx.playShoot(newProj.towerType);
             }
+          }
+
+          // Magma aura rumble — when any magma tower is actively damaging
+          if (next.phase === 'wave' && next.towers.some(t => t.type === 'cannon' && t.targetId)) {
+            sfx.playMagmaAura();
           }
 
           // Enemy killed — fewer alive enemies (not from reaching base)
