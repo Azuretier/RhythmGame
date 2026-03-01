@@ -182,7 +182,7 @@ const MOB_HEIGHTS: Record<TDEnemyType, number> = {
   spider: 0.8,
   enderman: 2.8,
   slime: 0.9,
-  magma_cube: 0.9,
+  magma_cube: 1.43,
   pig: 0.9,
   chicken: 0.7,
   cow: 1.2,
@@ -498,105 +498,122 @@ function createMagmaCube(segments = 3): MobMeshData {
   const magmaYellow = 0xffaa00; // Hottest parts of seams
   const eyeColor = 0xff8800;    // Orange-yellow eyes
 
-  // Segment definitions: each layer has position, size, shell color
-  // Heights are cumulative so segments stack naturally
-  let topY = 0;
+  // Each segment is a proper cube (width = height = depth)
+  const sizes = [0.55, 0.45, 0.35]; // bottom, middle, top
+  const seamH = 0.04;
+  let y = 0; // running Y position (bottom of current segment)
 
   // --- Segment 1 (bottom, always present) ---
-  const bottom = mbox(0.7, 0.2, 0.7, shellDark, magmaGlow, 0.15);
-  bottom.position.set(0, 0.1, 0);
+  const s1 = sizes[0];
+  const bottom = mbox(s1, s1, s1, shellDark, magmaGlow, 0.15);
+  bottom.position.set(0, y + s1 / 2, 0);
   group.add(bottom);
-  topY = 0.2;
 
   // Bottom face glow
-  const bottomGlow = mbox(0.4, 0.01, 0.4, magma, magma, 2.0);
+  const bottomGlow = mbox(s1 * 0.6, 0.01, s1 * 0.6, magma, magma, 2.0);
   bottomGlow.position.set(0, 0.005, 0);
   group.add(bottomGlow);
 
+  // Cracks on bottom segment
+  const btmCrackF = mbox(0.03, s1 * 0.6, 0.005, magma, magma, 2.0);
+  btmCrackF.position.set(0.08, y + s1 / 2, -(s1 / 2 + 0.001));
+  group.add(btmCrackF);
+  const btmCrackR = mbox(0.005, s1 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
+  btmCrackR.position.set(s1 / 2 + 0.001, y + s1 * 0.45, -0.06);
+  group.add(btmCrackR);
+
+  y += s1;
+
   if (segments >= 2) {
-    // --- Seam 1 (between bottom and middle) ---
-    const seam1 = mbox(0.62, 0.04, 0.62, magma, magma, 2.5);
-    seam1.position.set(0, 0.22, 0);
+    // --- Seam 1 ---
+    const seamW1 = sizes[0] * 0.9;
+    const seam1 = mbox(seamW1, seamH, seamW1, magma, magma, 2.5);
+    seam1.position.set(0, y + seamH / 2, 0);
     group.add(seam1);
-    const seam1Cross = mbox(0.66, 0.04, 0.04, magmaYellow, magmaYellow, 3.0);
-    seam1Cross.position.set(0, 0.22, 0);
-    group.add(seam1Cross);
-    const seam1CrossZ = mbox(0.04, 0.04, 0.66, magmaYellow, magmaYellow, 3.0);
-    seam1CrossZ.position.set(0, 0.22, 0);
-    group.add(seam1CrossZ);
+    const seam1X = mbox(seamW1 * 1.05, seamH, 0.04, magmaYellow, magmaYellow, 3.0);
+    seam1X.position.set(0, y + seamH / 2, 0);
+    group.add(seam1X);
+    const seam1Z = mbox(0.04, seamH, seamW1 * 1.05, magmaYellow, magmaYellow, 3.0);
+    seam1Z.position.set(0, y + seamH / 2, 0);
+    group.add(seam1Z);
+    y += seamH;
 
     // --- Segment 2 (middle) ---
-    const middle = mbox(0.64, 0.22, 0.64, shell, magmaGlow, 0.12);
-    middle.position.set(0, 0.35, 0);
+    const s2 = sizes[1];
+    const middle = mbox(s2, s2, s2, shell, magmaGlow, 0.12);
+    middle.position.set(0, y + s2 / 2, 0);
     group.add(middle);
 
-    // Vertical cracks on middle segment
-    const midCrackF = mbox(0.03, 0.18, 0.005, magma, magma, 2.0);
-    midCrackF.position.set(0.08, 0.35, -0.321);
+    // Cracks on middle segment
+    const midCrackF = mbox(0.03, s2 * 0.7, 0.005, magma, magma, 2.0);
+    midCrackF.position.set(0.06, y + s2 / 2, -(s2 / 2 + 0.001));
     group.add(midCrackF);
-    const midCrackF2 = mbox(0.03, 0.12, 0.005, magmaYellow, magmaYellow, 2.5);
-    midCrackF2.position.set(-0.14, 0.33, -0.321);
+    const midCrackF2 = mbox(0.03, s2 * 0.5, 0.005, magmaYellow, magmaYellow, 2.5);
+    midCrackF2.position.set(-0.1, y + s2 * 0.4, -(s2 / 2 + 0.001));
     group.add(midCrackF2);
-    const midCrackB = mbox(0.03, 0.15, 0.005, magma, magma, 2.0);
-    midCrackB.position.set(-0.06, 0.36, 0.321);
+    const midCrackB = mbox(0.03, s2 * 0.55, 0.005, magma, magma, 2.0);
+    midCrackB.position.set(-0.05, y + s2 / 2, s2 / 2 + 0.001);
     group.add(midCrackB);
-    const midCrackL = mbox(0.005, 0.16, 0.03, magma, magma, 2.0);
-    midCrackL.position.set(-0.321, 0.34, 0.1);
+    const midCrackL = mbox(0.005, s2 * 0.6, 0.03, magma, magma, 2.0);
+    midCrackL.position.set(-(s2 / 2 + 0.001), y + s2 * 0.45, 0.08);
     group.add(midCrackL);
-    const midCrackR = mbox(0.005, 0.14, 0.03, magmaYellow, magmaYellow, 2.0);
-    midCrackR.position.set(0.321, 0.35, -0.08);
+    const midCrackR = mbox(0.005, s2 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
+    midCrackR.position.set(s2 / 2 + 0.001, y + s2 / 2, -0.06);
     group.add(midCrackR);
 
-    topY = 0.46;
+    y += s2;
   }
 
   if (segments >= 3) {
-    // --- Seam 2 (between middle and top) ---
-    const seam2 = mbox(0.56, 0.04, 0.56, magma, magma, 2.5);
-    seam2.position.set(0, 0.48, 0);
+    // --- Seam 2 ---
+    const seamW2 = sizes[1] * 0.9;
+    const seam2 = mbox(seamW2, seamH, seamW2, magma, magma, 2.5);
+    seam2.position.set(0, y + seamH / 2, 0);
     group.add(seam2);
-    const seam2Cross = mbox(0.6, 0.04, 0.04, magmaYellow, magmaYellow, 3.0);
-    seam2Cross.position.set(0, 0.48, 0);
-    group.add(seam2Cross);
-    const seam2CrossZ = mbox(0.04, 0.04, 0.6, magmaYellow, magmaYellow, 3.0);
-    seam2CrossZ.position.set(0, 0.48, 0);
-    group.add(seam2CrossZ);
+    const seam2X = mbox(seamW2 * 1.05, seamH, 0.04, magmaYellow, magmaYellow, 3.0);
+    seam2X.position.set(0, y + seamH / 2, 0);
+    group.add(seam2X);
+    const seam2Z = mbox(0.04, seamH, seamW2 * 1.05, magmaYellow, magmaYellow, 3.0);
+    seam2Z.position.set(0, y + seamH / 2, 0);
+    group.add(seam2Z);
+    y += seamH;
 
     // --- Segment 3 (top — the "head") ---
-    const top = mbox(0.5, 0.26, 0.5, shell, magmaGlow, 0.1);
-    top.position.set(0, 0.63, 0);
+    const s3 = sizes[2];
+    const top = mbox(s3, s3, s3, shell, magmaGlow, 0.1);
+    top.position.set(0, y + s3 / 2, 0);
     group.add(top);
 
-    // Vertical cracks on top segment
-    const topCrackF = mbox(0.03, 0.2, 0.005, magma, magma, 1.8);
-    topCrackF.position.set(-0.05, 0.63, -0.251);
+    // Cracks on top segment
+    const topCrackF = mbox(0.03, s3 * 0.65, 0.005, magma, magma, 1.8);
+    topCrackF.position.set(-0.04, y + s3 / 2, -(s3 / 2 + 0.001));
     group.add(topCrackF);
-    const topCrackR = mbox(0.005, 0.18, 0.03, magma, magma, 1.8);
-    topCrackR.position.set(0.251, 0.64, 0.06);
+    const topCrackR = mbox(0.005, s3 * 0.55, 0.03, magma, magma, 1.8);
+    topCrackR.position.set(s3 / 2 + 0.001, y + s3 * 0.45, 0.04);
     group.add(topCrackR);
 
-    topY = 0.76;
+    y += s3;
   }
 
   // --- Eyes (always on the topmost segment) ---
-  // Position eyes based on how many segments we have
-  const eyeY = segments === 1 ? 0.14 : segments === 2 ? 0.38 : 0.66;
-  const eyeZ = segments === 1 ? -0.36 : segments === 2 ? -0.321 : -0.26;
+  const topSeg = sizes[segments - 1];
+  const eyeY = y - topSeg / 2 + topSeg * 0.15;
+  const eyeZ = -(topSeg / 2 + 0.01);
   const le = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
-  le.position.set(-0.1, eyeY, eyeZ);
+  le.position.set(-0.08, eyeY, eyeZ);
   group.add(le);
   const re = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
-  re.position.set(0.1, eyeY, eyeZ);
+  re.position.set(0.08, eyeY, eyeZ);
   group.add(re);
 
   // --- Inner core (glowing magma visible through seams and cracks) ---
-  const coreH = topY * 0.65;
-  const core = mbox(0.3, coreH, 0.3, magmaGlow, magmaGlow, 1.2);
-  core.position.set(0, topY * 0.45, 0);
+  const coreH = y * 0.6;
+  const core = mbox(0.2, coreH, 0.2, magmaGlow, magmaGlow, 1.2);
+  core.position.set(0, y * 0.45, 0);
   group.add(core);
 
-  // Height table: 1 seg=0.3, 2 seg=0.55, 3 seg=0.9
-  const height = segments === 1 ? 0.3 : segments === 2 ? 0.55 : 0.9;
+  // Height: seg1=0.55, seg2=0.55+0.04+0.45=1.04, seg3=1.04+0.04+0.35=1.43
+  const height = y;
 
   return {
     group, type: 'magma_cube',
