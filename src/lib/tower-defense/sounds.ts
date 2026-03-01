@@ -1,6 +1,10 @@
 /**
  * Procedural sound effects for the tower defense game.
  * Uses the Web Audio API — no external audio files needed.
+ *
+ * All sounds are designed to evoke Minecraft audio:
+ * block place thunks, bow twangs, XP orb plinks, mob death poofs,
+ * raid horns, stone button clicks, and more.
  */
 
 let audioCtx: AudioContext | null = null;
@@ -90,114 +94,142 @@ function noise(dur: number, vol: number, filterFreq: number, filterQ: number, de
   src.stop(t + dur);
 }
 
-// ─── Tower Placement ────────────────────────────────────────
+/** Short sine "pop" with very fast decay — the Minecraft XP orb plink. */
+function pop(freq: number, vol: number, delay = 0) {
+  const c = ctx();
+  if (!c) return;
+  const t = c.currentTime + delay;
+  const osc = c.createOscillator();
+  const gain = c.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, t);
+  osc.frequency.exponentialRampToValueAtTime(freq * 1.15, t + 0.02);
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  osc.connect(gain);
+  gain.connect(c.destination);
+  osc.start(t);
+  osc.stop(t + 0.07);
+}
+
+// ─── Tower Placement (Minecraft block place — woody thunk) ──
 
 export function playTowerPlace() {
-  // Satisfying "thunk" + confirmation chime
-  sweep(200, 80, 0.1, 'sine', 0.2);
-  noise(0.06, 0.08, 400, 2);
-  tone(523, 0.12, 'triangle', 0.1, 0.05);
-  tone(784, 0.15, 'triangle', 0.08, 0.1);
+  // Low sine pop for the body of the "thunk"
+  sweep(180, 90, 0.08, 'sine', 0.2);
+  // Short noise burst for woody texture
+  noise(0.04, 0.1, 300, 2);
+  // Subtle secondary thump
+  tone(120, 0.05, 'sine', 0.08, 0.01);
 }
 
-// ─── Tower Sell ─────────────────────────────────────────────
+// ─── Tower Sell (Minecraft XP orb collection — ascending plinks) ──
 
 export function playTowerSell() {
-  // Coins jingling — descending metallic tones
-  tone(1200, 0.08, 'square', 0.06);
-  tone(900, 0.08, 'square', 0.05, 0.06);
-  tone(600, 0.1, 'square', 0.04, 0.12);
-  sweep(300, 100, 0.12, 'sine', 0.08, 0.05);
+  // Rapid ascending plinks like collecting multiple XP orbs
+  pop(1000, 0.07);
+  pop(1400, 0.07, 0.04);
+  pop(1800, 0.08, 0.08);
+  pop(2200, 0.09, 0.12);
 }
 
-// ─── Tower Upgrade ──────────────────────────────────────────
+// ─── Tower Upgrade (Minecraft anvil + enchantment shimmer) ──
 
 export function playTowerUpgrade() {
-  // Ascending power-up arpeggio
-  tone(440, 0.12, 'triangle', 0.1);
-  tone(554, 0.12, 'triangle', 0.1, 0.08);
-  tone(659, 0.12, 'triangle', 0.1, 0.16);
-  tone(880, 0.2, 'triangle', 0.12, 0.24);
-  // Shimmer overlay
-  sweep(880, 1760, 0.3, 'sine', 0.04, 0.2);
+  // Metallic anvil clang
+  tone(800, 0.08, 'square', 0.06);
+  noise(0.05, 0.05, 3500, 6);
+  // Enchantment shimmer — ascending ethereal sweep
+  sweep(600, 2400, 0.3, 'sine', 0.04, 0.06);
+  // Ethereal triangle tones layered on top
+  tone(1200, 0.15, 'triangle', 0.04, 0.1);
+  tone(1600, 0.12, 'triangle', 0.03, 0.18);
+  tone(2000, 0.1, 'triangle', 0.03, 0.24);
 }
 
 // ─── Tower Shooting (per tower type) ────────────────────────
 
 export function playShootArcher() {
-  // Quick twang
-  sweep(600, 1200, 0.06, 'sawtooth', 0.08);
-  tone(200, 0.04, 'sine', 0.06);
+  // Minecraft bow shoot — string twang with resonant sweep
+  sweep(400, 1200, 0.05, 'sawtooth', 0.08);
+  // String release thump
+  tone(150, 0.03, 'sine', 0.06);
 }
 
 export function playShootCannon() {
-  // Deep boom + crunch
-  sweep(150, 40, 0.15, 'sine', 0.18);
-  noise(0.1, 0.12, 200, 1);
-  sweep(300, 80, 0.08, 'sawtooth', 0.06);
+  // Minecraft TNT explosion — deep bass boom with debris
+  sweep(120, 35, 0.2, 'sine', 0.18);
+  // Mid-frequency debris layer
+  noise(0.15, 0.12, 200, 1);
+  // Upper debris scatter
+  noise(0.08, 0.06, 800, 3, 0.02);
 }
 
 export function playShootFrost() {
-  // Crystalline ping
-  tone(1400, 0.15, 'sine', 0.06);
-  tone(1800, 0.1, 'sine', 0.04, 0.03);
-  sweep(2200, 800, 0.12, 'triangle', 0.03, 0.02);
+  // Minecraft glass/ice break — crystalline crunch + shimmer
+  noise(0.06, 0.08, 3000, 6);
+  // High crystalline tones
+  tone(2000, 0.08, 'sine', 0.05, 0.01);
+  tone(2800, 0.06, 'sine', 0.04, 0.02);
 }
 
 export function playShootLightning() {
-  // Electric zap
-  sweep(300, 2000, 0.04, 'sawtooth', 0.1);
-  sweep(2000, 400, 0.06, 'square', 0.06, 0.04);
-  noise(0.05, 0.06, 3000, 5);
+  // Minecraft lightning strike — sharp crack then rumble
+  // Initial crack
+  noise(0.03, 0.14, 5000, 8);
+  // Electrical crackle sweep
+  sweep(2000, 200, 0.08, 'square', 0.07, 0.02);
+  // Low rumble tail
+  tone(60, 0.15, 'sine', 0.1, 0.04);
 }
 
 export function playShootSniper() {
-  // High-velocity crack
-  noise(0.03, 0.15, 5000, 8);
-  sweep(1000, 200, 0.08, 'sawtooth', 0.07, 0.02);
-  tone(100, 0.06, 'sine', 0.1);
+  // Minecraft crossbow — tight mechanical snap
+  tone(600, 0.03, 'square', 0.08);
+  // Sharp mechanical click
+  noise(0.02, 0.1, 4000, 8, 0.01);
+  // Short thud
+  tone(100, 0.02, 'sine', 0.06, 0.02);
 }
 
 export function playShootFlame() {
-  // Whoosh — filtered noise burst
-  noise(0.12, 0.1, 800, 1.5);
-  sweep(200, 600, 0.1, 'sawtooth', 0.04);
+  // Minecraft blaze shoot — breathy fire whoosh
+  noise(0.1, 0.08, 600, 1.5);
+  // Soft mid-range body
+  sweep(200, 500, 0.08, 'sawtooth', 0.04);
+  // Upper sizzle
+  noise(0.06, 0.03, 2000, 3, 0.02);
 }
 
 export function playShootArcane() {
-  // Mystical pulse
-  tone(660, 0.15, 'sine', 0.07);
-  tone(990, 0.12, 'sine', 0.05, 0.04);
-  sweep(400, 800, 0.1, 'triangle', 0.04, 0.02);
+  // Minecraft enderman teleport — reversed warbling, ethereal
+  // Descending sweep (reverse feel)
+  sweep(1200, 400, 0.12, 'sine', 0.06);
+  // Overlapping ascending counter-sweep
+  sweep(800, 1600, 0.1, 'sine', 0.04, 0.03);
+  // Warbling triangle with slight pitch instability
+  tone(600, 0.15, 'triangle', 0.05, 0.02);
+  tone(620, 0.12, 'triangle', 0.03, 0.04);
 }
 
-// ─── Magma Aura (volcano emit rumble) ─────────────────────
+// ─── Magma Aura (Minecraft lava bubbling / nether ambient) ──
 
 let lastMagmaAuraTime = 0;
-const MAGMA_AURA_INTERVAL = 600; // ms between eruption pulses
+const MAGMA_AURA_INTERVAL = 600; // ms between bubble pulses
 
 export function playMagmaAura() {
   const now = performance.now();
   if (now - lastMagmaAuraTime < MAGMA_AURA_INTERVAL) return;
   lastMagmaAuraTime = now;
 
-  // === Volcanic eruption burst ===
-  // Heavy sub-bass detonation — the core "boom"
-  sweep(80, 30, 0.45, 'sine', 0.14);
-  // Layered mid-bass punch for body
-  sweep(120, 50, 0.3, 'sawtooth', 0.07);
-  // Violent crackling eruption — wide-band noise burst
-  noise(0.35, 0.1, 300, 1.2);
-  // Upper crackle layer — sharper debris scatter
-  noise(0.2, 0.06, 1200, 3, 0.05);
-  // Lava bubble burst — rapid ascending pop
-  sweep(150, 350, 0.12, 'sine', 0.06, 0.08);
-  // Magma splatter — descending guttural tone
-  sweep(250, 80, 0.25, 'sawtooth', 0.05, 0.12);
-  // Steam vent hiss — high-frequency sizzle
-  noise(0.25, 0.04, 4000, 5, 0.1);
-  // Resonant fire roar tail
-  sweep(200, 60, 0.4, 'square', 0.03, 0.2);
+  // Lava bubble pop — low sine sweep up then down
+  sweep(100, 200, 0.08, 'sine', 0.08);
+  sweep(200, 120, 0.07, 'sine', 0.05, 0.08);
+  // Gurgling noise
+  noise(0.12, 0.04, 250, 2, 0.02);
+  // Occasional higher bubble
+  sweep(200, 350, 0.06, 'sine', 0.04, 0.1);
+  sweep(350, 180, 0.05, 'sine', 0.03, 0.16);
 }
 
 const SHOOT_SOUNDS: Record<string, () => void> = {
@@ -215,91 +247,123 @@ export function playShoot(towerType: string) {
   if (fn) fn();
 }
 
-// ─── Enemy Kill ─────────────────────────────────────────────
+// ─── Enemy Kill (Minecraft mob death poof + XP plink) ───────
 
 export function playEnemyKill() {
-  // Impact crunch + reward chime
-  sweep(300, 80, 0.08, 'square', 0.1);
-  noise(0.05, 0.06, 500, 2);
-  tone(698, 0.1, 'triangle', 0.06, 0.06);
-  tone(880, 0.12, 'triangle', 0.05, 0.1);
+  // Death "poof" — short noise burst
+  noise(0.05, 0.08, 600, 2);
+  // XP orb plink
+  pop(1400, 0.06, 0.04);
 }
 
-// ─── Boss Kill ──────────────────────────────────────────────
+// ─── Boss Kill (Minecraft Ender Dragon death — dramatic fanfare) ──
 
 export function playBossKill() {
-  // Big explosion + fanfare
-  sweep(200, 30, 0.3, 'sawtooth', 0.15);
-  noise(0.2, 0.12, 300, 1);
+  // Large explosion impact
+  sweep(200, 40, 0.2, 'sine', 0.15);
+  noise(0.2, 0.1, 200, 1);
+  // Dramatic ascending fanfare — C5 → E5 → G5 → C6
   tone(523, 0.15, 'triangle', 0.08, 0.15);
-  tone(659, 0.15, 'triangle', 0.08, 0.25);
-  tone(784, 0.15, 'triangle', 0.08, 0.35);
-  tone(1047, 0.3, 'triangle', 0.1, 0.45);
+  tone(659, 0.15, 'triangle', 0.08, 0.27);
+  tone(784, 0.15, 'triangle', 0.08, 0.39);
+  tone(1047, 0.25, 'triangle', 0.1, 0.51);
+  // Shimmering sweep at climax
+  sweep(1000, 3000, 0.4, 'sine', 0.04, 0.5);
 }
 
-// ─── Life Lost ──────────────────────────────────────────────
+// ─── Life Lost (Minecraft player damage "oof") ─────────────
 
 export function playLifeLost() {
-  // Warning alarm — descending dissonant tones
-  sweep(800, 200, 0.2, 'square', 0.1);
-  sweep(600, 150, 0.2, 'square', 0.08, 0.1);
-  tone(100, 0.15, 'sine', 0.12, 0.05);
+  // Very short low "oof" — the classic Minecraft hurt thump
+  tone(200, 0.08, 'sine', 0.15);
+  // Slight noise for texture
+  noise(0.04, 0.06, 300, 2, 0.01);
 }
 
-// ─── Wave Start ─────────────────────────────────────────────
+// ─── Wave Start (Minecraft raid horn — deep ominous) ────────
 
 export function playWaveStart() {
-  // War horn — layered ascending tones
-  sweep(150, 300, 0.4, 'sawtooth', 0.08);
-  sweep(225, 450, 0.35, 'sawtooth', 0.05, 0.05);
-  tone(300, 0.3, 'triangle', 0.06, 0.15);
-  noise(0.15, 0.04, 600, 2);
+  // Deep ominous raid horn — primary note
+  const c = ctx();
+  if (!c) return;
+  const t = c.currentTime;
+
+  // Main horn — sawtooth at ~110Hz with slow attack
+  const osc1 = c.createOscillator();
+  const gain1 = c.createGain();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(110, t);
+  gain1.gain.setValueAtTime(0.001, t);
+  gain1.gain.linearRampToValueAtTime(0.1, t + 0.1);
+  gain1.gain.setValueAtTime(0.1, t + 0.35);
+  gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+  osc1.connect(gain1);
+  gain1.connect(c.destination);
+  osc1.start(t);
+  osc1.stop(t + 0.55);
+
+  // Harmonic fifth above at lower volume for richness
+  const osc2 = c.createOscillator();
+  const gain2 = c.createGain();
+  osc2.type = 'sawtooth';
+  osc2.frequency.setValueAtTime(165, t);
+  gain2.gain.setValueAtTime(0.001, t);
+  gain2.gain.linearRampToValueAtTime(0.05, t + 0.1);
+  gain2.gain.setValueAtTime(0.05, t + 0.35);
+  gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+  osc2.connect(gain2);
+  gain2.connect(c.destination);
+  osc2.start(t);
+  osc2.stop(t + 0.55);
 }
 
-// ─── Wave Complete ──────────────────────────────────────────
+// ─── Wave Complete (Minecraft level up — ascending plinks) ──
 
 export function playWaveComplete() {
-  // Victory jingle
-  tone(523, 0.12, 'triangle', 0.08);
-  tone(659, 0.12, 'triangle', 0.08, 0.1);
-  tone(784, 0.12, 'triangle', 0.08, 0.2);
-  tone(1047, 0.25, 'triangle', 0.1, 0.3);
-  sweep(1047, 2094, 0.3, 'sine', 0.03, 0.3);
+  // Series of ascending plinks — Minecraft level up sparkle
+  pop(800, 0.06);
+  pop(1000, 0.07, 0.06);
+  pop(1200, 0.08, 0.12);
+  pop(1600, 0.1, 0.18);
+  // Gentle shimmer tail
+  sweep(1600, 2400, 0.2, 'sine', 0.03, 0.2);
 }
 
-// ─── Game Won ───────────────────────────────────────────────
+// ─── Game Won (Minecraft credits — triumphant fanfare) ──────
 
 export function playGameWon() {
-  // Grand fanfare
-  const notes = [523, 659, 784, 1047, 784, 1047, 1319, 1568];
+  // Major arpeggio in triangle waves — C5 E5 G5 C6 E6 G6 C7
+  const notes = [523, 659, 784, 1047, 1319, 1568, 2093];
   notes.forEach((f, i) => {
-    tone(f, 0.2, 'triangle', 0.1, i * 0.12);
+    tone(f, 0.18, 'triangle', 0.09, i * 0.1);
   });
-  sweep(200, 100, 0.8, 'sine', 0.06, 0.2);
-  noise(0.3, 0.03, 1000, 2, 0.5);
+  // Gentle shimmer sweep at the end
+  sweep(2000, 3500, 0.3, 'sine', 0.03, 0.65);
 }
 
-// ─── Game Lost ──────────────────────────────────────────────
+// ─── Game Lost (Minecraft death screen — somber descending) ─
 
 export function playGameLost() {
-  // Somber descending tones
-  tone(400, 0.3, 'sawtooth', 0.08);
-  tone(350, 0.3, 'sawtooth', 0.07, 0.25);
-  tone(300, 0.3, 'sawtooth', 0.06, 0.5);
-  tone(200, 0.5, 'sawtooth', 0.08, 0.75);
-  sweep(200, 50, 0.6, 'sine', 0.06, 0.9);
+  // Dark, somber descending sawtooth tones
+  tone(300, 0.3, 'sawtooth', 0.07);
+  tone(250, 0.3, 'sawtooth', 0.06, 0.25);
+  tone(200, 0.3, 'sawtooth', 0.06, 0.5);
+  tone(150, 0.5, 'sawtooth', 0.07, 0.75);
+  // Final tone fades slowly into silence
+  sweep(150, 80, 0.6, 'sine', 0.04, 0.95);
 }
 
-// ─── UI Click ───────────────────────────────────────────────
+// ─── UI Click (Minecraft stone button click — dry, crisp) ───
 
 export function playUIClick() {
-  tone(800, 0.05, 'square', 0.04);
-  tone(1200, 0.04, 'square', 0.03, 0.02);
+  // Extremely short noise burst — no tonal element
+  noise(0.02, 0.06, 2000, 4);
 }
 
-// ─── Invalid Action ─────────────────────────────────────────
+// ─── Invalid Action (Minecraft villager "hmm" — nasal buzz) ─
 
 export function playInvalid() {
-  tone(150, 0.12, 'square', 0.06);
-  tone(120, 0.15, 'square', 0.05, 0.08);
+  // Short nasal buzz — two staggered square wave tones
+  tone(150, 0.1, 'square', 0.06);
+  tone(130, 0.1, 'square', 0.05, 0.06);
 }
