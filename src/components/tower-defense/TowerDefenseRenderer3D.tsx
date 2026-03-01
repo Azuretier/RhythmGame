@@ -587,7 +587,8 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       if (target) {
         const dx = target.position.x - tower.gridX;
         const dz = target.position.z - tower.gridZ;
-        const targetAngle = Math.atan2(dx, dz);
+        // Mob models face -Z, so add PI to point face toward target
+        const targetAngle = Math.atan2(dx, dz) + Math.PI;
         // Smooth rotation toward target
         let delta = targetAngle - facingAngleRef.current;
         while (delta > Math.PI) delta -= Math.PI * 2;
@@ -733,8 +734,9 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
     const dz = enemy.position.z - prevPosRef.current.z;
     const moved = dx * dx + dz * dz;
     if (moved > 0.00001) {
-      // atan2(dx, dz) gives rotation where positive-Z is forward (0 radians)
-      const targetAngle = Math.atan2(dx, dz);
+      // atan2(dx, dz) gives rotation where +Z is 0 radians, but mob models
+      // face -Z by default, so add PI to align the face with travel direction
+      const targetAngle = Math.atan2(dx, dz) + Math.PI;
       // Smooth rotation to avoid snapping at waypoint corners
       let delta = targetAngle - facingAngleRef.current;
       // Normalize to [-PI, PI]
