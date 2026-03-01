@@ -274,13 +274,13 @@ export default function MinecraftTitlePage() {
       {/* Screen content */}
       {screen === 'main' && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center"
+          className="absolute inset-0 flex flex-col items-center justify-center text-center"
           style={{ zIndex: 10, willChange: 'transform' }}
         >
           {/* Title */}
-          <div className="flex flex-col items-center mb-8">
+          <div className="flex flex-col items-center mb-10">
             <h1 className={styles.mcTitle}>MINECRAFT</h1>
-            <div className="relative mt-1">
+            <div className="relative mt-2">
               <span className={styles.mcSubtitle}>Switch Edition</span>
               {/* Splash text */}
               <span
@@ -297,7 +297,7 @@ export default function MinecraftTitlePage() {
           </div>
 
           {/* Menu buttons */}
-          <div className={styles.menuContainer}>
+          <div className={styles.menuContainer} style={{ padding: '0 24px' }}>
             {/* Play — primary, full width */}
             <button
               className={styles.mcButtonPrimary}
@@ -350,7 +350,7 @@ export default function MinecraftTitlePage() {
       )}
 
       {/* Bottom info bar */}
-      <div className={styles.bottomBar}>
+      <div className={styles.bottomBar} style={{ zIndex: 10, willChange: 'transform' }}>
         <span className={styles.bottomBarText}>
           Minecraft: Switch Edition (Web)
         </span>
