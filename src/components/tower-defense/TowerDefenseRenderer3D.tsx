@@ -643,9 +643,10 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       }
     }
 
-    // Idle animation
+    // Idle animation (slime types don't bounce on the tower stage)
     if (mobRef.current) {
-      animateMob(mobRef.current, t, true);
+      const slimeTower = tower.type === 'cannon' || tower.type === 'frost';
+      animateMob(mobRef.current, t, !slimeTower);
     }
   });
 
