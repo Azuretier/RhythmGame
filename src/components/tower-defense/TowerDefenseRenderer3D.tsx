@@ -50,6 +50,10 @@ const ENEMY_MOB_SCALE: Record<EnemyType, number> = {
 };
 
 const TOWER_MOB_SCALE = 0.4;
+// Frost slime model (0.7 wide) scaled down to match magma cube base (0.55 wide)
+const TOWER_MOB_SCALE_OVERRIDES: Partial<Record<TowerType, number>> = {
+  frost: 0.4 * (0.55 / 0.7), // ≈ 0.314
+};
 
 // ===== Error Boundary =====
 interface ErrorBoundaryState { hasError: boolean; error: string | null }
@@ -504,6 +508,14 @@ function PathLine({ waypoints }: { waypoints: Vec3[] }) {
 }
 
 // ===== Towers (Minecraft Character Models) =====
+
+// Disable raycasting on all child meshes so AoE rings don't block terrain clicks
+const noRaycast = (node: THREE.Group | null) => {
+  if (node) node.traverse((child) => {
+    if ((child as THREE.Mesh).isMesh) (child as THREE.Mesh).raycast = () => {};
+  });
+};
+
 // ===== Magma Tower Aura Ring =====
 function MagmaAuraRing({ range }: { range: number }) {
   const ringRef = useRef<THREE.Mesh>(null);
@@ -525,7 +537,7 @@ function MagmaAuraRing({ range }: { range: number }) {
   });
 
   return (
-    <group position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <group ref={noRaycast} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       {/* Filled magma circle */}
       <mesh ref={pulseRef}>
         <circleGeometry args={[range, 32]} />
@@ -566,7 +578,7 @@ function FrostAoERing({ range }: { range: number }) {
   });
 
   return (
-    <group position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+    <group ref={noRaycast} position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       {/* Filled frost circle */}
       <mesh ref={pulseRef}>
         <circleGeometry args={[range, 32]} />
@@ -599,15 +611,16 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
   const def = TOWER_DEFS[tower.type];
   const mobType = TOWER_MOB_MAP[tower.type];
   const isMagma = tower.type === 'cannon';
+  const mobScale = TOWER_MOB_SCALE_OVERRIDES[tower.type] ?? TOWER_MOB_SCALE;
 
   // Magma cube: segments = tower level (1→1 cube, 2→2 segments, 3→full 3-segment)
   const mobData = useMemo(() => {
     const data = isMagma
       ? createMobMesh(mobType, { segments: tower.level })
       : createMobMesh(mobType);
-    data.group.scale.setScalar(TOWER_MOB_SCALE);
+    data.group.scale.setScalar(mobScale);
     return data;
-  }, [mobType, isMagma, tower.level]);
+  }, [mobType, isMagma, tower.level, mobScale]);
 
   useEffect(() => {
     mobRef.current = mobData;
@@ -651,7 +664,7 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
   });
 
   const levelScale = 1 + (tower.level - 1) * 0.05;
-  const charHeight = mobData.height * TOWER_MOB_SCALE;
+  const charHeight = mobData.height * mobScale;
   const towerRange = def.rangePerLevel[tower.level - 1] ?? def.range;
 
   return (
@@ -1066,12 +1079,13 @@ function PlacementPreview({ x, z, towerType, canPlace }: {
   const groupRef = useRef<THREE.Group>(null);
   const mobType = TOWER_MOB_MAP[towerType];
   const def = TOWER_DEFS[towerType];
+  const previewScale = TOWER_MOB_SCALE_OVERRIDES[towerType] ?? TOWER_MOB_SCALE;
   const canPlaceRef = useRef(canPlace);
   canPlaceRef.current = canPlace;
 
   const { mobData, clonedMats } = useMemo(() => {
     const data = createMobMesh(mobType);
-    data.group.scale.setScalar(TOWER_MOB_SCALE);
+    data.group.scale.setScalar(previewScale);
     // Clone materials with transparency for ghost preview
     const mats: { mat: THREE.MeshStandardMaterial; origColor: THREE.Color; origEmissive: THREE.Color; origEmissiveI: number }[] = [];
     data.group.traverse((child: THREE.Object3D) => {
@@ -1090,7 +1104,7 @@ function PlacementPreview({ x, z, towerType, canPlace }: {
       }
     });
     return { mobData: data, clonedMats: mats };
-  }, [mobType]);
+  }, [mobType, previewScale]);
 
   // Update tint based on canPlace
   useEffect(() => {
