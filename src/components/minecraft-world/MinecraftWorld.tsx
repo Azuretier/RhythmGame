@@ -92,6 +92,10 @@ export default function MinecraftWorld() {
   const remotePlayerMeshes = useRef<Map<string, { group: THREE.Group; lastUpdate: number }>>(new Map());
   const sceneRef = useRef<THREE.Scene | null>(null);
 
+  // Track roomState in a ref so the animation loop always reads fresh data
+  const roomStateRef = useRef(mp.roomState);
+  useEffect(() => { roomStateRef.current = mp.roomState; }, [mp.roomState]);
+
   const handleCreateRoom = useCallback(() => {
     if (!playerName.trim()) return;
     localStorage.setItem('mw_playerName', playerName.trim());
@@ -869,16 +873,21 @@ export default function MinecraftWorld() {
         }
       }
 
-      // Update remote players
+      // Update remote players — read from refs to avoid stale closure
       const playerColors = new Map<string, string>();
       const playerNames = new Map<string, string>();
-      if (mp.roomState) {
-        for (const p of mp.roomState.players) {
+      const currentRoomState = roomStateRef.current;
+      if (currentRoomState) {
+        for (const p of currentRoomState.players) {
           playerColors.set(p.id, p.color);
           playerNames.set(p.id, p.name);
         }
       }
-      updateRemotePlayers(mp.remotePlayerList, playerColors, playerNames);
+      updateRemotePlayers(
+        Array.from(mp.remotePlayers.current.values()),
+        playerColors,
+        playerNames,
+      );
 
       renderer.render(scene, camera);
     }
