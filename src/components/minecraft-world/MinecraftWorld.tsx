@@ -477,7 +477,7 @@ export default function MinecraftWorld() {
       rebuildChunkAt(x, y, z);
     }
 
-    /** Break a block (left-click) — sends to server, server broadcasts back */
+    /** Break a block (left-click) — applies instantly on client, sends to server for sync */
     function breakBlock() {
       if (!worldRef.current) return;
       const hit = raycastBlock();
@@ -485,11 +485,13 @@ export default function MinecraftWorld() {
       const [bx, by, bz] = hit.hitPos;
       // Don't break bedrock
       if (worldRef.current.getBlock(bx, by, bz) === Block.Bedrock) return;
-      // Send to server — the server will broadcast mw_block_changed to all clients (including us)
+      // Apply locally first for instant feedback (zero perceived delay)
+      applyBlockChange(bx, by, bz, Block.Air);
+      // Send to server to sync with other players
       mp.sendBreakBlock(bx, by, bz);
     }
 
-    /** Place a block (right-click) — sends to server, server broadcasts back */
+    /** Place a block (right-click) — applies instantly on client, sends to server for sync */
     function placeBlock(blockType: BlockType) {
       if (!worldRef.current || blockType === Block.Air) return;
       const hit = raycastBlock();
@@ -503,12 +505,16 @@ export default function MinecraftWorld() {
       if (Math.floor(camPos.x) === px && Math.floor(camPos.z) === pz) {
         if (py === Math.floor(playerFeetY) || py === Math.floor(playerFeetY) + 1) return;
       }
-      // Send to server — the server will broadcast mw_block_changed to all clients (including us)
+      // Apply locally first for instant feedback (zero perceived delay)
+      applyBlockChange(px, py, pz, blockType);
+      // Send to server to sync with other players
       mp.sendPlaceBlock(px, py, pz, blockType);
     }
 
     // Register block change callback so server-broadcast changes update the 3D world
+    // Skip self-originated changes (already applied locally above for instant feedback)
     mp.onBlockChange((event: BlockChangeEvent) => {
+      if (event.playerId === mp.playerId) return;
       applyBlockChange(event.x, event.y, event.z, event.blockType);
     });
 
