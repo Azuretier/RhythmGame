@@ -174,21 +174,30 @@ export function playShootArcane() {
 // ─── Magma Aura (volcano emit rumble) ─────────────────────
 
 let lastMagmaAuraTime = 0;
-const MAGMA_AURA_INTERVAL = 800; // ms between rumble pulses
+const MAGMA_AURA_INTERVAL = 600; // ms between eruption pulses
 
 export function playMagmaAura() {
   const now = performance.now();
   if (now - lastMagmaAuraTime < MAGMA_AURA_INTERVAL) return;
   lastMagmaAuraTime = now;
 
-  // Deep volcanic rumble — low-frequency sub-bass pulse
-  sweep(60, 35, 0.5, 'sine', 0.08);
-  // Crackling magma surface — filtered noise burst
-  noise(0.3, 0.04, 250, 1.5);
-  // Mid-range lava bubble pop
-  sweep(180, 100, 0.2, 'sine', 0.04, 0.1);
-  // High hiss — steam vent
-  noise(0.15, 0.02, 3500, 4, 0.15);
+  // === Volcanic eruption burst ===
+  // Heavy sub-bass detonation — the core "boom"
+  sweep(80, 30, 0.45, 'sine', 0.14);
+  // Layered mid-bass punch for body
+  sweep(120, 50, 0.3, 'sawtooth', 0.07);
+  // Violent crackling eruption — wide-band noise burst
+  noise(0.35, 0.1, 300, 1.2);
+  // Upper crackle layer — sharper debris scatter
+  noise(0.2, 0.06, 1200, 3, 0.05);
+  // Lava bubble burst — rapid ascending pop
+  sweep(150, 350, 0.12, 'sine', 0.06, 0.08);
+  // Magma splatter — descending guttural tone
+  sweep(250, 80, 0.25, 'sawtooth', 0.05, 0.12);
+  // Steam vent hiss — high-frequency sizzle
+  noise(0.25, 0.04, 4000, 5, 0.1);
+  // Resonant fire roar tail
+  sweep(200, 60, 0.4, 'square', 0.03, 0.2);
 }
 
 const SHOOT_SOUNDS: Record<string, () => void> = {
