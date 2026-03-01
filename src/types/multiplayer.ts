@@ -98,8 +98,223 @@ import type { ArenaClientMessage, ArenaServerMessage } from './arena';
 import type { MCClientMessage, MCServerMessage as MCBoardServerMessage } from './minecraft-board';
 import type { EoEClientMessage } from './echoes';
 import type { MWClientMessage } from './minecraft-world';
+import type { TDPlayerState, TDMultiplayerRoom, EnemyType, TowerType, Tower, Enemy, Projectile, GamePhase } from './tower-defense';
 
 export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, MWClientMessage };
+
+// ===== Tower Defense Multiplayer Messages =====
+
+// --- Client → Server ---
+
+export interface TDCreateRoomMessage {
+  type: 'td_create_room';
+  playerName: string;
+  mapIndex?: number;
+}
+
+export interface TDJoinRoomMessage {
+  type: 'td_join_room';
+  roomCode: string;
+  playerName: string;
+}
+
+export interface TDLeaveRoomMessage {
+  type: 'td_leave_room';
+}
+
+export interface TDSetReadyMessage {
+  type: 'td_set_ready';
+  ready: boolean;
+}
+
+export interface TDStartGameMessage {
+  type: 'td_start_game';
+}
+
+export interface TDPlaceTowerMessage {
+  type: 'td_place_tower';
+  towerType: TowerType;
+  gridX: number;
+  gridZ: number;
+}
+
+export interface TDSellTowerMessage {
+  type: 'td_sell_tower';
+  towerId: string;
+}
+
+export interface TDUpgradeTowerMessage {
+  type: 'td_upgrade_tower';
+  towerId: string;
+}
+
+export interface TDStartWaveMessage {
+  type: 'td_start_wave';
+}
+
+export interface TDSendEnemyMessage {
+  type: 'td_send_enemy';
+  targetPlayerId: string;
+  enemyType: EnemyType;
+}
+
+export interface TDSelectTargetMessage {
+  type: 'td_select_target';
+  targetPlayerId: string;
+}
+
+export type TDClientMessage =
+  | TDCreateRoomMessage
+  | TDJoinRoomMessage
+  | TDLeaveRoomMessage
+  | TDSetReadyMessage
+  | TDStartGameMessage
+  | TDPlaceTowerMessage
+  | TDSellTowerMessage
+  | TDUpgradeTowerMessage
+  | TDStartWaveMessage
+  | TDSendEnemyMessage
+  | TDSelectTargetMessage;
+
+// --- Server → Client ---
+
+export interface TDRoomCreatedMessage {
+  type: 'td_room_created';
+  roomCode: string;
+  playerId: string;
+}
+
+export interface TDRoomJoinedMessage {
+  type: 'td_room_joined';
+  roomCode: string;
+  room: TDMultiplayerRoom;
+}
+
+export interface TDRoomStateMessage {
+  type: 'td_room_state';
+  room: TDMultiplayerRoom;
+}
+
+export interface TDPlayerJoinedMessage {
+  type: 'td_player_joined';
+  player: TDPlayerState;
+}
+
+export interface TDPlayerLeftMessage {
+  type: 'td_player_left';
+  playerId: string;
+}
+
+export interface TDPlayerReadyMessage {
+  type: 'td_player_ready';
+  playerId: string;
+  ready: boolean;
+}
+
+export interface TDCountdownMessage {
+  type: 'td_countdown';
+  seconds: number;
+}
+
+export interface TDGameStartedMessage {
+  type: 'td_game_started';
+  mapIndex: number;
+  wave: number;
+}
+
+export interface TDStateUpdatePlayer {
+  playerId: string;
+  towers: Tower[];
+  enemies: Enemy[];
+  projectiles: Projectile[];
+  gold: number;
+  lives: number;
+  score: number;
+  sendPoints: number;
+  phase: GamePhase;
+}
+
+export interface TDStateUpdateMessage {
+  type: 'td_state_update';
+  playerStates: TDStateUpdatePlayer[];
+}
+
+export interface TDTowerPlacedMessage {
+  type: 'td_tower_placed';
+  playerId: string;
+  tower: Tower;
+}
+
+export interface TDTowerSoldMessage {
+  type: 'td_tower_sold';
+  playerId: string;
+  towerId: string;
+}
+
+export interface TDTowerUpgradedMessage {
+  type: 'td_tower_upgraded';
+  playerId: string;
+  towerId: string;
+  level: number;
+}
+
+export interface TDWaveStartedMessage {
+  type: 'td_wave_started';
+  waveNumber: number;
+}
+
+export interface TDWaveCompleteMessage {
+  type: 'td_wave_complete';
+  waveNumber: number;
+  reward: number;
+}
+
+export interface TDEnemySentMessage {
+  type: 'td_enemy_sent';
+  fromPlayerId: string;
+  toPlayerId: string;
+  enemyType: EnemyType;
+  count: number;
+}
+
+export interface TDEnemiesIncomingMessage {
+  type: 'td_enemies_incoming';
+  fromPlayerName: string;
+  enemyType: EnemyType;
+  count: number;
+}
+
+export interface TDPlayerEliminatedMessage {
+  type: 'td_player_eliminated';
+  playerId: string;
+  rank: number;
+}
+
+export interface TDGameOverMessage {
+  type: 'td_game_over';
+  winnerId: string;
+  rankings: Array<{ playerId: string; rank: number; score: number }>;
+}
+
+export type TDServerMessage =
+  | TDRoomCreatedMessage
+  | TDRoomJoinedMessage
+  | TDRoomStateMessage
+  | TDPlayerJoinedMessage
+  | TDPlayerLeftMessage
+  | TDPlayerReadyMessage
+  | TDCountdownMessage
+  | TDGameStartedMessage
+  | TDStateUpdateMessage
+  | TDTowerPlacedMessage
+  | TDTowerSoldMessage
+  | TDTowerUpgradedMessage
+  | TDWaveStartedMessage
+  | TDWaveCompleteMessage
+  | TDEnemySentMessage
+  | TDEnemiesIncomingMessage
+  | TDPlayerEliminatedMessage
+  | TDGameOverMessage;
 
 export type ClientMessage =
   | CreateRoomMessage
@@ -118,6 +333,7 @@ export type ClientMessage =
   | MCClientMessage
   | MWClientMessage
   | EoEClientMessage
+  | TDClientMessage
   | SetProfileMessage
   | GetOnlineUsersMessage;
 
@@ -280,7 +496,8 @@ export type ServerMessage =
   | RankedMatchFoundMessage
   | RankedQueuedMessage
   | ArenaServerMessage
-  | MCBoardServerMessage;
+  | MCBoardServerMessage
+  | TDServerMessage;
 
 // ===== Relay Payload Types =====
 // These are game-specific messages relayed between players

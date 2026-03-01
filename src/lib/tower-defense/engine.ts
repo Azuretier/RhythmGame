@@ -1,6 +1,6 @@
 import type {
   GameState, GamePhase, Tower, Enemy, Projectile, Vec3,
-  TowerType, EnemyType, StatusEffect, WaveGroup,
+  TowerType, EnemyType, StatusEffect, WaveGroup, SpawnTracker,
 } from '@/types/tower-defense';
 import {
   TOWER_DEFS, ENEMY_DEFS, INITIAL_GOLD, INITIAL_LIVES,
@@ -170,16 +170,6 @@ function hasAmplify(enemy: Enemy): number {
 }
 
 // === Spawning ===
-interface SpawnTracker {
-  groups: {
-    group: WaveGroup;
-    spawned: number;
-    nextSpawn: number; // time until next spawn for this group
-    startTimer: number;
-    done: boolean;
-  }[];
-  allDone: boolean;
-}
 
 let spawnTracker: SpawnTracker | null = null;
 
@@ -189,7 +179,7 @@ export function startWave(state: GameState): GameState {
   if (waveIndex >= WAVES.length) return state;
 
   const waveDef = WAVES[waveIndex];
-  spawnTracker = {
+  const tracker: SpawnTracker = {
     groups: waveDef.groups.map(g => ({
       group: g,
       spawned: 0,
@@ -200,6 +190,9 @@ export function startWave(state: GameState): GameState {
     allDone: false,
   };
 
+  // Store on module-level for single-player backward compat
+  spawnTracker = tracker;
+
   const totalEnemies = waveDef.groups.reduce((sum, g) => sum + g.count, 0);
 
   return {
@@ -208,6 +201,7 @@ export function startWave(state: GameState): GameState {
     currentWave: waveIndex + 1,
     waveCountdown: WAVE_PREP_TIME,
     enemiesRemaining: totalEnemies,
+    spawnTracker: tracker,
   };
 }
 
@@ -266,11 +260,13 @@ export function updateGame(state: GameState, dt: number): GameState {
 }
 
 function tickSpawning(state: GameState, dt: number): GameState {
-  if (!spawnTracker || spawnTracker.allDone) return state;
+  // Use per-state tracker if available, fall back to module-level
+  const tracker = state.spawnTracker || spawnTracker;
+  if (!tracker || tracker.allDone) return state;
 
   const newEnemies: Enemy[] = [];
 
-  for (const gt of spawnTracker.groups) {
+  for (const gt of tracker.groups) {
     if (gt.done) continue;
 
     if (gt.startTimer > 0) {
@@ -296,7 +292,7 @@ function tickSpawning(state: GameState, dt: number): GameState {
     }
   }
 
-  spawnTracker.allDone = spawnTracker.groups.every(g => g.done);
+  tracker.allDone = tracker.groups.every(g => g.done);
 
   if (newEnemies.length > 0) {
     return { ...state, enemies: [...state.enemies, ...newEnemies] };
@@ -688,12 +684,14 @@ function cleanupDead(state: GameState): GameState {
 }
 
 function checkWaveComplete(state: GameState): GameState {
+  const tracker = state.spawnTracker || spawnTracker;
+
   if (state.lives <= 0) {
     spawnTracker = null;
-    return { ...state, phase: 'lost', lives: 0 };
+    return { ...state, phase: 'lost', lives: 0, spawnTracker: null };
   }
 
-  const spawningDone = !spawnTracker || spawnTracker.allDone;
+  const spawningDone = !tracker || tracker.allDone;
   const allDead = state.enemies.length === 0;
 
   if (spawningDone && allDead) {
@@ -707,6 +705,7 @@ function checkWaveComplete(state: GameState): GameState {
         phase: 'won',
         gold: state.gold + reward,
         score: state.score + reward * 5,
+        spawnTracker: null,
       };
     }
 
@@ -718,6 +717,7 @@ function checkWaveComplete(state: GameState): GameState {
       score: state.score + reward * 5,
       waveCountdown: WAVE_PREP_TIME,
       enemiesRemaining: 0,
+      spawnTracker: null,
     };
   }
 
