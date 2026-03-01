@@ -650,7 +650,7 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
     }
   });
 
-  const levelScale = 1 + (tower.level - 1) * 0.1;
+  const levelScale = 1 + (tower.level - 1) * 0.05;
   const charHeight = mobData.height * TOWER_MOB_SCALE;
   const towerRange = def.rangePerLevel[tower.level - 1] ?? def.range;
 
@@ -661,14 +661,14 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       scale={levelScale}
     >
-      {/* Colored platform base */}
+      {/* Colored platform base (sized to fit within one grid cell) */}
       <mesh position={[0, 0.05, 0]} castShadow>
-        <cylinderGeometry args={[0.35, 0.4, 0.1, 8]} />
+        <cylinderGeometry args={[0.28, 0.32, 0.1, 8]} />
         <meshStandardMaterial color={def.color} roughness={0.4} metalness={0.3} />
       </mesh>
       {/* Accent ring on platform */}
       <mesh position={[0, 0.11, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.28, 0.35, 8]} />
+        <ringGeometry args={[0.22, 0.28, 8]} />
         <meshStandardMaterial color={def.accentColor} emissive={def.accentColor} emissiveIntensity={0.3} side={THREE.DoubleSide} />
       </mesh>
       {/* Minecraft character model (rotates toward target) */}

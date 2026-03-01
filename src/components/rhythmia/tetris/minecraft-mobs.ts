@@ -182,7 +182,7 @@ const MOB_HEIGHTS: Record<TDEnemyType, number> = {
   spider: 0.8,
   enderman: 2.8,
   slime: 0.9,
-  magma_cube: 1.03,
+  magma_cube: 0.78,
   pig: 0.9,
   chicken: 0.7,
   cow: 1.2,
@@ -498,9 +498,9 @@ function createMagmaCube(segments = 3): MobMeshData {
   const magmaYellow = 0xffaa00; // Hottest parts of seams
   const eyeColor = 0xff8800;    // Orange-yellow eyes
 
-  // Segment widths and heights — squished cubes (height ≈ 70% of width)
+  // Segment widths and heights — flat slabs (height ≈ 50% of width)
   const widths  = [0.55, 0.45, 0.35]; // bottom, middle, top
-  const heights = [0.38, 0.32, 0.25]; // squished to avoid being too tall
+  const heights = [0.28, 0.24, 0.18]; // flat enough to stack next to each other
   const seamH = 0.04;
   let y = 0; // running Y position (bottom of current segment)
 
@@ -614,7 +614,7 @@ function createMagmaCube(segments = 3): MobMeshData {
   core.position.set(0, y * 0.45, 0);
   group.add(core);
 
-  // Height: seg1=0.55, seg2=0.55+0.04+0.45=1.04, seg3=1.04+0.04+0.35=1.43
+  // Height: seg1=0.28, seg2=0.28+0.04+0.24=0.56, seg3=0.56+0.04+0.18=0.78
   const height = y;
 
   return {
