@@ -3,7 +3,7 @@
 import { Component, Suspense, useMemo, useCallback, useRef, useEffect, useState } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Html, Sky, Billboard } from '@react-three/drei';
+import { OrbitControls, Html, Sky, Billboard, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import type {
   GameState, Tower, Enemy, Projectile, GridCell, TowerType, EnemyType, Vec3,
@@ -672,12 +672,88 @@ function TowersGroup({ towers, enemies, selectedTowerId, onSelectTower }: {
   );
 }
 
+// ===== Pixel Font =====
+const PIXEL_FONT = '/fonts/PressStart2P-Regular.ttf';
+
+// Renders a hidden Text element at scene init so troika loads the pixel font
+// during the initial Suspense phase, preventing a black-screen flash when the
+// first EnemyHpDisplay mounts later.
+function FontPreloader() {
+  return (
+    <Text font={PIXEL_FONT} fontSize={0.01} position={[0, -100, 0]} visible={false}>
+      {' '}
+    </Text>
+  );
+}
+
+// ===== Enemy HP Display =====
+function getHpBarColor(hpPercent: number): string {
+  if (hpPercent > 0.5) return '#22c55e';
+  if (hpPercent > 0.25) return '#eab308';
+  return '#ef4444';
+}
+
+const HP_BAR_WIDTH = 0.6;
+const HP_BAR_HEIGHT = 0.08;
+const HP_FILL_HEIGHT = 0.06;
+const HP_LABEL_FONT_SIZE = 0.07;
+
+function EnemyHpDisplay({ name, hp, maxHp, yOffset }: {
+  name: string;
+  hp: number;
+  maxHp: number;
+  yOffset: number;
+}) {
+  const hpPercent = hp / maxHp;
+  const labelText = `${name} ${Math.ceil(hp)}`;
+
+  return (
+    <Billboard position={[0, yOffset, 0]} follow lockX={false} lockY={false} lockZ={false}>
+      {/* "Name HP" — right-aligned to center */}
+      <Text
+        font={PIXEL_FONT}
+        position={[-0.02, 0.1, 0.001]}
+        fontSize={HP_LABEL_FONT_SIZE}
+        anchorX="right"
+        anchorY="middle"
+        outlineWidth={0.004}
+        outlineColor="#000000"
+      >
+        {labelText}
+        <meshBasicMaterial color="#ffffff" />
+      </Text>
+      {/* Red filled heart — left-aligned to center, sits right after the text */}
+      <Text
+        font={PIXEL_FONT}
+        position={[0.02, 0.1, 0.001]}
+        fontSize={HP_LABEL_FONT_SIZE}
+        anchorX="left"
+        anchorY="middle"
+        outlineWidth={0.004}
+        outlineColor="#7f0000"
+      >
+        ❤
+        <meshBasicMaterial color="#ef4444" />
+      </Text>
+      {/* Background bar */}
+      <mesh position={[0, 0, 0]}>
+        <planeGeometry args={[HP_BAR_WIDTH, HP_BAR_HEIGHT]} />
+        <meshBasicMaterial color="#1f2937" side={THREE.DoubleSide} />
+      </mesh>
+      {/* HP fill bar */}
+      <mesh position={[(hpPercent - 1) * (HP_BAR_WIDTH / 2), 0, 0.001]}>
+        <planeGeometry args={[HP_BAR_WIDTH * hpPercent, HP_FILL_HEIGHT]} />
+        <meshBasicMaterial color={getHpBarColor(hpPercent)} side={THREE.DoubleSide} />
+      </mesh>
+    </Billboard>
+  );
+}
+
 // ===== Enemies (Animal Mob Models) =====
 function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: boolean; onClick: () => void }) {
   const groupRef = useRef<THREE.Group>(null);
   const mobRef = useRef<MobMeshData | null>(null);
   const def = ENEMY_DEFS[enemy.type];
-  const hpPercent = enemy.hp / enemy.maxHp;
   const mobType = ENEMY_MOB_MAP[enemy.type];
   const mobScale = ENEMY_MOB_SCALE[enemy.type];
 
@@ -801,22 +877,13 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
         </mesh>
       )}
 
-      {/* HP bar (billboarded to always face camera) */}
-      {hpPercent < 1 && (
-        <Billboard position={[0, charHeight + 0.1, 0]} follow lockX={false} lockY={false} lockZ={false}>
-          <mesh position={[0, 0, 0]}>
-            <planeGeometry args={[0.6, 0.08]} />
-            <meshBasicMaterial color="#1f2937" side={THREE.DoubleSide} />
-          </mesh>
-          <mesh position={[(hpPercent - 1) * 0.3, 0, 0.001]}>
-            <planeGeometry args={[0.6 * hpPercent, 0.06]} />
-            <meshBasicMaterial
-              color={hpPercent > 0.5 ? '#22c55e' : hpPercent > 0.25 ? '#eab308' : '#ef4444'}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-        </Billboard>
-      )}
+      {/* Enemy HP display (name + gauge) */}
+      <EnemyHpDisplay
+        name={def.name}
+        hp={enemy.hp}
+        maxHp={enemy.maxHp}
+        yOffset={charHeight + 0.1}
+      />
     </group>
   );
 }
@@ -1142,6 +1209,7 @@ function GameScene({ state, onCellClick, onSelectTower, onSelectEnemy, hoveredCe
     <>
       <color attach="background" args={['#0f172a']} />
       <fog attach="fog" args={['#0f172a', 25, 55]} />
+      <FontPreloader />
       <Lights />
       <Ground />
       <VoxelBackgroundStage mapWidth={state.map.width} mapHeight={state.map.height} />
