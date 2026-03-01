@@ -27,7 +27,15 @@ export default function MinecraftPanorama() {
     const renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mountRef.current.appendChild(renderer.domElement);
+
+    // Force the canvas behind DOM elements — WebGL canvases get their own
+    // GPU compositing layer which can render above regular DOM content.
+    const canvas = renderer.domElement;
+    canvas.style.position = "absolute";
+    canvas.style.inset = "0";
+    canvas.style.zIndex = "-1";
+
+    mountRef.current.appendChild(canvas);
 
     // Load 6 panorama face textures individually
     // Minecraft panorama order: 0=front, 1=right, 2=back, 3=left, 4=top, 5=bottom

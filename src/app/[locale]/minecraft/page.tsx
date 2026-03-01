@@ -113,8 +113,8 @@ function WorldCreationPanel({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
       transition={{ duration: 0.25 }}
-      className="relative flex items-center justify-center h-full px-4"
-      style={{ zIndex: 10 }}
+      className="absolute inset-0 flex items-center justify-center px-4"
+      style={{ zIndex: 10, willChange: 'transform' }}
     >
       <div className={styles.mcPanel} style={{ maxWidth: '480px', width: '100%' }}>
         {/* Header */}
@@ -274,8 +274,8 @@ export default function MinecraftTitlePage() {
       {/* Screen content */}
       {screen === 'main' && (
         <div
-          className="relative flex flex-col items-center justify-center h-full"
-          style={{ zIndex: 10 }}
+          className="absolute inset-0 flex flex-col items-center justify-center"
+          style={{ zIndex: 10, willChange: 'transform' }}
         >
           {/* Title */}
           <div className="flex flex-col items-center mb-8">
