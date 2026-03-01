@@ -8,7 +8,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
 import { useRouter } from '@/i18n/navigation';
 import styles from '@/components/home/v1.0.2/V1_0_2_UI.module.css';
 import type { GameMode, Difficulty } from '@/types/minecraft-switch';
@@ -108,11 +107,7 @@ function WorldCreationPanel({
   }, [worldName, seed, size, gameMode, difficulty, onCreateWorld]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: 20 }}
-      transition={{ duration: 0.25 }}
+    <div
       className="absolute inset-0 flex items-center justify-center px-4"
       style={{ zIndex: 10, willChange: 'transform' }}
     >
@@ -221,7 +216,7 @@ function WorldCreationPanel({
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -297,7 +292,7 @@ export default function MinecraftTitlePage() {
           </div>
 
           {/* Menu buttons */}
-          <div className={styles.menuContainer} style={{ padding: '0 24px' }}>
+          <div className={styles.menuContainer} style={{ maxWidth: '420px', margin: '0 auto' }}>
             {/* Play — primary, full width */}
             <button
               className={styles.mcButtonPrimary}
