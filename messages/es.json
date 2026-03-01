@@ -1508,5 +1508,55 @@
     "accentColor": "Color de acento",
     "latest": "última",
     "goHome": "Ir al inicio"
+  },
+  "inventory": {
+    "meta": {
+      "title": "Inventario - Azuretia",
+      "description": "Gestiona tus objetos, materiales y consumibles recolectados."
+    },
+    "title": "INVENTARIO",
+    "button": "Inventario",
+    "filter": {
+      "all": "Todo",
+      "material": "Materiales",
+      "consumable": "Consumibles",
+      "equipment": "Equipo",
+      "relic": "Reliquias",
+      "currency": "Moneda"
+    },
+    "sort": "Ordenar",
+    "sortBy": {
+      "category": "Categoría",
+      "rarity": "Rareza",
+      "count": "Cantidad",
+      "name": "Nombre"
+    },
+    "empty": {
+      "title": "Sin objetos aún",
+      "desc": "¡Juega partidas para recolectar objetos y materiales!"
+    },
+    "details": {
+      "info": "Info",
+      "owned": "En posesión",
+      "maxStack": "Máx. apilable"
+    },
+    "actions": {
+      "use": "Usar",
+      "discard": "Descartar"
+    },
+    "summary": {
+      "uniqueItems": "Únicos",
+      "totalItems": "Total",
+      "collected": "Recolectados",
+      "consumed": "Usados"
+    },
+    "discard": {
+      "title": "¿Descartar objeto?",
+      "warning": "Esto eliminará 1 unidad de este objeto de tu inventario.",
+      "cancel": "Cancelar",
+      "confirm": "Descartar"
+    },
+    "usedItem": "Usaste {name}",
+    "discardedItem": "Descartaste {name}"
   }
 }
