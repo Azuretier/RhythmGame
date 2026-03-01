@@ -68,6 +68,8 @@ export type MWClientMessage =
   | { type: 'mw_ready'; ready: boolean }
   | { type: 'mw_start' }
   | { type: 'mw_position'; x: number; y: number; z: number; rx: number; ry: number }
+  | { type: 'mw_break_block'; x: number; y: number; z: number }
+  | { type: 'mw_place_block'; x: number; y: number; z: number; blockType: number }
   | { type: 'mw_chat'; message: string };
 
 // ===== Server → Client Messages =====
@@ -81,11 +83,24 @@ export type MWServerMessage =
   | { type: 'mw_player_left'; playerId: string }
   | { type: 'mw_player_ready'; playerId: string; ready: boolean }
   | { type: 'mw_countdown'; count: number }
-  | { type: 'mw_game_started'; seed: number }
+  | { type: 'mw_game_started'; seed: number; serverTime: number }
   | { type: 'mw_player_position'; player: MWPlayerPosition }
+  | { type: 'mw_block_changed'; playerId: string; x: number; y: number; z: number; blockType: number }
+  | { type: 'mw_time_sync'; dayTime: number }
   | { type: 'mw_chat_message'; playerId: string; playerName: string; message: string }
   | { type: 'mw_error'; message: string; code?: string }
-  | { type: 'mw_reconnected'; roomCode: string; playerId: string; roomState: MWRoomState; reconnectToken: string };
+  | { type: 'mw_reconnected'; roomCode: string; playerId: string; roomState: MWRoomState; reconnectToken: string; blockChanges: MWBlockChange[]; serverTime: number };
+
+// ===== Block Change Record =====
+
+export interface MWBlockChange {
+  playerId: string;
+  x: number;
+  y: number;
+  z: number;
+  blockType: number; // 0 = air (broken)
+  tick: number;
+}
 
 // ===== Firestore Room Document =====
 
