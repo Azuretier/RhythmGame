@@ -7,9 +7,8 @@
 // and the death screen. Rendered as a fullscreen overlay on top of the game.
 // =============================================================================
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import type { DamageSource } from '@/types/minecraft-switch';
 
 // ---------------------------------------------------------------------------
 // Props

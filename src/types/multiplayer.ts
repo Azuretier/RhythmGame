@@ -96,12 +96,13 @@ export interface CancelRankedMessage {
 // Arena client messages (re-exported from arena types for the unified union)
 import type { ArenaClientMessage, ArenaServerMessage } from './arena';
 import type { MCClientMessage, MCServerMessage as MCBoardServerMessage } from './minecraft-board';
-import type { EoEClientMessage } from './echoes';
-import type { MWClientMessage } from './minecraft-world';
-import type { FPSClientMessage } from './fps-arena';
-import type { MSClientMessage } from './minecraft-switch';
+import type { EoEClientMessage, EoEServerMessage } from './echoes';
+import type { MWClientMessage, MWServerMessage } from './minecraft-world';
+import type { FPSClientMessage, FPSServerMessage } from './fps-arena';
+import type { MSClientMessage, MSServerMessage } from './minecraft-switch';
+import type { WFClientMessage, WFServerMessage } from './warfront';
 
-export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, MWClientMessage, FPSClientMessage, MSClientMessage };
+export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, MWClientMessage, FPSClientMessage, MSClientMessage, WFClientMessage, MSServerMessage, WFServerMessage, FPSServerMessage, MWServerMessage, EoEServerMessage };
 
 export type ClientMessage =
   | CreateRoomMessage
@@ -122,6 +123,7 @@ export type ClientMessage =
   | EoEClientMessage
   | FPSClientMessage
   | MSClientMessage
+  | WFClientMessage
   | SetProfileMessage
   | GetOnlineUsersMessage;
 
@@ -284,7 +286,12 @@ export type ServerMessage =
   | RankedMatchFoundMessage
   | RankedQueuedMessage
   | ArenaServerMessage
-  | MCBoardServerMessage;
+  | MCBoardServerMessage
+  | FPSServerMessage
+  | MSServerMessage
+  | WFServerMessage
+  | MWServerMessage
+  | EoEServerMessage;
 
 // ===== Relay Payload Types =====
 // These are game-specific messages relayed between players

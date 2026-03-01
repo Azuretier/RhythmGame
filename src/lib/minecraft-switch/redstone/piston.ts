@@ -526,11 +526,8 @@ export class PistonEngine {
           if (!isPushable(adjBlock)) continue;
 
           // Check sticky compatibility
-          if (sticksTo(blockId, adjBlock) || (isSlimeBlock(blockId) || isHoneyBlock(blockId)) && !isSlimeBlock(adjBlock) && !isHoneyBlock(adjBlock)) {
-            // Only chain if the block would actually be affected
-            if (sticksTo(blockId, adjBlock)) {
-              queue.push({ x: adjX, y: adjY, z: adjZ });
-            }
+          if (sticksTo(blockId, adjBlock)) {
+            queue.push({ x: adjX, y: adjY, z: adjZ });
           }
         }
       }

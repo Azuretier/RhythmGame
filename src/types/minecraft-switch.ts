@@ -1324,6 +1324,8 @@ export interface RedstoneState {
   locked: boolean;
   /** Connected faces for wire routing. */
   connections: Record<string, boolean>;
+  /** Facing direction (for directional components like comparators, repeaters). */
+  facing?: 'north' | 'south' | 'east' | 'west';
 }
 
 // =============================================================================

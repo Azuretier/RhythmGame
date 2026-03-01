@@ -6,7 +6,7 @@
 // armor slots, and drag-and-drop item management.
 // =============================================================================
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { InventorySlot, EnchantmentInstance } from '@/types/minecraft-switch';
 
@@ -33,8 +33,8 @@ interface InventoryScreenProps {
     toContainer: ContainerType,
     count?: number,
   ) => void;
-  /** Attempt to craft from the 2x2 grid. */
-  onCraftItem: (grid: (InventorySlot | null)[]) => void;
+  /** Attempt to craft from the 2x2 grid. Returns the result item or null. */
+  onCraftItem: (grid: (InventorySlot | null)[]) => InventorySlot | null;
 }
 
 type ContainerType = 'main' | 'hotbar' | 'armor' | 'offhand' | 'crafting';
@@ -296,8 +296,9 @@ export default function InventoryScreen({
   // Update crafting output when grid changes
   useEffect(() => {
     const hasItems = craftingGrid.some(s => s !== null);
-    if (hasItems) {
-      onCraftItem(craftingGrid);
+    if (hasItems && onCraftItem) {
+      const result = onCraftItem(craftingGrid);
+      setCraftingOutput(result || null);
     } else {
       setCraftingOutput(null);
     }

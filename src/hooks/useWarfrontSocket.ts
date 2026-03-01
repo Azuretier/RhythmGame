@@ -92,9 +92,15 @@ export function useWarfrontSocket(): WarfrontSocketState {
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTokenRef = useRef<string | null>(null);
+  const playerIdRef = useRef<string | null>(null);
+  const myTeamIdRef = useRef<string | null>(null);
   const remoteSoldiersRef = useRef(new Map<string, { x: number; y: number; z: number; rx: number; ry: number; weaponId: string; health: number }>());
   const remoteEngineersRef = useRef(new Map<string, { x: number; y: number; z: number; rx: number; ry: number }>());
   const lastPositionSendRef = useRef(0);
+
+  // Sync refs when state changes to avoid stale closures in handleMessage
+  useEffect(() => { playerIdRef.current = playerId; }, [playerId]);
+  useEffect(() => { myTeamIdRef.current = myTeamId; }, [myTeamId]);
 
   const send = useCallback((msg: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -103,16 +109,21 @@ export function useWarfrontSocket(): WarfrontSocketState {
   }, []);
 
   const handleMessage = useCallback((event: MessageEvent) => {
-    const msg = JSON.parse(event.data) as WFServerMessage & { type: string; playerId?: string; reconnectToken?: string };
+    const raw = JSON.parse(event.data) as { type: string; playerId?: string; reconnectToken?: string };
+
+    // Handle generic server messages before typed warfront messages
+    if (raw.type === 'connected') {
+      setPlayerId(raw.playerId || null);
+      return;
+    }
+    if (raw.type === 'ping') {
+      send({ type: 'pong' });
+      return;
+    }
+
+    const msg = raw as unknown as WFServerMessage;
 
     switch (msg.type) {
-      case 'connected':
-        setPlayerId(msg.playerId || null);
-        break;
-
-      case 'ping':
-        send({ type: 'pong' });
-        break;
 
       case 'wf_room_created':
         if ('roomCode' in msg) {
@@ -145,13 +156,13 @@ export function useWarfrontSocket(): WarfrontSocketState {
         break;
 
       case 'wf_role_selected':
-        if ('playerId' in msg && 'role' in msg && msg.playerId === playerId) {
+        if ('playerId' in msg && 'role' in msg && msg.playerId === playerIdRef.current) {
           setMyRole(msg.role as WarfrontRole);
         }
         break;
 
       case 'wf_team_selected':
-        if ('playerId' in msg && 'teamId' in msg && msg.playerId === playerId) {
+        if ('playerId' in msg && 'teamId' in msg && msg.playerId === playerIdRef.current) {
           setMyTeamId(msg.teamId as string);
         }
         break;
@@ -177,7 +188,7 @@ export function useWarfrontSocket(): WarfrontSocketState {
         break;
 
       case 'wf_resources_update':
-        if ('resources' in msg && 'teamId' in msg && msg.teamId === myTeamId) {
+        if ('resources' in msg && 'teamId' in msg && msg.teamId === myTeamIdRef.current) {
           setTeamResources(msg.resources as ResourcePool);
         }
         break;
@@ -243,7 +254,7 @@ export function useWarfrontSocket(): WarfrontSocketState {
         console.error('[WF]', (msg as { message: string }).message);
         break;
     }
-  }, [send, playerId, myTeamId]);
+  }, [send]);
 
   const connect = useCallback(() => {
     if (wsRef.current) return;

@@ -568,7 +568,12 @@ export default function CraftingScreen({
 
     if (shiftCraft) {
       // Craft as many as possible
+      // Use local mutable copies so each iteration sees the updated inventory
+      // (React batches state updates, so reading localMain/localHotbar in a loop
+      //  would return stale values from the closure.)
       let currentGrid = [...craftingGrid];
+      let workingMain = [...localMain];
+      let workingHotbar = [...localHotbar];
       let totalCrafted = 0;
       const maxCrafts = 64; // Safety limit
 
@@ -585,13 +590,9 @@ export default function CraftingScreen({
 
         // Try stacking into hotbar
         for (let h = 0; h < 9; h++) {
-          const slot = localHotbar[h];
+          const slot = workingHotbar[h];
           if (slot && slot.item === resultItem && slot.count + resultCount <= 64) {
-            setLocalHotbar(prev => {
-              const next = [...prev];
-              next[h] = { ...slot, count: slot.count + resultCount };
-              return next;
-            });
+            workingHotbar[h] = { ...slot, count: slot.count + resultCount };
             placed = true;
             break;
           }
@@ -599,13 +600,9 @@ export default function CraftingScreen({
         // Try stacking into main
         if (!placed) {
           for (let m = 0; m < 27; m++) {
-            const slot = localMain[m];
+            const slot = workingMain[m];
             if (slot && slot.item === resultItem && slot.count + resultCount <= 64) {
-              setLocalMain(prev => {
-                const next = [...prev];
-                next[m] = { ...slot, count: slot.count + resultCount };
-                return next;
-              });
+              workingMain[m] = { ...slot, count: slot.count + resultCount };
               placed = true;
               break;
             }
@@ -614,12 +611,8 @@ export default function CraftingScreen({
         // Try empty hotbar
         if (!placed) {
           for (let h = 0; h < 9; h++) {
-            if (!localHotbar[h]) {
-              setLocalHotbar(prev => {
-                const next = [...prev];
-                next[h] = { item: resultItem, count: resultCount };
-                return next;
-              });
+            if (!workingHotbar[h]) {
+              workingHotbar[h] = { item: resultItem, count: resultCount };
               placed = true;
               break;
             }
@@ -628,12 +621,8 @@ export default function CraftingScreen({
         // Try empty main
         if (!placed) {
           for (let m = 0; m < 27; m++) {
-            if (!localMain[m]) {
-              setLocalMain(prev => {
-                const next = [...prev];
-                next[m] = { item: resultItem, count: resultCount };
-                return next;
-              });
+            if (!workingMain[m]) {
+              workingMain[m] = { item: resultItem, count: resultCount };
               placed = true;
               break;
             }
@@ -646,6 +635,9 @@ export default function CraftingScreen({
         totalCrafted++;
       }
 
+      // Apply the final inventory state once after the loop
+      setLocalMain(workingMain);
+      setLocalHotbar(workingHotbar);
       setCraftingGrid(currentGrid);
     } else {
       // Single craft — put result on cursor

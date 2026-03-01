@@ -8,7 +8,7 @@
 // overlays (waiting, countdown, playing, round end, game end).
 // =============================================================================
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------

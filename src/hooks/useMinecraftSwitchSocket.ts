@@ -115,6 +115,7 @@ export function useMinecraftSwitchSocket() {
 
   const [phase, setPhaseRaw] = useState<MSGamePhase>('menu');
   const setPhase = useCallback((p: MSGamePhase) => { phaseRef.current = p; setPhaseRaw(p); }, []);
+  const [roomCode, setRoomCode] = useState<string | null>(null);
   const [roomState, setRoomState] = useState<MSRoomState | null>(null);
   const [publicRooms, setPublicRooms] = useState<MSPublicRoom[]>([]);
   const [countdownCount, setCountdownCount] = useState(0);
@@ -147,6 +148,13 @@ export function useMinecraftSwitchSocket() {
   const [inventory, setInventory] = useState<PlayerInventory | null>(null);
 
   // =========================================================================
+  // Refs for stable closures (avoids stale closure in connectWebSocket)
+  // =========================================================================
+
+  const handleServerMessageRef = useRef<(msg: { type: string; [key: string]: unknown }) => void>(() => {});
+  const attemptReconnectRef = useRef<() => void>(() => {});
+
+  // =========================================================================
   // WebSocket Connection
   // =========================================================================
 
@@ -173,7 +181,7 @@ export function useMinecraftSwitchSocket() {
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-        handleServerMessage(msg);
+        handleServerMessageRef.current(msg);
       } catch { /* ignore malformed messages */ }
     };
 
@@ -181,7 +189,7 @@ export function useMinecraftSwitchSocket() {
       if (wsRef.current !== ws) return;
       setConnectionStatus('disconnected');
       wsRef.current = null;
-      attemptReconnect();
+      attemptReconnectRef.current();
     };
 
     ws.onerror = () => { ws.close(); };
@@ -242,6 +250,7 @@ export function useMinecraftSwitchSocket() {
         sessionStorage.setItem(SESSION_STORAGE_KEY, m.reconnectToken);
         playerIdRef.current = m.playerId;
         setPlayerId(m.playerId);
+        setRoomCode(m.roomCode);
         setPhase('lobby');
         break;
       }
@@ -252,6 +261,7 @@ export function useMinecraftSwitchSocket() {
         sessionStorage.setItem(SESSION_STORAGE_KEY, m.reconnectToken);
         playerIdRef.current = m.playerId;
         setPlayerId(m.playerId);
+        setRoomCode(m.roomCode);
         setRoomState(m.roomState);
         setPhase('lobby');
         break;
@@ -558,7 +568,9 @@ export function useMinecraftSwitchSocket() {
         sessionStorage.setItem(SESSION_STORAGE_KEY, m.reconnectToken);
         playerIdRef.current = m.playerId;
         setPlayerId(m.playerId);
+        setRoomCode(m.roomCode);
         setRoomState(m.roomState);
+        setWorldType(m.roomState.worldType);
         if (m.roomState.status === 'playing') {
           setGameSeed(m.roomState.seed || 0);
           setPhase('playing');
@@ -593,6 +605,10 @@ export function useMinecraftSwitchSocket() {
         break;
     }
   }, [send, setPhase]);
+
+  // Keep refs in sync with latest callbacks
+  useEffect(() => { handleServerMessageRef.current = handleServerMessage; }, [handleServerMessage]);
+  useEffect(() => { attemptReconnectRef.current = attemptReconnect; }, [attemptReconnect]);
 
   // =========================================================================
   // Block Update Flush Timer
@@ -651,6 +667,7 @@ export function useMinecraftSwitchSocket() {
   const leaveRoom = useCallback(() => {
     send({ type: 'ms_leave' });
     setPhase('menu');
+    setRoomCode(null);
     setRoomState(null);
     remotePlayers.current.clear();
     setRemotePlayerList([]);
@@ -744,6 +761,7 @@ export function useMinecraftSwitchSocket() {
     // Game phase
     phase,
     setPhase,
+    roomCode,
     roomState,
     publicRooms,
     countdownCount,

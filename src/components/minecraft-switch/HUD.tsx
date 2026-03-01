@@ -10,7 +10,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { PlayerState, InventorySlot } from '@/types/minecraft-switch';
-import { MS_CONFIG } from '@/types/minecraft-switch';
 
 // ---------------------------------------------------------------------------
 // Props

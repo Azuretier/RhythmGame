@@ -7,6 +7,7 @@ import type { MinecraftWorldManager } from '../lib/minecraft-world/MinecraftWorl
 import type { FPSArenaManager } from '../lib/fps-arena/FPSArenaManager';
 import type { EoEManager } from '../lib/echoes/EoEManager';
 import type { MinecraftSwitchManager } from '../lib/minecraft-switch/MinecraftSwitchManager';
+import type { WarfrontManager } from '../lib/warfront/WarfrontManager';
 
 // Player connection tracking
 export interface PlayerConnection {
@@ -96,6 +97,11 @@ export interface HandlerContext {
   broadcastToMCS: (roomCode: string, message: ServerMessage, excludePlayerId?: string) => void;
   sendMCSRoomState: (roomCode: string) => void;
   startMCSCountdown: (roomCode: string, gameSeed: number) => void;
+
+  // Warfront helpers
+  wfManager: WarfrontManager;
+  broadcastToWF: (roomCode: string, msg: ServerMessage, excludeId?: string) => void;
+  sendWFRoomState: (roomCode: string) => void;
 
   // Countdown helpers
   startCountdown: (roomCode: string, gameSeed: number) => void;

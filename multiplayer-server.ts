@@ -774,6 +774,11 @@ const handlerCtx: HandlerContext = {
   sendMCSRoomState,
   startMCSCountdown,
 
+  // Warfront helpers
+  wfManager,
+  broadcastToWF,
+  sendWFRoomState,
+
   // Countdown helpers
   startCountdown,
   cancelCountdown,
@@ -796,13 +801,8 @@ const handlerCtx: HandlerContext = {
   RANKED_POINT_RANGE,
 };
 
-// Extended context for warfront handler
-const wfHandlerCtx: WarfrontHandlerContext = {
-  ...handlerCtx,
-  wfManager,
-  broadcastToWF,
-  sendWFRoomState,
-};
+// Extended context for warfront handler (handlerCtx now includes wfManager)
+const wfHandlerCtx: WarfrontHandlerContext = handlerCtx;
 
 // ===== Message Handler =====
 
@@ -955,6 +955,12 @@ function handleDisconnect(playerId: string, reason: string): void {
     sendMCSRoomState(mcsResult.roomCode);
   }
 
+  // Handle Warfront disconnect
+  const wfResult = wfManager.markDisconnected(playerId);
+  if (wfResult.roomCode) {
+    sendWFRoomState(wfResult.roomCode);
+  }
+
   // Handle EoE disconnect
   eoeManager.removePlayer(playerId);
   eoeManager.dequeuePlayer(playerId);
@@ -1041,6 +1047,8 @@ const server = createServer((req, res) => {
       mcBoards: mcBoardManager.getRoomCount(),
       mcWorlds: mwManager.getRoomCount(),
       mcSwitch: mcsManager.getRoomCount(),
+      fpsArenas: fpsManager.getRoomCount(),
+      warfront: wfManager.getRoomCount(),
     }));
   } else if (req.url === '/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1051,6 +1059,8 @@ const server = createServer((req, res) => {
       mcBoards: mcBoardManager.getRoomCount(),
       mcWorlds: mwManager.getRoomCount(),
       mcSwitch: mcsManager.getRoomCount(),
+      fpsArenas: fpsManager.getRoomCount(),
+      warfront: wfManager.getRoomCount(),
       arenaQueue: arenaQueue.size,
       uptime: process.uptime(),
       memory: process.memoryUsage(),
@@ -1211,6 +1221,7 @@ function shutdown(signal: string) {
       mwManager.destroy();
       fpsManager.destroy();
       mcsManager.destroy();
+      wfManager.destroy();
       eoeManager.destroy();
       console.log('[SHUTDOWN] Complete');
       process.exit(0);

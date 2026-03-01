@@ -324,7 +324,7 @@ function StarBurst({ index }: { index: number }) {
 }
 
 /** Celebration screen when the tutorial is complete */
-function CelebrationScreen({ onDismiss }: { onDismiss: () => void }) {
+function CelebrationScreen({ onDismiss, totalSteps }: { onDismiss: () => void; totalSteps: number }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -391,7 +391,7 @@ function CelebrationScreen({ onDismiss }: { onDismiss: () => void }) {
           <div className="text-center">
             <div className="font-pixel text-lg text-green-400 font-bold"
               style={{ textShadow: '1px 1px 0 #000' }}>
-              17
+              {totalSteps}
             </div>
             <div className="font-pixel text-[9px] text-gray-500">Steps</div>
           </div>
@@ -501,7 +501,7 @@ export default function TutorialOverlay({
     return (
       <>
         <style dangerouslySetInnerHTML={{ __html: TUTORIAL_STYLES }} />
-        <CelebrationScreen onDismiss={onDismiss} />
+        <CelebrationScreen onDismiss={onDismiss} totalSteps={totalSteps} />
       </>
     );
   }

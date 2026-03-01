@@ -17,7 +17,7 @@ import type {
   ArmorStats,
   DamageSource,
 } from '@/types/minecraft-switch';
-import { MS_CONFIG, PHYSICS, MATERIAL_TIER_CONFIG } from '@/types/minecraft-switch';
+import { MS_CONFIG, PHYSICS } from '@/types/minecraft-switch';
 import { isUndeadMob, isArthropodMob } from './mobs/mob-registry';
 
 // =============================================================================

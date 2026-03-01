@@ -584,8 +584,8 @@ function generateMineshaft(
   seed: number,
 ): void {
   const rand = seededRandom(positionSeed(seed, cx, 3333, cz));
-  const baseX = cx * CHUNK_WIDTH + Math.floor(rand() * 12) + 2;
-  const baseZ = cz * CHUNK_DEPTH + Math.floor(rand() * 12) + 2;
+  let baseX = cx * CHUNK_WIDTH + Math.floor(rand() * 12) + 2;
+  let baseZ = cz * CHUNK_DEPTH + Math.floor(rand() * 12) + 2;
   const baseY = 20 + Math.floor(rand() * 30); // y 20-50
 
   // Number of corridors: 3-7
@@ -673,8 +673,8 @@ function generateMineshaft(
     }
 
     // Branch point: offset the start position for next corridor
-    baseX + Math.floor((rand() - 0.5) * 10);
-    baseZ + Math.floor((rand() - 0.5) * 10);
+    baseX += Math.floor((rand() - 0.5) * 10);
+    baseZ += Math.floor((rand() - 0.5) * 10);
   }
 }
 

@@ -8,7 +8,7 @@
 // speed lines, and phase overlays (countdown, racing, finished, results).
 // =============================================================================
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
 // ---------------------------------------------------------------------------
@@ -335,9 +335,8 @@ function MiniLeaderboard({ players, currentPlayerId }: { players: GlidePlayer[];
 function SpeedLines({ speed }: { speed: number }) {
   const isBoosting = speed >= 80;
 
-  if (!isBoosting) return null;
-
   // Generate line positions — random-ish offsets from fixed seeds
+  // NOTE: useMemo must be called before any early return (Rules of Hooks)
   const lineCount = Math.min(12, Math.floor((speed - 80) / 2) + 4);
   const lines = useMemo(() => {
     const result = [];
@@ -352,6 +351,8 @@ function SpeedLines({ speed }: { speed: number }) {
     }
     return result;
   }, [lineCount, speed]);
+
+  if (!isBoosting) return null;
 
   return (
     <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden">

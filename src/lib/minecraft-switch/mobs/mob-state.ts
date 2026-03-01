@@ -450,7 +450,6 @@ export class MobStateManager {
 
             if (damage > 0) {
               // Check for ranged mobs
-              const def = getMobDef(mob.type);
               if (mob.type === 'skeleton' || mob.type === 'stray') {
                 // Ranged attack — shoot projectile
                 this.onMobShootProjectile?.(mob, targetPos);

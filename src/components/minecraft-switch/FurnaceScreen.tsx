@@ -11,7 +11,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { InventorySlot, EnchantmentInstance } from '@/types/minecraft-switch';
-import { isSmeltable, isFuel } from '@/lib/minecraft-switch/crafting/smelting';
 
 // ---------------------------------------------------------------------------
 // Props

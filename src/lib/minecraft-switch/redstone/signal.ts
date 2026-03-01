@@ -74,6 +74,22 @@ const HORIZONTAL_DIRECTIONS: Vec3[] = [
   { x: 0, y: 0, z: -1 },
 ];
 
+/** Opposite direction lookup for comparator input side (back = opposite of output). */
+const OPPOSITE_DIRECTION: Record<string, Vec3> = {
+  north: { x: 0, y: 0, z: 1 },   // facing north outputs north, input from south (+z)
+  south: { x: 0, y: 0, z: -1 },  // facing south outputs south, input from north (-z)
+  east:  { x: -1, y: 0, z: 0 },  // facing east outputs east, input from west (-x)
+  west:  { x: 1, y: 0, z: 0 },   // facing west outputs west, input from east (+x)
+};
+
+/** Perpendicular direction lookup for comparator side inputs. */
+const PERPENDICULAR_DIRECTIONS: Record<string, Vec3[]> = {
+  north: [{ x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 }],  // east and west
+  south: [{ x: 1, y: 0, z: 0 }, { x: -1, y: 0, z: 0 }],  // east and west
+  east:  [{ x: 0, y: 0, z: 1 }, { x: 0, y: 0, z: -1 }],   // south and north
+  west:  [{ x: 0, y: 0, z: 1 }, { x: 0, y: 0, z: -1 }],   // south and north
+};
+
 // =============================================================================
 // BLOCK CLASSIFICATION HELPERS
 // =============================================================================
@@ -664,7 +680,6 @@ export class RedstoneEngine {
 
     // Torch is attached to the block below (for upright torches)
     // or to the side block (for wall torches)
-    const blockBelow = this.world.getBlock(x, y - 1, z);
     const belowPowered = this.isBlockPoweredExcluding(x, y - 1, z, x, y, z);
 
     const oldPower = this.powerLevels.get(key) ?? MAX_POWER;
@@ -784,22 +799,18 @@ export class RedstoneEngine {
     const key = posKey(x, y, z);
     const state = this.getOrCreateState(key);
 
-    // Get back signal (input)
-    let backSignal = 0;
-    for (const dir of HORIZONTAL_DIRECTIONS) {
-      const nx = x + dir.x;
-      const nz = z + dir.z;
-      const neighborPower = this.powerLevels.get(posKey(nx, y, nz)) ?? 0;
-      backSignal = Math.max(backSignal, neighborPower);
-    }
+    // Get facing from component state, default to north
+    const facing = state?.facing ?? 'north';
+    const backDir = OPPOSITE_DIRECTION[facing];
+    const sideDirs = PERPENDICULAR_DIRECTIONS[facing];
 
-    // Get side signals
+    // Back signal: from the block behind the comparator (input side)
+    const backSignal = this.getPowerLevel(x + backDir.x, y, z + backDir.z);
+
+    // Side signals: max from the two side neighbors
     let sideSignal = 0;
-    for (const dir of HORIZONTAL_DIRECTIONS) {
-      const nx = x + dir.x;
-      const nz = z + dir.z;
-      const neighborPower = this.powerLevels.get(posKey(nx, y, nz)) ?? 0;
-      sideSignal = Math.max(sideSignal, neighborPower);
+    for (const dir of sideDirs) {
+      sideSignal = Math.max(sideSignal, this.getPowerLevel(x + dir.x, y, z + dir.z));
     }
 
     let output: number;

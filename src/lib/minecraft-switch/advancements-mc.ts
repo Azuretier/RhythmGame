@@ -15,8 +15,8 @@ import type {
   PlayerInventory,
   InventorySlot,
   BlockId,
-  Block,
 } from '@/types/minecraft-switch';
+import { Block } from '@/types/minecraft-switch';
 
 // =============================================================================
 // Game State for Advancement Checking
@@ -91,7 +91,10 @@ export interface AdvancementGameState {
 // Log Block IDs — convenience set for "Getting Wood" check
 // =============================================================================
 
-const LOG_BLOCK_IDS = new Set<number>([40, 50, 60, 70, 80, 90]); // OakLog=40, SpruceLog=50, BirchLog=60, JungleLog=70, AcaciaLog=80, DarkOakLog=90
+const LOG_BLOCK_IDS = new Set<number>([
+  Block.OakLog, Block.SpruceLog, Block.BirchLog,
+  Block.JungleLog, Block.AcaciaLog, Block.DarkOakLog,
+]);
 
 const IRON_ARMOR_IDS = new Set(['iron_helmet', 'iron_chestplate', 'iron_leggings', 'iron_boots']);
 const DIAMOND_ARMOR_IDS = new Set(['diamond_helmet', 'diamond_chestplate', 'diamond_leggings', 'diamond_boots']);

@@ -807,8 +807,6 @@ export class MinecraftSwitchManager {
   // ===========================================================================
 
   private cycleWeather(room: MSRoom): void {
-    const weathers: ('clear' | 'rain' | 'thunder')[] = ['clear', 'rain', 'thunder'];
-    const currentIndex = weathers.indexOf(room.weather);
     // Weighted random: 60% clear, 30% rain, 10% thunder
     const rand = Math.random();
     if (rand < 0.6) {

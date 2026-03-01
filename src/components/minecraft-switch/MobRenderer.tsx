@@ -9,7 +9,7 @@
 // Designed for use with @react-three/fiber in the main game canvas.
 // =============================================================================
 
-import { useMemo, useRef, useCallback } from 'react';
+import { useMemo, useRef, useCallback, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 
@@ -431,13 +431,22 @@ function MobMesh({ data }: MobMeshProps) {
     });
   }, []);
 
+  // Dispose materials on unmount to prevent GPU memory leaks
+  useEffect(() => {
+    return () => {
+      materials.forEach(mat => mat.dispose());
+      hurtMaterial.dispose();
+    };
+  }, [materials, hurtMaterial]);
+
   // Animation frame update
   useFrame((_state, _delta) => {
     if (!groupRef.current) return;
 
     // Position and rotation
     groupRef.current.position.set(data.x, data.y, data.z);
-    groupRef.current.rotation.y = -data.yaw;
+    // Yaw is stored in degrees (see mob-ai.ts), convert to radians for Three.js
+    groupRef.current.rotation.y = -data.yaw * (Math.PI / 180);
 
     // Death animation: fall over
     if (data.animation === 'dying') {
