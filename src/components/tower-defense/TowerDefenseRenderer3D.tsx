@@ -672,13 +672,15 @@ function TowersGroup({ towers, enemies, selectedTowerId, onSelectTower }: {
   );
 }
 
-// ===== Font Preloader =====
-// Renders a hidden Text element at scene init so troika loads the default font
+// ===== Pixel Font =====
+const PIXEL_FONT = '/fonts/PressStart2P-Regular.ttf';
+
+// Renders a hidden Text element at scene init so troika loads the pixel font
 // during the initial Suspense phase, preventing a black-screen flash when the
 // first EnemyHpDisplay mounts later.
 function FontPreloader() {
   return (
-    <Text fontSize={0.01} position={[0, -100, 0]} visible={false}>
+    <Text font={PIXEL_FONT} fontSize={0.01} position={[0, -100, 0]} visible={false}>
       {' '}
     </Text>
   );
@@ -709,6 +711,7 @@ function EnemyHpDisplay({ name, hp, maxHp, yOffset }: {
     <Billboard position={[0, yOffset, 0]} follow lockX={false} lockY={false} lockZ={false}>
       {/* "Name HP" — right-aligned to center */}
       <Text
+        font={PIXEL_FONT}
         position={[-0.02, 0.1, 0.001]}
         fontSize={HP_LABEL_FONT_SIZE}
         anchorX="right"
@@ -721,6 +724,7 @@ function EnemyHpDisplay({ name, hp, maxHp, yOffset }: {
       </Text>
       {/* Red filled heart — left-aligned to center, sits right after the text */}
       <Text
+        font={PIXEL_FONT}
         position={[0.02, 0.1, 0.001]}
         fontSize={HP_LABEL_FONT_SIZE}
         anchorX="left"
