@@ -1,0 +1,293 @@
+/* === Top HUD Bar === */
+.hudBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(100, 116, 139, 0.3);
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.hudLeft,
+.hudRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hudCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* === Stat Pills === */
+.statPill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 10px;
+  padding: 4px 10px;
+  height: 32px;
+}
+
+.statIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.statValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.goldValue {
+  color: #fbbf24;
+}
+
+.livesValue {
+  color: #f87171;
+}
+
+.scoreValue {
+  color: #a78bfa;
+}
+
+/* === Gold Flash Animation === */
+.goldFlash {
+  animation: goldFlash 0.4s ease-out;
+}
+
+@keyframes goldFlash {
+  0% {
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.9);
+    color: #fef08a;
+  }
+  100% {
+    text-shadow: none;
+    color: #fbbf24;
+  }
+}
+
+/* === Heart Shake Animation === */
+.heartShake {
+  animation: heartShake 0.5s ease-out;
+}
+
+@keyframes heartShake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-3px); }
+  20% { transform: translateX(3px); }
+  30% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  50% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+  70% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+
+/* === Wave Info (Center) === */
+.waveTitle {
+  font-weight: 800;
+  font-size: 15px;
+  color: #f8fafc;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.waveProgressTrack {
+  width: 140px;
+  height: 4px;
+  background: #1e293b;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.waveProgressFill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transition: width 0.4s ease;
+}
+
+.phaseText {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* === HUD Buttons (Right) === */
+.hudBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 10px;
+  padding: 4px 10px;
+  height: 32px;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.hudBtn:hover {
+  border-color: rgba(148, 163, 184, 0.6);
+  color: #f8fafc;
+}
+
+.hudBtnActive {
+  border-color: #22d3ee;
+  color: #22d3ee;
+}
+
+.hudBtnLabel {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* === Wave Start Button === */
+.waveStartWrap {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.waveStartBtn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  color: #f8fafc;
+  animation: pulseGlow 2s ease-in-out infinite;
+  transition: transform 0.1s;
+}
+
+.waveStartBtn:hover {
+  transform: scale(1.04);
+}
+
+.waveStartBtn:active {
+  transform: scale(0.97);
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.3), 0 0 20px rgba(56, 189, 248, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.6), 0 0 40px rgba(56, 189, 248, 0.25);
+  }
+}
+
+.waveStartLabel {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.countdownRing {
+  position: absolute;
+  inset: -6px;
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  pointer-events: none;
+}
+
+.countdownText {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(248, 250, 252, 0.7);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .hudBar {
+    height: 48px;
+    padding: 0 8px;
+  }
+
+  .statPill {
+    padding: 3px 7px;
+    gap: 4px;
+    height: 28px;
+  }
+
+  .statValue {
+    font-size: 12px;
+  }
+
+  .waveTitle {
+    font-size: 12px;
+  }
+
+  .waveProgressTrack {
+    width: 90px;
+    height: 3px;
+  }
+
+  .phaseText {
+    font-size: 10px;
+  }
+
+  .hudBtn {
+    padding: 3px 7px;
+    height: 28px;
+  }
+
+  .hudBtnLabel {
+    font-size: 11px;
+  }
+
+  .hudCenter {
+    gap: 1px;
+  }
+
+  .waveStartBtn {
+    padding: 10px 24px;
+  }
+
+  .waveStartLabel {
+    font-size: 13px;
+  }
+
+  .countdownText {
+    font-size: 10px;
+  }
+}

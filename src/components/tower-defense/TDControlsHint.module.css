@@ -1,0 +1,50 @@
+/* === Controls Hint Wrapper === */
+.controlsWrap {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 20;
+}
+
+/* === Control Row === */
+.controlRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* === Key Pill === */
+.keyPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(100, 116, 139, 0.4);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* === Key Action Description === */
+.keyAction {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* === Responsive: hide on mobile === */
+@media (max-width: 768px) {
+  .controlsWrap {
+    display: none;
+  }
+}
