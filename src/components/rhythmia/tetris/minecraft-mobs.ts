@@ -446,43 +446,61 @@ function createEnderman(): MobMeshData {
 
 // ========== Slime ==========
 
-function createSlime(): MobMeshData {
+function createSlime(segments = 3): MobMeshData {
   const group = new THREE.Group();
   const slimeGreen = 0x5cb85c;
   const slimeDark = 0x3d8b3d;
   const slimeCore = 0x2e6b2e;
   const eyeColor = 0x111111;
 
-  // Outer body — narrower than magma cube base, closer to mid-segment (0.45 × 0.24 × 0.45)
-  const body = mbox(0.45, 0.24, 0.45, slimeGreen, slimeGreen, 0.3);
-  body.position.set(0, 0.12, 0);
-  // Make it semi-transparent looking with emissive glow
-  const bodyMat = body.material as THREE.MeshStandardMaterial;
-  bodyMat.transparent = true;
-  bodyMat.opacity = 0.75;
-  group.add(body);
+  // Stacked slime segments — shrink as they go up (like magma cube)
+  const widths  = [0.45, 0.37, 0.29]; // bottom, middle, top
+  const heights = [0.24, 0.20, 0.16];
+  const gapH = 0.03; // small gap between stacked slimes
+  let y = 0;
 
-  // Inner core (darker, smaller cube visible inside)
-  const core = mbox(0.22, 0.12, 0.22, slimeCore, slimeCore, 0.2);
-  core.position.set(0, 0.10, 0);
-  group.add(core);
+  for (let i = 0; i < segments; i++) {
+    const w = widths[i], h = heights[i];
 
-  // Eyes (on the front face)
+    // Outer gelatinous body
+    const body = mbox(w, h, w, slimeGreen, slimeGreen, 0.3);
+    body.position.set(0, y + h / 2, 0);
+    const bodyMat = body.material as THREE.MeshStandardMaterial;
+    bodyMat.transparent = true;
+    bodyMat.opacity = 0.75;
+    group.add(body);
+
+    // Inner core
+    const coreW = w * 0.5, coreH = h * 0.5;
+    const core = mbox(coreW, coreH, coreW, slimeCore, slimeCore, 0.2);
+    core.position.set(0, y + h * 0.42, 0);
+    group.add(core);
+
+    y += h;
+    if (i < segments - 1) y += gapH;
+  }
+
+  // Eyes on the topmost segment
+  const topW = widths[segments - 1];
+  const topH = heights[segments - 1];
+  const eyeY = y - topH / 2 + topH * 0.15;
+  const eyeZ = -(topW / 2 + 0.01);
   const le = mbox(0.07, 0.05, 0.02, eyeColor);
-  le.position.set(-0.08, 0.16, -0.23);
+  le.position.set(-0.07, eyeY, eyeZ);
   group.add(le);
   const re = mbox(0.07, 0.05, 0.02, eyeColor);
-  re.position.set(0.08, 0.16, -0.23);
+  re.position.set(0.07, eyeY, eyeZ);
   group.add(re);
 
-  // Mouth (wide line)
-  const mouth = mbox(0.13, 0.025, 0.02, eyeColor);
-  mouth.position.set(0, 0.10, -0.23);
+  // Mouth on the topmost segment
+  const mouth = mbox(0.12, 0.025, 0.02, eyeColor);
+  mouth.position.set(0, eyeY - topH * 0.25, eyeZ);
   group.add(mouth);
 
+  // Height: seg1=0.24, seg2=0.24+0.03+0.20=0.47, seg3=0.47+0.03+0.16=0.66
   return {
     group, type: 'slime',
-    height: 0.24, isGltf: false,
+    height: y, isGltf: false,
   };
 }
 
@@ -1189,7 +1207,7 @@ export function createMobMesh(type: TDEnemyType, options?: { segments?: number }
     case 'creeper': return createCreeper();
     case 'spider': return createSpider();
     case 'enderman': return createEnderman();
-    case 'slime': return createSlime();
+    case 'slime': return createSlime(options?.segments);
     case 'magma_cube': return createMagmaCube(options?.segments);
     case 'pig': return createPig();
     case 'chicken': return createChicken();
