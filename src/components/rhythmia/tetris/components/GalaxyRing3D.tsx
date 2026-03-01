@@ -181,13 +181,24 @@ function towerToWorld(side: string, index: number): { x: number; z: number; angl
     };
 }
 
-// ===== Terrain Grid — instanced mesh of all ring cells =====
+// ===== Terrain Grid — instanced mesh of all ring cells (2×2 sub-blocks per cell) =====
+const SUB_GAP = 0.008;
+const SUB_SIZE = (CELL - CELL_GAP) / 2 - SUB_GAP;
+
 function TerrainGrid() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
 
     const { count, matrices, colors } = useMemo(() => {
         const rng = mulberry32(42);
-        const cells: { x: number; z: number; color: THREE.Color; heightVar: number }[] = [];
+        const blocks: { x: number; z: number; h: number; color: THREE.Color }[] = [];
+
+        const halfCell = (CELL - CELL_GAP) / 2;
+        const subOffsets = [
+            { dx: -halfCell / 2, dz: -halfCell / 2 },
+            { dx:  halfCell / 2, dz: -halfCell / 2 },
+            { dx: -halfCell / 2, dz:  halfCell / 2 },
+            { dx:  halfCell / 2, dz:  halfCell / 2 },
+        ];
 
         for (let row = 0; row < GRID_H; row++) {
             for (let col = 0; col < GRID_W; col++) {
@@ -196,45 +207,84 @@ function TerrainGrid() {
 
                 const wx = ORIGIN_X + col * CELL;
                 const wz = ORIGIN_Z + row * CELL;
-                const hv = (rng() - 0.5) * 0.04;
 
-                let color: THREE.Color;
+                let baseColor: THREE.Color;
                 switch (kind) {
                     case 'path':
-                        color = PATH_COLORS[Math.floor(rng() * PATH_COLORS.length)];
+                        baseColor = PATH_COLORS[Math.floor(rng() * PATH_COLORS.length)];
                         break;
                     case 'tower':
-                        color = TOWER_LAYER_COLORS[Math.floor(rng() * TOWER_LAYER_COLORS.length)];
+                        baseColor = TOWER_LAYER_COLORS[Math.floor(rng() * TOWER_LAYER_COLORS.length)];
                         break;
                     case 'buffer':
-                        color = BUFFER_COLORS[Math.floor(rng() * BUFFER_COLORS.length)];
+                        baseColor = BUFFER_COLORS[Math.floor(rng() * BUFFER_COLORS.length)];
                         break;
                     case 'corner':
-                        color = CORNER_COLOR.clone();
+                        baseColor = CORNER_COLOR.clone();
                         break;
                     default:
-                        color = CORNER_COLOR.clone();
+                        baseColor = CORNER_COLOR.clone();
                 }
 
-                cells.push({ x: wx, z: wz, color, heightVar: hv });
+                for (let s = 0; s < 4; s++) {
+                    let heightBase: number;
+                    let heightVar: number;
+                    switch (kind) {
+                        case 'path':
+                            heightBase = BLOCK_H * 0.85;
+                            heightVar = (rng() - 0.5) * 0.06;
+                            break;
+                        case 'tower':
+                            heightBase = BLOCK_H * 1.1;
+                            heightVar = (rng() - 0.5) * 0.06;
+                            break;
+                        case 'buffer':
+                            heightBase = BLOCK_H;
+                            heightVar = (rng() - 0.5) * 0.16;
+                            break;
+                        case 'corner':
+                            heightBase = BLOCK_H * 0.7;
+                            heightVar = (rng() - 0.5) * 0.02;
+                            break;
+                        default:
+                            heightBase = BLOCK_H;
+                            heightVar = 0;
+                    }
+
+                    const subColor = baseColor.clone();
+                    const brightness = 1 + (rng() - 0.5) * 0.1;
+                    subColor.r *= brightness;
+                    subColor.g *= brightness;
+                    subColor.b *= brightness;
+
+                    blocks.push({
+                        x: wx + subOffsets[s].dx,
+                        z: wz + subOffsets[s].dz,
+                        h: heightBase + heightVar,
+                        color: subColor,
+                    });
+                }
             }
         }
 
-        const totalBlocks = cells.length;
+        const totalBlocks = blocks.length;
         const mat = new Float32Array(totalBlocks * 16);
-        const col = new Float32Array(totalBlocks * 3);
+        const colArr = new Float32Array(totalBlocks * 3);
         const dummy = new THREE.Matrix4();
+        const scaleMat = new THREE.Matrix4();
 
         for (let i = 0; i < totalBlocks; i++) {
-            const c = cells[i];
-            dummy.makeTranslation(c.x, c.heightVar, c.z);
+            const b = blocks[i];
+            dummy.makeTranslation(b.x, 0, b.z);
+            scaleMat.makeScale(1, b.h / BLOCK_H, 1);
+            dummy.multiply(scaleMat);
             dummy.toArray(mat, i * 16);
-            col[i * 3] = c.color.r;
-            col[i * 3 + 1] = c.color.g;
-            col[i * 3 + 2] = c.color.b;
+            colArr[i * 3] = b.color.r;
+            colArr[i * 3 + 1] = b.color.g;
+            colArr[i * 3 + 2] = b.color.b;
         }
 
-        return { count: totalBlocks, matrices: mat, colors: col };
+        return { count: totalBlocks, matrices: mat, colors: colArr };
     }, []);
 
     useEffect(() => {
@@ -249,35 +299,46 @@ function TerrainGrid() {
         mesh.instanceMatrix.needsUpdate = true;
     }, [count, matrices, colors]);
 
-    const blockSize = CELL - CELL_GAP;
-
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]} castShadow={false} receiveShadow={false}>
-            <boxGeometry args={[blockSize, BLOCK_H, blockSize]} />
-            <meshStandardMaterial vertexColors roughness={0.85} metalness={0.05} flatShading />
+            <boxGeometry args={[SUB_SIZE, BLOCK_H, SUB_SIZE]} />
+            <meshStandardMaterial vertexColors roughness={0.75} metalness={0.08} flatShading />
         </instancedMesh>
     );
 }
 
-// ===== Terrain underside — darker slab beneath the whole ring =====
+// ===== Terrain underside — darker slab beneath the whole ring (2×2 sub-blocks) =====
 function TerrainUnderside() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
 
     const { count, matrices } = useMemo(() => {
-        const cells: { x: number; z: number }[] = [];
+        const halfCell = (CELL - CELL_GAP) / 2;
+        const subOffsets = [
+            { dx: -halfCell / 2, dz: -halfCell / 2 },
+            { dx:  halfCell / 2, dz: -halfCell / 2 },
+            { dx: -halfCell / 2, dz:  halfCell / 2 },
+            { dx:  halfCell / 2, dz:  halfCell / 2 },
+        ];
+
+        const blocks: { x: number; z: number }[] = [];
         for (let row = 0; row < GRID_H; row++) {
             for (let col = 0; col < GRID_W; col++) {
                 if (getCellKind(col, row) === 'empty') continue;
-                cells.push({ x: ORIGIN_X + col * CELL, z: ORIGIN_Z + row * CELL });
+                const wx = ORIGIN_X + col * CELL;
+                const wz = ORIGIN_Z + row * CELL;
+                for (let s = 0; s < 4; s++) {
+                    blocks.push({ x: wx + subOffsets[s].dx, z: wz + subOffsets[s].dz });
+                }
             }
         }
-        const mat = new Float32Array(cells.length * 16);
+
+        const mat = new Float32Array(blocks.length * 16);
         const dummy = new THREE.Matrix4();
-        for (let i = 0; i < cells.length; i++) {
-            dummy.makeTranslation(cells[i].x, -BLOCK_H * 0.6, cells[i].z);
+        for (let i = 0; i < blocks.length; i++) {
+            dummy.makeTranslation(blocks[i].x, -BLOCK_H * 0.6, blocks[i].z);
             dummy.toArray(mat, i * 16);
         }
-        return { count: cells.length, matrices: mat };
+        return { count: blocks.length, matrices: mat };
     }, []);
 
     useEffect(() => {
@@ -291,11 +352,9 @@ function TerrainUnderside() {
         mesh.instanceMatrix.needsUpdate = true;
     }, [count, matrices]);
 
-    const blockSize = CELL - CELL_GAP;
-
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
-            <boxGeometry args={[blockSize, BLOCK_H * 0.5, blockSize]} />
+            <boxGeometry args={[SUB_SIZE, BLOCK_H * 0.5, SUB_SIZE]} />
             <meshStandardMaterial color="#1a0e30" roughness={0.95} flatShading />
         </instancedMesh>
     );
@@ -304,15 +363,27 @@ function TerrainUnderside() {
 // ===== Ground plane with pixelated texture =====
 function GroundPlane() {
     const texture = useMemo(() => {
+        const res = 32;
         const canvas = document.createElement('canvas');
-        canvas.width = 16;
-        canvas.height = 16;
+        canvas.width = res;
+        canvas.height = res;
         const ctx = canvas.getContext('2d')!;
         const rng = mulberry32(99);
-        const cs = ['#0e0818', '#120c20', '#160e28', '#0e0a1a', '#100c1e'];
-        for (let x = 0; x < 16; x++) {
-            for (let y = 0; y < 16; y++) {
-                ctx.fillStyle = cs[Math.floor(rng() * cs.length)];
+        const cs = ['#0e0818', '#120c20', '#160e28', '#0e0a1a', '#100c1e', '#0c0616'];
+        const center = (res - 1) / 2;
+        const maxDist = Math.sqrt(center * center + center * center);
+        for (let x = 0; x < res; x++) {
+            for (let y = 0; y < res; y++) {
+                const baseColor = cs[Math.floor(rng() * cs.length)];
+                const dist = Math.sqrt((x - center) ** 2 + (y - center) ** 2);
+                const darken = 0.7 + 0.3 * (1 - dist / maxDist);
+                const r = parseInt(baseColor.slice(1, 3), 16);
+                const g = parseInt(baseColor.slice(3, 5), 16);
+                const b = parseInt(baseColor.slice(5, 7), 16);
+                const dr = Math.round(r * darken);
+                const dg = Math.round(g * darken);
+                const db = Math.round(b * darken);
+                ctx.fillStyle = `rgb(${dr},${dg},${db})`;
                 ctx.fillRect(x, y, 1, 1);
             }
         }
@@ -365,7 +436,7 @@ function TerrainDecorations() {
 
     const { count, matrices, colors } = useMemo(() => {
         const rng = mulberry32(137);
-        const decoCount = 30;
+        const decoCount = 70;
         const mat = new Float32Array(decoCount * 16);
         const col = new Float32Array(decoCount * 3);
         const dummy = new THREE.Matrix4();
@@ -374,23 +445,47 @@ function TerrainDecorations() {
             new THREE.Color('#66aacc'),
             new THREE.Color('#aa77dd'),
             new THREE.Color('#5588aa'),
+            new THREE.Color('#9944ee'),
+            new THREE.Color('#44ccaa'),
         ];
 
         let placed = 0;
-        for (let attempt = 0; attempt < decoCount * 3 && placed < decoCount; attempt++) {
+        for (let attempt = 0; attempt < decoCount * 4 && placed < decoCount; attempt++) {
             const gCol = Math.floor(rng() * GRID_W);
             const gRow = Math.floor(rng() * GRID_H);
             const kind = getCellKind(gCol, gRow);
             if (kind === 'empty') continue;
 
-            const scale = 0.03 + rng() * 0.06;
-            const hScale = 0.5 + rng() * 2;
+            const typeRoll = rng();
+            let scaleX: number, scaleY: number, scaleZ: number;
+
+            if (typeRoll < 0.7) {
+                // Small crystals (70%)
+                const scale = 0.03 + rng() * 0.06;
+                const hScale = 0.5 + rng() * 2;
+                scaleX = scale;
+                scaleY = scale * hScale;
+                scaleZ = scale;
+            } else if (typeRoll < 0.9) {
+                // Flat mushroom-like shapes (20%) — wider, shorter
+                const baseScale = 0.04 + rng() * 0.05;
+                scaleX = baseScale * 1.8;
+                scaleY = baseScale * 0.5;
+                scaleZ = baseScale * 1.8;
+            } else {
+                // Tall spires (10%) — very thin, tall
+                const baseScale = 0.02 + rng() * 0.03;
+                scaleX = baseScale;
+                scaleY = baseScale * 4 + rng() * 0.08;
+                scaleZ = baseScale;
+            }
+
             const wx = ORIGIN_X + gCol * CELL + (rng() - 0.5) * CELL * 0.4;
             const wz = ORIGIN_Z + gRow * CELL + (rng() - 0.5) * CELL * 0.4;
 
             dummy.identity();
-            dummy.makeTranslation(wx, BLOCK_H * 0.5 + scale * hScale * 0.5, wz);
-            dummy.multiply(new THREE.Matrix4().makeScale(scale, scale * hScale, scale));
+            dummy.makeTranslation(wx, BLOCK_H * 0.5 + scaleY * 0.5, wz);
+            dummy.multiply(new THREE.Matrix4().makeScale(scaleX, scaleY, scaleZ));
             dummy.toArray(mat, placed * 16);
 
             const c = crystalColors[Math.floor(rng() * crystalColors.length)];
@@ -478,7 +573,198 @@ function EnemyHPBar({ health, maxHealth }: { health: number; maxHealth: number }
     );
 }
 
-// ===== Pixelated Enemy with smooth movement =====
+// ===== HD Enemy Variant: Grunt =====
+function EnemyGrunt({ bodyColor, headColor, feetColor, healthRatio }: {
+    bodyColor: THREE.Color; headColor: THREE.Color; feetColor: THREE.Color; healthRatio: number;
+}) {
+    const emissiveColor = useMemo(() => new THREE.Color('#ff3333'), []);
+    const emissiveIntensity = healthRatio < 0.25 ? 0.6 : healthRatio < 0.5 ? 0.3 : 0;
+    return (
+        <>
+            {/* Body */}
+            <mesh name="body" position={[0, ENEMY_SIZE * 0.5, 0]}>
+                <boxGeometry args={[0.28, 0.28, 0.22]} />
+                <meshStandardMaterial color={bodyColor} emissive={emissiveColor} emissiveIntensity={emissiveIntensity} roughness={0.85} metalness={0.1} flatShading />
+            </mesh>
+            {/* Head */}
+            <mesh name="head" position={[0, ENEMY_SIZE * 1.2, 0]}>
+                <boxGeometry args={[0.31, 0.22, 0.25]} />
+                <meshStandardMaterial color={headColor} emissive={emissiveColor} emissiveIntensity={emissiveIntensity} roughness={0.8} metalness={0.1} flatShading />
+            </mesh>
+            {/* Left horn */}
+            <mesh position={[-0.08, ENEMY_SIZE * 1.55, 0]}>
+                <boxGeometry args={[0.04, 0.08, 0.04]} />
+                <meshStandardMaterial color={feetColor} roughness={0.7} metalness={0.2} flatShading />
+            </mesh>
+            {/* Right horn */}
+            <mesh position={[0.08, ENEMY_SIZE * 1.55, 0]}>
+                <boxGeometry args={[0.04, 0.08, 0.04]} />
+                <meshStandardMaterial color={feetColor} roughness={0.7} metalness={0.2} flatShading />
+            </mesh>
+            {/* Left eye */}
+            <mesh name="left_eye" position={[-0.07, ENEMY_SIZE * 1.25, 0.12]}>
+                <boxGeometry args={[0.06, 0.05, 0.03]} />
+                <meshStandardMaterial color="#111111" emissive="#ff3333" emissiveIntensity={0.5} />
+            </mesh>
+            {/* Right eye */}
+            <mesh name="right_eye" position={[0.07, ENEMY_SIZE * 1.25, 0.12]}>
+                <boxGeometry args={[0.06, 0.05, 0.03]} />
+                <meshStandardMaterial color="#111111" emissive="#ff3333" emissiveIntensity={0.5} />
+            </mesh>
+        </>
+    );
+}
+
+// ===== HD Enemy Variant: Ranger =====
+function EnemyRanger({ bodyColor, headColor, feetColor, healthRatio }: {
+    bodyColor: THREE.Color; headColor: THREE.Color; feetColor: THREE.Color; healthRatio: number;
+}) {
+    const emissiveColor = useMemo(() => new THREE.Color('#ff3333'), []);
+    const emissiveIntensity = healthRatio < 0.25 ? 0.6 : healthRatio < 0.5 ? 0.3 : 0;
+    return (
+        <>
+            {/* Body - slimmer */}
+            <mesh name="body" position={[0, ENEMY_SIZE * 0.55, 0]}>
+                <boxGeometry args={[0.22, 0.30, 0.18]} />
+                <meshStandardMaterial color={bodyColor} emissive={emissiveColor} emissiveIntensity={emissiveIntensity} roughness={0.8} metalness={0.15} flatShading />
+            </mesh>
+            {/* Head - taller */}
+            <mesh name="head" position={[0, ENEMY_SIZE * 1.3, 0]}>
+                <boxGeometry args={[0.26, 0.26, 0.22]} />
+                <meshStandardMaterial color={headColor} emissive={emissiveColor} emissiveIntensity={emissiveIntensity} roughness={0.75} metalness={0.15} flatShading />
+            </mesh>
+            {/* Left pointed ear */}
+            <mesh position={[-0.15, ENEMY_SIZE * 1.5, 0]} rotation={[0, 0, 0.4]}>
+                <boxGeometry args={[0.03, 0.06, 0.03]} />
+                <meshStandardMaterial color={headColor} roughness={0.7} metalness={0.15} flatShading />
+            </mesh>
+            {/* Right pointed ear */}
+            <mesh position={[0.15, ENEMY_SIZE * 1.5, 0]} rotation={[0, 0, -0.4]}>
+                <boxGeometry args={[0.03, 0.06, 0.03]} />
+                <meshStandardMaterial color={headColor} roughness={0.7} metalness={0.15} flatShading />
+            </mesh>
+            {/* Left eye */}
+            <mesh name="left_eye" position={[-0.06, ENEMY_SIZE * 1.35, 0.11]}>
+                <boxGeometry args={[0.05, 0.04, 0.03]} />
+                <meshStandardMaterial color="#111111" emissive="#ff3333" emissiveIntensity={0.5} />
+            </mesh>
+            {/* Right eye */}
+            <mesh name="right_eye" position={[0.06, ENEMY_SIZE * 1.35, 0.11]}>
+                <boxGeometry args={[0.05, 0.04, 0.03]} />
+                <meshStandardMaterial color="#111111" emissive="#ff3333" emissiveIntensity={0.5} />
+            </mesh>
+            {/* Shield on left side */}
+            <mesh position={[-0.16, ENEMY_SIZE * 0.5, 0.06]}>
+                <boxGeometry args={[0.08, 0.10, 0.03]} />
+                <meshStandardMaterial color={feetColor} roughness={0.6} metalness={0.25} flatShading />
+            </mesh>
+        </>
+    );
+}
+
+// ===== HD Enemy Variant: Brute =====
+function EnemyBrute({ bodyColor, headColor, feetColor, healthRatio }: {
+    bodyColor: THREE.Color; headColor: THREE.Color; feetColor: THREE.Color; healthRatio: number;
+}) {
+    const emissiveColor = useMemo(() => new THREE.Color('#ff3333'), []);
+    const emissiveIntensity = healthRatio < 0.25 ? 0.6 : healthRatio < 0.5 ? 0.3 : 0;
+    return (
+        <>
+            {/* Body - wide */}
+            <mesh name="body" position={[0, ENEMY_SIZE * 0.5, 0]}>
+                <boxGeometry args={[0.34, 0.26, 0.24]} />
+                <meshStandardMaterial color={bodyColor} emissive={emissiveColor} emissiveIntensity={emissiveIntensity} roughness={0.9} metalness={0.1} flatShading />
+            </mesh>
+            {/* Head - small */}
+            <mesh name="head" position={[0, ENEMY_SIZE * 1.05, 0]}>
+                <boxGeometry args={[0.24, 0.18, 0.20]} />
+                <meshStandardMaterial color={headColor} emissive={emissiveColor} emissiveIntensity={emissiveIntensity} roughness={0.85} metalness={0.1} flatShading />
+            </mesh>
+            {/* Left shoulder spike */}
+            <mesh position={[-0.2, ENEMY_SIZE * 0.85, 0]}>
+                <boxGeometry args={[0.05, 0.10, 0.05]} />
+                <meshStandardMaterial color={feetColor} roughness={0.6} metalness={0.3} flatShading />
+            </mesh>
+            {/* Right shoulder spike */}
+            <mesh position={[0.2, ENEMY_SIZE * 0.85, 0]}>
+                <boxGeometry args={[0.05, 0.10, 0.05]} />
+                <meshStandardMaterial color={feetColor} roughness={0.6} metalness={0.3} flatShading />
+            </mesh>
+            {/* Left eye */}
+            <mesh name="left_eye" position={[-0.05, ENEMY_SIZE * 1.08, 0.10]}>
+                <boxGeometry args={[0.05, 0.04, 0.03]} />
+                <meshStandardMaterial color="#111111" emissive="#ff3333" emissiveIntensity={0.5} />
+            </mesh>
+            {/* Right eye */}
+            <mesh name="right_eye" position={[0.05, ENEMY_SIZE * 1.08, 0.10]}>
+                <boxGeometry args={[0.05, 0.04, 0.03]} />
+                <meshStandardMaterial color="#111111" emissive="#ff3333" emissiveIntensity={0.5} />
+            </mesh>
+        </>
+    );
+}
+
+// ===== HD Enemy Variant: Mage =====
+function EnemyMage({ bodyColor, headColor, feetColor, healthRatio }: {
+    bodyColor: THREE.Color; headColor: THREE.Color; feetColor: THREE.Color; healthRatio: number;
+}) {
+    const emissiveColor = useMemo(() => new THREE.Color('#ff3333'), []);
+    const emissiveIntensity = healthRatio < 0.25 ? 0.6 : healthRatio < 0.5 ? 0.3 : 0;
+    return (
+        <>
+            {/* Body */}
+            <mesh name="body" position={[0, ENEMY_SIZE * 0.5, 0]}>
+                <boxGeometry args={[0.26, 0.28, 0.20]} />
+                <meshStandardMaterial color={bodyColor} emissive={emissiveColor} emissiveIntensity={emissiveIntensity} roughness={0.8} metalness={0.12} flatShading />
+            </mesh>
+            {/* Robe base - wider */}
+            <mesh position={[0, ENEMY_SIZE * 0.2, 0]}>
+                <boxGeometry args={[0.30, 0.12, 0.24]} />
+                <meshStandardMaterial color={bodyColor} roughness={0.85} metalness={0.1} flatShading />
+            </mesh>
+            {/* Head */}
+            <mesh name="head" position={[0, ENEMY_SIZE * 1.2, 0]}>
+                <boxGeometry args={[0.24, 0.20, 0.22]} />
+                <meshStandardMaterial color={headColor} emissive={emissiveColor} emissiveIntensity={emissiveIntensity} roughness={0.75} metalness={0.12} flatShading />
+            </mesh>
+            {/* Pointed hat - 3 stacked decreasing boxes */}
+            <mesh position={[0, ENEMY_SIZE * 1.5, 0]}>
+                <boxGeometry args={[0.20, 0.08, 0.18]} />
+                <meshStandardMaterial color={feetColor} roughness={0.7} metalness={0.15} flatShading />
+            </mesh>
+            <mesh position={[0, ENEMY_SIZE * 1.6, 0]}>
+                <boxGeometry args={[0.14, 0.08, 0.12]} />
+                <meshStandardMaterial color={feetColor} roughness={0.7} metalness={0.15} flatShading />
+            </mesh>
+            <mesh position={[0, ENEMY_SIZE * 1.7, 0]}>
+                <boxGeometry args={[0.08, 0.08, 0.08]} />
+                <meshStandardMaterial color={feetColor} roughness={0.6} metalness={0.2} flatShading />
+            </mesh>
+            {/* Left eye */}
+            <mesh name="left_eye" position={[-0.05, ENEMY_SIZE * 1.25, 0.11]}>
+                <boxGeometry args={[0.05, 0.04, 0.03]} />
+                <meshStandardMaterial color="#111111" emissive="#ff3333" emissiveIntensity={0.5} />
+            </mesh>
+            {/* Right eye */}
+            <mesh name="right_eye" position={[0.05, ENEMY_SIZE * 1.25, 0.11]}>
+                <boxGeometry args={[0.05, 0.04, 0.03]} />
+                <meshStandardMaterial color="#111111" emissive="#ff3333" emissiveIntensity={0.5} />
+            </mesh>
+            {/* Staff in right hand */}
+            <mesh position={[0.17, ENEMY_SIZE * 1.0, 0]}>
+                <boxGeometry args={[0.03, 0.30, 0.03]} />
+                <meshStandardMaterial color="#666655" roughness={0.7} metalness={0.15} flatShading />
+            </mesh>
+            {/* Staff orb */}
+            <mesh position={[0.17, ENEMY_SIZE * 1.2, 0]}>
+                <boxGeometry args={[0.05, 0.05, 0.05]} />
+                <meshStandardMaterial color="#9966ff" emissive="#9966ff" emissiveIntensity={0.8} roughness={0.3} metalness={0.2} flatShading />
+            </mesh>
+        </>
+    );
+}
+
+// ===== Pixelated Enemy with smooth movement (HD variants) =====
 function PixelEnemy({ pathPosition, index, health, maxHealth }: {
     pathPosition: number;
     index: number;
@@ -488,6 +774,8 @@ function PixelEnemy({ pathPosition, index, health, maxHealth }: {
     const groupRef = useRef<THREE.Group>(null);
     const smoothRef = useRef({ x: 0, z: 0, angle: 0, init: false });
     const color = useMemo(() => ENEMY_COLORS[index % ENEMY_COLORS.length], [index]);
+    const variant = index % 4;
+    const healthRatio = maxHealth > 0 ? health / maxHealth : 1;
 
     useFrame(({ clock }, delta) => {
         if (!groupRef.current) return;
@@ -517,40 +805,76 @@ function PixelEnemy({ pathPosition, index, health, maxHealth }: {
 
     const leftFootRef = useRef<THREE.Mesh>(null);
     const rightFootRef = useRef<THREE.Mesh>(null);
+    const leftArmRef = useRef<THREE.Mesh>(null);
+    const rightArmRef = useRef<THREE.Mesh>(null);
 
+    // Foot walk animation + arm swing (opposite phase)
     useFrame(({ clock }) => {
-        if (!leftFootRef.current || !rightFootRef.current) return;
         const w = Math.sin(clock.elapsedTime * 6 + index * 2);
-        leftFootRef.current.position.z = w * 0.04;
-        rightFootRef.current.position.z = -w * 0.04;
+        if (leftFootRef.current) leftFootRef.current.position.z = w * 0.04;
+        if (rightFootRef.current) rightFootRef.current.position.z = -w * 0.04;
+        if (leftArmRef.current) leftArmRef.current.rotation.x = -w * 0.3;
+        if (rightArmRef.current) rightArmRef.current.rotation.x = w * 0.3;
     });
+
+    // Shadow pulse when low health
+    const shadowRef = useRef<THREE.Mesh>(null);
+    useFrame(({ clock }) => {
+        if (!shadowRef.current) return;
+        const pulse = healthRatio < 0.25 ? 0.3 + Math.sin(clock.elapsedTime * 8) * 0.15 : 0.35;
+        (shadowRef.current.material as THREE.MeshBasicMaterial).opacity = pulse;
+    });
+
+    const variantProps = { bodyColor, headColor, feetColor, healthRatio };
+
+    // Foot sizes per variant
+    const footSize = variant === 2
+        ? { w: 0.12, h: 0.10, d: 0.14, spread: 0.1 }   // Brute: big feet
+        : variant === 1 || variant === 3
+        ? { w: 0.08, h: 0.07, d: 0.10, spread: 0.06 }   // Ranger/Mage: small feet
+        : { w: 0.1, h: 0.08, d: 0.12, spread: 0.08 };    // Grunt: medium feet
+
+    // Arm sizes per variant
+    const armSize = variant === 2
+        ? { w: 0.08, h: 0.22, xOff: 0.22, yOff: ENEMY_SIZE * 0.45 }  // Brute: thick arms
+        : variant === 1
+        ? { w: 0.05, h: 0.18, xOff: 0.16, yOff: ENEMY_SIZE * 0.55 }  // Ranger
+        : variant === 3
+        ? { w: 0.05, h: 0.18, xOff: 0.17, yOff: ENEMY_SIZE * 0.55 }  // Mage
+        : { w: 0.06, h: 0.2, xOff: 0.19, yOff: ENEMY_SIZE * 0.55 };   // Grunt
 
     return (
         <group ref={groupRef}>
             <EnemyHPBar health={health} maxHealth={maxHealth} />
-            <mesh position={[0, ENEMY_SIZE * 0.5, 0]}>
-                <boxGeometry args={[ENEMY_SIZE, ENEMY_SIZE, ENEMY_SIZE * 0.8]} />
-                <meshStandardMaterial color={bodyColor} roughness={0.9} flatShading />
+            {/* Ground shadow */}
+            <mesh ref={shadowRef} position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <circleGeometry args={[0.12, 8]} />
+                <meshBasicMaterial color="#000000" transparent opacity={0.35} depthWrite={false} />
             </mesh>
-            <mesh position={[0, ENEMY_SIZE * 1.25, 0]}>
-                <boxGeometry args={[ENEMY_SIZE * 1.1, ENEMY_SIZE * 0.8, ENEMY_SIZE * 0.9]} />
-                <meshStandardMaterial color={headColor} roughness={0.85} flatShading />
+            {/* Variant-specific body parts (body, head, eyes, unique features) */}
+            {variant === 0 && <EnemyGrunt {...variantProps} />}
+            {variant === 1 && <EnemyRanger {...variantProps} />}
+            {variant === 2 && <EnemyBrute {...variantProps} />}
+            {variant === 3 && <EnemyMage {...variantProps} />}
+            {/* Shared animated left arm */}
+            <mesh ref={leftArmRef} position={[-armSize.xOff, armSize.yOff, 0]}>
+                <boxGeometry args={[armSize.w, armSize.h, armSize.w]} />
+                <meshStandardMaterial color={bodyColor} roughness={0.85} metalness={0.1} flatShading />
             </mesh>
-            <mesh position={[-ENEMY_SIZE * 0.22, ENEMY_SIZE * 1.3, ENEMY_SIZE * 0.42]}>
-                <boxGeometry args={[ENEMY_SIZE * 0.15, ENEMY_SIZE * 0.12, ENEMY_SIZE * 0.08]} />
-                <meshStandardMaterial color="#111111" />
+            {/* Shared animated right arm */}
+            <mesh ref={rightArmRef} position={[armSize.xOff, armSize.yOff, 0]}>
+                <boxGeometry args={[armSize.w, armSize.h, armSize.w]} />
+                <meshStandardMaterial color={bodyColor} roughness={0.85} metalness={0.1} flatShading />
             </mesh>
-            <mesh position={[ENEMY_SIZE * 0.22, ENEMY_SIZE * 1.3, ENEMY_SIZE * 0.42]}>
-                <boxGeometry args={[ENEMY_SIZE * 0.15, ENEMY_SIZE * 0.12, ENEMY_SIZE * 0.08]} />
-                <meshStandardMaterial color="#111111" />
+            {/* Shared animated left foot */}
+            <mesh ref={leftFootRef} position={[-footSize.spread, 0, 0]}>
+                <boxGeometry args={[footSize.w, footSize.h, footSize.d]} />
+                <meshStandardMaterial color={feetColor} roughness={0.95} metalness={0.05} flatShading />
             </mesh>
-            <mesh ref={leftFootRef} position={[-ENEMY_SIZE * 0.2, 0, 0]}>
-                <boxGeometry args={[ENEMY_SIZE * 0.35, ENEMY_SIZE * 0.3, ENEMY_SIZE * 0.4]} />
-                <meshStandardMaterial color={feetColor} roughness={0.95} flatShading />
-            </mesh>
-            <mesh ref={rightFootRef} position={[ENEMY_SIZE * 0.2, 0, 0]}>
-                <boxGeometry args={[ENEMY_SIZE * 0.35, ENEMY_SIZE * 0.3, ENEMY_SIZE * 0.4]} />
-                <meshStandardMaterial color={feetColor} roughness={0.95} flatShading />
+            {/* Shared animated right foot */}
+            <mesh ref={rightFootRef} position={[footSize.spread, 0, 0]}>
+                <boxGeometry args={[footSize.w, footSize.h, footSize.d]} />
+                <meshStandardMaterial color={feetColor} roughness={0.95} metalness={0.05} flatShading />
             </mesh>
         </group>
     );
@@ -583,7 +907,7 @@ function TowerAura({ active }: { active: boolean }) {
     );
 }
 
-// ===== Tower Mesh =====
+// ===== HD Tower Mesh =====
 function GridTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
     side: string;
     index: number;
@@ -598,6 +922,9 @@ function GridTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
 
     const pos = useMemo(() => towerToWorld(side, index), [side, index]);
 
+    // Orb rotation ref
+    const orbRef = useRef<THREE.Mesh>(null);
+
     useFrame(({ clock }) => {
         if (!groupRef.current) return;
         groupRef.current.position.set(pos.x, BLOCK_H * 0.5, pos.z);
@@ -607,44 +934,103 @@ function GridTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
         } else {
             groupRef.current.scale.setScalar(1);
         }
+        // Spin the orb
+        if (orbRef.current) {
+            orbRef.current.rotation.y = clock.elapsedTime * 2;
+            orbRef.current.rotation.x = Math.sin(clock.elapsedTime * 1.5) * 0.3;
+        }
     });
 
     const baseColor = isCharged ? TOWER_COLOR_CHARGED : TOWER_COLOR_IDLE;
+    const crownColor = isCharged ? '#bb99ff' : '#776699';
+    const S = TOWER_SIZE; // shorthand
 
     return (
         <group ref={groupRef}>
             <TowerAura active={lineClearPulse && isCharged} />
-            <mesh position={[0, TOWER_SIZE * 0.35, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 1.4, TOWER_SIZE * 0.7, TOWER_SIZE * 1.4]} />
-                <meshStandardMaterial color={baseColor} roughness={0.75} flatShading />
+
+            {/* === Base platform === */}
+            <mesh name="base" position={[0, S * 0.35, 0]}>
+                <boxGeometry args={[S * 1.4, S * 0.7, S * 1.4]} />
+                <meshStandardMaterial color={baseColor} roughness={0.85} metalness={0.05} flatShading />
             </mesh>
-            <mesh position={[0, TOWER_SIZE * 1.2, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 0.9, TOWER_SIZE * 1.2, TOWER_SIZE * 0.9]} />
-                <meshStandardMaterial color={baseColor} roughness={0.65} flatShading />
+            {/* 4 corner posts on base */}
+            {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([dx, dz], i) => (
+                <mesh key={`base-post-${i}`} position={[dx * S * 0.6, S * 0.55, dz * S * 0.6]}>
+                    <boxGeometry args={[S * 0.18, S * 0.45, S * 0.18]} />
+                    <meshStandardMaterial color={baseColor} roughness={0.8} metalness={0.08} flatShading />
+                </mesh>
+            ))}
+
+            {/* === Middle pillar === */}
+            <mesh name="pillar" position={[0, S * 1.2, 0]}>
+                <boxGeometry args={[S * 0.9, S * 1.2, S * 0.9]} />
+                <meshStandardMaterial color={baseColor} roughness={0.75} metalness={0.1} flatShading />
             </mesh>
-            <mesh position={[0, TOWER_SIZE * 2.1, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 1.2, TOWER_SIZE * 0.25, TOWER_SIZE * 1.2]} />
-                <meshStandardMaterial color={isCharged ? '#bb99ff' : '#776699'} roughness={0.7} flatShading />
+            {/* Window slits (front and back) */}
+            <mesh position={[0, S * 1.25, S * 0.46]}>
+                <boxGeometry args={[S * 0.15, S * 0.35, S * 0.04]} />
+                <meshStandardMaterial color="#1a0e30" roughness={0.95} flatShading />
             </mesh>
+            <mesh position={[0, S * 1.25, -S * 0.46]}>
+                <boxGeometry args={[S * 0.15, S * 0.35, S * 0.04]} />
+                <meshStandardMaterial color="#1a0e30" roughness={0.95} flatShading />
+            </mesh>
+
+            {/* === Crown ring === */}
+            <mesh name="crown" position={[0, S * 2.1, 0]}>
+                <boxGeometry args={[S * 1.2, S * 0.25, S * 1.2]} />
+                <meshStandardMaterial color={crownColor} roughness={0.65} metalness={0.12} flatShading />
+            </mesh>
+            {/* 4 battlement posts on crown */}
+            {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([dx, dz], i) => (
+                <mesh key={`crown-post-${i}`} position={[dx * S * 0.5, S * 2.38, dz * S * 0.5]}>
+                    <boxGeometry args={[S * 0.15, S * 0.3, S * 0.15]} />
+                    <meshStandardMaterial color={crownColor} roughness={0.6} metalness={0.15} flatShading />
+                </mesh>
+            ))}
+
+            {/* === Orb socket (pedestal) === */}
+            <mesh name="orb_socket" position={[0, S * 2.35, 0]}>
+                <boxGeometry args={[S * 0.2, S * 0.15, S * 0.2]} />
+                <meshStandardMaterial color={crownColor} roughness={0.5} metalness={0.15} flatShading />
+            </mesh>
+
+            {/* === Charge orb (octahedron + transparent shell) === */}
             {isCharged && (
                 <>
-                    <mesh position={[0, TOWER_SIZE * 2.6, 0]}>
-                        <boxGeometry args={[TOWER_SIZE * 0.35, TOWER_SIZE * 0.5, TOWER_SIZE * 0.35]} />
+                    <mesh ref={orbRef} position={[0, S * 2.65, 0]}>
+                        <octahedronGeometry args={[S * 0.18, 0]} />
                         <meshStandardMaterial
                             color={TOWER_GLOW_COLOR}
                             emissive={TOWER_GLOW_COLOR}
                             emissiveIntensity={chargeRatio * 2.5}
                             roughness={0.2}
+                            metalness={0.1}
                             flatShading
                         />
                     </mesh>
-                    <pointLight position={[0, TOWER_SIZE * 2.8, 0]} color={TOWER_GLOW_COLOR} intensity={chargeRatio * 0.6} distance={1.5} />
+                    {/* Transparent outer shell */}
+                    <mesh position={[0, S * 2.65, 0]}>
+                        <octahedronGeometry args={[S * 0.26, 0]} />
+                        <meshStandardMaterial
+                            color={TOWER_GLOW_COLOR}
+                            transparent
+                            opacity={chargeRatio * 0.2}
+                            roughness={0.1}
+                            metalness={0.05}
+                            flatShading
+                        />
+                    </mesh>
+                    <pointLight position={[0, S * 2.8, 0]} color={TOWER_GLOW_COLOR} intensity={chargeRatio * 0.6} distance={1.5} />
                 </>
             )}
+
+            {/* === Level indicator ring === */}
             {level > 1 && (
-                <mesh position={[0, TOWER_SIZE * 2.35, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 1.0, TOWER_SIZE * 0.12, TOWER_SIZE * 1.0]} />
-                    <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={0.3} roughness={0.5} flatShading />
+                <mesh position={[0, S * 2.25, 0]}>
+                    <boxGeometry args={[S * 1.0, S * 0.12, S * 1.0]} />
+                    <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={0.3} roughness={0.5} metalness={0.1} flatShading />
                 </mesh>
             )}
         </group>
