@@ -1,6 +1,6 @@
 'use client';
 
-import { Component, Suspense, useMemo, useCallback, useRef, useEffect, useState } from 'react';
+import { Component, Suspense, useMemo, useRef, useEffect, useState } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Sky, Billboard, Text } from '@react-three/drei';
@@ -72,8 +72,6 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode; fallback: Rea
 
 // ===== Constants =====
 const CELL_SIZE = 1;
-const BLOCKS_PER_CELL = 2; // 2x2 sub-blocks per cell for higher-resolution terrain
-const SUB_BLOCK_SIZE = CELL_SIZE / BLOCKS_PER_CELL; // 0.5
 
 const TERRAIN_COLORS: Record<string, string> = {
   grass: '#3a7d44',
@@ -105,7 +103,6 @@ function seededRandom(seed: number): () => number {
 function generateBackgroundVoxels(mapW: number, mapH: number) {
   const blocks: { x: number; y: number; z: number; r: number; g: number; b: number }[] = [];
   const rand = seededRandom(42);
-  const S = 0.5; // sub-voxel size (half of original 1x1x1)
 
   const isBoard = (x: number, z: number) => x >= 0 && x < mapW && z >= 0 && z < mapH;
   const chebyDist = (x: number, z: number) => {
@@ -123,27 +120,14 @@ function generateBackgroundVoxels(mapW: number, mapH: number) {
   const EXT = 10;
   const minC = -EXT;
   const maxC = Math.max(mapW, mapH) - 1 + EXT;
-  const MAX_BLOCKS = 3800; // Stay under 4000 budget
 
   const add = (x: number, y: number, z: number, r: number, g: number, b: number, noise = 0.04) => {
-    if (blocks.length >= MAX_BLOCKS) return;
     blocks.push({
       x, y, z,
       r: Math.max(0, Math.min(1, r + (rand() - 0.5) * noise * 2)),
       g: Math.max(0, Math.min(1, g + (rand() - 0.5) * noise * 2)),
       b: Math.max(0, Math.min(1, b + (rand() - 0.5) * noise * 2)),
     });
-  };
-
-  // Helper: add a 2x2 sub-grid for one cell position (surface block)
-  const addSubGrid = (cx: number, cz: number, y: number, r: number, g: number, b: number, noise = 0.04) => {
-    for (let sx = 0; sx < 2; sx++) {
-      for (let sz = 0; sz < 2; sz++) {
-        const subX = cx + sx * S - S * 0.5;
-        const subZ = cz + sz * S - S * 0.5;
-        add(subX, y + (rand() - 0.5) * 0.04, subZ, r, g, b, noise);
-      }
-    }
   };
 
   // 1. Cliff faces + surface around the board (dist 1-3)
@@ -156,24 +140,15 @@ function generateBackgroundVoxels(mapW: number, mapH: number) {
       const surfY = getGroundY(x, z);
       const bottomY = surfY - Math.floor(2 + dist * 1.3 + rand());
 
-      // Surface grass blocks (2x2 sub-voxels)
-      addSubGrid(x, z, surfY, 0.15, 0.33, 0.10, 0.06);
+      // Surface grass block
+      add(x, surfY, z, 0.15, 0.33, 0.10, 0.06);
 
-      // Cliff face below (use sub-voxels for top layers, single for deeper)
+      // Cliff face below
       for (let y = bottomY; y < surfY; y++) {
         const df = (y - bottomY) / Math.max(surfY - bottomY, 1);
         if (y >= surfY - 1 && rand() > 0.65) {
-          addSubGrid(x, z, y, 0.18, 0.36, 0.13, 0.06);
-        } else if (y >= surfY - 2) {
-          // Near-surface cliff: sub-voxels
-          for (let sx = 0; sx < 2; sx++) {
-            for (let sz = 0; sz < 2; sz++) {
-              const shade = 0.28 + df * 0.12;
-              add(x + sx * S - S * 0.5, y + (rand() - 0.5) * 0.03, z + sz * S - S * 0.5, shade + 0.05, shade, shade - 0.03, 0.05);
-            }
-          }
+          add(x, y, z, 0.18, 0.36, 0.13, 0.06);
         } else {
-          // Deep cliff: single voxel per layer to save budget
           const shade = 0.28 + df * 0.12;
           add(x, y, z, shade + 0.05, shade, shade - 0.03, 0.05);
         }
@@ -181,32 +156,23 @@ function generateBackgroundVoxels(mapW: number, mapH: number) {
     }
   }
 
-  // 2. Extended ground (dist 4-EXT) — sub-voxels for near, single for far
+  // 2. Extended ground (dist 4-EXT)
   for (let x = minC; x <= maxC; x++) {
     for (let z = minC; z <= maxC; z++) {
       if (isBoard(x, z)) continue;
       const dist = chebyDist(x, z);
       if (dist < 4 || dist > EXT) continue;
       const gy = getGroundY(x, z);
-      const useSubVoxels = dist <= 6;
       if (rand() > 0.88) {
-        if (useSubVoxels) {
-          addSubGrid(x, z, gy, 0.28, 0.20, 0.10, 0.04);
-        } else {
-          add(x, gy, z, 0.28, 0.20, 0.10, 0.04);
-        }
+        add(x, gy, z, 0.28, 0.20, 0.10, 0.04);
       } else {
         const g = 0.10 + rand() * 0.12;
-        if (useSubVoxels) {
-          addSubGrid(x, z, gy, g * 0.55, g + 0.18, g * 0.35, 0.05);
-        } else {
-          add(x, gy, z, g * 0.55, g + 0.18, g * 0.35, 0.05);
-        }
+        add(x, gy, z, g * 0.55, g + 0.18, g * 0.35, 0.05);
       }
     }
   }
 
-  // 3. Mountains (sub-voxels for surface layer, single for interior)
+  // 3. Mountains
   const mountains = [
     { cx: -7, cz: -7, h: 10, r: 4 },
     { cx: -6, cz: 8, h: 12, r: 5 },
@@ -237,20 +203,11 @@ function generateBackgroundVoxels(mapW: number, mapH: number) {
 
         for (let y = baseY; y <= baseY + peak; y++) {
           const rh = peak > 0 ? (y - baseY) / peak : 0;
-          const isTop = y === baseY + peak;
           if (rh > 0.75 && peak > 4) {
-            if (isTop) {
-              addSubGrid(x, z, y, 0.88, 0.91, 0.96, 0.04);
-            } else {
-              add(x, y, z, 0.88, 0.91, 0.96, 0.04);
-            }
+            add(x, y, z, 0.88, 0.91, 0.96, 0.04);
           } else if (rh > 0.45) {
             const s = 0.38 + rand() * 0.12;
-            if (isTop) {
-              addSubGrid(x, z, y, s, s * 0.95, s * 0.88, 0.05);
-            } else {
-              add(x, y, z, s, s * 0.95, s * 0.88, 0.05);
-            }
+            add(x, y, z, s, s * 0.95, s * 0.88, 0.05);
           } else {
             const s = 0.30 + rand() * 0.1;
             add(x, y, z, s * 0.8, s * 0.95, s * 0.7, 0.05);
@@ -260,7 +217,7 @@ function generateBackgroundVoxels(mapW: number, mapH: number) {
     }
   }
 
-  // 4. Trees (sub-voxel leaves for rounder canopies)
+  // 4. Trees
   const treeSpots: { x: number; z: number }[] = [];
   for (let i = 0; i < 55; i++) {
     const tx = Math.floor(minC + rand() * (maxC - minC + 1));
@@ -275,60 +232,49 @@ function generateBackgroundVoxels(mapW: number, mapH: number) {
   for (const t of treeSpots) {
     const gy = getGroundY(t.x, t.z) + 1;
     const trunkH = 2 + Math.floor(rand() * 3);
-    // Trunk: sub-voxels for detail
     for (let y = gy; y < gy + trunkH; y++) {
-      for (let sx = 0; sx < 2; sx++) {
-        for (let sz = 0; sz < 2; sz++) {
-          add(t.x + sx * S - S * 0.5, y + (rand() - 0.5) * 0.02, t.z + sz * S - S * 0.5, 0.30, 0.18, 0.08, 0.04);
-        }
-      }
+      add(t.x, y, t.z, 0.30, 0.18, 0.08, 0.04);
     }
     const canopyBase = gy + trunkH;
     const shape = rand();
     if (shape < 0.4) {
-      // Spherical canopy — sub-voxel leaves for rounder shape
       const cr = 1 + Math.floor(rand() * 2);
-      const crS = cr * 2; // doubled radius in sub-voxel space
-      for (let dx = -crS; dx <= crS; dx++) {
-        for (let dz = -crS; dz <= crS; dz++) {
-          for (let dy = 0; dy <= crS; dy++) {
-            if (dx * dx + dz * dz + dy * dy > (crS + 1) ** 2) continue;
-            const wx = t.x + dx * S;
-            const wz = t.z + dz * S;
-            if (isBoard(Math.floor(wx), Math.floor(wz))) continue;
-            add(wx, canopyBase + dy * S, wz, 0.08, 0.38 + rand() * 0.18, 0.06, 0.06);
+      for (let dx = -cr; dx <= cr; dx++) {
+        for (let dz = -cr; dz <= cr; dz++) {
+          for (let dy = 0; dy <= cr; dy++) {
+            if (dx * dx + dz * dz + dy * dy > (cr + 0.5) ** 2) continue;
+            if (isBoard(t.x + dx, t.z + dz)) continue;
+            add(t.x + dx, canopyBase + dy, t.z + dz, 0.08, 0.38 + rand() * 0.18, 0.06, 0.06);
           }
         }
       }
     } else if (shape < 0.7) {
-      // Conical canopy
       for (let ly = 0; ly < 4; ly++) {
         const lr = Math.max(0, 2 - ly);
         for (let dx = -lr; dx <= lr; dx++) {
           for (let dz = -lr; dz <= lr; dz++) {
             if (Math.abs(dx) + Math.abs(dz) > lr + 1) continue;
             if (isBoard(t.x + dx, t.z + dz)) continue;
-            addSubGrid(t.x + dx, t.z + dz, canopyBase + ly, 0.04, 0.28 + rand() * 0.12, 0.04, 0.05);
+            add(t.x + dx, canopyBase + ly, t.z + dz, 0.04, 0.28 + rand() * 0.12, 0.04, 0.05);
           }
         }
       }
     } else {
-      // Flat canopy
       const cr = 2;
       for (let dx = -cr; dx <= cr; dx++) {
         for (let dz = -cr; dz <= cr; dz++) {
           if (Math.abs(dx) + Math.abs(dz) > cr + 1) continue;
           if (isBoard(t.x + dx, t.z + dz)) continue;
-          addSubGrid(t.x + dx, t.z + dz, canopyBase, 0.12, 0.42 + rand() * 0.12, 0.08, 0.05);
+          add(t.x + dx, canopyBase, t.z + dz, 0.12, 0.42 + rand() * 0.12, 0.08, 0.05);
           if (rand() > 0.55) {
-            addSubGrid(t.x + dx, t.z + dz, canopyBase + 1, 0.10, 0.38 + rand() * 0.10, 0.06, 0.05);
+            add(t.x + dx, canopyBase + 1, t.z + dz, 0.10, 0.38 + rand() * 0.10, 0.06, 0.05);
           }
         }
       }
     }
   }
 
-  // 5. Crystal formations (sub-voxels for more detail)
+  // 5. Crystal formations
   const crystals = [
     { cx: -3, cz: 5, h: 4 },
     { cx: 18, cz: -3, h: 3 },
@@ -341,21 +287,14 @@ function generateBackgroundVoxels(mapW: number, mapH: number) {
   for (const cr of crystals) {
     const baseY = getGroundY(cr.cx, cr.cz) + 1;
     for (let y = baseY; y < baseY + cr.h; y++) {
-      // Taper the crystal: fewer sub-voxels at top
-      const taper = 1 - (y - baseY) / cr.h;
-      for (let sx = 0; sx < 2; sx++) {
-        for (let sz = 0; sz < 2; sz++) {
-          if (taper < 0.5 && (sx + sz) % 2 === 0) continue; // skip corners near top
-          add(cr.cx + sx * S - S * 0.5, y, cr.cz + sz * S - S * 0.5, 0.10, 0.70 + rand() * 0.20, 0.85 + rand() * 0.15, 0.08);
-        }
-      }
+      add(cr.cx, y, cr.cz, 0.10, 0.70 + rand() * 0.20, 0.85 + rand() * 0.15, 0.08);
     }
-    if (rand() > 0.3) addSubGrid(cr.cx + 1, cr.cz, baseY, 0.08, 0.65, 0.80, 0.06);
-    if (rand() > 0.3) addSubGrid(cr.cx, cr.cz + 1, baseY, 0.08, 0.65, 0.80, 0.06);
-    if (rand() > 0.5) addSubGrid(cr.cx - 1, cr.cz, baseY, 0.12, 0.60, 0.75, 0.06);
+    if (rand() > 0.3) add(cr.cx + 1, baseY, cr.cz, 0.08, 0.65, 0.80, 0.06);
+    if (rand() > 0.3) add(cr.cx, baseY, cr.cz + 1, 0.08, 0.65, 0.80, 0.06);
+    if (rand() > 0.5) add(cr.cx - 1, baseY, cr.cz, 0.12, 0.60, 0.75, 0.06);
   }
 
-  // 6. Ruins (sub-voxel detail)
+  // 6. Ruins
   const ruins = [
     { cx: -6, cz: 3 },
     { cx: 21, cz: 13 },
@@ -375,7 +314,7 @@ function generateBackgroundVoxels(mapW: number, mapH: number) {
         const h = isCorner ? 3 + Math.floor(rand() * 2) : 1 + Math.floor(rand() * 2);
         for (let y = baseY; y < baseY + h; y++) {
           const s = 0.35 + rand() * 0.12;
-          addSubGrid(rx, rz, y, s, s * 0.95, s * 0.88, 0.05);
+          add(rx, y, rz, s, s * 0.95, s * 0.88, 0.05);
         }
       }
     }
@@ -436,7 +375,7 @@ function VoxelBackgroundStage({ mapWidth, mapHeight }: { mapWidth: number; mapHe
       castShadow
       receiveShadow
     >
-      <boxGeometry args={[0.5, 0.5, 0.5]} />
+      <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial roughness={0.75} metalness={0.05} flatShading />
     </instancedMesh>
   );
@@ -496,161 +435,55 @@ function FloatingVoxels({ mapWidth, mapHeight }: { mapWidth: number; mapHeight: 
   );
 }
 
-// ===== Terrain (InstancedMesh with 2x2 sub-blocks per cell) =====
-
-// Seeded height noise per sub-block for organic terrain feel
-function terrainHeightNoise(cellX: number, cellZ: number, sx: number, sz: number, terrain: string): number {
-  // Deterministic noise based on position
-  const seed = (cellX * 73 + cellZ * 137 + sx * 31 + sz * 97) & 0xffff;
-  const n = ((seed * 1664525 + 1013904223) & 0x7fffffff) / 0x7fffffff; // 0..1
-  switch (terrain) {
-    case 'grass': return (n - 0.5) * 0.04; // subtle ±0.02
-    case 'mountain': return (n - 0.5) * 0.16; // pronounced ±0.08
-    case 'water': return Math.sin((cellX + sx * 0.5) * 2.5 + (cellZ + sz * 0.5) * 1.7) * 0.02; // wave
-    case 'path': return (n - 0.5) * 0.01; // nearly flat cobblestone
-    default: return 0;
-  }
-}
-
-const TERRAIN_TYPES = ['grass', 'path', 'water', 'mountain', 'spawn', 'base'] as const;
-
-interface TerrainInstanceData {
-  terrain: string;
-  matrices: THREE.Matrix4[];
-  colors: THREE.Color[];
-}
-
-function TerrainGrid({ grid, hoveredCell, canPlace }: {
+// ===== Terrain Grid =====
+function TerrainGrid({ grid, onCellClick, hoveredCell, canPlace }: {
   grid: GridCell[][];
+  onCellClick: (x: number, z: number) => void;
   hoveredCell: { x: number; z: number } | null;
   canPlace: boolean;
 }) {
-  const instanceRefs = useRef<Map<string, THREE.InstancedMesh>>(new Map());
-
-  // Build instance data grouped by terrain type
-  const instanceDataByType = useMemo(() => {
-    const dataMap = new Map<string, TerrainInstanceData>();
-    for (const t of TERRAIN_TYPES) {
-      dataMap.set(t, { terrain: t, matrices: [], colors: [] });
-    }
-
-    const dummy = new THREE.Object3D();
-
+  const meshesData = useMemo(() => {
+    const cells: { x: number; z: number; terrain: string; elevation: number; hasTower: boolean }[] = [];
     for (let z = 0; z < grid.length; z++) {
       for (let x = 0; x < grid[z].length; x++) {
-        const cell = grid[z][x];
-        const data = dataMap.get(cell.terrain);
-        if (!data) continue;
-
-        const baseHeight = cell.terrain === 'water' ? 0.08 :
-                          cell.terrain === 'mountain' ? 0.5 :
-                          cell.terrain === 'path' ? 0.12 : 0.2;
-
-        for (let sx = 0; sx < BLOCKS_PER_CELL; sx++) {
-          for (let sz = 0; sz < BLOCKS_PER_CELL; sz++) {
-            const heightNoise = terrainHeightNoise(x, z, sx, sz, cell.terrain);
-            const subHeight = baseHeight + heightNoise;
-
-            // Position the sub-block within the cell
-            const subX = x + (sx * SUB_BLOCK_SIZE) - (CELL_SIZE - SUB_BLOCK_SIZE) / 2;
-            const subZ = z + (sz * SUB_BLOCK_SIZE) - (CELL_SIZE - SUB_BLOCK_SIZE) / 2;
-            const subY = cell.elevation + subHeight / 2 - 0.1;
-
-            dummy.position.set(subX, subY, subZ);
-            dummy.scale.set(SUB_BLOCK_SIZE, subHeight, SUB_BLOCK_SIZE);
-            dummy.updateMatrix();
-            data.matrices.push(dummy.matrix.clone());
-
-            // Sub-block checkerboard pattern
-            const checker = (x + z + sx + sz) % 2 === 0;
-            const baseColor = checker
-              ? TERRAIN_COLORS[cell.terrain] || '#888888'
-              : TERRAIN_COLORS_ALT[cell.terrain] || '#777777';
-            data.colors.push(new THREE.Color(baseColor));
-          }
-        }
+        const c = grid[z][x];
+        cells.push({ x: c.x, z: c.z, terrain: c.terrain, elevation: c.elevation, hasTower: !!c.towerId });
       }
     }
-
-    return dataMap;
+    return cells;
   }, [grid]);
-
-  // Apply hover highlight by updating colors for the hovered cell
-  useEffect(() => {
-    for (const [terrainType, data] of instanceDataByType) {
-      const mesh = instanceRefs.current.get(terrainType);
-      if (!mesh || data.matrices.length === 0) continue;
-
-      let idx = 0;
-      for (let z = 0; z < grid.length; z++) {
-        for (let x = 0; x < grid[z].length; x++) {
-          const cell = grid[z][x];
-          if (cell.terrain !== terrainType) continue;
-
-          const isHovered = hoveredCell && hoveredCell.x === x && hoveredCell.z === z;
-          const hasTower = !!cell.towerId;
-
-          for (let sx = 0; sx < BLOCKS_PER_CELL; sx++) {
-            for (let sz = 0; sz < BLOCKS_PER_CELL; sz++) {
-              let color: THREE.Color;
-              if (isHovered && canPlace && cell.terrain === 'grass' && !hasTower) {
-                color = new THREE.Color('#22d3ee');
-              } else if (isHovered && (!canPlace || cell.terrain !== 'grass' || hasTower)) {
-                color = new THREE.Color('#ef4444');
-              } else {
-                color = data.colors[idx];
-              }
-              mesh.setColorAt(idx, color);
-              idx++;
-            }
-          }
-        }
-      }
-
-      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    }
-  }, [instanceDataByType, hoveredCell, canPlace, grid]);
-
-  // Set matrices and initial colors on mount / data change
-  const setInstanceRef = useCallback((terrainType: string, mesh: THREE.InstancedMesh | null) => {
-    if (!mesh) {
-      instanceRefs.current.delete(terrainType);
-      return;
-    }
-    instanceRefs.current.set(terrainType, mesh);
-    const data = instanceDataByType.get(terrainType);
-    if (!data) return;
-
-    for (let i = 0; i < data.matrices.length; i++) {
-      mesh.setMatrixAt(i, data.matrices[i]);
-      mesh.setColorAt(i, data.colors[i]);
-    }
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  }, [instanceDataByType]);
 
   return (
     <group>
-      {TERRAIN_TYPES.map(terrainType => {
-        const data = instanceDataByType.get(terrainType);
-        if (!data || data.matrices.length === 0) return null;
+      {meshesData.map((cell, i) => {
+        const isHovered = hoveredCell && hoveredCell.x === cell.x && hoveredCell.z === cell.z;
+        const checker = (cell.x + cell.z) % 2 === 0;
+        const baseColor = checker ? TERRAIN_COLORS[cell.terrain] : TERRAIN_COLORS_ALT[cell.terrain];
+        let color = baseColor;
+        if (isHovered && canPlace && cell.terrain === 'grass' && !cell.hasTower) {
+          color = '#22d3ee';
+        } else if (isHovered && (!canPlace || cell.terrain !== 'grass' || cell.hasTower)) {
+          color = '#ef4444';
+        }
 
-        const isWater = terrainType === 'water';
+        const height = cell.terrain === 'water' ? 0.08 :
+                       cell.terrain === 'mountain' ? 0.5 + Math.random() * 0.001 :
+                       cell.terrain === 'path' ? 0.12 : 0.2;
 
         return (
-          <instancedMesh
-            key={terrainType}
-            ref={(mesh: THREE.InstancedMesh | null) => setInstanceRef(terrainType, mesh)}
-            args={[undefined, undefined, data.matrices.length]}
-            castShadow={!isWater}
-            receiveShadow
+          <mesh
+            key={i}
+            position={[cell.x, cell.elevation + height / 2 - 0.1, cell.z]}
+            onClick={(e) => { e.stopPropagation(); onCellClick(cell.x, cell.z); }}
+            onPointerEnter={(e) => e.stopPropagation()}
           >
-            <boxGeometry args={[1, 1, 1]} />
+            <boxGeometry args={[CELL_SIZE, height, CELL_SIZE]} />
             <meshStandardMaterial
-              roughness={isWater ? 0.2 : 0.8}
-              metalness={isWater ? 0.3 : 0.05}
+              color={color}
+              roughness={cell.terrain === 'water' ? 0.2 : 0.8}
+              metalness={cell.terrain === 'water' ? 0.3 : 0.05}
             />
-          </instancedMesh>
+          </mesh>
         );
       })}
     </group>
@@ -1567,21 +1400,12 @@ function GameScene({ state, onCellClick, onSelectTower, onSelectEnemy, hoveredCe
       <FloatingVoxels mapWidth={state.map.width} mapHeight={state.map.height} />
       <CameraSetup mapWidth={state.map.width} mapHeight={state.map.height} />
 
-      {/* Invisible plane for raycasting + click detection */}
+      {/* Invisible plane for raycasting */}
       <mesh
         ref={planeRef}
         rotation={[-Math.PI / 2, 0, 0]}
         position={[state.map.width / 2 - 0.5, 0, state.map.height / 2 - 0.5]}
         visible={false}
-        onClick={(e) => {
-          e.stopPropagation();
-          const pt = e.point;
-          const gx = Math.round(pt.x);
-          const gz = Math.round(pt.z);
-          if (gx >= 0 && gx < state.map.width && gz >= 0 && gz < state.map.height) {
-            onCellClick(gx, gz);
-          }
-        }}
       >
         <planeGeometry args={[state.map.width + 2, state.map.height + 2]} />
         <meshBasicMaterial />
@@ -1589,6 +1413,7 @@ function GameScene({ state, onCellClick, onSelectTower, onSelectEnemy, hoveredCe
 
       <TerrainGrid
         grid={state.map.grid}
+        onCellClick={onCellClick}
         hoveredCell={hoveredCell}
         canPlace={!!state.selectedTowerType}
       />
