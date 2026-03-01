@@ -99,8 +99,12 @@ export default function MinecraftPanorama() {
   return (
     <div
       ref={mountRef}
-      className="absolute inset-0 z-0"
-      style={{ filter: "blur(2px) brightness(0.7)" }}
+      className="absolute inset-0"
+      style={{
+        filter: "blur(2px) brightness(0.7)",
+        zIndex: 0,
+        pointerEvents: "none",
+      }}
     />
   );
 }

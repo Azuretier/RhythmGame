@@ -113,7 +113,8 @@ function WorldCreationPanel({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
       transition={{ duration: 0.25 }}
-      className="relative z-10 flex items-center justify-center h-full px-4"
+      className="relative flex items-center justify-center h-full px-4"
+      style={{ zIndex: 10 }}
     >
       <div className={styles.mcPanel} style={{ maxWidth: '480px', width: '100%' }}>
         {/* Header */}
@@ -232,8 +233,11 @@ export default function MinecraftTitlePage() {
   const router = useRouter();
   const [screen, setScreen] = useState<Screen>('main');
   const [splash, setSplash] = useState('');
+  // Track client mount to avoid SSR rendering motion elements with opacity:0
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setSplash(SPLASHES[Math.floor(Math.random() * SPLASHES.length)]);
+    setMounted(true);
   }, []);
 
   const handleCreateWorld = useCallback((config: WorldConfig) => {
@@ -262,7 +266,7 @@ export default function MinecraftTitlePage() {
   }, [router]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden" style={{ isolation: 'isolate' }}>
       {/* Panorama background */}
       <MinecraftPanorama />
 
@@ -275,15 +279,16 @@ export default function MinecraftTitlePage() {
         {screen === 'main' && (
           <motion.div
             key="main"
-            initial={{ opacity: 0 }}
+            initial={mounted ? { opacity: 0 } : false}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="relative z-10 flex flex-col items-center justify-center h-full"
+            className="relative flex flex-col items-center justify-center h-full"
+            style={{ zIndex: 10 }}
           >
             {/* Title */}
             <motion.div
-              initial={{ y: -40, opacity: 0 }}
+              initial={mounted ? { y: -40, opacity: 0 } : false}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
               className="flex flex-col items-center mb-8"
@@ -293,7 +298,7 @@ export default function MinecraftTitlePage() {
                 <span className={styles.mcSubtitle}>Switch Edition</span>
                 {/* Splash text */}
                 <motion.span
-                  initial={{ scale: 0, opacity: 0 }}
+                  initial={mounted ? { scale: 0, opacity: 0 } : false}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.5, duration: 0.4, type: 'spring' }}
                   className={styles.splashText}
@@ -310,7 +315,7 @@ export default function MinecraftTitlePage() {
 
             {/* Menu buttons */}
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
+              initial={mounted ? { y: 20, opacity: 0 } : false}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               className={styles.menuContainer}
