@@ -1,9 +1,13 @@
 // Server-side room manager for Minecraft World multiplayer
-// Handles room lifecycle and position relay (no server-side physics)
+// Handles room lifecycle, position relay, block change sync, and day/night time sync
 
 import type { ServerMessage } from '@/types/multiplayer';
 import { MW_PLAYER_COLORS, MW_CONFIG } from '@/types/minecraft-world';
-import type { MWPlayer, MWRoomState, MWPublicRoom, MWPlayerPosition } from '@/types/minecraft-world';
+import type { MWPlayer, MWRoomState, MWPublicRoom, MWPlayerPosition, MWBlockChange } from '@/types/minecraft-world';
+
+// Day cycle: 240 seconds per full day (matching client constant)
+const DAY_CYCLE_DURATION = 240_000; // ms
+const TIME_SYNC_INTERVAL = 5_000; // broadcast time sync every 5 seconds
 
 interface MWRoom {
   code: string;
@@ -16,6 +20,12 @@ interface MWRoom {
   createdAt: number;
   lastActivity: number;
   positions: Map<string, MWPlayerPosition>;
+  // Block change tracking for synchronization
+  blockChanges: MWBlockChange[];
+  blockChangeTick: number;
+  // Day/night: game start timestamp for consistent time calculation
+  gameStartTime: number;
+  timeSyncInterval: ReturnType<typeof setInterval> | null;
 }
 
 interface ManagerCallbacks {
@@ -68,6 +78,10 @@ export class MinecraftWorldManager {
       createdAt: Date.now(),
       lastActivity: Date.now(),
       positions: new Map(),
+      blockChanges: [],
+      blockChangeTick: 0,
+      gameStartTime: 0,
+      timeSyncInterval: null,
     };
 
     this.rooms.set(code, room);
@@ -116,6 +130,7 @@ export class MinecraftWorldManager {
     room.lastActivity = Date.now();
 
     if (room.players.length === 0) {
+      if (room.timeSyncInterval) clearInterval(room.timeSyncInterval);
       this.rooms.delete(roomCode);
       return { roomCode };
     }
@@ -167,7 +182,37 @@ export class MinecraftWorldManager {
     if (room) {
       room.status = 'playing';
       room.lastActivity = Date.now();
+      room.gameStartTime = Date.now();
+      room.blockChanges = [];
+      room.blockChangeTick = 0;
+
+      // Start periodic time sync broadcasts
+      room.timeSyncInterval = setInterval(() => {
+        if (room.status !== 'playing') {
+          if (room.timeSyncInterval) clearInterval(room.timeSyncInterval);
+          room.timeSyncInterval = null;
+          return;
+        }
+        const dayTime = this.getDayTime(room);
+        this.callbacks.onBroadcastToRoom(roomCode, {
+          type: 'mw_time_sync',
+          dayTime,
+        } as unknown as ServerMessage);
+      }, TIME_SYNC_INTERVAL);
     }
+  }
+
+  /** Get the current day time (0-1) for a room based on elapsed time since game start */
+  private getDayTime(room: MWRoom): number {
+    const elapsed = Date.now() - room.gameStartTime;
+    return (elapsed % DAY_CYCLE_DURATION) / DAY_CYCLE_DURATION;
+  }
+
+  /** Get the server time offset for a room (ms since game started) */
+  getServerTime(roomCode: string): number {
+    const room = this.rooms.get(roomCode);
+    if (!room) return 0;
+    return Date.now() - room.gameStartTime;
   }
 
   handlePosition(playerId: string, x: number, y: number, z: number, rx: number, ry: number): void {
@@ -185,6 +230,69 @@ export class MinecraftWorldManager {
       type: 'mw_player_position',
       player: pos,
     } as unknown as ServerMessage, playerId);
+  }
+
+  // ===== Block Change Sync =====
+
+  handleBreakBlock(playerId: string, x: number, y: number, z: number): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room || room.status !== 'playing') return;
+    if (!room.players.some(p => p.id === playerId && p.connected)) return;
+
+    room.blockChangeTick++;
+    const change: MWBlockChange = {
+      playerId,
+      x, y, z,
+      blockType: 0, // air = broken
+      tick: room.blockChangeTick,
+    };
+    room.blockChanges.push(change);
+    room.lastActivity = Date.now();
+
+    // Broadcast to all players (including the sender for confirmation)
+    this.callbacks.onBroadcastToRoom(roomCode, {
+      type: 'mw_block_changed',
+      playerId,
+      x, y, z,
+      blockType: 0,
+    } as unknown as ServerMessage);
+  }
+
+  handlePlaceBlock(playerId: string, x: number, y: number, z: number, blockType: number): void {
+    const roomCode = this.playerToRoom.get(playerId);
+    if (!roomCode) return;
+
+    const room = this.rooms.get(roomCode);
+    if (!room || room.status !== 'playing') return;
+    if (!room.players.some(p => p.id === playerId && p.connected)) return;
+
+    room.blockChangeTick++;
+    const change: MWBlockChange = {
+      playerId,
+      x, y, z,
+      blockType,
+      tick: room.blockChangeTick,
+    };
+    room.blockChanges.push(change);
+    room.lastActivity = Date.now();
+
+    // Broadcast to all players (including the sender for confirmation)
+    this.callbacks.onBroadcastToRoom(roomCode, {
+      type: 'mw_block_changed',
+      playerId,
+      x, y, z,
+      blockType,
+    } as unknown as ServerMessage);
+  }
+
+  /** Get all block changes for a room (used for reconnection) */
+  getBlockChanges(roomCode: string): MWBlockChange[] {
+    const room = this.rooms.get(roomCode);
+    if (!room) return [];
+    return room.blockChanges;
   }
 
   handleChat(playerId: string, message: string): void {
@@ -318,6 +426,7 @@ export class MinecraftWorldManager {
     for (const [code, room] of this.rooms) {
       const connectedCount = room.players.filter(p => p.connected).length;
       if (connectedCount === 0 && now - room.lastActivity > staleTimeout) {
+        if (room.timeSyncInterval) clearInterval(room.timeSyncInterval);
         for (const p of room.players) {
           this.playerToRoom.delete(p.id);
         }
@@ -328,6 +437,9 @@ export class MinecraftWorldManager {
   }
 
   destroy(): void {
+    for (const room of this.rooms.values()) {
+      if (room.timeSyncInterval) clearInterval(room.timeSyncInterval);
+    }
     clearInterval(this.cleanupInterval);
     this.rooms.clear();
     this.playerToRoom.clear();

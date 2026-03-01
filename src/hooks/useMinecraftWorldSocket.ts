@@ -1,12 +1,12 @@
 'use client';
 
 // Minecraft World - Client WebSocket Hook
-// Manages connection, room state, and player position sync
+// Manages connection, room state, player position sync, and block change sync
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type {
   MWServerMessage, MWRoomState, MWPublicRoom,
-  MWGamePhase, MWPlayerPosition,
+  MWGamePhase, MWPlayerPosition, MWBlockChange,
 } from '@/types/minecraft-world';
 import {
   saveRoom, listOpenRooms, updateRoomStatus, deleteRoom, cleanupStaleRooms,
@@ -25,6 +25,14 @@ interface ChatMessage {
   playerName: string;
   message: string;
   timestamp: number;
+}
+
+export interface BlockChangeEvent {
+  playerId: string;
+  x: number;
+  y: number;
+  z: number;
+  blockType: number;
 }
 
 export function useMinecraftWorldSocket() {
@@ -52,6 +60,16 @@ export function useMinecraftWorldSocket() {
   const [remotePlayerList, setRemotePlayerList] = useState<MWPlayerPosition[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [gameMessage, setGameMessage] = useState<string | null>(null);
+
+  // Block change sync: callback ref for the 3D scene to receive block changes
+  const blockChangeCallbackRef = useRef<((event: BlockChangeEvent) => void) | null>(null);
+
+  // Server time sync for day/night cycle
+  const serverTimeOffsetRef = useRef<number>(0); // ms offset from Date.now() to server game time
+  const [serverDayTime, setServerDayTime] = useState<number>(0);
+
+  // Reconnection block change replay
+  const pendingBlockChangesRef = useRef<MWBlockChange[]>([]);
 
   // === WebSocket Connection ===
 
@@ -168,7 +186,7 @@ export function useMinecraftWorldSocket() {
 
       case 'mw_player_joined': {
         const m = msg as Extract<MWServerMessage, { type: 'mw_player_joined' }>;
-        setRoomState(prev => {
+        setRoomState((prev: MWRoomState | null) => {
           if (!prev) return prev;
           return { ...prev, players: [...prev.players, m.player] };
         });
@@ -177,9 +195,9 @@ export function useMinecraftWorldSocket() {
 
       case 'mw_player_left': {
         const m = msg as Extract<MWServerMessage, { type: 'mw_player_left' }>;
-        setRoomState(prev => {
+        setRoomState((prev: MWRoomState | null) => {
           if (!prev) return prev;
-          return { ...prev, players: prev.players.filter(p => p.id !== m.playerId) };
+          return { ...prev, players: prev.players.filter((p) => p.id !== m.playerId) };
         });
         remotePlayers.current.delete(m.playerId);
         setRemotePlayerList(Array.from(remotePlayers.current.values()));
@@ -188,11 +206,11 @@ export function useMinecraftWorldSocket() {
 
       case 'mw_player_ready': {
         const m = msg as Extract<MWServerMessage, { type: 'mw_player_ready' }>;
-        setRoomState(prev => {
+        setRoomState((prev: MWRoomState | null) => {
           if (!prev) return prev;
           return {
             ...prev,
-            players: prev.players.map(p =>
+            players: prev.players.map((p) =>
               p.id === m.playerId ? { ...p, ready: m.ready } : p
             ),
           };
@@ -215,6 +233,8 @@ export function useMinecraftWorldSocket() {
       case 'mw_game_started': {
         const m = msg as Extract<MWServerMessage, { type: 'mw_game_started' }>;
         setGameSeed(m.seed);
+        // Store the server time offset so client can compute synchronized day time
+        serverTimeOffsetRef.current = Date.now() - m.serverTime;
         setPhase('playing');
         break;
       }
@@ -223,16 +243,35 @@ export function useMinecraftWorldSocket() {
         const m = msg as Extract<MWServerMessage, { type: 'mw_player_position' }>;
         if (m.player.id !== playerIdRef.current) {
           remotePlayers.current.set(m.player.id, m.player);
-          // Throttle React updates to avoid excessive re-renders
-          // (position updates come at 10Hz per player)
           setRemotePlayerList(Array.from(remotePlayers.current.values()));
         }
         break;
       }
 
+      case 'mw_block_changed': {
+        const m = msg as Extract<MWServerMessage, { type: 'mw_block_changed' }>;
+        // Notify the 3D scene about the block change
+        if (blockChangeCallbackRef.current) {
+          blockChangeCallbackRef.current({
+            playerId: m.playerId,
+            x: m.x,
+            y: m.y,
+            z: m.z,
+            blockType: m.blockType,
+          });
+        }
+        break;
+      }
+
+      case 'mw_time_sync': {
+        const m = msg as Extract<MWServerMessage, { type: 'mw_time_sync' }>;
+        setServerDayTime(m.dayTime);
+        break;
+      }
+
       case 'mw_chat_message': {
         const m = msg as Extract<MWServerMessage, { type: 'mw_chat_message' }>;
-        setChatMessages(prev => [
+        setChatMessages((prev: ChatMessage[]) => [
           ...prev.slice(-49),
           { playerId: m.playerId, playerName: m.playerName, message: m.message, timestamp: Date.now() },
         ]);
@@ -248,6 +287,9 @@ export function useMinecraftWorldSocket() {
         setRoomState(m.roomState);
         if (m.roomState.status === 'playing') {
           setGameSeed(m.roomState.seed || 0);
+          serverTimeOffsetRef.current = Date.now() - m.serverTime;
+          // Store pending block changes to replay after world is generated
+          pendingBlockChangesRef.current = m.blockChanges || [];
           setPhase('playing');
         } else {
           setPhase('lobby');
@@ -349,9 +391,36 @@ export function useMinecraftWorldSocket() {
     send({ type: 'mw_position', x, y, z, rx, ry });
   }, [send]);
 
+  const sendBreakBlock = useCallback((x: number, y: number, z: number) => {
+    send({ type: 'mw_break_block', x, y, z });
+  }, [send]);
+
+  const sendPlaceBlock = useCallback((x: number, y: number, z: number, blockType: number) => {
+    send({ type: 'mw_place_block', x, y, z, blockType });
+  }, [send]);
+
   const sendChat = useCallback((message: string) => {
     send({ type: 'mw_chat', message });
   }, [send]);
+
+  /** Register a callback to receive block changes from the server */
+  const onBlockChange = useCallback((callback: ((event: BlockChangeEvent) => void) | null) => {
+    blockChangeCallbackRef.current = callback;
+  }, []);
+
+  /** Get synchronized day time (0-1) based on server time */
+  const getSyncedDayTime = useCallback((): number => {
+    const DAY_CYCLE_DURATION = 240_000;
+    const serverGameTime = Date.now() - serverTimeOffsetRef.current;
+    return (serverGameTime % DAY_CYCLE_DURATION) / DAY_CYCLE_DURATION;
+  }, []);
+
+  /** Consume pending block changes (used on reconnect to replay missed changes) */
+  const consumePendingBlockChanges = useCallback((): MWBlockChange[] => {
+    const changes = pendingBlockChangesRef.current;
+    pendingBlockChangesRef.current = [];
+    return changes;
+  }, []);
 
   return {
     // Connection
@@ -374,6 +443,12 @@ export function useMinecraftWorldSocket() {
     chatMessages,
     gameMessage,
 
+    // Block sync
+    onBlockChange,
+    serverDayTime,
+    getSyncedDayTime,
+    consumePendingBlockChanges,
+
     // Firestore
     refreshFirestoreRooms,
     saveRoomToFirestore,
@@ -386,6 +461,8 @@ export function useMinecraftWorldSocket() {
     setReady,
     startGame,
     sendPosition,
+    sendBreakBlock,
+    sendPlaceBlock,
     sendChat,
   };
 }

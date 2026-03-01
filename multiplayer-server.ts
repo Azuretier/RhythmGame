@@ -373,8 +373,9 @@ function startMWCountdown(roomCode: string, gameSeed: number): void {
       count--;
       setTimeout(tick, 1000);
     } else {
-      broadcastToMW(roomCode, { type: 'mw_game_started', seed: gameSeed } as unknown as ServerMessage);
       mwManager.beginPlaying(roomCode);
+      const serverTime = mwManager.getServerTime(roomCode);
+      broadcastToMW(roomCode, { type: 'mw_game_started', seed: gameSeed, serverTime } as unknown as ServerMessage);
       console.log(`[MW] Game started in room ${roomCode} with seed ${gameSeed}`);
     }
   };
@@ -821,6 +822,8 @@ function handleMessage(playerId: string, raw: string): void {
 
           const newToken = issueReconnectToken(playerId);
           const mwRoomState = mwManager.getRoomState(mwRoom.code);
+          const blockChanges = mwManager.getBlockChanges(mwRoom.code);
+          const serverTime = mwManager.getServerTime(mwRoom.code);
 
           sendToPlayer(playerId, {
             type: 'mw_reconnected',
@@ -828,6 +831,8 @@ function handleMessage(playerId: string, raw: string): void {
             playerId,
             roomState: mwRoomState,
             reconnectToken: newToken,
+            blockChanges,
+            serverTime,
           } as unknown as ServerMessage);
 
           sendMWRoomState(mwRoom.code);
@@ -1530,6 +1535,16 @@ function handleMessage(playerId: string, raw: string): void {
 
     case 'mw_position': {
       mwManager.handlePosition(playerId, message.x, message.y, message.z, message.rx, message.ry);
+      break;
+    }
+
+    case 'mw_break_block': {
+      mwManager.handleBreakBlock(playerId, message.x, message.y, message.z);
+      break;
+    }
+
+    case 'mw_place_block': {
+      mwManager.handlePlaceBlock(playerId, message.x, message.y, message.z, message.blockType);
       break;
     }
 
