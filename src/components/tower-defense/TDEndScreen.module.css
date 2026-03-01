@@ -1,0 +1,184 @@
+/* ===== End Overlay ===== */
+.endOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  z-index: 20;
+  padding: 24px;
+}
+
+.endOverlayWon {
+  background: rgba(10, 30, 20, 0.88);
+}
+
+.endOverlayLost {
+  background: rgba(30, 10, 10, 0.88);
+}
+
+/* ===== Stars ===== */
+.stars {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.star {
+  width: 48px;
+  height: 48px;
+}
+
+.starFilled {
+  color: #fbbf24;
+  filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+}
+
+.starEmpty {
+  color: #334155;
+}
+
+/* ===== End Title ===== */
+.endTitle {
+  font-size: 52px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.endTitleWon {
+  color: #4ade80;
+  text-shadow: 0 0 30px rgba(74, 222, 128, 0.6), 0 0 80px rgba(74, 222, 128, 0.2);
+}
+
+.endTitleLost {
+  color: #f87171;
+  text-shadow: 0 0 30px rgba(248, 113, 113, 0.6), 0 0 80px rgba(248, 113, 113, 0.2);
+}
+
+.endSubtitle {
+  font-size: 16px;
+  color: #94a3b8;
+  margin-bottom: 32px;
+  letter-spacing: 1px;
+}
+
+/* ===== Stats Grid ===== */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 36px;
+  max-width: 520px;
+  width: 100%;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 12px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(100, 116, 139, 0.25);
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+}
+
+.statIcon {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.statValue {
+  font-size: 26px;
+  font-weight: 800;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+/* ===== Actions ===== */
+.actions {
+  display: flex;
+  gap: 14px;
+}
+
+.actionBtn {
+  padding: 12px 36px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: transform 0.15s ease;
+}
+
+.actionBtnPrimary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #f8fafc;
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.3);
+}
+
+.actionBtnSecondary {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(100, 116, 139, 0.4);
+  color: #cbd5e1;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .endTitle {
+    font-size: 32px;
+    letter-spacing: 3px;
+  }
+
+  .endSubtitle {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .statValue {
+    font-size: 20px;
+  }
+
+  .star {
+    width: 36px;
+    height: 36px;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .actionBtn {
+    padding: 10px 24px;
+    font-size: 13px;
+    text-align: center;
+  }
+}
