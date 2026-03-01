@@ -137,6 +137,19 @@ export interface Wave {
 // === Game State ===
 export type GamePhase = 'menu' | 'build' | 'wave' | 'paused' | 'won' | 'lost';
 
+export interface SpawnTrackerGroup {
+  group: WaveGroup;
+  spawned: number;
+  nextSpawn: number;
+  startTimer: number;
+  done: boolean;
+}
+
+export interface SpawnTracker {
+  groups: SpawnTrackerGroup[];
+  allDone: boolean;
+}
+
 export interface GameState {
   phase: GamePhase;
   gold: number;
@@ -156,6 +169,7 @@ export interface GameState {
   enemiesRemaining: number;
   autoStart: boolean;
   gameSpeed: number;
+  spawnTracker?: SpawnTracker | null;
 }
 
 // === Constants ===
@@ -377,3 +391,66 @@ export const INITIAL_GOLD = 500;
 export const INITIAL_LIVES = 20;
 export const WAVE_PREP_TIME = 15; // seconds between waves
 export const TOTAL_WAVES = 30;
+
+// ===== Multiplayer Types =====
+
+/** Per-player state in a multiplayer TD game */
+export interface TDPlayerState {
+  playerId: string;
+  playerName: string;
+  gameState: GameState;
+  ready: boolean;
+  connected: boolean;
+  sendPoints: number;
+  totalSent: number;
+  totalReceived: number;
+  eliminated: boolean;
+  eliminatedAt: number | null;
+}
+
+/** Cost table for sending enemies to opponents */
+export interface SendEnemyCost {
+  enemyType: EnemyType;
+  cost: number;
+  count: number;
+  hpMultiplier: number;
+}
+
+/** Multiplayer room state */
+export interface TDMultiplayerRoom {
+  code: string;
+  name: string;
+  hostId: string;
+  players: TDPlayerState[];
+  status: 'waiting' | 'countdown' | 'playing' | 'ended';
+  maxPlayers: number;
+  mapIndex: number;
+  currentWave: number;
+  waveActive: boolean;
+  winner: string | null;
+}
+
+/** Send enemy action */
+export interface SendEnemyAction {
+  fromPlayerId: string;
+  toPlayerId: string;
+  enemyType: EnemyType;
+  count: number;
+  hpMultiplier: number;
+}
+
+export const SEND_ENEMY_COSTS: SendEnemyCost[] = [
+  { enemyType: 'grunt', cost: 5, count: 3, hpMultiplier: 1.0 },
+  { enemyType: 'fast', cost: 4, count: 4, hpMultiplier: 1.0 },
+  { enemyType: 'tank', cost: 15, count: 1, hpMultiplier: 1.2 },
+  { enemyType: 'flying', cost: 8, count: 2, hpMultiplier: 1.0 },
+  { enemyType: 'healer', cost: 12, count: 2, hpMultiplier: 1.0 },
+  { enemyType: 'swarm', cost: 3, count: 8, hpMultiplier: 0.8 },
+  { enemyType: 'shield', cost: 18, count: 1, hpMultiplier: 1.0 },
+  { enemyType: 'boss', cost: 50, count: 1, hpMultiplier: 0.6 },
+];
+
+export const SEND_POINTS_PER_KILL: Record<EnemyType, number> = {
+  grunt: 1, fast: 1, tank: 3, flying: 2,
+  healer: 2, boss: 10, swarm: 1, shield: 3,
+};

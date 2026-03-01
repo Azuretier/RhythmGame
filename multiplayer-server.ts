@@ -6,6 +6,7 @@ import { ArenaRoomManager } from './src/lib/arena/ArenaManager';
 import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardManager';
 import { EoEManager, isEoEMessage } from './src/lib/echoes/EoEManager';
 import { MinecraftWorldManager } from './src/lib/minecraft-world/MinecraftWorldManager';
+import { TDMultiplayerManager } from './src/lib/tower-defense/TDMultiplayerManager';
 import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
@@ -311,6 +312,10 @@ function isMWMessage(type: string): boolean {
   return type.startsWith('mw_');
 }
 
+function isTDMessage(type: string): boolean {
+  return type.startsWith('td_');
+}
+
 // ===== Minecraft Board Game System =====
 
 const mcBoardManager = new MinecraftBoardManager({
@@ -425,6 +430,29 @@ function startMCBoardCountdown(roomCode: string, gameSeed: number): void {
     }
   };
   tick();
+}
+
+// ===== Tower Defense Multiplayer System =====
+
+const tdManager = new TDMultiplayerManager({
+  onBroadcast: (roomCode, message, excludePlayerId) => {
+    broadcastToTD(roomCode, message as ServerMessage, excludePlayerId);
+  },
+  onSendToPlayer: (playerId, message) => {
+    sendToPlayer(playerId, message as ServerMessage);
+  },
+  onSessionEnd: (roomCode) => {
+    console.log(`[TD-MP] Session ended: ${roomCode}`);
+  },
+});
+
+function broadcastToTD(roomCode: string, message: ServerMessage, excludePlayerId?: string): void {
+  const playerIds = tdManager.getPlayerIdsInRoom(roomCode);
+  for (const pid of playerIds) {
+    if (pid !== excludePlayerId) {
+      sendToPlayer(pid, message);
+    }
+  }
 }
 
 // Countdown timers: track active countdowns so they can be cancelled
@@ -1553,6 +1581,100 @@ function handleMessage(playerId: string, raw: string): void {
       break;
     }
 
+    // ===== Tower Defense Multiplayer Messages =====
+
+    case 'td_create_room': {
+      const { roomCode } = tdManager.createRoom(playerId, message.playerName, message.mapIndex);
+      const reconnectToken = issueReconnectToken(playerId);
+      sendToPlayer(playerId, {
+        type: 'td_room_created',
+        roomCode,
+        playerId,
+      } as unknown as ServerMessage);
+      const tdRoom = tdManager.getRoom(roomCode);
+      if (tdRoom) {
+        sendToPlayer(playerId, { type: 'td_room_state', room: tdRoom } as unknown as ServerMessage);
+      }
+      console.log(`[TD-MP] Room ${roomCode} created by ${message.playerName}`);
+      break;
+    }
+
+    case 'td_join_room': {
+      const result = tdManager.joinRoom(message.roomCode, playerId, message.playerName);
+      if (!result.success) {
+        sendError(playerId, result.error || 'Failed to join TD room', 'TD_JOIN_FAILED');
+        break;
+      }
+      const reconnectToken = issueReconnectToken(playerId);
+      const tdRoom = tdManager.getRoom(message.roomCode);
+      if (tdRoom) {
+        sendToPlayer(playerId, {
+          type: 'td_room_joined',
+          roomCode: message.roomCode.toUpperCase().trim(),
+          room: tdRoom,
+        } as unknown as ServerMessage);
+      }
+      console.log(`[TD-MP] ${message.playerName} joined room ${message.roomCode}`);
+      break;
+    }
+
+    case 'td_leave_room': {
+      tdManager.leaveRoom(playerId);
+      break;
+    }
+
+    case 'td_set_ready': {
+      tdManager.setReady(playerId, message.ready);
+      break;
+    }
+
+    case 'td_start_game': {
+      tdManager.startGame(playerId);
+      break;
+    }
+
+    case 'td_place_tower': {
+      const placeResult = tdManager.placeTower(playerId, message.towerType, message.gridX, message.gridZ);
+      if (!placeResult.success) {
+        sendError(playerId, placeResult.error || 'Cannot place tower');
+      }
+      break;
+    }
+
+    case 'td_sell_tower': {
+      const sellResult = tdManager.sellTower(playerId, message.towerId);
+      if (!sellResult.success) {
+        sendError(playerId, sellResult.error || 'Cannot sell tower');
+      }
+      break;
+    }
+
+    case 'td_upgrade_tower': {
+      const upgradeResult = tdManager.upgradeTower(playerId, message.towerId);
+      if (!upgradeResult.success) {
+        sendError(playerId, upgradeResult.error || 'Cannot upgrade tower');
+      }
+      break;
+    }
+
+    case 'td_start_wave': {
+      tdManager.startWave(playerId);
+      break;
+    }
+
+    case 'td_send_enemy': {
+      const sendResult = tdManager.sendEnemy(playerId, message.targetPlayerId, message.enemyType);
+      if (!sendResult.success) {
+        sendError(playerId, sendResult.error || 'Cannot send enemy');
+      }
+      break;
+    }
+
+    case 'td_select_target': {
+      tdManager.selectTarget(playerId, message.targetPlayerId);
+      break;
+    }
+
     default: {
       // Echoes of Eternity messages
       if (isEoEMessage(message.type)) {
@@ -1681,6 +1803,9 @@ function handleDisconnect(playerId: string, reason: string): void {
     sendMWRoomState(mwResult.roomCode);
   }
 
+  // Handle TD multiplayer disconnect
+  tdManager.handleDisconnect(playerId);
+
   // Handle EoE disconnect
   eoeManager.removePlayer(playerId);
   eoeManager.dequeuePlayer(playerId);
@@ -1766,6 +1891,7 @@ const server = createServer((req, res) => {
       arenas: arenaManager.getRoomCount(),
       mcBoards: mcBoardManager.getRoomCount(),
       mcWorlds: mwManager.getRoomCount(),
+      tdRooms: tdManager.getRoomCount(),
     }));
   } else if (req.url === '/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1775,6 +1901,7 @@ const server = createServer((req, res) => {
       arenas: arenaManager.getRoomCount(),
       mcBoards: mcBoardManager.getRoomCount(),
       mcWorlds: mwManager.getRoomCount(),
+      tdRooms: tdManager.getRoomCount(),
       arenaQueue: arenaQueue.size,
       uptime: process.uptime(),
       memory: process.memoryUsage(),
@@ -1933,6 +2060,7 @@ function shutdown(signal: string) {
       arenaManager.destroy();
       mcBoardManager.destroy();
       mwManager.destroy();
+      tdManager.destroy();
       console.log('[SHUTDOWN] Complete');
       process.exit(0);
     });
