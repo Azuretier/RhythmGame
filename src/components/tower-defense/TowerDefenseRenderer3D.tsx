@@ -366,6 +366,10 @@ function VoxelBackgroundStage({ mapWidth, mapHeight }: { mapWidth: number; mapHe
 
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+
+    // Compute correct bounding sphere so frustum culling uses actual
+    // spatial extent instead of the unit-box geometry's default sphere.
+    mesh.computeBoundingSphere();
   }, [voxelData]);
 
   return (
@@ -422,7 +426,7 @@ function FloatingVoxels({ mapWidth, mapHeight }: { mapWidth: number; mapHeight: 
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT]}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, COUNT]} frustumCulled={false}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial
         color="#4aeadc"
