@@ -50,10 +50,8 @@ const ENEMY_MOB_SCALE: Record<EnemyType, number> = {
 };
 
 const TOWER_MOB_SCALE = 0.4;
-// Frost slime model (0.7 wide) scaled down to match magma cube base (0.55 wide)
-const TOWER_MOB_SCALE_OVERRIDES: Partial<Record<TowerType, number>> = {
-  frost: 0.4 * (0.55 / 0.7), // ≈ 0.314
-};
+// Slime model now matches magma cube dimensions — no overrides needed
+const TOWER_MOB_SCALE_OVERRIDES: Partial<Record<TowerType, number>> = {};
 
 // ===== Error Boundary =====
 interface ErrorBoundaryState { hasError: boolean; error: string | null }

@@ -181,7 +181,7 @@ const MOB_HEIGHTS: Record<TDEnemyType, number> = {
   creeper: 1.6,
   spider: 0.8,
   enderman: 2.8,
-  slime: 0.5,
+  slime: 0.28,
   magma_cube: 0.78,
   pig: 0.9,
   chicken: 0.7,
@@ -453,9 +453,9 @@ function createSlime(): MobMeshData {
   const slimeCore = 0x2e6b2e;
   const eyeColor = 0x111111;
 
-  // Outer body (gelatinous cube, squished flat like a blob)
-  const body = mbox(0.7, 0.35, 0.7, slimeGreen, slimeGreen, 0.3);
-  body.position.set(0, 0.175, 0);
+  // Outer body — sized to match magma cube bottom segment (0.55 × 0.28 × 0.55)
+  const body = mbox(0.55, 0.28, 0.55, slimeGreen, slimeGreen, 0.3);
+  body.position.set(0, 0.14, 0);
   // Make it semi-transparent looking with emissive glow
   const bodyMat = body.material as THREE.MeshStandardMaterial;
   bodyMat.transparent = true;
@@ -463,26 +463,26 @@ function createSlime(): MobMeshData {
   group.add(body);
 
   // Inner core (darker, smaller cube visible inside)
-  const core = mbox(0.35, 0.17, 0.35, slimeCore, slimeCore, 0.2);
-  core.position.set(0, 0.15, 0);
+  const core = mbox(0.27, 0.14, 0.27, slimeCore, slimeCore, 0.2);
+  core.position.set(0, 0.12, 0);
   group.add(core);
 
   // Eyes (on the front face)
-  const le = mbox(0.08, 0.08, 0.02, eyeColor);
-  le.position.set(-0.12, 0.24, -0.36);
+  const le = mbox(0.08, 0.06, 0.02, eyeColor);
+  le.position.set(-0.09, 0.19, -0.28);
   group.add(le);
-  const re = mbox(0.08, 0.08, 0.02, eyeColor);
-  re.position.set(0.12, 0.24, -0.36);
+  const re = mbox(0.08, 0.06, 0.02, eyeColor);
+  re.position.set(0.09, 0.19, -0.28);
   group.add(re);
 
   // Mouth (wide line)
-  const mouth = mbox(0.2, 0.04, 0.02, eyeColor);
-  mouth.position.set(0, 0.15, -0.36);
+  const mouth = mbox(0.16, 0.03, 0.02, eyeColor);
+  mouth.position.set(0, 0.12, -0.28);
   group.add(mouth);
 
   return {
     group, type: 'slime',
-    height: 0.5, isGltf: false,
+    height: 0.28, isGltf: false,
   };
 }
 
