@@ -545,13 +545,16 @@ function FrostAoERing({ range }: { range: number }) {
   );
 }
 
-function TowerMesh({ tower, isSelected, onClick }: {
+function TowerMesh({ tower, isSelected, enemies, onClick }: {
   tower: Tower;
   isSelected: boolean;
+  enemies: Enemy[];
   onClick: () => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
+  const mobWrapperRef = useRef<THREE.Group>(null);
   const mobRef = useRef<MobMeshData | null>(null);
+  const facingAngleRef = useRef<number>(0);
   const def = TOWER_DEFS[tower.type];
   const mobType = TOWER_MOB_MAP[tower.type];
 
@@ -577,6 +580,23 @@ function TowerMesh({ tower, isSelected, onClick }: {
     } else {
       groupRef.current.position.y = 0.15;
     }
+
+    // Face toward current target
+    if (mobWrapperRef.current && tower.targetId) {
+      const target = enemies.find(e => e.id === tower.targetId);
+      if (target) {
+        const dx = target.position.x - tower.gridX;
+        const dz = target.position.z - tower.gridZ;
+        const targetAngle = Math.atan2(dx, dz);
+        // Smooth rotation toward target
+        let delta = targetAngle - facingAngleRef.current;
+        while (delta > Math.PI) delta -= Math.PI * 2;
+        while (delta < -Math.PI) delta += Math.PI * 2;
+        facingAngleRef.current += delta * 0.2;
+        mobWrapperRef.current.rotation.y = facingAngleRef.current;
+      }
+    }
+
     // Idle animation
     if (mobRef.current) {
       animateMob(mobRef.current, t, true);
@@ -604,8 +624,8 @@ function TowerMesh({ tower, isSelected, onClick }: {
         <ringGeometry args={[0.28, 0.35, 8]} />
         <meshStandardMaterial color={def.accentColor} emissive={def.accentColor} emissiveIntensity={0.3} side={THREE.DoubleSide} />
       </mesh>
-      {/* Minecraft character model */}
-      <group position={[0, 0.1, 0]}>
+      {/* Minecraft character model (rotates toward target) */}
+      <group ref={mobWrapperRef} position={[0, 0.1, 0]}>
         <primitive object={mobData.group} />
       </group>
       {/* Frost tower: always-visible radiating slow AoE */}
@@ -630,8 +650,9 @@ function TowerMesh({ tower, isSelected, onClick }: {
   );
 }
 
-function TowersGroup({ towers, selectedTowerId, onSelectTower }: {
+function TowersGroup({ towers, enemies, selectedTowerId, onSelectTower }: {
   towers: Tower[];
+  enemies: Enemy[];
   selectedTowerId: string | null;
   onSelectTower: (id: string) => void;
 }) {
@@ -641,6 +662,7 @@ function TowersGroup({ towers, selectedTowerId, onSelectTower }: {
         <TowerMesh
           key={tower.id}
           tower={tower}
+          enemies={enemies}
           isSelected={tower.id === selectedTowerId}
           onClick={() => onSelectTower(tower.id)}
         />
@@ -1145,6 +1167,7 @@ function GameScene({ state, onCellClick, onSelectTower, onSelectEnemy, hoveredCe
 
       <TowersGroup
         towers={state.towers}
+        enemies={state.enemies}
         selectedTowerId={state.selectedTowerId}
         onSelectTower={onSelectTower}
       />
