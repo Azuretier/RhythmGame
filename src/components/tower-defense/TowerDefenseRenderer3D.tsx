@@ -1,6 +1,6 @@
 'use client';
 
-import { Component, Suspense, useMemo, useCallback, useRef, useEffect, useState } from 'react';
+import { Component, Suspense, useMemo, useRef, useEffect, useState } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Sky, Billboard, Text } from '@react-three/drei';
@@ -72,6 +72,7 @@ class CanvasErrorBoundary extends Component<{ children: ReactNode; fallback: Rea
 
 // ===== Constants =====
 const CELL_SIZE = 1;
+
 const TERRAIN_COLORS: Record<string, string> = {
   grass: '#3a7d44',
   path: '#c4a35a',
@@ -434,7 +435,7 @@ function FloatingVoxels({ mapWidth, mapHeight }: { mapWidth: number; mapHeight: 
   );
 }
 
-// ===== Terrain =====
+// ===== Terrain Grid =====
 function TerrainGrid({ grid, onCellClick, hoveredCell, canPlace }: {
   grid: GridCell[][];
   onCellClick: (x: number, z: number) => void;
@@ -596,6 +597,34 @@ function FrostAoERing({ range }: { range: number }) {
   );
 }
 
+// ===== Arcane Tower Aura Glow =====
+function ArcaneAuraGlow({ height }: { height: number }) {
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (ringRef.current) {
+      ringRef.current.rotation.z = state.clock.elapsedTime * 0.8;
+      const mat = ringRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.15 + Math.sin(state.clock.elapsedTime * 2.5) * 0.08;
+    }
+  });
+
+  return (
+    <group ref={noRaycast} position={[0, height * 0.5 + 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Rotating magical ring */}
+      <mesh ref={ringRef}>
+        <ringGeometry args={[0.2, 0.28, 6]} />
+        <meshBasicMaterial color="#c084fc" transparent opacity={0.2} side={THREE.DoubleSide} />
+      </mesh>
+      {/* Inner arcane glow */}
+      <mesh>
+        <circleGeometry args={[0.15, 6]} />
+        <meshBasicMaterial color="#a855f7" transparent opacity={0.1} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  );
+}
+
 function TowerMesh({ tower, isSelected, enemies, onClick }: {
   tower: Tower;
   isSelected: boolean;
@@ -672,15 +701,39 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       scale={levelScale}
     >
-      {/* Colored platform base (sized to fit within one grid cell) */}
+      {/* Platform base — main body */}
       <mesh position={[0, 0.05, 0]} castShadow>
         <cylinderGeometry args={[0.28, 0.32, 0.1, 8]} />
-        <meshStandardMaterial color={def.color} roughness={0.4} metalness={0.3} />
+        <meshStandardMaterial color={def.color} roughness={0.35} metalness={0.35} />
       </mesh>
-      {/* Accent ring on platform */}
+      {/* Platform base — darker bottom band for gradient effect */}
+      <mesh position={[0, 0.015, 0]}>
+        <cylinderGeometry args={[0.31, 0.33, 0.03, 8]} />
+        <meshStandardMaterial color={def.accentColor} roughness={0.5} metalness={0.25} />
+      </mesh>
+      {/* Emissive glow ring underneath platform */}
+      <mesh position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.28, 0.36, 16]} />
+        <meshStandardMaterial
+          color={def.accentColor}
+          emissive={def.accentColor}
+          emissiveIntensity={0.6}
+          transparent
+          opacity={0.5}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      {/* Accent ring on platform — enhanced emissive */}
       <mesh position={[0, 0.11, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.22, 0.28, 8]} />
-        <meshStandardMaterial color={def.accentColor} emissive={def.accentColor} emissiveIntensity={0.3} side={THREE.DoubleSide} />
+        <ringGeometry args={[0.22, 0.29, 8]} />
+        <meshStandardMaterial
+          color={def.accentColor}
+          emissive={def.accentColor}
+          emissiveIntensity={0.6}
+          roughness={0.3}
+          metalness={0.4}
+          side={THREE.DoubleSide}
+        />
       </mesh>
       {/* Minecraft character model (rotates toward target) */}
       <group ref={mobWrapperRef} position={[0, 0.1, 0]}>
@@ -693,6 +746,30 @@ function TowerMesh({ tower, isSelected, enemies, onClick }: {
       {/* Frost tower: always-visible radiating slow AoE */}
       {tower.type === 'frost' && (
         <FrostAoERing range={towerRange} />
+      )}
+      {/* Lightning tower: purple energy glow on platform */}
+      {tower.type === 'lightning' && (
+        <pointLight
+          position={[0, charHeight * 0.5 + 0.1, 0]}
+          color="#a78bfa"
+          intensity={1.5}
+          distance={2}
+          decay={2}
+        />
+      )}
+      {/* Arcane tower: magical aura glow ring */}
+      {tower.type === 'arcane' && (
+        <ArcaneAuraGlow height={charHeight} />
+      )}
+      {/* Flame tower: warm ember glow */}
+      {tower.type === 'flame' && (
+        <pointLight
+          position={[0, charHeight * 0.3 + 0.1, 0]}
+          color="#ef4444"
+          intensity={1.0}
+          distance={1.5}
+          decay={2}
+        />
       )}
       {/* Range indicator when selected */}
       {isSelected && (
@@ -834,21 +911,67 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
     };
   }, [mobData]);
 
-  // Apply tint for status effects
+  // Store original material emissive values for restoration
+  const origEmissives = useRef<Map<THREE.Material, { color: number; intensity: number }>>(new Map());
+
+  // Capture original emissive values on first mount
   useEffect(() => {
     if (mobData.isGltf) return;
+    const map = new Map<THREE.Material, { color: number; intensity: number }>();
     mobData.group.traverse((child: THREE.Object3D) => {
-      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-        if (isBurning) {
-          child.material.emissive.set(0xff4400);
-          child.material.emissiveIntensity = 0.4;
-        } else if (isSlow) {
-          child.material.emissive.set(0x38bdf8);
-          child.material.emissiveIntensity = 0.3;
-        } else {
-          child.material.emissive.set(0x000000);
-          child.material.emissiveIntensity = 0;
+      if (child instanceof THREE.Mesh) {
+        const mat = child.material;
+        if (mat instanceof THREE.MeshStandardMaterial) {
+          if (!map.has(mat)) {
+            map.set(mat, { color: mat.emissive.getHex(), intensity: mat.emissiveIntensity });
+          }
         }
+      }
+    });
+    origEmissives.current = map;
+  }, [mobData]);
+
+  // Apply status effect visuals — burning spots, frost tint, or restore originals
+  useEffect(() => {
+    if (mobData.isGltf) return;
+    let meshIndex = 0;
+    mobData.group.traverse((child: THREE.Object3D) => {
+      if (child instanceof THREE.Mesh) {
+        const mat = child.material;
+        if (mat instanceof THREE.MeshStandardMaterial) {
+          if (isBurning) {
+            // Burning: emissive orange flickering spots on alternating mesh parts
+            if (meshIndex % 3 === 0) {
+              mat.emissive.set(0xff4400);
+              mat.emissiveIntensity = 0.7;
+            } else if (meshIndex % 3 === 1) {
+              mat.emissive.set(0xff6600);
+              mat.emissiveIntensity = 0.25;
+            } else {
+              mat.emissive.set(0x331100);
+              mat.emissiveIntensity = 0.15;
+            }
+          } else if (isSlow) {
+            // Frozen/slowed: icy blue tint + clearcoat frost on PhysicalMaterials
+            mat.emissive.set(0x38bdf8);
+            mat.emissiveIntensity = 0.3;
+            if (mat instanceof THREE.MeshPhysicalMaterial) {
+              mat.clearcoat = Math.max(mat.clearcoat, 0.7);
+              mat.clearcoatRoughness = 0.05;
+            }
+          } else {
+            // Restore original emissive values
+            const orig = origEmissives.current.get(mat);
+            if (orig) {
+              mat.emissive.set(orig.color);
+              mat.emissiveIntensity = orig.intensity;
+            } else {
+              mat.emissive.set(0x000000);
+              mat.emissiveIntensity = 0;
+            }
+          }
+        }
+        meshIndex++;
       }
     });
   }, [mobData, isBurning, isSlow]);
@@ -915,12 +1038,18 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
         </mesh>
       )}
 
-      {/* Amplify marker */}
+      {/* Amplify marker — double wireframe energy crackle */}
       {isAmplified && (
-        <mesh position={[0, charHeight * 0.5, 0]}>
-          <sphereGeometry args={[mobScale * 2, 8, 8]} />
-          <meshStandardMaterial color="#c084fc" transparent opacity={0.2} wireframe />
-        </mesh>
+        <group position={[0, charHeight * 0.5, 0]}>
+          <mesh>
+            <sphereGeometry args={[mobScale * 2, 8, 8]} />
+            <meshStandardMaterial color="#c084fc" emissive="#9333ea" emissiveIntensity={0.6} transparent opacity={0.25} wireframe />
+          </mesh>
+          <mesh rotation={[0.5, 0.8, 0]}>
+            <sphereGeometry args={[mobScale * 1.6, 6, 6]} />
+            <meshStandardMaterial color="#a855f7" emissive="#7c3aed" emissiveIntensity={0.8} transparent opacity={0.2} wireframe />
+          </mesh>
+        </group>
       )}
 
       {/* Stun marker */}

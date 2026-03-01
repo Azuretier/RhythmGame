@@ -40,6 +40,7 @@ export interface MobMeshData {
 
 const geoCache = new Map<string, THREE.BoxGeometry>();
 const matCache = new Map<string, THREE.MeshStandardMaterial>();
+const physMatCache = new Map<string, THREE.MeshPhysicalMaterial>();
 
 function getGeo(w: number, h: number, d: number): THREE.BoxGeometry {
   const key = `${w.toFixed(3)},${h.toFixed(3)},${d.toFixed(3)}`;
@@ -51,23 +52,84 @@ function getGeo(w: number, h: number, d: number): THREE.BoxGeometry {
   return geo;
 }
 
+interface MatOpts {
+  roughness?: number;
+  metalness?: number;
+  transparent?: boolean;
+  opacity?: number;
+}
+
 function getMat(
   color: number,
   emissive = 0x000000,
   emissiveIntensity = 0,
+  opts?: MatOpts,
 ): THREE.MeshStandardMaterial {
-  const key = `${color.toString(16)}-${emissive.toString(16)}-${emissiveIntensity.toFixed(2)}`;
+  const r = opts?.roughness ?? 0.85;
+  const m = opts?.metalness ?? 0.0;
+  const t = opts?.transparent ?? false;
+  const o = opts?.opacity ?? 1.0;
+  const key = `${color.toString(16)}-${emissive.toString(16)}-${emissiveIntensity.toFixed(2)}-r${r.toFixed(2)}-m${m.toFixed(2)}-t${t ? 1 : 0}-o${o.toFixed(2)}`;
   let mat = matCache.get(key);
   if (!mat) {
     mat = new THREE.MeshStandardMaterial({
       color,
-      roughness: 0.85,
-      metalness: 0.0,
+      roughness: r,
+      metalness: m,
       flatShading: true,
       emissive,
       emissiveIntensity,
+      transparent: t,
+      opacity: o,
     });
     matCache.set(key, mat);
+  }
+  return mat;
+}
+
+interface PhysMatOpts {
+  roughness?: number;
+  metalness?: number;
+  clearcoat?: number;
+  clearcoatRoughness?: number;
+  transmission?: number;
+  thickness?: number;
+  transparent?: boolean;
+  opacity?: number;
+}
+
+function getPhysicalMat(
+  color: number,
+  emissive = 0x000000,
+  emissiveIntensity = 0,
+  opts?: PhysMatOpts,
+): THREE.MeshPhysicalMaterial {
+  const r = opts?.roughness ?? 0.85;
+  const m = opts?.metalness ?? 0.0;
+  const cc = opts?.clearcoat ?? 0;
+  const ccr = opts?.clearcoatRoughness ?? 0.1;
+  const tr = opts?.transmission ?? 0;
+  const th = opts?.thickness ?? 0;
+  const t = opts?.transparent ?? false;
+  const o = opts?.opacity ?? 1.0;
+  const key = `phys-${color.toString(16)}-${emissive.toString(16)}-${emissiveIntensity.toFixed(2)}-r${r.toFixed(2)}-m${m.toFixed(2)}-cc${cc.toFixed(2)}-ccr${ccr.toFixed(2)}-tr${tr.toFixed(2)}-th${th.toFixed(2)}-t${t ? 1 : 0}-o${o.toFixed(2)}`;
+  let mat = physMatCache.get(key);
+  if (!mat) {
+    mat = new THREE.MeshPhysicalMaterial({
+      color,
+      roughness: r,
+      metalness: m,
+      flatShading: true,
+      emissive,
+      emissiveIntensity,
+      clearcoat: cc,
+      clearcoatRoughness: ccr,
+      transmission: tr,
+      thickness: th,
+      transparent: t,
+      opacity: o,
+    });
+    physMatCache.set(key, mat);
   }
   return mat;
 }
@@ -77,8 +139,19 @@ function mbox(
   w: number, h: number, d: number,
   color: number,
   emissive = 0x000000, emissiveIntensity = 0,
+  opts?: MatOpts,
 ): THREE.Mesh {
-  return new THREE.Mesh(getGeo(w, h, d), getMat(color, emissive, emissiveIntensity));
+  return new THREE.Mesh(getGeo(w, h, d), getMat(color, emissive, emissiveIntensity, opts));
+}
+
+/** Create a box mesh with MeshPhysicalMaterial. */
+function mboxPhys(
+  w: number, h: number, d: number,
+  color: number,
+  emissive = 0x000000, emissiveIntensity = 0,
+  opts?: PhysMatOpts,
+): THREE.Mesh {
+  return new THREE.Mesh(getGeo(w, h, d), getPhysicalMat(color, emissive, emissiveIntensity, opts));
 }
 
 /** Create an articulated limb group with pivot at (offsetX, pivotY, offsetZ). */
@@ -86,10 +159,11 @@ function limb(
   w: number, h: number, d: number,
   color: number,
   pivotY: number, offsetX: number, offsetZ = 0,
+  matOpts?: MatOpts,
 ): THREE.Group {
   const group = new THREE.Group();
   group.position.set(offsetX, pivotY, offsetZ);
-  const mesh = mbox(w, h, d, color);
+  const mesh = mbox(w, h, d, color, 0x000000, 0, matOpts);
   mesh.position.y = -h / 2;
   group.add(mesh);
   return group;
@@ -201,31 +275,47 @@ function createZombie(): MobMeshData {
   const shirt = 0x2a9d8f;
   const pants = 0x3b55a0;
 
-  // Head
-  const head = mbox(0.5, 0.5, 0.5, skin, 0x2a4a15, 0.15);
+  // Head — slight emissive for undead glow
+  const head = mbox(0.5, 0.5, 0.5, skin, 0x2a4a15, 0.15, { roughness: 0.9, metalness: 0.05 });
   head.position.set(0, 1.65, 0);
   group.add(head);
 
-  // Eyes
-  const le = mbox(0.12, 0.06, 0.02, 0x111111);
+  // Eyes — faint green emissive for eerie look
+  const le = mbox(0.12, 0.06, 0.02, 0x111111, 0x1a3a0a, 0.5);
   le.position.set(-0.12, 1.68, -0.26);
   group.add(le);
-  const re = mbox(0.12, 0.06, 0.02, 0x111111);
+  const re = mbox(0.12, 0.06, 0.02, 0x111111, 0x1a3a0a, 0.5);
   re.position.set(0.12, 1.68, -0.26);
   group.add(re);
 
   // Body
-  const body = mbox(0.5, 0.7, 0.3, shirt);
+  const body = mbox(0.5, 0.7, 0.3, shirt, 0x000000, 0, { roughness: 0.8 });
   body.position.set(0, 1.05, 0);
   group.add(body);
 
-  // Arms (extended forward — classic Minecraft zombie pose)
-  const leftArm = limb(0.25, 0.7, 0.25, skin, 1.4, -0.375);
+  // Ember spots on body (flame tower visual — glowing hot patches)
+  const ember1 = mbox(0.08, 0.08, 0.01, 0xff4400, 0xff4400, 1.5);
+  ember1.position.set(-0.15, 1.2, -0.16);
+  group.add(ember1);
+  const ember2 = mbox(0.06, 0.06, 0.01, 0xff6600, 0xff6600, 1.2);
+  ember2.position.set(0.1, 0.9, -0.16);
+  group.add(ember2);
+
+  // Arms (extended forward) — hands glow with heat
+  const leftArm = limb(0.25, 0.7, 0.25, skin, 1.4, -0.375, 0, { roughness: 0.85 });
   leftArm.rotation.x = -Math.PI / 3;
   group.add(leftArm);
-  const rightArm = limb(0.25, 0.7, 0.25, skin, 1.4, 0.375);
+  const rightArm = limb(0.25, 0.7, 0.25, skin, 1.4, 0.375, 0, { roughness: 0.85 });
   rightArm.rotation.x = -Math.PI / 3;
   group.add(rightArm);
+
+  // Hand glow (emissive tips on arms for flame tower heat)
+  const lHand = mbox(0.2, 0.15, 0.2, 0xcc4400, 0xff4400, 1.0);
+  lHand.position.set(-0.375, 0.75, -0.45);
+  group.add(lHand);
+  const rHand = mbox(0.2, 0.15, 0.2, 0xcc4400, 0xff4400, 1.0);
+  rHand.position.set(0.375, 0.75, -0.45);
+  group.add(rHand);
 
   // Legs
   const leftLeg = limb(0.24, 0.7, 0.25, pants, 0.7, -0.13);
@@ -243,18 +333,21 @@ function createZombie(): MobMeshData {
 function createSkeleton(): MobMeshData {
   const group = new THREE.Group();
   const bone = 0xd4c8a8;
+  const boneLight = 0xe0d8c0;
   const dark = 0x2a2520;
+  const boneOpts: MatOpts = { roughness: 0.95, metalness: 0.05 };
+  const boneLimbOpts: MatOpts = { roughness: 0.9, metalness: 0.08 };
 
-  // Head
-  const head = mbox(0.5, 0.5, 0.5, bone);
+  // Head — slightly lighter skull with rough bone texture
+  const head = mbox(0.5, 0.5, 0.5, boneLight, 0x000000, 0, boneOpts);
   head.position.set(0, 1.65, 0);
   group.add(head);
 
-  // Eye sockets (dark holes)
-  const le = mbox(0.1, 0.08, 0.02, dark);
+  // Eye sockets (dark holes with faint red emissive)
+  const le = mbox(0.1, 0.08, 0.02, dark, 0x110808, 0.3);
   le.position.set(-0.12, 1.68, -0.26);
   group.add(le);
-  const re = mbox(0.1, 0.08, 0.02, dark);
+  const re = mbox(0.1, 0.08, 0.02, dark, 0x110808, 0.3);
   re.position.set(0.12, 1.68, -0.26);
   group.add(re);
   // Nose hole
@@ -262,26 +355,38 @@ function createSkeleton(): MobMeshData {
   nose.position.set(0, 1.62, -0.26);
   group.add(nose);
 
-  // Body (thin ribcage)
-  const body = mbox(0.35, 0.7, 0.2, bone);
+  // Body (thin ribcage) — rough bone
+  const body = mbox(0.35, 0.7, 0.2, bone, 0x000000, 0, boneOpts);
   body.position.set(0, 1.05, 0);
   group.add(body);
-  // Rib detail (darker stripe)
-  const rib = mbox(0.36, 0.08, 0.21, dark);
+  // Rib detail (darker stripes)
+  const rib = mbox(0.36, 0.08, 0.21, dark, 0x000000, 0, { roughness: 0.8 });
   rib.position.set(0, 1.1, 0);
   group.add(rib);
+  const rib2 = mbox(0.36, 0.06, 0.21, 0x3a3530, 0x000000, 0, { roughness: 0.8 });
+  rib2.position.set(0, 0.95, 0);
+  group.add(rib2);
 
-  // Arms (thin)
-  const leftArm = limb(0.15, 0.7, 0.15, bone, 1.4, -0.25);
+  // Arms (thin) — varied roughness for bone texture
+  const leftArm = limb(0.15, 0.7, 0.15, bone, 1.4, -0.25, 0, boneLimbOpts);
   group.add(leftArm);
-  const rightArm = limb(0.15, 0.7, 0.15, bone, 1.4, 0.25);
+  const rightArm = limb(0.15, 0.7, 0.15, bone, 1.4, 0.25, 0, boneLimbOpts);
   group.add(rightArm);
 
   // Legs (thin)
-  const leftLeg = limb(0.15, 0.7, 0.15, bone, 0.7, -0.1);
+  const leftLeg = limb(0.15, 0.7, 0.15, bone, 0.7, -0.1, 0, boneLimbOpts);
   group.add(leftLeg);
-  const rightLeg = limb(0.15, 0.7, 0.15, bone, 0.7, 0.1);
+  const rightLeg = limb(0.15, 0.7, 0.15, bone, 0.7, 0.1, 0, boneLimbOpts);
   group.add(rightLeg);
+
+  // Quiver (leather-brown detail on back)
+  const quiver = mbox(0.1, 0.4, 0.1, 0x6b4226, 0x000000, 0, { roughness: 0.95 });
+  quiver.position.set(0.12, 1.15, 0.15);
+  group.add(quiver);
+  // Arrow tips poking out of quiver
+  const arrowTip = mbox(0.03, 0.08, 0.03, 0x888888, 0x000000, 0, { roughness: 0.3, metalness: 0.5 });
+  arrowTip.position.set(0.12, 1.4, 0.15);
+  group.add(arrowTip);
 
   return {
     group, type: 'skeleton',
@@ -406,36 +511,52 @@ function createEnderman(): MobMeshData {
   const group = new THREE.Group();
   const black = 0x1a1a2e;
   const purple = 0xcc00ff;
+  const darkPurple = 0x220044;
+  const bodyOpts: MatOpts = { roughness: 0.6, metalness: 0.25 };
+  const limbOpts: MatOpts = { roughness: 0.55, metalness: 0.3 };
 
-  // Head
-  const head = mbox(0.5, 0.45, 0.5, black, 0x220044, 0.2);
+  // Head — metallic dark surface with purple emissive tint
+  const head = mbox(0.5, 0.45, 0.5, black, darkPurple, 0.25, bodyOpts);
   head.position.set(0, 2.55, 0);
   group.add(head);
 
-  // Eyes (glowing purple)
-  const le = mbox(0.14, 0.06, 0.02, purple, purple, 3.0);
+  // Eyes (glowing purple — intensified)
+  const le = mbox(0.14, 0.06, 0.02, purple, purple, 4.0);
   le.position.set(-0.12, 2.56, -0.26);
   group.add(le);
-  const re = mbox(0.14, 0.06, 0.02, purple, purple, 3.0);
+  const re = mbox(0.14, 0.06, 0.02, purple, purple, 4.0);
   re.position.set(0.12, 2.56, -0.26);
   group.add(re);
 
-  // Body (thin and tall)
-  const body = mbox(0.4, 0.8, 0.25, black, 0x220044, 0.1);
+  // Body (thin and tall) — metallic sheen
+  const body = mbox(0.4, 0.8, 0.25, black, darkPurple, 0.15, bodyOpts);
   body.position.set(0, 1.93, 0);
   group.add(body);
 
-  // Arms (very long and thin)
-  const leftArm = limb(0.12, 1.1, 0.12, black, 2.33, -0.26);
+  // Purple energy vein on chest
+  const vein = mbox(0.05, 0.5, 0.01, purple, purple, 2.5);
+  vein.position.set(0, 1.93, -0.131);
+  group.add(vein);
+
+  // Arms (very long and thin) — metallic
+  const leftArm = limb(0.12, 1.1, 0.12, black, 2.33, -0.26, 0, limbOpts);
   group.add(leftArm);
-  const rightArm = limb(0.12, 1.1, 0.12, black, 2.33, 0.26);
+  const rightArm = limb(0.12, 1.1, 0.12, black, 2.33, 0.26, 0, limbOpts);
   group.add(rightArm);
 
-  // Legs (very long and thin)
-  const leftLeg = limb(0.15, 1.2, 0.15, black, 1.25, -0.1);
+  // Legs (very long and thin) — metallic
+  const leftLeg = limb(0.15, 1.2, 0.15, black, 1.25, -0.1, 0, limbOpts);
   group.add(leftLeg);
-  const rightLeg = limb(0.15, 1.2, 0.15, black, 1.25, 0.1);
+  const rightLeg = limb(0.15, 1.2, 0.15, black, 1.25, 0.1, 0, limbOpts);
   group.add(rightLeg);
+
+  // Purple particle accents at hands (small emissive cubes)
+  const lParticle = mbox(0.06, 0.06, 0.06, purple, purple, 3.0);
+  lParticle.position.set(-0.26, 1.2, 0);
+  group.add(lParticle);
+  const rParticle = mbox(0.06, 0.06, 0.06, purple, purple, 3.0);
+  rParticle.position.set(0.26, 1.2, 0);
+  group.add(rParticle);
 
   return {
     group, type: 'enderman',
@@ -448,9 +569,9 @@ function createEnderman(): MobMeshData {
 
 function createSlime(segments = 3): MobMeshData {
   const group = new THREE.Group();
-  const slimeGreen = 0x5cb85c;
-  const slimeDark = 0x3d8b3d;
-  const slimeCore = 0x2e6b2e;
+  // Frost slime palette — icy blue-green instead of plain green
+  const slimeIce = 0x7dd3fc;
+  const slimeCore = 0x38bdf8;
   const eyeColor = 0x111111;
 
   // Stacked slime segments — shrink as they go up (like magma cube)
@@ -462,17 +583,21 @@ function createSlime(segments = 3): MobMeshData {
   for (let i = 0; i < segments; i++) {
     const w = widths[i], h = heights[i];
 
-    // Outer gelatinous body
-    const body = mbox(w, h, w, slimeGreen, slimeGreen, 0.3);
+    // Outer gelatinous body — MeshPhysicalMaterial with clearcoat for ice effect
+    const body = mboxPhys(w, h, w, slimeIce, slimeIce, 0.4, {
+      roughness: 0.15,
+      metalness: 0.05,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1,
+      transparent: true,
+      opacity: 0.7,
+    });
     body.position.set(0, y + h / 2, 0);
-    const bodyMat = body.material as THREE.MeshStandardMaterial;
-    bodyMat.transparent = true;
-    bodyMat.opacity = 0.75;
     group.add(body);
 
-    // Inner core
+    // Inner core — slightly visible through transparent shell
     const coreW = w * 0.5, coreH = h * 0.5;
-    const core = mbox(coreW, coreH, coreW, slimeCore, slimeCore, 0.2);
+    const core = mbox(coreW, coreH, coreW, slimeCore, slimeCore, 0.3);
     core.position.set(0, y + h * 0.42, 0);
     group.add(core);
 
@@ -508,13 +633,15 @@ function createSlime(segments = 3): MobMeshData {
 
 function createMagmaCube(segments = 3): MobMeshData {
   const group = new THREE.Group();
-  // Minecraft magma cube palette
+  // Minecraft magma cube palette — enhanced emissive values
   const shell = 0x2a1a0a;       // Dark charred shell
   const shellDark = 0x1a0e04;   // Darker variation for bottom segments
   const magma = 0xff6600;       // Bright orange magma in seams
   const magmaGlow = 0xff4400;   // Inner glow
   const magmaYellow = 0xffaa00; // Hottest parts of seams
+  const magmaWhite = 0xffcc44;  // White-hot highlights
   const eyeColor = 0xff8800;    // Orange-yellow eyes
+  const shellOpts: MatOpts = { roughness: 0.95, metalness: 0.1 };
 
   // Segment widths and heights — flat slabs (height ≈ 50% of width)
   const widths  = [0.55, 0.45, 0.35]; // bottom, middle, top
@@ -524,59 +651,63 @@ function createMagmaCube(segments = 3): MobMeshData {
 
   // --- Segment 1 (bottom, always present) ---
   const w1 = widths[0], h1 = heights[0];
-  const bottom = mbox(w1, h1, w1, shellDark, magmaGlow, 0.15);
+  const bottom = mbox(w1, h1, w1, shellDark, magmaGlow, 0.2, shellOpts);
   bottom.position.set(0, y + h1 / 2, 0);
   group.add(bottom);
 
-  // Bottom face glow
-  const bottomGlow = mbox(w1 * 0.6, 0.01, w1 * 0.6, magma, magma, 2.0);
+  // Bottom face glow — intensified
+  const bottomGlow = mbox(w1 * 0.6, 0.01, w1 * 0.6, magma, magma, 3.0);
   bottomGlow.position.set(0, 0.005, 0);
   group.add(bottomGlow);
 
-  // Cracks on bottom segment
-  const btmCrackF = mbox(0.03, h1 * 0.6, 0.005, magma, magma, 2.0);
+  // Cracks on bottom segment — stronger glow
+  const btmCrackF = mbox(0.03, h1 * 0.6, 0.005, magma, magma, 3.0);
   btmCrackF.position.set(0.08, y + h1 / 2, -(w1 / 2 + 0.001));
   group.add(btmCrackF);
-  const btmCrackR = mbox(0.005, h1 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
+  const btmCrackR = mbox(0.005, h1 * 0.5, 0.03, magmaYellow, magmaYellow, 3.0);
   btmCrackR.position.set(w1 / 2 + 0.001, y + h1 * 0.45, -0.06);
   group.add(btmCrackR);
+  // Additional crack on left side
+  const btmCrackL = mbox(0.005, h1 * 0.4, 0.03, magmaWhite, magmaWhite, 3.5);
+  btmCrackL.position.set(-(w1 / 2 + 0.001), y + h1 * 0.55, 0.05);
+  group.add(btmCrackL);
 
   y += h1;
 
   if (segments >= 2) {
-    // --- Seam 1 ---
+    // --- Seam 1 — intensified glow ---
     const seamW1 = widths[0] * 0.9;
-    const seam1 = mbox(seamW1, seamH, seamW1, magma, magma, 2.5);
+    const seam1 = mbox(seamW1, seamH, seamW1, magma, magma, 3.5);
     seam1.position.set(0, y + seamH / 2, 0);
     group.add(seam1);
-    const seam1X = mbox(seamW1 * 1.05, seamH, 0.04, magmaYellow, magmaYellow, 3.0);
+    const seam1X = mbox(seamW1 * 1.05, seamH, 0.04, magmaYellow, magmaYellow, 4.0);
     seam1X.position.set(0, y + seamH / 2, 0);
     group.add(seam1X);
-    const seam1Z = mbox(0.04, seamH, seamW1 * 1.05, magmaYellow, magmaYellow, 3.0);
+    const seam1Z = mbox(0.04, seamH, seamW1 * 1.05, magmaYellow, magmaYellow, 4.0);
     seam1Z.position.set(0, y + seamH / 2, 0);
     group.add(seam1Z);
     y += seamH;
 
     // --- Segment 2 (middle) ---
     const w2 = widths[1], h2 = heights[1];
-    const middle = mbox(w2, h2, w2, shell, magmaGlow, 0.12);
+    const middle = mbox(w2, h2, w2, shell, magmaGlow, 0.18, shellOpts);
     middle.position.set(0, y + h2 / 2, 0);
     group.add(middle);
 
-    // Cracks on middle segment
-    const midCrackF = mbox(0.03, h2 * 0.7, 0.005, magma, magma, 2.0);
+    // Cracks on middle segment — enhanced
+    const midCrackF = mbox(0.03, h2 * 0.7, 0.005, magma, magma, 3.0);
     midCrackF.position.set(0.06, y + h2 / 2, -(w2 / 2 + 0.001));
     group.add(midCrackF);
-    const midCrackF2 = mbox(0.03, h2 * 0.5, 0.005, magmaYellow, magmaYellow, 2.5);
+    const midCrackF2 = mbox(0.03, h2 * 0.5, 0.005, magmaWhite, magmaWhite, 3.5);
     midCrackF2.position.set(-0.1, y + h2 * 0.4, -(w2 / 2 + 0.001));
     group.add(midCrackF2);
-    const midCrackB = mbox(0.03, h2 * 0.55, 0.005, magma, magma, 2.0);
+    const midCrackB = mbox(0.03, h2 * 0.55, 0.005, magma, magma, 3.0);
     midCrackB.position.set(-0.05, y + h2 / 2, w2 / 2 + 0.001);
     group.add(midCrackB);
-    const midCrackL = mbox(0.005, h2 * 0.6, 0.03, magma, magma, 2.0);
+    const midCrackL = mbox(0.005, h2 * 0.6, 0.03, magma, magma, 3.0);
     midCrackL.position.set(-(w2 / 2 + 0.001), y + h2 * 0.45, 0.08);
     group.add(midCrackL);
-    const midCrackR = mbox(0.005, h2 * 0.5, 0.03, magmaYellow, magmaYellow, 2.0);
+    const midCrackR = mbox(0.005, h2 * 0.5, 0.03, magmaYellow, magmaYellow, 3.0);
     midCrackR.position.set(w2 / 2 + 0.001, y + h2 / 2, -0.06);
     group.add(midCrackR);
 
@@ -584,51 +715,51 @@ function createMagmaCube(segments = 3): MobMeshData {
   }
 
   if (segments >= 3) {
-    // --- Seam 2 ---
+    // --- Seam 2 — intensified ---
     const seamW2 = widths[1] * 0.9;
-    const seam2 = mbox(seamW2, seamH, seamW2, magma, magma, 2.5);
+    const seam2 = mbox(seamW2, seamH, seamW2, magma, magma, 3.5);
     seam2.position.set(0, y + seamH / 2, 0);
     group.add(seam2);
-    const seam2X = mbox(seamW2 * 1.05, seamH, 0.04, magmaYellow, magmaYellow, 3.0);
+    const seam2X = mbox(seamW2 * 1.05, seamH, 0.04, magmaYellow, magmaYellow, 4.0);
     seam2X.position.set(0, y + seamH / 2, 0);
     group.add(seam2X);
-    const seam2Z = mbox(0.04, seamH, seamW2 * 1.05, magmaYellow, magmaYellow, 3.0);
+    const seam2Z = mbox(0.04, seamH, seamW2 * 1.05, magmaYellow, magmaYellow, 4.0);
     seam2Z.position.set(0, y + seamH / 2, 0);
     group.add(seam2Z);
     y += seamH;
 
     // --- Segment 3 (top — the "head") ---
     const w3 = widths[2], h3 = heights[2];
-    const top = mbox(w3, h3, w3, shell, magmaGlow, 0.1);
+    const top = mbox(w3, h3, w3, shell, magmaGlow, 0.15, shellOpts);
     top.position.set(0, y + h3 / 2, 0);
     group.add(top);
 
-    // Cracks on top segment
-    const topCrackF = mbox(0.03, h3 * 0.65, 0.005, magma, magma, 1.8);
+    // Cracks on top segment — enhanced
+    const topCrackF = mbox(0.03, h3 * 0.65, 0.005, magma, magma, 2.5);
     topCrackF.position.set(-0.04, y + h3 / 2, -(w3 / 2 + 0.001));
     group.add(topCrackF);
-    const topCrackR = mbox(0.005, h3 * 0.55, 0.03, magma, magma, 1.8);
+    const topCrackR = mbox(0.005, h3 * 0.55, 0.03, magmaWhite, magmaWhite, 3.0);
     topCrackR.position.set(w3 / 2 + 0.001, y + h3 * 0.45, 0.04);
     group.add(topCrackR);
 
     y += h3;
   }
 
-  // --- Eyes (always on the topmost segment) ---
+  // --- Eyes (always on the topmost segment) — brighter ---
   const topW = widths[segments - 1];
   const topH = heights[segments - 1];
   const eyeY = y - topH / 2 + topH * 0.15;
   const eyeZ = -(topW / 2 + 0.01);
-  const le = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
+  const le = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 4.5);
   le.position.set(-0.08, eyeY, eyeZ);
   group.add(le);
-  const re = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
+  const re = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 4.5);
   re.position.set(0.08, eyeY, eyeZ);
   group.add(re);
 
-  // --- Inner core (glowing magma visible through seams and cracks) ---
+  // --- Inner core (glowing magma visible through seams and cracks) — intensified ---
   const coreH = y * 0.6;
-  const core = mbox(0.2, coreH, 0.2, magmaGlow, magmaGlow, 1.2);
+  const core = mbox(0.2, coreH, 0.2, magmaGlow, magmaGlow, 2.0);
   core.position.set(0, y * 0.45, 0);
   group.add(core);
 
@@ -649,45 +780,46 @@ function createPig(): MobMeshData {
   const darkPink = 0xd08888;
   const snout = 0xe8c0c0;
 
-  // Head
-  const head = mbox(0.4, 0.35, 0.35, pink);
+  // Head — slightly lower roughness for smooth skin
+  const head = mbox(0.4, 0.35, 0.35, pink, 0x000000, 0, { roughness: 0.7 });
   head.position.set(0, 0.65, -0.3);
   group.add(head);
 
-  // Snout
-  const nose = mbox(0.2, 0.15, 0.1, snout);
+  // Snout — glossy wet nose
+  const nose = mbox(0.2, 0.15, 0.1, snout, 0x000000, 0, { roughness: 0.35, metalness: 0.05 });
   nose.position.set(0, 0.6, -0.52);
   group.add(nose);
 
   // Nostrils
-  const nl = mbox(0.04, 0.04, 0.02, darkPink);
+  const nl = mbox(0.04, 0.04, 0.02, darkPink, 0x000000, 0, { roughness: 0.3 });
   nl.position.set(-0.04, 0.6, -0.58);
   group.add(nl);
-  const nr = mbox(0.04, 0.04, 0.02, darkPink);
+  const nr = mbox(0.04, 0.04, 0.02, darkPink, 0x000000, 0, { roughness: 0.3 });
   nr.position.set(0.04, 0.6, -0.58);
   group.add(nr);
 
-  // Eyes
-  const le = mbox(0.06, 0.06, 0.02, 0x111111);
+  // Eyes — emissive glow
+  const le = mbox(0.06, 0.06, 0.02, 0x111111, 0x221100, 0.4, { roughness: 0.3 });
   le.position.set(-0.1, 0.7, -0.48);
   group.add(le);
-  const re = mbox(0.06, 0.06, 0.02, 0x111111);
+  const re = mbox(0.06, 0.06, 0.02, 0x111111, 0x221100, 0.4, { roughness: 0.3 });
   re.position.set(0.1, 0.7, -0.48);
   group.add(re);
 
-  // Body
-  const body = mbox(0.45, 0.4, 0.6, pink);
+  // Body — standard pig skin roughness
+  const body = mbox(0.45, 0.4, 0.6, pink, 0x000000, 0, { roughness: 0.75 });
   body.position.set(0, 0.5, 0.05);
   group.add(body);
 
-  // Legs
-  const frontLeftLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, -0.15, -0.15);
+  // Legs — slightly rougher hooves
+  const legOpts: MatOpts = { roughness: 0.8 };
+  const frontLeftLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, -0.15, -0.15, legOpts);
   group.add(frontLeftLeg);
-  const frontRightLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, 0.15, -0.15);
+  const frontRightLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, 0.15, -0.15, legOpts);
   group.add(frontRightLeg);
-  const backLeftLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, -0.15, 0.25);
+  const backLeftLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, -0.15, 0.25, legOpts);
   group.add(backLeftLeg);
-  const backRightLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, 0.15, 0.25);
+  const backRightLeg = limb(0.15, 0.3, 0.15, darkPink, 0.3, 0.15, 0.25, legOpts);
   group.add(backRightLeg);
 
   return {
@@ -703,58 +835,60 @@ function createChicken(): MobMeshData {
   const beak = 0xe8a020;
   const wattle = 0xcc3333;
   const legColor = 0xd0a030;
+  const featherOpts: MatOpts = { roughness: 0.92 }; // soft feather-like roughness
 
   // Head
-  const head = mbox(0.2, 0.22, 0.2, white);
+  const head = mbox(0.2, 0.22, 0.2, white, 0x000000, 0, featherOpts);
   head.position.set(0, 0.58, -0.15);
   group.add(head);
 
-  // Beak
-  const beakMesh = mbox(0.08, 0.06, 0.1, beak);
+  // Beak — glossy keratin
+  const beakMesh = mbox(0.08, 0.06, 0.1, beak, 0x553300, 0.15, { roughness: 0.3 });
   beakMesh.position.set(0, 0.54, -0.3);
   group.add(beakMesh);
 
-  // Wattle (red bit under beak)
-  const wattleMesh = mbox(0.06, 0.08, 0.04, wattle);
+  // Wattle — bright, slightly glossy red flesh
+  const wattleMesh = mbox(0.06, 0.08, 0.04, wattle, 0xcc3333, 0.2, { roughness: 0.45 });
   wattleMesh.position.set(0, 0.48, -0.27);
   group.add(wattleMesh);
 
-  // Comb (red on top)
-  const comb = mbox(0.04, 0.08, 0.1, wattle);
+  // Comb — bright emissive red
+  const comb = mbox(0.04, 0.08, 0.1, wattle, 0xcc3333, 0.25, { roughness: 0.45 });
   comb.position.set(0, 0.72, -0.15);
   group.add(comb);
 
-  // Eyes
-  const le = mbox(0.04, 0.04, 0.02, 0x111111);
+  // Eyes — emissive glow
+  const le = mbox(0.04, 0.04, 0.02, 0x111111, 0x221100, 0.4, { roughness: 0.3 });
   le.position.set(-0.08, 0.6, -0.26);
   group.add(le);
-  const re = mbox(0.04, 0.04, 0.02, 0x111111);
+  const re = mbox(0.04, 0.04, 0.02, 0x111111, 0x221100, 0.4, { roughness: 0.3 });
   re.position.set(0.08, 0.6, -0.26);
   group.add(re);
 
-  // Body (round and plump)
-  const body = mbox(0.3, 0.3, 0.4, white);
+  // Body — feathery roughness
+  const body = mbox(0.3, 0.3, 0.4, white, 0x000000, 0, featherOpts);
   body.position.set(0, 0.35, 0.05);
   group.add(body);
 
-  // Wings
-  const lw = mbox(0.04, 0.2, 0.25, 0xe0e0d8);
+  // Wings — slightly different tone
+  const lw = mbox(0.04, 0.2, 0.25, 0xe0e0d8, 0x000000, 0, { roughness: 0.95 });
   lw.position.set(-0.18, 0.38, 0.05);
   group.add(lw);
-  const rw = mbox(0.04, 0.2, 0.25, 0xe0e0d8);
+  const rw = mbox(0.04, 0.2, 0.25, 0xe0e0d8, 0x000000, 0, { roughness: 0.95 });
   rw.position.set(0.18, 0.38, 0.05);
   group.add(rw);
 
   // Tail feathers
-  const tail = mbox(0.1, 0.15, 0.08, white);
+  const tail = mbox(0.1, 0.15, 0.08, white, 0x000000, 0, featherOpts);
   tail.position.set(0, 0.45, 0.28);
   tail.rotation.x = -0.3;
   group.add(tail);
 
-  // Legs (thin)
-  const leftLeg = limb(0.06, 0.2, 0.06, legColor, 0.2, -0.08);
+  // Legs — scaly texture, slightly glossy
+  const legOpts: MatOpts = { roughness: 0.5 };
+  const leftLeg = limb(0.06, 0.2, 0.06, legColor, 0.2, -0.08, 0, legOpts);
   group.add(leftLeg);
-  const rightLeg = limb(0.06, 0.2, 0.06, legColor, 0.2, 0.08);
+  const rightLeg = limb(0.06, 0.2, 0.06, legColor, 0.2, 0.08, 0, legOpts);
   group.add(rightLeg);
 
   return {
@@ -770,56 +904,59 @@ function createCow(): MobMeshData {
   const brown = 0x4a3728;
   const skin = 0xc0a888;
   const horn = 0xe8dcc0;
+  const hideOpts: MatOpts = { roughness: 0.9 }; // leathery hide
+  const patchOpts: MatOpts = { roughness: 0.75 }; // slightly smoother brown patches
 
-  // Head
-  const head = mbox(0.4, 0.35, 0.35, white);
+  // Head — leathery
+  const head = mbox(0.4, 0.35, 0.35, white, 0x000000, 0, hideOpts);
   head.position.set(0, 0.95, -0.45);
   group.add(head);
 
-  // Snout
-  const snoutMesh = mbox(0.25, 0.15, 0.1, skin);
+  // Snout — wet muzzle, lower roughness
+  const snoutMesh = mbox(0.25, 0.15, 0.1, skin, 0x000000, 0, { roughness: 0.4, metalness: 0.05 });
   snoutMesh.position.set(0, 0.88, -0.66);
   group.add(snoutMesh);
 
-  // Horns
-  const lh = mbox(0.06, 0.15, 0.06, horn);
+  // Horns — smooth keratin
+  const hornOpts: MatOpts = { roughness: 0.4, metalness: 0.08 };
+  const lh = mbox(0.06, 0.15, 0.06, horn, 0x000000, 0, hornOpts);
   lh.position.set(-0.18, 1.18, -0.42);
   lh.rotation.z = 0.3;
   group.add(lh);
-  const rh = mbox(0.06, 0.15, 0.06, horn);
+  const rh = mbox(0.06, 0.15, 0.06, horn, 0x000000, 0, hornOpts);
   rh.position.set(0.18, 1.18, -0.42);
   rh.rotation.z = -0.3;
   group.add(rh);
 
-  // Eyes
-  const le = mbox(0.06, 0.06, 0.02, 0x111111);
+  // Eyes — emissive glow
+  const le = mbox(0.06, 0.06, 0.02, 0x111111, 0x221100, 0.35, { roughness: 0.3 });
   le.position.set(-0.1, 1.0, -0.63);
   group.add(le);
-  const re = mbox(0.06, 0.06, 0.02, 0x111111);
+  const re = mbox(0.06, 0.06, 0.02, 0x111111, 0x221100, 0.35, { roughness: 0.3 });
   re.position.set(0.1, 1.0, -0.63);
   group.add(re);
 
-  // Body (large)
-  const body = mbox(0.55, 0.5, 0.8, white);
+  // Body — leathery hide
+  const body = mbox(0.55, 0.5, 0.8, white, 0x000000, 0, hideOpts);
   body.position.set(0, 0.7, 0.0);
   group.add(body);
 
-  // Brown patches on body
-  const patch1 = mbox(0.3, 0.25, 0.35, brown);
+  // Brown patches — distinct roughness for visible pattern
+  const patch1 = mbox(0.3, 0.25, 0.35, brown, 0x000000, 0, patchOpts);
   patch1.position.set(-0.14, 0.78, -0.1);
   group.add(patch1);
-  const patch2 = mbox(0.25, 0.2, 0.3, brown);
+  const patch2 = mbox(0.25, 0.2, 0.3, brown, 0x000000, 0, patchOpts);
   patch2.position.set(0.12, 0.65, 0.15);
   group.add(patch2);
 
-  // Legs
-  const frontLeftLeg = limb(0.15, 0.45, 0.15, white, 0.45, -0.2, -0.25);
+  // Legs — leathery hide
+  const frontLeftLeg = limb(0.15, 0.45, 0.15, white, 0.45, -0.2, -0.25, hideOpts);
   group.add(frontLeftLeg);
-  const frontRightLeg = limb(0.15, 0.45, 0.15, white, 0.45, 0.2, -0.25);
+  const frontRightLeg = limb(0.15, 0.45, 0.15, white, 0.45, 0.2, -0.25, hideOpts);
   group.add(frontRightLeg);
-  const backLeftLeg = limb(0.15, 0.45, 0.15, white, 0.45, -0.2, 0.25);
+  const backLeftLeg = limb(0.15, 0.45, 0.15, white, 0.45, -0.2, 0.25, hideOpts);
   group.add(backLeftLeg);
-  const backRightLeg = limb(0.15, 0.45, 0.15, white, 0.45, 0.2, 0.25);
+  const backRightLeg = limb(0.15, 0.45, 0.15, white, 0.45, 0.2, 0.25, hideOpts);
   group.add(backRightLeg);
 
   return {
@@ -834,63 +971,77 @@ function createBee(): MobMeshData {
   const yellow = 0xf0c830;
   const black = 0x222222;
   const wing = 0xc0e0ff;
+  // Glossy chitin exoskeleton
+  const chitinOpts: MatOpts = { roughness: 0.3, metalness: 0.1 };
 
-  // Body (striped)
-  const bodyFront = mbox(0.2, 0.2, 0.15, yellow);
+  // Body (striped) — glossy chitin
+  const bodyFront = mbox(0.2, 0.2, 0.15, yellow, 0x443300, 0.08, chitinOpts);
   bodyFront.position.set(0, 0.3, -0.08);
   group.add(bodyFront);
-  const bodyStripe = mbox(0.21, 0.21, 0.08, black);
+  const bodyStripe = mbox(0.21, 0.21, 0.08, black, 0x000000, 0, chitinOpts);
   bodyStripe.position.set(0, 0.3, 0.02);
   group.add(bodyStripe);
-  const bodyBack = mbox(0.2, 0.2, 0.15, yellow);
+  const bodyBack = mbox(0.2, 0.2, 0.15, yellow, 0x443300, 0.08, chitinOpts);
   bodyBack.position.set(0, 0.3, 0.12);
   group.add(bodyBack);
 
-  // Stinger
-  const stinger = mbox(0.04, 0.04, 0.08, 0x333333);
+  // Stinger — dark glossy
+  const stinger = mbox(0.04, 0.04, 0.08, 0x333333, 0x000000, 0, { roughness: 0.25 });
   stinger.position.set(0, 0.28, 0.24);
   group.add(stinger);
 
-  // Head
-  const head = mbox(0.18, 0.18, 0.12, yellow);
+  // Head — chitin
+  const head = mbox(0.18, 0.18, 0.12, yellow, 0x443300, 0.05, chitinOpts);
   head.position.set(0, 0.32, -0.2);
   group.add(head);
 
-  // Eyes
-  const le = mbox(0.06, 0.06, 0.02, 0x111111);
+  // Eyes — emissive glow
+  const le = mbox(0.06, 0.06, 0.02, 0x111111, 0x221100, 0.5, { roughness: 0.2 });
   le.position.set(-0.06, 0.34, -0.27);
   group.add(le);
-  const re = mbox(0.06, 0.06, 0.02, 0x111111);
+  const re = mbox(0.06, 0.06, 0.02, 0x111111, 0x221100, 0.5, { roughness: 0.2 });
   re.position.set(0.06, 0.34, -0.27);
   group.add(re);
 
   // Antennae
-  const la = mbox(0.02, 0.1, 0.02, black);
+  const la = mbox(0.02, 0.1, 0.02, black, 0x000000, 0, chitinOpts);
   la.position.set(-0.05, 0.46, -0.22);
   la.rotation.z = 0.3;
   group.add(la);
-  const ra = mbox(0.02, 0.1, 0.02, black);
+  const ra = mbox(0.02, 0.1, 0.02, black, 0x000000, 0, chitinOpts);
   ra.position.set(0.05, 0.46, -0.22);
   ra.rotation.z = -0.3;
   group.add(ra);
 
-  // Wings (semi-transparent look via emissive)
+  // Wings — MeshPhysicalMaterial with transmission for translucency
   const leftArm = new THREE.Group();
   leftArm.position.set(-0.12, 0.42, 0.0);
-  const lwMesh = mbox(0.18, 0.02, 0.12, wing, wing, 0.5);
-  const lwMat = lwMesh.material as THREE.MeshStandardMaterial;
-  lwMat.transparent = true;
-  lwMat.opacity = 0.5;
+  const lwMesh = new THREE.Mesh(
+    getGeo(0.18, 0.02, 0.12),
+    getPhysicalMat(wing, wing, 0.5, {
+      roughness: 0.1,
+      transmission: 0.6,
+      thickness: 0.05,
+      transparent: true,
+      opacity: 0.55,
+    }),
+  );
   lwMesh.position.set(-0.09, 0, 0);
   leftArm.add(lwMesh);
   group.add(leftArm);
 
   const rightArm = new THREE.Group();
   rightArm.position.set(0.12, 0.42, 0.0);
-  const rwMesh = mbox(0.18, 0.02, 0.12, wing, wing, 0.5);
-  const rwMat = rwMesh.material as THREE.MeshStandardMaterial;
-  rwMat.transparent = true;
-  rwMat.opacity = 0.5;
+  const rwMesh = new THREE.Mesh(
+    getGeo(0.18, 0.02, 0.12),
+    getPhysicalMat(wing, wing, 0.5, {
+      roughness: 0.1,
+      transmission: 0.6,
+      thickness: 0.05,
+      transparent: true,
+      opacity: 0.55,
+    }),
+  );
   rwMesh.position.set(0.09, 0, 0);
   rightArm.add(rwMesh);
   group.add(rightArm);
@@ -907,63 +1058,69 @@ function createCat(): MobMeshData {
   const orange = 0xe8a050;
   const darkOrange = 0xc08040;
   const belly = 0xf0d8b0;
+  const furOpts: MatOpts = { roughness: 0.95 }; // soft fur
 
-  // Head
-  const head = mbox(0.25, 0.2, 0.2, orange);
+  // Head — fuzzy
+  const head = mbox(0.25, 0.2, 0.2, orange, 0x000000, 0, furOpts);
   head.position.set(0, 0.5, -0.2);
   group.add(head);
 
-  // Ears (triangular via small boxes rotated)
-  const learBox = mbox(0.06, 0.1, 0.04, darkOrange);
+  // Ears
+  const learBox = mbox(0.06, 0.1, 0.04, darkOrange, 0x000000, 0, furOpts);
   learBox.position.set(-0.1, 0.65, -0.2);
   learBox.rotation.z = 0.2;
   group.add(learBox);
-  const rearBox = mbox(0.06, 0.1, 0.04, darkOrange);
+  const rearBox = mbox(0.06, 0.1, 0.04, darkOrange, 0x000000, 0, furOpts);
   rearBox.position.set(0.1, 0.65, -0.2);
   rearBox.rotation.z = -0.2;
   group.add(rearBox);
 
-  // Eyes
-  const le = mbox(0.05, 0.04, 0.02, 0x22cc44);
+  // Eyes — bright green emissive glow (cat-like)
+  const le = mbox(0.05, 0.04, 0.02, 0x22cc44, 0x22cc44, 0.8, { roughness: 0.2 });
   le.position.set(-0.06, 0.52, -0.31);
   group.add(le);
-  const re = mbox(0.05, 0.04, 0.02, 0x22cc44);
+  const re = mbox(0.05, 0.04, 0.02, 0x22cc44, 0x22cc44, 0.8, { roughness: 0.2 });
   re.position.set(0.06, 0.52, -0.31);
   group.add(re);
 
-  // Nose
-  const nose = mbox(0.04, 0.03, 0.02, 0xdd7788);
+  // Nose — glossy pink
+  const nose = mbox(0.04, 0.03, 0.02, 0xdd7788, 0x000000, 0, { roughness: 0.35 });
   nose.position.set(0, 0.47, -0.31);
   group.add(nose);
 
-  // Body
-  const body = mbox(0.22, 0.2, 0.45, orange);
+  // Body — fuzzy fur
+  const body = mbox(0.22, 0.2, 0.45, orange, 0x000000, 0, furOpts);
   body.position.set(0, 0.35, 0.1);
   group.add(body);
 
-  // Belly stripe
-  const bellyMesh = mbox(0.16, 0.12, 0.35, belly);
+  // Healing aura collar — glowing green band around neck
+  const collar = mbox(0.24, 0.04, 0.22, 0x44dd66, 0x44dd66, 1.5, { roughness: 0.3 });
+  collar.position.set(0, 0.46, -0.05);
+  group.add(collar);
+
+  // Belly stripe — soft
+  const bellyMesh = mbox(0.16, 0.12, 0.35, belly, 0x000000, 0, furOpts);
   bellyMesh.position.set(0, 0.28, 0.1);
   group.add(bellyMesh);
 
-  // Tail (series of small boxes)
-  const tailBase = mbox(0.06, 0.06, 0.15, orange);
+  // Tail
+  const tailBase = mbox(0.06, 0.06, 0.15, orange, 0x000000, 0, furOpts);
   tailBase.position.set(0, 0.4, 0.4);
   tailBase.rotation.x = -0.5;
   group.add(tailBase);
-  const tailTip = mbox(0.05, 0.05, 0.12, darkOrange);
+  const tailTip = mbox(0.05, 0.05, 0.12, darkOrange, 0x000000, 0, furOpts);
   tailTip.position.set(0, 0.5, 0.5);
   tailTip.rotation.x = -1.0;
   group.add(tailTip);
 
-  // Legs
-  const frontLeftLeg = limb(0.08, 0.2, 0.08, orange, 0.25, -0.08, -0.1);
+  // Legs — fuzzy fur
+  const frontLeftLeg = limb(0.08, 0.2, 0.08, orange, 0.25, -0.08, -0.1, furOpts);
   group.add(frontLeftLeg);
-  const frontRightLeg = limb(0.08, 0.2, 0.08, orange, 0.25, 0.08, -0.1);
+  const frontRightLeg = limb(0.08, 0.2, 0.08, orange, 0.25, 0.08, -0.1, furOpts);
   group.add(frontRightLeg);
-  const backLeftLeg = limb(0.08, 0.2, 0.08, orange, 0.25, -0.08, 0.25);
+  const backLeftLeg = limb(0.08, 0.2, 0.08, orange, 0.25, -0.08, 0.25, furOpts);
   group.add(backLeftLeg);
-  const backRightLeg = limb(0.08, 0.2, 0.08, orange, 0.25, 0.08, 0.25);
+  const backRightLeg = limb(0.08, 0.2, 0.08, orange, 0.25, 0.08, 0.25, furOpts);
   group.add(backRightLeg);
 
   return {
@@ -978,12 +1135,23 @@ function createHorse(): MobMeshData {
   const brown = 0x8b5e3c;
   const darkBrown = 0x5c3a24;
   const mane = 0x2a1a10;
+  const armor = 0x7a7a8a; // iron armor plate color
 
-  // Head
-  const head = mbox(0.25, 0.35, 0.55, brown);
+  // Head — armored clearcoat (MeshPhysicalMaterial)
+  const head = mboxPhys(0.25, 0.35, 0.55, brown, 0x000000, 0, {
+    roughness: 0.5, metalness: 0.15, clearcoat: 0.6, clearcoatRoughness: 0.15,
+  });
   head.position.set(0, 1.15, -0.5);
   head.rotation.x = 0.3;
   group.add(head);
+
+  // Head armor plate (chamfron)
+  const chamfron = mboxPhys(0.2, 0.2, 0.15, armor, 0x000000, 0, {
+    roughness: 0.3, metalness: 0.5, clearcoat: 0.8, clearcoatRoughness: 0.1,
+  });
+  chamfron.position.set(0, 1.24, -0.62);
+  chamfron.rotation.x = 0.3;
+  group.add(chamfron);
 
   // Ears
   const lear = mbox(0.06, 0.12, 0.06, brown);
@@ -993,38 +1161,48 @@ function createHorse(): MobMeshData {
   rear.position.set(0.08, 1.42, -0.4);
   group.add(rear);
 
-  // Eyes
-  const le = mbox(0.06, 0.06, 0.02, 0x111111);
+  // Eyes — fiery boss glow
+  const le = mbox(0.06, 0.06, 0.02, 0xcc4400, 0xff6600, 1.2, { roughness: 0.2 });
   le.position.set(-0.12, 1.18, -0.72);
   group.add(le);
-  const re = mbox(0.06, 0.06, 0.02, 0x111111);
+  const re = mbox(0.06, 0.06, 0.02, 0xcc4400, 0xff6600, 1.2, { roughness: 0.2 });
   re.position.set(0.12, 1.18, -0.72);
   group.add(re);
 
-  // Mane (along neck/back)
-  const maneMesh = mbox(0.06, 0.3, 0.3, mane);
+  // Mane
+  const maneMesh = mbox(0.06, 0.3, 0.3, mane, 0x000000, 0, { roughness: 0.95 });
   maneMesh.position.set(0, 1.32, -0.3);
   group.add(maneMesh);
 
-  // Body (large barrel)
-  const body = mbox(0.5, 0.5, 0.75, brown);
+  // Body — armored clearcoat
+  const body = mboxPhys(0.5, 0.5, 0.75, brown, 0x000000, 0, {
+    roughness: 0.5, metalness: 0.12, clearcoat: 0.5, clearcoatRoughness: 0.2,
+  });
   body.position.set(0, 0.85, 0.1);
   group.add(body);
 
+  // Body armor plate (peytral)
+  const peytral = mboxPhys(0.44, 0.3, 0.35, armor, 0x000000, 0, {
+    roughness: 0.3, metalness: 0.5, clearcoat: 0.8, clearcoatRoughness: 0.1,
+  });
+  peytral.position.set(0, 0.92, -0.08);
+  group.add(peytral);
+
   // Tail
-  const tail = mbox(0.06, 0.35, 0.06, mane);
+  const tail = mbox(0.06, 0.35, 0.06, mane, 0x000000, 0, { roughness: 0.95 });
   tail.position.set(0, 0.85, 0.5);
   tail.rotation.x = 0.4;
   group.add(tail);
 
-  // Legs (long)
-  const frontLeftLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, -0.18, -0.2);
+  // Legs — slightly metallic hooves
+  const legOpts: MatOpts = { roughness: 0.65, metalness: 0.08 };
+  const frontLeftLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, -0.18, -0.2, legOpts);
   group.add(frontLeftLeg);
-  const frontRightLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, 0.18, -0.2);
+  const frontRightLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, 0.18, -0.2, legOpts);
   group.add(frontRightLeg);
-  const backLeftLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, -0.18, 0.35);
+  const backLeftLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, -0.18, 0.35, legOpts);
   group.add(backLeftLeg);
-  const backRightLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, 0.18, 0.35);
+  const backRightLeg = limb(0.14, 0.6, 0.14, darkBrown, 0.6, 0.18, 0.35, legOpts);
   group.add(backRightLeg);
 
   return {
@@ -1039,66 +1217,67 @@ function createRabbit(): MobMeshData {
   const fur = 0xc8a878;
   const belly = 0xf0e0c8;
   const earInner = 0xe8b0b0;
+  const furOpts: MatOpts = { roughness: 0.95 }; // soft fluffy fur
 
-  // Head
-  const head = mbox(0.2, 0.18, 0.18, fur);
+  // Head — fluffy
+  const head = mbox(0.2, 0.18, 0.18, fur, 0x000000, 0, furOpts);
   head.position.set(0, 0.38, -0.12);
   group.add(head);
 
-  // Ears (tall)
-  const learOuter = mbox(0.06, 0.2, 0.04, fur);
+  // Ears — outer fur, inner pink skin
+  const learOuter = mbox(0.06, 0.2, 0.04, fur, 0x000000, 0, furOpts);
   learOuter.position.set(-0.06, 0.58, -0.1);
   learOuter.rotation.z = 0.15;
   group.add(learOuter);
-  const learInner = mbox(0.04, 0.16, 0.02, earInner);
+  const learInner = mbox(0.04, 0.16, 0.02, earInner, 0x000000, 0, { roughness: 0.6 });
   learInner.position.set(-0.06, 0.58, -0.11);
   learInner.rotation.z = 0.15;
   group.add(learInner);
-  const rearOuter = mbox(0.06, 0.2, 0.04, fur);
+  const rearOuter = mbox(0.06, 0.2, 0.04, fur, 0x000000, 0, furOpts);
   rearOuter.position.set(0.06, 0.58, -0.1);
   rearOuter.rotation.z = -0.15;
   group.add(rearOuter);
-  const rearInner = mbox(0.04, 0.16, 0.02, earInner);
+  const rearInner = mbox(0.04, 0.16, 0.02, earInner, 0x000000, 0, { roughness: 0.6 });
   rearInner.position.set(0.06, 0.58, -0.11);
   rearInner.rotation.z = -0.15;
   group.add(rearInner);
 
-  // Eyes
-  const le = mbox(0.04, 0.04, 0.02, 0xcc2222);
+  // Eyes — red emissive glow
+  const le = mbox(0.04, 0.04, 0.02, 0xcc2222, 0xcc2222, 0.6, { roughness: 0.2 });
   le.position.set(-0.06, 0.4, -0.22);
   group.add(le);
-  const re = mbox(0.04, 0.04, 0.02, 0xcc2222);
+  const re = mbox(0.04, 0.04, 0.02, 0xcc2222, 0xcc2222, 0.6, { roughness: 0.2 });
   re.position.set(0.06, 0.4, -0.22);
   group.add(re);
 
-  // Nose
-  const nose = mbox(0.04, 0.03, 0.02, 0xdd8888);
+  // Nose — pink glossy
+  const nose = mbox(0.04, 0.03, 0.02, 0xdd8888, 0x000000, 0, { roughness: 0.35 });
   nose.position.set(0, 0.36, -0.22);
   group.add(nose);
 
-  // Body
-  const body = mbox(0.2, 0.2, 0.3, fur);
+  // Body — fluffy
+  const body = mbox(0.2, 0.2, 0.3, fur, 0x000000, 0, furOpts);
   body.position.set(0, 0.25, 0.08);
   group.add(body);
 
-  // Belly
-  const bellyMesh = mbox(0.14, 0.1, 0.2, belly);
+  // Belly — soft
+  const bellyMesh = mbox(0.14, 0.1, 0.2, belly, 0x000000, 0, furOpts);
   bellyMesh.position.set(0, 0.18, 0.08);
   group.add(bellyMesh);
 
-  // Tail (fluffy puff)
-  const tail = mbox(0.1, 0.1, 0.08, belly);
+  // Tail (fluffy puff) — extra soft
+  const tail = mbox(0.1, 0.1, 0.08, belly, 0x000000, 0, { roughness: 1.0 });
   tail.position.set(0, 0.28, 0.28);
   group.add(tail);
 
-  // Legs (short back legs, tiny front)
-  const frontLeftLeg = limb(0.06, 0.12, 0.06, fur, 0.15, -0.06, -0.05);
+  // Legs — fluffy fur
+  const frontLeftLeg = limb(0.06, 0.12, 0.06, fur, 0.15, -0.06, -0.05, furOpts);
   group.add(frontLeftLeg);
-  const frontRightLeg = limb(0.06, 0.12, 0.06, fur, 0.15, 0.06, -0.05);
+  const frontRightLeg = limb(0.06, 0.12, 0.06, fur, 0.15, 0.06, -0.05, furOpts);
   group.add(frontRightLeg);
-  const backLeftLeg = limb(0.08, 0.15, 0.1, fur, 0.15, -0.08, 0.18);
+  const backLeftLeg = limb(0.08, 0.15, 0.1, fur, 0.15, -0.08, 0.18, furOpts);
   group.add(backLeftLeg);
-  const backRightLeg = limb(0.08, 0.15, 0.1, fur, 0.15, 0.08, 0.18);
+  const backRightLeg = limb(0.08, 0.15, 0.1, fur, 0.15, 0.08, 0.18, furOpts);
   group.add(backRightLeg);
 
   return {
@@ -1113,66 +1292,73 @@ function createWolf(): MobMeshData {
   const gray = 0x9e9e9e;
   const darkGray = 0x606060;
   const belly = 0xd0d0d0;
+  // Bristled fur — high roughness
+  const furOpts: MatOpts = { roughness: 0.92 };
 
-  // Head
-  const head = mbox(0.28, 0.22, 0.28, gray);
+  // Head — bristled fur
+  const head = mbox(0.28, 0.22, 0.28, gray, 0x000000, 0, furOpts);
   head.position.set(0, 0.62, -0.28);
   group.add(head);
 
   // Snout
-  const snout = mbox(0.14, 0.1, 0.15, belly);
+  const snout = mbox(0.14, 0.1, 0.15, belly, 0x000000, 0, { roughness: 0.7 });
   snout.position.set(0, 0.56, -0.48);
   group.add(snout);
 
-  // Nose
-  const nose = mbox(0.05, 0.04, 0.02, 0x222222);
+  // Nose — glossy wet
+  const nose = mbox(0.05, 0.04, 0.02, 0x222222, 0x000000, 0, { roughness: 0.2 });
   nose.position.set(0, 0.58, -0.56);
   group.add(nose);
 
-  // Ears
-  const lear = mbox(0.08, 0.12, 0.06, darkGray);
+  // Ears — darker bristled fur
+  const lear = mbox(0.08, 0.12, 0.06, darkGray, 0x000000, 0, furOpts);
   lear.position.set(-0.1, 0.78, -0.25);
   group.add(lear);
-  const rear = mbox(0.08, 0.12, 0.06, darkGray);
+  const rear = mbox(0.08, 0.12, 0.06, darkGray, 0x000000, 0, furOpts);
   rear.position.set(0.1, 0.78, -0.25);
   group.add(rear);
 
-  // Eyes
-  const le = mbox(0.05, 0.04, 0.02, 0x884400);
+  // Eyes — amber emissive glow
+  const le = mbox(0.05, 0.04, 0.02, 0x884400, 0xcc8800, 0.7, { roughness: 0.2 });
   le.position.set(-0.08, 0.65, -0.42);
   group.add(le);
-  const re = mbox(0.05, 0.04, 0.02, 0x884400);
+  const re = mbox(0.05, 0.04, 0.02, 0x884400, 0xcc8800, 0.7, { roughness: 0.2 });
   re.position.set(0.08, 0.65, -0.42);
   group.add(re);
 
-  // Body
-  const body = mbox(0.3, 0.28, 0.5, gray);
+  // Body — bristled fur with shield glow accent stripe along spine
+  const body = mbox(0.3, 0.28, 0.5, gray, 0x000000, 0, furOpts);
   body.position.set(0, 0.45, 0.05);
   group.add(body);
 
-  // Belly
-  const bellyMesh = mbox(0.2, 0.14, 0.35, belly);
+  // Shield glow stripe along back
+  const shieldStripe = mbox(0.1, 0.04, 0.4, 0x60a5fa, 0x60a5fa, 0.8, { roughness: 0.3 });
+  shieldStripe.position.set(0, 0.61, 0.05);
+  group.add(shieldStripe);
+
+  // Belly — softer
+  const bellyMesh = mbox(0.2, 0.14, 0.35, belly, 0x000000, 0, { roughness: 0.88 });
   bellyMesh.position.set(0, 0.35, 0.05);
   group.add(bellyMesh);
 
-  // Tail (bushy, angled up)
-  const tail = mbox(0.08, 0.08, 0.25, gray);
+  // Tail (bushy, angled up) — very fluffy
+  const tail = mbox(0.08, 0.08, 0.25, gray, 0x000000, 0, { roughness: 0.98 });
   tail.position.set(0, 0.55, 0.4);
   tail.rotation.x = -0.6;
   group.add(tail);
-  const tailTip = mbox(0.06, 0.06, 0.1, belly);
+  const tailTip = mbox(0.06, 0.06, 0.1, belly, 0x000000, 0, { roughness: 0.98 });
   tailTip.position.set(0, 0.65, 0.5);
   tailTip.rotation.x = -0.8;
   group.add(tailTip);
 
-  // Legs
-  const frontLeftLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, -0.1, -0.15);
+  // Legs — bristled dark fur
+  const frontLeftLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, -0.1, -0.15, furOpts);
   group.add(frontLeftLeg);
-  const frontRightLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, 0.1, -0.15);
+  const frontRightLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, 0.1, -0.15, furOpts);
   group.add(frontRightLeg);
-  const backLeftLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, -0.1, 0.22);
+  const backLeftLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, -0.1, 0.22, furOpts);
   group.add(backLeftLeg);
-  const backRightLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, 0.1, 0.22);
+  const backRightLeg = limb(0.1, 0.3, 0.1, darkGray, 0.31, 0.1, 0.22, furOpts);
   group.add(backRightLeg);
 
   return {
@@ -1421,8 +1607,10 @@ export function disposeMobGroup(mob: MobMeshData): void {
 export function disposeSharedMobResources(): void {
   for (const geo of geoCache.values()) geo.dispose();
   for (const mat of matCache.values()) mat.dispose();
+  for (const mat of physMatCache.values()) mat.dispose();
   geoCache.clear();
   matCache.clear();
+  physMatCache.clear();
   gltfCache.clear();
   gltfAttempted.clear();
 }
