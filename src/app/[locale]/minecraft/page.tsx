@@ -6,7 +6,7 @@
 // and animated panel transitions. Reuses the proven v1.0.2 UI system.
 // =============================================================================
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from '@/i18n/navigation';
@@ -231,9 +231,10 @@ function WorldCreationPanel({
 export default function MinecraftTitlePage() {
   const router = useRouter();
   const [screen, setScreen] = useState<Screen>('main');
-  const [splash] = useState(
-    () => SPLASHES[Math.floor(Math.random() * SPLASHES.length)],
-  );
+  const [splash, setSplash] = useState('');
+  useEffect(() => {
+    setSplash(SPLASHES[Math.floor(Math.random() * SPLASHES.length)]);
+  }, []);
 
   const handleCreateWorld = useCallback((config: WorldConfig) => {
     let seedNum: number;
