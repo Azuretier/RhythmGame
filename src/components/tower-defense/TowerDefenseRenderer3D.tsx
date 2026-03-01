@@ -672,12 +672,72 @@ function TowersGroup({ towers, enemies, selectedTowerId, onSelectTower }: {
   );
 }
 
+// ===== Enemy HP Display =====
+function getHpBarColor(hpPercent: number): string {
+  if (hpPercent > 0.5) return '#22c55e';
+  if (hpPercent > 0.25) return '#eab308';
+  return '#ef4444';
+}
+
+const HP_BAR_WIDTH = 0.6;
+const HP_BAR_HEIGHT = 0.08;
+const HP_FILL_HEIGHT = 0.06;
+const HP_LABEL_FONT_SIZE = 0.07;
+
+function EnemyHpDisplay({ name, hp, maxHp, yOffset }: {
+  name: string;
+  hp: number;
+  maxHp: number;
+  yOffset: number;
+}) {
+  const hpPercent = hp / maxHp;
+  const labelText = `${name} ${Math.ceil(hp)}`;
+
+  return (
+    <Billboard position={[0, yOffset, 0]} follow lockX={false} lockY={false} lockZ={false}>
+      {/* "Name HP" — right-aligned to center */}
+      <Text
+        position={[-0.02, 0.1, 0.001]}
+        fontSize={HP_LABEL_FONT_SIZE}
+        anchorX="right"
+        anchorY="middle"
+        outlineWidth={0.004}
+        outlineColor="#000000"
+      >
+        {labelText}
+        <meshBasicMaterial color="#ffffff" />
+      </Text>
+      {/* Red filled heart — left-aligned to center, sits right after the text */}
+      <Text
+        position={[0.02, 0.1, 0.001]}
+        fontSize={HP_LABEL_FONT_SIZE}
+        anchorX="left"
+        anchorY="middle"
+        outlineWidth={0.004}
+        outlineColor="#7f0000"
+      >
+        ❤
+        <meshBasicMaterial color="#ef4444" />
+      </Text>
+      {/* Background bar */}
+      <mesh position={[0, 0, 0]}>
+        <planeGeometry args={[HP_BAR_WIDTH, HP_BAR_HEIGHT]} />
+        <meshBasicMaterial color="#1f2937" side={THREE.DoubleSide} />
+      </mesh>
+      {/* HP fill bar */}
+      <mesh position={[(hpPercent - 1) * (HP_BAR_WIDTH / 2), 0, 0.001]}>
+        <planeGeometry args={[HP_BAR_WIDTH * hpPercent, HP_FILL_HEIGHT]} />
+        <meshBasicMaterial color={getHpBarColor(hpPercent)} side={THREE.DoubleSide} />
+      </mesh>
+    </Billboard>
+  );
+}
+
 // ===== Enemies (Animal Mob Models) =====
 function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: boolean; onClick: () => void }) {
   const groupRef = useRef<THREE.Group>(null);
   const mobRef = useRef<MobMeshData | null>(null);
   const def = ENEMY_DEFS[enemy.type];
-  const hpPercent = enemy.hp / enemy.maxHp;
   const mobType = ENEMY_MOB_MAP[enemy.type];
   const mobScale = ENEMY_MOB_SCALE[enemy.type];
 
@@ -801,36 +861,13 @@ function EnemyMesh({ enemy, isSelected, onClick }: { enemy: Enemy; isSelected: b
         </mesh>
       )}
 
-      {/* HP bar with name and HP label (billboarded to always face camera) */}
-      {hpPercent < 1 && (
-        <Billboard position={[0, charHeight + 0.1, 0]} follow lockX={false} lockY={false} lockZ={false}>
-          {/* Name HP ♡ label above the gauge */}
-          <Text
-            position={[0, 0.1, 0.001]}
-            fontSize={0.07}
-            color="#ffffff"
-            anchorX="center"
-            anchorY="middle"
-            outlineWidth={0.004}
-            outlineColor="#000000"
-          >
-            {def.name} {Math.ceil(enemy.hp)} ♡
-          </Text>
-          {/* Background bar */}
-          <mesh position={[0, 0, 0]}>
-            <planeGeometry args={[0.6, 0.08]} />
-            <meshBasicMaterial color="#1f2937" side={THREE.DoubleSide} />
-          </mesh>
-          {/* Fill bar */}
-          <mesh position={[(hpPercent - 1) * 0.3, 0, 0.001]}>
-            <planeGeometry args={[0.6 * hpPercent, 0.06]} />
-            <meshBasicMaterial
-              color={hpPercent > 0.5 ? '#22c55e' : hpPercent > 0.25 ? '#eab308' : '#ef4444'}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-        </Billboard>
-      )}
+      {/* Enemy HP display (name + gauge) */}
+      <EnemyHpDisplay
+        name={def.name}
+        hp={enemy.hp}
+        maxHp={enemy.maxHp}
+        yOffset={charHeight + 0.1}
+      />
     </group>
   );
 }
