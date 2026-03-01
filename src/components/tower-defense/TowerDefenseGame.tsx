@@ -86,7 +86,7 @@ function SelectedTowerInfo({ tower, gold, onUpgrade, onSell, onDeselect }: {
   return (
     <div className={styles.selectedTowerPanel}>
       <h3 style={{ color: def.color }}>
-        {TOWER_ICONS[tower.type]} {def.name} (Lv.{tower.level})
+        {TOWER_ICONS[tower.type]} {def.name}
         <span
           onClick={onDeselect}
           style={{ float: 'right', cursor: 'pointer', color: '#64748b', fontSize: '14px' }}
