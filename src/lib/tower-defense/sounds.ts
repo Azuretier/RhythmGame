@@ -171,6 +171,26 @@ export function playShootArcane() {
   sweep(400, 800, 0.1, 'triangle', 0.04, 0.02);
 }
 
+// ─── Magma Aura (volcano emit rumble) ─────────────────────
+
+let lastMagmaAuraTime = 0;
+const MAGMA_AURA_INTERVAL = 800; // ms between rumble pulses
+
+export function playMagmaAura() {
+  const now = performance.now();
+  if (now - lastMagmaAuraTime < MAGMA_AURA_INTERVAL) return;
+  lastMagmaAuraTime = now;
+
+  // Deep volcanic rumble — low-frequency sub-bass pulse
+  sweep(60, 35, 0.5, 'sine', 0.08);
+  // Crackling magma surface — filtered noise burst
+  noise(0.3, 0.04, 250, 1.5);
+  // Mid-range lava bubble pop
+  sweep(180, 100, 0.2, 'sine', 0.04, 0.1);
+  // High hiss — steam vent
+  noise(0.15, 0.02, 3500, 4, 0.15);
+}
+
 const SHOOT_SOUNDS: Record<string, () => void> = {
   archer: playShootArcher,
   cannon: playShootCannon,

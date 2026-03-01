@@ -490,56 +490,96 @@ function createSlime(): MobMeshData {
 
 function createMagmaCube(): MobMeshData {
   const group = new THREE.Group();
-  const magmaOrange = 0xff6600;
-  const magmaDark = 0x330000;
-  const magmaCore = 0xff2200;
-  const magmaYellow = 0xffaa00;
+  // Minecraft magma cube palette
+  const shell = 0x2a1a0a;       // Dark charred shell
+  const shellDark = 0x1a0e04;   // Darker variation for bottom segments
+  const magma = 0xff6600;       // Bright orange magma in seams
+  const magmaGlow = 0xff4400;   // Inner glow
+  const magmaYellow = 0xffaa00; // Hottest parts of seams
+  const eyeColor = 0xff8800;    // Orange-yellow eyes
 
-  // Outer body (cube, slightly squished like slime)
-  const body = mbox(0.7, 0.6, 0.7, magmaDark, magmaOrange, 0.4);
-  body.position.set(0, 0.3, 0);
-  group.add(body);
+  // --- Segmented body: 3 layers (bottom, middle, top) with magma seams ---
 
-  // Magma cracks — bright orange/yellow lines on faces
-  // Front face cracks
-  const crackH1 = mbox(0.3, 0.03, 0.005, magmaOrange, magmaOrange, 2.0);
-  crackH1.position.set(0.05, 0.35, -0.351);
-  group.add(crackH1);
-  const crackV1 = mbox(0.03, 0.25, 0.005, magmaYellow, magmaYellow, 2.5);
-  crackV1.position.set(-0.1, 0.28, -0.351);
-  group.add(crackV1);
-  const crackH2 = mbox(0.2, 0.03, 0.005, magmaYellow, magmaYellow, 2.0);
-  crackH2.position.set(0.15, 0.2, -0.351);
-  group.add(crackH2);
+  // Bottom segment (largest)
+  const bottom = mbox(0.7, 0.2, 0.7, shellDark, magmaGlow, 0.15);
+  bottom.position.set(0, 0.1, 0);
+  group.add(bottom);
 
-  // Side cracks
-  const crackS1 = mbox(0.005, 0.2, 0.25, magmaOrange, magmaOrange, 2.0);
-  crackS1.position.set(-0.351, 0.3, 0.05);
-  group.add(crackS1);
-  const crackS2 = mbox(0.005, 0.03, 0.3, magmaYellow, magmaYellow, 2.0);
-  crackS2.position.set(0.351, 0.25, -0.05);
-  group.add(crackS2);
+  // Magma seam 1 (between bottom and middle) — visible glowing gap
+  const seam1 = mbox(0.62, 0.04, 0.62, magma, magma, 2.5);
+  seam1.position.set(0, 0.22, 0);
+  group.add(seam1);
+  // Cross crack on seam 1
+  const seam1Cross = mbox(0.66, 0.04, 0.04, magmaYellow, magmaYellow, 3.0);
+  seam1Cross.position.set(0, 0.22, 0);
+  group.add(seam1Cross);
+  const seam1CrossZ = mbox(0.04, 0.04, 0.66, magmaYellow, magmaYellow, 3.0);
+  seam1CrossZ.position.set(0, 0.22, 0);
+  group.add(seam1CrossZ);
 
-  // Top face cracks
-  const crackT1 = mbox(0.25, 0.005, 0.03, magmaOrange, magmaOrange, 2.0);
-  crackT1.position.set(0.05, 0.601, 0.1);
-  group.add(crackT1);
-  const crackT2 = mbox(0.03, 0.005, 0.2, magmaYellow, magmaYellow, 2.0);
-  crackT2.position.set(-0.12, 0.601, -0.05);
-  group.add(crackT2);
+  // Middle segment
+  const middle = mbox(0.64, 0.22, 0.64, shell, magmaGlow, 0.12);
+  middle.position.set(0, 0.35, 0);
+  group.add(middle);
 
-  // Inner core (bright glowing center visible through cracks)
-  const core = mbox(0.35, 0.3, 0.35, magmaCore, magmaCore, 1.5);
-  core.position.set(0, 0.25, 0);
+  // Vertical cracks on middle segment (all 4 faces)
+  const midCrackF = mbox(0.03, 0.18, 0.005, magma, magma, 2.0);
+  midCrackF.position.set(0.08, 0.35, -0.321);
+  group.add(midCrackF);
+  const midCrackF2 = mbox(0.03, 0.12, 0.005, magmaYellow, magmaYellow, 2.5);
+  midCrackF2.position.set(-0.14, 0.33, -0.321);
+  group.add(midCrackF2);
+  const midCrackB = mbox(0.03, 0.15, 0.005, magma, magma, 2.0);
+  midCrackB.position.set(-0.06, 0.36, 0.321);
+  group.add(midCrackB);
+  const midCrackL = mbox(0.005, 0.16, 0.03, magma, magma, 2.0);
+  midCrackL.position.set(-0.321, 0.34, 0.1);
+  group.add(midCrackL);
+  const midCrackR = mbox(0.005, 0.14, 0.03, magmaYellow, magmaYellow, 2.0);
+  midCrackR.position.set(0.321, 0.35, -0.08);
+  group.add(midCrackR);
+
+  // Magma seam 2 (between middle and top)
+  const seam2 = mbox(0.56, 0.04, 0.56, magma, magma, 2.5);
+  seam2.position.set(0, 0.48, 0);
+  group.add(seam2);
+  const seam2Cross = mbox(0.6, 0.04, 0.04, magmaYellow, magmaYellow, 3.0);
+  seam2Cross.position.set(0, 0.48, 0);
+  group.add(seam2Cross);
+  const seam2CrossZ = mbox(0.04, 0.04, 0.6, magmaYellow, magmaYellow, 3.0);
+  seam2CrossZ.position.set(0, 0.48, 0);
+  group.add(seam2CrossZ);
+
+  // Top segment (smallest — the "head")
+  const top = mbox(0.5, 0.26, 0.5, shell, magmaGlow, 0.1);
+  top.position.set(0, 0.63, 0);
+  group.add(top);
+
+  // Vertical cracks on top segment
+  const topCrackF = mbox(0.03, 0.2, 0.005, magma, magma, 1.8);
+  topCrackF.position.set(-0.05, 0.63, -0.251);
+  group.add(topCrackF);
+  const topCrackR = mbox(0.005, 0.18, 0.03, magma, magma, 1.8);
+  topCrackR.position.set(0.251, 0.64, 0.06);
+  group.add(topCrackR);
+
+  // --- Eyes (on the front of the top segment, menacing orange glow) ---
+  const le = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
+  le.position.set(-0.1, 0.66, -0.26);
+  group.add(le);
+  const re = mbox(0.08, 0.06, 0.02, eyeColor, eyeColor, 3.5);
+  re.position.set(0.1, 0.66, -0.26);
+  group.add(re);
+
+  // --- Inner core (glowing magma visible through seams and cracks) ---
+  const core = mbox(0.3, 0.5, 0.3, magmaGlow, magmaGlow, 1.2);
+  core.position.set(0, 0.35, 0);
   group.add(core);
 
-  // Eyes (bright yellow-orange, menacing)
-  const le = mbox(0.1, 0.08, 0.02, magmaYellow, magmaYellow, 3.0);
-  le.position.set(-0.12, 0.4, -0.36);
-  group.add(le);
-  const re = mbox(0.1, 0.08, 0.02, magmaYellow, magmaYellow, 3.0);
-  re.position.set(0.12, 0.4, -0.36);
-  group.add(re);
+  // --- Bottom face glow (magma dripping from underside) ---
+  const bottomGlow = mbox(0.4, 0.01, 0.4, magma, magma, 2.0);
+  bottomGlow.position.set(0, 0.005, 0);
+  group.add(bottomGlow);
 
   return {
     group, type: 'magma_cube',
