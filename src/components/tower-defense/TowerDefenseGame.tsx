@@ -152,14 +152,14 @@ const ABILITY_LABELS: Record<string, { label: string; description: string; color
 };
 
 const ENEMY_ICONS: Record<EnemyType, string> = {
-  grunt: '👹',
-  fast: '💨',
-  tank: '🛡️',
-  flying: '🛸',
-  healer: '💚',
-  boss: '👑',
-  swarm: '🐝',
-  shield: '🔰',
+  grunt: '🐷',
+  fast: '🐔',
+  tank: '🐄',
+  flying: '🐝',
+  healer: '🐱',
+  boss: '🐴',
+  swarm: '🐰',
+  shield: '🐺',
 };
 
 // ===== Enemy Info Panel =====
