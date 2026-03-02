@@ -6,6 +6,7 @@ import { useSkillTree } from '@/lib/skill-tree/context';
 import AdvancementToast from './AdvancementToast';
 import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
 import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
+import { trackEvent } from '@/lib/analytics';
 
 // ===== Types =====
 interface PieceCell {
@@ -414,6 +415,12 @@ export const Rhythmia: React.FC = () => {
     if (result.newlyUnlockedIds.length > 0) {
       setToastIds(result.newlyUnlockedIds);
     }
+    trackEvent('game_end', {
+      game_mode: 'vanilla',
+      score: scoreRef.current,
+      lines: linesRef.current,
+      result: 'completed',
+    });
 
     // Award skill tree points
     awardGamePoints();
@@ -824,6 +831,7 @@ export const Rhythmia: React.FC = () => {
     setShowGameOver(false);
     setGameStarted(true);
     setClearingRows([]);
+    trackEvent('game_start', { game_mode: 'vanilla' });
 
     // Reset per-game advancement tracking
     gameTSpinsRef.current = 0;

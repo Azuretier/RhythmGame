@@ -16,6 +16,7 @@ import {
 import type { RankedState, RankChange } from '@/lib/ranked/types';
 import { TetrisAIGame, getDifficultyForRank } from '@/lib/ranked/TetrisAI';
 import type { BoardCell } from '@/types/multiplayer';
+import { trackEvent } from '@/lib/analytics';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 type MatchPhase = 'idle' | 'found' | 'countdown' | 'playing' | 'result';
@@ -206,6 +207,15 @@ export default function RankedMatch({ playerName, onBack, ws, connectionStatus, 
     };
     setRankedState(newState);
     saveRankedState(newState);
+
+    trackEvent('ranked_match_result', {
+      result: won ? 'win' : 'loss',
+      rank_points: change.newPoints,
+      rank_points_delta: change.pointsDelta,
+      tier_name: change.newTier.name,
+      is_promotion: !!change.isPromotion,
+      is_demotion: !!change.isDemotion,
+    });
 
     // Stop AI if running
     if (aiGameRef.current) {

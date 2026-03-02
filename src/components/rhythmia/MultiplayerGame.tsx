@@ -11,6 +11,7 @@ import type {
   PublicRoomInfo,
 } from '@/types/multiplayer';
 import { useProfile } from '@/lib/profile/context';
+import { trackEvent } from '@/lib/analytics';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 type GameMode = 'lobby' | 'room-browser' | 'waiting-room' | 'countdown' | 'playing' | 'finished' | 'ranked' | 'mob-battle';
@@ -154,6 +155,11 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
         setRoomState(msg.roomState);
         setMode('waiting-room');
         setError(null);
+        trackEvent('multiplayer_match_joined', {
+          game_mode: 'multiplayer',
+          room_code: msg.roomCode,
+          player_count: msg.roomState.players.length,
+        });
         break;
 
       case 'room_state':

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Heart, Instagram, Github, Youtube, Twitter, ExternalLink } from "lucide-react";
 import { FaDiscord } from "react-icons/fa";
@@ -61,9 +62,11 @@ export default function V1_0_1_UI() {
                 >
                   <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 p-1">
                     <div className="w-full h-full rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
-                      <img
+                      <Image
                         src="/profile_image/Switch_Edition.png"
                         alt="Azur"
+                        width={128}
+                        height={128}
                         className="w-full h-full object-cover"
                       />
                     </div>

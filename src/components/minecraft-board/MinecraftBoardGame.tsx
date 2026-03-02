@@ -6,9 +6,11 @@
 // =============================================================
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { useMinecraftBoardSocket } from '@/hooks/useMinecraftBoardSocket';
-import BoardRenderer from './BoardRenderer3D';
 import PlayerHUD, { InventoryPanel } from './PlayerHUD';
+
+const BoardRenderer = dynamic(() => import('./BoardRenderer3D'), { ssr: false });
 import CraftingPanel from './CraftingPanel';
 import type { Direction, MCPublicRoom } from '@/types/minecraft-board';
 import { BLOCK_PROPERTIES } from '@/types/minecraft-board';

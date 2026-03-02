@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import type { DragonGaugeState } from '../types';
 import { DRAGON_FURY_MAX, DRAGON_MIGHT_MAX } from '../constants';
-import { DragonModel3D } from './DragonModel3D';
+
+const DragonModel3D = dynamic(
+  () => import('./DragonModel3D').then(mod => ({ default: mod.DragonModel3D })),
+  { ssr: false }
+);
 
 interface DragonGaugeProps {
     gauge: DragonGaugeState;

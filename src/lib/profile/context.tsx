@@ -6,6 +6,7 @@ import { getStoredProfile, setStoredProfile } from './storage';
 import { syncUserDataToFirestore } from '@/lib/google-sync/firestore';
 import { auth } from '@/lib/rhythmia/firebase';
 import { isGoogleLinked } from '@/lib/google-sync/service';
+import { trackEvent } from '@/lib/analytics';
 
 interface ProfileContextType {
   profile: UserProfile | null;
@@ -54,6 +55,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     setStoredProfile(newProfile);
     setIsProfileSetup(true);
     setShowProfileSetup(false);
+    trackEvent('profile_created', { player_name: newProfile.name });
 
     // Sync to Firestore if Google account is linked
     if (auth?.currentUser && isGoogleLinked(auth.currentUser)) {

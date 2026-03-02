@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Github, Twitter, Mail } from 'lucide-react';
 
 export default function Profile() {
@@ -5,9 +6,11 @@ export default function Profile() {
     <section className="flex flex-col items-center text-center py-12 mb-10">
       <div className="relative mb-6">
         <div className="w-32 h-32 rounded-full border-4 border-primary p-1">
-          <img 
-            src="/avatar.jpg" // Put your image in /public/avatar.jpg
-            alt="Profile" 
+          <Image
+            src="/avatar.jpg"
+            alt="Profile"
+            width={128}
+            height={128}
             className="w-full h-full rounded-full object-cover"
           />
         </div>

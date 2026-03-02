@@ -73,6 +73,44 @@ const playerConnections = new Map<string, PlayerConnection>();
 const reconnectTokens = new Map<string, { playerId: string; expires: number }>();
 const disconnectTimers = new Map<string, NodeJS.Timeout>();
 
+// ===== Rate Limiting =====
+
+const CONNECTION_RATE_LIMIT = 10;   // max connections per IP per window
+const CONNECTION_RATE_WINDOW = 60_000; // 1 minute
+const MESSAGE_RATE_LIMIT = 60;      // max messages per player per window
+const MESSAGE_RATE_WINDOW = 10_000; // 10 seconds
+
+const connectionRates = new Map<string, { count: number; resetAt: number }>();
+const messageRates = new Map<string, { count: number; resetAt: number }>();
+
+function checkConnectionRate(ip: string): boolean {
+  const now = Date.now();
+  const entry = connectionRates.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    connectionRates.set(ip, { count: 1, resetAt: now + CONNECTION_RATE_WINDOW });
+    return true;
+  }
+  if (entry.count < CONNECTION_RATE_LIMIT) {
+    entry.count++;
+    return true;
+  }
+  return false;
+}
+
+function checkMessageRate(playerId: string): boolean {
+  const now = Date.now();
+  const entry = messageRates.get(playerId);
+  if (!entry || now >= entry.resetAt) {
+    messageRates.set(playerId, { count: 1, resetAt: now + MESSAGE_RATE_WINDOW });
+    return true;
+  }
+  if (entry.count < MESSAGE_RATE_LIMIT) {
+    entry.count++;
+    return true;
+  }
+  return false;
+}
+
 // ===== Arena System =====
 
 const arenaManager = new ArenaRoomManager({
@@ -1871,7 +1909,11 @@ function validateOrigin(request: IncomingMessage): boolean {
 // ===== HTTP Server =====
 
 const server = createServer((req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const requestOrigin = req.headers.origin;
+  const allowedOrigin = requestOrigin && ALLOWED_ORIGINS.some(a => requestOrigin === a || requestOrigin.startsWith(a))
+    ? requestOrigin
+    : ALLOWED_ORIGINS[0];
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -1945,7 +1987,7 @@ const heartbeatInterval = setInterval(() => {
   });
 }, HEARTBEAT_INTERVAL);
 
-// Token cleanup + notification cooldown cleanup
+// Token cleanup + notification cooldown cleanup + rate limit cleanup
 const tokenCleanupInterval = setInterval(() => {
   const now = Date.now();
   reconnectTokens.forEach((data, token) => {
@@ -1953,12 +1995,28 @@ const tokenCleanupInterval = setInterval(() => {
       reconnectTokens.delete(token);
     }
   });
+  connectionRates.forEach((entry, ip) => {
+    if (now >= entry.resetAt) connectionRates.delete(ip);
+  });
+  messageRates.forEach((entry, id) => {
+    if (now >= entry.resetAt) messageRates.delete(id);
+  });
   cleanupNotificationCooldowns();
 }, 60000);
 
 // ===== Connection Handler =====
 
 wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
+  // Connection rate limiting by IP
+  const clientIp = (request.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim()
+    || request.socket.remoteAddress
+    || 'unknown';
+  if (!checkConnectionRate(clientIp)) {
+    console.log(`[RATE_LIMIT] Connection rejected for IP ${clientIp}`);
+    ws.close(1008, 'Too many connections');
+    return;
+  }
+
   const playerId = generatePlayerId();
 
   const conn: PlayerConnection = {
@@ -1980,6 +2038,11 @@ wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
   broadcastOnlineCount();
 
   ws.on('message', (data: Buffer) => {
+    // Message rate limiting per player
+    if (!checkMessageRate(playerId)) {
+      sendError(playerId, 'Rate limit exceeded, slow down', 'RATE_LIMITED');
+      return;
+    }
     try {
       handleMessage(playerId, data.toString());
     } catch (error) {

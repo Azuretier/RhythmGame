@@ -18,6 +18,7 @@ import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
 import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
+import { trackEvent } from '@/lib/analytics';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
 const VoxelWorldBackground = dynamic(() => import('./VoxelWorldBackground'), {
@@ -626,6 +627,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 if (result.newlyUnlockedIds.length > 0) setToastIds(result.newlyUnlockedIds);
                 awardGamePoints();
             }
+            trackEvent('game_end', {
+                game_mode: 'multiplayer',
+                score: scoreRef.current,
+                lines: linesRef.current,
+                result: 'loss',
+            });
             onGameEnd(opponent?.id || '');
             render();
             return false;
@@ -1063,6 +1070,12 @@ export const MultiplayerBattle: React.FC<Props> = ({
                                 awardGamePoints();
                                 awardMultiplayerWinPoints();
                             }
+                            trackEvent('game_end', {
+                                game_mode: 'multiplayer',
+                                score: scoreRef.current,
+                                lines: linesRef.current,
+                                result: 'win',
+                            });
                             onGameEnd(playerId);
                             render();
                         }
@@ -1118,6 +1131,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
 
         fillQueue();
         spawnPiece();
+        trackEvent('game_start', { game_mode: 'multiplayer' });
 
         setTimeout(() => sendBoardUpdate(), 100);
 

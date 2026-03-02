@@ -1,6 +1,7 @@
 import type { PlayerStats, AdvancementState } from './types';
 import { ADVANCEMENTS } from './definitions';
 import { syncToFirestore, writeNotification } from './firestore';
+import { trackEvent } from '@/lib/analytics';
 
 const STORAGE_KEY = 'rhythmia_advancements';
 
@@ -93,6 +94,14 @@ export function checkNewAdvancements(state: AdvancementState): AdvancementState 
   }
 
   if (newlyUnlocked.length === 0) return state;
+
+  const totalUnlocked = state.unlockedIds.length + newlyUnlocked.length;
+  for (const advId of newlyUnlocked) {
+    trackEvent('achievement_unlocked', {
+      achievement_id: advId,
+      achievement_count: totalUnlocked,
+    });
+  }
 
   return {
     ...state,

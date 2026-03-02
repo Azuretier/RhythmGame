@@ -97,35 +97,72 @@ export default async function LocaleLayout({ children, params }: Props) {
 
     const gaId = process.env.NEXT_PUBLIC_GA_ID;
 
-    const jsonLd = {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Azuretia",
-        "operatingSystem": "Web",
-        "applicationCategory": "GameApplication",
-        "genre": ["PuzzleGame", "MusicGame"],
-        "description": {
-            ja: "テトリスとリズムゲームを融合させたブラウザパズルゲーム。",
-            en: "A browser-based puzzle game merging Tetris and rhythm mechanics.",
-            th: "เกมพัซเซิลบนเบราว์เซอร์ที่ผสมผสานเตตริสและกลไกจังหวะ",
-            es: "Un juego de puzzles en el navegador que fusiona Tetris y mecánicas de ritmo.",
-            fr: "Un jeu de puzzle en navigateur fusionnant Tetris et mécaniques de rythme."
-        }[locale] || "A browser-based puzzle game merging Tetris and rhythm mechanics.",
-        "author": {
-            "@type": "Person",
-            "name": "Azuretier"
+    const localizedDescription = {
+        ja: "テトリスとリズムゲームを融合させたブラウザパズルゲーム。",
+        en: "A browser-based puzzle game merging Tetris and rhythm mechanics.",
+        th: "เกมพัซเซิลบนเบราว์เซอร์ที่ผสมผสานเตตริสและกลไกจังหวะ",
+        es: "Un juego de puzzles en el navegador que fusiona Tetris y mecánicas de ritmo.",
+        fr: "Un jeu de puzzle en navigateur fusionnant Tetris et mécaniques de rythme."
+    }[locale] || "A browser-based puzzle game merging Tetris and rhythm mechanics.";
+
+    const jsonLd = [
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Azuretia",
+            "operatingSystem": "Web",
+            "applicationCategory": "GameApplication",
+            "genre": ["PuzzleGame", "MusicGame"],
+            "description": localizedDescription,
+            "author": {
+                "@type": "Person",
+                "name": "Azuretier"
+            }
+        },
+        {
+            "@context": "https://schema.org",
+            "@type": "VideoGame",
+            "name": "RHYTHMIA",
+            "description": localizedDescription,
+            "url": "https://azuretier.net",
+            "image": "https://azuretier.net/rhythmia.png",
+            "genre": ["Rhythm", "Puzzle", "Music"],
+            "gamePlatform": "Web Browser",
+            "applicationCategory": "Game",
+            "operatingSystem": "Any",
+            "playMode": ["SinglePlayer", "MultiPlayer", "CoOp"],
+            "numberOfPlayers": {
+                "@type": "QuantitativeValue",
+                "minValue": 1,
+                "maxValue": 9
+            },
+            "author": {
+                "@type": "Person",
+                "name": "Azuretier",
+                "url": "https://azuretier.net"
+            },
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD",
+                "availability": "https://schema.org/InStock"
+            },
+            "inLanguage": ["ja", "en", "th", "es", "fr"]
         }
-    };
+    ];
 
     return (
         <html lang={locale} suppressHydrationWarning>
             <head>
                 <meta name="theme-color" content="#ffbd43" />
                 <link rel="icon" href="/favicon.ico" />
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-                />
+                {jsonLd.map((schema, i) => (
+                    <script
+                        key={i}
+                        type="application/ld+json"
+                        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+                    />
+                ))}
                 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet" />
             </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }} suppressHydrationWarning>

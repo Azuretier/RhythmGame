@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import { useTranslations, useLocale } from 'next-intl';
 import type { ServerMessage, OnlineUser } from '@/types/multiplayer';
 import type { UserProfile } from '@/lib/profile/types';
@@ -25,8 +26,9 @@ import AnimatedLogo from '@/components/rhythmia/AnimatedLogo';
 import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
-import GameModeMap from '@/components/rhythmia/GameModeMap';
 import InventoryPanel from '@/components/inventory/InventoryPanel';
+
+const GameModeMap = dynamic(() => import('@/components/rhythmia/GameModeMap'), { ssr: false });
 
 type GameMode = 'lobby' | 'vanilla' | 'multiplayer';
 

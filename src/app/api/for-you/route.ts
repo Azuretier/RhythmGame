@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { z } from 'zod';
+import { RateLimiter, getClientIp } from '@/lib/rate-limit';
 import forYouConfig from '../../../../for-you.config.json';
 
 export const dynamic = 'force-dynamic';
 
-interface ForYouRequest {
-    locale: string;
-    unlockedAdvancements: number;
-    totalAdvancements: number;
-    recentCategories?: string[];
-}
+const rateLimiter = new RateLimiter({ maxRequests: 10, windowMs: 60_000 });
+
+const forYouSchema = z.object({
+    locale: z.string().trim().max(10),
+    unlockedAdvancements: z.number().int().min(0).max(10000),
+    totalAdvancements: z.number().int().min(0).max(10000),
+    recentCategories: z.array(z.string().trim().max(100)).max(50).optional(),
+});
 
 interface ContentCard {
     type: 'tutorial' | 'video' | 'tip';
@@ -28,8 +32,26 @@ function resolveVideoUrl(url?: string): string {
 
 export async function POST(request: NextRequest) {
     try {
-        const body: ForYouRequest = await request.json();
-        const { locale, unlockedAdvancements, totalAdvancements, recentCategories } = body;
+        const ip = getClientIp(request);
+        const limit = rateLimiter.check(ip);
+        if (!limit.allowed) {
+            return NextResponse.json(
+                { error: 'Too many requests' },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil(limit.retryAfterMs / 1000)) } }
+            );
+        }
+
+        const rawBody = await request.json();
+        const parsed = forYouSchema.safeParse(rawBody);
+
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: 'Invalid request', details: parsed.error.issues.map(i => i.message) },
+                { status: 400 }
+            );
+        }
+
+        const { locale, unlockedAdvancements, totalAdvancements, recentCategories } = parsed.data;
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
@@ -107,8 +129,8 @@ Return ONLY the JSON array, no markdown fencing, no explanation.`;
     } catch (error) {
         console.error('For You API error:', error);
         return NextResponse.json(
-            { cards: getFallbackContent('en', 0, 1) },
-            { status: 200 }
+            { error: 'Internal server error', cards: getFallbackContent('en', 0, 1) },
+            { status: 500 }
         );
     }
 }
