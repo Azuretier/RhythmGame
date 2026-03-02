@@ -1,0 +1,391 @@
+/* === Send Enemy Panel === */
+.panel {
+  position: absolute;
+  right: 16px;
+  top: 80px;
+  width: 260px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(100, 116, 139, 0.3);
+  border-radius: 12px;
+}
+
+/* === Header === */
+.header {
+  padding: 12px 16px 8px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.headerIcon {
+  display: flex;
+  align-items: center;
+  color: #22d3ee;
+  flex-shrink: 0;
+}
+
+.headerLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+}
+
+.pointsRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pointsIcon {
+  display: flex;
+  align-items: center;
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+.pointsValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fbbf24;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.pointsGlow {
+  animation: pointGlow 0.5s ease-out;
+}
+
+.pointsLabel {
+  font-size: 11px;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+/* === Target Section === */
+.targetSection {
+  padding: 8px 12px;
+  border-top: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.sectionLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #64748b;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.targetList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.targetBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: rgba(30, 41, 59, 0.6);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.targetBtn:hover {
+  background: rgba(51, 65, 85, 0.6);
+}
+
+.targetBtnSelected {
+  composes: targetBtn;
+  background: rgba(34, 211, 238, 0.08);
+  border-color: rgba(34, 211, 238, 0.4);
+  animation: targetPulse 2s ease-in-out infinite;
+}
+
+.targetBtnSelected:hover {
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.targetBtnEliminated {
+  composes: targetBtn;
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.targetBtnEliminated:hover {
+  background: rgba(30, 41, 59, 0.3);
+}
+
+/* Radio indicator */
+.radio {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #64748b;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radioSelected {
+  composes: radio;
+  border-color: #22d3ee;
+}
+
+.radioEliminated {
+  composes: radio;
+  border-color: #475569;
+}
+
+.radioDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22d3ee;
+}
+
+.radioX {
+  font-size: 6px;
+  color: #64748b;
+  line-height: 1;
+}
+
+.targetName {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.targetNameEliminated {
+  composes: targetName;
+  color: #475569;
+  text-decoration: line-through;
+}
+
+.livesIndicator {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.livesIcon {
+  color: #f87171;
+  display: flex;
+  align-items: center;
+}
+
+.livesCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  font-variant-numeric: tabular-nums;
+}
+
+.eliminatedIcon {
+  color: #475569;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* === Enemy Grid === */
+.enemyGrid {
+  padding: 8px 12px 12px;
+  border-top: 1px solid rgba(100, 116, 139, 0.2);
+  overflow-y: auto;
+  max-height: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.enemyBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(30, 41, 59, 0.7);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  width: 100%;
+}
+
+.enemyBtn:hover {
+  background: rgba(51, 65, 85, 0.8);
+}
+
+.enemyBtnDisabled {
+  composes: enemyBtn;
+  background: rgba(30, 41, 59, 0.3);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.enemyBtnDisabled:hover {
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.enemyIcon {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+.enemyInfo {
+  flex: 1;
+  text-align: left;
+}
+
+.enemyLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.enemyCount {
+  font-size: 10px;
+  color: #64748b;
+  margin-left: 4px;
+}
+
+.costBadge {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.costBadgeDisabled {
+  composes: costBadge;
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+}
+
+.costIcon {
+  display: flex;
+  align-items: center;
+}
+
+/* === No-target hint === */
+.hintWrap {
+  padding: 0 12px 8px;
+  text-align: center;
+}
+
+.hintText {
+  font-size: 10px;
+  color: rgba(34, 211, 238, 0.6);
+}
+
+/* === Keyframe Animations === */
+@keyframes pointGlow {
+  0% {
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.9);
+    color: #fef08a;
+  }
+  100% {
+    text-shadow: none;
+    color: #fbbf24;
+  }
+}
+
+@keyframes targetPulse {
+  0%, 100% {
+    box-shadow: 0 0 0px rgba(34, 211, 238, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.15);
+  }
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .panel {
+    right: 8px;
+    top: 56px;
+    width: 220px;
+    border-radius: 10px;
+  }
+
+  .header {
+    padding: 10px 12px 6px;
+  }
+
+  .pointsValue {
+    font-size: 15px;
+  }
+
+  .headerLabel {
+    font-size: 10px;
+  }
+
+  .targetSection {
+    padding: 6px 10px;
+  }
+
+  .targetBtn,
+  .targetBtnSelected,
+  .targetBtnEliminated {
+    padding: 5px 8px;
+  }
+
+  .targetName,
+  .targetNameEliminated {
+    font-size: 11px;
+  }
+
+  .enemyGrid {
+    padding: 6px 10px 10px;
+    max-height: 260px;
+  }
+
+  .enemyBtn,
+  .enemyBtnDisabled {
+    padding: 6px 8px;
+  }
+
+  .enemyLabel {
+    font-size: 11px;
+  }
+
+  .costBadge,
+  .costBadgeDisabled {
+    font-size: 10px;
+  }
+}

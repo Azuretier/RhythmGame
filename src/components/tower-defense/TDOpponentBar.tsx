@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Heart, Trophy, Zap, Skull, Crosshair } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import styles from './TDOpponentBar.module.css';
 
 interface TDOpponentBarProps {
   opponents: Array<{
@@ -48,12 +48,7 @@ export default function TDOpponentBar({
 }: TDOpponentBarProps) {
   return (
     <motion.div
-      className={cn(
-        'absolute bottom-4 left-1/2 -translate-x-1/2 z-20',
-        'flex flex-row gap-2 px-3 py-2',
-        'bg-slate-900/[0.92] backdrop-blur-2xl',
-        'border border-slate-700/50 rounded-2xl'
-      )}
+      className={styles.bar}
       initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 28, delay: 0.1 }}
@@ -64,59 +59,51 @@ export default function TDOpponentBar({
         const livesColor =
           livesPercent > 0.5 ? '#22c55e' : livesPercent > 0.25 ? '#eab308' : '#ef4444';
 
+        const cardClass = opp.eliminated
+          ? styles.cardEliminated
+          : isSelected
+            ? styles.cardSelected
+            : styles.card;
+
         return (
           <motion.button
             key={opp.playerId}
             onClick={() => !opp.eliminated && onSelectTarget(opp.playerId)}
             disabled={opp.eliminated}
-            className={cn(
-              'relative flex flex-col gap-1.5 px-3 py-2 rounded-xl transition-all duration-150 min-w-[140px]',
-              opp.eliminated
-                ? 'bg-slate-800/30 opacity-50 cursor-not-allowed'
-                : isSelected
-                  ? 'bg-cyan-500/10 border border-cyan-500/50 cursor-pointer'
-                  : 'bg-slate-800/60 border border-transparent hover:bg-slate-700/60 cursor-pointer'
-            )}
+            className={cardClass}
             whileHover={!opp.eliminated ? { y: -2 } : undefined}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
             {/* Selected target badge */}
             {isSelected && !opp.eliminated && (
-              <div className="absolute -top-1.5 -right-1.5 bg-cyan-500 rounded-full p-0.5">
-                <Crosshair size={8} className="text-white" />
+              <div className={styles.targetBadge}>
+                <Crosshair size={8} />
               </div>
             )}
 
             {/* Player name row */}
-            <div className="flex items-center gap-1.5">
+            <div className={styles.playerRow}>
               {opp.eliminated ? (
-                <Skull size={12} className="text-slate-500 flex-shrink-0" />
+                <Skull size={12} className={styles.eliminatedIcon} />
               ) : (
                 <div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  className={styles.statusDot}
                   style={{ backgroundColor: livesColor }}
                 />
               )}
-              <span
-                className={cn(
-                  'text-xs font-semibold truncate max-w-[80px]',
-                  opp.eliminated ? 'text-slate-500 line-through' : 'text-slate-200'
-                )}
-              >
+              <span className={opp.eliminated ? styles.playerNameEliminated : styles.playerName}>
                 {opp.playerName}
               </span>
             </div>
 
             {opp.eliminated ? (
-              <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-                Eliminated
-              </div>
+              <div className={styles.eliminatedLabel}>Eliminated</div>
             ) : (
               <>
                 {/* Lives bar */}
-                <div className="w-full h-1.5 bg-slate-700/60 rounded-full overflow-hidden">
+                <div className={styles.livesBar}>
                   <div
-                    className="h-full rounded-full transition-all duration-300"
+                    className={styles.livesFill}
                     style={{
                       width: `${livesPercent * 100}%`,
                       backgroundColor: livesColor,
@@ -125,34 +112,34 @@ export default function TDOpponentBar({
                 </div>
 
                 {/* Stats row */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="flex items-center gap-0.5" title="Lives">
-                    <Heart size={9} className="text-red-400 fill-red-400" />
-                    <span className="text-[10px] font-semibold text-slate-300 tabular-nums">
+                <div className={styles.statsRow}>
+                  <span className={styles.stat} title="Lives">
+                    <Heart size={9} className={styles.statIconLives} style={{ fill: 'currentColor' }} />
+                    <span className={styles.statValueLives}>
                       {opp.lives}/{opp.maxLives}
                     </span>
                   </span>
-                  <span className="flex items-center gap-0.5" title="Score">
-                    <Trophy size={9} className="text-purple-400" />
-                    <span className="text-[10px] font-medium text-slate-400 tabular-nums">
+                  <span className={styles.stat} title="Score">
+                    <Trophy size={9} className={styles.statIconScore} />
+                    <span className={styles.statValue}>
                       {opp.score}
                     </span>
                   </span>
-                  <span className="flex items-center gap-0.5 text-slate-400" title="Towers">
-                    <TowerIcon />
-                    <span className="text-[10px] font-medium tabular-nums">
+                  <span className={styles.stat} title="Towers">
+                    <span className={styles.statIconTowers}><TowerIcon /></span>
+                    <span className={styles.statValue}>
                       {opp.towerCount}
                     </span>
                   </span>
-                  <span className="flex items-center gap-0.5 text-slate-400" title="Enemies">
-                    <EnemyCountIcon />
-                    <span className="text-[10px] font-medium tabular-nums">
+                  <span className={styles.stat} title="Enemies">
+                    <span className={styles.statIconEnemies}><EnemyCountIcon /></span>
+                    <span className={styles.statValue}>
                       {opp.enemyCount}
                     </span>
                   </span>
-                  <span className="flex items-center gap-0.5" title="Send Points">
-                    <Zap size={9} className="text-amber-400" />
-                    <span className="text-[10px] font-medium text-slate-400 tabular-nums">
+                  <span className={styles.stat} title="Send Points">
+                    <Zap size={9} className={styles.statIconPoints} />
+                    <span className={styles.statValue}>
                       {opp.sendPoints}
                     </span>
                   </span>
