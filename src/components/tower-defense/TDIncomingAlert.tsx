@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 import type { EnemyType } from '@/types/tower-defense';
-import { cn } from '@/lib/utils';
+import styles from './TDIncomingAlert.module.css';
 
 const ENEMY_LABELS: Record<EnemyType, { label: string; icon: string }> = {
   grunt: { label: 'Grunts', icon: '🐷' },
@@ -74,7 +74,7 @@ export default function TDIncomingAlert({ alerts }: TDIncomingAlertProps) {
   }, []);
 
   return (
-    <div className="absolute top-20 right-4 z-30 flex flex-col gap-2 pointer-events-none w-[240px]">
+    <div className={styles.container}>
       <AnimatePresence mode="popLayout">
         {visibleAlerts.map((alert) => {
           const enemyInfo = ENEMY_LABELS[alert.enemyType];
@@ -84,62 +84,39 @@ export default function TDIncomingAlert({ alerts }: TDIncomingAlertProps) {
             <motion.div
               key={alert.timestamp}
               layout
-              initial={{ x: 100, opacity: 0, scale: 0.9 }}
-              animate={{
-                x: 0,
-                opacity: 1,
-                scale: 1,
-                boxShadow: [
-                  '0 0 0px rgba(239, 68, 68, 0)',
-                  '0 0 16px rgba(239, 68, 68, 0.4)',
-                  '0 0 8px rgba(239, 68, 68, 0.2)',
-                ],
-              }}
-              exit={{ x: 100, opacity: 0, scale: 0.9 }}
+              initial={{ x: -60, opacity: 0, scale: 0.9 }}
+              animate={{ x: 0, opacity: 1, scale: 1 }}
+              exit={{ x: -60, opacity: 0, scale: 0.9 }}
               transition={{
                 type: 'spring',
                 stiffness: 400,
                 damping: 25,
-                boxShadow: { duration: 0.8, repeat: 1 },
               }}
-              className={cn(
-                'flex items-center gap-2.5 px-3 py-2.5 rounded-xl pointer-events-auto',
-                'bg-slate-900/[0.95] backdrop-blur-xl',
-                isBoss
-                  ? 'border-2 border-red-500/70'
-                  : 'border border-red-500/40'
-              )}
+              className={isBoss ? styles.alertBoss : styles.alert}
             >
               {/* Warning icon */}
-              <div
-                className={cn(
-                  'flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg',
-                  isBoss ? 'bg-red-500/25' : 'bg-orange-500/15'
-                )}
-              >
+              <div className={isBoss ? styles.iconWrapBoss : styles.iconWrap}>
                 <AlertTriangle
                   size={16}
-                  className={isBoss ? 'text-red-400' : 'text-orange-400'}
+                  className={isBoss ? styles.iconBoss : styles.icon}
                 />
               </div>
 
               {/* Alert content */}
-              <div className="flex-1 min-w-0">
-                <div className="text-[10px] font-semibold text-red-400 uppercase tracking-wider mb-0.5">
-                  Incoming
-                </div>
-                <div className="text-xs text-slate-200 leading-tight">
-                  <span className="font-bold text-slate-100">
+              <div className={styles.content}>
+                <div className={styles.incomingLabel}>Incoming</div>
+                <div className={styles.messageText}>
+                  <span className={styles.senderName}>
                     {alert.fromPlayerName}
                   </span>
                   {' sent '}
-                  <span className="font-bold">
-                    {alert.count}×
+                  <span className={styles.enemyCountText}>
+                    {alert.count}&times;
                   </span>
                   {' '}
-                  <span className="inline-flex items-center gap-0.5">
-                    <span>{enemyInfo?.icon}</span>
-                    <span className={isBoss ? 'text-red-300 font-bold' : ''}>
+                  <span className={styles.enemyInline}>
+                    <span className={styles.enemyEmoji}>{enemyInfo?.icon}</span>
+                    <span className={isBoss ? styles.bossEnemyName : undefined}>
                       {enemyInfo?.label ?? alert.enemyType}
                     </span>
                   </span>
