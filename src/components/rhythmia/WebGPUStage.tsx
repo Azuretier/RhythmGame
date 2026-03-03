@@ -24,7 +24,7 @@ export default function WebGPUStage() {
     const init = async () => {
       // Check for WebGPU support
       if (!navigator.gpu) {
-        console.log('WebGPU not supported, using CSS fallback');
+        console.warn('WebGPU not supported, using CSS fallback');
         return;
       }
 
@@ -32,7 +32,7 @@ export default function WebGPUStage() {
         // Request adapter and device
         const adapter = await navigator.gpu.requestAdapter();
         if (!adapter) {
-          console.log('No WebGPU adapter found');
+          console.warn('No WebGPU adapter found');
           return;
         }
 
@@ -46,7 +46,7 @@ export default function WebGPUStage() {
         // Configure canvas
         const context = canvas.getContext('webgpu');
         if (!context) {
-          console.log('Could not get WebGPU context');
+          console.warn('Could not get WebGPU context');
           return;
         }
         contextRef.current = context;

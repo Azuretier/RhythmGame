@@ -12,7 +12,11 @@ import type {
   PowerUpType,
   EmoteType,
   TargetMode,
+  ArenaServerMessage,
 } from '@/types/arena';
+import type {
+  ConnectedMessage, PingMessage, ErrorMessage, ServerShutdownMessage,
+} from '@/types/multiplayer';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -140,10 +144,10 @@ export function useArenaSocket() {
     }
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleServerMessage = useCallback((msg: any) => {
-    const type = msg.type as string;
-    switch (type) {
+  type ArenaHandledMessage = ConnectedMessage | PingMessage | ErrorMessage | ServerShutdownMessage | ArenaServerMessage;
+
+  const handleServerMessage = useCallback((msg: ArenaHandledMessage) => {
+    switch (msg.type) {
       // Standard multiplayer messages we still need
       case 'connected':
         playerIdRef.current = msg.playerId;
@@ -239,20 +243,29 @@ export function useArenaSocket() {
       }
 
       case 'arena_player_action': {
-        setLastPlayerAction(msg as PlayerActionEvent);
+        setLastPlayerAction({
+          playerId: msg.playerId,
+          playerName: msg.playerName,
+          action: msg.action,
+          onBeat: msg.onBeat,
+        });
         break;
       }
 
       case 'arena_player_eliminated': {
-        const elim = msg as EliminationEvent;
-        setLastElimination(elim);
+        setLastElimination({
+          playerId: msg.playerId,
+          playerName: msg.playerName,
+          placement: msg.placement,
+          eliminatedBy: msg.eliminatedBy,
+        });
 
         setArenaState(prev => {
           if (!prev) return prev;
           return {
             ...prev,
             players: prev.players.map(p =>
-              p.id === elim.playerId ? { ...p, alive: false, placement: elim.placement } : p
+              p.id === msg.playerId ? { ...p, alive: false, placement: msg.placement } : p
             ),
             aliveCount: prev.aliveCount - 1,
           };
@@ -267,7 +280,13 @@ export function useArenaSocket() {
       }
 
       case 'arena_session_end': {
-        setSessionResult(msg as ArenaSessionResult);
+        setSessionResult({
+          reason: msg.reason,
+          winnerId: msg.winnerId,
+          winnerName: msg.winnerName,
+          rankings: msg.rankings,
+          stats: msg.stats,
+        });
         setPhase('ended');
         break;
       }
@@ -280,12 +299,15 @@ export function useArenaSocket() {
       }
 
       case 'arena_tempo_collapse': {
-        setLastTempoCollapse(msg as TempoCollapseEvent);
+        setLastTempoCollapse({
+          avgSync: msg.avgSync,
+          bpmDeviation: msg.bpmDeviation,
+        });
         break;
       }
 
       case 'arena_powerup_spawned': {
-        setHeldPowerUp(msg.powerUp as PowerUpType);
+        setHeldPowerUp(msg.powerUp);
         break;
       }
 
@@ -293,7 +315,7 @@ export function useArenaSocket() {
         setLastPowerUpUsed({
           playerId: msg.playerId,
           playerName: msg.playerName,
-          powerUp: msg.powerUp as PowerUpType,
+          powerUp: msg.powerUp,
           targetName: msg.targetName,
         });
         // If it was us who used it, clear held power-up
@@ -301,29 +323,29 @@ export function useArenaSocket() {
           setHeldPowerUp(null);
           // Apply self-effects
           if (msg.powerUp === 'shield' || msg.powerUp === 'score_boost') {
-            setActiveEffects(prev => [...prev, { type: msg.powerUp as PowerUpType, expiresAt: Date.now() + (msg.powerUp === 'shield' ? 5000 : 6000) }]);
+            setActiveEffects(prev => [...prev, { type: msg.powerUp, expiresAt: Date.now() + (msg.powerUp === 'shield' ? 5000 : 6000) }]);
           }
         }
         // If we are the target of freeze
         if (msg.powerUp === 'freeze_target' && msg.targetId === playerIdRef.current) {
-          setActiveEffects(prev => [...prev, { type: 'freeze_target' as PowerUpType, expiresAt: Date.now() + 3000 }]);
+          setActiveEffects(prev => [...prev, { type: 'freeze_target', expiresAt: Date.now() + 3000 }]);
         }
         break;
       }
 
       case 'arena_emote_sent': {
-        const emoteData = { playerId: msg.playerId, playerName: msg.playerName, emote: msg.emote as EmoteType };
+        const emoteData = { playerId: msg.playerId, playerName: msg.playerName, emote: msg.emote };
         setLastEmote(emoteData);
         setEmoteMap(prev => {
           const next = new Map(prev);
-          next.set(msg.playerId, { emote: msg.emote as EmoteType, expiresAt: Date.now() + 3000 });
+          next.set(msg.playerId, { emote: msg.emote, expiresAt: Date.now() + 3000 });
           return next;
         });
         break;
       }
 
       case 'arena_event_feed': {
-        const feedEvent = msg.event as ArenaFeedEvent;
+        const feedEvent = msg.event;
         setFeedEvents(prev => {
           const next = [...prev, feedEvent];
           // Keep only last 8 events
@@ -362,7 +384,7 @@ export function useArenaSocket() {
 
     ws.onmessage = (event) => {
       try {
-        const message = JSON.parse(event.data);
+        const message = JSON.parse(event.data) as ArenaHandledMessage;
         handleServerMessage(message);
       } catch (err) {
         console.error('[ARENA WS] Parse error:', err);

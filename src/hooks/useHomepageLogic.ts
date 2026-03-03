@@ -89,7 +89,7 @@ export function useHomepageLogic() {
                 } else if (message.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong' }));
                 }
-            } catch { }
+            } catch (err) { console.warn('[useHomepageLogic] Failed to parse WebSocket message:', err); }
         };
 
         ws.onclose = () => {

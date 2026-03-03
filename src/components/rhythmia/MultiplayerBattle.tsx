@@ -463,7 +463,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             gain.connect(ctx.destination);
             osc.start();
             osc.stop(ctx.currentTime + dur);
-        } catch { }
+        } catch (err) { console.warn('[MultiplayerBattle] Audio playTone failed:', err); }
     }, []);
 
     const playDrum = useCallback((wIdx = 0) => {
@@ -472,7 +472,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         try {
             if (ctx.state === 'suspended') ctx.resume();
             playWorldDrum(ctx, wIdx);
-        } catch { }
+        } catch (err) { console.warn('[MultiplayerBattle] Audio playDrum failed:', err); }
     }, []);
 
     const playLineClear = useCallback((count: number, wIdx = 0) => {
@@ -515,7 +515,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             gain2.connect(ctx.destination);
             osc2.start(t);
             osc2.stop(t + 0.12);
-        } catch { }
+        } catch (err) { console.warn('[MultiplayerBattle] Audio playTSpinSound failed:', err); }
     }, []);
 
     // ===== Terrain Ready Handler =====
@@ -1083,7 +1083,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
                 } else if (msg.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong' }));
                 }
-            } catch { }
+            } catch (err) { console.error('[MultiplayerBattle] Failed to process WebSocket message:', err); }
         };
 
         ws.addEventListener('message', handler);

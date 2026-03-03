@@ -392,6 +392,27 @@ export interface ArenaTargetChanged {
   targetId?: string;
 }
 
+export interface ArenaPowerUpSpawnedMessage {
+  type: 'arena_powerup_spawned';
+  powerUp: PowerUpType;
+}
+
+export interface ArenaPowerUpUsedMessage {
+  type: 'arena_powerup_used';
+  playerId: string;
+  playerName: string;
+  powerUp: PowerUpType;
+  targetId?: string;
+  targetName?: string;
+}
+
+export interface ArenaEmoteSentMessage {
+  type: 'arena_emote_sent';
+  playerId: string;
+  playerName: string;
+  emote: EmoteType;
+}
+
 export type ArenaServerMessage =
   | ArenaCreatedMessage
   | ArenaJoinedMessage
@@ -411,7 +432,10 @@ export type ArenaServerMessage =
   | ArenaQueuedMessage
   | ArenaTempoCollapseMessage
   | ArenaEmoteBroadcast
-  | ArenaTargetChanged;
+  | ArenaTargetChanged
+  | ArenaPowerUpSpawnedMessage
+  | ArenaPowerUpUsedMessage
+  | ArenaEmoteSentMessage;
 
 // ===== Relay Payload =====
 

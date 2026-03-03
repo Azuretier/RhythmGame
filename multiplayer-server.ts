@@ -180,7 +180,7 @@ function broadcastOnlineCount(): void {
       try {
         conn.ws.send(countMsg);
         conn.ws.send(usersMsg);
-      } catch { }
+      } catch (err) { console.warn('[MultiplayerServer] Failed to send online status update:', err); }
     }
   });
 }
@@ -2114,7 +2114,7 @@ function shutdown(signal: string) {
       };
       conn.ws.send(JSON.stringify(msg));
       conn.ws.close(1001, 'Server shutdown');
-    } catch { }
+    } catch (err) { console.warn('[SHUTDOWN] Failed to notify/close connection:', err); }
   });
 
   wss.close(() => {

@@ -22,7 +22,6 @@ interface WindowFrameProps {
   isActive: boolean;
   onFocus: () => void;
   children: React.ReactNode;
-  theme: any;
   isDarkMode: boolean;
   large?: boolean;
   scrollable?: boolean;
@@ -31,15 +30,14 @@ interface WindowFrameProps {
 }
 
 const WindowFrame = memo(({ 
-  title, 
-  id, 
+  title,
+  id,
   onClose,
   onHide,
-  isActive, 
-  onFocus, 
-  children, 
-  theme, 
-  isDarkMode, 
+  isActive,
+  onFocus,
+  children,
+  isDarkMode,
   large = false,
   scrollable = false,
   position,

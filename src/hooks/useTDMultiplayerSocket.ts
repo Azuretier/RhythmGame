@@ -5,6 +5,10 @@ import type {
   GameState, Tower, Enemy, Projectile, EnemyType, TowerType,
   TDPlayerState, TDMultiplayerRoom,
 } from '@/types/tower-defense';
+import type {
+  PingMessage, ConnectedMessage, OnlineCountMessage, ErrorMessage,
+  TDServerMessage, TDStateUpdatePlayer,
+} from '@/types/multiplayer';
 
 // ===== Exported Types =====
 
@@ -120,33 +124,33 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
 
   // ===== Server message handler =====
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleServerMessage = useCallback((msg: any) => {
-    const type = msg.type as string;
+  type TDHandledMessage = PingMessage | ConnectedMessage | OnlineCountMessage | ErrorMessage | TDServerMessage;
 
-    // Standard multiplayer protocol messages
-    if (type === 'ping') {
-      lastPingRef.current = Date.now();
-      send({ type: 'pong' });
-      return;
-    }
+  const handleServerMessage = useCallback((msg: TDHandledMessage) => {
+    switch (msg.type) {
+      // Standard multiplayer protocol messages
+      case 'ping': {
+        lastPingRef.current = Date.now();
+        send({ type: 'pong' });
+        return;
+      }
 
-    if (type === 'connected') {
-      playerIdRef.current = msg.playerId;
-      setPlayerId(msg.playerId);
-      return;
-    }
+      case 'connected': {
+        playerIdRef.current = msg.playerId;
+        setPlayerId(msg.playerId);
+        return;
+      }
 
-    if (type === 'online_count') return;
+      case 'online_count':
+        return;
 
-    if (type === 'error') {
-      setError(msg.message);
-      return;
-    }
+      case 'error': {
+        setError(msg.message);
+        return;
+      }
 
-    // ===== TD-specific messages =====
+      // ===== TD-specific messages =====
 
-    switch (type) {
       case 'td_room_created': {
         roomCodeRef.current = msg.roomCode;
         setRoomCode(msg.roomCode);
@@ -176,7 +180,7 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
       }
 
       case 'td_player_joined': {
-        const p = msg.player as TDPlayerState;
+        const p = msg.player;
         setPlayers(prev => {
           if (prev.some(x => x.playerId === p.playerId)) return prev;
           return [...prev, toMultiplayerPlayer(p)];
@@ -212,18 +216,7 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
       }
 
       case 'td_state_update': {
-        const playerStates = msg.playerStates as Array<{
-          playerId: string;
-          towers: Tower[];
-          enemies: Enemy[];
-          projectiles: Projectile[];
-          gold: number;
-          lives: number;
-          score: number;
-          sendPoints: number;
-          phase: string;
-        }>;
-
+        const playerStates = msg.playerStates;
         const myId = playerIdRef.current;
 
         for (const ps of playerStates) {
@@ -247,7 +240,7 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
 
         // Update opponent states
         setOpponentStates(() => {
-          const newMap = new Map<string, typeof playerStates[number]>();
+          const newMap = new Map<string, TDStateUpdatePlayer>();
           for (const ps of playerStates) {
             if (ps.playerId !== myId) {
               newMap.set(ps.playerId, ps);
@@ -304,9 +297,9 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
 
       case 'td_enemies_incoming': {
         const alert = {
-          fromPlayerName: msg.fromPlayerName as string,
-          enemyType: msg.enemyType as EnemyType,
-          count: msg.count as number,
+          fromPlayerName: msg.fromPlayerName,
+          enemyType: msg.enemyType,
+          count: msg.count,
           timestamp: Date.now(),
         };
         setIncomingAlerts(prev => [...prev, alert]);
@@ -327,7 +320,7 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
         setWinner(msg.winnerId || null);
 
         // Build rankings with player names
-        const rankingsRaw = msg.rankings as Array<{ playerId: string; rank: number; score: number }>;
+        const rankingsRaw = msg.rankings;
         setPlayers(prev => {
           const rankingsWithNames = rankingsRaw.map(r => {
             const player = prev.find(p => p.playerId === r.playerId);
@@ -393,7 +386,7 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
 
     ws.onmessage = (event) => {
       try {
-        const message = JSON.parse(event.data);
+        const message = JSON.parse(event.data) as TDHandledMessage;
         handleServerMessage(message);
       } catch { /* ignore parse errors */ }
     };

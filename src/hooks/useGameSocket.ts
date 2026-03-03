@@ -57,12 +57,10 @@ export function useGameSocket(): UseGameSocketReturn {
     });
 
     socketInstance.on('connect', () => {
-      console.log('Connected to game server');
       setIsConnected(true);
     });
 
     socketInstance.on('disconnect', () => {
-      console.log('Disconnected from game server');
       setIsConnected(false);
     });
 

@@ -83,7 +83,7 @@ export default function ProfileSetup() {
           friendCode: profile.friendCode,
           locale: profile.locale,
         }),
-      }).catch(() => {});
+      }).catch((err) => { console.warn('[ProfileSetup] Failed to log site entry to Discord:', err); });
     }
 
     // Switch locale if different from current

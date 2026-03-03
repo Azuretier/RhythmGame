@@ -64,7 +64,7 @@ export function loadAdvancementState(): AdvancementState {
         newlyUnlockedIds: [],
       };
     }
-  } catch {}
+  } catch (err) { console.warn('[Advancements] Failed to load advancement state from localStorage:', err); }
 
   return { stats: getDefaultStats(), unlockedIds: [], newlyUnlockedIds: [] };
 }
@@ -80,7 +80,7 @@ export function saveAdvancementState(state: AdvancementState): void {
         unlockedIds: state.unlockedIds,
       })
     );
-  } catch {}
+  } catch (err) { console.warn('[Advancements] Failed to save advancement state to localStorage:', err); }
 }
 
 export function checkNewAdvancements(state: AdvancementState): AdvancementState {
