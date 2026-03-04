@@ -99,8 +99,9 @@ import type { MCClientMessage, MCServerMessage as MCBoardServerMessage } from '.
 import type { EoEClientMessage } from './echoes';
 import type { MWClientMessage } from './minecraft-world';
 import type { TDPlayerState, TDMultiplayerRoom, EnemyType, TowerType, Tower, Enemy, Projectile, GamePhase } from './tower-defense';
+import type { MSClientMessage } from './minecraft-switch';
 
-export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, MWClientMessage };
+export type { ArenaClientMessage, ArenaServerMessage, MCClientMessage, MCBoardServerMessage, MWClientMessage, MSClientMessage };
 
 // ===== Tower Defense Multiplayer Messages =====
 
@@ -334,6 +335,7 @@ export type ClientMessage =
   | MWClientMessage
   | EoEClientMessage
   | TDClientMessage
+  | MSClientMessage
   | SetProfileMessage
   | GetOnlineUsersMessage;
 

@@ -7,6 +7,7 @@ import { MinecraftBoardManager } from './src/lib/minecraft-board/MinecraftBoardM
 import { EoEManager, isEoEMessage } from './src/lib/echoes/EoEManager';
 import { MinecraftWorldManager } from './src/lib/minecraft-world/MinecraftWorldManager';
 import { TDMultiplayerManager } from './src/lib/tower-defense/TDMultiplayerManager';
+import { MinecraftSwitchManager } from './src/lib/minecraft-switch/MinecraftSwitchManager';
 import { notifyPlayerOnline, cleanupNotificationCooldowns } from './src/lib/discord-bot/notifications';
 import type {
   ClientMessage,
@@ -491,6 +492,61 @@ function broadcastToTD(roomCode: string, message: ServerMessage, excludePlayerId
       sendToPlayer(pid, message);
     }
   }
+}
+
+// ===== Minecraft Switch Edition System =====
+
+const mcsManager = new MinecraftSwitchManager({
+  onSendToPlayer: (playerId, message) => {
+    sendToPlayer(playerId, message);
+  },
+  onBroadcastToRoom: (roomCode, message, excludePlayerId) => {
+    broadcastToMCS(roomCode, message, excludePlayerId);
+  },
+  onSessionEnd: (roomCode) => {
+    console.log(`[MCS] Session ended: ${roomCode}`);
+  },
+});
+
+function broadcastToMCS(roomCode: string, message: ServerMessage, excludePlayerId?: string): void {
+  const playerIds = mcsManager.getPlayerIdsInRoom(roomCode);
+  for (const pid of playerIds) {
+    if (pid !== excludePlayerId) {
+      sendToPlayer(pid, message);
+    }
+  }
+}
+
+function sendMCSRoomState(roomCode: string): void {
+  const roomState = mcsManager.getRoomState(roomCode);
+  if (roomState) {
+    broadcastToMCS(roomCode, { type: 'ms_room_state', roomState } as unknown as ServerMessage);
+  }
+}
+
+function isMCSMessage(type: string): boolean {
+  return type.startsWith('ms_');
+}
+
+function startMCSCountdown(roomCode: string, gameSeed: number): void {
+  let count = COUNTDOWN_SECONDS;
+  const tick = () => {
+    if (count > 0) {
+      broadcastToMCS(roomCode, { type: 'ms_countdown', count } as unknown as ServerMessage);
+      count--;
+      setTimeout(tick, 1000);
+    } else {
+      broadcastToMCS(roomCode, { type: 'ms_game_started', seed: gameSeed } as unknown as ServerMessage);
+      try {
+        mcsManager.beginPlaying(roomCode);
+      } catch (err) {
+        console.error(`[MCS] beginPlaying failed for room ${roomCode}:`, err);
+        broadcastToMCS(roomCode, { type: 'ms_error', message: 'Failed to start game' } as unknown as ServerMessage);
+      }
+      console.log(`[MCS] Game started in room ${roomCode}`);
+    }
+  };
+  tick();
 }
 
 // Countdown timers: track active countdowns so they can be cancelled
@@ -1714,6 +1770,135 @@ function handleMessage(playerId: string, raw: string): void {
     }
 
     default: {
+      // Minecraft Switch Edition messages
+      if (isMCSMessage(message.type)) {
+        const conn = playerConnections.get(playerId);
+
+        switch (message.type) {
+          case 'ms_create_room': {
+            const existing = mcsManager.getRoomByPlayerId(playerId);
+            if (existing) {
+              const oldCode = existing.code;
+              mcsManager.removePlayer(playerId);
+              broadcastToMCS(oldCode, { type: 'ms_player_left', playerId } as unknown as ServerMessage);
+              sendMCSRoomState(oldCode);
+            }
+            const { roomCode, player } = mcsManager.createRoom(
+              playerId,
+              (message.playerName || 'Player').slice(0, 16),
+              message.roomName,
+              {
+                gameMode: message.gameMode,
+                difficulty: message.difficulty,
+                worldType: message.worldType,
+              },
+            );
+            const reconnectToken = issueReconnectToken(playerId);
+            sendToPlayer(playerId, {
+              type: 'ms_room_created', roomCode, playerId: player.id, reconnectToken,
+            } as unknown as ServerMessage);
+            sendMCSRoomState(roomCode);
+            console.log(`[MCS] Room ${roomCode} created by ${player.name}`);
+            break;
+          }
+          case 'ms_join_room': {
+            const existing = mcsManager.getRoomByPlayerId(playerId);
+            if (existing) {
+              const oldCode = existing.code;
+              mcsManager.removePlayer(playerId);
+              broadcastToMCS(oldCode, { type: 'ms_player_left', playerId } as unknown as ServerMessage);
+              sendMCSRoomState(oldCode);
+            }
+            const result = mcsManager.joinRoom(message.roomCode, playerId, (message.playerName || 'Player').slice(0, 16));
+            if (!result.success || !result.player) {
+              sendError(playerId, result.error || 'Failed to join', 'MCS_JOIN_FAILED');
+              break;
+            }
+            const roomCode = message.roomCode.toUpperCase().trim();
+            const roomState = mcsManager.getRoomState(roomCode);
+            if (!roomState) { sendError(playerId, 'Room not found', 'MCS_ROOM_NOT_FOUND'); break; }
+            const reconnectToken = issueReconnectToken(playerId);
+            sendToPlayer(playerId, {
+              type: 'ms_joined_room', roomCode, playerId: result.player.id, roomState, reconnectToken,
+            } as unknown as ServerMessage);
+            broadcastToMCS(roomCode, { type: 'ms_player_joined', player: result.player } as unknown as ServerMessage, playerId);
+            sendMCSRoomState(roomCode);
+            console.log(`[MCS] ${result.player.name} joined room ${message.roomCode}`);
+            break;
+          }
+          case 'ms_get_rooms': {
+            const rooms = mcsManager.getPublicRooms();
+            sendToPlayer(playerId, { type: 'ms_room_list', rooms } as unknown as ServerMessage);
+            break;
+          }
+          case 'ms_leave': {
+            const result = mcsManager.removePlayer(playerId);
+            if (conn?.reconnectToken) reconnectTokens.delete(conn.reconnectToken);
+            if (result.roomCode) {
+              broadcastToMCS(result.roomCode, { type: 'ms_player_left', playerId } as unknown as ServerMessage);
+              if (result.room) sendMCSRoomState(result.roomCode);
+              console.log(`[MCS] Player ${playerId} left room ${result.roomCode}`);
+            }
+            break;
+          }
+          case 'ms_ready': {
+            const readyResult = mcsManager.setPlayerReady(playerId, message.ready);
+            if (!readyResult.success) { sendError(playerId, readyResult.error || 'Failed to set ready'); break; }
+            const room = mcsManager.getRoomByPlayerId(playerId);
+            if (room) {
+              broadcastToMCS(room.code, { type: 'ms_player_ready', playerId, ready: message.ready } as unknown as ServerMessage);
+              sendMCSRoomState(room.code);
+            }
+            break;
+          }
+          case 'ms_start': {
+            const startResult = mcsManager.startGame(playerId);
+            if (!startResult.success || !startResult.gameSeed) {
+              sendError(playerId, startResult.error || 'Failed to start', 'MCS_START_FAILED');
+              break;
+            }
+            const room = mcsManager.getRoomByPlayerId(playerId);
+            if (room) {
+              sendMCSRoomState(room.code);
+              startMCSCountdown(room.code, startResult.gameSeed);
+            }
+            break;
+          }
+          case 'ms_position':
+            mcsManager.handlePlayerPosition(playerId, message.x, message.y, message.z, message.yaw, message.pitch, message.onGround);
+            break;
+          case 'ms_sprint':
+            mcsManager.handleSprint(playerId, message.sprinting);
+            break;
+          case 'ms_sneak':
+            mcsManager.handleSneak(playerId, message.sneaking);
+            break;
+          case 'ms_break_block':
+            mcsManager.handleBlockBreak(playerId, message.x, message.y, message.z);
+            break;
+          case 'ms_place_block':
+            mcsManager.handleBlockPlace(playerId, message.x, message.y, message.z, message.blockId, message.face);
+            break;
+          case 'ms_start_breaking':
+          case 'ms_cancel_breaking':
+          case 'ms_interact_block':
+            break;
+          case 'ms_select_slot':
+            mcsManager.handleSelectSlot(playerId, message.slot);
+            break;
+          case 'ms_chat':
+            mcsManager.handleChat(playerId, message.message);
+            break;
+          case 'ms_change_gamemode':
+            mcsManager.handleGameModeChange(playerId, message.gameMode);
+            break;
+          case 'ms_change_difficulty':
+            mcsManager.handleDifficultyChange(playerId, message.difficulty);
+            break;
+        }
+        break;
+      }
+
       // Echoes of Eternity messages
       if (isEoEMessage(message.type)) {
         const conn = playerConnections.get(playerId);
@@ -1844,6 +2029,12 @@ function handleDisconnect(playerId: string, reason: string): void {
   // Handle TD multiplayer disconnect
   tdManager.handleDisconnect(playerId);
 
+  // Handle Minecraft Switch disconnect
+  const mcsResult = mcsManager.markDisconnected(playerId);
+  if (mcsResult.roomCode) {
+    sendMCSRoomState(mcsResult.roomCode);
+  }
+
   // Handle EoE disconnect
   eoeManager.removePlayer(playerId);
   eoeManager.dequeuePlayer(playerId);
@@ -1934,6 +2125,7 @@ const server = createServer((req, res) => {
       mcBoards: mcBoardManager.getRoomCount(),
       mcWorlds: mwManager.getRoomCount(),
       tdRooms: tdManager.getRoomCount(),
+      mcSwitch: mcsManager.getRoomCount(),
     }));
   } else if (req.url === '/stats') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1944,6 +2136,7 @@ const server = createServer((req, res) => {
       mcBoards: mcBoardManager.getRoomCount(),
       mcWorlds: mwManager.getRoomCount(),
       tdRooms: tdManager.getRoomCount(),
+      mcSwitch: mcsManager.getRoomCount(),
       arenaQueue: arenaQueue.size,
       uptime: process.uptime(),
       memory: process.memoryUsage(),
@@ -2124,6 +2317,7 @@ function shutdown(signal: string) {
       mcBoardManager.destroy();
       mwManager.destroy();
       tdManager.destroy();
+      mcsManager.destroy();
       console.log('[SHUTDOWN] Complete');
       process.exit(0);
     });

@@ -1,0 +1,1292 @@
+/* ================================================================
+   MinecraftSwitch.module.css
+   Pixel-perfect CSS module for Minecraft: Nintendo Switch Edition UI
+   ================================================================ */
+
+/* ========================
+   Core Design Tokens
+   ======================== */
+
+/* All text: pixel font, no border-radius, sharp edges, text shadows */
+
+/* ========================
+   Title Screen Layout
+   ======================== */
+
+.titleScreen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+  overflow: hidden;
+  background: #000000;
+}
+
+.screenOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 50;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* ========================
+   Title & Branding
+   ======================== */
+
+.mcTitle {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: clamp(36px, 6vw, 72px);
+  color: #ffffff;
+  text-shadow:
+    4px 4px 0px #3f3f3f,
+    -1px -1px 0px #3f3f3f,
+    1px -1px 0px #3f3f3f,
+    -1px 1px 0px #3f3f3f,
+    0px 4px 0px #2a2a2a;
+  letter-spacing: 4px;
+  image-rendering: pixelated;
+  user-select: none;
+  line-height: 1.1;
+}
+
+.mcSubtitle {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: clamp(10px, 2vw, 18px);
+  color: #ffff00;
+  text-shadow: 2px 2px 0px #3f3f3f;
+  letter-spacing: 2px;
+  user-select: none;
+  margin-top: 4px;
+}
+
+.mcEditionBadge {
+  display: inline-block;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: clamp(8px, 1.2vw, 12px);
+  color: #ffff00;
+  text-shadow: 1px 1px 0px #3f3f3f;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border: 2px solid #ffff00;
+  background: rgba(255, 255, 0, 0.08);
+  user-select: none;
+  text-transform: uppercase;
+}
+
+.splashText {
+  position: absolute;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: clamp(10px, 1.5vw, 16px);
+  color: #ffff00;
+  text-shadow: 2px 2px 0px #3f3f3f;
+  transform: rotate(-20deg);
+  transform-origin: center center;
+  animation: splashPulse 1.5s ease-in-out infinite;
+  user-select: none;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@keyframes splashPulse {
+  0%, 100% {
+    transform: rotate(-20deg) scale(1);
+  }
+  50% {
+    transform: rotate(-20deg) scale(1.1);
+  }
+}
+
+/* ========================
+   Buttons
+   ======================== */
+
+.mcButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 24px;
+  min-height: 44px;
+  background: linear-gradient(180deg, #8b8b8b 0%, #737373 50%, #6b6b6b 100%);
+  border: 3px solid;
+  border-color: #aaaaaa #555555 #555555 #aaaaaa;
+  color: #ffffff;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0px #3f3f3f;
+  cursor: pointer;
+  transition: filter 0.1s, background 0.1s;
+  image-rendering: pixelated;
+  user-select: none;
+  text-align: center;
+  line-height: 1.3;
+  white-space: nowrap;
+  outline: none;
+}
+
+.mcButton:hover {
+  background: linear-gradient(180deg, #a0a0a0 0%, #8b8b8b 50%, #7e7e7e 100%);
+  border-color: #c0c0c0 #666666 #666666 #c0c0c0;
+}
+
+.mcButton:active {
+  background: linear-gradient(180deg, #6b6b6b 0%, #5e5e5e 50%, #555555 100%);
+  border-color: #555555 #aaaaaa #aaaaaa #555555;
+  padding-top: 10px;
+  padding-bottom: 6px;
+}
+
+.mcButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.mcButton:disabled {
+  background: linear-gradient(180deg, #5a5a5a 0%, #4a4a4a 50%, #424242 100%);
+  border-color: #6a6a6a #3a3a3a #3a3a3a #6a6a6a;
+  color: #a0a0a0;
+  text-shadow: 2px 2px 0px #2a2a2a;
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* Primary green button (Play, Create, Confirm) */
+.mcButtonPrimary {
+  composes: mcButton;
+  background: linear-gradient(180deg, #5a9e3e 0%, #4c8c34 50%, #3e7a2a 100%);
+  border-color: #6eb852 #2e5a1e #2e5a1e #6eb852;
+}
+
+.mcButtonPrimary:hover {
+  background: linear-gradient(180deg, #6eb852 0%, #5a9e3e 50%, #4c8c34 100%);
+  border-color: #82cc66 #3a6e28 #3a6e28 #82cc66;
+}
+
+.mcButtonPrimary:active {
+  background: linear-gradient(180deg, #3e7a2a 0%, #346a22 50%, #2e5a1e 100%);
+  border-color: #2e5a1e #6eb852 #6eb852 #2e5a1e;
+}
+
+.mcButtonPrimary:disabled {
+  background: linear-gradient(180deg, #3a5e2a 0%, #2e4e22 50%, #24401a 100%);
+  border-color: #4a6e3a #1e3a14 #1e3a14 #4a6e3a;
+  color: #7a9a6a;
+}
+
+/* Danger red button (Delete, Cancel destructive) */
+.mcButtonDanger {
+  composes: mcButton;
+  background: linear-gradient(180deg, #b04040 0%, #963434 50%, #7e2a2a 100%);
+  border-color: #cc5555 #5a1e1e #5a1e1e #cc5555;
+}
+
+.mcButtonDanger:hover {
+  background: linear-gradient(180deg, #cc5555 0%, #b04040 50%, #963434 100%);
+  border-color: #e06a6a #6e2828 #6e2828 #e06a6a;
+}
+
+.mcButtonDanger:active {
+  background: linear-gradient(180deg, #7e2a2a 0%, #6a2222 50%, #5a1e1e 100%);
+  border-color: #5a1e1e #cc5555 #cc5555 #5a1e1e;
+}
+
+.mcButtonDanger:disabled {
+  background: linear-gradient(180deg, #5a3030 0%, #4a2828 50%, #402020 100%);
+  border-color: #6a3a3a #3a1a1a #3a1a1a #6a3a3a;
+  color: #9a6a6a;
+}
+
+/* Small button variant */
+.mcButtonSmall {
+  composes: mcButton;
+  padding: 4px 14px;
+  min-height: 32px;
+  font-size: 11px;
+}
+
+.mcButtonSmall:active {
+  padding-top: 6px;
+  padding-bottom: 2px;
+}
+
+/* ========================
+   Menu Layout
+   ======================== */
+
+.menuContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+  padding: 0 16px;
+  z-index: 10;
+}
+
+.menuRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.menuRow > * {
+  flex: 1;
+}
+
+/* ========================
+   Panel System
+   ======================== */
+
+.mcPanel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 64px);
+  background: rgba(0, 0, 0, 0.88);
+  border: 3px solid;
+  border-color: #555555 #2a2a2a #2a2a2a #555555;
+  box-shadow:
+    0 0 60px rgba(0, 0, 0, 0.6),
+    inset 0 0 30px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.2s ease-out;
+}
+
+.mcPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%);
+  border-bottom: 3px solid;
+  border-bottom-color: #555555;
+  min-height: 48px;
+}
+
+.mcPanelTitle {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 18px;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #1a1a1a;
+  letter-spacing: 2px;
+  user-select: none;
+  text-align: center;
+}
+
+.mcPanelContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #555555 #1a1a1a;
+}
+
+/* Webkit scrollbar for panel content */
+.mcPanelContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mcPanelContent::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.mcPanelContent::-webkit-scrollbar-thumb {
+  background: #555555;
+  border: 1px solid #3a3a3a;
+}
+
+.mcPanelContent::-webkit-scrollbar-thumb:hover {
+  background: #6a6a6a;
+}
+
+.mcPanelFooter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 3px solid;
+  border-top-color: #555555;
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+}
+
+/* ========================
+   Overlays (Vignette & Gradient)
+   ======================== */
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gradientOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, transparent 20%),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, transparent 25%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ========================
+   Bottom Bar
+   ======================== */
+
+.bottomBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.bottomBar > * {
+  pointer-events: auto;
+}
+
+.bottomBarText {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+/* ========================
+   Loading Screen
+   ======================== */
+
+.loadingScreen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  background-color: #6B553A;
+  /* Dirt texture tint via repeating gradient to simulate the look */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.08) 0px,
+      rgba(0, 0, 0, 0.08) 4px,
+      transparent 4px,
+      transparent 8px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.06) 0px,
+      rgba(0, 0, 0, 0.06) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+  background-size: 8px 8px;
+  image-rendering: pixelated;
+  z-index: 100;
+}
+
+.loadingBar {
+  width: 300px;
+  max-width: 80vw;
+  height: 20px;
+  background: #2a2a2a;
+  border: 3px solid;
+  border-color: #555555 #1a1a1a #1a1a1a #555555;
+  overflow: hidden;
+  position: relative;
+}
+
+.loadingBarFill {
+  height: 100%;
+  background: linear-gradient(180deg, #5a9e3e 0%, #4c8c34 50%, #3e7a2a 100%);
+  transition: width 0.3s ease-out;
+  position: relative;
+}
+
+.loadingBarFill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 6px,
+    rgba(0, 0, 0, 0.15) 6px,
+    rgba(0, 0, 0, 0.15) 8px
+  );
+}
+
+.loadingText {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 14px;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #3f3f3f;
+  user-select: none;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* ========================
+   Game HUD
+   ======================== */
+
+/* Hotbar */
+.hotbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid;
+  border-color: #555555 #2a2a2a #2a2a2a #555555;
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  image-rendering: pixelated;
+}
+
+.hotbarSlot {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #555555 0%, #4a4a4a 50%, #3e3e3e 100%);
+  border: 2px solid;
+  border-color: #6a6a6a #2a2a2a #2a2a2a #6a6a6a;
+  position: relative;
+  image-rendering: pixelated;
+}
+
+.hotbarSlotSelected {
+  composes: hotbarSlot;
+  border-color: #ffffff #cccccc #cccccc #ffffff;
+  background: linear-gradient(180deg, #6a6a6a 0%, #5a5a5a 50%, #4e4e4e 100%);
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+/* Stat Bars */
+.healthBar,
+.hungerBar,
+.armorBar,
+.xpBar {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+.healthBar {
+  position: fixed;
+  bottom: 78px;
+  left: 50%;
+  transform: translateX(-50%) translateX(-92px);
+  z-index: 40;
+}
+
+.hungerBar {
+  position: fixed;
+  bottom: 78px;
+  left: 50%;
+  transform: translateX(-50%) translateX(92px);
+  z-index: 40;
+  flex-direction: row-reverse;
+}
+
+.armorBar {
+  position: fixed;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%) translateX(-92px);
+  z-index: 40;
+}
+
+.xpBar {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 39;
+  width: 182px;
+  height: 5px;
+  background: #1a1a1a;
+  border: 1px solid #0a0a0a;
+}
+
+/* Crosshair */
+.crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: "";
+  position: absolute;
+  background: #ffffff;
+  mix-blend-mode: difference;
+}
+
+.crosshair::before {
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.crosshair::after {
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+}
+
+/* ========================
+   Form Elements
+   ======================== */
+
+.mcInput {
+  width: 100%;
+  padding: 8px 12px;
+  min-height: 40px;
+  background: #000000;
+  border: 3px solid;
+  border-color: #555555 #2a2a2a #2a2a2a #555555;
+  color: #ffffff;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0px #1a1a1a;
+  outline: none;
+  caret-color: #ffffff;
+  image-rendering: pixelated;
+}
+
+.mcInput::placeholder {
+  color: #6a6a6a;
+  text-shadow: none;
+}
+
+.mcInput:focus {
+  border-color: #888888 #444444 #444444 #888888;
+  background: #0a0a0a;
+}
+
+.mcInput:disabled {
+  background: #1a1a1a;
+  color: #555555;
+  cursor: not-allowed;
+}
+
+.mcSelect {
+  width: 100%;
+  padding: 8px 12px;
+  min-height: 40px;
+  background: linear-gradient(180deg, #8b8b8b 0%, #737373 50%, #6b6b6b 100%);
+  border: 3px solid;
+  border-color: #aaaaaa #555555 #555555 #aaaaaa;
+  color: #ffffff;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0px #3f3f3f;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  image-rendering: pixelated;
+  /* Custom dropdown arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M0 0h12L6 8z' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+.mcSelect:hover {
+  background-color: #a0a0a0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M0 0h12L6 8z' fill='%23ffffff'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.mcSelect:focus {
+  border-color: #c0c0c0 #666666 #666666 #c0c0c0;
+}
+
+.mcSelect:disabled {
+  background: linear-gradient(180deg, #5a5a5a 0%, #4a4a4a 50%, #424242 100%);
+  border-color: #6a6a6a #3a3a3a #3a3a3a #6a6a6a;
+  color: #8a8a8a;
+  cursor: not-allowed;
+}
+
+.mcToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  min-height: 36px;
+  min-width: 80px;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition: background 0.1s;
+  image-rendering: pixelated;
+}
+
+/* Toggle OFF state */
+.mcToggleOff {
+  composes: mcToggle;
+  background: linear-gradient(180deg, #8b8b8b 0%, #737373 50%, #6b6b6b 100%);
+  border: 3px solid;
+  border-color: #aaaaaa #555555 #555555 #aaaaaa;
+  color: #cc4444;
+  text-shadow: 2px 2px 0px #3f3f3f;
+}
+
+/* Toggle ON state */
+.mcToggleOn {
+  composes: mcToggle;
+  background: linear-gradient(180deg, #5a9e3e 0%, #4c8c34 50%, #3e7a2a 100%);
+  border: 3px solid;
+  border-color: #6eb852 #2e5a1e #2e5a1e #6eb852;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #2a5a1a;
+}
+
+.mcToggleOff:hover {
+  background: linear-gradient(180deg, #a0a0a0 0%, #8b8b8b 50%, #7e7e7e 100%);
+}
+
+.mcToggleOn:hover {
+  background: linear-gradient(180deg, #6eb852 0%, #5a9e3e 50%, #4c8c34 100%);
+}
+
+.mcLabel {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 12px;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #3f3f3f;
+  letter-spacing: 1px;
+  user-select: none;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* ========================
+   Global Scrollbar
+   ======================== */
+
+.customScrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #555555 #1a1a1a;
+}
+
+.customScrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.customScrollbar::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb {
+  background: #555555;
+  border: 1px solid #3a3a3a;
+}
+
+.customScrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6a6a6a;
+}
+
+/* ========================
+   Animations & Transitions
+   ======================== */
+
+.fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.fadeOut {
+  animation: fadeOut 0.3s ease-in forwards;
+}
+
+.slideUp {
+  animation: slideUp 0.25s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================
+   Slider / Range (e.g. world size, difficulty)
+   ======================== */
+
+.mcSlider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.mcSliderTrack {
+  flex: 1;
+  height: 8px;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #555555 #1a1a1a #1a1a1a #555555;
+  position: relative;
+  cursor: pointer;
+}
+
+.mcSliderFill {
+  height: 100%;
+  background: linear-gradient(180deg, #5a9e3e 0%, #3e7a2a 100%);
+}
+
+.mcSliderThumb {
+  width: 12px;
+  height: 16px;
+  background: linear-gradient(180deg, #aaaaaa 0%, #8b8b8b 50%, #737373 100%);
+  border: 2px solid;
+  border-color: #cccccc #555555 #555555 #cccccc;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: grab;
+}
+
+.mcSliderThumb:active {
+  cursor: grabbing;
+  border-color: #555555 #cccccc #cccccc #555555;
+}
+
+.mcSliderValue {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 12px;
+  color: #ffffff;
+  text-shadow: 1px 1px 0px #3f3f3f;
+  min-width: 48px;
+  text-align: center;
+  user-select: none;
+}
+
+/* ========================
+   Tooltip / Description Text
+   ======================== */
+
+.mcTooltip {
+  position: absolute;
+  padding: 6px 10px;
+  background: rgba(16, 0, 16, 0.94);
+  border: 2px solid;
+  border-color: #5a005a #28002e #28002e #5a005a;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 10px;
+  color: #ffffff;
+  text-shadow: 1px 1px 0px #1a1a1a;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 60;
+  user-select: none;
+}
+
+.mcDescription {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.4);
+  line-height: 1.7;
+  user-select: none;
+}
+
+/* ========================
+   List / World List Item
+   ======================== */
+
+.mcListItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(60, 60, 60, 0.4);
+  border: 2px solid #3a3a3a;
+  cursor: pointer;
+  transition: border-color 0.1s, background 0.1s;
+  user-select: none;
+}
+
+.mcListItem:hover {
+  border-color: #6a6a6a;
+  background: rgba(80, 80, 80, 0.5);
+}
+
+.mcListItemSelected {
+  composes: mcListItem;
+  border-color: #aaaaaa;
+  background: rgba(100, 100, 100, 0.5);
+}
+
+.mcListItemTitle {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 13px;
+  color: #ffffff;
+  text-shadow: 1px 1px 0px #2a2a2a;
+  line-height: 1.4;
+}
+
+.mcListItemSubtext {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.45);
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================
+   Tab Bar (for panels with tabs)
+   ======================== */
+
+.mcTabBar {
+  display: flex;
+  width: 100%;
+  border-bottom: 3px solid #3a3a3a;
+}
+
+.mcTab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 100%);
+  border: none;
+  border-right: 2px solid #2a2a2a;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 11px;
+  color: #aaaaaa;
+  text-shadow: 1px 1px 0px #1a1a1a;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s, color 0.1s;
+}
+
+.mcTab:last-child {
+  border-right: none;
+}
+
+.mcTab:hover {
+  background: linear-gradient(180deg, #5a5a5a 0%, #4a4a4a 100%);
+  color: #cccccc;
+}
+
+.mcTabActive {
+  composes: mcTab;
+  background: linear-gradient(180deg, #6a6a6a 0%, #555555 100%);
+  color: #ffffff;
+  border-bottom: 3px solid #ffffff;
+  margin-bottom: -3px;
+}
+
+/* ========================
+   Inventory / Crafting Grid
+   ======================== */
+
+.inventoryGrid {
+  display: grid;
+  gap: 2px;
+  image-rendering: pixelated;
+}
+
+.inventorySlot {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #555555 0%, #3e3e3e 100%);
+  border: 2px solid;
+  border-color: #6a6a6a #2a2a2a #2a2a2a #6a6a6a;
+  position: relative;
+  cursor: pointer;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+.inventorySlot:hover {
+  border-color: #888888 #444444 #444444 #888888;
+  background: linear-gradient(180deg, #666666 0%, #4e4e4e 100%);
+}
+
+.inventorySlotCount {
+  position: absolute;
+  bottom: 1px;
+  right: 3px;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 9px;
+  color: #ffffff;
+  text-shadow: 1px 1px 0px #1a1a1a;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ========================
+   Dialog / Confirmation
+   ======================== */
+
+.mcDialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.92);
+  border: 3px solid;
+  border-color: #555555 #2a2a2a #2a2a2a #555555;
+  max-width: 480px;
+  width: 100%;
+  animation: slideUp 0.2s ease-out;
+}
+
+.mcDialogText {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 13px;
+  color: #ffffff;
+  text-shadow: 2px 2px 0px #3f3f3f;
+  text-align: center;
+  line-height: 1.6;
+  user-select: none;
+}
+
+.mcDialogActions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.mcDialogActions > * {
+  flex: 1;
+}
+
+/* ========================
+   Progress Bar (generic)
+   ======================== */
+
+.mcProgressBar {
+  width: 100%;
+  height: 12px;
+  background: #2a2a2a;
+  border: 2px solid;
+  border-color: #555555 #1a1a1a #1a1a1a #555555;
+  position: relative;
+  overflow: hidden;
+}
+
+.mcProgressFill {
+  height: 100%;
+  background: linear-gradient(180deg, #5a9e3e 0%, #3e7a2a 100%);
+  transition: width 0.3s ease-out;
+}
+
+.mcProgressText {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 8px;
+  color: #ffffff;
+  text-shadow: 1px 1px 0px #1a1a1a;
+  user-select: none;
+}
+
+/* ========================
+   Separator
+   ======================== */
+
+.mcSeparator {
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #555555 20%,
+    #555555 80%,
+    transparent 100%
+  );
+  border: none;
+  margin: 4px 0;
+}
+
+/* ========================
+   Badge / Tag
+   ======================== */
+
+.mcBadge {
+  display: inline-block;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-size: 9px;
+  padding: 2px 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.mcBadgeGreen {
+  composes: mcBadge;
+  color: #5ae65a;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+  background: rgba(90, 230, 90, 0.1);
+  border: 1px solid rgba(90, 230, 90, 0.25);
+}
+
+.mcBadgeYellow {
+  composes: mcBadge;
+  color: #ffff00;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+  background: rgba(255, 255, 0, 0.1);
+  border: 1px solid rgba(255, 255, 0, 0.25);
+}
+
+.mcBadgeRed {
+  composes: mcBadge;
+  color: #ff5555;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+  background: rgba(255, 85, 85, 0.1);
+  border: 1px solid rgba(255, 85, 85, 0.25);
+}
+
+.mcBadgeBlue {
+  composes: mcBadge;
+  color: #5555ff;
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+  background: rgba(85, 85, 255, 0.1);
+  border: 1px solid rgba(85, 85, 255, 0.25);
+}
+
+/* ========================
+   Responsive Adjustments
+   ======================== */
+
+@media (max-width: 768px) {
+  .mcTitle {
+    font-size: clamp(28px, 8vw, 48px);
+    letter-spacing: 2px;
+  }
+
+  .mcSubtitle {
+    font-size: clamp(8px, 2.5vw, 14px);
+  }
+
+  .mcButton {
+    padding: 6px 16px;
+    min-height: 38px;
+    font-size: 12px;
+  }
+
+  .mcButton:active {
+    padding-top: 8px;
+    padding-bottom: 4px;
+  }
+
+  .mcButtonSmall {
+    padding: 4px 10px;
+    min-height: 28px;
+    font-size: 10px;
+  }
+
+  .mcButtonSmall:active {
+    padding-top: 5px;
+    padding-bottom: 3px;
+  }
+
+  .menuContainer {
+    max-width: 320px;
+    gap: 6px;
+  }
+
+  .mcPanel {
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 32px);
+  }
+
+  .mcPanelTitle {
+    font-size: 14px;
+  }
+
+  .mcPanelContent {
+    padding: 12px;
+  }
+
+  .bottomBar {
+    padding: 8px 16px;
+  }
+
+  .bottomBarText {
+    font-size: 8px;
+  }
+
+  .loadingBar {
+    width: 240px;
+  }
+
+  .loadingText {
+    font-size: 12px;
+  }
+
+  .hotbarSlot,
+  .hotbarSlotSelected {
+    width: 36px;
+    height: 36px;
+  }
+
+  .inventorySlot {
+    width: 34px;
+    height: 34px;
+  }
+
+  .mcInput {
+    font-size: 11px;
+    min-height: 36px;
+    padding: 6px 10px;
+  }
+
+  .mcSelect {
+    font-size: 11px;
+    min-height: 36px;
+    padding: 6px 10px;
+    padding-right: 28px;
+  }
+
+  .mcLabel {
+    font-size: 10px;
+  }
+
+  .mcDialog {
+    padding: 16px;
+    max-width: calc(100vw - 32px);
+  }
+
+  .mcDialogText {
+    font-size: 11px;
+  }
+
+  .mcTab {
+    font-size: 9px;
+    padding: 6px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mcTitle {
+    font-size: clamp(22px, 10vw, 36px);
+  }
+
+  .mcButton {
+    padding: 5px 12px;
+    min-height: 34px;
+    font-size: 11px;
+  }
+
+  .mcButton:active {
+    padding-top: 7px;
+    padding-bottom: 3px;
+  }
+
+  .menuContainer {
+    max-width: 280px;
+    gap: 5px;
+  }
+
+  .menuRow {
+    gap: 5px;
+  }
+
+  .hotbarSlot,
+  .hotbarSlotSelected {
+    width: 30px;
+    height: 30px;
+  }
+
+  .mcPanelHeader {
+    padding: 8px 12px;
+    min-height: 40px;
+  }
+
+  .mcPanelTitle {
+    font-size: 12px;
+  }
+
+  .mcPanelFooter {
+    padding: 8px 12px;
+  }
+}
