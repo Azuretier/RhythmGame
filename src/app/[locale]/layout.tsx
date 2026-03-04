@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
+import { isValidUIVersion } from '@/lib/version/storage';
 
 import Provider from '../provider';
 import { VersionProvider } from '@/lib/version/context';
@@ -107,6 +108,12 @@ export default async function LocaleLayout({ children, params }: Props) {
     // version on first paint — prevents a flash of the default version.
     const cookieStore = await cookies();
     const initialVersion = cookieStore.get('azuret_app_version')?.value;
+    // Resolve the version for the server render — used for both the
+    // VersionProvider initial state AND the data-version attribute on <html>
+    // so that version-specific CSS rules apply from the very first paint.
+    const resolvedVersion = initialVersion && isValidUIVersion(initialVersion)
+      ? initialVersion
+      : 'current';
 
     const jsonLd = {
         "@context": "https://schema.org",
@@ -129,7 +136,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     };
 
     return (
-        <html lang={locale}>
+        <html lang={locale} data-version={resolvedVersion}>
             <head>
                 <meta name="theme-color" content="#ffbd43" />
                 <link rel="icon" href="/favicon.ico" />

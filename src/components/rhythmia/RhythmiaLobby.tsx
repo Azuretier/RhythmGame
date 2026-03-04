@@ -337,7 +337,7 @@ export default function RhythmiaLobby() {
                         <section className={`${styles.slideSection} ${styles.slideSectionLanding}`}>
                             <motion.header
                                 className={styles.header}
-                                initial={{ opacity: 0, y: -20 }}
+                                initial={false}
                                 animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? -20 : 0 }}
                                 transition={{ duration: 0.6, delay: 0.1 }}
                             >
@@ -390,7 +390,7 @@ export default function RhythmiaLobby() {
                             <main className={styles.main}>
                                 <motion.div
                                     className={styles.heroText}
-                                    initial={{ opacity: 0, y: 30 }}
+                                    initial={false}
                                     animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
                                     transition={{ duration: 0.7, delay: 0.2 }}
                                 >
@@ -435,7 +435,7 @@ export default function RhythmiaLobby() {
                         >
                             <motion.div
                                 className={styles.forYouSection}
-                                initial={{ opacity: 0, y: 30 }}
+                                initial={false}
                                 animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? 30 : 0 }}
                                 transition={{ duration: 0.6, delay: 0.7 }}
                             >
@@ -452,7 +452,7 @@ export default function RhythmiaLobby() {
                             <LoyaltyWidget />
                             <motion.footer
                                 className={styles.footer}
-                                initial={{ opacity: 0 }}
+                                initial={false}
                                 animate={{ opacity: isLoading ? 0 : 0.4 }}
                                 transition={{ duration: 0.6, delay: 0.6 }}
                             >
