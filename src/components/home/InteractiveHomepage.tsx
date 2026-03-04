@@ -113,7 +113,6 @@ export default function InteractiveHomepage() {
   };
 
   const handleBackgroundLoaded = () => {
-    console.log("Background loaded");
     setBackgroundLoaded(true);
   };
 

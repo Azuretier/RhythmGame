@@ -68,7 +68,6 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
 
     const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 15000);
     reconnectAttemptsRef.current++;
-    console.log(`[WS] Scheduling reconnect attempt ${reconnectAttemptsRef.current} in ${delay}ms`);
     setConnectionStatus('connecting');
 
     reconnectTimerRef.current = setTimeout(() => {
@@ -86,7 +85,6 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('[WS] Connected');
       setConnectionStatus('connected');
       setError(null);
       reconnectAttemptsRef.current = 0;
@@ -109,7 +107,6 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
     };
 
     ws.onclose = () => {
-      console.log('[WS] Disconnected');
       setConnectionStatus('disconnected');
       wsRef.current = null;
 
@@ -264,7 +261,6 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
         wsRef.current?.readyState === WebSocket.OPEN &&
         Date.now() - lastPingRef.current > PING_TIMEOUT
       ) {
-        console.log('[WS] Ping timeout — server may be unreachable');
         wsRef.current.close();
       }
     }, 10000);

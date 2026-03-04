@@ -127,7 +127,7 @@ export default function RhythmiaLobby() {
                 } else if (message.type === 'ping') {
                     ws.send(JSON.stringify({ type: 'pong' }));
                 }
-            } catch { }
+            } catch (err) { console.warn('[RhythmiaLobby] Failed to parse WebSocket message:', err); }
         };
 
         ws.onclose = () => {

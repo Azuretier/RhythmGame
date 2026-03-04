@@ -8,7 +8,7 @@
 
 import { Component, Suspense, useMemo, useCallback, useRef, useEffect } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type {
@@ -619,10 +619,9 @@ function InteractionPlane({
   onMobClick: (mobId: string) => void;
   onPlayerClick: (targetPlayerId: string) => void;
 }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleClick = useCallback((e: any) => {
+  const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    const point = e.point as THREE.Vector3;
+    const point = e.point;
     const wx = Math.round(point.x);
     const wz = Math.round(point.z);
 

@@ -63,75 +63,100 @@ export class FirestoreRoomService {
       })),
     };
 
-    await this.db
-      .collection(this.roomsCollection)
-      .doc(roomState.code)
-      .set(doc, { merge: true });
+    try {
+      await this.db
+        .collection(this.roomsCollection)
+        .doc(roomState.code)
+        .set(doc, { merge: true });
 
-    console.log(`Room ${roomState.code} saved to Firestore`);
+      console.log(`Room ${roomState.code} saved to Firestore`);
+    } catch (error) {
+      console.error('[FirestoreRoomService] saveRoom failed:', error);
+      throw error;
+    }
   }
 
   /**
    * Get a room from Firestore
    */
   async getRoom(roomCode: string): Promise<FirestoreRoomDocument | null> {
-    const doc = await this.db
-      .collection(this.roomsCollection)
-      .doc(roomCode)
-      .get();
+    try {
+      const doc = await this.db
+        .collection(this.roomsCollection)
+        .doc(roomCode)
+        .get();
 
-    if (!doc.exists) {
+      if (!doc.exists) {
+        return null;
+      }
+
+      return doc.data() as FirestoreRoomDocument;
+    } catch (error) {
+      console.error('[FirestoreRoomService] getRoom failed:', error);
       return null;
     }
-
-    return doc.data() as FirestoreRoomDocument;
   }
 
   /**
    * List all open rooms
    */
   async listOpenRooms(): Promise<FirestoreRoomDocument[]> {
-    const snapshot = await this.db
-      .collection(this.roomsCollection)
-      .where('status', '==', 'open')
-      .orderBy('createdAt', 'desc')
-      .limit(50)
-      .get();
+    try {
+      const snapshot = await this.db
+        .collection(this.roomsCollection)
+        .where('status', '==', 'open')
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
 
-    return snapshot.docs.map((doc) => doc.data() as FirestoreRoomDocument);
+      return snapshot.docs.map((doc) => doc.data() as FirestoreRoomDocument);
+    } catch (error) {
+      console.error('[FirestoreRoomService] listOpenRooms failed:', error);
+      return [];
+    }
   }
 
   /**
    * Delete a room from Firestore
    */
   async deleteRoom(roomCode: string): Promise<void> {
-    await this.db.collection(this.roomsCollection).doc(roomCode).delete();
-    console.log(`Room ${roomCode} deleted from Firestore`);
+    try {
+      await this.db.collection(this.roomsCollection).doc(roomCode).delete();
+      console.log(`Room ${roomCode} deleted from Firestore`);
+    } catch (error) {
+      console.error('[FirestoreRoomService] deleteRoom failed:', error);
+      throw error;
+    }
   }
 
   /**
    * Clean up stale rooms (older than TTL)
    */
   async cleanupStaleRooms(): Promise<number> {
-    const cutoffTime = Date.now() - this.roomTTL;
-    const snapshot = await this.db
-      .collection(this.roomsCollection)
-      .where('updatedAt', '<', cutoffTime)
-      .get();
+    try {
+      const cutoffTime = Date.now() - this.roomTTL;
+      const snapshot = await this.db
+        .collection(this.roomsCollection)
+        .where('updatedAt', '<', cutoffTime)
+        .get();
 
-    const batch = this.db.batch();
-    snapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
-    });
+      const batch = this.db.batch();
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
 
-    await batch.commit();
-    const count = snapshot.docs.length;
-    
-    if (count > 0) {
-      console.log(`Cleaned up ${count} stale rooms from Firestore`);
+      await batch.commit();
+      const count = snapshot.docs.length;
+
+      if (count > 0) {
+        console.log(`Cleaned up ${count} stale rooms from Firestore`);
+      }
+
+      return count;
+    } catch (error) {
+      console.error('[FirestoreRoomService] cleanupStaleRooms failed:', error);
+      return 0;
     }
-    
-    return count;
   }
 
   /**
@@ -141,12 +166,17 @@ export class FirestoreRoomService {
     roomCode: string,
     status: FirestoreRoomStatus,
   ): Promise<void> {
-    await this.db
-      .collection(this.roomsCollection)
-      .doc(roomCode)
-      .update({
-        status,
-        updatedAt: Date.now(),
-      });
+    try {
+      await this.db
+        .collection(this.roomsCollection)
+        .doc(roomCode)
+        .update({
+          status,
+          updatedAt: Date.now(),
+        });
+    } catch (error) {
+      console.error('[FirestoreRoomService] updateRoomStatus failed:', error);
+      throw error;
+    }
   }
 }

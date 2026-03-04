@@ -4,6 +4,7 @@ import * as THREE from 'three'
 import { useEffect, useRef, useState, ReactNode, Suspense } from 'react'
 import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
 import { useCursor, MeshPortalMaterial, CameraControls, Gltf, Text, Preload } from '@react-three/drei'
+import type CameraControlsImpl from 'camera-controls'
 import { easing } from 'maath'
 import { RoundedPlaneGeometry } from 'maath/geometry'
 
@@ -109,7 +110,7 @@ function Rig({ activeId }: { activeId: string | null }) {
             position.current.set(0, 0, 5)
             focus.current.set(0, 0, 0)
         }
-        ;(controls as any)?.setLookAt(
+        ;(controls as CameraControlsImpl)?.setLookAt(
             ...position.current.toArray(),
             ...focus.current.toArray(),
             true

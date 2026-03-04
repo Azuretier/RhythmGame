@@ -34,7 +34,7 @@ function loadRankedState(): RankedState {
         tier: getTierByPoints(parsed.points || 0),
       };
     }
-  } catch {}
+  } catch (err) { console.warn('[RankedMatch] Failed to load ranked state from localStorage:', err); }
   return getDefaultRankedState();
 }
 
@@ -46,7 +46,7 @@ function saveRankedState(state: RankedState): void {
       losses: state.losses,
       winStreak: state.winStreak,
     }));
-  } catch {}
+  } catch (err) { console.warn('[RankedMatch] Failed to save ranked state to localStorage:', err); }
 }
 
 interface Props {

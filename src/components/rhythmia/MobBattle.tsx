@@ -306,7 +306,7 @@ export const MobBattle: React.FC<Props> = ({
       gain.connect(ctx.destination);
       osc.start();
       osc.stop(ctx.currentTime + dur);
-    } catch {}
+    } catch (err) { console.warn('[MobBattle] Audio playTone failed:', err); }
   }, []);
 
   const playDrum = useCallback((wIdx = 2) => {
@@ -315,7 +315,7 @@ export const MobBattle: React.FC<Props> = ({
     try {
       if (ctx.state === 'suspended') ctx.resume();
       playWorldDrum(ctx, wIdx);
-    } catch {}
+    } catch (err) { console.warn('[MobBattle] Audio playDrum failed:', err); }
   }, []);
 
   const playLineClear = useCallback((count: number, wIdx = 2) => {
@@ -762,7 +762,7 @@ export const MobBattle: React.FC<Props> = ({
         } else if (msg.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong' }));
         }
-      } catch {}
+      } catch (err) { console.error('[MobBattle] Failed to process WebSocket message:', err); }
     };
 
     ws.addEventListener('message', handler);

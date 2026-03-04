@@ -85,7 +85,7 @@ export function loadDailyBonusState(): ScoreRankingState {
         combinedScore: stats.totalScore + stats.dailyBonusXP,
       };
     }
-  } catch {}
+  } catch (err) { console.warn('[Loyalty] Failed to load daily bonus state from localStorage:', err); }
 
   return { stats: getDefaultStats(), combinedScore: 0 };
 }
@@ -98,7 +98,7 @@ export function saveDailyBonusState(state: ScoreRankingState): void {
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {}
+  } catch (err) { console.warn('[Loyalty] Failed to save daily bonus state to localStorage:', err); }
 }
 
 /**
