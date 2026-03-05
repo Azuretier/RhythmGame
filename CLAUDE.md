@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**azuretier.net** (package name: `azuret.net`) is a full-stack gaming platform built with Next.js 16 and TypeScript. It features multiplayer rhythm/battle games (Rhythmia) with ranked matchmaking, a 9-player arena mode, a Minecraft-style board game, an advancements (achievements) system, loyalty rewards, profile customization with skin theming, interactive stories, a wiki, and WebGL/Three.js visual effects. The site is internationalized with next-intl, supporting Japanese (default), English, Thai, Spanish, and French locales.
+**azuretier.net** (package name: `azuret.net`) is a full-stack gaming platform built with Next.js 16 and TypeScript. It is designed as an open, personalizable space — every player can customize their profile, skin, and theme to make the experience their own, and the platform is built to be publicly shareable so players can feature and showcase it. It features multiplayer rhythm/battle games (Rhythmia) with ranked matchmaking, a 9-player arena mode, a Minecraft-style board game, an advancements (achievements) system, loyalty rewards, profile customization with skin theming, interactive stories, a wiki, and WebGL/Three.js visual effects. The site is internationalized with next-intl, supporting Japanese (default), English, Thai, Spanish, and French locales.
 
 ## Tech Stack
 

@@ -45,7 +45,6 @@ export class MultiplayerRoomManager {
         room.players.forEach(p => this.playerToRoom.delete(p.id));
       }
       this.rooms.delete(code);
-      console.log(`[CLEANUP] Removed stale room ${code}`);
     });
   }
 
