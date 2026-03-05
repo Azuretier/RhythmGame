@@ -42,12 +42,12 @@
 ## Phase 4: Surrounding Tower Terrain
 > Goal: Ring terrain matches tower-defense page quality
 
-- [ ] **4.1** Audit standalone `/tower-defense` page terrain and extract reusable terrain components
-- [ ] **4.2** Unify terrain rendering between ring and standalone TD page
-- [ ] **4.3** Add terrain biome system (grass, desert, snow — cosmetic variety)
-- [ ] **4.4** Add terrain height variation with smooth transitions (not just flat blocks)
-- [ ] **4.5** Improve tower platform visuals (foundation, walls, flagpoles)
-- [ ] **4.6** Add path decoration (road texture, directional arrows, entry/exit portals)
+- [x] **4.1** Audit standalone `/tower-defense` page terrain and extract reusable terrain components
+- [x] **4.2** Unify terrain rendering between ring and standalone TD page
+- [x] **4.3** Add terrain biome system (grass, desert, snow — cosmetic variety)
+- [x] **4.4** Add terrain height variation with smooth transitions (not just flat blocks)
+- [x] **4.5** Improve tower platform visuals (foundation, walls, flagpoles)
+- [x] **4.6** Add path decoration (road texture, directional arrows, entry/exit portals)
 
 ## Phase 5: Flexible Board UI
 > Goal: Board UI adapts to camera angle and screen size
@@ -86,5 +86,6 @@
 |------|-------|----------------|--------|-----|
 | 2026-03-05 | P1 | 1.1-1.5 (all) | claude/project-p1-layer-architecture | #468 |
 | 2026-03-05 | P2 | 2.1-2.7 (all) | claude/project-p2-movable-camera | #469 |
-| 2026-03-05 | P3 | 3.1-3.6 (all) | claude/project-p3-center-terrain | TBD |
+| 2026-03-05 | P3 | 3.1-3.6 (all) | claude/project-p3-center-terrain | #470 |
+| 2026-03-05 | P4 | 4.1-4.6 (all) | claude/project-p4-tower-terrain | TBD |
 
