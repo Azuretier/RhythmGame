@@ -6,7 +6,7 @@ import {
     Music, Swords, Users, BookOpen, Pickaxe, Trophy,
     Play, ExternalLink,
 } from 'lucide-react';
-import { ADVANCEMENTS, BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
+import { BATTLE_ARENA_REQUIRED_ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { useHomepageLogic } from '@/hooks/useHomepageLogic';
 import Advancements from '@/components/rhythmia/Advancements';
 import ProfileSetup from '@/components/profile/ProfileSetup';
@@ -15,7 +15,6 @@ import SkinCustomizer from '@/components/profile/SkinCustomizer';
 import SkillTree from '@/components/profile/SkillTree';
 import VanillaGame from '@/components/rhythmia/tetris';
 import MultiplayerGame from '@/components/rhythmia/MultiplayerGame';
-import LocaleSwitcher from '@/components/LocaleSwitcher';
 import AnimatedLogo from '@/components/rhythmia/AnimatedLogo';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 import { useRouter } from '@/i18n/navigation';
@@ -163,47 +162,6 @@ export default function Homepage() {
                     )}
                 </AnimatePresence>
 
-                {/* ---- Navbar ---- */}
-                <motion.nav
-                    className={styles.navbar}
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: isLoading ? 0 : 1, y: isLoading ? -20 : 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    data-theme-nav
-                >
-                    <div className={styles.navInner}>
-                        <div className={styles.navLogo}>
-                            azuretier<span className={styles.navLogoAccent}>.net</span>
-                        </div>
-
-                        <div className={styles.navLinks}>
-                            <button className={styles.navLink} onClick={() => router.push('/wiki')}>
-                                Wiki
-                            </button>
-                            <button className={styles.navLink} onClick={() => router.push('/updates')}>
-                                {t('nav.updates')}
-                            </button>
-                            <button className={styles.navLink} onClick={() => setShowAdvancements(true)}>
-                                {t('advancements.button', { count: unlockedCount, total: ADVANCEMENTS.length })}
-                            </button>
-                            <button className={styles.navLink} onClick={() => setShowSkinCustomizer(true)}>
-                                {t('skin.profileButton')}
-                            </button>
-
-                            <div className={styles.navDivider} />
-
-                            <button className={styles.navOnline} onClick={requestOnlineUsers}>
-                                <span className={styles.onlineDot} />
-                                {t('lobby.onlineCount', { count: onlineCount })}
-                            </button>
-
-                            <div className={styles.navDivider} />
-
-                            <LocaleSwitcher />
-                        </div>
-                    </div>
-                </motion.nav>
-
                 {/* ---- Hero ---- */}
                 <motion.section
                     className={styles.hero}
@@ -283,15 +241,6 @@ export default function Homepage() {
                     </div>
                 </motion.section>
 
-                {/* ---- Footer ---- */}
-                <motion.footer
-                    className={styles.footer}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: isLoading ? 0 : 1 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
-                >
-                    {t('footer.copyright')}
-                </motion.footer>
             </div>
         </>
     );

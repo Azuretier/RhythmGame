@@ -1,0 +1,142 @@
+.page {
+  min-height: 100vh;
+  padding: 96px 24px 48px;
+  background: var(--skin-background, #000000);
+  color: var(--skin-foreground, #ffffff);
+  font-family: var(--theme-font-body, 'Inter', sans-serif);
+}
+
+.header {
+  max-width: 72rem;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.5));
+}
+
+.grid {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--skin-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--theme-radius, 12px);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  transition: background 0.2s, border-color 0.2s;
+  width: 100%;
+}
+
+.card:hover {
+  background: var(--skin-surface, rgba(255, 255, 255, 0.06));
+  border-color: var(--skin-accent, #007FFF);
+}
+
+.cardLocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cardLocked:hover {
+  border-color: var(--skin-border, rgba(255, 255, 255, 0.08));
+  background: var(--skin-surface, rgba(255, 255, 255, 0.03));
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--skin-accent-dim, rgba(0, 127, 255, 0.12));
+  color: var(--skin-accent, #007FFF);
+  flex-shrink: 0;
+}
+
+.badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--skin-accent, #007FFF);
+  color: var(--skin-accent-light, #3399FF);
+  border-radius: 4px;
+}
+
+.cardTitle {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.cardDesc {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.5));
+  margin: 0;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.players {
+  font-size: 0.7rem;
+  color: var(--skin-subtext, rgba(255, 255, 255, 0.35));
+  letter-spacing: 0.03em;
+}
+
+.lockIcon {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 80px 16px 32px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+}

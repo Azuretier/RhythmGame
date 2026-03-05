@@ -15,6 +15,9 @@ import { GoogleSyncProvider } from '@/lib/google-sync/context';
 import { SkillTreeProvider } from '@/lib/skill-tree/context';
 import { ShapeProvider } from '@/lib/shape/context';
 import { InventoryProvider } from '@/lib/inventory/context';
+import { LayoutConfigProvider } from '@/lib/layout/context';
+import GlobalNav from '@/components/layout/GlobalNav';
+import GlobalFooter from '@/components/layout/GlobalFooter';
 
 // Vercel Analytics
 import { Analytics } from "@vercel/analytics/next"
@@ -175,9 +178,13 @@ export default async function LocaleLayout({ children, params }: Props) {
                                     <SkillTreeProvider>
                                         <InventoryProvider>
                                             <VersionProvider>
-                                                <Provider>
-                                                    {children}
-                                                </Provider>
+                                                <LayoutConfigProvider>
+                                                    <Provider>
+                                                        <GlobalNav />
+                                                        {children}
+                                                        <GlobalFooter />
+                                                    </Provider>
+                                                </LayoutConfigProvider>
                                             </VersionProvider>
                                         </InventoryProvider>
                                     </SkillTreeProvider>

@@ -1,0 +1,33 @@
+.page {
+  min-height: 100vh;
+  padding: 96px 24px 48px;
+  background: var(--skin-background, #000000);
+  color: var(--skin-foreground, #ffffff);
+  font-family: var(--theme-font-body, 'Inter', sans-serif);
+}
+
+.header {
+  max-width: 48rem;
+  margin: 0 auto 32px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.content {
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 80px 16px 32px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+}

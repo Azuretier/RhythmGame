@@ -245,7 +245,46 @@
   "nav": {
     "wiki": "Wiki",
     "updates": "アップデート",
-    "lobby": "ロビー"
+    "lobby": "ロビー",
+    "games": "ゲーム",
+    "settings": "設定",
+    "loyalty": "ランク"
+  },
+  "games": {
+    "title": "ゲーム一覧",
+    "subtitle": "次のアドベンチャーを選ぼう",
+    "vanilla": {
+      "title": "RHYTHMIA",
+      "description": "ビートに合わせてブロックを落とそう。ラインを消し、コンボを繋げ、ハイスコアを目指すソロモード。"
+    },
+    "multiplayer": {
+      "title": "1v1 バトル",
+      "description": "リアルタイム1v1対戦。相手にお邪魔ラインを送り込め。最後に立っている者が勝者。"
+    },
+    "arena": {
+      "title": "9人アリーナ",
+      "description": "共有テンポ、カオスギミック、テンポシフトを生き残る9人同時対戦アリーナモード。"
+    },
+    "towerDefense": {
+      "title": "タワーディフェンス",
+      "description": "防衛を築き、敵の波を送り込む協力タワーディフェンスモード。"
+    },
+    "minecraftBoard": {
+      "title": "マインクラフトボード",
+      "description": "マインクラフト風マルチプレイヤーボードゲーム。採掘、クラフト、モブ戦闘で勝利を目指せ。"
+    },
+    "minecraftWorld": {
+      "title": "マインクラフトワールド",
+      "description": "マルチプレイヤーボクセルサンドボックスワールドで探索と建築を楽しもう。"
+    },
+    "echoes": {
+      "title": "ECHOES OF ELYSIUM",
+      "description": "ストーリー駆動型の進行を持つ新しいRPGスタイルのゲームモード。"
+    },
+    "stories": {
+      "title": "ストーリー",
+      "description": "分岐する対話とキャラクター成長を持つビジュアルノベルチャプターに飛び込もう。"
+    }
   },
   "lobby": {
     "loading": "読み込み中",

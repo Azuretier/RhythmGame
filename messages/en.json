@@ -1354,7 +1354,46 @@
   "nav": {
     "wiki": "Wiki",
     "updates": "Updates",
-    "lobby": "Lobby"
+    "lobby": "Lobby",
+    "games": "Games",
+    "settings": "Settings",
+    "loyalty": "Loyalty"
+  },
+  "games": {
+    "title": "All Games",
+    "subtitle": "Choose your next adventure",
+    "vanilla": {
+      "title": "RHYTHMIA",
+      "description": "Drop blocks to the beat. Clear lines, build combos, and chase high scores in the original solo mode."
+    },
+    "multiplayer": {
+      "title": "1v1 BATTLE",
+      "description": "Real-time 1v1 battles. Send garbage lines to your opponent. Last one standing wins."
+    },
+    "arena": {
+      "title": "9-PLAYER ARENA",
+      "description": "Survive shared tempo, chaos gimmicks, and tempo shifts in 9-player simultaneous arena mode."
+    },
+    "towerDefense": {
+      "title": "TOWER DEFENSE",
+      "description": "Build defenses and send waves of enemies in cooperative tower defense mode."
+    },
+    "minecraftBoard": {
+      "title": "MINECRAFT BOARD",
+      "description": "Minecraft-inspired multiplayer board game. Mine, craft, fight mobs, and race to victory."
+    },
+    "minecraftWorld": {
+      "title": "MINECRAFT WORLD",
+      "description": "Explore and build in a multiplayer voxel sandbox world."
+    },
+    "echoes": {
+      "title": "ECHOES OF ELYSIUM",
+      "description": "Experience a new RPG-style game mode with story-driven progression."
+    },
+    "stories": {
+      "title": "STORIES",
+      "description": "Dive into visual novel chapters with branching dialogue and character progression."
+    }
   },
   "meta": {
     "title": "RHYTHMIA | Rhythm x Tetris Fusion Puzzle Game - Azuretier",

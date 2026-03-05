@@ -2,7 +2,46 @@
   "nav": {
     "wiki": "Wiki",
     "updates": "Mises à jour",
-    "lobby": "Lobby"
+    "lobby": "Lobby",
+    "games": "Jeux",
+    "settings": "Paramètres",
+    "loyalty": "Rang"
+  },
+  "games": {
+    "title": "Tous les Jeux",
+    "subtitle": "Choisissez votre prochaine aventure",
+    "vanilla": {
+      "title": "RHYTHMIA",
+      "description": "Posez des blocs en rythme. Effacez des lignes, enchaînez les combos et visez les meilleurs scores en mode solo."
+    },
+    "multiplayer": {
+      "title": "COMBAT 1v1",
+      "description": "Combats 1v1 en temps réel. Envoyez des lignes de déchets à votre adversaire. Le dernier debout gagne."
+    },
+    "arena": {
+      "title": "ARÈNE 9 JOUEURS",
+      "description": "Survivez au tempo partagé, aux astuces du chaos et aux changements de tempo en mode arène à 9 joueurs."
+    },
+    "towerDefense": {
+      "title": "DÉFENSE DE TOUR",
+      "description": "Construisez des défenses et envoyez des vagues d'ennemis en mode coopératif de défense de tour."
+    },
+    "minecraftBoard": {
+      "title": "PLATEAU MINECRAFT",
+      "description": "Jeu de plateau multijoueur inspiré de Minecraft. Minez, craftez, combattez des mobs et foncez vers la victoire."
+    },
+    "minecraftWorld": {
+      "title": "MONDE MINECRAFT",
+      "description": "Explorez et construisez dans un monde sandbox voxel multijoueur."
+    },
+    "echoes": {
+      "title": "ECHOES OF ELYSIUM",
+      "description": "Découvrez un nouveau mode de jeu style RPG avec une progression narrative."
+    },
+    "stories": {
+      "title": "HISTOIRES",
+      "description": "Plongez dans des chapitres de roman visuel avec des dialogues à embranchements et la progression des personnages."
+    }
   },
   "footer": {
     "copyright": "azuretier.net © 2025"

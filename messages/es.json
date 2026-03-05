@@ -920,7 +920,46 @@
   "nav": {
     "wiki": "Wiki",
     "updates": "Actualizaciones",
-    "lobby": "Lobby"
+    "lobby": "Lobby",
+    "games": "Juegos",
+    "settings": "Configuración",
+    "loyalty": "Rango"
+  },
+  "games": {
+    "title": "Todos los Juegos",
+    "subtitle": "Elige tu próxima aventura",
+    "vanilla": {
+      "title": "RHYTHMIA",
+      "description": "Deja caer bloques al ritmo. Limpia líneas, haz combos y persigue puntuaciones altas en el modo solo."
+    },
+    "multiplayer": {
+      "title": "BATALLA 1v1",
+      "description": "Batallas 1v1 en tiempo real. Envía líneas basura a tu oponente. El último en pie gana."
+    },
+    "arena": {
+      "title": "ARENA 9 JUGADORES",
+      "description": "Sobrevive al tempo compartido, trucos del caos y cambios de tempo en modo arena de 9 jugadores."
+    },
+    "towerDefense": {
+      "title": "DEFENSA DE TORRES",
+      "description": "Construye defensas y envía oleadas de enemigos en modo cooperativo de defensa de torres."
+    },
+    "minecraftBoard": {
+      "title": "TABLERO MINECRAFT",
+      "description": "Juego de mesa multijugador inspirado en Minecraft. Mina, craftea, lucha contra mobs y corre hacia la victoria."
+    },
+    "minecraftWorld": {
+      "title": "MUNDO MINECRAFT",
+      "description": "Explora y construye en un mundo sandbox voxel multijugador."
+    },
+    "echoes": {
+      "title": "ECHOES OF ELYSIUM",
+      "description": "Experimenta un nuevo modo de juego estilo RPG con progresión basada en historia."
+    },
+    "stories": {
+      "title": "HISTORIAS",
+      "description": "Sumérgete en capítulos de novela visual con diálogos ramificados y progresión de personajes."
+    }
   },
   "localeSwitcher": {
     "label": "Idioma",

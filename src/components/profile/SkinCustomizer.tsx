@@ -52,7 +52,8 @@ function PrivacyToggle() {
 }
 
 interface SkinCustomizerProps {
-  onClose: () => void;
+  onClose?: () => void;
+  inline?: boolean;
 }
 
 function SakuraDecoration() {
@@ -132,7 +133,7 @@ function SkinSwatch({ skin, isActive, onSelect }: { skin: Skin; isActive: boolea
   );
 }
 
-export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
+export default function SkinCustomizer({ onClose, inline }: SkinCustomizerProps) {
   const t = useTranslations('skin');
   const tProfile = useTranslations('profile');
   const tTheme = useTranslations('uiTheme');
@@ -187,22 +188,10 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
 
   const iconData = profile ? getIconById(profile.icon) : null;
 
-  return (
-    <motion.div
-      className={styles.overlay}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.25 }}
-    >
-      <motion.div
-        className={styles.panel}
-        initial={{ opacity: 0, y: 40, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 40, scale: 0.95 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      >
+  const content = (
+    <>
         {/* Header with profile info */}
+        {!inline && (
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             {profile && iconData && (
@@ -227,6 +216,7 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
             </svg>
           </button>
         </div>
+        )}
 
         {/* Name change section */}
         {profile && (
@@ -415,6 +405,29 @@ export default function SkinCustomizer({ onClose }: SkinCustomizerProps) {
         <div className={styles.privacySection}>
           <PrivacyToggle />
         </div>
+    </>
+  );
+
+  if (inline) {
+    return <div className={styles.panel}>{content}</div>;
+  }
+
+  return (
+    <motion.div
+      className={styles.overlay}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.25 }}
+    >
+      <motion.div
+        className={styles.panel}
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 40, scale: 0.95 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      >
+        {content}
       </motion.div>
     </motion.div>
   );
