@@ -368,7 +368,6 @@ export class MinecraftSwitchManager {
       this.gameTick(roomCode);
     }, TICK_INTERVAL);
 
-    console.log(`[MCS] Game loop started for room ${roomCode} at ${MS_CONFIG.TICK_RATE} tps`);
   }
 
   private stopGameLoop(roomCode: string): void {
@@ -377,7 +376,6 @@ export class MinecraftSwitchManager {
 
     clearInterval(room.gameLoopInterval);
     room.gameLoopInterval = null;
-    console.log(`[MCS] Game loop stopped for room ${roomCode}`);
   }
 
   private gameTick(roomCode: string): void {
@@ -1245,7 +1243,6 @@ export class MinecraftSwitchManager {
           this.playerToRoom.delete(p.id);
         }
         this.rooms.delete(code);
-        console.log(`[MCS] Cleaned up stale room ${code}`);
       }
     }
   }

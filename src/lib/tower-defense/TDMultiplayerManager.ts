@@ -831,7 +831,6 @@ export class TDMultiplayerManager {
         room.players.forEach(p => this.playerToRoom.delete(p.playerId));
       }
       this.rooms.delete(code);
-      console.log(`[TD CLEANUP] Removed stale TD room ${code}`);
     });
   }
 

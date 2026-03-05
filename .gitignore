@@ -46,6 +46,10 @@ next-env.d.ts
 /public/sitemap.xml
 /public/sitemap-*.xml
 
+# daily workflow docs (local session aids)
+DAILY-SESSION-GUIDE.md
+DAILY-WORKFLOW.md
+
 # claude-worker
 claude-worker.ps1
 claude-launcher.ps1

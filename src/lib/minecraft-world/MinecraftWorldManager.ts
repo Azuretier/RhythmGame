@@ -431,7 +431,6 @@ export class MinecraftWorldManager {
           this.playerToRoom.delete(p.id);
         }
         this.rooms.delete(code);
-        console.log(`[MW] Cleaned up stale room ${code}`);
       }
     }
   }
