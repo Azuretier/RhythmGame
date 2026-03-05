@@ -1167,7 +1167,10 @@ export function GalaxyRing3D({
                 width: '100vw',
                 height: '100vh',
                 pointerEvents: hasInteraction ? 'auto' : 'none',
-                zIndex: 2,
+                // When interacting (tower placement/selection), raise above game UI (z-index: 3)
+                // so clicks reach the 3D ring instead of being blocked by HTML elements.
+                // When not interacting, stay behind game UI for normal tetris controls.
+                zIndex: hasInteraction ? 4 : 2,
             }}
         >
             <GalaxyRingScene
