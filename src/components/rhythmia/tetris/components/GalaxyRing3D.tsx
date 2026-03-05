@@ -67,7 +67,6 @@ const DEPTH = GALAXY_RING_DEPTH;                 // 3
 // ===== 3D sizing =====
 const CELL = 0.32;
 const CELL_GAP = 0.02;
-const BLOCK_H = 0.18;
 const LERP_SPEED = 8;
 const SLOT_SIZE = 0.18;
 
@@ -85,13 +84,28 @@ const TOWER_TYPE_COLORS: Record<TowerType, { main: string; accent: string; glow:
     arcane:    { main: '#c084fc', accent: '#a855f7', glow: '#dd99ff' },
 };
 
-// ===== Path/Terrain colors =====
-const PATH_COLORS = [new THREE.Color('#3a6a4a'), new THREE.Color('#4a7a5a'), new THREE.Color('#3a5a4a'), new THREE.Color('#4a7a5a')];
-const TOWER_LAYER_COLORS = [new THREE.Color('#4a3a6a'), new THREE.Color('#5a4a7a'), new THREE.Color('#3a2a5a')];
-const BUFFER_COLORS = [new THREE.Color('#2a1a4a'), new THREE.Color('#3a2a5a')];
-const CORNER_COLOR = new THREE.Color('#1a1030');
-const SLOT_COLOR_EMPTY = new THREE.Color('#554488');
-const SLOT_COLOR_HIGHLIGHT = new THREE.Color('#8866dd');
+// ===== Terrain colors (matching TD page style) =====
+// Path layer: tan/sandy path tiles (checkerboard pair)
+const PATH_COLOR_A = new THREE.Color('#c4a35a');
+const PATH_COLOR_B = new THREE.Color('#b8944d');
+// Tower layer: grass tiles for tower placement (checkerboard pair)
+const GRASS_COLOR_A = new THREE.Color('#3a7d44');
+const GRASS_COLOR_B = new THREE.Color('#348a3e');
+// Buffer layer: slightly darker grass
+const BUFFER_COLOR_A = new THREE.Color('#2e6836');
+const BUFFER_COLOR_B = new THREE.Color('#296030');
+// Corner cells: mountain/rock
+const CORNER_COLOR_A = new THREE.Color('#6b7280');
+const CORNER_COLOR_B = new THREE.Color('#5f6670');
+// Slot marker colors
+const SLOT_COLOR_EMPTY = new THREE.Color('#88aa66');
+const SLOT_COLOR_HIGHLIGHT = new THREE.Color('#22d3ee');
+
+// Cell heights by type (matching TD page style)
+const HEIGHT_PATH = 0.12;
+const HEIGHT_GRASS = 0.2;
+const HEIGHT_BUFFER = 0.2;
+const HEIGHT_CORNER = 0.35;
 
 // ===== Pixel filter setup =====
 function PixelFilterSetup() {
@@ -171,36 +185,53 @@ function towerToWorld(side: string, index: number): { x: number; z: number; angl
     return { x: pathWorld.x + dx, z: pathWorld.z + dz, angle: pathWorld.angle };
 }
 
-// ===== Terrain Grid =====
+// ===== Terrain Grid (TD-style with checkerboard + varying heights) =====
 function TerrainGrid() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
     const { count, matrices, colors } = useMemo(() => {
         const rng = mulberry32(42);
-        const cells: { x: number; z: number; color: THREE.Color; heightVar: number }[] = [];
+        const cells: { x: number; z: number; color: THREE.Color; height: number }[] = [];
         for (let row = 0; row < GRID_H; row++) {
             for (let col = 0; col < GRID_W; col++) {
                 const kind = getCellKind(col, row);
                 if (kind === 'empty') continue;
                 const wx = ORIGIN_X + col * CELL;
                 const wz = ORIGIN_Z + row * CELL;
-                const hv = (rng() - 0.5) * 0.04;
+                const checker = (col + row) % 2 === 0;
                 let color: THREE.Color;
+                let height: number;
                 switch (kind) {
-                    case 'path': color = PATH_COLORS[Math.floor(rng() * PATH_COLORS.length)]; break;
-                    case 'tower': color = TOWER_LAYER_COLORS[Math.floor(rng() * TOWER_LAYER_COLORS.length)]; break;
-                    case 'buffer': color = BUFFER_COLORS[Math.floor(rng() * BUFFER_COLORS.length)]; break;
-                    default: color = CORNER_COLOR.clone();
+                    case 'path':
+                        color = checker ? PATH_COLOR_A : PATH_COLOR_B;
+                        height = HEIGHT_PATH;
+                        break;
+                    case 'tower':
+                        color = checker ? GRASS_COLOR_A : GRASS_COLOR_B;
+                        height = HEIGHT_GRASS;
+                        break;
+                    case 'buffer':
+                        color = checker ? BUFFER_COLOR_A : BUFFER_COLOR_B;
+                        height = HEIGHT_BUFFER;
+                        break;
+                    default:
+                        color = checker ? CORNER_COLOR_A : CORNER_COLOR_B;
+                        height = HEIGHT_CORNER + rng() * 0.05;
+                        break;
                 }
-                cells.push({ x: wx, z: wz, color, heightVar: hv });
+                cells.push({ x: wx, z: wz, color, height });
             }
         }
         const totalBlocks = cells.length;
         const mat = new Float32Array(totalBlocks * 16);
         const col = new Float32Array(totalBlocks * 3);
         const dummy = new THREE.Matrix4();
+        const scale = new THREE.Matrix4();
+        const blockSize = CELL - CELL_GAP;
         for (let i = 0; i < totalBlocks; i++) {
             const c = cells[i];
-            dummy.makeTranslation(c.x, c.heightVar, c.z);
+            dummy.makeTranslation(c.x, c.height * 0.5, c.z);
+            scale.makeScale(blockSize, c.height, blockSize);
+            dummy.multiply(scale);
             dummy.toArray(mat, i * 16);
             col[i * 3] = c.color.r; col[i * 3 + 1] = c.color.g; col[i * 3 + 2] = c.color.b;
         }
@@ -219,11 +250,10 @@ function TerrainGrid() {
         mesh.instanceMatrix.needsUpdate = true;
     }, [count, matrices, colors]);
 
-    const blockSize = CELL - CELL_GAP;
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]} castShadow={false} receiveShadow={false}>
-            <boxGeometry args={[blockSize, BLOCK_H, blockSize]} />
-            <meshStandardMaterial vertexColors roughness={0.85} metalness={0.05} flatShading />
+            <boxGeometry args={[1, 1, 1]} />
+            <meshStandardMaterial vertexColors roughness={0.8} metalness={0.05} flatShading />
         </instancedMesh>
     );
 }
@@ -242,7 +272,7 @@ function TerrainUnderside() {
         const mat = new Float32Array(cells.length * 16);
         const dummy = new THREE.Matrix4();
         for (let i = 0; i < cells.length; i++) {
-            dummy.makeTranslation(cells[i].x, -BLOCK_H * 0.6, cells[i].z);
+            dummy.makeTranslation(cells[i].x, -0.06, cells[i].z);
             dummy.toArray(mat, i * 16);
         }
         return { count: cells.length, matrices: mat };
@@ -262,8 +292,8 @@ function TerrainUnderside() {
     const blockSize = CELL - CELL_GAP;
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
-            <boxGeometry args={[blockSize, BLOCK_H * 0.5, blockSize]} />
-            <meshStandardMaterial color="#1a0e30" roughness={0.95} flatShading />
+            <boxGeometry args={[blockSize, 0.08, blockSize]} />
+            <meshStandardMaterial color="#3d2b1a" roughness={0.95} flatShading />
         </instancedMesh>
     );
 }
@@ -275,7 +305,7 @@ function GroundPlane() {
         canvas.width = 16; canvas.height = 16;
         const ctx = canvas.getContext('2d')!;
         const rng = mulberry32(99);
-        const cs = ['#0e0818', '#120c20', '#160e28', '#0e0a1a', '#100c1e'];
+        const cs = ['#2a4a2a', '#1e3a1e', '#243e24', '#1a361a', '#223c22'];
         for (let x = 0; x < 16; x++) {
             for (let y = 0; y < 16; y++) {
                 ctx.fillStyle = cs[Math.floor(rng() * cs.length)];
@@ -288,9 +318,9 @@ function GroundPlane() {
     }, []);
     const size = Math.max(GRID_W, GRID_H) * CELL * 2;
     return (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -BLOCK_H, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
             <planeGeometry args={[size, size]} />
-            <meshStandardMaterial map={texture} roughness={0.95} transparent opacity={0.45} />
+            <meshStandardMaterial map={texture} roughness={0.95} transparent opacity={0.6} />
         </mesh>
     );
 }
@@ -298,7 +328,7 @@ function GroundPlane() {
 // ===== Path outline =====
 function PathOutline() {
     const points = useMemo(() => {
-        const y = BLOCK_H * 0.5 + 0.01;
+        const y = HEIGHT_PATH + 0.01;
         const halfW = (GRID_W - 1) * CELL * 0.5 + CELL * 0.5;
         const topZ = ORIGIN_Z - CELL * 0.5;
         const botZ = ORIGIN_Z + (GRID_H - 1) * CELL + CELL * 0.5;
@@ -312,7 +342,7 @@ function PathOutline() {
     return (
         <line>
             <bufferGeometry attach="geometry" {...lineGeo} />
-            <lineBasicMaterial color="#9977ee" transparent opacity={0.5} />
+            <lineBasicMaterial color="#fbbf24" transparent opacity={0.5} />
         </line>
     );
 }
@@ -326,7 +356,7 @@ function TerrainDecorations() {
         const mat = new Float32Array(decoCount * 16);
         const col = new Float32Array(decoCount * 3);
         const dummy = new THREE.Matrix4();
-        const crystalColors = [new THREE.Color('#8866cc'), new THREE.Color('#66aacc'), new THREE.Color('#aa77dd'), new THREE.Color('#5588aa')];
+        const crystalColors = [new THREE.Color('#6b8e23'), new THREE.Color('#8b7355'), new THREE.Color('#556b2f'), new THREE.Color('#8fbc8f')];
         let placed = 0;
         for (let attempt = 0; attempt < decoCount * 3 && placed < decoCount; attempt++) {
             const gCol = Math.floor(rng() * GRID_W);
@@ -337,7 +367,7 @@ function TerrainDecorations() {
             const wx = ORIGIN_X + gCol * CELL + (rng() - 0.5) * CELL * 0.4;
             const wz = ORIGIN_Z + gRow * CELL + (rng() - 0.5) * CELL * 0.4;
             dummy.identity();
-            dummy.makeTranslation(wx, BLOCK_H * 0.5 + scale * hScale * 0.5, wz);
+            dummy.makeTranslation(wx, HEIGHT_GRASS + scale * hScale * 0.5, wz);
             dummy.multiply(new THREE.Matrix4().makeScale(scale, scale * hScale, scale));
             dummy.toArray(mat, placed * 16);
             const c = crystalColors[Math.floor(rng() * crystalColors.length)];
@@ -514,8 +544,8 @@ function MobEnemy({ pathPosition, enemyType, id, health, maxHealth, effects, fly
         if (!groupRef.current) return;
         const target = pathToWorld(pathPosition);
         const bobY = flying
-            ? BLOCK_H * 0.5 + 0.3 + Math.sin(clock.elapsedTime * 2 + idHash) * 0.08
-            : BLOCK_H * 0.5 + Math.sin(clock.elapsedTime * 4 + idHash) * 0.02;
+            ? HEIGHT_PATH + 0.3 + Math.sin(clock.elapsedTime * 2 + idHash) * 0.08
+            : HEIGHT_PATH + Math.sin(clock.elapsedTime * 4 + idHash) * 0.02;
         const s = smoothRef.current;
         if (!s.init) {
             s.x = target.x; s.z = target.z; s.angle = target.angle; s.init = true;
@@ -765,7 +795,7 @@ function MobTower({ tower, isSelected, lineClearPulse, onClick }: {
 
     useFrame(({ clock }) => {
         if (!groupRef.current) return;
-        groupRef.current.position.set(towerPos.x, BLOCK_H * 0.5, towerPos.z);
+        groupRef.current.position.set(towerPos.x, HEIGHT_GRASS * 0.5, towerPos.z);
 
         if (isSelected) {
             groupRef.current.scale.setScalar(1 + Math.sin(clock.elapsedTime * 4) * 0.08);
@@ -875,7 +905,7 @@ function TowerSlotMarker({ slot, highlighted, onSlotClick }: {
 
     useFrame(({ clock }) => {
         if (!groupRef.current) return;
-        groupRef.current.position.set(slotPos.x, BLOCK_H * 0.5, slotPos.z);
+        groupRef.current.position.set(slotPos.x, HEIGHT_GRASS * 0.5, slotPos.z);
         if (matRef.current) {
             if (highlighted) {
                 const pulse = 0.4 + Math.sin(clock.elapsedTime * 4) * 0.2;
@@ -904,16 +934,15 @@ function TowerSlotMarker({ slot, highlighted, onSlotClick }: {
         onSlotClick(globalIndex);
     }, [globalIndex, onSlotClick]);
 
-    const HIT_SIZE = 0.4; // Larger invisible hitbox for reliable raycasting
     return (
         <group ref={groupRef}>
-            {/* Invisible larger hitbox for click detection */}
-            <mesh position={[0, SLOT_SIZE * 0.5 + 0.05, 0]} onPointerDown={handleClick}>
-                <boxGeometry args={[HIT_SIZE, HIT_SIZE, HIT_SIZE]} />
+            {/* Invisible hitbox for reliable click detection */}
+            <mesh position={[0, 0.12, 0]} onPointerDown={handleClick}>
+                <boxGeometry args={[0.28, 0.24, 0.28]} />
                 <meshBasicMaterial visible={false} />
             </mesh>
             {/* Visible slot marker */}
-            <mesh position={[0, SLOT_SIZE * 0.5, 0]}>
+            <mesh position={[0, HEIGHT_GRASS * 0.5 + 0.02, 0]}>
                 <boxGeometry args={[SLOT_SIZE, SLOT_SIZE * 0.3, SLOT_SIZE]} />
                 <meshStandardMaterial ref={matRef} color={SLOT_COLOR_EMPTY} transparent opacity={0.15} roughness={0.8} flatShading />
             </mesh>
@@ -944,7 +973,7 @@ function RingProjectile3D({ projectile }: { projectile: RingProjectile }) {
     useFrame((state, delta) => {
         if (!groupRef.current || !projRef.current) return;
         const target = pathToWorld(projectile.pathFraction);
-        const y = BLOCK_H * 0.5 + 0.25;
+        const y = HEIGHT_GRASS * 0.5 + 0.25;
         const s = smoothRef.current;
         if (!s.init) {
             s.x = target.x; s.z = target.z; s.init = true;
@@ -991,7 +1020,7 @@ function GateMarkers({ gates }: { gates: GalaxyGate[] }) {
             {positions.map(({ x, z, angle, ratio, side }) => {
                 const gateColor = ratio > 0.5 ? '#44ff88' : ratio > 0.25 ? '#ffaa44' : '#ff4444';
                 return (
-                    <group key={side} position={[x, BLOCK_H * 0.5, z]} rotation={[0, angle, 0]}>
+                    <group key={side} position={[x, HEIGHT_PATH, z]} rotation={[0, angle, 0]}>
                         <mesh position={[-0.12, 0.2, 0]}>
                             <boxGeometry args={[0.08, 0.4, 0.08]} />
                             <meshStandardMaterial color={gateColor} emissive={gateColor} emissiveIntensity={0.6} roughness={0.4} flatShading />
