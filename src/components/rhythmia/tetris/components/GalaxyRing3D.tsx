@@ -3,6 +3,7 @@
 import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import type { TowerType, RingEnemy, RingTower, RingProjectile, TowerSlot, GalaxyGate } from '../galaxy-types';
+import type { Board, Piece } from '../types';
 import { GalaxyRingScene } from './GalaxyScene';
 import { CameraController } from './CameraController';
 import { useLayerInteraction } from '../hooks/useLayerInteraction';
@@ -20,6 +21,9 @@ export interface GalaxyRing3DProps {
     lineClearPulse?: boolean;
     isPaused?: boolean;
     gameOver?: boolean;
+    board?: Board;
+    currentPiece?: Piece | null;
+    clearedRows?: number[];
     onSlotClick: (slotIndex: number) => void;
     onTowerClick: (towerId: string) => void;
 }
@@ -28,6 +32,7 @@ export function GalaxyRing3D({
     enemies, towers, gates, projectiles, towerSlots,
     selectedTowerType, selectedTowerId,
     lineClearPulse = false, isPaused = false, gameOver = false,
+    board, currentPiece, clearedRows,
     onSlotClick, onTowerClick,
 }: GalaxyRing3DProps) {
     const { canvasPointerEvents, canvasZIndex } = useLayerInteraction({
@@ -60,6 +65,9 @@ export function GalaxyRing3D({
                 selectedTowerType={selectedTowerType}
                 selectedTowerId={selectedTowerId}
                 lineClearPulse={lineClearPulse}
+                board={board}
+                currentPiece={currentPiece}
+                clearedRows={clearedRows}
                 onSlotClick={onSlotClick}
                 onTowerClick={onTowerClick}
             />

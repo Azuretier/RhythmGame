@@ -4,8 +4,10 @@ import React, { useRef, useMemo, useEffect, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { TowerType, EnemyType, RingEnemy, RingTower, RingProjectile, TowerSlot, GalaxyGate } from '../galaxy-types';
+import type { Board, Piece } from '../types';
 import { TOWER_DEFS } from '@/types/tower-defense';
 import { createMobMesh, animateMob, disposeMobGroup, disposeSharedMobResources } from '../minecraft-mobs';
+import { CenterTerrain } from './CenterTerrain';
 import type { MobMeshData } from '../minecraft-mobs';
 import type { TDEnemyType } from '../types';
 import { createProjectileMesh, animateProjectile, disposeProjectileGroup, disposeSharedProjectileResources } from '@/components/tower-defense/td-projectiles';
@@ -1081,6 +1083,9 @@ export interface GalaxyRingSceneProps {
     selectedTowerType: TowerType | null;
     selectedTowerId: string | null;
     lineClearPulse: boolean;
+    board?: Board;
+    currentPiece?: Piece | null;
+    clearedRows?: number[];
     onSlotClick: (slotIndex: number) => void;
     onTowerClick: (towerId: string) => void;
 }
@@ -1094,6 +1099,9 @@ export function GalaxyRingScene({
     selectedTowerType,
     selectedTowerId,
     lineClearPulse,
+    board,
+    currentPiece,
+    clearedRows,
     onSlotClick,
     onTowerClick,
 }: GalaxyRingSceneProps) {
@@ -1108,6 +1116,13 @@ export function GalaxyRingScene({
             <group rotation={[0.45, 0, 0]}>
                 <GroundPlane />
                 <TerrainGrid />
+                {board && (
+                    <CenterTerrain
+                        board={board}
+                        currentPiece={currentPiece ?? null}
+                        clearedRows={clearedRows}
+                    />
+                )}
                 <TerrainUnderside />
                 <PathOutline />
                 <TerrainDecorations />
