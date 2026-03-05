@@ -4,6 +4,7 @@ import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import type { TowerType, RingEnemy, RingTower, RingProjectile, TowerSlot, GalaxyGate } from '../galaxy-types';
 import { GalaxyRingScene } from './GalaxyScene';
+import { CameraController } from './CameraController';
 import { useLayerInteraction } from '../hooks/useLayerInteraction';
 
 // ===== Exported Canvas wrapper =====
@@ -39,7 +40,7 @@ export function GalaxyRing3D({
     return (
         <Canvas
             gl={{ antialias: true, alpha: true }}
-            camera={{ position: [0, 5, 7], fov: 50, near: 0.1, far: 100 }}
+            camera={{ fov: 50, near: 0.1, far: 100 }}
             style={{
                 position: 'fixed',
                 inset: 0,
@@ -49,6 +50,7 @@ export function GalaxyRing3D({
                 zIndex: canvasZIndex,
             }}
         >
+            <CameraController />
             <GalaxyRingScene
                 enemies={enemies}
                 towers={towers}
