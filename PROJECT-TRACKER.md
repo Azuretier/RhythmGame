@@ -72,11 +72,11 @@
 ## Phase 7: Continuous Refactoring
 > Goal: Keep codebase clean as complexity grows
 
-- [ ] **7.1** Split `GalaxyRing3D.tsx` (1200+ lines) into sub-modules: terrain, entities, effects, scene
-- [ ] **7.2** Split `tetris.tsx` main orchestrator — extract Galaxy TD integration into `useGalaxyTDIntegration` hook
-- [ ] **7.3** Create shared constants file for all layer/dimension/color values
-- [ ] **7.4** Add JSDoc to all public hooks and component props
-- [ ] **7.5** Remove dead code paths from phase-gating cleanup
+- [x] **7.1** Split `GalaxyScene.tsx` into sub-modules: terrain extracted to `GalaxyTerrain.tsx`
+- [x] **7.2** Split `tetris.tsx` main orchestrator — extract Galaxy TD integration into `useGalaxyTDIntegration` hook
+- [x] **7.3** Create shared constants file (`galaxy-shared-constants.ts`) for all layer/dimension/color values
+- [x] **7.4** Add JSDoc to all public hooks and component props
+- [x] **7.5** Remove dead code paths from phase-gating cleanup
 
 ---
 
@@ -90,4 +90,5 @@
 | 2026-03-05 | P4 | 4.1-4.6 (all) | claude/project-p4-tower-terrain | #471 |
 | 2026-03-05 | P5 | 5.1-5.6 (all) | claude/project-p5-flexible-board-ui | #472 |
 | 2026-03-05 | P6 | 6.1-6.6 (all) | claude/project-p6-multiplayer-arch | TBD |
+| 2026-03-05 | P7 | 7.1-7.5 (all) | claude/project-p7-refactoring | TBD |
 
