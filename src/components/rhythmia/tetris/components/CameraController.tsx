@@ -2,12 +2,15 @@
 
 import { useEffect, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
-import { useCameraController } from '../hooks/useCameraController';
+import { useCameraController, CAMERA_PRESETS } from '../hooks/useCameraController';
+import type { CameraPreset } from '../hooks/useCameraController';
 
 const ORBIT_SPEED = 0.005;
 const PAN_SPEED = 0.01;
 const ZOOM_SPEED = 0.5;
 const PINCH_ZOOM_SPEED = 0.02;
+
+const PRESET_ORDER: CameraPreset[] = ['isometric', 'topDown', 'closeUp', 'cinematic'];
 
 /**
  * Camera controller component — lives inside the R3F Canvas.
@@ -16,12 +19,15 @@ const PINCH_ZOOM_SPEED = 0.02;
  * - Right-drag / two-finger drag: orbit
  * - Scroll wheel / pinch: zoom
  * - Middle-drag: pan
+ * - C key: cycle camera preset
+ * - R key: reset to isometric
  *
  * Left-click passes through to tower slot hitboxes.
+ * Arrow keys, 1-7, E, L, Escape are NOT captured (reserved for tetris/TD).
  */
 export function CameraController() {
     const { gl } = useThree();
-    const { stateRef } = useCameraController();
+    const { stateRef, setPreset, resetCamera } = useCameraController();
 
     // Track drag state outside React state to avoid re-renders
     const dragRef = useRef({
@@ -146,6 +152,20 @@ export function CameraController() {
             dragRef.current.isPanning = false;
         };
 
+        // ===== Keyboard shortcuts =====
+        // C: cycle preset, R: reset to isometric
+        // Does NOT capture arrows, 1-7, E, L, Escape (tetris/TD keys)
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'c' || e.key === 'C') {
+                const currentPreset = stateRef.current.preset;
+                const idx = PRESET_ORDER.indexOf(currentPreset);
+                const nextIdx = (idx + 1) % PRESET_ORDER.length;
+                setPreset(PRESET_ORDER[nextIdx]);
+            } else if (e.key === 'r' || e.key === 'R') {
+                resetCamera();
+            }
+        };
+
         // Attach listeners
         canvas.addEventListener('mousedown', onMouseDown);
         canvas.addEventListener('mousemove', onMouseMove);
@@ -155,6 +175,7 @@ export function CameraController() {
         canvas.addEventListener('touchstart', onTouchStart, { passive: false });
         canvas.addEventListener('touchmove', onTouchMove, { passive: false });
         canvas.addEventListener('touchend', onTouchEnd);
+        window.addEventListener('keydown', onKeyDown);
 
         return () => {
             canvas.removeEventListener('mousedown', onMouseDown);
@@ -165,8 +186,9 @@ export function CameraController() {
             canvas.removeEventListener('touchstart', onTouchStart);
             canvas.removeEventListener('touchmove', onTouchMove);
             canvas.removeEventListener('touchend', onTouchEnd);
+            window.removeEventListener('keydown', onKeyDown);
         };
-    }, [gl, stateRef]);
+    }, [gl, stateRef, setPreset, resetCamera]);
 
     return null; // This component only manages camera state, no visual output
 }
