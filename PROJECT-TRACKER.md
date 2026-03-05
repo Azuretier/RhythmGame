@@ -52,12 +52,12 @@
 ## Phase 5: Flexible Board UI
 > Goal: Board UI adapts to camera angle and screen size
 
-- [ ] **5.1** Create `BoardOverlay` component that projects 2D tetris onto 3D space
-- [ ] **5.2** Add CSS transform that matches camera perspective (board follows 3D projection)
-- [ ] **5.3** Implement responsive layout — board size scales with viewport
-- [ ] **5.4** Add toggle: full 2D mode (classic) vs 3D-integrated mode
-- [ ] **5.5** HUD elements reflow based on camera angle (gold/lives/wave indicators)
-- [ ] **5.6** Touch-friendly controls for mobile (larger hitboxes, gesture support)
+- [x] **5.1** Create `BoardOverlay` component that projects 2D tetris onto 3D space
+- [x] **5.2** Add CSS transform that matches camera perspective (board follows 3D projection)
+- [x] **5.3** Implement responsive layout — board size scales with viewport
+- [x] **5.4** Add toggle: full 2D mode (classic) vs 3D-integrated mode
+- [x] **5.5** HUD elements reflow based on camera angle (gold/lives/wave indicators)
+- [x] **5.6** Touch-friendly controls for mobile (larger hitboxes, gesture support)
 
 ## Phase 6: Multiplayer Architecture
 > Goal: Component architecture ready for networked play
@@ -87,5 +87,6 @@
 | 2026-03-05 | P1 | 1.1-1.5 (all) | claude/project-p1-layer-architecture | #468 |
 | 2026-03-05 | P2 | 2.1-2.7 (all) | claude/project-p2-movable-camera | #469 |
 | 2026-03-05 | P3 | 3.1-3.6 (all) | claude/project-p3-center-terrain | #470 |
-| 2026-03-05 | P4 | 4.1-4.6 (all) | claude/project-p4-tower-terrain | TBD |
+| 2026-03-05 | P4 | 4.1-4.6 (all) | claude/project-p4-tower-terrain | #471 |
+| 2026-03-05 | P5 | 5.1-5.6 (all) | claude/project-p5-flexible-board-ui | TBD |
 
