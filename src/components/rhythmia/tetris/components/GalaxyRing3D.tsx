@@ -4,7 +4,7 @@ import React from 'react';
 import { Canvas } from '@react-three/fiber';
 import type { TowerType, RingEnemy, RingTower, RingProjectile, TowerSlot, GalaxyGate } from '../galaxy-types';
 import { GalaxyRingScene } from './GalaxyScene';
-import { LAYER_3D_DEFAULT, LAYER_3D_INTERACTIVE } from '../layer-constants';
+import { useLayerInteraction } from '../hooks/useLayerInteraction';
 
 // ===== Exported Canvas wrapper =====
 export interface GalaxyRing3DProps {
@@ -17,6 +17,8 @@ export interface GalaxyRing3DProps {
     selectedTowerType: TowerType | null;
     selectedTowerId: string | null;
     lineClearPulse?: boolean;
+    isPaused?: boolean;
+    gameOver?: boolean;
     onSlotClick: (slotIndex: number) => void;
     onTowerClick: (towerId: string) => void;
 }
@@ -24,9 +26,16 @@ export interface GalaxyRing3DProps {
 export function GalaxyRing3D({
     enemies, towers, gates, projectiles, towerSlots,
     selectedTowerType, selectedTowerId,
-    lineClearPulse = false, onSlotClick, onTowerClick,
+    lineClearPulse = false, isPaused = false, gameOver = false,
+    onSlotClick, onTowerClick,
 }: GalaxyRing3DProps) {
-    const hasInteraction = selectedTowerType !== null || selectedTowerId !== null;
+    const { canvasPointerEvents, canvasZIndex } = useLayerInteraction({
+        selectedTowerType,
+        selectedTowerId,
+        isPaused,
+        gameOver,
+    });
+
     return (
         <Canvas
             gl={{ antialias: true, alpha: true }}
@@ -36,11 +45,8 @@ export function GalaxyRing3D({
                 inset: 0,
                 width: '100vw',
                 height: '100vh',
-                pointerEvents: hasInteraction ? 'auto' : 'none',
-                // When interacting (tower placement/selection), raise above game UI (z-index: 3)
-                // so clicks reach the 3D ring instead of being blocked by HTML elements.
-                // When not interacting, stay behind game UI for normal tetris controls.
-                zIndex: hasInteraction ? LAYER_3D_INTERACTIVE : LAYER_3D_DEFAULT,
+                pointerEvents: canvasPointerEvents,
+                zIndex: canvasZIndex,
             }}
         >
             <GalaxyRingScene

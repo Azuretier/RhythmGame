@@ -1762,6 +1762,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             selectedTowerType={galaxyTD.selectedTowerType}
             selectedTowerId={galaxyTD.selectedTowerId}
             lineClearPulse={galaxyLineClearPulse}
+            isPaused={isPaused}
+            gameOver={gameOver}
             onSlotClick={(slotIndex) => {
               if (galaxyTD.selectedTowerType) {
                 galaxyTD.placeTower(galaxyTD.selectedTowerType, slotIndex);

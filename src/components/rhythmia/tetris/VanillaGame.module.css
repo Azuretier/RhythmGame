@@ -63,13 +63,14 @@
   padding: 10px;
   gap: 10px;
   position: relative;
-  z-index: 1;
+  z-index: 1; /* LAYER_3D_BACKGROUND */
 }
 
-/* All game UI children render above the Galaxy TD 3D ring (position: fixed, z-index: 2) */
+/* All game UI children render above the Galaxy TD 3D ring (LAYER_3D_DEFAULT = 2) */
+/* See layer-constants.ts for the full z-index hierarchy */
 .game > * {
   position: relative;
-  z-index: 3;
+  z-index: 3; /* LAYER_GAME_UI */
 }
 
 /* Score display */
