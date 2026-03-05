@@ -32,12 +32,12 @@
 ## Phase 3: Center Terrain (Dig Phase)
 > Goal: 3D destructible terrain in the center where tetris board is
 
-- [ ] **3.1** Create `CenterTerrain.tsx` — 10x20 voxel grid matching tetris board cells
-- [ ] **3.2** Map tetris board state to 3D blocks (filled cell = block, empty = air)
-- [ ] **3.3** Add block destruction animation (particles, shake) when lines are cleared
-- [ ] **3.4** Sync dig phase terrain with tetris piece placement in real-time
-- [ ] **3.5** Add depth layers (blocks stack visually, not just flat plane)
-- [ ] **3.6** Implement terrain material system (different block types = different textures/colors)
+- [x] **3.1** Create `CenterTerrain.tsx` — 10x20 voxel grid matching tetris board cells
+- [x] **3.2** Map tetris board state to 3D blocks (filled cell = block, empty = air)
+- [x] **3.3** Add block destruction animation (particles, shake) when lines are cleared
+- [x] **3.4** Sync dig phase terrain with tetris piece placement in real-time
+- [x] **3.5** Add depth layers (blocks stack visually, not just flat plane)
+- [x] **3.6** Implement terrain material system (different block types = different textures/colors)
 
 ## Phase 4: Surrounding Tower Terrain
 > Goal: Ring terrain matches tower-defense page quality
@@ -85,5 +85,6 @@
 | Date | Phase | Tasks Completed | Branch | PR |
 |------|-------|----------------|--------|-----|
 | 2026-03-05 | P1 | 1.1-1.5 (all) | claude/project-p1-layer-architecture | #468 |
-| 2026-03-05 | P2 | 2.1-2.7 (all) | claude/project-p2-movable-camera | TBD |
+| 2026-03-05 | P2 | 2.1-2.7 (all) | claude/project-p2-movable-camera | #469 |
+| 2026-03-05 | P3 | 3.1-3.6 (all) | claude/project-p3-center-terrain | TBD |
 
