@@ -121,7 +121,7 @@ export const GalaxyBoard = React.memo(function GalaxyBoard({
         />
     );
 
-    if (!galaxyActive || waveNumber <= 0) {
+    if (waveNumber <= 0) {
         return boardElement;
     }
 

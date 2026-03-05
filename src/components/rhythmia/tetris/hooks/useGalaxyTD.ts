@@ -35,6 +35,9 @@ export function useGalaxyTD({
     useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
     useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
 
+    // Kill tracking for item drops (compare alive count before/after tick)
+    const recentKillsRef = useRef(0);
+
     // ===== Tick (called each beat with dt in seconds) =====
     const tick = useCallback((dt: number) => {
         if (isPausedRef.current || gameOverRef.current) return;
@@ -45,7 +48,11 @@ export function useGalaxyTD({
             if (s.phase === 'build' && s.currentWave < s.totalWaves) {
                 s = engineStartWave(s);
             }
-            return updateRingGame(s, dt);
+            const aliveBefore = s.enemies.filter(e => !e.dead).length;
+            s = updateRingGame(s, dt);
+            const aliveAfter = s.enemies.filter(e => !e.dead).length;
+            recentKillsRef.current = Math.max(0, aliveBefore - aliveAfter);
+            return s;
         });
     }, []);
 
@@ -106,13 +113,11 @@ export function useGalaxyTD({
         setState(createInitialState());
     }, []);
 
-    // Clear enemies on phase change (keep towers)
-    const [prevPhase, setPrevPhase] = useState(terrainPhase);
+    // Clear enemies on game over only (ring stays active across phases)
     const [prevGameOver, setPrevGameOver] = useState(gameOver);
-    if (prevPhase !== terrainPhase || prevGameOver !== gameOver) {
-        setPrevPhase(terrainPhase);
+    if (prevGameOver !== gameOver) {
         setPrevGameOver(gameOver);
-        if (terrainPhase !== 'dig' || gameOver) {
+        if (gameOver) {
             setState(prev => ({
                 ...prev,
                 enemies: [],
@@ -136,6 +141,7 @@ export function useGalaxyTD({
         selectedTowerType: state.selectedTowerType,
         selectedTowerId: state.selectedTowerId,
         phase: state.phase,
+        recentKillsRef,
         tick,
         onLineClear,
         placeTower,
