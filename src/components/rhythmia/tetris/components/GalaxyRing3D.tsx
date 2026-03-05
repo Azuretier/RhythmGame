@@ -3,8 +3,13 @@
 import React, { useRef, useMemo, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { TowerType, EnemyType, RingEnemy, RingTower, RingProjectile, TowerSlot, GalaxyGate, StatusEffect } from '../galaxy-types';
-import { ENEMY_DEFS } from '@/types/tower-defense';
+import type { TowerType, EnemyType, RingEnemy, RingTower, RingProjectile, TowerSlot, GalaxyGate } from '../galaxy-types';
+import { TOWER_DEFS, ENEMY_DEFS } from '@/types/tower-defense';
+import { createMobMesh, animateMob, disposeMobGroup, disposeSharedMobResources } from '../minecraft-mobs';
+import type { MobMeshData } from '../minecraft-mobs';
+import type { TDEnemyType } from '../types';
+import { createProjectileMesh, animateProjectile, disposeProjectileGroup, disposeSharedProjectileResources } from '@/components/tower-defense/td-projectiles';
+import type { ProjectileMeshData } from '@/components/tower-defense/td-projectiles';
 import {
     GALAXY_RING_DEPTH,
     GALAXY_TOP_WIDTH,
@@ -15,6 +20,42 @@ import {
     GALAXY_TOWERS_PER_SIDE_LR,
     GALAXY_GATE_POSITIONS,
 } from '../galaxy-constants';
+
+// ===== Tower-to-Minecraft-Mob mapping (same as TD page) =====
+const TOWER_MOB_MAP: Record<TowerType, TDEnemyType> = {
+    archer: 'skeleton',
+    cannon: 'magma_cube',
+    frost: 'slime',
+    lightning: 'enderman',
+    sniper: 'skeleton',
+    flame: 'zombie',
+    arcane: 'enderman',
+};
+
+// ===== Enemy-to-Animal-Mob mapping (same as TD page) =====
+const ENEMY_MOB_MAP: Record<EnemyType, TDEnemyType> = {
+    grunt: 'pig',
+    fast: 'chicken',
+    tank: 'cow',
+    flying: 'bee',
+    healer: 'cat',
+    boss: 'horse',
+    swarm: 'rabbit',
+    shield: 'wolf',
+};
+
+const ENEMY_MOB_SCALE: Record<EnemyType, number> = {
+    grunt: 0.28,
+    fast: 0.25,
+    tank: 0.32,
+    flying: 0.28,
+    healer: 0.28,
+    boss: 0.42,
+    swarm: 0.18,
+    shield: 0.32,
+};
+
+const TOWER_MOB_SCALE = 0.25;
 
 // ===== Grid dimensions =====
 const GRID_W = GALAXY_TOP_WIDTH;               // 16
@@ -27,35 +68,22 @@ const DEPTH = GALAXY_RING_DEPTH;                 // 3
 const CELL = 0.32;
 const CELL_GAP = 0.02;
 const BLOCK_H = 0.18;
-const ENEMY_SIZE = 0.28;
-const TOWER_SIZE = 0.22;
 const LERP_SPEED = 8;
 const SLOT_SIZE = 0.18;
 
 const ORIGIN_X = -(GRID_W - 1) * CELL * 0.5;
 const ORIGIN_Z = -(GRID_H - 1) * CELL * 0.5;
 
-// ===== Tower type colors =====
-const TOWER_TYPE_COLORS: Record<TowerType, { main: THREE.Color; accent: THREE.Color; glow: THREE.Color }> = {
-    archer:    { main: new THREE.Color('#4ade80'), accent: new THREE.Color('#22c55e'), glow: new THREE.Color('#66ff99') },
-    cannon:    { main: new THREE.Color('#f97316'), accent: new THREE.Color('#ea580c'), glow: new THREE.Color('#ff9944') },
-    frost:     { main: new THREE.Color('#38bdf8'), accent: new THREE.Color('#0ea5e9'), glow: new THREE.Color('#66ddff') },
-    lightning: { main: new THREE.Color('#a78bfa'), accent: new THREE.Color('#8b5cf6'), glow: new THREE.Color('#bb99ff') },
-    sniper:    { main: new THREE.Color('#f43f5e'), accent: new THREE.Color('#e11d48'), glow: new THREE.Color('#ff6688') },
-    flame:     { main: new THREE.Color('#ef4444'), accent: new THREE.Color('#dc2626'), glow: new THREE.Color('#ff6644') },
-    arcane:    { main: new THREE.Color('#c084fc'), accent: new THREE.Color('#a855f7'), glow: new THREE.Color('#dd99ff') },
+// ===== Tower type colors (for platforms and auras) =====
+const TOWER_TYPE_COLORS: Record<TowerType, { main: string; accent: string; glow: string }> = {
+    archer:    { main: '#4ade80', accent: '#22c55e', glow: '#66ff99' },
+    cannon:    { main: '#f97316', accent: '#ea580c', glow: '#ff9944' },
+    frost:     { main: '#38bdf8', accent: '#0ea5e9', glow: '#66ddff' },
+    lightning: { main: '#a78bfa', accent: '#8b5cf6', glow: '#bb99ff' },
+    sniper:    { main: '#f43f5e', accent: '#e11d48', glow: '#ff6688' },
+    flame:     { main: '#ef4444', accent: '#dc2626', glow: '#ff6644' },
+    arcane:    { main: '#c084fc', accent: '#a855f7', glow: '#dd99ff' },
 };
-
-// ===== Enemy type colors =====
-function getEnemyColor(type: EnemyType): THREE.Color {
-    const def = ENEMY_DEFS[type];
-    return new THREE.Color(def.color);
-}
-
-function getEnemyScale(type: EnemyType): number {
-    const def = ENEMY_DEFS[type];
-    return def.scale / 0.4; // normalized to base grunt scale
-}
 
 // ===== Path/Terrain colors =====
 const PATH_COLORS = [new THREE.Color('#3a6a4a'), new THREE.Color('#4a7a5a'), new THREE.Color('#3a5a4a'), new THREE.Color('#4a7a5a')];
@@ -340,7 +368,7 @@ function TerrainDecorations() {
 }
 
 // ===== HP Number Sprite =====
-function HPNumberSprite({ health, maxHealth }: { health: number; maxHealth: number }) {
+function HPNumberSprite({ health, maxHealth, yOffset }: { health: number; maxHealth: number; yOffset: number }) {
     const texture = useMemo(() => {
         const canvas = document.createElement('canvas');
         canvas.width = 64; canvas.height = 24;
@@ -360,21 +388,21 @@ function HPNumberSprite({ health, maxHealth }: { health: number; maxHealth: numb
     }, [health, maxHealth]);
     useEffect(() => () => { texture.dispose(); }, [texture]);
     return (
-        <sprite position={[0, ENEMY_SIZE * 2.15, 0]} scale={[0.38, 0.14, 1]}>
+        <sprite position={[0, yOffset + 0.12, 0]} scale={[0.38, 0.14, 1]}>
             <spriteMaterial map={texture} transparent depthTest={false} />
         </sprite>
     );
 }
 
 // ===== Enemy HP Bar =====
-function EnemyHPBar({ health, maxHealth }: { health: number; maxHealth: number }) {
+function EnemyHPBar({ health, maxHealth, yOffset }: { health: number; maxHealth: number; yOffset: number }) {
     const ratio = Math.max(0, health / maxHealth);
-    const barW = ENEMY_SIZE * 1.3;
+    const barW = 0.32;
     const barH = 0.035;
     const barColor = ratio > 0.5 ? '#44dd66' : ratio > 0.25 ? '#ddaa33' : '#dd3333';
     return (
-        <group position={[0, ENEMY_SIZE * 1.85, 0]}>
-            <HPNumberSprite health={health} maxHealth={maxHealth} />
+        <group position={[0, yOffset, 0]}>
+            <HPNumberSprite health={health} maxHealth={maxHealth} yOffset={0} />
             <mesh>
                 <planeGeometry args={[barW, barH]} />
                 <meshBasicMaterial color="#111111" transparent opacity={0.7} side={THREE.DoubleSide} />
@@ -387,41 +415,111 @@ function EnemyHPBar({ health, maxHealth }: { health: number; maxHealth: number }
     );
 }
 
-// ===== Pixelated Enemy with type-specific visuals =====
-function PixelEnemy({ pathPosition, enemyType, id, health, maxHealth, effects }: {
+// ===== Mob Enemy (Minecraft animal models) =====
+function MobEnemy({ pathPosition, enemyType, id, health, maxHealth, effects, flying }: {
     pathPosition: number;
     enemyType: EnemyType;
     id: string;
     health: number;
     maxHealth: number;
-    effects: StatusEffect[];
+    effects: { type: string }[];
+    flying: boolean;
 }) {
     const groupRef = useRef<THREE.Group>(null);
+    const mobRef = useRef<MobMeshData | null>(null);
     const smoothRef = useRef({ x: 0, z: 0, angle: 0, init: false });
+    const prevPosRef = useRef({ x: 0, z: 0 });
+    const facingAngleRef = useRef(0);
     const idHash = useMemo(() => hashString(id), [id]);
-    const baseColor = useMemo(() => getEnemyColor(enemyType), [enemyType]);
-    const scale = useMemo(() => getEnemyScale(enemyType), [enemyType]);
+    const mobType = ENEMY_MOB_MAP[enemyType];
+    const mobScale = ENEMY_MOB_SCALE[enemyType];
 
-    // Status effect tints
     const isSlow = effects.some(e => e.type === 'slow');
-    const isBurn = effects.some(e => e.type === 'burn');
-    const isStun = effects.some(e => e.type === 'stun');
+    const isBurning = effects.some(e => e.type === 'burn');
+    const isAmplified = effects.some(e => e.type === 'amplify');
+    const isStunned = effects.some(e => e.type === 'stun');
 
-    const bodyColor = useMemo(() => {
-        const c = baseColor.clone();
-        if (isSlow) c.lerp(new THREE.Color('#4488ff'), 0.4);
-        if (isBurn) c.lerp(new THREE.Color('#ff4422'), 0.3);
-        if (isStun) c.lerp(new THREE.Color('#ffff44'), 0.5);
-        return c;
-    }, [baseColor, isSlow, isBurn, isStun]);
+    const mobData = useMemo(() => {
+        const data = createMobMesh(mobType);
+        data.group.scale.setScalar(mobScale);
+        return data;
+    }, [mobType, mobScale]);
+
+    useEffect(() => {
+        mobRef.current = mobData;
+        return () => {
+            disposeMobGroup(mobData);
+            mobRef.current = null;
+        };
+    }, [mobData]);
+
+    // Store original material emissive values
+    const origEmissives = useRef<Map<THREE.Material, { color: number; intensity: number }>>(new Map());
+
+    useEffect(() => {
+        if (mobData.isGltf) return;
+        const map = new Map<THREE.Material, { color: number; intensity: number }>();
+        mobData.group.traverse((child: THREE.Object3D) => {
+            if (child instanceof THREE.Mesh) {
+                const mat = child.material;
+                if (mat instanceof THREE.MeshStandardMaterial) {
+                    if (!map.has(mat)) {
+                        map.set(mat, { color: mat.emissive.getHex(), intensity: mat.emissiveIntensity });
+                    }
+                }
+            }
+        });
+        origEmissives.current = map;
+    }, [mobData]);
+
+    // Apply status effect visuals
+    useEffect(() => {
+        if (mobData.isGltf) return;
+        let meshIndex = 0;
+        mobData.group.traverse((child: THREE.Object3D) => {
+            if (child instanceof THREE.Mesh) {
+                const mat = child.material;
+                if (mat instanceof THREE.MeshStandardMaterial) {
+                    if (isBurning) {
+                        if (meshIndex % 3 === 0) {
+                            mat.emissive.set(0xff4400);
+                            mat.emissiveIntensity = 0.7;
+                        } else if (meshIndex % 3 === 1) {
+                            mat.emissive.set(0xff6600);
+                            mat.emissiveIntensity = 0.25;
+                        } else {
+                            mat.emissive.set(0x331100);
+                            mat.emissiveIntensity = 0.15;
+                        }
+                    } else if (isSlow) {
+                        mat.emissive.set(0x38bdf8);
+                        mat.emissiveIntensity = 0.3;
+                    } else {
+                        const orig = origEmissives.current.get(mat);
+                        if (orig) {
+                            mat.emissive.set(orig.color);
+                            mat.emissiveIntensity = orig.intensity;
+                        } else {
+                            mat.emissive.set(0x000000);
+                            mat.emissiveIntensity = 0;
+                        }
+                    }
+                }
+                meshIndex++;
+            }
+        });
+    }, [mobData, isBurning, isSlow]);
 
     useFrame(({ clock }, delta) => {
         if (!groupRef.current) return;
         const target = pathToWorld(pathPosition);
-        const bobY = BLOCK_H * 0.5 + Math.sin(clock.elapsedTime * 2 + idHash) * 0.04;
+        const bobY = flying
+            ? BLOCK_H * 0.5 + 0.3 + Math.sin(clock.elapsedTime * 2 + idHash) * 0.08
+            : BLOCK_H * 0.5 + Math.sin(clock.elapsedTime * 4 + idHash) * 0.02;
         const s = smoothRef.current;
         if (!s.init) {
             s.x = target.x; s.z = target.z; s.angle = target.angle; s.init = true;
+            prevPosRef.current = { x: target.x, z: target.z };
         } else {
             const t = 1 - Math.exp(-LERP_SPEED * delta);
             s.x += (target.x - s.x) * t; s.z += (target.z - s.z) * t;
@@ -431,54 +529,172 @@ function PixelEnemy({ pathPosition, enemyType, id, health, maxHealth, effects }:
             s.angle += ad * t;
         }
         groupRef.current.position.set(s.x, bobY, s.z);
-        groupRef.current.rotation.y = s.angle;
+
+        // Face direction of movement
+        const dx = s.x - prevPosRef.current.x;
+        const dz = s.z - prevPosRef.current.z;
+        if (dx * dx + dz * dz > 0.000001) {
+            const targetAngle = Math.atan2(dx, dz) + Math.PI;
+            let angleDelta = targetAngle - facingAngleRef.current;
+            while (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
+            while (angleDelta < -Math.PI) angleDelta += Math.PI * 2;
+            facingAngleRef.current += angleDelta * 0.25;
+        }
+        prevPosRef.current = { x: s.x, z: s.z };
+        groupRef.current.rotation.y = facingAngleRef.current;
+
+        // Animate mob limbs
+        if (mobRef.current) {
+            animateMob(mobRef.current, clock.elapsedTime, !isStunned);
+        }
     });
 
-    const headColor = useMemo(() => bodyColor.clone().multiplyScalar(1.15), [bodyColor]);
-    const feetColor = useMemo(() => bodyColor.clone().multiplyScalar(0.75), [bodyColor]);
-    const leftFootRef = useRef<THREE.Mesh>(null);
-    const rightFootRef = useRef<THREE.Mesh>(null);
+    const charHeight = mobData.height * mobScale;
 
-    useFrame(({ clock }) => {
-        if (!leftFootRef.current || !rightFootRef.current) return;
-        const w = Math.sin(clock.elapsedTime * 6 + idHash * 2);
-        leftFootRef.current.position.z = w * 0.04;
-        rightFootRef.current.position.z = -w * 0.04;
+    return (
+        <group ref={groupRef}>
+            <primitive object={mobData.group} />
+            <EnemyHPBar health={health} maxHealth={maxHealth} yOffset={charHeight + 0.05} />
+
+            {/* Shield aura (wolf) */}
+            {enemyType === 'shield' && (
+                <mesh position={[0, charHeight * 0.5, 0]}>
+                    <sphereGeometry args={[mobScale * 2.5, 12, 8]} />
+                    <meshStandardMaterial color="#60a5fa" transparent opacity={0.15} side={THREE.DoubleSide} />
+                </mesh>
+            )}
+
+            {/* Healer aura (cat) */}
+            {enemyType === 'healer' && (
+                <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+                    <ringGeometry args={[0.15, 0.22, 16]} />
+                    <meshBasicMaterial color="#86efac" transparent opacity={0.15} side={THREE.DoubleSide} />
+                </mesh>
+            )}
+
+            {/* Amplify marker */}
+            {isAmplified && (
+                <group position={[0, charHeight * 0.5, 0]}>
+                    <mesh>
+                        <sphereGeometry args={[mobScale * 2, 8, 8]} />
+                        <meshStandardMaterial color="#c084fc" emissive="#9333ea" emissiveIntensity={0.6} transparent opacity={0.25} wireframe />
+                    </mesh>
+                </group>
+            )}
+
+            {/* Stun marker */}
+            {isStunned && (
+                <mesh position={[0, charHeight + 0.1, 0]}>
+                    <octahedronGeometry args={[0.06, 0]} />
+                    <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={1} />
+                </mesh>
+            )}
+        </group>
+    );
+}
+
+// ===== Tower Aura Effects =====
+
+// Magma tower (cannon) — pulsing orange aura ring
+function MagmaAuraRing({ radius }: { radius: number }) {
+    const pulseRef = useRef<THREE.Mesh>(null);
+    const ringRef = useRef<THREE.Mesh>(null);
+
+    useFrame((state) => {
+        const t = state.clock.elapsedTime;
+        if (pulseRef.current) {
+            const pulse = 0.85 + Math.sin(t * 3) * 0.15;
+            pulseRef.current.scale.set(pulse, pulse, 1);
+            const mat = pulseRef.current.material as THREE.MeshBasicMaterial;
+            mat.opacity = 0.1 + Math.sin(t * 3) * 0.05;
+        }
+        if (ringRef.current) {
+            ringRef.current.rotation.z = t * 0.5;
+        }
     });
 
     return (
-        <group ref={groupRef} scale={[scale, scale, scale]}>
-            <EnemyHPBar health={health} maxHealth={maxHealth} />
-            <mesh position={[0, ENEMY_SIZE * 0.5, 0]}>
-                <boxGeometry args={[ENEMY_SIZE, ENEMY_SIZE, ENEMY_SIZE * 0.8]} />
-                <meshStandardMaterial color={bodyColor} roughness={0.9} flatShading />
+        <group position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh ref={pulseRef}>
+                <circleGeometry args={[radius, 24]} />
+                <meshBasicMaterial color="#ff6600" transparent opacity={0.1} side={THREE.DoubleSide} />
             </mesh>
-            <mesh position={[0, ENEMY_SIZE * 1.25, 0]}>
-                <boxGeometry args={[ENEMY_SIZE * 1.1, ENEMY_SIZE * 0.8, ENEMY_SIZE * 0.9]} />
-                <meshStandardMaterial color={headColor} roughness={0.85} flatShading />
+            <mesh ref={ringRef}>
+                <ringGeometry args={[radius * 0.5, radius * 0.55, 24]} />
+                <meshBasicMaterial color="#ff8800" transparent opacity={0.15} side={THREE.DoubleSide} />
             </mesh>
-            <mesh position={[-ENEMY_SIZE * 0.22, ENEMY_SIZE * 1.3, ENEMY_SIZE * 0.42]}>
-                <boxGeometry args={[ENEMY_SIZE * 0.15, ENEMY_SIZE * 0.12, ENEMY_SIZE * 0.08]} />
-                <meshStandardMaterial color="#111111" />
-            </mesh>
-            <mesh position={[ENEMY_SIZE * 0.22, ENEMY_SIZE * 1.3, ENEMY_SIZE * 0.42]}>
-                <boxGeometry args={[ENEMY_SIZE * 0.15, ENEMY_SIZE * 0.12, ENEMY_SIZE * 0.08]} />
-                <meshStandardMaterial color="#111111" />
-            </mesh>
-            <mesh ref={leftFootRef} position={[-ENEMY_SIZE * 0.2, 0, 0]}>
-                <boxGeometry args={[ENEMY_SIZE * 0.35, ENEMY_SIZE * 0.3, ENEMY_SIZE * 0.4]} />
-                <meshStandardMaterial color={feetColor} roughness={0.95} flatShading />
-            </mesh>
-            <mesh ref={rightFootRef} position={[ENEMY_SIZE * 0.2, 0, 0]}>
-                <boxGeometry args={[ENEMY_SIZE * 0.35, ENEMY_SIZE * 0.3, ENEMY_SIZE * 0.4]} />
-                <meshStandardMaterial color={feetColor} roughness={0.95} flatShading />
+            <mesh>
+                <ringGeometry args={[radius - 0.03, radius, 24]} />
+                <meshBasicMaterial color="#f97316" transparent opacity={0.25} side={THREE.DoubleSide} />
             </mesh>
         </group>
     );
 }
 
-// ===== Tower Aura =====
-function TowerAura({ active, color }: { active: boolean; color: THREE.Color }) {
+// Frost tower — radiating slow AoE ring
+function FrostAoERing({ radius }: { radius: number }) {
+    const pulseRef = useRef<THREE.Mesh>(null);
+    const ringRef = useRef<THREE.Mesh>(null);
+
+    useFrame((state) => {
+        const t = state.clock.elapsedTime;
+        if (pulseRef.current) {
+            const pulse = 0.9 + Math.sin(t * 2) * 0.1;
+            pulseRef.current.scale.set(pulse, pulse, 1);
+            const mat = pulseRef.current.material as THREE.MeshBasicMaterial;
+            mat.opacity = 0.08 + Math.sin(t * 2) * 0.04;
+        }
+        if (ringRef.current) {
+            ringRef.current.rotation.z = t * 0.3;
+        }
+    });
+
+    return (
+        <group position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh ref={pulseRef}>
+                <circleGeometry args={[radius, 24]} />
+                <meshBasicMaterial color="#38bdf8" transparent opacity={0.08} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh ref={ringRef}>
+                <ringGeometry args={[radius * 0.5, radius * 0.55, 24]} />
+                <meshBasicMaterial color="#7dd3fc" transparent opacity={0.12} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh>
+                <ringGeometry args={[radius - 0.03, radius, 24]} />
+                <meshBasicMaterial color="#38bdf8" transparent opacity={0.2} side={THREE.DoubleSide} />
+            </mesh>
+        </group>
+    );
+}
+
+// Arcane tower — magical aura glow
+function ArcaneAuraGlow({ height }: { height: number }) {
+    const ringRef = useRef<THREE.Mesh>(null);
+
+    useFrame((state) => {
+        if (ringRef.current) {
+            ringRef.current.rotation.z = state.clock.elapsedTime * 0.8;
+            const mat = ringRef.current.material as THREE.MeshBasicMaterial;
+            mat.opacity = 0.15 + Math.sin(state.clock.elapsedTime * 2.5) * 0.08;
+        }
+    });
+
+    return (
+        <group position={[0, height * 0.5 + 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <mesh ref={ringRef}>
+                <ringGeometry args={[0.12, 0.18, 6]} />
+                <meshBasicMaterial color="#c084fc" transparent opacity={0.2} side={THREE.DoubleSide} />
+            </mesh>
+            <mesh>
+                <circleGeometry args={[0.1, 6]} />
+                <meshBasicMaterial color="#a855f7" transparent opacity={0.1} side={THREE.DoubleSide} />
+            </mesh>
+        </group>
+    );
+}
+
+// ===== Line-clear pulse aura =====
+function TowerAura({ active, color }: { active: boolean; color: string }) {
     const meshRef = useRef<THREE.Mesh>(null);
     const matRef = useRef<THREE.MeshBasicMaterial>(null);
     const scaleRef = useRef(0);
@@ -492,142 +708,30 @@ function TowerAura({ active, color }: { active: boolean; color: THREE.Color }) {
         meshRef.current.visible = s > 0.01;
     });
     return (
-        <mesh ref={meshRef} position={[0, TOWER_SIZE * 1.5, 0]} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
-            <ringGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 2.2, 8]} />
+        <mesh ref={meshRef} position={[0, 0.15, 0]} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
+            <ringGeometry args={[0.12, 0.3, 8]} />
             <meshBasicMaterial ref={matRef} color={color} transparent opacity={0} side={THREE.DoubleSide} />
         </mesh>
     );
 }
 
-// ===== Type-specific tower geometry =====
-function TowerBody({ type, level }: { type: TowerType; level: number }) {
-    const colors = TOWER_TYPE_COLORS[type];
-
-    // Common base
-    const base = (
-        <mesh position={[0, TOWER_SIZE * 0.35, 0]}>
-            <boxGeometry args={[TOWER_SIZE * 1.4, TOWER_SIZE * 0.7, TOWER_SIZE * 1.4]} />
-            <meshStandardMaterial color={colors.main} roughness={0.75} flatShading />
-        </mesh>
-    );
-
-    // Type-specific top
-    let top: React.ReactNode;
-    switch (type) {
-        case 'archer': // Tall narrow
-            top = (
-                <mesh position={[0, TOWER_SIZE * 1.5, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 0.6, TOWER_SIZE * 1.6, TOWER_SIZE * 0.6]} />
-                    <meshStandardMaterial color={colors.accent} roughness={0.65} flatShading />
-                </mesh>
-            );
-            break;
-        case 'cannon': // Squat wide
-            top = (
-                <mesh position={[0, TOWER_SIZE * 1.0, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 1.2, TOWER_SIZE * 0.8, TOWER_SIZE * 1.2]} />
-                    <meshStandardMaterial color={colors.accent} roughness={0.6} flatShading />
-                </mesh>
-            );
-            break;
-        case 'frost': // Crystal shape
-            top = (
-                <mesh position={[0, TOWER_SIZE * 1.3, 0]} rotation={[0, Math.PI / 4, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 1.2, TOWER_SIZE * 0.8]} />
-                    <meshStandardMaterial color={colors.accent} roughness={0.3} metalness={0.3} flatShading />
-                </mesh>
-            );
-            break;
-        case 'lightning': // Tall spire
-            top = (
-                <mesh position={[0, TOWER_SIZE * 1.7, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 0.5, TOWER_SIZE * 2.0, TOWER_SIZE * 0.5]} />
-                    <meshStandardMaterial color={colors.accent} roughness={0.5} metalness={0.2} flatShading />
-                </mesh>
-            );
-            break;
-        case 'sniper': // Narrow tall
-            top = (
-                <mesh position={[0, TOWER_SIZE * 1.6, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 0.4, TOWER_SIZE * 1.8, TOWER_SIZE * 0.4]} />
-                    <meshStandardMaterial color={colors.accent} roughness={0.7} flatShading />
-                </mesh>
-            );
-            break;
-        case 'flame': // Flickering top
-            top = (
-                <>
-                    <mesh position={[0, TOWER_SIZE * 1.1, 0]}>
-                        <boxGeometry args={[TOWER_SIZE * 1.0, TOWER_SIZE * 1.0, TOWER_SIZE * 1.0]} />
-                        <meshStandardMaterial color={colors.accent} roughness={0.6} flatShading />
-                    </mesh>
-                    <mesh position={[0, TOWER_SIZE * 1.8, 0]}>
-                        <boxGeometry args={[TOWER_SIZE * 0.5, TOWER_SIZE * 0.5, TOWER_SIZE * 0.5]} />
-                        <meshStandardMaterial color="#ff8844" emissive="#ff4422" emissiveIntensity={1.5} roughness={0.2} flatShading />
-                    </mesh>
-                </>
-            );
-            break;
-        case 'arcane': // Floating orb
-            top = (
-                <>
-                    <mesh position={[0, TOWER_SIZE * 1.2, 0]}>
-                        <boxGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 1.0, TOWER_SIZE * 0.8]} />
-                        <meshStandardMaterial color={colors.accent} roughness={0.5} flatShading />
-                    </mesh>
-                    <mesh position={[0, TOWER_SIZE * 2.2, 0]}>
-                        <boxGeometry args={[TOWER_SIZE * 0.45, TOWER_SIZE * 0.45, TOWER_SIZE * 0.45]} />
-                        <meshStandardMaterial color={colors.glow} emissive={colors.glow} emissiveIntensity={2} roughness={0.2} flatShading />
-                    </mesh>
-                </>
-            );
-            break;
-    }
-
-    return (
-        <>
-            {base}
-            {top}
-            {/* Crown for leveled towers */}
-            <mesh position={[0, TOWER_SIZE * 2.8, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 1.2, TOWER_SIZE * 0.25, TOWER_SIZE * 1.2]} />
-                <meshStandardMaterial color={colors.accent} roughness={0.7} flatShading />
-            </mesh>
-            {/* Glow tip */}
-            <mesh position={[0, TOWER_SIZE * 3.2, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 0.35, TOWER_SIZE * 0.4, TOWER_SIZE * 0.35]} />
-                <meshStandardMaterial color={colors.glow} emissive={colors.glow} emissiveIntensity={1.5} roughness={0.2} flatShading />
-            </mesh>
-            <pointLight position={[0, TOWER_SIZE * 3.4, 0]} color={colors.glow} intensity={0.5} distance={1.5} />
-            {level > 1 && (
-                <mesh position={[0, TOWER_SIZE * 3.0, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 1.0, TOWER_SIZE * 0.12, TOWER_SIZE * 1.0]} />
-                    <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={0.3} roughness={0.5} flatShading />
-                </mesh>
-            )}
-            {level > 2 && (
-                <mesh position={[0, TOWER_SIZE * 3.15, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 0.08, TOWER_SIZE * 0.8]} />
-                    <meshStandardMaterial color="#ff8844" emissive="#ff8844" emissiveIntensity={0.5} roughness={0.5} flatShading />
-                </mesh>
-            )}
-        </>
-    );
-}
-
-// ===== Tower Mesh =====
-function GridTower({ tower, isSelected, lineClearPulse, onClick }: {
+// ===== Tower Mesh with Minecraft mob model =====
+function MobTower({ tower, isSelected, lineClearPulse, onClick }: {
     tower: RingTower;
     isSelected: boolean;
     lineClearPulse: boolean;
     onClick: (id: string) => void;
 }) {
     const groupRef = useRef<THREE.Group>(null);
+    const mobWrapperRef = useRef<THREE.Group>(null);
+    const mobRef = useRef<MobMeshData | null>(null);
+    const facingAngleRef = useRef(0);
     const colors = TOWER_TYPE_COLORS[tower.type];
+    const def = TOWER_DEFS[tower.type];
+    const mobType = TOWER_MOB_MAP[tower.type];
+    const isStackable = tower.type === 'cannon' || tower.type === 'frost';
 
-    // The slot stores the per-side index; use tower.side + slot local index for positioning
     const localIndex = useMemo(() => {
-        // Slots ordered: top(10), bottom(10), left(20), right(20)
         let idx = tower.slotIndex;
         const tb = GALAXY_TOWERS_PER_SIDE_TB;
         const lr = GALAXY_TOWERS_PER_SIDE_LR;
@@ -642,14 +746,48 @@ function GridTower({ tower, isSelected, lineClearPulse, onClick }: {
 
     const towerPos = useMemo(() => towerToWorld(tower.side, localIndex), [tower.side, localIndex]);
 
+    // Create mob mesh (stackable mobs grow with level)
+    const mobData = useMemo(() => {
+        const data = isStackable
+            ? createMobMesh(mobType, { segments: tower.level })
+            : createMobMesh(mobType);
+        data.group.scale.setScalar(TOWER_MOB_SCALE);
+        return data;
+    }, [mobType, isStackable, tower.level]);
+
+    useEffect(() => {
+        mobRef.current = mobData;
+        return () => {
+            disposeMobGroup(mobData);
+            mobRef.current = null;
+        };
+    }, [mobData]);
+
     useFrame(({ clock }) => {
         if (!groupRef.current) return;
         groupRef.current.position.set(towerPos.x, BLOCK_H * 0.5, towerPos.z);
-        groupRef.current.rotation.y = towerPos.angle;
+
         if (isSelected) {
             groupRef.current.scale.setScalar(1 + Math.sin(clock.elapsedTime * 4) * 0.08);
         } else {
             groupRef.current.scale.setScalar(1);
+        }
+
+        // Face toward target (use path angle as base, target override when attacking)
+        if (mobWrapperRef.current && tower.targetId) {
+            // When targeting, rotate mob to face the path direction
+            const targetAngle = towerPos.angle + Math.PI;
+            let delta = targetAngle - facingAngleRef.current;
+            while (delta > Math.PI) delta -= Math.PI * 2;
+            while (delta < -Math.PI) delta += Math.PI * 2;
+            facingAngleRef.current += delta * 0.15;
+            mobWrapperRef.current.rotation.y = facingAngleRef.current;
+        }
+
+        // Idle animation (slime types don't bounce on the tower stage)
+        if (mobRef.current) {
+            const slimeTower = tower.type === 'cannon' || tower.type === 'frost';
+            animateMob(mobRef.current, clock.elapsedTime, !slimeTower);
         }
     });
 
@@ -658,13 +796,65 @@ function GridTower({ tower, isSelected, lineClearPulse, onClick }: {
         onClick(tower.id);
     }, [tower.id, onClick]);
 
+    const charHeight = mobData.height * TOWER_MOB_SCALE;
+    // Convert ring-engine range (path-fraction) to approximate 3D radius
+    const towerRange = (def.range / 72) * GALAXY_PATH_LENGTH * CELL * 0.15;
+
     return (
         <group ref={groupRef} onPointerDown={handleClick}>
             <TowerAura active={lineClearPulse} color={colors.glow} />
-            <TowerBody type={tower.type} level={tower.level} />
+
+            {/* Platform base */}
+            <mesh position={[0, 0.03, 0]} castShadow>
+                <cylinderGeometry args={[0.16, 0.19, 0.06, 8]} />
+                <meshStandardMaterial color={colors.main} roughness={0.35} metalness={0.35} />
+            </mesh>
+            {/* Platform accent ring */}
+            <mesh position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.16, 0.21, 12]} />
+                <meshStandardMaterial
+                    color={colors.accent}
+                    emissive={colors.accent}
+                    emissiveIntensity={0.6}
+                    transparent opacity={0.5}
+                    side={THREE.DoubleSide}
+                />
+            </mesh>
+
+            {/* Minecraft mob model */}
+            <group ref={mobWrapperRef} position={[0, 0.06, 0]}>
+                <primitive object={mobData.group} />
+            </group>
+
+            {/* Level indicators */}
+            {tower.level > 1 && (
+                <mesh position={[0, 0.065, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <ringGeometry args={[0.14, 0.17, 8]} />
+                    <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={0.3} transparent opacity={0.7} side={THREE.DoubleSide} />
+                </mesh>
+            )}
+            {tower.level > 2 && (
+                <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <ringGeometry args={[0.11, 0.14, 8]} />
+                    <meshStandardMaterial color="#ff8844" emissive="#ff8844" emissiveIntensity={0.5} transparent opacity={0.7} side={THREE.DoubleSide} />
+                </mesh>
+            )}
+
+            {/* Type-specific auras */}
+            {tower.type === 'cannon' && <MagmaAuraRing radius={towerRange} />}
+            {tower.type === 'frost' && <FrostAoERing radius={towerRange} />}
+            {tower.type === 'arcane' && <ArcaneAuraGlow height={charHeight} />}
+            {tower.type === 'lightning' && (
+                <pointLight position={[0, charHeight * 0.5 + 0.06, 0]} color="#a78bfa" intensity={1.5} distance={1} decay={2} />
+            )}
+            {tower.type === 'flame' && (
+                <pointLight position={[0, charHeight * 0.3 + 0.06, 0]} color="#ef4444" intensity={1.0} distance={0.8} decay={2} />
+            )}
+
+            {/* Selection ring */}
             {isSelected && (
                 <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <ringGeometry args={[TOWER_SIZE * 1.5, TOWER_SIZE * 2.0, 16]} />
+                    <ringGeometry args={[0.2, 0.25, 16]} />
                     <meshBasicMaterial color="#ffffff" transparent opacity={0.3} side={THREE.DoubleSide} />
                 </mesh>
             )}
@@ -681,7 +871,6 @@ function TowerSlotMarker({ slot, highlighted, onSlotClick }: {
     const groupRef = useRef<THREE.Group>(null);
     const matRef = useRef<THREE.MeshStandardMaterial>(null);
 
-    // slot.index is the per-side local index
     const slotPos = useMemo(() => towerToWorld(slot.side, slot.index), [slot.side, slot.index]);
 
     useFrame(({ clock }) => {
@@ -725,40 +914,54 @@ function TowerSlotMarker({ slot, highlighted, onSlotClick }: {
     );
 }
 
-// ===== Projectile =====
+// ===== Projectile (Minecraft-themed) =====
 function RingProjectile3D({ projectile }: { projectile: RingProjectile }) {
     const groupRef = useRef<THREE.Group>(null);
+    const projRef = useRef<ProjectileMeshData | null>(null);
     const smoothRef = useRef({ x: 0, z: 0, init: false });
-    const colors = TOWER_TYPE_COLORS[projectile.towerType];
+    const prevPos = useRef(new THREE.Vector3());
+    const velocity = useRef(new THREE.Vector3());
 
-    useFrame((_, delta) => {
-        if (!groupRef.current) return;
+    const projData = useMemo(() => {
+        return createProjectileMesh(projectile.towerType);
+    }, [projectile.towerType]);
+
+    useEffect(() => {
+        projRef.current = projData;
+        return () => {
+            disposeProjectileGroup(projData);
+            projRef.current = null;
+        };
+    }, [projData]);
+
+    useFrame((state, delta) => {
+        if (!groupRef.current || !projRef.current) return;
         const target = pathToWorld(projectile.pathFraction);
-        const y = BLOCK_H * 0.5 + TOWER_SIZE * 2;
+        const y = BLOCK_H * 0.5 + 0.25;
         const s = smoothRef.current;
         if (!s.init) {
             s.x = target.x; s.z = target.z; s.init = true;
+            prevPos.current.set(target.x, y, target.z);
         } else {
             const t = 1 - Math.exp(-LERP_SPEED * 2 * delta);
             s.x += (target.x - s.x) * t;
             s.z += (target.z - s.z) * t;
         }
         groupRef.current.position.set(s.x, y, s.z);
+
+        // Compute velocity for arrow orientation
+        velocity.current.set(s.x - prevPos.current.x, 0, s.z - prevPos.current.z);
+        if (velocity.current.lengthSq() > 0.0001) {
+            velocity.current.normalize();
+        }
+        prevPos.current.set(s.x, y, s.z);
+
+        animateProjectile(projRef.current, state.clock.elapsedTime, velocity.current);
     });
 
     return (
         <group ref={groupRef}>
-            <mesh>
-                <boxGeometry args={[0.06, 0.06, 0.06]} />
-                <meshStandardMaterial
-                    color={colors.glow}
-                    emissive={colors.glow}
-                    emissiveIntensity={3}
-                    roughness={0.2}
-                    flatShading
-                />
-            </mesh>
-            <pointLight color={colors.glow} intensity={0.3} distance={0.8} />
+            <primitive object={projData.group} />
         </group>
     );
 }
@@ -802,6 +1005,17 @@ function GateMarkers({ gates }: { gates: GalaxyGate[] }) {
     );
 }
 
+// ===== Cleanup shared resources on unmount =====
+function SharedResourceCleanup() {
+    useEffect(() => {
+        return () => {
+            disposeSharedMobResources();
+            disposeSharedProjectileResources();
+        };
+    }, []);
+    return null;
+}
+
 // ===== Main 3D Scene =====
 function GalaxyRingScene({
     enemies,
@@ -829,6 +1043,7 @@ function GalaxyRingScene({
     return (
         <>
             <PixelFilterSetup />
+            <SharedResourceCleanup />
             <ambientLight intensity={0.7} color="#ccccff" />
             <directionalLight position={[5, 10, 5]} intensity={0.9} color="#ffffff" />
             <directionalLight position={[-4, 6, -6]} intensity={0.25} color="#8888cc" />
@@ -851,9 +1066,9 @@ function GalaxyRingScene({
                     />
                 ))}
 
-                {/* Placed towers */}
+                {/* Placed towers (Minecraft mob models) */}
                 {towers.map(tower => (
-                    <GridTower
+                    <MobTower
                         key={tower.id}
                         tower={tower}
                         isSelected={tower.id === selectedTowerId}
@@ -862,9 +1077,9 @@ function GalaxyRingScene({
                     />
                 ))}
 
-                {/* Enemies */}
+                {/* Enemies (Minecraft animal mob models) */}
                 {enemies.filter(e => !e.dead).map(enemy => (
-                    <PixelEnemy
+                    <MobEnemy
                         key={enemy.id}
                         pathPosition={enemy.pathFraction}
                         enemyType={enemy.type}
@@ -872,10 +1087,11 @@ function GalaxyRingScene({
                         health={enemy.hp}
                         maxHealth={enemy.maxHp}
                         effects={enemy.effects}
+                        flying={enemy.flying}
                     />
                 ))}
 
-                {/* Projectiles */}
+                {/* Projectiles (Minecraft-themed: arrows, cobwebs, TNT, etc.) */}
                 {projectiles.map(proj => (
                     <RingProjectile3D key={proj.id} projectile={proj} />
                 ))}
