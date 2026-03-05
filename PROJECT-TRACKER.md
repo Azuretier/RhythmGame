@@ -62,12 +62,12 @@
 ## Phase 6: Multiplayer Architecture
 > Goal: Component architecture ready for networked play
 
-- [ ] **6.1** Extract game actions into `GameAction` type union (place_tower, upgrade, sell, line_clear, tick)
-- [ ] **6.2** Create `useGameActions` hook — dispatches actions locally or to network
-- [ ] **6.3** Create `GameStateSync` context — wraps state with network send/receive capability
-- [ ] **6.4** Define WebSocket protocol types in `src/types/galaxy-td-multiplayer.ts`
-- [ ] **6.5** Add player slots to ring (P1 controls top/bottom towers, P2 controls left/right)
-- [ ] **6.6** Stub `useGalaxyTDMultiplayer` hook (extends useGalaxyTD with network layer)
+- [x] **6.1** Extract game actions into `GameAction` type union (place_tower, upgrade, sell, line_clear, tick)
+- [x] **6.2** Create `useGameActions` hook — dispatches actions locally or to network
+- [x] **6.3** Create `GameStateSync` context — wraps state with network send/receive capability
+- [x] **6.4** Define WebSocket protocol types in `src/types/galaxy-td-multiplayer.ts`
+- [x] **6.5** Add player slots to ring (P1 controls top/bottom towers, P2 controls left/right)
+- [x] **6.6** Stub `useGalaxyTDMultiplayer` hook (extends useGalaxyTD with network layer)
 
 ## Phase 7: Continuous Refactoring
 > Goal: Keep codebase clean as complexity grows
@@ -88,5 +88,6 @@
 | 2026-03-05 | P2 | 2.1-2.7 (all) | claude/project-p2-movable-camera | #469 |
 | 2026-03-05 | P3 | 3.1-3.6 (all) | claude/project-p3-center-terrain | #470 |
 | 2026-03-05 | P4 | 4.1-4.6 (all) | claude/project-p4-tower-terrain | #471 |
-| 2026-03-05 | P5 | 5.1-5.6 (all) | claude/project-p5-flexible-board-ui | TBD |
+| 2026-03-05 | P5 | 5.1-5.6 (all) | claude/project-p5-flexible-board-ui | #472 |
+| 2026-03-05 | P6 | 6.1-6.6 (all) | claude/project-p6-multiplayer-arch | TBD |
 
