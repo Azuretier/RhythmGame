@@ -22,6 +22,8 @@ import {
     GALAXY_TOWERS_PER_SIDE_LR,
     GALAXY_GATE_POSITIONS,
 } from '../galaxy-constants';
+import { getBiomeColors, mulberry32 as mulberry32Shared, hashString as hashStringShared } from '../terrain-utils';
+import type { Biome } from '../terrain-utils';
 
 // ===== Tower-to-Minecraft-Mob mapping (same as TD page) =====
 const TOWER_MOB_MAP: Record<TowerType, TDEnemyType> = {
@@ -86,19 +88,6 @@ const TOWER_TYPE_COLORS: Record<TowerType, { main: string; accent: string; glow:
     arcane:    { main: '#c084fc', accent: '#a855f7', glow: '#dd99ff' },
 };
 
-// ===== Terrain colors (matching TD page style) =====
-// Path layer: tan/sandy path tiles (checkerboard pair)
-const PATH_COLOR_A = new THREE.Color('#c4a35a');
-const PATH_COLOR_B = new THREE.Color('#b8944d');
-// Tower layer: grass tiles for tower placement (checkerboard pair)
-const GRASS_COLOR_A = new THREE.Color('#3a7d44');
-const GRASS_COLOR_B = new THREE.Color('#348a3e');
-// Buffer layer: slightly darker grass
-const BUFFER_COLOR_A = new THREE.Color('#2e6836');
-const BUFFER_COLOR_B = new THREE.Color('#296030');
-// Corner cells: mountain/rock
-const CORNER_COLOR_A = new THREE.Color('#6b7280');
-const CORNER_COLOR_B = new THREE.Color('#5f6670');
 // Slot marker colors
 const SLOT_COLOR_EMPTY = new THREE.Color('#88aa66');
 const SLOT_COLOR_HIGHLIGHT = new THREE.Color('#22d3ee');
@@ -109,25 +98,9 @@ const HEIGHT_GRASS = 0.2;
 const HEIGHT_BUFFER = 0.2;
 const HEIGHT_CORNER = 0.35;
 
-// ===== Seeded PRNG (Mulberry32) =====
-export function mulberry32(seed: number): () => number {
-    let s = seed | 0;
-    return () => {
-        s = (s + 0x6D2B79F5) | 0;
-        let t = Math.imul(s ^ (s >>> 15), 1 | s);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-}
-
-// ===== Simple string hash for stable random =====
-export function hashString(s: string): number {
-    let hash = 0;
-    for (let i = 0; i < s.length; i++) {
-        hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0;
-    }
-    return Math.abs(hash);
-}
+// Re-export shared utilities from terrain-utils
+export const mulberry32 = mulberry32Shared;
+export const hashString = hashStringShared;
 
 // ===== Pixel filter setup =====
 function PixelFilterSetup() {
@@ -208,10 +181,11 @@ export function towerToWorld(side: string, index: number): { x: number; z: numbe
 }
 
 // ===== Terrain Grid (TD-style with checkerboard + varying heights) =====
-function TerrainGrid() {
+function TerrainGrid({ biome }: { biome: Biome }) {
     const meshRef = useRef<THREE.InstancedMesh>(null);
     const { count, matrices, colors } = useMemo(() => {
         const rng = mulberry32(42);
+        const bc = getBiomeColors(biome);
         const cells: { x: number; z: number; color: THREE.Color; height: number }[] = [];
         for (let row = 0; row < GRID_H; row++) {
             for (let col = 0; col < GRID_W; col++) {
@@ -224,20 +198,20 @@ function TerrainGrid() {
                 let height: number;
                 switch (kind) {
                     case 'path':
-                        color = checker ? PATH_COLOR_A : PATH_COLOR_B;
+                        color = checker ? bc.pathA : bc.pathB;
                         height = HEIGHT_PATH;
                         break;
                     case 'tower':
-                        color = checker ? GRASS_COLOR_A : GRASS_COLOR_B;
-                        height = HEIGHT_GRASS;
+                        color = checker ? bc.grassA : bc.grassB;
+                        height = HEIGHT_GRASS + (rng() - 0.5) * 0.02;
                         break;
                     case 'buffer':
-                        color = checker ? BUFFER_COLOR_A : BUFFER_COLOR_B;
-                        height = HEIGHT_BUFFER;
+                        color = checker ? bc.bufferA : bc.bufferB;
+                        height = HEIGHT_BUFFER + (rng() - 0.5) * 0.02;
                         break;
                     default:
-                        color = checker ? CORNER_COLOR_A : CORNER_COLOR_B;
-                        height = HEIGHT_CORNER + rng() * 0.05;
+                        color = checker ? bc.cornerA : bc.cornerB;
+                        height = 0.2 + rng() * 0.3;
                         break;
                 }
                 cells.push({ x: wx, z: wz, color, height });
@@ -258,7 +232,7 @@ function TerrainGrid() {
             col[i * 3] = c.color.r; col[i * 3 + 1] = c.color.g; col[i * 3 + 2] = c.color.b;
         }
         return { count: totalBlocks, matrices: mat, colors: col };
-    }, []);
+    }, [biome]);
 
     useEffect(() => {
         if (!meshRef.current) return;
@@ -321,13 +295,13 @@ function TerrainUnderside() {
 }
 
 // ===== Ground plane =====
-function GroundPlane() {
+function GroundPlane({ biome }: { biome: Biome }) {
     const texture = useMemo(() => {
         const canvas = document.createElement('canvas');
         canvas.width = 16; canvas.height = 16;
         const ctx = canvas.getContext('2d')!;
         const rng = mulberry32(99);
-        const cs = ['#2a4a2a', '#1e3a1e', '#243e24', '#1a361a', '#223c22'];
+        const cs = getBiomeColors(biome).groundTones;
         for (let x = 0; x < 16; x++) {
             for (let y = 0; y < 16; y++) {
                 ctx.fillStyle = cs[Math.floor(rng() * cs.length)];
@@ -337,7 +311,7 @@ function GroundPlane() {
         const tex = new THREE.CanvasTexture(canvas);
         tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false;
         return tex;
-    }, []);
+    }, [biome]);
     const size = Math.max(GRID_W, GRID_H) * CELL * 2;
     return (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]}>
@@ -370,7 +344,7 @@ function PathOutline() {
 }
 
 // ===== Decorative crystals =====
-function TerrainDecorations() {
+function TerrainDecorations({ biome }: { biome: Biome }) {
     const meshRef = useRef<THREE.InstancedMesh>(null);
     const { count, matrices, colors } = useMemo(() => {
         const rng = mulberry32(137);
@@ -378,7 +352,7 @@ function TerrainDecorations() {
         const mat = new Float32Array(decoCount * 16);
         const col = new Float32Array(decoCount * 3);
         const dummy = new THREE.Matrix4();
-        const crystalColors = [new THREE.Color('#6b8e23'), new THREE.Color('#8b7355'), new THREE.Color('#556b2f'), new THREE.Color('#8fbc8f')];
+        const crystalColors = getBiomeColors(biome).decorationColors;
         let placed = 0;
         for (let attempt = 0; attempt < decoCount * 3 && placed < decoCount; attempt++) {
             const gCol = Math.floor(rng() * GRID_W);
@@ -397,7 +371,7 @@ function TerrainDecorations() {
             placed++;
         }
         return { count: placed, matrices: mat.slice(0, placed * 16), colors: col.slice(0, placed * 3) };
-    }, []);
+    }, [biome]);
 
     useEffect(() => {
         if (!meshRef.current) return;
@@ -416,6 +390,88 @@ function TerrainDecorations() {
             <boxGeometry args={[1, 1, 1]} />
             <meshStandardMaterial vertexColors roughness={0.4} metalness={0.2} flatShading />
         </instancedMesh>
+    );
+}
+
+// ===== Directional path arrows (InstancedMesh) =====
+function PathArrows() {
+    const meshRef = useRef<THREE.InstancedMesh>(null);
+    const { count, matrices } = useMemo(() => {
+        // Place an arrow every 6th path cell
+        const arrowCount = Math.floor(GALAXY_PATH_LENGTH / 6);
+        const mat = new Float32Array(arrowCount * 16);
+        const dummy = new THREE.Matrix4();
+        const rot = new THREE.Matrix4();
+        const scale = new THREE.Matrix4();
+        for (let i = 0; i < arrowCount; i++) {
+            const pathFrac = (i * 6 + 3) / GALAXY_PATH_LENGTH;
+            const pos = pathToWorld(pathFrac);
+            dummy.makeTranslation(pos.x, HEIGHT_PATH + 0.01, pos.z);
+            rot.makeRotationY(pos.angle);
+            scale.makeScale(0.06, 0.01, 0.08);
+            dummy.multiply(rot).multiply(scale);
+            dummy.toArray(mat, i * 16);
+        }
+        return { count: arrowCount, matrices: mat };
+    }, []);
+
+    useEffect(() => {
+        if (!meshRef.current) return;
+        const mesh = meshRef.current;
+        const dummy = new THREE.Matrix4();
+        for (let i = 0; i < count; i++) {
+            dummy.fromArray(matrices, i * 16);
+            mesh.setMatrixAt(i, dummy);
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+    }, [count, matrices]);
+
+    const triGeo = useMemo(() => {
+        const geo = new THREE.BufferGeometry();
+        // Simple triangle pointing in +Z
+        const verts = new Float32Array([
+            -1, 0, -1,
+             1, 0, -1,
+             0, 0,  1,
+        ]);
+        geo.setAttribute('position', new THREE.BufferAttribute(verts, 3));
+        geo.computeVertexNormals();
+        return geo;
+    }, []);
+
+    return (
+        <instancedMesh ref={meshRef} args={[triGeo, undefined, count]}>
+            <meshStandardMaterial color="#fbbf24" emissive="#fbbf24" emissiveIntensity={0.3} transparent opacity={0.5} side={THREE.DoubleSide} flatShading />
+        </instancedMesh>
+    );
+}
+
+// ===== Colored gate entry/exit markers =====
+function GateEntryMarkers({ gates }: { gates: GalaxyGate[] }) {
+    const markers = useMemo(() => {
+        const sides = ['top', 'right', 'bottom', 'left'] as const;
+        return sides.map(side => {
+            const gate = gates.find(g => g.side === side);
+            const ratio = gate ? gate.health / gate.maxHealth : 1;
+            const pos = GALAXY_GATE_POSITIONS[side];
+            const world = pathToWorld(pos);
+            const color = ratio > 0.5 ? '#44ff88' : ratio > 0.25 ? '#ffaa44' : '#ff4444';
+            return { ...world, color, side };
+        });
+    }, [gates]);
+
+    return (
+        <>
+            {markers.map(({ x, z, color, side }) => (
+                <group key={`entry-${side}`} position={[x, HEIGHT_PATH + 0.005, z]}>
+                    {/* Colored circle on the path at gate position */}
+                    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+                        <ringGeometry args={[0.08, 0.14, 12]} />
+                        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} transparent opacity={0.7} side={THREE.DoubleSide} />
+                    </mesh>
+                </group>
+            ))}
+        </>
     );
 }
 
@@ -851,9 +907,33 @@ function MobTower({ tower, isSelected, lineClearPulse, onClick }: {
     // Convert ring-engine range (path-fraction) to approximate 3D radius
     const towerRange = (def.range / 72) * GALAXY_PATH_LENGTH * CELL * 0.15;
 
+    // Level indicator dot positions (spread evenly above tower)
+    const levelDots = useMemo(() => {
+        const dots: { x: number; z: number }[] = [];
+        for (let i = 0; i < tower.level; i++) {
+            const angle = (i / Math.max(tower.level, 1)) * Math.PI * 2 - Math.PI / 2;
+            dots.push({ x: Math.cos(angle) * 0.08, z: Math.sin(angle) * 0.08 });
+        }
+        return dots;
+    }, [tower.level]);
+
     return (
         <group ref={groupRef} onPointerDown={handleClick}>
             <TowerAura active={lineClearPulse} color={colors.glow} />
+
+            {/* Stone foundation (wider than platform) */}
+            <mesh position={[0, -0.01, 0]} castShadow>
+                <boxGeometry args={[0.38, 0.04, 0.38]} />
+                <meshStandardMaterial color="#555555" roughness={0.9} metalness={0.05} flatShading />
+            </mesh>
+
+            {/* Corner pillars on foundation */}
+            {[[-1, -1], [-1, 1], [1, -1], [1, 1]].map(([dx, dz], i) => (
+                <mesh key={`pillar-${i}`} position={[dx * 0.16, 0.03, dz * 0.16]}>
+                    <cylinderGeometry args={[0.015, 0.02, 0.08, 6]} />
+                    <meshStandardMaterial color="#777777" roughness={0.8} flatShading />
+                </mesh>
+            ))}
 
             {/* Platform base */}
             <mesh position={[0, 0.03, 0]} castShadow>
@@ -877,19 +957,13 @@ function MobTower({ tower, isSelected, lineClearPulse, onClick }: {
                 <primitive object={mobData.group} />
             </group>
 
-            {/* Level indicators */}
-            {tower.level > 1 && (
-                <mesh position={[0, 0.065, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <ringGeometry args={[0.14, 0.17, 8]} />
-                    <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={0.3} transparent opacity={0.7} side={THREE.DoubleSide} />
+            {/* Level indicator dots above tower */}
+            {levelDots.map((dot, i) => (
+                <mesh key={`lvl-${i}`} position={[dot.x, charHeight + 0.15, dot.z]}>
+                    <sphereGeometry args={[0.018, 6, 6]} />
+                    <meshStandardMaterial color={colors.glow} emissive={colors.glow} emissiveIntensity={0.8} />
                 </mesh>
-            )}
-            {tower.level > 2 && (
-                <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                    <ringGeometry args={[0.11, 0.14, 8]} />
-                    <meshStandardMaterial color="#ff8844" emissive="#ff8844" emissiveIntensity={0.5} transparent opacity={0.7} side={THREE.DoubleSide} />
-                </mesh>
-            )}
+            ))}
 
             {/* Type-specific auras */}
             {tower.type === 'cannon' && <MagmaAuraRing radius={towerRange} />}
@@ -1083,6 +1157,7 @@ export interface GalaxyRingSceneProps {
     selectedTowerType: TowerType | null;
     selectedTowerId: string | null;
     lineClearPulse: boolean;
+    biome?: Biome;
     board?: Board;
     currentPiece?: Piece | null;
     clearedRows?: number[];
@@ -1099,6 +1174,7 @@ export function GalaxyRingScene({
     selectedTowerType,
     selectedTowerId,
     lineClearPulse,
+    biome = 'forest',
     board,
     currentPiece,
     clearedRows,
@@ -1114,8 +1190,8 @@ export function GalaxyRingScene({
             <directionalLight position={[-4, 6, -6]} intensity={0.25} color="#8888cc" />
 
             <group rotation={[0.45, 0, 0]}>
-                <GroundPlane />
-                <TerrainGrid />
+                <GroundPlane biome={biome} />
+                <TerrainGrid biome={biome} />
                 {board && (
                     <CenterTerrain
                         board={board}
@@ -1125,8 +1201,10 @@ export function GalaxyRingScene({
                 )}
                 <TerrainUnderside />
                 <PathOutline />
-                <TerrainDecorations />
+                <PathArrows />
+                <TerrainDecorations biome={biome} />
                 <GateMarkers gates={gates} />
+                <GateEntryMarkers gates={gates} />
 
                 {/* Empty tower slots */}
                 {towerSlots.filter(s => !s.occupied).map((slot) => (

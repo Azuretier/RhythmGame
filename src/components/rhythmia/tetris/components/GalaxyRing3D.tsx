@@ -7,6 +7,7 @@ import type { Board, Piece } from '../types';
 import { GalaxyRingScene } from './GalaxyScene';
 import { CameraController } from './CameraController';
 import { useLayerInteraction } from '../hooks/useLayerInteraction';
+import type { Biome } from '../terrain-utils';
 
 // ===== Exported Canvas wrapper =====
 export interface GalaxyRing3DProps {
@@ -21,6 +22,7 @@ export interface GalaxyRing3DProps {
     lineClearPulse?: boolean;
     isPaused?: boolean;
     gameOver?: boolean;
+    biome?: Biome;
     board?: Board;
     currentPiece?: Piece | null;
     clearedRows?: number[];
@@ -32,6 +34,7 @@ export function GalaxyRing3D({
     enemies, towers, gates, projectiles, towerSlots,
     selectedTowerType, selectedTowerId,
     lineClearPulse = false, isPaused = false, gameOver = false,
+    biome = 'forest',
     board, currentPiece, clearedRows,
     onSlotClick, onTowerClick,
 }: GalaxyRing3DProps) {
@@ -65,6 +68,7 @@ export function GalaxyRing3D({
                 selectedTowerType={selectedTowerType}
                 selectedTowerId={selectedTowerId}
                 lineClearPulse={lineClearPulse}
+                biome={biome}
                 board={board}
                 currentPiece={currentPiece}
                 clearedRows={clearedRows}
