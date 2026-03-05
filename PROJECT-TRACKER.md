@@ -21,13 +21,13 @@
 ## Phase 2: Movable 3D Camera
 > Goal: Player-controllable camera with smooth transitions
 
-- [ ] **2.1** Create `useCameraController` hook (orbit, pan, zoom with bounds)
-- [ ] **2.2** Add camera presets: isometric (current), top-down, follow-enemy, cinematic
-- [ ] **2.3** Implement smooth camera transitions between presets (lerp position + target)
-- [ ] **2.4** Add mouse/touch controls: right-drag to orbit, scroll to zoom, middle-drag to pan
-- [ ] **2.5** Add camera bounds to prevent looking under terrain or too far away
-- [ ] **2.6** Keyboard shortcuts for camera presets (C to cycle, R to reset)
-- [ ] **2.7** Ensure camera movement doesn't interfere with tetris keyboard controls
+- [x] **2.1** Create `useCameraController` hook (orbit, pan, zoom with bounds)
+- [x] **2.2** Add camera presets: isometric (current), top-down, follow-enemy, cinematic
+- [x] **2.3** Implement smooth camera transitions between presets (lerp position + target)
+- [x] **2.4** Add mouse/touch controls: right-drag to orbit, scroll to zoom, middle-drag to pan
+- [x] **2.5** Add camera bounds to prevent looking under terrain or too far away
+- [x] **2.6** Keyboard shortcuts for camera presets (C to cycle, R to reset)
+- [x] **2.7** Ensure camera movement doesn't interfere with tetris keyboard controls
 
 ## Phase 3: Center Terrain (Dig Phase)
 > Goal: 3D destructible terrain in the center where tetris board is
@@ -84,5 +84,6 @@
 
 | Date | Phase | Tasks Completed | Branch | PR |
 |------|-------|----------------|--------|-----|
-| 2026-03-05 | P1 | 1.1-1.5 (all) | claude/project-p1-layer-architecture | TBD |
+| 2026-03-05 | P1 | 1.1-1.5 (all) | claude/project-p1-layer-architecture | #468 |
+| 2026-03-05 | P2 | 2.1-2.7 (all) | claude/project-p2-movable-camera | TBD |
 
