@@ -69,6 +69,14 @@ export interface GalaxyGate {
 export type RingTDPhase = 'build' | 'wave' | 'won' | 'lost';
 
 // Full galaxy TD state snapshot
+// Player configuration for multiplayer mode
+export interface GalaxyTDPlayerConfig {
+    playerId: string;
+    controlledSides: GalaxyRingSide[];
+    color: string;
+}
+
+// Full galaxy TD state snapshot
 export interface GalaxyTDState {
     phase: RingTDPhase;
     gold: number;
