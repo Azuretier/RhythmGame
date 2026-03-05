@@ -7,22 +7,9 @@ import type { Board, Piece } from '../types';
 import { getShape } from '../utils/boardUtils';
 import { VISIBLE_HEIGHT, BOARD_WIDTH, BUFFER_ZONE } from '../constants';
 import {
-    GALAXY_RING_DEPTH,
-    GALAXY_TOP_WIDTH,
-    GALAXY_SIDE_HEIGHT,
-} from '../galaxy-constants';
-
-// ===== Grid constants (matching GalaxyScene.tsx) =====
-const GRID_W = GALAXY_TOP_WIDTH;                           // 16
-const GRID_H = GALAXY_SIDE_HEIGHT + 2 * GALAXY_RING_DEPTH; // 26
-const DEPTH = GALAXY_RING_DEPTH;                            // 3
-const BOARD_W = GRID_W - 2 * DEPTH;                         // 10
-const BOARD_H = GALAXY_SIDE_HEIGHT;                          // 20
-
-const CELL = 0.32;
-const CELL_GAP = 0.02;
-const ORIGIN_X = -(GRID_W - 1) * CELL * 0.5;
-const ORIGIN_Z = -(GRID_H - 1) * CELL * 0.5;
+    DEPTH, BOARD_W, BOARD_H,
+    CELL, CELL_GAP, ORIGIN_X, ORIGIN_Z,
+} from '../galaxy-shared-constants';
 const BLOCK_SIZE = CELL - CELL_GAP;
 
 // Max instances: 10x20 board + up to 4 cells for current piece

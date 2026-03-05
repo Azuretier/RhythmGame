@@ -22,6 +22,11 @@ import {
     GALAXY_TOWERS_PER_SIDE_LR,
     GALAXY_GATE_POSITIONS,
 } from '../galaxy-constants';
+import {
+    GRID_W, GRID_H, DEPTH, BOARD_W, BOARD_H,
+    CELL, CELL_GAP, ORIGIN_X, ORIGIN_Z,
+    SCENE_ROTATION_X,
+} from '../galaxy-shared-constants';
 import { getBiomeColors, mulberry32 as mulberry32Shared, hashString as hashStringShared } from '../terrain-utils';
 import type { Biome } from '../terrain-utils';
 
@@ -61,21 +66,9 @@ const ENEMY_MOB_SCALE: Record<EnemyType, number> = {
 
 const TOWER_MOB_SCALE = 0.25;
 
-// ===== Grid dimensions =====
-const GRID_W = GALAXY_TOP_WIDTH;               // 16
-const GRID_H = GALAXY_SIDE_HEIGHT + 2 * GALAXY_RING_DEPTH; // 26
-const BOARD_W = GRID_W - 2 * GALAXY_RING_DEPTH; // 10
-const BOARD_H = GALAXY_SIDE_HEIGHT;              // 20
-const DEPTH = GALAXY_RING_DEPTH;                 // 3
-
-// ===== 3D sizing =====
-const CELL = 0.32;
-const CELL_GAP = 0.02;
 const LERP_SPEED = 8;
 const SLOT_SIZE = 0.18;
 
-const ORIGIN_X = -(GRID_W - 1) * CELL * 0.5;
-const ORIGIN_Z = -(GRID_H - 1) * CELL * 0.5;
 
 // ===== Tower type colors (for platforms and auras) =====
 const TOWER_TYPE_COLORS: Record<TowerType, { main: string; accent: string; glow: string }> = {
@@ -1189,7 +1182,7 @@ export function GalaxyRingScene({
             <directionalLight position={[5, 10, 5]} intensity={0.9} color="#ffffff" />
             <directionalLight position={[-4, 6, -6]} intensity={0.25} color="#8888cc" />
 
-            <group rotation={[0.45, 0, 0]}>
+            <group rotation={[SCENE_ROTATION_X, 0, 0]}>
                 <GroundPlane biome={biome} />
                 <TerrainGrid biome={biome} />
                 {board && (
