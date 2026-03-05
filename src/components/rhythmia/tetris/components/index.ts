@@ -32,3 +32,4 @@ export { DragonGauge } from './DragonGauge';
 export { GalaxyBoard } from './GalaxyBoard';
 export { ElementalHUD } from './ElementalHUD';
 export { ReactionBanner } from './ReactionBanner';
+export { BoardOverlay } from './BoardOverlay';
