@@ -441,6 +441,13 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   const galaxyTDPlaceTowerRef = useRef(galaxyTD.placeTower);
   galaxyTDPlaceTowerRef.current = galaxyTD.placeTower;
 
+  // Galaxy TD game over — trigger main game over when TD lives reach 0
+  useEffect(() => {
+    if (galaxyTD.lives <= 0 && terrainPhase === 'dig' && !gameOver) {
+      setGameOver(true);
+    }
+  }, [galaxyTD.lives, terrainPhase, gameOver, setGameOver]);
+
   // Line clear pulse for tower aura visual
   const [galaxyLineClearPulse, setGalaxyLineClearPulse] = useState(false);
   const galaxyPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

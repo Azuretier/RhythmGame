@@ -904,8 +904,15 @@ function TowerSlotMarker({ slot, highlighted, onSlotClick }: {
         onSlotClick(globalIndex);
     }, [globalIndex, onSlotClick]);
 
+    const HIT_SIZE = 0.4; // Larger invisible hitbox for reliable raycasting
     return (
-        <group ref={groupRef} onPointerDown={handleClick}>
+        <group ref={groupRef}>
+            {/* Invisible larger hitbox for click detection */}
+            <mesh position={[0, SLOT_SIZE * 0.5 + 0.05, 0]} onPointerDown={handleClick}>
+                <boxGeometry args={[HIT_SIZE, HIT_SIZE, HIT_SIZE]} />
+                <meshBasicMaterial visible={false} />
+            </mesh>
+            {/* Visible slot marker */}
             <mesh position={[0, SLOT_SIZE * 0.5, 0]}>
                 <boxGeometry args={[SLOT_SIZE, SLOT_SIZE * 0.3, SLOT_SIZE]} />
                 <meshStandardMaterial ref={matRef} color={SLOT_COLOR_EMPTY} transparent opacity={0.15} roughness={0.8} flatShading />
