@@ -11,6 +11,7 @@ interface UseGameActionsProps {
     dispatch: (action: GameAction) => void;
 }
 
+/** Provides stable, memoized action methods that create and dispatch GameAction objects for tower defense gameplay. */
 export function useGameActions({ dispatch }: UseGameActionsProps) {
     const placeTower = useCallback((towerType: TowerType, slotIndex: number) => {
         dispatch({ type: 'place_tower', towerType, slotIndex });

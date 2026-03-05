@@ -12,6 +12,7 @@ interface UseGalaxyTDMultiplayerProps {
     terrainPhase: string;
 }
 
+/** Wraps useGalaxyTD with multiplayer stubs (connect/disconnect). Currently delegates entirely to single-player. */
 export function useGalaxyTDMultiplayer(props: UseGalaxyTDMultiplayerProps) {
     const galaxyTD = useGalaxyTD(props);
 

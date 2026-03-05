@@ -41,6 +41,7 @@ interface LayerInteractionState {
     hasInteraction: boolean;
 }
 
+/** Manages pointer-event routing between the 2D UI and 3D Canvas based on tower interaction state. */
 export function useLayerInteraction({
     selectedTowerType,
     selectedTowerId,

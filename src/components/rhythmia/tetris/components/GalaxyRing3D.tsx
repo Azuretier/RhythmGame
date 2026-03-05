@@ -8,6 +8,7 @@ import { GalaxyRingScene } from './GalaxyScene';
 import { CameraController } from './CameraController';
 import { useLayerInteraction } from '../hooks/useLayerInteraction';
 import type { Biome } from '../terrain-utils';
+import { DEFAULT_CAMERA_FOV } from '../galaxy-shared-constants';
 
 // ===== Exported Canvas wrapper =====
 export interface GalaxyRing3DProps {
@@ -48,7 +49,7 @@ export function GalaxyRing3D({
     return (
         <Canvas
             gl={{ antialias: true, alpha: true }}
-            camera={{ fov: 50, near: 0.1, far: 100 }}
+            camera={{ fov: DEFAULT_CAMERA_FOV, near: 0.1, far: 100 }}
             style={{
                 position: 'fixed',
                 inset: 0,

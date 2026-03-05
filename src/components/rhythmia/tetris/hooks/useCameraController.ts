@@ -1,10 +1,11 @@
 import { useRef, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { DEFAULT_CAMERA_POSITION } from '../galaxy-shared-constants';
 
 // ===== Camera presets =====
 export const CAMERA_PRESETS = {
-    isometric: { position: [0, 5, 7] as const, target: [0, 0, 0] as const },
+    isometric: { position: DEFAULT_CAMERA_POSITION, target: [0, 0, 0] as const },
     topDown:   { position: [0, 10, 0.01] as const, target: [0, 0, 0] as const },
     closeUp:   { position: [0, 3, 4] as const, target: [0, 0, 0] as const },
     cinematic: { position: [4, 3, 6] as const, target: [0, 0, 0] as const },
@@ -36,6 +37,7 @@ export interface CameraControllerReturn {
     stateRef: React.MutableRefObject<CameraState>;
 }
 
+/** Manages the 3D camera with preset views, smooth transitions, orbit/zoom/pan controls, and per-frame lerp updates. */
 export function useCameraController(): CameraControllerReturn {
     const { camera } = useThree();
 

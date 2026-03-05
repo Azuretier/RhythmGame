@@ -33,7 +33,7 @@ import { GalaxyTDPanel } from './components/GalaxyTDPanel';
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
 import { useCorruptionSystem } from './hooks/useCorruptionSystem';
-import { useGalaxyTD } from './hooks/useGalaxyTD';
+import { useGalaxyTDIntegration } from './hooks/useGalaxyTDIntegration';
 
 // Corruption system
 
@@ -429,28 +429,17 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   });
 
   // ===== Galaxy TD System (ring around board during dig phase) =====
-  const galaxyTD = useGalaxyTD({
+  const {
+    galaxyTD,
+    lineClearPulse: galaxyLineClearPulse,
+    handleLineClear: galaxyHandleLineClear,
+    tickBeat: galaxyTickBeat,
+  } = useGalaxyTDIntegration({
     isPaused,
     gameOver,
     terrainPhase,
+    setGameOver,
   });
-  const galaxyTDTickRef = useRef(galaxyTD.tick);
-  galaxyTDTickRef.current = galaxyTD.tick;
-  const galaxyTDOnLineClearRef = useRef(galaxyTD.onLineClear);
-  galaxyTDOnLineClearRef.current = galaxyTD.onLineClear;
-  const galaxyTDPlaceTowerRef = useRef(galaxyTD.placeTower);
-  galaxyTDPlaceTowerRef.current = galaxyTD.placeTower;
-
-  // Galaxy TD game over — trigger main game over when TD lives reach 0
-  useEffect(() => {
-    if (galaxyTD.lives <= 0 && !gameOver) {
-      setGameOver(true);
-    }
-  }, [galaxyTD.lives, gameOver, setGameOver]);
-
-  // Line clear pulse for tower aura visual
-  const [galaxyLineClearPulse, setGalaxyLineClearPulse] = useState(false);
-  const galaxyPulseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Stable refs for tower defense callbacks used in beat timer setInterval
   const spawnEnemiesRef = useRef(spawnEnemies);
@@ -921,13 +910,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
       const center = getBoardCenter();
 
-      // Galaxy TD: line clears grant gold + Tetris AoE (both phases)
-      galaxyTDOnLineClearRef.current(clearedLines);
-
-      // Flash tower aura pulse
-      setGalaxyLineClearPulse(true);
-      if (galaxyPulseTimerRef.current) clearTimeout(galaxyPulseTimerRef.current);
-      galaxyPulseTimerRef.current = setTimeout(() => setGalaxyLineClearPulse(false), 600);
+      // Galaxy TD: line clears grant gold + Tetris AoE + tower aura pulse
+      galaxyHandleLineClear(clearedLines);
 
       if (phase === 'td') {
         // === TD PHASE: Kill enemies when lines are cleared ===
@@ -1269,10 +1253,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       }
 
       // Galaxy TD ring tick — runs every beat (both phases)
-      galaxyTDTickRef.current(interval / 1000);
-
-      // Ring enemy kills → item drops + SE
-      const ringKills = galaxyTD.recentKillsRef.current;
+      const ringKills = galaxyTickBeat(interval / 1000);
       if (ringKills > 0) {
         playKillSoundRef.current();
         const c = getBoardCenterRef.current();

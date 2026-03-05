@@ -26,6 +26,7 @@ interface GameStateSyncProviderProps {
     playerId?: string | null;
 }
 
+/** Provides Galaxy TD game state and dispatch to the component tree via React Context. */
 export function GameStateSyncProvider({
     children,
     state,
@@ -48,6 +49,7 @@ export function GameStateSyncProvider({
     );
 }
 
+/** Consumes the Galaxy TD game state and dispatch from the nearest GameStateSyncProvider. */
 export function useGameStateSync(): GameStateSyncContextValue {
     const ctx = useContext(GameStateSyncContext);
     if (!ctx) {

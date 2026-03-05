@@ -23,10 +23,10 @@ interface UseGalaxyTDProps {
     terrainPhase: string;
 }
 
+/** Manages the Galaxy TD ring game state: tower placement, enemy waves, gold economy, and per-beat ticking. */
 export function useGalaxyTD({
     isPaused,
     gameOver,
-    terrainPhase,
 }: UseGalaxyTDProps) {
     const [state, setState] = useState<GalaxyTDState>(() => createInitialState());
 
