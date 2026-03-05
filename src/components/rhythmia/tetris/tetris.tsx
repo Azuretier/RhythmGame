@@ -26,6 +26,9 @@ const GalaxyRing3D = dynamic(
   { ssr: false }
 );
 
+// Galaxy TD HUD panel
+import { GalaxyTDPanel } from './components/GalaxyTDPanel';
+
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
 import { useKeybinds } from './hooks/useKeybinds';
@@ -427,7 +430,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
   // ===== Galaxy TD System (ring around board during dig phase) =====
   const galaxyTD = useGalaxyTD({
-    isPlaying,
     isPaused,
     gameOver,
     terrainPhase,
@@ -436,6 +438,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   galaxyTDTickRef.current = galaxyTD.tick;
   const galaxyTDOnLineClearRef = useRef(galaxyTD.onLineClear);
   galaxyTDOnLineClearRef.current = galaxyTD.onLineClear;
+  const galaxyTDPlaceTowerRef = useRef(galaxyTD.placeTower);
+  galaxyTDPlaceTowerRef.current = galaxyTD.placeTower;
 
   // Line clear pulse for tower aura visual
   const [galaxyLineClearPulse, setGalaxyLineClearPulse] = useState(false);
@@ -1251,7 +1255,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         }
       } else {
         // === Dig phase: Galaxy TD ring tick ===
-        galaxyTDTickRef.current();
+        galaxyTDTickRef.current(interval / 1000);
       }
 
       // VFX: beat pulse ring — intensity scales with BPM (both modes)
@@ -1728,13 +1732,39 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         <div className={styles.game}>
           {/* Galaxy TD 3D ring — fullscreen behind game UI, only during dig phase */}
           {terrainPhase === 'dig' && (
-            <GalaxyRing3D
-              enemies={galaxyTD.enemies}
-              towers={galaxyTD.towers}
-              gates={galaxyTD.gates}
-              waveNumber={galaxyTD.waveNumber}
-              lineClearPulse={galaxyLineClearPulse}
-            />
+            <>
+              <GalaxyRing3D
+                enemies={galaxyTD.enemies}
+                towers={galaxyTD.towers}
+                gates={galaxyTD.gates}
+                projectiles={galaxyTD.projectiles}
+                towerSlots={galaxyTD.towerSlots}
+                waveNumber={galaxyTD.waveNumber}
+                selectedTowerType={galaxyTD.selectedTowerType}
+                selectedTowerId={galaxyTD.selectedTowerId}
+                lineClearPulse={galaxyLineClearPulse}
+                onSlotClick={(slotIndex) => {
+                  if (galaxyTD.selectedTowerType) {
+                    galaxyTD.placeTower(galaxyTD.selectedTowerType, slotIndex);
+                  }
+                }}
+                onTowerClick={(towerId) => {
+                  galaxyTD.selectTower(towerId);
+                }}
+              />
+              <GalaxyTDPanel
+                gold={galaxyTD.gold}
+                lives={galaxyTD.lives}
+                waveNumber={galaxyTD.waveNumber}
+                totalWaves={30}
+                selectedTowerType={galaxyTD.selectedTowerType}
+                selectedTowerId={galaxyTD.selectedTowerId}
+                towers={galaxyTD.towers}
+                onSelectTowerType={galaxyTD.selectTowerType}
+                onUpgradeTower={galaxyTD.upgradeTower}
+                onSellTower={galaxyTD.sellTower}
+              />
+            </>
           )}
 
           {/* Game phase indicator */}
@@ -1780,6 +1810,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
               <GalaxyBoard
                 galaxyActive={terrainPhase === 'dig'}
                 waveNumber={galaxyTD.waveNumber}
+                gold={galaxyTD.gold}
+                lives={galaxyTD.lives}
                 board={board}
                 currentPiece={currentPiece}
                 boardBeat={boardBeat}

@@ -1,23 +1,22 @@
 'use client';
 
-import React, { useRef, useMemo, useEffect } from 'react';
+import React, { useRef, useMemo, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { GalaxyRingEnemy, GalaxyTower, GalaxyGate } from '../galaxy-types';
+import type { TowerType, EnemyType, RingEnemy, RingTower, RingProjectile, TowerSlot, GalaxyGate, StatusEffect } from '../galaxy-types';
+import { ENEMY_DEFS } from '@/types/tower-defense';
 import {
     GALAXY_RING_DEPTH,
     GALAXY_TOP_WIDTH,
     GALAXY_SIDE_HEIGHT,
     GALAXY_PATH_LENGTH,
     GALAXY_SIDE_BOUNDARIES,
-    GALAXY_GATE_POSITIONS,
     GALAXY_TOWERS_PER_SIDE_TB,
     GALAXY_TOWERS_PER_SIDE_LR,
+    GALAXY_GATE_POSITIONS,
 } from '../galaxy-constants';
 
 // ===== Grid dimensions =====
-// Board = 10 wide × 20 tall.  Ring = 3 cells deep on each side.
-// Total grid = 16 wide × 26 tall.  Center 10×20 is the board (empty).
 const GRID_W = GALAXY_TOP_WIDTH;               // 16
 const GRID_H = GALAXY_SIDE_HEIGHT + 2 * GALAXY_RING_DEPTH; // 26
 const BOARD_W = GRID_W - 2 * GALAXY_RING_DEPTH; // 10
@@ -25,51 +24,51 @@ const BOARD_H = GALAXY_SIDE_HEIGHT;              // 20
 const DEPTH = GALAXY_RING_DEPTH;                 // 3
 
 // ===== 3D sizing =====
-const CELL = 0.32;                  // World units per grid cell
-const CELL_GAP = 0.02;             // Gap between cells
-const BLOCK_H = 0.18;              // Terrain block height
+const CELL = 0.32;
+const CELL_GAP = 0.02;
+const BLOCK_H = 0.18;
 const ENEMY_SIZE = 0.28;
 const TOWER_SIZE = 0.22;
 const LERP_SPEED = 8;
+const SLOT_SIZE = 0.18;
 
-// Precomputed grid origin — center the grid at world origin
 const ORIGIN_X = -(GRID_W - 1) * CELL * 0.5;
 const ORIGIN_Z = -(GRID_H - 1) * CELL * 0.5;
 
-// ===== Color palettes =====
-const ENEMY_COLORS = [
-    new THREE.Color('#88cc88'),
-    new THREE.Color('#7799bb'),
-    new THREE.Color('#bb9977'),
-    new THREE.Color('#aa88cc'),
-    new THREE.Color('#ccaa77'),
-];
+// ===== Tower type colors =====
+const TOWER_TYPE_COLORS: Record<TowerType, { main: THREE.Color; accent: THREE.Color; glow: THREE.Color }> = {
+    archer:    { main: new THREE.Color('#4ade80'), accent: new THREE.Color('#22c55e'), glow: new THREE.Color('#66ff99') },
+    cannon:    { main: new THREE.Color('#f97316'), accent: new THREE.Color('#ea580c'), glow: new THREE.Color('#ff9944') },
+    frost:     { main: new THREE.Color('#38bdf8'), accent: new THREE.Color('#0ea5e9'), glow: new THREE.Color('#66ddff') },
+    lightning: { main: new THREE.Color('#a78bfa'), accent: new THREE.Color('#8b5cf6'), glow: new THREE.Color('#bb99ff') },
+    sniper:    { main: new THREE.Color('#f43f5e'), accent: new THREE.Color('#e11d48'), glow: new THREE.Color('#ff6688') },
+    flame:     { main: new THREE.Color('#ef4444'), accent: new THREE.Color('#dc2626'), glow: new THREE.Color('#ff6644') },
+    arcane:    { main: new THREE.Color('#c084fc'), accent: new THREE.Color('#a855f7'), glow: new THREE.Color('#dd99ff') },
+};
 
-const PATH_COLORS = [
-    new THREE.Color('#3a6a4a'),
-    new THREE.Color('#4a7a5a'),
-    new THREE.Color('#3a5a4a'),
-    new THREE.Color('#4a7a5a'),
-];
-const TOWER_LAYER_COLORS = [
-    new THREE.Color('#4a3a6a'),
-    new THREE.Color('#5a4a7a'),
-    new THREE.Color('#3a2a5a'),
-];
-const BUFFER_COLORS = [
-    new THREE.Color('#2a1a4a'),
-    new THREE.Color('#3a2a5a'),
-];
+// ===== Enemy type colors =====
+function getEnemyColor(type: EnemyType): THREE.Color {
+    const def = ENEMY_DEFS[type];
+    return new THREE.Color(def.color);
+}
+
+function getEnemyScale(type: EnemyType): number {
+    const def = ENEMY_DEFS[type];
+    return def.scale / 0.4; // normalized to base grunt scale
+}
+
+// ===== Path/Terrain colors =====
+const PATH_COLORS = [new THREE.Color('#3a6a4a'), new THREE.Color('#4a7a5a'), new THREE.Color('#3a5a4a'), new THREE.Color('#4a7a5a')];
+const TOWER_LAYER_COLORS = [new THREE.Color('#4a3a6a'), new THREE.Color('#5a4a7a'), new THREE.Color('#3a2a5a')];
+const BUFFER_COLORS = [new THREE.Color('#2a1a4a'), new THREE.Color('#3a2a5a')];
 const CORNER_COLOR = new THREE.Color('#1a1030');
-const GATE_COLOR_FULL = new THREE.Color('#44ff88');
-
-const TOWER_COLOR_IDLE = new THREE.Color('#6655aa');
-const TOWER_COLOR_CHARGED = new THREE.Color('#aa88ff');
-const TOWER_GLOW_COLOR = new THREE.Color('#00ccff');
+const SLOT_COLOR_EMPTY = new THREE.Color('#554488');
+const SLOT_COLOR_HIGHLIGHT = new THREE.Color('#8866dd');
 
 // ===== Pixel filter setup =====
 function PixelFilterSetup() {
     const { gl } = useThree();
+    // eslint-disable-next-line react-hooks/immutability
     useEffect(() => { gl.outputColorSpace = THREE.SRGBColorSpace; }, [gl]);
     return null;
 }
@@ -85,78 +84,49 @@ function getCellKind(col: number, row: number): CellKind {
     const inCenter = col >= DEPTH && col < DEPTH + BOARD_W && row >= DEPTH && row < DEPTH + BOARD_H;
 
     if (inCenter) return 'empty';
-
-    // Corners (3×3 blocks at each corner)
     if ((inTopStrip || inBottomStrip) && (inLeftStrip || inRightStrip)) return 'corner';
 
-    // Determine layer (distance from outer edge)
     let layer: number;
-    if (inTopStrip) {
-        layer = row;
-    } else if (inBottomStrip) {
-        layer = GRID_H - 1 - row;
-    } else if (inLeftStrip) {
-        layer = col;
-    } else if (inRightStrip) {
-        layer = GRID_W - 1 - col;
-    } else {
-        return 'empty';
-    }
+    if (inTopStrip) layer = row;
+    else if (inBottomStrip) layer = GRID_H - 1 - row;
+    else if (inLeftStrip) layer = col;
+    else if (inRightStrip) layer = GRID_W - 1 - col;
+    else return 'empty';
 
     if (layer === 0) return 'path';
     if (layer === 1) return 'tower';
     return 'buffer';
 }
 
-// ===== Path fraction (0-1) → 3D world position on the rectangular path =====
-// Clockwise: top (left→right), right (top→bottom), bottom (right→left), left (bottom→top)
+// ===== Path fraction → 3D world position =====
 function pathToWorld(pathPos: number): { x: number; z: number; angle: number } {
     const p = ((pathPos % 1.0) + 1.0) % 1.0;
-    const totalLen = GALAXY_PATH_LENGTH; // 72
-    const cellIdx = p * totalLen;
-
-    const topLen = GALAXY_TOP_WIDTH;     // 16
-    const rightLen = GALAXY_SIDE_HEIGHT; // 20
-    const bottomLen = GALAXY_TOP_WIDTH;  // 16
-    // leftLen = 20
+    const cellIdx = p * GALAXY_PATH_LENGTH;
+    const topLen = GALAXY_TOP_WIDTH;
+    const rightLen = GALAXY_SIDE_HEIGHT;
+    const bottomLen = GALAXY_TOP_WIDTH;
 
     let col: number, row: number, angle: number;
 
     if (cellIdx < topLen) {
-        // Top side: row=0, col goes left→right
         const t = cellIdx / topLen;
-        col = t * (GRID_W - 1);
-        row = 0;
-        angle = 0; // facing right
+        col = t * (GRID_W - 1); row = 0; angle = 0;
     } else if (cellIdx < topLen + rightLen) {
-        // Right side: col=GRID_W-1, row goes top→bottom
         const t = (cellIdx - topLen) / rightLen;
-        col = GRID_W - 1;
-        row = DEPTH + t * (BOARD_H - 1);
-        angle = -Math.PI / 2; // facing down
+        col = GRID_W - 1; row = DEPTH + t * (BOARD_H - 1); angle = -Math.PI / 2;
     } else if (cellIdx < topLen + rightLen + bottomLen) {
-        // Bottom side: row=GRID_H-1, col goes right→left
         const t = (cellIdx - topLen - rightLen) / bottomLen;
-        col = (GRID_W - 1) * (1 - t);
-        row = GRID_H - 1;
-        angle = Math.PI; // facing left
+        col = (GRID_W - 1) * (1 - t); row = GRID_H - 1; angle = Math.PI;
     } else {
-        // Left side: col=0, row goes bottom→top
         const leftStart = topLen + rightLen + bottomLen;
         const t = (cellIdx - leftStart) / GALAXY_SIDE_HEIGHT;
-        col = 0;
-        row = DEPTH + (BOARD_H - 1) * (1 - t);
-        angle = Math.PI / 2; // facing up
+        col = 0; row = DEPTH + (BOARD_H - 1) * (1 - t); angle = Math.PI / 2;
     }
 
-    return {
-        x: ORIGIN_X + col * CELL,
-        z: ORIGIN_Z + row * CELL,
-        angle,
-    };
+    return { x: ORIGIN_X + col * CELL, z: ORIGIN_Z + row * CELL, angle };
 }
 
-// ===== Tower position on the tower layer (1 cell inward from path) =====
+// ===== Tower position (1 cell inward from path) =====
 function towerToWorld(side: string, index: number): { x: number; z: number; angle: number } {
     const bounds = GALAXY_SIDE_BOUNDARIES[side as keyof typeof GALAXY_SIDE_BOUNDARIES];
     const count = (side === 'top' || side === 'bottom') ? GALAXY_TOWERS_PER_SIDE_TB : GALAXY_TOWERS_PER_SIDE_LR;
@@ -164,76 +134,48 @@ function towerToWorld(side: string, index: number): { x: number; z: number; angl
     const padding = (side === 'top' || side === 'bottom') ? sideLen * (DEPTH / GALAXY_TOP_WIDTH) : 0;
     const usable = sideLen - 2 * padding;
     const pathFrac = bounds.start + padding + (index + 0.5) * (usable / count);
-
-    // Get the path position, then offset inward by 1 cell
     const pathWorld = pathToWorld(pathFrac);
     let dx = 0, dz = 0;
-
-    if (side === 'top') { dz = CELL; }
-    else if (side === 'bottom') { dz = -CELL; }
-    else if (side === 'left') { dx = CELL; }
-    else { dx = -CELL; }
-
-    return {
-        x: pathWorld.x + dx,
-        z: pathWorld.z + dz,
-        angle: pathWorld.angle,
-    };
+    if (side === 'top') dz = CELL;
+    else if (side === 'bottom') dz = -CELL;
+    else if (side === 'left') dx = CELL;
+    else dx = -CELL;
+    return { x: pathWorld.x + dx, z: pathWorld.z + dz, angle: pathWorld.angle };
 }
 
-// ===== Terrain Grid — instanced mesh of all ring cells =====
+// ===== Terrain Grid =====
 function TerrainGrid() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
-
     const { count, matrices, colors } = useMemo(() => {
         const rng = mulberry32(42);
         const cells: { x: number; z: number; color: THREE.Color; heightVar: number }[] = [];
-
         for (let row = 0; row < GRID_H; row++) {
             for (let col = 0; col < GRID_W; col++) {
                 const kind = getCellKind(col, row);
                 if (kind === 'empty') continue;
-
                 const wx = ORIGIN_X + col * CELL;
                 const wz = ORIGIN_Z + row * CELL;
                 const hv = (rng() - 0.5) * 0.04;
-
                 let color: THREE.Color;
                 switch (kind) {
-                    case 'path':
-                        color = PATH_COLORS[Math.floor(rng() * PATH_COLORS.length)];
-                        break;
-                    case 'tower':
-                        color = TOWER_LAYER_COLORS[Math.floor(rng() * TOWER_LAYER_COLORS.length)];
-                        break;
-                    case 'buffer':
-                        color = BUFFER_COLORS[Math.floor(rng() * BUFFER_COLORS.length)];
-                        break;
-                    case 'corner':
-                        color = CORNER_COLOR.clone();
-                        break;
-                    default:
-                        color = CORNER_COLOR.clone();
+                    case 'path': color = PATH_COLORS[Math.floor(rng() * PATH_COLORS.length)]; break;
+                    case 'tower': color = TOWER_LAYER_COLORS[Math.floor(rng() * TOWER_LAYER_COLORS.length)]; break;
+                    case 'buffer': color = BUFFER_COLORS[Math.floor(rng() * BUFFER_COLORS.length)]; break;
+                    default: color = CORNER_COLOR.clone();
                 }
-
                 cells.push({ x: wx, z: wz, color, heightVar: hv });
             }
         }
-
         const totalBlocks = cells.length;
         const mat = new Float32Array(totalBlocks * 16);
         const col = new Float32Array(totalBlocks * 3);
         const dummy = new THREE.Matrix4();
-
         for (let i = 0; i < totalBlocks; i++) {
             const c = cells[i];
             dummy.makeTranslation(c.x, c.heightVar, c.z);
             dummy.toArray(mat, i * 16);
-            col[i * 3] = c.color.r;
-            col[i * 3 + 1] = c.color.g;
-            col[i * 3 + 2] = c.color.b;
+            col[i * 3] = c.color.r; col[i * 3 + 1] = c.color.g; col[i * 3 + 2] = c.color.b;
         }
-
         return { count: totalBlocks, matrices: mat, colors: col };
     }, []);
 
@@ -250,7 +192,6 @@ function TerrainGrid() {
     }, [count, matrices, colors]);
 
     const blockSize = CELL - CELL_GAP;
-
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]} castShadow={false} receiveShadow={false}>
             <boxGeometry args={[blockSize, BLOCK_H, blockSize]} />
@@ -259,10 +200,9 @@ function TerrainGrid() {
     );
 }
 
-// ===== Terrain underside — darker slab beneath the whole ring =====
+// ===== Terrain underside =====
 function TerrainUnderside() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
-
     const { count, matrices } = useMemo(() => {
         const cells: { x: number; z: number }[] = [];
         for (let row = 0; row < GRID_H; row++) {
@@ -292,7 +232,6 @@ function TerrainUnderside() {
     }, [count, matrices]);
 
     const blockSize = CELL - CELL_GAP;
-
     return (
         <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
             <boxGeometry args={[blockSize, BLOCK_H * 0.5, blockSize]} />
@@ -301,12 +240,11 @@ function TerrainUnderside() {
     );
 }
 
-// ===== Ground plane with pixelated texture =====
+// ===== Ground plane =====
 function GroundPlane() {
     const texture = useMemo(() => {
         const canvas = document.createElement('canvas');
-        canvas.width = 16;
-        canvas.height = 16;
+        canvas.width = 16; canvas.height = 16;
         const ctx = canvas.getContext('2d')!;
         const rng = mulberry32(99);
         const cs = ['#0e0818', '#120c20', '#160e28', '#0e0a1a', '#100c1e'];
@@ -317,14 +255,10 @@ function GroundPlane() {
             }
         }
         const tex = new THREE.CanvasTexture(canvas);
-        tex.magFilter = THREE.NearestFilter;
-        tex.minFilter = THREE.NearestFilter;
-        tex.generateMipmaps = false;
+        tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false;
         return tex;
     }, []);
-
     const size = Math.max(GRID_W, GRID_H) * CELL * 2;
-
     return (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -BLOCK_H, 0]}>
             <planeGeometry args={[size, size]} />
@@ -333,7 +267,7 @@ function GroundPlane() {
     );
 }
 
-// ===== Path outline — thin rectangular loop marking the outer path =====
+// ===== Path outline =====
 function PathOutline() {
     const points = useMemo(() => {
         const y = BLOCK_H * 0.5 + 0.01;
@@ -341,16 +275,12 @@ function PathOutline() {
         const topZ = ORIGIN_Z - CELL * 0.5;
         const botZ = ORIGIN_Z + (GRID_H - 1) * CELL + CELL * 0.5;
         return [
-            new THREE.Vector3(-halfW, y, topZ),
-            new THREE.Vector3(halfW, y, topZ),
-            new THREE.Vector3(halfW, y, botZ),
-            new THREE.Vector3(-halfW, y, botZ),
+            new THREE.Vector3(-halfW, y, topZ), new THREE.Vector3(halfW, y, topZ),
+            new THREE.Vector3(halfW, y, botZ), new THREE.Vector3(-halfW, y, botZ),
             new THREE.Vector3(-halfW, y, topZ),
         ];
     }, []);
-
     const lineGeo = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]);
-
     return (
         <line>
             <bufferGeometry attach="geometry" {...lineGeo} />
@@ -359,47 +289,33 @@ function PathOutline() {
     );
 }
 
-// ===== Decorative crystals scattered on the ring =====
+// ===== Decorative crystals =====
 function TerrainDecorations() {
     const meshRef = useRef<THREE.InstancedMesh>(null);
-
     const { count, matrices, colors } = useMemo(() => {
         const rng = mulberry32(137);
         const decoCount = 30;
         const mat = new Float32Array(decoCount * 16);
         const col = new Float32Array(decoCount * 3);
         const dummy = new THREE.Matrix4();
-        const crystalColors = [
-            new THREE.Color('#8866cc'),
-            new THREE.Color('#66aacc'),
-            new THREE.Color('#aa77dd'),
-            new THREE.Color('#5588aa'),
-        ];
-
+        const crystalColors = [new THREE.Color('#8866cc'), new THREE.Color('#66aacc'), new THREE.Color('#aa77dd'), new THREE.Color('#5588aa')];
         let placed = 0;
         for (let attempt = 0; attempt < decoCount * 3 && placed < decoCount; attempt++) {
             const gCol = Math.floor(rng() * GRID_W);
             const gRow = Math.floor(rng() * GRID_H);
-            const kind = getCellKind(gCol, gRow);
-            if (kind === 'empty') continue;
-
+            if (getCellKind(gCol, gRow) === 'empty') continue;
             const scale = 0.03 + rng() * 0.06;
             const hScale = 0.5 + rng() * 2;
             const wx = ORIGIN_X + gCol * CELL + (rng() - 0.5) * CELL * 0.4;
             const wz = ORIGIN_Z + gRow * CELL + (rng() - 0.5) * CELL * 0.4;
-
             dummy.identity();
             dummy.makeTranslation(wx, BLOCK_H * 0.5 + scale * hScale * 0.5, wz);
             dummy.multiply(new THREE.Matrix4().makeScale(scale, scale * hScale, scale));
             dummy.toArray(mat, placed * 16);
-
             const c = crystalColors[Math.floor(rng() * crystalColors.length)];
-            col[placed * 3] = c.r;
-            col[placed * 3 + 1] = c.g;
-            col[placed * 3 + 2] = c.b;
+            col[placed * 3] = c.r; col[placed * 3 + 1] = c.g; col[placed * 3 + 2] = c.b;
             placed++;
         }
-
         return { count: placed, matrices: mat.slice(0, placed * 16), colors: col.slice(0, placed * 3) };
     }, []);
 
@@ -427,28 +343,22 @@ function TerrainDecorations() {
 function HPNumberSprite({ health, maxHealth }: { health: number; maxHealth: number }) {
     const texture = useMemo(() => {
         const canvas = document.createElement('canvas');
-        canvas.width = 64;
-        canvas.height = 24;
+        canvas.width = 64; canvas.height = 24;
         const ctx = canvas.getContext('2d')!;
         ctx.clearRect(0, 0, 64, 24);
         ctx.font = 'bold 18px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-        ctx.strokeText(`${health}/${maxHealth}`, 32, 12);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.strokeStyle = '#000000'; ctx.lineWidth = 3;
+        const txt = `${Math.ceil(health)}/${maxHealth}`;
+        ctx.strokeText(txt, 32, 12);
         const ratio = health / maxHealth;
         ctx.fillStyle = ratio > 0.5 ? '#44dd66' : ratio > 0.25 ? '#ddaa33' : '#dd3333';
-        ctx.fillText(`${health}/${maxHealth}`, 32, 12);
+        ctx.fillText(txt, 32, 12);
         const tex = new THREE.CanvasTexture(canvas);
-        tex.magFilter = THREE.NearestFilter;
-        tex.minFilter = THREE.NearestFilter;
-        tex.generateMipmaps = false;
+        tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false;
         return tex;
     }, [health, maxHealth]);
-
     useEffect(() => () => { texture.dispose(); }, [texture]);
-
     return (
         <sprite position={[0, ENEMY_SIZE * 2.15, 0]} scale={[0.38, 0.14, 1]}>
             <spriteMaterial map={texture} transparent depthTest={false} />
@@ -462,7 +372,6 @@ function EnemyHPBar({ health, maxHealth }: { health: number; maxHealth: number }
     const barW = ENEMY_SIZE * 1.3;
     const barH = 0.035;
     const barColor = ratio > 0.5 ? '#44dd66' : ratio > 0.25 ? '#ddaa33' : '#dd3333';
-
     return (
         <group position={[0, ENEMY_SIZE * 1.85, 0]}>
             <HPNumberSprite health={health} maxHealth={maxHealth} />
@@ -478,55 +387,67 @@ function EnemyHPBar({ health, maxHealth }: { health: number; maxHealth: number }
     );
 }
 
-// ===== Pixelated Enemy with smooth movement =====
-function PixelEnemy({ pathPosition, index, health, maxHealth }: {
+// ===== Pixelated Enemy with type-specific visuals =====
+function PixelEnemy({ pathPosition, enemyType, id, health, maxHealth, effects }: {
     pathPosition: number;
-    index: number;
+    enemyType: EnemyType;
+    id: string;
     health: number;
     maxHealth: number;
+    effects: StatusEffect[];
 }) {
     const groupRef = useRef<THREE.Group>(null);
     const smoothRef = useRef({ x: 0, z: 0, angle: 0, init: false });
-    const color = useMemo(() => ENEMY_COLORS[index % ENEMY_COLORS.length], [index]);
+    const idHash = useMemo(() => hashString(id), [id]);
+    const baseColor = useMemo(() => getEnemyColor(enemyType), [enemyType]);
+    const scale = useMemo(() => getEnemyScale(enemyType), [enemyType]);
+
+    // Status effect tints
+    const isSlow = effects.some(e => e.type === 'slow');
+    const isBurn = effects.some(e => e.type === 'burn');
+    const isStun = effects.some(e => e.type === 'stun');
+
+    const bodyColor = useMemo(() => {
+        const c = baseColor.clone();
+        if (isSlow) c.lerp(new THREE.Color('#4488ff'), 0.4);
+        if (isBurn) c.lerp(new THREE.Color('#ff4422'), 0.3);
+        if (isStun) c.lerp(new THREE.Color('#ffff44'), 0.5);
+        return c;
+    }, [baseColor, isSlow, isBurn, isStun]);
 
     useFrame(({ clock }, delta) => {
         if (!groupRef.current) return;
         const target = pathToWorld(pathPosition);
-        const bobY = BLOCK_H * 0.5 + Math.sin(clock.elapsedTime * 2 + index) * 0.04;
-
+        const bobY = BLOCK_H * 0.5 + Math.sin(clock.elapsedTime * 2 + idHash) * 0.04;
         const s = smoothRef.current;
         if (!s.init) {
             s.x = target.x; s.z = target.z; s.angle = target.angle; s.init = true;
         } else {
             const t = 1 - Math.exp(-LERP_SPEED * delta);
-            s.x += (target.x - s.x) * t;
-            s.z += (target.z - s.z) * t;
+            s.x += (target.x - s.x) * t; s.z += (target.z - s.z) * t;
             let ad = target.angle - s.angle;
             if (ad > Math.PI) ad -= Math.PI * 2;
             if (ad < -Math.PI) ad += Math.PI * 2;
             s.angle += ad * t;
         }
-
         groupRef.current.position.set(s.x, bobY, s.z);
         groupRef.current.rotation.y = s.angle;
     });
 
-    const bodyColor = useMemo(() => color.clone(), [color]);
-    const headColor = useMemo(() => color.clone().multiplyScalar(1.15), [color]);
-    const feetColor = useMemo(() => color.clone().multiplyScalar(0.75), [color]);
-
+    const headColor = useMemo(() => bodyColor.clone().multiplyScalar(1.15), [bodyColor]);
+    const feetColor = useMemo(() => bodyColor.clone().multiplyScalar(0.75), [bodyColor]);
     const leftFootRef = useRef<THREE.Mesh>(null);
     const rightFootRef = useRef<THREE.Mesh>(null);
 
     useFrame(({ clock }) => {
         if (!leftFootRef.current || !rightFootRef.current) return;
-        const w = Math.sin(clock.elapsedTime * 6 + index * 2);
+        const w = Math.sin(clock.elapsedTime * 6 + idHash * 2);
         leftFootRef.current.position.z = w * 0.04;
         rightFootRef.current.position.z = -w * 0.04;
     });
 
     return (
-        <group ref={groupRef}>
+        <group ref={groupRef} scale={[scale, scale, scale]}>
             <EnemyHPBar health={health} maxHealth={maxHealth} />
             <mesh position={[0, ENEMY_SIZE * 0.5, 0]}>
                 <boxGeometry args={[ENEMY_SIZE, ENEMY_SIZE, ENEMY_SIZE * 0.8]} />
@@ -557,96 +478,287 @@ function PixelEnemy({ pathPosition, index, health, maxHealth }: {
 }
 
 // ===== Tower Aura =====
-function TowerAura({ active }: { active: boolean }) {
+function TowerAura({ active, color }: { active: boolean; color: THREE.Color }) {
     const meshRef = useRef<THREE.Mesh>(null);
     const matRef = useRef<THREE.MeshBasicMaterial>(null);
     const scaleRef = useRef(0);
-
     useFrame((_, delta) => {
         if (!meshRef.current || !matRef.current) return;
-        if (active && scaleRef.current < 1) {
-            scaleRef.current = Math.min(1, scaleRef.current + delta * 4);
-        } else if (!active && scaleRef.current > 0) {
-            scaleRef.current = Math.max(0, scaleRef.current - delta * 2);
-        }
+        if (active && scaleRef.current < 1) scaleRef.current = Math.min(1, scaleRef.current + delta * 4);
+        else if (!active && scaleRef.current > 0) scaleRef.current = Math.max(0, scaleRef.current - delta * 2);
         const s = scaleRef.current;
         meshRef.current.scale.set(1 + s * 0.8, 1, 1 + s * 0.8);
         matRef.current.opacity = (1 - s) * 0.6;
         meshRef.current.visible = s > 0.01;
     });
-
     return (
         <mesh ref={meshRef} position={[0, TOWER_SIZE * 1.5, 0]} rotation={[-Math.PI / 2, 0, 0]} visible={false}>
             <ringGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 2.2, 8]} />
-            <meshBasicMaterial ref={matRef} color={TOWER_GLOW_COLOR} transparent opacity={0} side={THREE.DoubleSide} />
+            <meshBasicMaterial ref={matRef} color={color} transparent opacity={0} side={THREE.DoubleSide} />
         </mesh>
     );
 }
 
+// ===== Type-specific tower geometry =====
+function TowerBody({ type, level }: { type: TowerType; level: number }) {
+    const colors = TOWER_TYPE_COLORS[type];
+
+    // Common base
+    const base = (
+        <mesh position={[0, TOWER_SIZE * 0.35, 0]}>
+            <boxGeometry args={[TOWER_SIZE * 1.4, TOWER_SIZE * 0.7, TOWER_SIZE * 1.4]} />
+            <meshStandardMaterial color={colors.main} roughness={0.75} flatShading />
+        </mesh>
+    );
+
+    // Type-specific top
+    let top: React.ReactNode;
+    switch (type) {
+        case 'archer': // Tall narrow
+            top = (
+                <mesh position={[0, TOWER_SIZE * 1.5, 0]}>
+                    <boxGeometry args={[TOWER_SIZE * 0.6, TOWER_SIZE * 1.6, TOWER_SIZE * 0.6]} />
+                    <meshStandardMaterial color={colors.accent} roughness={0.65} flatShading />
+                </mesh>
+            );
+            break;
+        case 'cannon': // Squat wide
+            top = (
+                <mesh position={[0, TOWER_SIZE * 1.0, 0]}>
+                    <boxGeometry args={[TOWER_SIZE * 1.2, TOWER_SIZE * 0.8, TOWER_SIZE * 1.2]} />
+                    <meshStandardMaterial color={colors.accent} roughness={0.6} flatShading />
+                </mesh>
+            );
+            break;
+        case 'frost': // Crystal shape
+            top = (
+                <mesh position={[0, TOWER_SIZE * 1.3, 0]} rotation={[0, Math.PI / 4, 0]}>
+                    <boxGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 1.2, TOWER_SIZE * 0.8]} />
+                    <meshStandardMaterial color={colors.accent} roughness={0.3} metalness={0.3} flatShading />
+                </mesh>
+            );
+            break;
+        case 'lightning': // Tall spire
+            top = (
+                <mesh position={[0, TOWER_SIZE * 1.7, 0]}>
+                    <boxGeometry args={[TOWER_SIZE * 0.5, TOWER_SIZE * 2.0, TOWER_SIZE * 0.5]} />
+                    <meshStandardMaterial color={colors.accent} roughness={0.5} metalness={0.2} flatShading />
+                </mesh>
+            );
+            break;
+        case 'sniper': // Narrow tall
+            top = (
+                <mesh position={[0, TOWER_SIZE * 1.6, 0]}>
+                    <boxGeometry args={[TOWER_SIZE * 0.4, TOWER_SIZE * 1.8, TOWER_SIZE * 0.4]} />
+                    <meshStandardMaterial color={colors.accent} roughness={0.7} flatShading />
+                </mesh>
+            );
+            break;
+        case 'flame': // Flickering top
+            top = (
+                <>
+                    <mesh position={[0, TOWER_SIZE * 1.1, 0]}>
+                        <boxGeometry args={[TOWER_SIZE * 1.0, TOWER_SIZE * 1.0, TOWER_SIZE * 1.0]} />
+                        <meshStandardMaterial color={colors.accent} roughness={0.6} flatShading />
+                    </mesh>
+                    <mesh position={[0, TOWER_SIZE * 1.8, 0]}>
+                        <boxGeometry args={[TOWER_SIZE * 0.5, TOWER_SIZE * 0.5, TOWER_SIZE * 0.5]} />
+                        <meshStandardMaterial color="#ff8844" emissive="#ff4422" emissiveIntensity={1.5} roughness={0.2} flatShading />
+                    </mesh>
+                </>
+            );
+            break;
+        case 'arcane': // Floating orb
+            top = (
+                <>
+                    <mesh position={[0, TOWER_SIZE * 1.2, 0]}>
+                        <boxGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 1.0, TOWER_SIZE * 0.8]} />
+                        <meshStandardMaterial color={colors.accent} roughness={0.5} flatShading />
+                    </mesh>
+                    <mesh position={[0, TOWER_SIZE * 2.2, 0]}>
+                        <boxGeometry args={[TOWER_SIZE * 0.45, TOWER_SIZE * 0.45, TOWER_SIZE * 0.45]} />
+                        <meshStandardMaterial color={colors.glow} emissive={colors.glow} emissiveIntensity={2} roughness={0.2} flatShading />
+                    </mesh>
+                </>
+            );
+            break;
+    }
+
+    return (
+        <>
+            {base}
+            {top}
+            {/* Crown for leveled towers */}
+            <mesh position={[0, TOWER_SIZE * 2.8, 0]}>
+                <boxGeometry args={[TOWER_SIZE * 1.2, TOWER_SIZE * 0.25, TOWER_SIZE * 1.2]} />
+                <meshStandardMaterial color={colors.accent} roughness={0.7} flatShading />
+            </mesh>
+            {/* Glow tip */}
+            <mesh position={[0, TOWER_SIZE * 3.2, 0]}>
+                <boxGeometry args={[TOWER_SIZE * 0.35, TOWER_SIZE * 0.4, TOWER_SIZE * 0.35]} />
+                <meshStandardMaterial color={colors.glow} emissive={colors.glow} emissiveIntensity={1.5} roughness={0.2} flatShading />
+            </mesh>
+            <pointLight position={[0, TOWER_SIZE * 3.4, 0]} color={colors.glow} intensity={0.5} distance={1.5} />
+            {level > 1 && (
+                <mesh position={[0, TOWER_SIZE * 3.0, 0]}>
+                    <boxGeometry args={[TOWER_SIZE * 1.0, TOWER_SIZE * 0.12, TOWER_SIZE * 1.0]} />
+                    <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={0.3} roughness={0.5} flatShading />
+                </mesh>
+            )}
+            {level > 2 && (
+                <mesh position={[0, TOWER_SIZE * 3.15, 0]}>
+                    <boxGeometry args={[TOWER_SIZE * 0.8, TOWER_SIZE * 0.08, TOWER_SIZE * 0.8]} />
+                    <meshStandardMaterial color="#ff8844" emissive="#ff8844" emissiveIntensity={0.5} roughness={0.5} flatShading />
+                </mesh>
+            )}
+        </>
+    );
+}
+
 // ===== Tower Mesh =====
-function GridTower({ side, index, charge, maxCharge, level, lineClearPulse }: {
-    side: string;
-    index: number;
-    charge: number;
-    maxCharge: number;
-    level: number;
+function GridTower({ tower, isSelected, lineClearPulse, onClick }: {
+    tower: RingTower;
+    isSelected: boolean;
     lineClearPulse: boolean;
+    onClick: (id: string) => void;
 }) {
     const groupRef = useRef<THREE.Group>(null);
-    const isCharged = charge > 0;
-    const chargeRatio = charge / maxCharge;
+    const colors = TOWER_TYPE_COLORS[tower.type];
 
-    const pos = useMemo(() => towerToWorld(side, index), [side, index]);
+    // The slot stores the per-side index; use tower.side + slot local index for positioning
+    const localIndex = useMemo(() => {
+        // Slots ordered: top(10), bottom(10), left(20), right(20)
+        let idx = tower.slotIndex;
+        const tb = GALAXY_TOWERS_PER_SIDE_TB;
+        const lr = GALAXY_TOWERS_PER_SIDE_LR;
+        if (tower.side === 'top') return idx;
+        idx -= tb;
+        if (tower.side === 'bottom') return idx;
+        idx -= tb;
+        if (tower.side === 'left') return idx;
+        idx -= lr;
+        return idx;
+    }, [tower.slotIndex, tower.side]);
+
+    const towerPos = useMemo(() => towerToWorld(tower.side, localIndex), [tower.side, localIndex]);
 
     useFrame(({ clock }) => {
         if (!groupRef.current) return;
-        groupRef.current.position.set(pos.x, BLOCK_H * 0.5, pos.z);
-        groupRef.current.rotation.y = pos.angle;
-        if (isCharged) {
-            groupRef.current.scale.setScalar(1 + Math.sin(clock.elapsedTime * 3) * 0.05);
+        groupRef.current.position.set(towerPos.x, BLOCK_H * 0.5, towerPos.z);
+        groupRef.current.rotation.y = towerPos.angle;
+        if (isSelected) {
+            groupRef.current.scale.setScalar(1 + Math.sin(clock.elapsedTime * 4) * 0.08);
         } else {
             groupRef.current.scale.setScalar(1);
         }
     });
 
-    const baseColor = isCharged ? TOWER_COLOR_CHARGED : TOWER_COLOR_IDLE;
+    const handleClick = useCallback((e: { stopPropagation: () => void }) => {
+        e.stopPropagation();
+        onClick(tower.id);
+    }, [tower.id, onClick]);
+
+    return (
+        <group ref={groupRef} onPointerDown={handleClick}>
+            <TowerAura active={lineClearPulse} color={colors.glow} />
+            <TowerBody type={tower.type} level={tower.level} />
+            {isSelected && (
+                <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                    <ringGeometry args={[TOWER_SIZE * 1.5, TOWER_SIZE * 2.0, 16]} />
+                    <meshBasicMaterial color="#ffffff" transparent opacity={0.3} side={THREE.DoubleSide} />
+                </mesh>
+            )}
+        </group>
+    );
+}
+
+// ===== Empty Tower Slot =====
+function TowerSlotMarker({ slot, highlighted, onSlotClick }: {
+    slot: TowerSlot;
+    highlighted: boolean;
+    onSlotClick: (index: number) => void;
+}) {
+    const groupRef = useRef<THREE.Group>(null);
+    const matRef = useRef<THREE.MeshStandardMaterial>(null);
+
+    // slot.index is the per-side local index
+    const slotPos = useMemo(() => towerToWorld(slot.side, slot.index), [slot.side, slot.index]);
+
+    useFrame(({ clock }) => {
+        if (!groupRef.current) return;
+        groupRef.current.position.set(slotPos.x, BLOCK_H * 0.5, slotPos.z);
+        if (matRef.current) {
+            if (highlighted) {
+                const pulse = 0.4 + Math.sin(clock.elapsedTime * 4) * 0.2;
+                matRef.current.opacity = pulse;
+                matRef.current.color = SLOT_COLOR_HIGHLIGHT;
+            } else {
+                matRef.current.opacity = 0.15;
+                matRef.current.color = SLOT_COLOR_EMPTY;
+            }
+        }
+    });
+
+    const globalIndex = useMemo(() => {
+        const tb = GALAXY_TOWERS_PER_SIDE_TB;
+        const lr = GALAXY_TOWERS_PER_SIDE_LR;
+        switch (slot.side) {
+            case 'top': return slot.index;
+            case 'bottom': return tb + slot.index;
+            case 'left': return 2 * tb + slot.index;
+            case 'right': return 2 * tb + lr + slot.index;
+        }
+    }, [slot.side, slot.index]);
+
+    const handleClick = useCallback((e: { stopPropagation: () => void }) => {
+        e.stopPropagation();
+        onSlotClick(globalIndex);
+    }, [globalIndex, onSlotClick]);
+
+    return (
+        <group ref={groupRef} onPointerDown={handleClick}>
+            <mesh position={[0, SLOT_SIZE * 0.5, 0]}>
+                <boxGeometry args={[SLOT_SIZE, SLOT_SIZE * 0.3, SLOT_SIZE]} />
+                <meshStandardMaterial ref={matRef} color={SLOT_COLOR_EMPTY} transparent opacity={0.15} roughness={0.8} flatShading />
+            </mesh>
+        </group>
+    );
+}
+
+// ===== Projectile =====
+function RingProjectile3D({ projectile }: { projectile: RingProjectile }) {
+    const groupRef = useRef<THREE.Group>(null);
+    const smoothRef = useRef({ x: 0, z: 0, init: false });
+    const colors = TOWER_TYPE_COLORS[projectile.towerType];
+
+    useFrame((_, delta) => {
+        if (!groupRef.current) return;
+        const target = pathToWorld(projectile.pathFraction);
+        const y = BLOCK_H * 0.5 + TOWER_SIZE * 2;
+        const s = smoothRef.current;
+        if (!s.init) {
+            s.x = target.x; s.z = target.z; s.init = true;
+        } else {
+            const t = 1 - Math.exp(-LERP_SPEED * 2 * delta);
+            s.x += (target.x - s.x) * t;
+            s.z += (target.z - s.z) * t;
+        }
+        groupRef.current.position.set(s.x, y, s.z);
+    });
 
     return (
         <group ref={groupRef}>
-            <TowerAura active={lineClearPulse && isCharged} />
-            <mesh position={[0, TOWER_SIZE * 0.35, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 1.4, TOWER_SIZE * 0.7, TOWER_SIZE * 1.4]} />
-                <meshStandardMaterial color={baseColor} roughness={0.75} flatShading />
+            <mesh>
+                <boxGeometry args={[0.06, 0.06, 0.06]} />
+                <meshStandardMaterial
+                    color={colors.glow}
+                    emissive={colors.glow}
+                    emissiveIntensity={3}
+                    roughness={0.2}
+                    flatShading
+                />
             </mesh>
-            <mesh position={[0, TOWER_SIZE * 1.2, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 0.9, TOWER_SIZE * 1.2, TOWER_SIZE * 0.9]} />
-                <meshStandardMaterial color={baseColor} roughness={0.65} flatShading />
-            </mesh>
-            <mesh position={[0, TOWER_SIZE * 2.1, 0]}>
-                <boxGeometry args={[TOWER_SIZE * 1.2, TOWER_SIZE * 0.25, TOWER_SIZE * 1.2]} />
-                <meshStandardMaterial color={isCharged ? '#bb99ff' : '#776699'} roughness={0.7} flatShading />
-            </mesh>
-            {isCharged && (
-                <>
-                    <mesh position={[0, TOWER_SIZE * 2.6, 0]}>
-                        <boxGeometry args={[TOWER_SIZE * 0.35, TOWER_SIZE * 0.5, TOWER_SIZE * 0.35]} />
-                        <meshStandardMaterial
-                            color={TOWER_GLOW_COLOR}
-                            emissive={TOWER_GLOW_COLOR}
-                            emissiveIntensity={chargeRatio * 2.5}
-                            roughness={0.2}
-                            flatShading
-                        />
-                    </mesh>
-                    <pointLight position={[0, TOWER_SIZE * 2.8, 0]} color={TOWER_GLOW_COLOR} intensity={chargeRatio * 0.6} distance={1.5} />
-                </>
-            )}
-            {level > 1 && (
-                <mesh position={[0, TOWER_SIZE * 2.35, 0]}>
-                    <boxGeometry args={[TOWER_SIZE * 1.0, TOWER_SIZE * 0.12, TOWER_SIZE * 1.0]} />
-                    <meshStandardMaterial color="#ffcc44" emissive="#ffcc44" emissiveIntensity={0.3} roughness={0.5} flatShading />
-                </mesh>
-            )}
+            <pointLight color={colors.glow} intensity={0.3} distance={0.8} />
         </group>
     );
 }
@@ -695,18 +807,28 @@ function GalaxyRingScene({
     enemies,
     towers,
     gates,
+    projectiles,
+    towerSlots,
+    selectedTowerType,
+    selectedTowerId,
     lineClearPulse,
+    onSlotClick,
+    onTowerClick,
 }: {
-    enemies: GalaxyRingEnemy[];
-    towers: GalaxyTower[];
+    enemies: RingEnemy[];
+    towers: RingTower[];
     gates: GalaxyGate[];
-    waveNumber: number;
+    projectiles: RingProjectile[];
+    towerSlots: TowerSlot[];
+    selectedTowerType: TowerType | null;
+    selectedTowerId: string | null;
     lineClearPulse: boolean;
+    onSlotClick: (slotIndex: number) => void;
+    onTowerClick: (towerId: string) => void;
 }) {
     return (
         <>
             <PixelFilterSetup />
-
             <ambientLight intensity={0.7} color="#ccccff" />
             <directionalLight position={[5, 10, 5]} intensity={0.9} color="#ffffff" />
             <directionalLight position={[-4, 6, -6]} intensity={0.25} color="#8888cc" />
@@ -719,26 +841,43 @@ function GalaxyRingScene({
                 <TerrainDecorations />
                 <GateMarkers gates={gates} />
 
-                {enemies.filter(e => e.alive).map(enemy => (
-                    <PixelEnemy
-                        key={enemy.id}
-                        pathPosition={enemy.pathPosition}
-                        index={enemy.id}
-                        health={enemy.health}
-                        maxHealth={enemy.maxHealth}
+                {/* Empty tower slots */}
+                {towerSlots.filter(s => !s.occupied).map((slot) => (
+                    <TowerSlotMarker
+                        key={`slot-${slot.side}-${slot.index}`}
+                        slot={slot}
+                        highlighted={selectedTowerType !== null}
+                        onSlotClick={onSlotClick}
                     />
                 ))}
 
+                {/* Placed towers */}
                 {towers.map(tower => (
                     <GridTower
                         key={tower.id}
-                        side={tower.side}
-                        index={tower.index}
-                        charge={tower.charge}
-                        maxCharge={tower.maxCharge}
-                        level={tower.level}
+                        tower={tower}
+                        isSelected={tower.id === selectedTowerId}
                         lineClearPulse={lineClearPulse}
+                        onClick={onTowerClick}
                     />
+                ))}
+
+                {/* Enemies */}
+                {enemies.filter(e => !e.dead).map(enemy => (
+                    <PixelEnemy
+                        key={enemy.id}
+                        pathPosition={enemy.pathFraction}
+                        enemyType={enemy.type}
+                        id={enemy.id}
+                        health={enemy.hp}
+                        maxHealth={enemy.maxHp}
+                        effects={enemy.effects}
+                    />
+                ))}
+
+                {/* Projectiles */}
+                {projectiles.map(proj => (
+                    <RingProjectile3D key={proj.id} projectile={proj} />
                 ))}
             </group>
         </>
@@ -747,14 +886,25 @@ function GalaxyRingScene({
 
 // ===== Exported Canvas wrapper =====
 export interface GalaxyRing3DProps {
-    enemies: GalaxyRingEnemy[];
-    towers: GalaxyTower[];
+    enemies: RingEnemy[];
+    towers: RingTower[];
     gates: GalaxyGate[];
+    projectiles: RingProjectile[];
+    towerSlots: TowerSlot[];
     waveNumber: number;
+    selectedTowerType: TowerType | null;
+    selectedTowerId: string | null;
     lineClearPulse?: boolean;
+    onSlotClick: (slotIndex: number) => void;
+    onTowerClick: (towerId: string) => void;
 }
 
-export function GalaxyRing3D({ enemies, towers, gates, waveNumber, lineClearPulse = false }: GalaxyRing3DProps) {
+export function GalaxyRing3D({
+    enemies, towers, gates, projectiles, towerSlots,
+    selectedTowerType, selectedTowerId,
+    lineClearPulse = false, onSlotClick, onTowerClick,
+}: GalaxyRing3DProps) {
+    const hasInteraction = selectedTowerType !== null || selectedTowerId !== null;
     return (
         <Canvas
             gl={{ antialias: true, alpha: true }}
@@ -764,7 +914,7 @@ export function GalaxyRing3D({ enemies, towers, gates, waveNumber, lineClearPuls
                 inset: 0,
                 width: '100vw',
                 height: '100vh',
-                pointerEvents: 'none',
+                pointerEvents: hasInteraction ? 'auto' : 'none',
                 zIndex: 2,
             }}
         >
@@ -772,8 +922,13 @@ export function GalaxyRing3D({ enemies, towers, gates, waveNumber, lineClearPuls
                 enemies={enemies}
                 towers={towers}
                 gates={gates}
-                waveNumber={waveNumber}
+                projectiles={projectiles}
+                towerSlots={towerSlots}
+                selectedTowerType={selectedTowerType}
+                selectedTowerId={selectedTowerId}
                 lineClearPulse={lineClearPulse}
+                onSlotClick={onSlotClick}
+                onTowerClick={onTowerClick}
             />
         </Canvas>
     );
@@ -788,4 +943,13 @@ function mulberry32(seed: number): () => number {
         t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
+}
+
+// ===== Simple string hash for stable random =====
+function hashString(s: string): number {
+    let hash = 0;
+    for (let i = 0; i < s.length; i++) {
+        hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash);
 }

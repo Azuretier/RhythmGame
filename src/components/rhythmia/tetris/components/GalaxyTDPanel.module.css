@@ -1,0 +1,242 @@
+/* ===== Galaxy TD Panel — HUD overlay ===== */
+
+.panel {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 15;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ===== Top Bar: Gold, Lives, Wave ===== */
+.topBar {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    pointer-events: auto;
+}
+
+.pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(30, 15, 60, 0.85);
+    border: 1px solid rgba(140, 100, 255, 0.3);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(220, 200, 255, 0.9);
+    backdrop-filter: blur(6px);
+    white-space: nowrap;
+}
+
+.pillIcon {
+    font-size: 0.85rem;
+}
+
+.goldPill {
+    color: #ffd700;
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.livesPill {
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.3);
+}
+
+.wavePill {
+    color: rgba(180, 140, 255, 0.9);
+}
+
+/* ===== Bottom Tower Bar ===== */
+.towerBar {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    pointer-events: auto;
+}
+
+.towerCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(30, 15, 60, 0.85);
+    border: 1px solid rgba(140, 100, 255, 0.2);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+    backdrop-filter: blur(6px);
+    min-width: 56px;
+    user-select: none;
+}
+
+.towerCard:hover {
+    border-color: rgba(140, 100, 255, 0.6);
+    transform: translateY(-2px);
+}
+
+.towerCardSelected {
+    border-color: rgba(140, 100, 255, 0.9);
+    background: rgba(60, 30, 120, 0.9);
+    box-shadow: 0 0 12px rgba(140, 100, 255, 0.3);
+}
+
+.towerCardDisabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.towerCardDisabled:hover {
+    border-color: rgba(140, 100, 255, 0.2);
+    transform: none;
+}
+
+.towerSwatch {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+
+.towerName {
+    font-size: 0.55rem;
+    font-weight: 600;
+    color: rgba(220, 200, 255, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.towerCost {
+    font-size: 0.55rem;
+    color: #ffd700;
+    font-weight: 700;
+}
+
+.towerHotkey {
+    font-size: 0.5rem;
+    color: rgba(160, 140, 200, 0.5);
+    margin-top: 1px;
+}
+
+/* ===== Selected Tower Side Panel ===== */
+.selectedPanel {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(30, 15, 60, 0.9);
+    border: 1px solid rgba(140, 100, 255, 0.3);
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+    min-width: 140px;
+}
+
+.selectedName {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(220, 200, 255, 0.95);
+}
+
+.selectedLevel {
+    font-size: 0.6rem;
+    color: rgba(180, 140, 255, 0.7);
+    font-weight: 600;
+}
+
+.selectedStat {
+    font-size: 0.6rem;
+    color: rgba(200, 180, 240, 0.7);
+}
+
+.selectedSpecial {
+    font-size: 0.55rem;
+    color: rgba(140, 200, 255, 0.7);
+    font-style: italic;
+}
+
+.selectedButtons {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.upgradeBtn, .sellBtn {
+    flex: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(140, 100, 255, 0.3);
+    font-size: 0.6rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.upgradeBtn {
+    background: rgba(60, 140, 60, 0.6);
+    color: #88ff88;
+}
+
+.upgradeBtn:hover {
+    background: rgba(60, 140, 60, 0.8);
+}
+
+.upgradeBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.sellBtn {
+    background: rgba(140, 60, 60, 0.6);
+    color: #ff8888;
+}
+
+.sellBtn:hover {
+    background: rgba(140, 60, 60, 0.8);
+}
+
+/* ===== Mobile: simplify layout ===== */
+@media (max-width: 768px) {
+    .topBar {
+        top: 4px;
+        gap: 6px;
+    }
+
+    .pill {
+        padding: 3px 8px;
+        font-size: 0.65rem;
+    }
+
+    .towerBar {
+        bottom: 4px;
+        gap: 4px;
+    }
+
+    .towerCard {
+        padding: 4px 6px;
+        min-width: 44px;
+    }
+
+    .towerName {
+        display: none;
+    }
+
+    .selectedPanel {
+        right: 4px;
+        padding: 8px;
+        min-width: 110px;
+    }
+}
