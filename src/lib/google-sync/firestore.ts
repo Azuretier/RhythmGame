@@ -17,10 +17,23 @@ import type { SkillTreeState } from '@/lib/skill-tree/types';
 
 const USER_DATA_COLLECTION = 'user_sync';
 
+export interface PurchaseRecord {
+  itemId: string;
+  itemType: 'crystal_pack' | 'battle_pass' | 'premium_skin' | 'inventory_expansion';
+  quantity: number;
+  priceJpy: number;
+  purchasedAt: Timestamp;
+  stripeSessionId?: string;
+}
+
 export interface SyncedUserData {
   profile: UserProfile | null;
   skinId: string | null;
   skillTree: SkillTreeState | null;
+  purchases?: PurchaseRecord[];
+  premiumCurrency?: number;
+  ownedPremiumSkins?: string[];
+  battlePassActive?: boolean;
   lastSyncedAt: Timestamp;
 }
 
@@ -29,7 +42,14 @@ export interface SyncedUserData {
  */
 export async function syncUserDataToFirestore(
   uid: string,
-  data: { profile?: UserProfile | null; skinId?: string | null; skillTree?: SkillTreeState | null }
+  data: {
+    profile?: UserProfile | null;
+    skinId?: string | null;
+    skillTree?: SkillTreeState | null;
+    premiumCurrency?: number;
+    ownedPremiumSkins?: string[];
+    battlePassActive?: boolean;
+  }
 ): Promise<void> {
   if (!db) return;
 
@@ -45,6 +65,15 @@ export async function syncUserDataToFirestore(
     }
     if (data.skillTree !== undefined) {
       payload.skillTree = data.skillTree;
+    }
+    if (data.premiumCurrency !== undefined) {
+      payload.premiumCurrency = data.premiumCurrency;
+    }
+    if (data.ownedPremiumSkins !== undefined) {
+      payload.ownedPremiumSkins = data.ownedPremiumSkins;
+    }
+    if (data.battlePassActive !== undefined) {
+      payload.battlePassActive = data.battlePassActive;
     }
 
     await setDoc(docRef, payload, { merge: true });

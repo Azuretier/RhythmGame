@@ -73,6 +73,12 @@ export default function GlobalNav() {
             {t('updates')}
           </button>
           <button
+            className={`${styles.navLink} ${isActive('/shop')}`}
+            onClick={() => router.push('/shop')}
+          >
+            {t('shop')}
+          </button>
+          <button
             className={`${styles.navLink} ${isActive('/loyalty')}`}
             onClick={() => router.push('/loyalty')}
           >

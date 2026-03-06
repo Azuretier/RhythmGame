@@ -923,7 +923,8 @@
     "lobby": "Lobby",
     "games": "Juegos",
     "settings": "Configuración",
-    "loyalty": "Rango"
+    "loyalty": "Rango",
+    "shop": "Tienda"
   },
   "games": {
     "title": "Todos los Juegos",
@@ -1597,5 +1598,37 @@
     },
     "usedItem": "Usaste {name}",
     "discardedItem": "Descartaste {name}"
+  },
+  "shop": {
+    "meta": {
+      "title": "Tienda — azuretier.net",
+      "description": "Personaliza tu estilo con artículos cosméticos. Cristales de Eternidad, Pase de Batalla, Skins Premium."
+    },
+    "title": "Tienda",
+    "subtitle": "Personaliza tu estilo con artículos cosméticos",
+    "tabs": {
+      "crystals": "Cristales",
+      "battlePass": "Pase de Batalla",
+      "skins": "Skins",
+      "items": "Artículos",
+      "history": "Historial"
+    },
+    "purchase": "Comprar",
+    "owned": "Adquirido",
+    "limited": "Limitado",
+    "checkout": "Comprar Ahora",
+    "noItems": "No hay artículos en esta categoría",
+    "noHistory": "Aún no hay historial de compras",
+    "needProfile": "Configura tu perfil para ver el historial de compras",
+    "status": {
+      "completed": "Completado",
+      "pending": "Procesando",
+      "failed": "Fallido",
+      "refunded": "Reembolsado"
+    },
+    "errors": {
+      "checkoutFailed": "Error en el pago",
+      "networkError": "Se produjo un error de red"
+    }
   }
 }

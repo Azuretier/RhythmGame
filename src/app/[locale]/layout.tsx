@@ -16,6 +16,7 @@ import { SkillTreeProvider } from '@/lib/skill-tree/context';
 import { ShapeProvider } from '@/lib/shape/context';
 import { InventoryProvider } from '@/lib/inventory/context';
 import { LayoutConfigProvider } from '@/lib/layout/context';
+import { ShopProvider } from '@/lib/shop/context';
 import GlobalNav from '@/components/layout/GlobalNav';
 import GlobalFooter from '@/components/layout/GlobalFooter';
 
@@ -177,6 +178,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                                 <SkinProvider>
                                     <SkillTreeProvider>
                                         <InventoryProvider>
+                                          <ShopProvider>
                                             <VersionProvider>
                                                 <LayoutConfigProvider>
                                                     <Provider>
@@ -186,6 +188,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                                                     </Provider>
                                                 </LayoutConfigProvider>
                                             </VersionProvider>
+                                          </ShopProvider>
                                         </InventoryProvider>
                                     </SkillTreeProvider>
                                 </SkinProvider>

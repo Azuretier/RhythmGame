@@ -27,6 +27,7 @@ import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
 import InventoryPanel from '@/components/inventory/InventoryPanel';
+import CrystalBalance from '@/components/shop/CrystalBalance';
 
 const GameModeMap = dynamic(() => import('@/components/rhythmia/GameModeMap'), { ssr: false });
 
@@ -371,6 +372,13 @@ export default function RhythmiaLobby() {
                                         onClick={() => setShowInventory(true)}
                                     >
                                         {t('inventory.button')}
+                                    </button>
+                                    <CrystalBalance onClick={() => router.push('/shop')} />
+                                    <button
+                                        className={styles.advButton}
+                                        onClick={() => router.push('/shop')}
+                                    >
+                                        {t('nav.shop')}
                                     </button>
                                     <button
                                         className={onlineStyles.onlineButton}

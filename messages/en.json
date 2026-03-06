@@ -1357,7 +1357,8 @@
     "lobby": "Lobby",
     "games": "Games",
     "settings": "Settings",
-    "loyalty": "Loyalty"
+    "loyalty": "Loyalty",
+    "shop": "Shop"
   },
   "games": {
     "title": "All Games",
@@ -1632,5 +1633,37 @@
     },
     "usedItem": "Used {name}",
     "discardedItem": "Discarded {name}"
+  },
+  "shop": {
+    "meta": {
+      "title": "Shop — azuretier.net",
+      "description": "Customize your style with cosmetic items. Eternity Crystals, Battle Pass, Premium Skins."
+    },
+    "title": "Shop",
+    "subtitle": "Customize your style with cosmetic items",
+    "tabs": {
+      "crystals": "Crystals",
+      "battlePass": "Battle Pass",
+      "skins": "Skins",
+      "items": "Items",
+      "history": "History"
+    },
+    "purchase": "Purchase",
+    "owned": "Owned",
+    "limited": "Limited",
+    "checkout": "Buy Now",
+    "noItems": "No items in this category",
+    "noHistory": "No purchase history yet",
+    "needProfile": "Set up your profile to view purchase history",
+    "status": {
+      "completed": "Completed",
+      "pending": "Processing",
+      "failed": "Failed",
+      "refunded": "Refunded"
+    },
+    "errors": {
+      "checkoutFailed": "Checkout failed",
+      "networkError": "A network error occurred"
+    }
   }
 }

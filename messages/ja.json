@@ -248,7 +248,8 @@
     "lobby": "ロビー",
     "games": "ゲーム",
     "settings": "設定",
-    "loyalty": "ランク"
+    "loyalty": "ランク",
+    "shop": "ショップ"
   },
   "games": {
     "title": "ゲーム一覧",
@@ -1632,5 +1633,37 @@
     },
     "usedItem": "{name}を使用しました",
     "discardedItem": "{name}を捨てました"
+  },
+  "shop": {
+    "meta": {
+      "title": "ショップ — azuretier.net",
+      "description": "コスメアイテムでスタイルをカスタマイズ。永遠の結晶、バトルパス、プレミアムスキン。"
+    },
+    "title": "ショップ",
+    "subtitle": "コスメアイテムであなたのスタイルをカスタマイズ",
+    "tabs": {
+      "crystals": "結晶",
+      "battlePass": "バトルパス",
+      "skins": "スキン",
+      "items": "アイテム",
+      "history": "履歴"
+    },
+    "purchase": "購入",
+    "owned": "所持済み",
+    "limited": "期間限定",
+    "checkout": "購入する",
+    "noItems": "このカテゴリにはアイテムがありません",
+    "noHistory": "まだ購入履歴はありません",
+    "needProfile": "プロフィールを設定すると購入履歴が表示されます",
+    "status": {
+      "completed": "完了",
+      "pending": "処理中",
+      "failed": "失敗",
+      "refunded": "返金済み"
+    },
+    "errors": {
+      "checkoutFailed": "チェックアウトに失敗しました",
+      "networkError": "ネットワークエラーが発生しました"
+    }
   }
 }

@@ -5,7 +5,8 @@
     "lobby": "Lobby",
     "games": "Jeux",
     "settings": "Paramètres",
-    "loyalty": "Rang"
+    "loyalty": "Rang",
+    "shop": "Boutique"
   },
   "games": {
     "title": "Tous les Jeux",
@@ -1597,5 +1598,37 @@
     },
     "usedItem": "{name} utilisé",
     "discardedItem": "{name} jeté"
+  },
+  "shop": {
+    "meta": {
+      "title": "Boutique — azuretier.net",
+      "description": "Personnalisez votre style avec des objets cosmétiques. Cristaux d'Éternité, Passe de Bataille, Skins Premium."
+    },
+    "title": "Boutique",
+    "subtitle": "Personnalisez votre style avec des objets cosmétiques",
+    "tabs": {
+      "crystals": "Cristaux",
+      "battlePass": "Passe de Bataille",
+      "skins": "Skins",
+      "items": "Objets",
+      "history": "Historique"
+    },
+    "purchase": "Acheter",
+    "owned": "Possédé",
+    "limited": "Limité",
+    "checkout": "Acheter Maintenant",
+    "noItems": "Aucun objet dans cette catégorie",
+    "noHistory": "Pas encore d'historique d'achats",
+    "needProfile": "Configurez votre profil pour voir l'historique d'achats",
+    "status": {
+      "completed": "Terminé",
+      "pending": "En cours",
+      "failed": "Échoué",
+      "refunded": "Remboursé"
+    },
+    "errors": {
+      "checkoutFailed": "Échec du paiement",
+      "networkError": "Une erreur réseau s'est produite"
+    }
   }
 }
