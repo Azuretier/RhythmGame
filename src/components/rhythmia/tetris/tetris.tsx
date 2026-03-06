@@ -437,7 +437,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   } = useGalaxyTDIntegration({
     isPaused,
     gameOver,
-    terrainPhase,
     setGameOver,
   });
 

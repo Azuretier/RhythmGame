@@ -25,7 +25,7 @@ import {
     GALAXY_GATE_POSITIONS,
 } from '../galaxy-constants';
 import {
-    CELL, ORIGIN_X, ORIGIN_Z,
+    CELL,
     SCENE_ROTATION_X,
 } from '../galaxy-shared-constants';
 import { hashString } from '../terrain-utils';

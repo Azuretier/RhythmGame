@@ -4,7 +4,6 @@ import { useGalaxyTD } from './useGalaxyTD';
 interface UseGalaxyTDIntegrationProps {
     isPaused: boolean;
     gameOver: boolean;
-    terrainPhase: string;
     setGameOver: (v: boolean) => void;
 }
 
@@ -21,10 +20,9 @@ interface UseGalaxyTDIntegrationProps {
 export function useGalaxyTDIntegration({
     isPaused,
     gameOver,
-    terrainPhase,
     setGameOver,
 }: UseGalaxyTDIntegrationProps) {
-    const galaxyTD = useGalaxyTD({ isPaused, gameOver, terrainPhase });
+    const galaxyTD = useGalaxyTD({ isPaused, gameOver });
 
     // Stable refs for callbacks used inside setInterval (avoids stale closures)
     const galaxyTDTickRef = useRef(galaxyTD.tick);

@@ -20,7 +20,6 @@ import {
 interface UseGalaxyTDProps {
     isPaused: boolean;
     gameOver: boolean;
-    terrainPhase: string;
 }
 
 /** Manages the Galaxy TD ring game state: tower placement, enemy waves, gold economy, and per-beat ticking. */

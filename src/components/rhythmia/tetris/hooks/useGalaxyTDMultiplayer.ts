@@ -9,7 +9,6 @@ import { useGalaxyTD } from './useGalaxyTD';
 interface UseGalaxyTDMultiplayerProps {
     isPaused: boolean;
     gameOver: boolean;
-    terrainPhase: string;
 }
 
 /** Wraps useGalaxyTD with multiplayer stubs (connect/disconnect). Currently delegates entirely to single-player. */

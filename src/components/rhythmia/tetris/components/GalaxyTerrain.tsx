@@ -23,7 +23,6 @@ import type { Biome } from '../terrain-utils';
 export const HEIGHT_PATH = 0.12;
 export const HEIGHT_GRASS = 0.2;
 export const HEIGHT_BUFFER = 0.2;
-export const HEIGHT_CORNER = 0.35;
 
 // ===== Cell type identification =====
 export type CellKind = 'path' | 'tower' | 'buffer' | 'corner' | 'empty';
