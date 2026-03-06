@@ -1,0 +1,184 @@
+/* ===== BoardOverlay — Flexible Board UI System ===== */
+
+/* Container with perspective for 3D mode */
+.overlay {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: clamp(200px, 40vw, 320px);
+}
+
+.overlay3d {
+  perspective: 800px;
+  transform-style: preserve-3d;
+}
+
+/* Board inner wrapper — transforms in 3D mode */
+.boardInner {
+  position: relative;
+  width: 100%;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.board3d {
+  transform: rotateX(15deg) scale(0.95);
+  transform-origin: center bottom;
+}
+
+/* ===== 2D/3D Toggle Button ===== */
+.modeToggle {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 20;
+  padding: 2px 6px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  line-height: 1.4;
+}
+
+.modeToggle:hover {
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* ===== HUD Reflow for 3D mode ===== */
+.hudIndicators {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: rgba(180, 140, 255, 0.7);
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  text-shadow: 0 0 8px rgba(140, 60, 255, 0.4);
+  transition: all 0.3s ease;
+}
+
+/* In 3D mode, move HUD to floating bottom-left to avoid 3D ring overlap */
+.hudIndicators3d {
+  top: auto;
+  bottom: -28px;
+  left: 8px;
+  transform: none;
+}
+
+/* ===== Touch Controls Overlay ===== */
+.touchOverlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Only show on touch devices */
+@media (pointer: coarse) {
+  .touchOverlay {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+  }
+}
+
+.touchZone {
+  pointer-events: auto;
+  background: transparent;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  cursor: pointer;
+  position: relative;
+}
+
+.touchZone::after {
+  content: attr(data-label);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0);
+  transition: color 0.15s;
+  pointer-events: none;
+}
+
+.touchZone:active::after {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.touchZone:active {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Touch zone grid placement */
+.touchLeft {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.touchRight {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.touchRotate {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.touchSoftDrop {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.touchHardDrop {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+/* ===== Responsive Layout ===== */
+
+/* Mobile: board takes full width */
+@media (max-width: 767px) {
+  .overlay {
+    width: clamp(200px, 85vw, 320px);
+  }
+
+  .hudIndicators {
+    font-size: 0.55rem;
+  }
+}
+
+/* Tablet: moderate width */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .overlay {
+    width: clamp(220px, 35vw, 300px);
+  }
+}
+
+/* Desktop: standard width */
+@media (min-width: 1025px) {
+  .overlay {
+    width: clamp(260px, 28vw, 320px);
+  }
+}

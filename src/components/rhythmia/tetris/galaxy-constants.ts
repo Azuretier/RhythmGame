@@ -17,42 +17,50 @@ export const GALAXY_SIDE_HEIGHT = VISIBLE_HEIGHT;                       // 20
 export const GALAXY_PATH_LENGTH =
     GALAXY_TOP_WIDTH + GALAXY_SIDE_HEIGHT + GALAXY_TOP_WIDTH + GALAXY_SIDE_HEIGHT;
 
-// ===== Tower Settings =====
-export const GALAXY_TOWER_MAX_CHARGE = 5;
-export const GALAXY_TOWER_DAMAGE = 1;
-export const GALAXY_TOWER_FIRE_INTERVAL = 2000;  // ms between auto-fires
-export const GALAXY_TOWER_RANGE = 0.15;           // Path-fraction range for targeting
-
+// ===== Tower Slot Layout =====
 // Number of tower slots per side
 export const GALAXY_TOWERS_PER_SIDE_TB = BOARD_WIDTH;   // 10 towers on top/bottom
 export const GALAXY_TOWERS_PER_SIDE_LR = VISIBLE_HEIGHT; // 20 towers on left/right
 
-// ===== Enemy Settings =====
-export const GALAXY_ENEMY_BASE_SPEED = 0.02;   // Path-fraction per beat
-export const GALAXY_ENEMY_BASE_HP = 3;
-export const GALAXY_ENEMIES_PER_WAVE = 4;
-export const GALAXY_WAVE_SPAWN_INTERVAL = 2;    // Beats between enemy spawns within a wave
-export const GALAXY_WAVE_COOLDOWN = 6;          // Beats between waves
+// ===== Gold Economy (replaces old charge system) =====
+export const GALAXY_INITIAL_GOLD = 200;
+export const GALAXY_INITIAL_LIVES = 10;
+
+export const GALAXY_GOLD_PER_SINGLE = 25;
+export const GALAXY_GOLD_PER_DOUBLE = 60;
+export const GALAXY_GOLD_PER_TRIPLE = 100;
+export const GALAXY_GOLD_PER_TETRIS = 175;
+
+export const GALAXY_TETRIS_AOE_DAMAGE = 50;  // Scaled for real HP pools
+
+// ===== Wave Timing =====
+export const GALAXY_WAVE_PREP_BEATS = 8;     // Build phase between waves
+export const GALAXY_RING_TOTAL_WAVES = 30;
+
+// ===== Speed Conversion =====
+// Enemy speeds from ENEMY_DEFS are in cells/second on a 2D grid.
+// Ring path is 72 cells. Divisor converts to path-fraction/second.
+// Using 24 instead of 72 for faster ring traversal (~16s for grunts).
+export const GALAXY_SPEED_DIVISOR = 24;
+
+// ===== Range Conversion =====
+// Tower ranges from TOWER_DEFS are in grid cells.
+// Convert to path-fraction: range / GALAXY_PATH_LENGTH
+export const GALAXY_RANGE_DIVISOR = GALAXY_PATH_LENGTH; // 72
+
+// ===== Sell Refund =====
+export const GALAXY_SELL_REFUND_RATE = 0.7;  // 70% of total invested
 
 // ===== Gate Settings =====
 export const GALAXY_GATE_HP = 50;
 
 // Gate positions on the ring (path-fraction) — midpoint of each side
-// Top midpoint: 0.5 * (GALAXY_TOP_WIDTH / GALAXY_PATH_LENGTH)
-// Right midpoint: (GALAXY_TOP_WIDTH + 0.5 * GALAXY_SIDE_HEIGHT) / GALAXY_PATH_LENGTH
-// etc.
 export const GALAXY_GATE_POSITIONS = {
     top:    (GALAXY_TOP_WIDTH * 0.5) / GALAXY_PATH_LENGTH,
     right:  (GALAXY_TOP_WIDTH + GALAXY_SIDE_HEIGHT * 0.5) / GALAXY_PATH_LENGTH,
     bottom: (GALAXY_TOP_WIDTH + GALAXY_SIDE_HEIGHT + GALAXY_TOP_WIDTH * 0.5) / GALAXY_PATH_LENGTH,
     left:   (GALAXY_TOP_WIDTH + GALAXY_SIDE_HEIGHT + GALAXY_TOP_WIDTH + GALAXY_SIDE_HEIGHT * 0.5) / GALAXY_PATH_LENGTH,
 } as const;
-
-// ===== Line Clear → Tower Effects =====
-export const GALAXY_CHARGE_PER_SINGLE = 1;
-export const GALAXY_CHARGE_PER_DOUBLE = 2;
-export const GALAXY_CHARGE_PER_TRIPLE = 3;     // Also triggers burst fire on all charged towers
-export const GALAXY_TETRIS_AOE_DAMAGE = 2;     // Damages all alive enemies on the ring
 
 // ===== Path Segment Boundaries =====
 // Maps path-fraction ranges to ring sides (clockwise starting from top-left)

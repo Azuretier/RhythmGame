@@ -20,7 +20,7 @@
     text-transform: uppercase;
     white-space: nowrap;
     pointer-events: none;
-    z-index: 10;
+    z-index: 10; /* LAYER_HUD_LABEL */
     text-shadow: 0 0 8px rgba(140, 60, 255, 0.4);
 }
 

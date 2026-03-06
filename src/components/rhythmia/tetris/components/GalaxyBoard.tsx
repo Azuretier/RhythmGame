@@ -11,6 +11,8 @@ interface GalaxyBoardProps {
     // Galaxy TD state
     galaxyActive: boolean;
     waveNumber: number;
+    gold?: number;
+    lives?: number;
 
     // Board props (pass-through)
     board: BoardType;
@@ -53,6 +55,8 @@ interface GalaxyBoardProps {
 export const GalaxyBoard = React.memo(function GalaxyBoard({
     galaxyActive,
     waveNumber,
+    gold,
+    lives,
     board,
     currentPiece,
     boardBeat,
@@ -117,13 +121,17 @@ export const GalaxyBoard = React.memo(function GalaxyBoard({
         />
     );
 
-    if (!galaxyActive || waveNumber <= 0) {
+    if (waveNumber <= 0) {
         return boardElement;
     }
 
     return (
         <div className={galaxyStyles.galaxyContainer}>
-            <div className={galaxyStyles.waveLabel}>WAVE {waveNumber}</div>
+            <div className={galaxyStyles.waveLabel}>
+                WAVE {waveNumber}
+                {gold !== undefined && <span>{' '}&middot; {gold}G</span>}
+                {lives !== undefined && <span>{' '}&middot; {lives}HP</span>}
+            </div>
             {boardElement}
         </div>
     );
