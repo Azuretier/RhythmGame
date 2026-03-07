@@ -272,6 +272,41 @@ export const MAX_DRAGON_EMBERS = 80;
 export const _MAX_DRAGON_BREATH_WAVES = 20;
 
 /**
+ * Create a fresh default VFXState with all arrays empty.
+ */
+export function createDefaultVFXState(): VFXState {
+    return {
+        beatRings: [],
+        equalizerBars: [],
+        glitchParticles: [],
+        rotationTrails: [],
+        whirlpools: [],
+        speedLines: [],
+        ascendingParticles: [],
+        genericParticles: [],
+        comboBreakShards: [],
+        comboBreakRings: [],
+        isFever: false,
+        feverHue: 0,
+        combo: 0,
+        dragonFireParticles: [],
+        dragonEmbers: [],
+        dragonEnergyTrails: [],
+        dragonBreathWaves: [],
+        isDragonBreathing: false,
+        dragonBreathPhase: 0,
+        dragonFlashAlpha: 0,
+        elementOrbParticles: [],
+        reactionBursts: [],
+        reactionAuras: [],
+        equipmentBeams: [],
+        corruptionGlitches: [],
+        corruptionShakeIntensity: 0,
+        corruptionFlashAlpha: 0,
+    };
+}
+
+/**
  * O(1) removal from array during reverse iteration:
  * swap dead element with last element and pop.
  */

@@ -34,7 +34,8 @@ interface FrameProps {
 }
 
 function Frame({ id, name, author, bg = '#111118', width = 1, height = 1.61803398875, children, activeId, onSelect, ...props }: FrameProps) {
-    const portal = useRef<{ blend: number } | null>(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const portal = useRef<any>(null)
     const [hovered, hover] = useState<boolean>(false)
     useCursor(hovered)
     useFrame((_state, dt) => {

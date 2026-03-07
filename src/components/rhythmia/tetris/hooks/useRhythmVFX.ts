@@ -31,7 +31,7 @@ import {
     spawnDragonFireBurst,
 } from './vfx-spawners';
 
-import { renderVFX } from './vfx-renderer';
+import { renderVFXFrame } from './vfx-renderer';
 
 export function useRhythmVFX() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -141,10 +141,7 @@ export function useRhythmVFX() {
     // Use a ref to hold the render function so the loop can self-schedule
     // without a circular useCallback dependency.
     const renderRef = useRef<(time: number) => void>((time: number) => {
-        renderVFX(time, canvasRef, stateRef, boardGeoRef, lastTimeRef);
-        if (activeRef.current) {
-            animFrameRef.current = requestAnimationFrame(renderRef.current);
-        }
+        renderVFXFrame(time, canvasRef, stateRef, boardGeoRef, lastTimeRef, activeRef, animFrameRef, renderRef.current);
     });
 
     // Update board geometry for coordinate mapping

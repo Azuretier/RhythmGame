@@ -16,7 +16,8 @@ interface RainEffectProps {
 const RainEffect = memo(({ onLoaded, intensity = 150 }: RainEffectProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const uniformsRef = useRef<Record<string, { value: unknown }> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const uniformsRef = useRef<Record<string, { value: any }> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
 
@@ -59,7 +60,8 @@ const RainEffect = memo(({ onLoaded, intensity = 150 }: RainEffectProps) => {
     const initialMappedIntensity = 0.1 + ((intensity - 50) / 250) * 0.7;
 
     // Create uniforms first (without texture)
-    const uniforms: Record<string, { value: unknown }> = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const uniforms: Record<string, { value: any }> = {
       u_tex0: { value: null },
       u_time: { value: 0 },
       u_intensity: { value: initialMappedIntensity },

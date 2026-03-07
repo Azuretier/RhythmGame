@@ -6,6 +6,7 @@
 import type {
   BattleState,
   BattlePhase,
+  BattleEndStats,
   CharacterInstance,
   EnemyInstance,
   CharacterSkill,
