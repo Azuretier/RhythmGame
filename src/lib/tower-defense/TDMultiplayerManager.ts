@@ -1,9 +1,9 @@
 import type {
   GameState, TDPlayerState, TDMultiplayerRoom, EnemyType, TowerType,
-  Tower, Enemy,
+  Enemy,
 } from '@/types/tower-defense';
 import {
-  SEND_ENEMY_COSTS, SEND_POINTS_PER_KILL, ENEMY_DEFS,
+  SEND_ENEMY_COSTS, ENEMY_DEFS,
   TOTAL_WAVES, WAVE_PREP_TIME,
 } from '@/types/tower-defense';
 import {

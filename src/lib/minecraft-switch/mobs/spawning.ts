@@ -9,11 +9,9 @@
 import { Block, type BiomeType, type Difficulty, type MobType } from '@/types/minecraft-switch';
 import { MS_CONFIG } from '@/types/minecraft-switch';
 import type { ChunkedWorld } from '@/lib/minecraft-switch/world-gen/chunk-world';
-import { MobEntity, type AIPlayerInfo, type Vec3 } from './mob-ai';
+import { MobEntity, type AIPlayerInfo } from './mob-ai';
 import {
-  MOB_REGISTRY,
   getMobDef,
-  getSpawnableMobs,
   SLIME_SIZE_STATS,
   type SlimeSize,
 } from './mob-registry';
@@ -198,7 +196,6 @@ function canSpawnHostile(
   }
 
   // Distance checks
-  const pos: Vec3 = { x, y, z };
   let nearestPlayerDist = Infinity;
   for (const p of players) {
     const dx = p.x - x;
@@ -279,7 +276,7 @@ function canSpawnAmbient(
  * - Water block at spawn position
  * - Appropriate biome (ocean, river, etc.)
  */
-function canSpawnWater(
+function _canSpawnWater(
   world: ChunkedWorld,
   x: number,
   y: number,

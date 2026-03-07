@@ -23,6 +23,7 @@ export function HealthManaHUD({ health }: HealthHUDProps) {
 
   useEffect(() => {
     if (health < prevHealthRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowVignette(true);
       const timer = setTimeout(() => setShowVignette(false), 400);
       return () => clearTimeout(timer);

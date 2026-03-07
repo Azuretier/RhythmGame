@@ -11,6 +11,7 @@ export default function WebGPUStage() {
   const pipelineRef = useRef<GPURenderPipeline | null>(null);
   const uniformBufferRef = useRef<GPUBuffer | null>(null);
   const bindGroupRef = useRef<GPUBindGroup | null>(null);
+  // eslint-disable-next-line react-hooks/purity
   const startTimeRef = useRef<number>(Date.now());
   const resolutionRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
 

@@ -53,7 +53,7 @@ interface GalaxyBoardProps {
  * that don't affect the board area.
  */
 export const GalaxyBoard = React.memo(function GalaxyBoard({
-    galaxyActive,
+    galaxyActive: _galaxyActive,
     waveNumber,
     gold,
     lives,

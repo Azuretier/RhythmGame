@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { useEoESocket } from '@/hooks/useEoESocket';
-import type { RhythmNote, RhythmJudgement } from '@/types/echoes';
+import type { RhythmJudgement } from '@/types/echoes';
 import { scoreRhythmResult } from '@/lib/echoes/combat';
 import styles from './EoEGame.module.css';
 
@@ -18,7 +18,7 @@ export function EoERhythm({ socket }: Props) {
   const [judgements, setJudgements] = useState<RhythmJudgement[]>([]);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
-  const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
+  const [, setCurrentNoteIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const startTimeRef = useRef<number>(0);
@@ -54,6 +54,22 @@ export function EoERhythm({ socket }: Props) {
     return () => clearTimeout(timer);
   }, [rhythmSequence]);
 
+  const finishSequence = useCallback(() => {
+    setIsPlaying(false);
+    cancelAnimationFrame(animFrameRef.current);
+
+    const result = scoreRhythmResult(
+      perfectCount.current,
+      greatCount.current,
+      goodCount.current,
+      missCount.current,
+      maxCombo
+    );
+
+    // Send to server
+    socket.submitRhythmResult(result);
+  }, [maxCombo, socket]);
+
   // Animation loop
   useEffect(() => {
     if (!isPlaying || !rhythmSequence) return;
@@ -87,7 +103,7 @@ export function EoERhythm({ socket }: Props) {
 
     animFrameRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animFrameRef.current);
-  }, [isPlaying, rhythmSequence]);
+  }, [isPlaying, rhythmSequence, finishSequence]);
 
   // Key handler
   useEffect(() => {
@@ -144,28 +160,13 @@ export function EoERhythm({ socket }: Props) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, rhythmSequence]);
 
-  const finishSequence = useCallback(() => {
-    setIsPlaying(false);
-    cancelAnimationFrame(animFrameRef.current);
-
-    const result = scoreRhythmResult(
-      perfectCount.current,
-      greatCount.current,
-      goodCount.current,
-      missCount.current,
-      maxCombo
-    );
-
-    // Send to server
-    socket.submitRhythmResult(result);
-  }, [maxCombo, socket]);
-
   if (!rhythmSequence) {
     return <div className={styles.rhythmLoading}>Preparing rhythm sequence...</div>;
   }
 
   const progress = Math.min(1, timeElapsed / rhythmSequence.duration);
   const totalNotes = rhythmSequence.notes.length;
+   
   const processedCount = processedNotesRef.current.size;
 
   // Get last judgement for display
@@ -180,6 +181,7 @@ export function EoERhythm({ socket }: Props) {
             {combo > 0 && `${combo} COMBO`}
           </span>
           <span className={styles.rhythmProgress}>
+            {/* eslint-disable-next-line react-hooks/refs */}
             {processedCount}/{totalNotes}
           </span>
         </div>
@@ -201,12 +203,13 @@ export function EoERhythm({ socket }: Props) {
 
       {/* Lane display */}
       <div className={styles.laneContainer}>
+        {/* eslint-disable-next-line react-hooks/refs */}
         {LANE_KEYS.map((key, lane) => (
           <div key={lane} className={styles.lane}>
             {/* Falling notes */}
             {rhythmSequence.notes
               .filter((note) => note.lane === lane && !processedNotesRef.current.has(rhythmSequence.notes.indexOf(note)))
-              .map((note, i) => {
+              .map((note) => {
                 const noteIdx = rhythmSequence.notes.indexOf(note);
                 const timeUntil = note.time - timeElapsed;
                 const yPos = Math.max(-10, Math.min(100, 80 - (timeUntil / 1000) * 40));
@@ -244,10 +247,12 @@ export function EoERhythm({ socket }: Props) {
 
       {/* Score summary */}
       <div className={styles.rhythmScore}>
+        {/* eslint-disable react-hooks/refs */}
         <span className={styles.scoreItem} style={{ color: '#FFD700' }}>P: {perfectCount.current}</span>
         <span className={styles.scoreItem} style={{ color: '#3B82F6' }}>G: {greatCount.current}</span>
         <span className={styles.scoreItem} style={{ color: '#22C55E' }}>OK: {goodCount.current}</span>
         <span className={styles.scoreItem} style={{ color: '#EF4444' }}>Miss: {missCount.current}</span>
+        {/* eslint-enable react-hooks/refs */}
       </div>
 
       {/* Pre-start message */}

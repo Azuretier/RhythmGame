@@ -62,6 +62,7 @@ export function useDeviceType(): DeviceInfo {
         };
 
         // Set initial values synchronously (no debounce on mount)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setViewportWidth(window.innerWidth);
         setViewportHeight(window.innerHeight);
 

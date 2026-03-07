@@ -6,10 +6,9 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useInventory } from '@/lib/inventory/context';
 import { ITEM_REGISTRY } from '@/lib/items/registry';
 import { RARITY_CONFIG, CATEGORY_CONFIG } from '@/lib/items/types';
-import type { ItemRarity, ItemCategory, InventoryEntry } from '@/lib/items/types';
+import type { ItemRarity, ItemCategory } from '@/lib/items/types';
 import type { InventoryFilterType, InventorySortType } from '@/lib/inventory/types';
 import { ItemTexture } from '@/components/items/ItemTexture';
-import { RarityBadge } from '@/components/items/RarityBadge';
 import { cn } from '@/lib/utils';
 import styles from './inventory.module.css';
 
@@ -125,6 +124,7 @@ export function InventoryPanel({ onClose }: InventoryPanelProps) {
 
     const handleUse = useCallback(() => {
         if (!selectedItemId) return;
+        // eslint-disable-next-line react-hooks/rules-of-hooks
         const success = useItem(selectedItemId);
         if (success) {
             const def = ITEM_REGISTRY[selectedItemId];

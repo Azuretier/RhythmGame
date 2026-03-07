@@ -127,6 +127,7 @@ export default function TDGameHUD({
   useEffect(() => {
     if (gold !== prevGoldRef.current) {
       prevGoldRef.current = gold;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGoldFlash(true);
       const timer = setTimeout(() => setGoldFlash(false), 400);
       return () => clearTimeout(timer);
@@ -139,6 +140,7 @@ export default function TDGameHUD({
 
   useEffect(() => {
     if (lives < prevLivesRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHeartShake(true);
       const timer = setTimeout(() => setHeartShake(false), 500);
       prevLivesRef.current = lives;

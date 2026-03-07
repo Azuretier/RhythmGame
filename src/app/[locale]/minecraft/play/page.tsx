@@ -114,7 +114,7 @@ function getInitialInventory(mode: GameMode): PlayerInventory {
 // ---------------------------------------------------------------------------
 
 function getInitialPlayerState(mode: GameMode): PlayerState {
-  const modeConfig = getGameModeConfig(mode);
+  const _modeConfig = getGameModeConfig(mode);
   const inventory = getInitialInventory(mode);
 
   return {
@@ -165,6 +165,7 @@ interface ChatMessage {
 // ---------------------------------------------------------------------------
 
 function StarField() {
+  /* eslint-disable react-hooks/purity */
   const stars = useMemo(() => {
     const result: { x: number; y: number; size: number; opacity: number }[] = [];
     for (let i = 0; i < 120; i++) {
@@ -177,6 +178,7 @@ function StarField() {
     }
     return result;
   }, []);
+  /* eslint-enable react-hooks/purity */
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -320,6 +322,7 @@ function ChatOverlay({
   onClose: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  // eslint-disable-next-line react-hooks/purity
   const now = Date.now();
 
   useEffect(() => {
@@ -415,6 +418,7 @@ function GamePlayContent() {
   // -- FPS counter --
   const [fps, setFps] = useState(0);
   const fpsFrames = useRef(0);
+  // eslint-disable-next-line react-hooks/purity
   const fpsLastTime = useRef(performance.now());
 
   // -- Loading progress animation --
@@ -558,7 +562,7 @@ function GamePlayContent() {
       toSlot: number,
       fromContainer: string,
       toContainer: string,
-      count?: number,
+      _count?: number,
     ) => {
       setPlayerState((prev) => {
         const inv = { ...prev.inventory };

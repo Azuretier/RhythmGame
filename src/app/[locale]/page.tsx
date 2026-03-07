@@ -2,7 +2,6 @@
 
 import { useVersion } from '@/lib/version/context';
 import Homepage from '@/components/home/Homepage';
-import RhythmiaLobby from '@/components/rhythmia/RhythmiaLobby';
 import V1_0_0_UI from '@/components/home/v1.0.0/V1_0_0_UI';
 import V1_0_1_UI from '@/components/home/v1.0.1/V1_0_1_UI';
 import V1_0_2_UI from '@/components/home/v1.0.2/V1_0_2_UI';

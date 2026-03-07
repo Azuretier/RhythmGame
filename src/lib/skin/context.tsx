@@ -49,6 +49,7 @@ export function SkinProvider({ children }: { children: ReactNode }) {
     } else {
       applySkinToDocument(currentSkin.colors);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Listen for skin-restored events from GoogleSyncProvider

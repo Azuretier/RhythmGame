@@ -572,8 +572,8 @@ export default function CraftingScreen({
       // (React batches state updates, so reading localMain/localHotbar in a loop
       //  would return stale values from the closure.)
       let currentGrid = [...craftingGrid];
-      let workingMain = [...localMain];
-      let workingHotbar = [...localHotbar];
+      const workingMain = [...localMain];
+      const workingHotbar = [...localHotbar];
       let totalCrafted = 0;
       const maxCrafts = 64; // Safety limit
 

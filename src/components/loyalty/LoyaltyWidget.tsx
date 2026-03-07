@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
@@ -56,6 +56,7 @@ export default function LoyaltyWidget() {
       advancementState.unlockedIds.length,
       advancementState.stats.totalLines,
     );
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(dailyState);
     setAdvState(advancementState);
   }, []);

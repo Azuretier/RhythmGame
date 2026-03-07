@@ -25,7 +25,7 @@ const WebGLBackground = dynamic(() => import("./WebGLBackground"), {
 
 export default function InteractiveHomepage() {
   const router = useRouter();
-  const { currentVersion, setVersion, isVersionSelected } = useVersion();
+  const { setVersion, isVersionSelected } = useVersion();
   const [loading, setLoading] = useState(true);
   const [showVersionSelector, setShowVersionSelector] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -80,6 +80,7 @@ export default function InteractiveHomepage() {
   useEffect(() => {
     // When background is loaded, complete the loading
     if (backgroundLoaded && progress >= 80) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(100);
       setStatus("Ready");
 

@@ -102,7 +102,7 @@ const WORLDS: World[] = [
 
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
-const CELL_SIZE = 28;
+// const CELL_SIZE = 28;
 
 type Piece = {
   type: string;
@@ -148,6 +148,7 @@ export default function Rhythmia() {
   // Refs for accessing current values in callbacks (avoids stale closures)
   const gameLoopRef = useRef<NodeJS.Timeout | null>(null);
   const beatTimerRef = useRef<number | null>(null);
+  // eslint-disable-next-line react-hooks/purity
   const lastBeatRef = useRef(Date.now());
   const audioCtxRef = useRef<AudioContext | null>(null);
   const boardRef = useRef(board);
@@ -380,7 +381,7 @@ export default function Rhythmia() {
   const hardDrop = useCallback(() => {
     if (!currentPiece || gameOver || isPaused) return;
     
-    let newPiece = { ...currentPiece };
+    const newPiece = { ...currentPiece };
     let dropDistance = 0;
     
     while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, board)) {

@@ -26,10 +26,13 @@ export function useGalaxyTDIntegration({
 
     // Stable refs for callbacks used inside setInterval (avoids stale closures)
     const galaxyTDTickRef = useRef(galaxyTD.tick);
+    // eslint-disable-next-line react-hooks/refs
     galaxyTDTickRef.current = galaxyTD.tick;
     const galaxyTDOnLineClearRef = useRef(galaxyTD.onLineClear);
+    // eslint-disable-next-line react-hooks/refs
     galaxyTDOnLineClearRef.current = galaxyTD.onLineClear;
     const galaxyTDPlaceTowerRef = useRef(galaxyTD.placeTower);
+    // eslint-disable-next-line react-hooks/refs
     galaxyTDPlaceTowerRef.current = galaxyTD.placeTower;
 
     // Galaxy TD game over — trigger main game over when TD lives reach 0

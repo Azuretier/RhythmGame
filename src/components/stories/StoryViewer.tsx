@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { CHAPTERS, PARTICLE_EMOJIS } from '@/data/stories/chapters';
+import { PARTICLE_EMOJIS } from '@/data/stories/chapters';
 import type { Chapter, StoryScene, DialogueLine } from '@/data/stories/chapters';
 import type { DungeonLocation, DungeonProgress } from '@/data/stories/dungeons';
-import { DUNGEON_LOCATIONS, getChapterForLocation, DEFAULT_PROGRESS } from '@/data/stories/dungeons';
+import { getChapterForLocation, DEFAULT_PROGRESS } from '@/data/stories/dungeons';
 import DungeonMap from './DungeonMap';
 import DungeonStage from './DungeonStage';
 import styles from './stories.module.css';
@@ -167,6 +167,7 @@ export default function StoryViewer() {
                 }, 600);
             }
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentChapter, currentScene, isTyping, lineIndex, sceneIndex, showLog, showMenu, completeTyping, viewState, selectedLocation]);
 
     // Add to log when line advances
@@ -267,21 +268,6 @@ export default function StoryViewer() {
         setSelectedLocation(null);
         setCurrentChapter(null);
     }, []);
-
-    const startChapter = (chapter: Chapter) => {
-        setCurrentChapter(chapter);
-        setSceneIndex(0);
-        setLineIndex(0);
-        setLog([]);
-        setAutoMode(false);
-        setShowLog(false);
-        setShowMenu(false);
-        setTransitioning(true);
-        setTimeout(() => {
-            setViewState('playing');
-            setTransitioning(false);
-        }, 400);
-    };
 
     const skipScene = () => {
         if (!currentChapter) return;

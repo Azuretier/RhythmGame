@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { db } from '@/lib/MNSW/firebase';
-import { doc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, collection } from 'firebase/firestore';
 import { createTextureAtlas, BLOCK_FACE_TEXTURES, TOTAL_TEXTURES } from './TextureUtils';
 
 // Post Processing
@@ -358,7 +358,7 @@ export class VoxelEngine {
                 const lx = ((x % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
                 const lz = ((z % CHUNK_SIZE) + CHUNK_SIZE) % CHUNK_SIZE;
                 const key = this.getChunkKey(cx, cz);
-                let chunk = this.chunks.get(key);
+                const chunk = this.chunks.get(key);
 
                 if (chunk) {
                     if (change.type === 'removed') {
@@ -552,7 +552,7 @@ export class VoxelEngine {
         if (e.button === 0) {
             this.modifyBlock(hitX, hitY, hitZ, 'air');
         } else if (e.button === 2) {
-            const selectedBlock = (window as any).__SELECTED_BLOCK__;
+            const selectedBlock = (window as unknown as Record<string, string>).__SELECTED_BLOCK__;
             if (!selectedBlock) return;
 
             const placeX = Math.floor((p.x + n.x * 0.1) / BLOCK_SIZE);

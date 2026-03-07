@@ -24,20 +24,29 @@ interface Navigator {
 }
 
 interface GPU {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   requestAdapter(options?: any): Promise<GPUAdapter | null>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPreferredCanvasFormat(): any;
 }
 
 interface GPUAdapter {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   requestDevice(descriptor?: any): Promise<GPUDevice>;
 }
 
 interface GPUDevice {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createBuffer(descriptor: any): GPUBuffer;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createShaderModule(descriptor: any): GPUShaderModule;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createRenderPipeline(descriptor: any): GPURenderPipeline;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createPipelineLayout(descriptor: any): GPUPipelineLayout;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createBindGroupLayout(descriptor: any): GPUBindGroupLayout;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createBindGroup(descriptor: any): GPUBindGroup;
   createCommandEncoder(): GPUCommandEncoder;
   queue: GPUQueue;
@@ -63,13 +72,19 @@ declare const GPUShaderStage: {
   COMPUTE: number;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface GPUShaderModule {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface GPURenderPipeline {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface GPUPipelineLayout {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface GPUBindGroupLayout {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface GPUBindGroup {}
 
 interface GPUCommandEncoder {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   beginRenderPass(descriptor: any): GPURenderPassEncoder;
   finish(): GPUCommandBuffer;
 }
@@ -81,6 +96,7 @@ interface GPURenderPassEncoder {
   end(): void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface GPUCommandBuffer {}
 
 interface GPUQueue {
@@ -89,6 +105,7 @@ interface GPUQueue {
 }
 
 interface GPUCanvasContext {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   configure(configuration: any): void;
   getCurrentTexture(): GPUTexture;
 }
@@ -97,6 +114,7 @@ interface GPUTexture {
   createView(): GPUTextureView;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface GPUTextureView {}
 // Spark SDK types (for Discord community features)
 interface SparkSDK {

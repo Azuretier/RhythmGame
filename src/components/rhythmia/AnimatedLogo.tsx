@@ -25,9 +25,11 @@ export default function AnimatedLogo({ onComplete }: AnimatedLogoProps) {
   const animFrameRef = useRef<number>(0);
   const startTimeRef = useRef(0);
   const onCompleteRef = useRef(onComplete);
+  // eslint-disable-next-line react-hooks/refs
   onCompleteRef.current = onComplete;
 
   // Phase timeline (seconds)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const PHASE_PARTICLES = 0;       // 0s – particles begin
   const PHASE_CONVERGE = 0.6;      // 0.6s – energy converges
   const PHASE_TEXT = 1.8;           // 1.8s – text appears
@@ -242,7 +244,7 @@ export default function AnimatedLogo({ onComplete }: AnimatedLogoProps) {
       cancelAnimationFrame(animFrameRef.current);
       window.removeEventListener('resize', handleResize);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   return (
     <motion.div

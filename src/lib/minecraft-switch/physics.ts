@@ -867,7 +867,7 @@ export class PlayerPhysics {
     const pMaxZ = pz + hw;
 
     // Block AABB (default: full block 1x1x1)
-    let bMinY = by;
+    const bMinY = by;
     let bMaxY = by + 1;
 
     // Slab blocks are half height (bottom half by default)

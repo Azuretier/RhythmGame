@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { useEoESocket } from '@/hooks/useEoESocket';
 import type { GachaPullResult } from '@/types/echoes';
-import { getCharacterDefinition, getAllCharacters } from '@/lib/echoes/characters';
+import { getCharacterDefinition } from '@/lib/echoes/characters';
 import { ELEMENT_COLORS } from '@/lib/echoes/elements';
 import { STANDARD_BANNER, getPityInfo } from '@/lib/echoes/gacha';
 import styles from './EoEGame.module.css';

@@ -45,8 +45,9 @@ export default function RankCard({
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full blur-xl opacity-50" />
                 <div className="relative w-24 h-24 rounded-full bg-white/10 border-2 border-white/20 overflow-hidden">
                   {avatarUrl ? (
-                    <img 
-                      src={avatarUrl} 
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatarUrl}
                       alt={displayName}
                       className="w-full h-full object-cover"
                     />

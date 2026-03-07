@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-import { Block, BlockType, BLOCK_TRANSPARENT } from './textures';
+import { Block, BlockType } from './textures';
 import { createTextureAtlas } from './textures';
 import { generateWorld, WorldData, WORLD_WIDTH, WORLD_DEPTH, WORLD_HEIGHT, SEA_LEVEL, CHUNK_SIZE } from './terrain';
 import { buildChunkGeometry } from './chunk-builder';
 import { useMinecraftWorldSocket, BlockChangeEvent } from '@/hooks/useMinecraftWorldSocket';
 import type { MWPlayerPosition } from '@/types/minecraft-world';
-import { BlockInventory, PLACEABLE_BLOCKS } from './BlockInventory';
+import { BlockInventory } from './BlockInventory';
 import styles from './MinecraftWorld.module.css';
 
 const PLAYER_HEIGHT = 1.62;
@@ -68,6 +68,7 @@ export default function MinecraftWorld() {
   useEffect(() => {
     mp.connectWebSocket();
     return () => mp.disconnect();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Load name from localStorage
@@ -86,6 +87,7 @@ export default function MinecraftWorld() {
     if (menuTab === 'browse') {
       mp.getRooms();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuTab]);
 
   // Remote player mesh management
@@ -993,9 +995,11 @@ export default function MinecraftWorld() {
       }
 
       // Clean up chunk meshes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       chunkMeshesRef.current.clear();
 
       // Clean up remote player meshes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       for (const [, entry] of remotePlayerMeshes.current) {
         entry.group.traverse(obj => {
           if (obj instanceof THREE.Mesh) {
@@ -1029,6 +1033,7 @@ export default function MinecraftWorld() {
         container.removeChild(renderer.domElement);
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mp.phase, mp.gameSeed]);
 
   // ====== Menu Phase ======
@@ -1427,6 +1432,7 @@ function KeyListener({ onKey }: { onKey: (e: KeyboardEvent) => void }) {
 // Scroll wheel listener for hotbar slot cycling
 function ScrollListener({ onScroll }: { onScroll: (delta: number) => void }) {
   const onScrollRef = useRef(onScroll);
+  // eslint-disable-next-line react-hooks/refs
   onScrollRef.current = onScroll;
 
   useEffect(() => {

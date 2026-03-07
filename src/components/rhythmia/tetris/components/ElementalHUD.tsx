@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import type { ElementalState, ActiveReaction, ElementType, ReactionType } from '@/lib/elements/types';
+import type { ElementalState, ActiveReaction, ElementType } from '@/lib/elements/types';
 import { ALL_ELEMENT_CONFIGS, REACTION_DEFINITIONS } from '@/lib/elements/definitions';
 import { MAX_ELEMENT_ORBS } from '@/lib/elements/engine';
 
@@ -188,6 +188,7 @@ export function ElementalHUD({ elementalState, activeReactions }: ElementalHUDPr
                         const def = REACTION_DEFINITIONS[ar.type];
                         if (!def) return null;
 
+                        // eslint-disable-next-line react-hooks/purity
                         const elapsed = Date.now() - ar.startTime;
                         const remaining = Math.max(0, 1 - elapsed / ar.duration);
 

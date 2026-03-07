@@ -161,7 +161,7 @@ export const TERRAIN_DAMAGE_PER_LINE = 4;
 // Items are now defined in the shared registry at @/lib/items/registry.
 // These re-exports maintain backward compatibility for game-specific code.
 import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState, TreasureBoxTier } from './types';
-import { MATERIAL_ITEMS, ITEM_REGISTRY, TOTAL_DROP_WEIGHT as _TOTAL_DROP_WEIGHT } from '@/lib/items/registry';
+import { MATERIAL_ITEMS, TOTAL_DROP_WEIGHT as _TOTAL_DROP_WEIGHT } from '@/lib/items/registry';
 
 export const ITEMS: ItemType[] = MATERIAL_ITEMS.map(item => ({
     id: item.id,

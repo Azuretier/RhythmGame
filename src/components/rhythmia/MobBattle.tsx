@@ -212,7 +212,7 @@ function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
 // ===== Component =====
 export const MobBattle: React.FC<Props> = ({
   ws,
-  roomCode,
+  roomCode: _roomCode,
   playerId,
   playerName,
   opponents,

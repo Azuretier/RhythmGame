@@ -206,7 +206,6 @@ export class FluidSimulator {
     const scheduledTick = this.currentTick + delay;
 
     // Avoid duplicate updates
-    const key = `${x},${y},${z}`;
     const exists = this.updateQueue.some(
       u => u.x === x && u.y === y && u.z === z && u.scheduledTick === scheduledTick,
     );

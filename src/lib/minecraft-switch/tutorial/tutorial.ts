@@ -184,7 +184,7 @@ function hasItemContaining(inventory: PlayerInventory, substring: string): boole
 /**
  * Calculate distance between two 3D points.
  */
-function distance3D(a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }): number {
+function _distance3D(a: { x: number; y: number; z: number }, b: { x: number; y: number; z: number }): number {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
   const dz = a.z - b.z;
@@ -498,7 +498,7 @@ export const DEFAULT_TUTORIAL_STEPS: TutorialStep[] = [
 const HINT_DELAY_SECONDS = 30;
 
 /** Maximum entries kept in the kill feed overlay. */
-const MAX_KILL_FEED = 5;
+const _MAX_KILL_FEED = 5;
 
 // =============================================================================
 // TUTORIAL MANAGER

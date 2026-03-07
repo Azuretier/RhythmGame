@@ -31,7 +31,6 @@ interface WindowFrameProps {
 
 const WindowFrame = memo(({ 
   title,
-  id,
   onClose,
   onHide,
   isActive,
@@ -66,6 +65,7 @@ const WindowFrame = memo(({
       x.set(position.x);
       y.set(position.y);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position.x, position.y, isMaximized, isDragging]);
 
   const handleMaximize = () => {
@@ -168,7 +168,7 @@ const WindowFrame = memo(({
       dragListener={!isMaximized} // Allow drag listener when not maximized
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onMouseDown={(e) => {
+      onMouseDown={() => {
         if (!isActive) {
           onFocus();
         }

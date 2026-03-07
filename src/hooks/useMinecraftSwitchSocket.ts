@@ -12,7 +12,6 @@ import type {
   MSRoomState,
   MSPublicRoom,
   MSGamePhase,
-  MSPlayer,
   GameMode,
   Difficulty,
   WorldType,
@@ -21,8 +20,6 @@ import type {
   PlayerInventory,
   WeatherType,
   DayPhase,
-  StatusEffectInstance,
-  DamageSource,
 } from '@/types/minecraft-switch';
 
 // =============================================================================
@@ -76,20 +73,6 @@ interface ChatMessage {
   color?: string;
 }
 
-interface DamageEvent {
-  targetId: string;
-  damage: number;
-  source: DamageSource | string;
-  attackerId?: string;
-  newHealth: number;
-}
-
-interface DeathEvent {
-  playerId: string;
-  deathMessage: string;
-  killerId?: string;
-}
-
 // =============================================================================
 // Hook
 // =============================================================================
@@ -105,6 +88,7 @@ export function useMinecraftSwitchSocket() {
   const playerIdRef = useRef<string | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTokenRef = useRef<string | null>(null);
+  // eslint-disable-next-line react-hooks/purity
   const lastPingRef = useRef<number>(Date.now());
   const phaseRef = useRef<MSGamePhase>('menu');
   const lastPositionSendRef = useRef<number>(0);

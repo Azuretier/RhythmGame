@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { getRecentUpdates } from '@/lib/updates';
 import styles from './WhatsNewBanner.module.css';
 
@@ -17,7 +17,6 @@ const LAST_SEEN_VERSION = 'rhythmia_last_seen_update';
 export default function WhatsNewBanner({ autoShow = true, dismissible = true }: WhatsNewBannerProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(true);
-  const t = useTranslations();
   const locale = useLocale();
 
   useEffect(() => {
@@ -30,6 +29,7 @@ export default function WhatsNewBanner({ autoShow = true, dismissible = true }: 
 
     if (latestUpdate && (!lastSeenUpdate || parseInt(lastSeenUpdate) < latestUpdate.number)) {
       if (!dismissed || dismissed !== latestUpdate.number.toString()) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsDismissed(false);
         setIsVisible(true);
       }

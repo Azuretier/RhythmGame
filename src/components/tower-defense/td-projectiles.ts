@@ -413,7 +413,7 @@ export function animateProjectile(
  * Dispose a projectile group.
  * Shared cache resources are NOT disposed (they persist).
  */
-export function disposeProjectileGroup(proj: ProjectileMeshData): void {
+export function disposeProjectileGroup(_proj: ProjectileMeshData): void {
   // Shared geometry/materials are cached — nothing to dispose per-instance
 }
 

@@ -135,6 +135,7 @@ export function CenterTerrain({ board, currentPiece, clearedRows }: CenterTerrai
                     tmpScale.makeScale(BLOCK_SIZE * scale, baseHeight * scale, BLOCK_SIZE * scale);
                     tmpMatrix.multiply(tmpScale);
                     mesh.setMatrixAt(instanceIdx, tmpMatrix);
+                    // eslint-disable-next-line react-hooks/immutability
                     colorBuffer[instanceIdx * 3] = color.r;
                     colorBuffer[instanceIdx * 3 + 1] = color.g;
                     colorBuffer[instanceIdx * 3 + 2] = color.b;

@@ -21,17 +21,15 @@ import type {
   BlockFace,
   PlayerPosition,
   PlayerInventory,
-  InventorySlot,
 } from '@/types/minecraft-switch';
 import {
   getGameModeConfig,
-  getDifficultyConfig,
   getDefaultGameRules,
   canPlayerBreak,
   canPlayerPlace,
   getCreativeInventory,
 } from './game-modes';
-import type { GameRules, GameModeConfig, DifficultyConfig } from './game-modes';
+import type { GameRules } from './game-modes';
 
 // =============================================================================
 // Internal Types
@@ -636,7 +634,6 @@ export class MinecraftSwitchManager {
     if (room.hostId !== playerId) return;
 
     room.difficulty = difficulty;
-    const config = getDifficultyConfig(difficulty);
 
     // Peaceful: heal all players, remove hostile mobs
     if (difficulty === 'peaceful') {
@@ -659,8 +656,6 @@ export class MinecraftSwitchManager {
   // ===========================================================================
 
   private processSurvivalMechanics(room: MSRoom): void {
-    const diffConfig = getDifficultyConfig(room.difficulty);
-
     for (const player of room.players) {
       if (!player.connected) continue;
       if (player.gameMode !== 'survival' && player.gameMode !== 'adventure') continue;

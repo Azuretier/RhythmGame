@@ -11,10 +11,7 @@ import type {
   EnchantmentInstance,
   EnchantmentType,
   MobType,
-  PlayerState,
   InventorySlot,
-  ToolStats,
-  ArmorStats,
   DamageSource,
 } from '@/types/minecraft-switch';
 import { MS_CONFIG, PHYSICS } from '@/types/minecraft-switch';
@@ -173,7 +170,7 @@ function getEnchantLevel(enchantments: EnchantmentInstance[] | undefined, type: 
 /**
  * Sum an enchantment level across all armor pieces.
  */
-function sumArmorEnchant(
+function _sumArmorEnchant(
   armorSlots: (InventorySlot | null)[],
   type: EnchantmentType,
 ): number {
@@ -627,7 +624,7 @@ export function canBlock(
   if (!isShieldActive) return false;
 
   // Calculate angle between player facing and damage direction
-  let angleDiff = Math.abs(((playerYaw - damageDirection + 540) % 360) - 180);
+  const angleDiff = Math.abs(((playerYaw - damageDirection + 540) % 360) - 180);
 
   // Shield blocks front 180 degrees
   return angleDiff <= 90;

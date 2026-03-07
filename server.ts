@@ -8,7 +8,6 @@ import {
   GAME_CONFIG,
   type ServerToClientEvents,
   type ClientToServerEvents,
-  type Player,
 } from './src/types/game';
 
 const dev = process.env.NODE_ENV !== 'production';

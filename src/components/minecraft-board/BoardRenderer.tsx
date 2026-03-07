@@ -8,7 +8,7 @@
 import { useMemo, useCallback, useRef, useEffect } from 'react';
 import type {
   WorldTile, MCTileUpdate, MCVisiblePlayer, MCMobState,
-  MCPlayerState, DayPhase, BlockType, Direction,
+  MCPlayerState, DayPhase, Direction,
 } from '@/types/minecraft-board';
 import {
   MC_BOARD_CONFIG, BLOCK_COLORS, BLOCK_TEXTURES, BLOCK_ICONS,
@@ -296,6 +296,7 @@ export default function BoardRenderer({
     }
 
     return cells;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibleTileMap, exploredTilesRef, playerMap, mobMap, selfState, playerId, onTileClick, onMobClick, onPlayerClick, activeAnomaly]);
 
   // Mobile touch controls with hold-to-move

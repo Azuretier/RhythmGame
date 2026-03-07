@@ -37,7 +37,7 @@ export const PLACEABLE_BLOCKS: BlockInfo[] = [
   { id: Block.DiamondOre,  name: 'Diamond Ore', color: '#808080', colorAlt: '#64dceb', pattern: 'dotted' },
 ];
 
-const HOTBAR_SIZE = 9;
+const _HOTBAR_SIZE = 9;
 
 /** Render a mini block icon with pattern */
 function BlockIcon({ block, size = 32 }: { block: BlockInfo; size?: number }) {

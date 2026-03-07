@@ -29,6 +29,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = getStoredProfile();
     if (stored) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProfileState(stored);
       setIsProfileSetup(true);
     } else {

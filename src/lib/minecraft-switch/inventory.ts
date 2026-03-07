@@ -9,10 +9,8 @@
 // =============================================================================
 
 import {
-  Block,
   type InventorySlot,
   type ArmorSlot,
-  type EnchantmentInstance,
   type MaterialTier,
   MATERIAL_TIER_CONFIG,
   ARMOR_TIER_CONFIG,

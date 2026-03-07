@@ -327,7 +327,6 @@ export class RedstoneEngine {
       const nx = x + dir.x;
       const ny = y + dir.y;
       const nz = z + dir.z;
-      const neighborBlock = this.world.getBlock(nx, ny, nz);
       const key = posKey(nx, ny, nz);
       const state = this.componentStates.get(key);
 
@@ -896,7 +895,7 @@ export class RedstoneEngine {
   /**
    * Notify redstone-activatable blocks near a position when power changes.
    */
-  private notifyRedstoneActivatables(x: number, y: number, z: number, power: number): void {
+  private notifyRedstoneActivatables(x: number, y: number, z: number, _power: number): void {
     for (const dir of DIRECTIONS) {
       const nx = x + dir.x;
       const ny = y + dir.y;

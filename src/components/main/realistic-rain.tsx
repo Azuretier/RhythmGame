@@ -16,7 +16,7 @@ interface RainEffectProps {
 const RainEffect = memo(({ onLoaded, intensity = 150 }: RainEffectProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const uniformsRef = useRef<Record<string, any> | null>(null);
+  const uniformsRef = useRef<Record<string, { value: unknown }> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const isInitializedRef = useRef(false);
 
@@ -59,7 +59,7 @@ const RainEffect = memo(({ onLoaded, intensity = 150 }: RainEffectProps) => {
     const initialMappedIntensity = 0.1 + ((intensity - 50) / 250) * 0.7;
 
     // Create uniforms first (without texture)
-    const uniforms: Record<string, any> = {
+    const uniforms: Record<string, { value: unknown }> = {
       u_tex0: { value: null },
       u_time: { value: 0 },
       u_intensity: { value: initialMappedIntensity },
@@ -222,6 +222,7 @@ const RainEffect = memo(({ onLoaded, intensity = 150 }: RainEffectProps) => {
       uniformsRef.current = null;
       isInitializedRef.current = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once
 
   return <div ref={containerRef} />;

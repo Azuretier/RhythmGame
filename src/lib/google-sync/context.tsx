@@ -23,7 +23,6 @@ import {
   loadAdvancementsForUid,
   loadLoyaltyForUid,
 } from './firestore';
-import type { UserProfile } from '@/lib/profile/types';
 import { getStoredProfile, setStoredProfile } from '@/lib/profile/storage';
 import { getStoredSkinId, setStoredSkinId } from '@/lib/skin/storage';
 import {

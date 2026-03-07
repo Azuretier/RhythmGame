@@ -1,6 +1,6 @@
 import type {
     EquipmentInstance, EquipmentLoadout, EquipmentBonuses,
-    EnchantmentType, StatType, EquipmentDefinition,
+    EnchantmentType, EquipmentDefinition,
 } from './types';
 import { DEFAULT_EQUIPMENT_BONUSES } from './types';
 import type { ElementType } from '@/lib/elements/types';

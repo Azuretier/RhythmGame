@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEquipment } from '@/lib/equipment/context';
-import type { EquipmentSlot, EquipmentInstance } from '@/lib/equipment/types';
+import type { EquipmentSlot } from '@/lib/equipment/types';
 import { ALL_EQUIPMENT_SLOTS, SLOT_CONFIG } from '@/lib/equipment/types';
 import { EQUIPMENT_REGISTRY, ENCHANTMENTS } from '@/lib/equipment/definitions';
 import { RARITY_CONFIG } from '@/lib/items/types';

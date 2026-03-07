@@ -784,7 +784,7 @@ export const Rhythmia: React.FC = () => {
     if (gameOverRef.current || !pieceRef.current) return;
 
     const currentPiece = pieceRef.current;
-    let currentPos = { ...piecePosRef.current };
+    const currentPos = { ...piecePosRef.current };
     const currentBoard = boardStateRef.current;
 
     while (!collision(currentPiece, currentPos.x, currentPos.y + 1, currentBoard)) {

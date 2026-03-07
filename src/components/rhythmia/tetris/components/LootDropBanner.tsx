@@ -42,6 +42,7 @@ export function LootDropBanner({ equipmentId, rarity, show }: LootDropBannerProp
         <AnimatePresence>
             {visible && (
                 <motion.div
+                    // eslint-disable-next-line react-hooks/purity
                     key={`loot-${equipmentId}-${Date.now()}`}
                     className={cn(
                         'fixed top-24 right-4 z-50',

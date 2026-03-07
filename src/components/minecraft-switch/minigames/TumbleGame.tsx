@@ -178,6 +178,7 @@ function CountdownOverlay({ value }: { value: number }) {
   const [animKey, setAnimKey] = useState(0);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayValue(value);
     setAnimKey(prev => prev + 1);
   }, [value]);

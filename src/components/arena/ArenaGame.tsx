@@ -3,14 +3,14 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useArenaSocket } from '@/hooks/useArenaSocket';
 import { useTranslations } from 'next-intl';
-import type { ArenaBoardPayload, ArenaFeedEvent, EmoteType, TargetMode } from '@/types/arena';
+import type { ArenaFeedEvent, EmoteType, TargetMode } from '@/types/arena';
 import { ARENA_MAX_PLAYERS, POWERUP_DEFS, EMOTE_DEFS } from '@/types/arena';
 import type { PowerUpType } from '@/types/arena';
 
 // Tetris engine
 import { useGameState } from '@/components/rhythmia/tetris/hooks';
 import {
-  BOARD_HEIGHT, BOARD_WIDTH, BUFFER_ZONE, COLORS, LOCK_DELAY, MAX_LOCK_MOVES, VISIBLE_HEIGHT,
+  BOARD_HEIGHT, BOARD_WIDTH, BUFFER_ZONE, COLORS, LOCK_DELAY, MAX_LOCK_MOVES,
 } from '@/components/rhythmia/tetris/constants';
 import {
   isValidPosition, lockPiece, clearLines, getShape,
@@ -230,15 +230,12 @@ export default function ArenaGame() {
     error,
     setError,
     countdownNumber,
-    gameSeed,
-    queuePosition,
     queueSize,
     bpm,
     beatPhase,
     chaosLevel,
     activeGimmick,
     syncMap,
-    lastPlayerAction,
     lastElimination,
     lastTempoCollapse,
     sessionResult,
@@ -269,7 +266,7 @@ export default function ArenaGame() {
     board, currentPiece, nextPiece, holdPiece, canHold,
     score, combo, lines, level, gameOver, isPlaying,
     boardRef, currentPieceRef, scoreRef, comboRef,
-    linesRef, levelRef, gameOverRef, isPausedRef,
+    linesRef, levelRef, gameOverRef,
     keyStatesRef, gameLoopRef, lastGravityRef,
     dasRef, arrRef, sdfRef,
     setBoard, setCurrentPiece, setHoldPiece, setCanHold,
@@ -719,6 +716,7 @@ export default function ArenaGame() {
         case 'e':
         case 'E':
           e.preventDefault();
+          // eslint-disable-next-line react-hooks/rules-of-hooks
           usePowerUp();
           break;
         case '1':
@@ -1110,6 +1108,7 @@ export default function ArenaGame() {
             <PowerUpHUD
               heldPowerUp={heldPowerUp}
               activeEffects={activeEffects}
+              // eslint-disable-next-line react-hooks/rules-of-hooks
               onUse={() => usePowerUp()}
             />
 

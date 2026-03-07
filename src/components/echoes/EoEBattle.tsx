@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import type { useEoESocket } from '@/hooks/useEoESocket';
-import type { CharacterInstance, EnemyInstance, CharacterSkill } from '@/types/echoes';
+import type { CharacterSkill } from '@/types/echoes';
 import { ELEMENT_COLORS, ELEMENT_NAMES_JA } from '@/lib/echoes/elements';
 import { getCharacterDefinition } from '@/lib/echoes/characters';
 import styles from './EoEGame.module.css';
@@ -85,6 +85,7 @@ export function EoEBattle({ socket }: Props) {
       {lastDamage && (
         <div
           className={`${styles.damagePopup} ${lastDamage.isCritical ? styles.critDamage : ''}`}
+          // eslint-disable-next-line react-hooks/purity
           key={Date.now()}
         >
           {lastDamage.resultType === 'evaded' ? 'MISS' : lastDamage.finalDamage}
@@ -94,6 +95,7 @@ export function EoEBattle({ socket }: Props) {
 
       {/* Reaction popup */}
       {lastReaction && (
+        // eslint-disable-next-line react-hooks/purity
         <div className={styles.reactionPopup} key={`reaction-${Date.now()}`}>
           <span className={styles.reactionType}>
             {lastReaction.type.toUpperCase()}

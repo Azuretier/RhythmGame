@@ -57,6 +57,7 @@ export function TutorialGuide({ onComplete }: TutorialGuideProps) {
     }, []);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStepAnim(false);
         const t = requestAnimationFrame(() => setStepAnim(true));
         return () => cancelAnimationFrame(t);

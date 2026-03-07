@@ -117,7 +117,7 @@ fn fs(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
 }
 `;
 
-      const module = device.createShaderModule({ code: shader });
+      const shaderModule = device.createShaderModule({ code: shader });
 
       const bindGroupLayout = device.createBindGroupLayout({
         entries: [
@@ -135,8 +135,8 @@ fn fs(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
 
       const pipeline = device.createRenderPipeline({
         layout: pipelineLayout,
-        vertex: { module, entryPoint: "vs" },
-        fragment: { module, entryPoint: "fs", targets: [{ format }] },
+        vertex: { module: shaderModule, entryPoint: "vs" },
+        fragment: { module: shaderModule, entryPoint: "fs", targets: [{ format }] },
         primitive: { topology: "triangle-list" },
       });
 

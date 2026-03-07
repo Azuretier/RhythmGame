@@ -29,6 +29,7 @@ export function WorldTransition({ phase, worldIdx, stageNumber, terrainPhase = '
 
     useEffect(() => {
         if (phase === 'WORLD_CREATION') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setVisible(true);
             setText(`STAGE ${stageNumber}`);
             setSubText(WORLDS[worldIdx]?.name || '');
@@ -67,6 +68,7 @@ export function WorldTransition({ phase, worldIdx, stageNumber, terrainPhase = '
     // Immediately hide transition overlay when player dies
     useEffect(() => {
         if (gameOver) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setVisible(false);
         }
     }, [gameOver]);
@@ -115,7 +117,8 @@ interface GamePhaseIndicatorProps {
 /**
  * Small HUD indicator showing current game phase
  */
-export function GamePhaseIndicator({ phase, stageNumber, equippedCardCount, terrainPhase = 'dig' }: GamePhaseIndicatorProps) {
+ 
+export function GamePhaseIndicator({ phase, stageNumber: _stageNumber, equippedCardCount, terrainPhase = 'dig' }: GamePhaseIndicatorProps) {
     const phaseLabels: Record<GamePhase, string> = {
         WORLD_CREATION: 'CONSTRUCTING',
         PLAYING: terrainPhase === 'td' ? 'DEFEND' : 'DIG',

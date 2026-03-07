@@ -46,6 +46,7 @@ function DamageVignette({ intensity, visible }: { intensity: number; visible: bo
 
   useEffect(() => {
     if (visible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpacity(Math.min(0.6, intensity * 0.6));
       const timer = setTimeout(() => setOpacity(0), 500);
       return () => clearTimeout(timer);
@@ -70,7 +71,7 @@ function DamageVignette({ intensity, visible }: { intensity: number; visible: bo
 // Low Health Heartbeat — Pulsing red border when health <= 8
 // ---------------------------------------------------------------------------
 
-function LowHealthOverlay({ health, maxHealth }: { health: number; maxHealth: number }) {
+function LowHealthOverlay({ health, maxHealth: _maxHealth }: { health: number; maxHealth: number }) {
   const isLowHealth = health > 0 && health <= 8;
 
   if (!isLowHealth) return null;
@@ -116,6 +117,7 @@ function DirectionalIndicator({
 
   useEffect(() => {
     if (visible && direction !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentDirection(direction);
       setShow(true);
       const timer = setTimeout(() => setShow(false), 1000);

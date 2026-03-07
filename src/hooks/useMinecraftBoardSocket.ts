@@ -6,9 +6,9 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type {
-  MCServerMessage, MCGameStateUpdate, MCRoomState, MCLobbyPlayer,
+  MCServerMessage, MCRoomState,
   MCPublicRoom, MCGamePhase, Direction, MCTileUpdate, WorldTile,
-  MCVisiblePlayer, MCMobState, MCPlayerState, DayPhase, ItemType,
+  MCVisiblePlayer, MCMobState, MCPlayerState, DayPhase,
   SideBoardVisibleState, AnomalyAlert,
 } from '@/types/minecraft-board';
 import { BLOCK_PROPERTIES, MC_BOARD_CONFIG } from '@/types/minecraft-board';
@@ -106,6 +106,7 @@ export function useMinecraftBoardSocket() {
     ws.onerror = () => {
       ws.close();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const attemptReconnect = useCallback(() => {
@@ -368,7 +369,7 @@ export function useMinecraftBoardSocket() {
       default:
         break;
     }
-  }, [send]);
+  }, [send, setPhase]);
 
   // === Ping timeout check ===
 
@@ -401,7 +402,7 @@ export function useMinecraftBoardSocket() {
     setRoomState(null);
     reconnectTokenRef.current = null;
     sessionStorage.removeItem('mc_reconnectToken');
-  }, [send]);
+  }, [send, setPhase]);
 
   const setReady = useCallback((ready: boolean) => {
     send({ type: 'mc_ready', ready });

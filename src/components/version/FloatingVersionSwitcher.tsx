@@ -35,6 +35,7 @@ export default function FloatingVersionSwitcher() {
     close();
 
     // Full reload to ensure clean state when switching versions
+    // eslint-disable-next-line react-hooks/immutability
     window.location.href = '/';
   };
 

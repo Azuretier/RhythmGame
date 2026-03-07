@@ -11,8 +11,6 @@ import type {
   DamageSource,
   Difficulty,
   BiomeType,
-  EnchantmentInstance,
-  MobDropEntry,
 } from '@/types/minecraft-switch';
 import { MS_CONFIG } from '@/types/minecraft-switch';
 import type { ChunkedWorld } from '@/lib/minecraft-switch/world-gen/chunk-world';
@@ -23,7 +21,6 @@ import {
   getMobDamage,
   SLIME_SIZE_STATS,
   CREEPER_CONFIG,
-  isUndeadMob,
   type SlimeSize,
 } from './mob-registry';
 

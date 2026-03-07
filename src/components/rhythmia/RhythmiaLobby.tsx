@@ -68,6 +68,7 @@ export default function RhythmiaLobby() {
     });
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUnlockedCount(getUnlockedCount());
         const timer = setTimeout(() => {
             setIsLoading(false);
@@ -78,6 +79,7 @@ export default function RhythmiaLobby() {
     // Refresh unlocked count when returning to lobby
     useEffect(() => {
         if (gameMode === 'lobby' && !showAdvancements) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setUnlockedCount(getUnlockedCount());
         }
     }, [gameMode, showAdvancements]);
@@ -137,7 +139,7 @@ export default function RhythmiaLobby() {
         };
 
         wsRef.current = ws;
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);  
 
     useEffect(() => {
         connectMultiplayerWs();

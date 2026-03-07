@@ -4,7 +4,7 @@ import type {
 } from './types';
 import { ALL_ELEMENTS, DEFAULT_ELEMENTAL_STATE } from './types';
 import {
-    ELEMENT_CONFIGS, ALL_ELEMENT_CONFIGS, TOTAL_ELEMENT_DROP_WEIGHT,
+    ALL_ELEMENT_CONFIGS,
     REACTION_DEFINITIONS, ALL_REACTION_DEFINITIONS, REACTION_PRIORITY,
 } from './definitions';
 
@@ -175,7 +175,7 @@ export function rollCorruptionOutcome(): 'success' | 'backfire' {
  */
 export function applyReactionEffect(
     reactionType: ReactionType,
-    context: ReactionGameContext,
+    _context: ReactionGameContext,
 ): ReactionResult {
     const base: ReactionResult = {
         terrainDamageMultiplier: 1.0,

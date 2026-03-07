@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useLocale } from 'next-intl';
-import type { DungeonLocation, DungeonProgress, LocationStatus, MapTile, MapPath } from '@/data/stories/dungeons';
+import type { DungeonLocation, DungeonProgress, LocationStatus } from '@/data/stories/dungeons';
 import {
   DUNGEON_LOCATIONS, MAP_PATHS, MAP_TERRAIN,
   MAP_WIDTH, MAP_HEIGHT, getLocationStatus,
@@ -79,8 +79,9 @@ export default function DungeonMap({ progress, onSelectLocation, onBack }: Dunge
     return statuses;
   }, [progress]);
 
-  // Center of the isometric map
-  const mapCenter = useMemo(() => {
+  // Center of the isometric map (kept for potential future use)
+   
+  const _mapCenter = useMemo(() => {
     const c = toIso(MAP_WIDTH / 2, MAP_HEIGHT / 2);
     return { x: c.x, y: c.y };
   }, []);

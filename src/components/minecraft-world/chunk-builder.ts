@@ -2,7 +2,7 @@
 // Generates Three.js BufferGeometry from world data for a given chunk
 
 import * as THREE from 'three';
-import { Block, BLOCK_FACES, BLOCK_TRANSPARENT, BLOCK_LIQUID, getTexUV, type BlockType } from './textures';
+import { Block, BLOCK_FACES, BLOCK_TRANSPARENT, BLOCK_LIQUID, getTexUV } from './textures';
 import { WorldData, WORLD_WIDTH, WORLD_DEPTH, WORLD_HEIGHT, CHUNK_SIZE } from './terrain';
 
 // Face definitions: vertices and normals for each of the 6 block faces

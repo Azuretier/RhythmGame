@@ -19,14 +19,14 @@ import styles from './MinecraftBoard.module.css';
 export default function MinecraftBoardGame() {
   const {
     connectionStatus, playerId, connectWebSocket, disconnect,
-    phase, setPhase, roomState, publicRooms, countdownCount,
+    phase, setPhase: _setPhase, roomState, publicRooms, countdownCount,
     exploredTilesRef, visibleTiles, visiblePlayers, visibleMobs,
-    selfState, dayPhase, timeOfDay,
+    selfState, dayPhase, timeOfDay: _timeOfDay,
     chatMessages, gameMessage, winner,
     anomalyAlerts,
     createRoom, joinRoom, getRooms, leaveRoom,
     setReady, startGame,
-    move, mine, cancelMine, craft, attack, placeBlock, eat, selectSlot, sendChat,
+    move, mine, cancelMine: _cancelMine, craft, attack, placeBlock: _placeBlock, eat, selectSlot, sendChat,
   } = useMinecraftBoardSocket();
 
   // UI state

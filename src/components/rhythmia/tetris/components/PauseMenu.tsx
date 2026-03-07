@@ -70,6 +70,7 @@ export function PauseMenu({
 
     useEffect(() => {
         const state = loadAdvancementState();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUnlockedCount(state.unlockedIds.length);
     }, []);
 

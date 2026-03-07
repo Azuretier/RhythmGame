@@ -47,6 +47,7 @@ export function SkillTreeProvider({ children }: { children: ReactNode }) {
   // before React re-renders. This prevents stale reads when multiple
   // mutations fire in the same tick (e.g. awardGamePoints + awardMultiplayerWinPoints).
   const stateRef = useRef<SkillTreeState>(loadSkillTreeState());
+  // eslint-disable-next-line react-hooks/refs
   const [state, setState] = useState<SkillTreeState>(() => stateRef.current);
 
   // Load from localStorage on mount

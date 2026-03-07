@@ -14,11 +14,6 @@ export default function Leaderboard({ gameSocket }: LeaderboardProps) {
   const currentPlayer = gameSocket.currentPlayer;
   const currentPlayerRank = leaderboard.findIndex(p => p.id === currentPlayer?.id) + 1;
 
-  const handleBackToLobby = () => {
-    // The server automatically returns to lobby after 10 seconds
-    // This is just for UI feedback
-  };
-
   const handleLeaveRoom = () => {
     if (confirm('Are you sure you want to leave?')) {
       gameSocket.leaveRoom();

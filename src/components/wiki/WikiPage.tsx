@@ -52,11 +52,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'updates', labelKey: 'sectionUpdates' },
 ];
 
-const SUB_IDS: SubSection[] = [
-  ...NAV_ITEMS.find((n) => n.id === 'game-overview')!.subsections!.map((s) => s.id),
-  ...NAV_ITEMS.find((n) => n.id === 'tutorials')!.subsections!.map((s) => s.id),
-];
-
 // --- Static data ---
 const WORLDS_DATA = [
   { nameKey: 'melodia', bpm: 100, color: '#FF6B9D' },
@@ -260,6 +255,7 @@ export default function WikiPage() {
     const sub = parts[1] as SubSection | undefined;
     const validPages: Page[] = ['game-overview', 'tutorials', 'community-resources', 'updates'];
     if (validPages.includes(page)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActivePage(page);
       if (sub) {
         setActiveSub(sub);
@@ -278,9 +274,10 @@ export default function WikiPage() {
         setActiveSub('tut-beginner');
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, []);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleScroll = useCallback(() => {
     if (isClickScrolling.current || (activePage !== 'game-overview' && activePage !== 'tutorials')) return;
     const container = contentRef.current;

@@ -8,7 +8,6 @@
 // plastic (flat/toy), and natural (detailed/organic).
 // =============================================================================
 
-import { Block } from '@/types/minecraft-switch';
 import { TEX } from '../texture-registry';
 
 // =============================================================================

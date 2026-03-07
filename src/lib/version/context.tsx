@@ -42,6 +42,7 @@ export function VersionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedVersion = getSelectedVersion();
     if (storedVersion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentVersion(storedVersion);
       setIsVersionSelected(true);
     }

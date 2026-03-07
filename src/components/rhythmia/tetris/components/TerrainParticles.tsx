@@ -72,6 +72,7 @@ export function TerrainParticles({ particles }: TerrainParticlesProps) {
         ctx.globalAlpha = 1;
 
         if (currentParticles.length > 0) {
+            // eslint-disable-next-line react-hooks/immutability
             animRef.current = requestAnimationFrame(render);
         }
     }, []);

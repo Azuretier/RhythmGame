@@ -362,6 +362,7 @@ function ActionBarText({ text }: { text?: string }) {
 
   useEffect(() => {
     if (text) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayText(text);
       setVisible(true);
       const timer = setTimeout(() => setVisible(false), 2000);

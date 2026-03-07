@@ -165,6 +165,7 @@ export default function SkinCustomizer({ onClose, inline }: SkinCustomizerProps)
   useEffect(() => {
     if (profile?.name && profile.name !== lastSyncedNameRef.current) {
       if (editName === lastSyncedNameRef.current) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setEditName(profile.name);
       }
       lastSyncedNameRef.current = profile.name;
@@ -311,6 +312,7 @@ export default function SkinCustomizer({ onClose, inline }: SkinCustomizerProps)
             <div className={styles.syncLinked}>
               <div className={styles.syncAccount}>
                 {googlePhotoURL ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={googlePhotoURL}
                     alt=""

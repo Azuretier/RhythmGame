@@ -27,11 +27,11 @@ function loadOverrides(): TerrainOverrides {
   try {
     const raw = localStorage.getItem(OVERRIDES_KEY);
     return raw ? (JSON.parse(raw) as TerrainOverrides) : {};
-  } catch (_err) { return {}; /* Silently ignore — terrain edits are optional and non-critical */ }
+  } catch { return {}; /* Silently ignore — terrain edits are optional and non-critical */ }
 }
 
 function saveOverrides(o: TerrainOverrides): void {
-  try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(o)); } catch (_err) { /* Silently ignore — terrain edits are optional and non-critical */ }
+  try { localStorage.setItem(OVERRIDES_KEY, JSON.stringify(o)); } catch { /* Silently ignore — terrain edits are optional and non-critical */ }
 }
 
 // ────────────────────────────────────────────
@@ -770,7 +770,8 @@ interface GameModeMapProps {
 }
 
 export default function GameModeMap({
-  isArenaLocked, unlockedCount, requiredAdvancements, onlineCount, onSelectMode, locale,
+   
+  isArenaLocked: _isArenaLocked, unlockedCount, requiredAdvancements, onlineCount, onSelectMode, locale,
 }: GameModeMapProps) {
   const t = useTranslations();
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
@@ -783,6 +784,7 @@ export default function GameModeMap({
   const [overrides, setOverrides] = useState<TerrainOverrides>({});
 
   // Load persisted overrides on mount
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setOverrides(loadOverrides()); }, []);
 
   // Keep isEditingRef in sync with editMode for use in CameraPan

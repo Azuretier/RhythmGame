@@ -50,6 +50,17 @@ next-env.d.ts
 DAILY-SESSION-GUIDE.md
 DAILY-WORKFLOW.md
 
+# project context (local development notes, brand assets, templates)
+/project-context/
+COMPANY_PHILOSOPHY.md
+PROJECT.md
+PROJECT-TRACKER.md
+
+# brand icons (originals kept outside repo)
+azuretier.net-SNS-Icon.png
+azuretier.net-icon.jfif
+azuretier.net-icon.jpg
+
 # claude-worker
 claude-worker.ps1
 claude-launcher.ps1

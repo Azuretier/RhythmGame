@@ -32,7 +32,7 @@ const CAVE_MIN_Y = 5;
 const SURFACE_BUFFER = 4;
 
 /** Y threshold below which deepslate replaces stone in caves. */
-const DEEPSLATE_Y = 0; // Deepslate not in Block enum; disabled for now
+const _DEEPSLATE_Y = 0; // Deepslate not in Block enum; disabled for now
 
 // =============================================================================
 // Cave Noise Set — Initialized per seed

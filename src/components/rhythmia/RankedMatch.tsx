@@ -15,7 +15,6 @@ import {
 } from '@/lib/ranked/constants';
 import type { RankedState, RankChange } from '@/lib/ranked/types';
 import { TetrisAIGame, getDifficultyForRank } from '@/lib/ranked/TetrisAI';
-import type { BoardCell } from '@/types/multiplayer';
 import { trackEvent } from '@/lib/analytics';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';

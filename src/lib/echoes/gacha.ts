@@ -13,7 +13,6 @@ import type {
   SeasonMission,
   LootEntry,
   ItemRarity,
-  EOE_CONFIG,
 } from '@/types/echoes';
 import { CHARACTER_DEFINITIONS } from './characters';
 

@@ -33,7 +33,6 @@ export default function Homepage() {
     const {
         gameMode,
         isLoading,
-        onlineCount,
         onlineUsers,
         showAdvancements, setShowAdvancements,
         showOnlineUsers, setShowOnlineUsers,
@@ -43,7 +42,6 @@ export default function Homepage() {
         unlockedCount,
         isArenaLocked,
         handleFeatureClick,
-        requestOnlineUsers,
         handleLogoComplete,
         showProfileSetup,
         launchGame,

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations, useLocale } from 'next-intl';
-import { PR_UPDATES, getRecentUpdates, getUpdatesByCategory, getUpdateStats, getLocalizedPRContent, type PRUpdate } from '@/lib/updates/changelog';
+import { getRecentUpdates, getUpdatesByCategory, getUpdateStats, getLocalizedPRContent } from '@/lib/updates/changelog';
 import styles from './UpdatesPanel.module.css';
 
 interface UpdatesPanelProps {
@@ -33,7 +33,6 @@ export default function UpdatesPanel({ maxItems = 10, showCategories = true }: U
   const t = useTranslations();
   const locale = useLocale();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const stats = getUpdateStats();
   const recentUpdates = getRecentUpdates(maxItems);

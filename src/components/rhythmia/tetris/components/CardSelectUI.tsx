@@ -126,6 +126,7 @@ export function CardSelectUI({
     // -1 = skip button focused, 0-2 = card index focused
     const [focusedIdx, setFocusedIdx] = useState<number>(-1);
     const focusedIdxRef = useRef(focusedIdx);
+    // eslint-disable-next-line react-hooks/refs
     focusedIdxRef.current = focusedIdx;
 
     // Clear all pending timers

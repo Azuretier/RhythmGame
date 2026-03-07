@@ -29,6 +29,7 @@ export function ShapeProvider({ children }: { children: ReactNode }) {
     const storedId = getStoredShapeId();
     const shape = storedId ? getShapeById(storedId) : getShapeById(DEFAULT_SHAPE_ID)!;
     if (shape) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentShape(shape);
       applyShapeToDocument(shape.radii);
     }

@@ -7,7 +7,7 @@
 // =============================================================================
 
 import type { CraftingRecipe } from '@/types/minecraft-switch';
-import { RECIPES, RECIPE_CATEGORIES, type RecipeCategory } from './recipes';
+import { RECIPES, RECIPE_CATEGORIES } from './recipes';
 
 // =============================================================================
 // TYPES
@@ -303,7 +303,7 @@ export class CraftingEngine {
    * @param recipe - The matched recipe.
    * @returns The modified grid with ingredients consumed.
    */
-  consumeIngredients(grid: GridCell[], gridWidth: number, recipe: CraftingRecipe): GridCell[] {
+  consumeIngredients(grid: GridCell[], _gridWidth: number, _recipe: CraftingRecipe): GridCell[] {
     const result = [...grid];
 
     // Items that leave a remainder when consumed in crafting

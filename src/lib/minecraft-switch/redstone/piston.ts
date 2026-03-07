@@ -543,7 +543,7 @@ export class PistonEngine {
     startX: number,
     startY: number,
     startZ: number,
-    pullDirection: PistonDirection
+    _pullDirection: PistonDirection
   ): { success: boolean; blocksToMove: Vec3[]; blocksToDestroy: Vec3[] } {
     const blocksToMove: Vec3[] = [];
     const blocksToDestroy: Vec3[] = [];

@@ -10,7 +10,6 @@ import type {
   MobType,
   MobDefinition,
   MobStats,
-  MobDropEntry,
   EntityCategory,
   BiomeType,
 } from '@/types/minecraft-switch';

@@ -485,7 +485,7 @@ function generateDesertTemple(
   world: ChunkedWorld,
   cx: number,
   cz: number,
-  seed: number,
+  _seed: number,
 ): void {
   const baseX = cx * CHUNK_WIDTH + 8;  // Center in chunk
   const baseZ = cz * CHUNK_DEPTH + 8;

@@ -12,7 +12,6 @@ import type {
   EnchantmentInstance,
   InventorySlot,
   ItemCategory,
-  BlockId,
 } from '@/types/minecraft-switch';
 import { Block } from '@/types/minecraft-switch';
 import type { ChunkedWorld } from '@/lib/minecraft-switch/world-gen/chunk-world';

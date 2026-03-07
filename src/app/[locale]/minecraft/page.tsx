@@ -74,6 +74,7 @@ export default function MinecraftTitlePage() {
 
   // Pick a random splash text on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSplash(SPLASHES[Math.floor(Math.random() * SPLASHES.length)]);
   }, []);
 

@@ -10,8 +10,6 @@ import type {
   CharacterRole,
   CharacterRarity,
   Element,
-  CharacterSkill,
-  PassiveAbility,
   ArtifactSet,
 } from '@/types/echoes';
 import { expForLevel } from './combat';

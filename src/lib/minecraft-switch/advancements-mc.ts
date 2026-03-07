@@ -14,7 +14,6 @@ import type {
   PlayerState,
   PlayerInventory,
   InventorySlot,
-  BlockId,
 } from '@/types/minecraft-switch';
 import { Block } from '@/types/minecraft-switch';
 

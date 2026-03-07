@@ -18,24 +18,16 @@ import type {
   RhythmNote,
   RhythmDifficulty,
   ComboChain,
-  FieldElement,
   Element,
   Position2D,
-  BattleLogEntry,
-  BattleEndStats,
   LootEntry,
-  DungeonReward,
   BattleEnvironment,
-  EOE_CONFIG,
 } from '@/types/echoes';
 import {
   resolveBestReaction,
   calculateReactionDamage,
   getReactionStatus,
   getElementDamageModifier,
-  createFieldElement,
-  getFieldElementsAtPosition,
-  ELEMENTAL_REACTIONS,
 } from './elements';
 
 // ---------------------------------------------------------------------------
@@ -70,7 +62,7 @@ export function calculateDamage(input: DamageCalcInput): Omit<DamageInstance, 's
   } = input;
 
   // Base damage: ATK * skill multiplier
-  let baseDamage = attackerStats.atk * skill.damageMultiplier;
+  const baseDamage = attackerStats.atk * skill.damageMultiplier;
 
   // Rhythm bonus
   let rhythmBonus = 1.0;
@@ -671,7 +663,7 @@ export function processEndOfTurn(state: BattleState): {
   // Process status effects for all actors
   for (const char of updatedState.playerParty) {
     if (!char.isAlive) continue;
-    const { damage, healing, expiredEffects: _expired } = processStatusEffects(char, state.turn);
+    const { damage, healing } = processStatusEffects(char, state.turn);
     char.stats.hp = Math.min(char.stats.maxHp, char.stats.hp + healing - damage);
     if (char.stats.hp <= 0) {
       char.isAlive = false;
@@ -681,7 +673,7 @@ export function processEndOfTurn(state: BattleState): {
 
   for (const enemy of updatedState.enemies) {
     if (!enemy.isAlive) continue;
-    const { damage, healing, expiredEffects: _expired } = processStatusEffects(enemy, state.turn);
+    const { damage, healing } = processStatusEffects(enemy, state.turn);
     enemy.stats.hp = Math.min(enemy.stats.maxHp, enemy.stats.hp + healing - damage);
     if (enemy.stats.hp <= 0) {
       enemy.isAlive = false;
@@ -767,7 +759,7 @@ export function calculateBattleEndStats(state: BattleState): BattleEndStats {
   const totalHealing: Record<string, number> = {};
 
   let reactionsTriggered = 0;
-  let bestCombo = state.comboChain.hits;
+  const bestCombo = state.comboChain.hits;
   let totalAccuracy = 0;
   let accuracySamples = 0;
 

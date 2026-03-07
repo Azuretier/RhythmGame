@@ -4,7 +4,6 @@ import { XP_REWARDS } from './constants';
 const STORAGE_KEY = 'rhythmia_loyalty';
 
 function getDefaultStats(): ScoreRankingStats {
-  const today = new Date().toISOString().split('T')[0];
   return {
     totalScore: 0,
     bestScorePerGame: 0,

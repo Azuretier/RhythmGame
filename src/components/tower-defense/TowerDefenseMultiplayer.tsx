@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Copy, Check, Crown, Users, Loader2, Wifi, WifiOff,
+  Copy, Check, Crown, Users, Loader2, WifiOff,
   Swords, LogOut, Trophy, Medal, Shield, Skull,
 } from 'lucide-react';
 import type { TowerType } from '@/types/tower-defense';
@@ -305,7 +305,7 @@ function TDMultiplayerWaitingRoom({
               {state.isHost && p.playerId === state.playerId && (
                 <Crown size={14} className={mpStyles.playerCrown} />
               )}
-              {!state.isHost && p.playerId === state.players.find(x => state.roomCode)?.playerId && null}
+              {!state.isHost && p.playerId === state.players.find(_x => state.roomCode)?.playerId && null}
               <span className={mpStyles.playerName}>{p.playerName}</span>
               {p.playerId === state.playerId && (
                 <span className={mpStyles.playerYouTag}>YOU</span>

@@ -1,6 +1,6 @@
 import type {
-  GameState, GamePhase, Tower, Enemy, Projectile, Vec3,
-  TowerType, EnemyType, StatusEffect, WaveGroup, SpawnTracker,
+  GameState, Tower, Enemy, Projectile, Vec3,
+  TowerType, EnemyType, StatusEffect, SpawnTracker,
 } from '@/types/tower-defense';
 import {
   TOWER_DEFS, ENEMY_DEFS, INITIAL_GOLD, INITIAL_LIVES,
@@ -20,7 +20,8 @@ function dist2d(a: Vec3, b: Vec3): number {
   return Math.sqrt(dx * dx + dz * dz);
 }
 
-function dist3d(a: Vec3, b: Vec3): number {
+ 
+function _dist3d(a: Vec3, b: Vec3): number {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
   const dz = a.z - b.z;
@@ -303,7 +304,7 @@ function tickSpawning(state: GameState, dt: number): GameState {
 function tickEnemyMovement(state: GameState, dt: number): GameState {
   const { map } = state;
   let lives = state.lives;
-  let score = state.score;
+  const score = state.score;
 
   const enemies = state.enemies.map(enemy => {
     if (enemy.dead) return enemy;
@@ -354,7 +355,8 @@ function tickEnemyMovement(state: GameState, dt: number): GameState {
 
 function tickTowerTargeting(state: GameState): GameState {
   const towers = state.towers.map(tower => {
-    const def = TOWER_DEFS[tower.type];
+     
+    const _def = TOWER_DEFS[tower.type];
     const range = getTowerRange(tower);
     const towerPos = getTowerPos(tower);
 
@@ -388,7 +390,7 @@ function tickAuraDamage(state: GameState, dt: number): GameState {
   if (auraTowers.length === 0) return state;
 
   let enemies = [...state.enemies];
-  let towers = [...state.towers];
+  const towers = [...state.towers];
   let gold = state.gold;
   let score = state.score;
 
@@ -483,7 +485,7 @@ function tickTowerFiring(state: GameState, dt: number): GameState {
 
 function tickProjectiles(state: GameState, dt: number): GameState {
   let enemies = [...state.enemies];
-  let towers = [...state.towers];
+  const towers = [...state.towers];
   let gold = state.gold;
   let score = state.score;
 

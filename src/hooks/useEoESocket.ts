@@ -13,23 +13,16 @@ import type {
   DamageInstance,
   ElementalReactionType,
   ComboChain,
-  StatusEffect,
   DungeonDefinition,
   DungeonReward,
   BattleEndStats,
-  DungeonStats,
   BattleRoyaleState,
   MobaState,
-  MobaEndStats,
   BuildingState,
   GachaPullResult,
   PlayerGachaState,
   PlayerRank,
-  BattlePassReward,
-  SeasonMission,
   Position2D,
-  LootEntry,
-  CharacterInstance,
 } from '@/types/echoes';
 
 // ---------------------------------------------------------------------------
@@ -178,6 +171,7 @@ export function useEoESocket() {
       setConnectionStatus('error');
       attemptReconnect();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const disconnect = useCallback(() => {

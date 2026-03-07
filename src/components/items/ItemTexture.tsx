@@ -15,7 +15,7 @@ interface ItemTextureProps {
 
 const GRID_SIZE = 16;
 
-function renderPixelGrid(texture: ItemTextureData, size: number): React.ReactElement[] {
+function renderPixelGrid(texture: ItemTextureData): React.ReactElement[] {
     const { grid, palette } = texture;
     const highlight = lightenColor(palette.base, 0.35);
     const shadow = darkenColor(palette.base, 0.35);
@@ -110,7 +110,7 @@ export function ItemTexture({ itemId, size = 32, glow = false, className }: Item
                 style={{ imageRendering: 'pixelated', display: 'block' }}
                 aria-label={item?.name || itemId}
             >
-                {renderPixelGrid(texture, size)}
+                {renderPixelGrid(texture)}
             </svg>
         </span>
     );

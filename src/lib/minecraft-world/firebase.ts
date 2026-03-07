@@ -14,7 +14,6 @@ import {
   orderBy,
   limit,
   updateDoc,
-  serverTimestamp,
 } from 'firebase/firestore';
 import type { MWFirestoreRoom } from '@/types/minecraft-world';
 

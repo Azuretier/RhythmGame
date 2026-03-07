@@ -383,7 +383,7 @@ export default function Tetris() {
     const piece = currentPieceRef.current;
     if (!piece || gameOverRef.current || isPausedRef.current) return;
     
-    let newPiece = { ...piece };
+    const newPiece = { ...piece };
     let dropDistance = 0;
     
     while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, boardRef.current)) {

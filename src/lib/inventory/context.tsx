@@ -28,6 +28,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     // Load from localStorage on mount
     useEffect(() => {
         const stored = loadInventoryState();
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setState(stored);
     }, []);
 

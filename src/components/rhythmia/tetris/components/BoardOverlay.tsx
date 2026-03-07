@@ -98,6 +98,7 @@ export const BoardOverlay = React.memo(function BoardOverlay({
     const [internalMode, setInternalMode] = useState<BoardMode>('2d');
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setInternalMode(getStoredMode());
     }, []);
 

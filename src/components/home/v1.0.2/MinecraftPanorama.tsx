@@ -13,6 +13,7 @@ export default function MinecraftPanorama() {
 
   useEffect(() => {
     if (!mountRef.current) return;
+    const container = mountRef.current;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -26,7 +27,7 @@ export default function MinecraftPanorama() {
     const renderer = new THREE.WebGLRenderer({ antialias: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mountRef.current.appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
 
     // Load cube texture from 6 panorama faces
     // Three.js CubeTextureLoader order: +x, -x, +y, -y, +z, -z
@@ -69,8 +70,8 @@ export default function MinecraftPanorama() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (mountRef.current) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (container) {
+        container.removeChild(renderer.domElement);
       }
       renderer.dispose();
       cubeTexture.dispose();

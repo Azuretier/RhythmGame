@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { useEoESocket } from '@/hooks/useEoESocket';
-import { getAllCharacters, analyzeParty } from '@/lib/echoes/characters';
+import { getAllCharacters } from '@/lib/echoes/characters';
 import { ELEMENT_COLORS, ELEMENT_NAMES_JA } from '@/lib/echoes/elements';
 import styles from './EoEGame.module.css';
 

@@ -120,6 +120,7 @@ export default function MultiplayerGame({ onQuit }: MultiplayerGameProps) {
     };
 
     wsRef.current = ws;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleReconnect]);
 
   connectWebSocketRef.current = connectWebSocket;

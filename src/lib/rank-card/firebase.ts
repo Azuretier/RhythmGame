@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { initializeApp, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { initAppCheck } from "@/lib/firebase/initAppCheck";
 
@@ -18,7 +18,7 @@ let db: Firestore | null = null;
 if (typeof window !== 'undefined') {
   try {
     app = getApp('rank-card');
-  } catch (error) {
+  } catch {
     app = initializeApp(firebaseConfig, 'rank-card');
   }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
-import { useCameraController, CAMERA_PRESETS } from '../hooks/useCameraController';
+import { useCameraController } from '../hooks/useCameraController';
 import type { CameraPreset } from '../hooks/useCameraController';
 
 const ORBIT_SPEED = 0.005;

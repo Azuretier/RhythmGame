@@ -19,6 +19,7 @@ export const AdvancementToast: React.FC<Props> = ({ unlockedIds, onDismiss }) =>
 
   // Stable ref so the timer never resets due to parent re-renders
   const onDismissRef = useRef(onDismiss);
+  // eslint-disable-next-line react-hooks/refs
   onDismissRef.current = onDismiss;
 
   // Reset currentIndex when transitioning from empty to non-empty array

@@ -88,6 +88,7 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
   const playerIdRef = useRef<string | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectTokenRef = useRef<string | null>(null);
+  // eslint-disable-next-line react-hooks/purity
   const lastPingRef = useRef(Date.now());
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -119,6 +120,28 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
   const send = useCallback((msg: Record<string, unknown>) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(msg));
+    }
+  }, []);
+
+  // ===== Room state helper =====
+
+  const applyRoomState = useCallback((room: TDMultiplayerRoom) => {
+    setRoomCode(room.code);
+    roomCodeRef.current = room.code;
+    setIsHost(room.hostId === playerIdRef.current);
+    setPlayers(room.players.map(toMultiplayerPlayer));
+
+    if (room.status === 'playing') {
+      setStatus('playing');
+      // Find own game state from room player data
+      const self = room.players.find(p => p.playerId === playerIdRef.current);
+      if (self) {
+        setOwnGameState(self.gameState);
+      }
+    } else if (room.status === 'countdown') {
+      setStatus('countdown');
+    } else if (room.status === 'ended') {
+      setStatus('ended');
     }
   }, []);
 
@@ -335,31 +358,11 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
       default:
         break;
     }
-  }, [send]);
-
-  // ===== Room state helper =====
-
-  const applyRoomState = useCallback((room: TDMultiplayerRoom) => {
-    setRoomCode(room.code);
-    roomCodeRef.current = room.code;
-    setIsHost(room.hostId === playerIdRef.current);
-    setPlayers(room.players.map(toMultiplayerPlayer));
-
-    if (room.status === 'playing') {
-      setStatus('playing');
-      // Find own game state from room player data
-      const self = room.players.find(p => p.playerId === playerIdRef.current);
-      if (self) {
-        setOwnGameState(self.gameState);
-      }
-    } else if (room.status === 'countdown') {
-      setStatus('countdown');
-    } else if (room.status === 'ended') {
-      setStatus('ended');
-    }
-  }, []);
+  }, [send, applyRoomState]);
 
   // ===== WebSocket connection =====
+
+  const connectWebSocketRef = useRef<() => void>(() => {});
 
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
@@ -402,7 +405,7 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
         setStatus('connecting');
         reconnectTimerRef.current = setTimeout(() => {
           reconnectTimerRef.current = null;
-          connectWebSocket();
+          connectWebSocketRef.current();
         }, delay);
       } else {
         setStatus('disconnected');
@@ -413,6 +416,8 @@ export function useTDMultiplayerSocket(): UseTDMultiplayerReturn {
       ws.close();
     };
   }, [handleServerMessage]);
+
+  useEffect(() => { connectWebSocketRef.current = connectWebSocket; }, [connectWebSocket]);
 
   const disconnect = useCallback(() => {
     reconnectAttemptsRef.current = MAX_RECONNECT_ATTEMPTS;

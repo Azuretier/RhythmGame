@@ -67,6 +67,7 @@ export function useArenaSocket() {
   const reconnectTokenRef = useRef<string>('');
   const reconnectAttemptsRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // eslint-disable-next-line react-hooks/purity
   const lastPingRef = useRef<number>(Date.now());
   const pingCheckTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingMessagesRef = useRef<object[]>([]);

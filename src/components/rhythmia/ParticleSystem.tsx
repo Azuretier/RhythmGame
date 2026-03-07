@@ -20,7 +20,8 @@ export default function ParticleSystem() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
   const particlesRef = useRef<Particle[]>([]);
-  const startTimeRef = useRef<number>(Date.now());
+   
+  const _startTimeRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;

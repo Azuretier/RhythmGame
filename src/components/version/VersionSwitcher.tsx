@@ -70,7 +70,7 @@ export default function VersionSwitcher() {
 
                 {/* Version options */}
                 <div className="p-6 space-y-3">
-                  {UI_VERSIONS.map((version, index) => {
+                  {UI_VERSIONS.map((version) => {
                     const metadata = VERSION_METADATA[version];
                     const isActive = currentVersion === version;
 

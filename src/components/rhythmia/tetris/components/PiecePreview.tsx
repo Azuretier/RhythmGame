@@ -1,5 +1,5 @@
 import React from 'react';
-import { COLORS, ColorTheme, getThemedColor } from '../constants';
+import { ColorTheme, getThemedColor } from '../constants';
 import { getShape } from '../utils/boardUtils';
 import styles from '../VanillaGame.module.css';
 

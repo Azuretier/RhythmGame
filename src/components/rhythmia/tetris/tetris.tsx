@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, ENEMY_REACH_DAMAGE, MAX_HEALTH, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION, BEAT_GOOD_WINDOW } from './constants';
-import type { Piece, GameMode, FeatureSettings } from './types';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION, BEAT_GOOD_WINDOW } from './constants';
+import type { Piece, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import { getModifiers } from './protocol';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
@@ -51,7 +51,6 @@ import {
 
 // Components
 import {
-  Board,
   NextPiece,
   HoldPiece,
   TitleScreen,
@@ -174,8 +173,6 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   const boardElRef = useRef<HTMLDivElement>(null);
   const beatBarRef = useRef<HTMLDivElement>(null);
 
-  const [pauseStateBeforeOverlay, setPauseStateBeforeOverlay] = useState(false);
-
   // Judgment display mode: 'text' (PERFECT!, GREAT!, etc.) or 'score' (+1600, etc.)
   const [judgmentDisplayMode, setJudgmentDisplayMode] = useState<JudgmentDisplayMode>(() => {
     if (typeof window !== 'undefined') {
@@ -194,6 +191,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       return next;
     });
   }, []);
+
+  // Action display — stacking toasts (declared before showActionMessage to avoid forward ref)
+  const actionIdRef = useRef(0);
 
   // Show action message (T-spin, Tetris, Back-to-Back) on the board
   const showActionMessage = useCallback((lines: string[], color: string) => {
@@ -245,9 +245,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   // Back-to-Back tracking — consecutive difficult clears (Tetris or T-spin clear)
   const lastClearWasDifficultRef = useRef(false);
 
-  // Action display (T-spin, Tetris, Back-to-Back) — stacking toasts
   const [actionToasts, setActionToasts] = useState<{ id: number; lines: string[]; color: string }[]>([]);
-  const actionIdRef = useRef(0);
 
   // Lock delay — grace period after piece lands before locking
   const lockStartTimeRef = useRef<number | null>(null);
@@ -300,8 +298,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     offeredCards,
     activeEffects,
     absorbingCardId,
-    // Game mode
-    gameMode,
+    // Game mode (unused but kept for API completeness)
+    // gameMode,
     // Protocol modifiers
     protocolMods,
     protocolModsRef,
@@ -322,7 +320,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     // Refs
     boardRef,
     currentPieceRef,
-    canHoldRef,
+    // canHoldRef,
     scoreRef,
     comboRef,
     linesRef,
@@ -337,7 +335,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     beatPhaseRef,
     activeEffectsRef,
     enemiesRef,
-    gameModeRef,
+    // gameModeRef,
     terrainPhaseRef,
     tdBeatsRemainingRef,
     gamePhaseRef,
@@ -356,11 +354,11 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     setLines,
     setLevel,
     setIsPaused,
-    setWorldIdx,
+    // setWorldIdx,
     setBeatPhase,
     setBoardBeat,
     setColorTheme,
-    setGamePhase,
+    // setGamePhase,
     spawnPiece,
     showJudgment,
     updateScore,
@@ -369,12 +367,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     handleTerrainReady,
     destroyTerrain,
     startNewStage,
-    terrainDestroyedCountRef,
-    terrainTotalRef,
+    // terrainDestroyedCountRef,
+    // terrainTotalRef,
     // Game loop actions
     spawnItemDrops,
     spawnTerrainParticles,
-    enterCardSelect,
+    // enterCardSelect,
     selectCard,
     skipCardSelect,
     finishAbsorption,
@@ -671,6 +669,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       fresh.forEach(id => liveNotifiedRef.current.add(id));
       setToastIds(prev => [...prev, ...fresh]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle piece locking and game advancement — branches by terrain phase
@@ -688,7 +687,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     const beatExtend = activeEffectsRef.current.beatExtendBonus || 0;
     const beatWindowMod = protocolModsRef.current.beatWindowMultiplier;
     const timing = getBeatJudgment(currentBeatPhase, beatExtend, beatWindowMod);
-    let mult = getBeatMultiplier(timing);
+    const mult = getBeatMultiplier(timing);
 
     // Track pieces placed for advancements
     gamePiecesPlacedRef.current++;
@@ -987,6 +986,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     const spawned = spawnPiece();
     setCurrentPiece(spawned);
     currentPieceRef.current = spawned;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     terrainPhaseRef, beatPhaseRef, comboRef, boardRef, levelRef, scoreRef, activeEffectsRef, stageNumberRef,
     setCombo, setBoard, setLines, setLevel, setCurrentPiece, setGameOver,
@@ -1008,7 +1008,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     const piece = currentPieceRef.current;
     if (!piece || gameOverRef.current || isPausedRef.current) return;
 
-    let newPiece = { ...piece };
+    const newPiece = { ...piece };
     let dropDistance = 0;
 
     while (isValidPosition({ ...newPiece, y: newPiece.y + 1 }, boardRef.current)) {
@@ -1178,6 +1178,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         bestCombo: gameBestComboRef.current,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameOver, onGameEnd]);
 
   // Reset beat timing when unpausing to avoid desync
@@ -1269,6 +1270,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     return () => {
       if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
 
   // Auto-fire bullet during TD phase (independent of beat timer)
@@ -1286,6 +1288,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     }, BULLET_FIRE_INTERVAL);
 
     return () => clearInterval(bulletTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, gameOver]);
 
   // Beat phase animation — drives cursor via direct DOM manipulation (CSS var + data attr)
@@ -1339,6 +1342,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     animFrame = requestAnimationFrame(updateBeat);
 
     return () => cancelAnimationFrame(animFrame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, gameOver, gameOverRef, worldIdxRef, lastBeatRef, beatPhaseRef, comboRef, setBeatPhase]);
 
   // Main game loop
@@ -1393,6 +1397,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, gameOver, tick, processHorizontalDasArr, processSoftDrop, processMouseSoftDrop, isPausedRef, gameOverRef, levelRef, lastGravityRef, gameLoopRef]);
 
   // Keyboard input handlers
@@ -1643,12 +1648,15 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
 
   // Persist advancement stats and unlocks on component unmount (e.g., player leaves mid-game)
   useEffect(() => {
+    const capturedGameOverRef = gameOverRef;
+    const capturedScoreRef = scoreRef;
+    const capturedLinesRef = linesRef;
     return () => {
       // Only record stats if game hasn't ended normally (player left via back button)
-      if (!gameOverRef.current && !advRecordedRef.current) {
+      if (!capturedGameOverRef.current && !advRecordedRef.current) {
         recordGameEnd({
-          score: scoreRef.current,
-          lines: linesRef.current,
+          score: capturedScoreRef.current,
+          lines: capturedLinesRef.current,
           tSpins: gameTSpinsRef.current,
           bestCombo: gameBestComboRef.current,
           perfectBeats: gamePerfectBeatsRef.current,
@@ -1661,9 +1669,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
         });
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const world = WORLDS[worldIdx];
 
   // Map game phase to skin ambient effect intensity
   const skinEffectIntensity = useMemo((): 'idle' | 'playing' | 'intense' => {

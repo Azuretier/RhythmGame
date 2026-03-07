@@ -16,11 +16,6 @@ import type {
   RelayPayload,
   SetProfileMessage,
 } from './src/types/multiplayer';
-import type {
-  ArenaClientMessage,
-  ArenaAction,
-  ArenaBoardPayload,
-} from './src/types/arena';
 import {
   ARENA_MAX_PLAYERS,
   ARENA_QUEUE_TIMEOUT,
@@ -339,22 +334,6 @@ function clearArenaTimer(playerId: string): void {
   }
 }
 
-function isArenaMessage(type: string): boolean {
-  return type.startsWith('arena_') || type === 'create_arena' || type === 'join_arena' || type === 'queue_arena' || type === 'cancel_arena_queue';
-}
-
-function isMCBoardMessage(type: string): boolean {
-  return type.startsWith('mc_');
-}
-
-function isMWMessage(type: string): boolean {
-  return type.startsWith('mw_');
-}
-
-function isTDMessage(type: string): boolean {
-  return type.startsWith('td_');
-}
-
 // ===== Minecraft Board Game System =====
 
 const mcBoardManager = new MinecraftBoardManager({
@@ -660,7 +639,7 @@ function createRankedRoom(
 
   // Create room with player1 as host
   const { roomCode } = roomManager.createRoom(player1Id, player1.playerName, 'Ranked Match', false, 2);
-  const joinResult = roomManager.joinRoom(roomCode, player2Id, player2.playerName);
+  roomManager.joinRoom(roomCode, player2Id, player2.playerName);
 
   const gameSeed = Math.floor(Math.random() * 2147483647);
   const token1 = issueReconnectToken(player1Id);
@@ -1679,7 +1658,7 @@ function handleMessage(playerId: string, raw: string): void {
 
     case 'td_create_room': {
       const { roomCode } = tdManager.createRoom(playerId, message.playerName, message.mapIndex);
-      const reconnectToken = issueReconnectToken(playerId);
+      issueReconnectToken(playerId);
       sendToPlayer(playerId, {
         type: 'td_room_created',
         roomCode,
@@ -1699,7 +1678,7 @@ function handleMessage(playerId: string, raw: string): void {
         sendError(playerId, result.error || 'Failed to join TD room', 'TD_JOIN_FAILED');
         break;
       }
-      const reconnectToken = issueReconnectToken(playerId);
+      issueReconnectToken(playerId);
       const tdRoom = tdManager.getRoom(message.roomCode);
       if (tdRoom) {
         sendToPlayer(playerId, {

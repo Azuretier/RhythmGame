@@ -152,6 +152,7 @@ function KillFeed({ entries }: { entries: KillFeedEntry[] }) {
   return (
     <div className="fixed top-16 right-4 z-50 pointer-events-none flex flex-col gap-1 max-w-xs">
       {visibleEntries.map((entry) => {
+        // eslint-disable-next-line react-hooks/purity
         const age = Date.now() - entry.timestamp;
         const fadeOpacity = age > 3500 ? Math.max(0, 1 - (age - 3500) / 1500) : 1;
 
@@ -181,7 +182,7 @@ function KillFeed({ entries }: { entries: KillFeedEntry[] }) {
 function SpectatorBar({
   spectatingName,
   alivePlayers,
-  currentIndex,
+  currentIndex: _currentIndex,
   onPrev,
   onNext,
 }: {
@@ -371,6 +372,7 @@ export default function BattleGame({ gameState, onSpectate }: BattleGameProps) {
   // Keep spectate index in range
   useEffect(() => {
     if (alivePlayers.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSpectateIndex(prev => Math.min(prev, alivePlayers.length - 1));
     }
   }, [alivePlayers.length]);

@@ -9,7 +9,6 @@ import {
   scoreToNextTier,
   formatScoreCompact,
   getRankGroups,
-  buildScoreRankingState,
   recordDailyVisit,
   syncGameplayStats,
   SCORE_RANK_TIERS,
@@ -55,6 +54,7 @@ export default function LoyaltyDashboard() {
       advancementState.stats.totalLines,
     );
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(dailyState);
     setAdvState(advancementState);
 
@@ -106,7 +106,7 @@ export default function LoyaltyDashboard() {
 
   if (!state) return null;
 
-  const { totalScore, bestScorePerGame, totalGamesPlayed, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
+  const { bestScorePerGame, totalGamesPlayed, totalLines, currentStreak, bestStreak, totalVisits, dailyBonusXP } = state.stats;
   const combinedScore = state.combinedScore;
   const currentTier = getTierByScore(combinedScore);
   const currentTierIndex = SCORE_RANK_TIERS.indexOf(currentTier);
@@ -134,6 +134,7 @@ export default function LoyaltyDashboard() {
         transition={{ duration: 0.6 }}
       >
         <div className={styles.logo}>RHYTHMIA</div>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className={styles.backLink}>
           {t('backToLobby')}
         </a>

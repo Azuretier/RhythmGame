@@ -6,7 +6,7 @@
 // armor slots, and drag-and-drop item management.
 // =============================================================================
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { InventorySlot, EnchantmentInstance } from '@/types/minecraft-switch';
 
@@ -151,7 +151,7 @@ function InvSlot({
   onLeftClick,
   onRightClick,
   onShiftClick,
-  onNumberKey,
+  onNumberKey: _onNumberKey,
   onMouseEnter,
   onMouseLeave,
   isHighlighted,
@@ -264,7 +264,7 @@ export default function InventoryScreen({
   const [hoveredSlot, setHoveredSlot] = useState<{ item: InventorySlot; x: number; y: number } | null>(null);
 
   // 2x2 crafting grid
-  const [craftingGrid, setCraftingGrid] = useState<(InventorySlot | null)[]>([null, null, null, null]);
+  const [craftingGrid, _setCraftingGrid] = useState<(InventorySlot | null)[]>([null, null, null, null]);
   const [craftingOutput, setCraftingOutput] = useState<InventorySlot | null>(null);
 
   // Track mouse for cursor item display
@@ -298,6 +298,7 @@ export default function InventoryScreen({
     const hasItems = craftingGrid.some(s => s !== null);
     if (hasItems && onCraftItem) {
       const result = onCraftItem(craftingGrid);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCraftingOutput(result || null);
     } else {
       setCraftingOutput(null);

@@ -132,6 +132,7 @@ export function useGameSocket(): UseGameSocketReturn {
       setRoomState(RoomState.FINISHED);
     });
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSocket(socketInstance);
     socketRef.current = socketInstance;
 

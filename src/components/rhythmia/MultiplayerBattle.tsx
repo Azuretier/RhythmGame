@@ -12,28 +12,24 @@ import { useSkillTree } from '@/lib/skill-tree/context';
 import AdvancementToast from './AdvancementToast';
 import { useRhythmVFX } from './tetris/hooks/useRhythmVFX';
 import { RhythmVFX } from './tetris/components/RhythmVFX';
-import { BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, WORLDS, getThemedColor, PIECE_TYPES } from './tetris/constants';
+import { BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, WORLDS, getThemedColor } from './tetris/constants';
 import { playWorldDrum, WORLD_LINE_CLEAR_CHIMES } from '@/lib/rhythmia/stageSounds';
 import type { TerrainParticle, FloatingItem } from './tetris/types';
 import { TerrainParticles } from './tetris/components/TerrainParticles';
 import { FloatingItems } from './tetris/components/FloatingItems';
 import { getBeatJudgment, getBeatMultiplier } from './tetris/utils';
 import { trackEvent } from '@/lib/analytics';
+import type { PieceType, Piece } from './multiplayer-battle-engine';
+import {
+    W, H, BPM, LOCK_DELAY, MAX_LOCK_MOVES, DAS, ARR, SOFT_DROP_SPEED,
+    createRNG, create7Bag, getShape, createEmptyBoard, isValid,
+    tryRotate, lockPiece, clearLines, getGhostY, addGarbageLines, detectTSpin,
+} from './multiplayer-battle-engine';
 
 // Dynamically import VoxelWorldBackground (Three.js requires client-side only)
 const VoxelWorldBackground = dynamic(() => import('./VoxelWorldBackground'), {
     ssr: false,
 });
-
-// ===== Types =====
-type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
-
-interface Piece {
-    type: PieceType;
-    rotation: 0 | 1 | 2 | 3;
-    x: number;
-    y: number;
-}
 
 interface Props {
     ws: WebSocket;
@@ -46,254 +42,10 @@ interface Props {
     onBackToLobby: () => void;
 }
 
-// ===== Constants =====
-const W = 10;
-const H = 20;
-const BPM = 120;
-const LOCK_DELAY = 500;
-const MAX_LOCK_MOVES = 15;
-const DAS = 167; // Delayed Auto Shift
-const ARR = 33;  // Auto Repeat Rate
-const SOFT_DROP_SPEED = 50;
-const GARBAGE_COLOR = '#555555';
-
-
-// All 4 rotation states for each piece (SRS)
-const SHAPES: Record<PieceType, number[][][]> = {
-    I: [
-        [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
-        [[0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
-        [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0]],
-        [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
-    ],
-    O: [
-        [[1, 1], [1, 1]],
-        [[1, 1], [1, 1]],
-        [[1, 1], [1, 1]],
-        [[1, 1], [1, 1]],
-    ],
-    T: [
-        [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
-        [[0, 1, 0], [0, 1, 1], [0, 1, 0]],
-        [[0, 0, 0], [1, 1, 1], [0, 1, 0]],
-        [[0, 1, 0], [1, 1, 0], [0, 1, 0]],
-    ],
-    S: [
-        [[0, 1, 1], [1, 1, 0], [0, 0, 0]],
-        [[0, 1, 0], [0, 1, 1], [0, 0, 1]],
-        [[0, 0, 0], [0, 1, 1], [1, 1, 0]],
-        [[1, 0, 0], [1, 1, 0], [0, 1, 0]],
-    ],
-    Z: [
-        [[1, 1, 0], [0, 1, 1], [0, 0, 0]],
-        [[0, 0, 1], [0, 1, 1], [0, 1, 0]],
-        [[0, 0, 0], [1, 1, 0], [0, 1, 1]],
-        [[0, 1, 0], [1, 1, 0], [1, 0, 0]],
-    ],
-    J: [
-        [[1, 0, 0], [1, 1, 1], [0, 0, 0]],
-        [[0, 1, 1], [0, 1, 0], [0, 1, 0]],
-        [[0, 0, 0], [1, 1, 1], [0, 0, 1]],
-        [[0, 1, 0], [0, 1, 0], [1, 1, 0]],
-    ],
-    L: [
-        [[0, 0, 1], [1, 1, 1], [0, 0, 0]],
-        [[0, 1, 0], [0, 1, 0], [0, 1, 1]],
-        [[0, 0, 0], [1, 1, 1], [1, 0, 0]],
-        [[1, 1, 0], [0, 1, 0], [0, 1, 0]],
-    ],
-};
-
-// SRS Wall Kick Data
-const ROTATION_NAMES = ['0', 'R', '2', 'L'] as const;
-
-const WALL_KICK_JLSTZ: Record<string, [number, number][]> = {
-    '0->R': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
-    'R->2': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
-    '2->L': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
-    'L->0': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
-    'R->0': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
-    '2->R': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
-    'L->2': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
-    '0->L': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
-};
-
-const WALL_KICK_I: Record<string, [number, number][]> = {
-    '0->R': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
-    'R->2': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
-    '2->L': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
-    'L->0': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
-    'R->0': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
-    '2->R': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
-    'L->2': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
-    '0->L': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
-};
-
-// ===== Seeded RNG =====
-function createRNG(seed: number) {
-    let s = seed;
-    return () => {
-        s = (s * 1103515245 + 12345) & 0x7fffffff;
-        return s / 0x7fffffff;
-    };
-}
-
-// ===== 7-Bag Randomizer =====
-function create7Bag(rng: () => number) {
-    let bag: PieceType[] = [];
-
-    return (): PieceType => {
-        if (bag.length === 0) {
-            bag = [...PIECE_TYPES] as PieceType[];
-            // Fisher-Yates shuffle
-            for (let i = bag.length - 1; i > 0; i--) {
-                const j = Math.floor(rng() * (i + 1));
-                [bag[i], bag[j]] = [bag[j], bag[i]];
-            }
-        }
-        return bag.pop()!;
-    };
-}
-
-// ===== Helper Functions =====
-function getShape(type: PieceType, rotation: number): number[][] {
-    return SHAPES[type][rotation];
-}
-
-function createEmptyBoard(): (BoardCell | null)[][] {
-    return Array.from({ length: H }, () => Array(W).fill(null));
-}
-
-function isValid(piece: Piece, board: (BoardCell | null)[][]): boolean {
-    const shape = getShape(piece.type, piece.rotation);
-    for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-            if (shape[y][x]) {
-                const nx = piece.x + x;
-                const ny = piece.y + y;
-                if (nx < 0 || nx >= W || ny >= H) return false;
-                if (ny >= 0 && board[ny][nx]) return false;
-            }
-        }
-    }
-    return true;
-}
-
-function getWallKicks(type: PieceType, from: number, to: number): [number, number][] {
-    const key = `${ROTATION_NAMES[from]}->${ROTATION_NAMES[to]}`;
-    if (type === 'I') return WALL_KICK_I[key] || [[0, 0]];
-    if (type === 'O') return [[0, 0]];
-    return WALL_KICK_JLSTZ[key] || [[0, 0]];
-}
-
-function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][]): Piece | null {
-    const toRotation = ((piece.rotation + direction + 4) % 4) as 0 | 1 | 2 | 3;
-    const kicks = getWallKicks(piece.type, piece.rotation, toRotation);
-
-    for (const [dx, dy] of kicks) {
-        const test: Piece = { ...piece, rotation: toRotation, x: piece.x + dx, y: piece.y - dy };
-        if (isValid(test, board)) return test;
-    }
-    return null;
-}
-
-function lockPiece(piece: Piece, board: (BoardCell | null)[][], worldIdx: number): (BoardCell | null)[][] {
-    const newBoard = board.map(row => [...row]);
-    const shape = getShape(piece.type, piece.rotation);
-    const color = getThemedColor(piece.type, 'stage', worldIdx);
-
-    for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-            if (shape[y][x]) {
-                const ny = piece.y + y;
-                const nx = piece.x + x;
-                if (ny >= 0 && ny < H && nx >= 0 && nx < W) {
-                    newBoard[ny][nx] = { color };
-                }
-            }
-        }
-    }
-    return newBoard;
-}
-
-function clearLines(board: (BoardCell | null)[][]): { board: (BoardCell | null)[][]; cleared: number; clearedRows: number[] } {
-    const clearedRows: number[] = [];
-    const remaining: (BoardCell | null)[][] = [];
-    for (let y = 0; y < board.length; y++) {
-        if (board[y].every(cell => cell !== null)) {
-            clearedRows.push(y);
-        } else {
-            remaining.push(board[y]);
-        }
-    }
-    const cleared = H - remaining.length;
-    while (remaining.length < H) {
-        remaining.unshift(Array(W).fill(null));
-    }
-    return { board: remaining, cleared, clearedRows };
-}
-
-function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
-    let gy = piece.y;
-    while (isValid({ ...piece, y: gy + 1 }, board)) gy++;
-    return gy;
-}
-
-function addGarbageLines(board: (BoardCell | null)[][], count: number, rng: () => number): (BoardCell | null)[][] {
-    if (count <= 0) return board;
-    const newBoard = board.slice(count);
-    for (let i = 0; i < count; i++) {
-        const row: (BoardCell | null)[] = Array(W).fill({ color: GARBAGE_COLOR } as BoardCell);
-        const gap = Math.floor(rng() * W);
-        row[gap] = null;
-        newBoard.push(row);
-    }
-    return newBoard;
-}
-
-// ===== T-Spin Detection =====
-function detectTSpin(piece: Piece, board: (BoardCell | null)[][], wasRotation: boolean): 'none' | 'mini' | 'full' {
-    if (piece.type !== 'T' || !wasRotation) return 'none';
-
-    // Check 4 corners around T-piece center
-    const cx = piece.x + 1;
-    const cy = piece.y + 1;
-    const corners = [
-        [cx - 1, cy - 1], [cx + 1, cy - 1],
-        [cx - 1, cy + 1], [cx + 1, cy + 1],
-    ];
-
-    let filledCorners = 0;
-    for (const [x, y] of corners) {
-        if (x < 0 || x >= W || y < 0 || y >= H || (y >= 0 && board[y]?.[x])) {
-            filledCorners++;
-        }
-    }
-
-    if (filledCorners >= 3) {
-        // Check front corners based on rotation to distinguish full vs mini
-        const frontCorners: [number, number][] = [];
-        switch (piece.rotation) {
-            case 0: frontCorners.push([cx - 1, cy - 1], [cx + 1, cy - 1]); break;
-            case 1: frontCorners.push([cx + 1, cy - 1], [cx + 1, cy + 1]); break;
-            case 2: frontCorners.push([cx - 1, cy + 1], [cx + 1, cy + 1]); break;
-            case 3: frontCorners.push([cx - 1, cy - 1], [cx - 1, cy + 1]); break;
-        }
-        let frontFilled = 0;
-        for (const [x, y] of frontCorners) {
-            if (x < 0 || x >= W || y < 0 || y >= H || (y >= 0 && board[y]?.[x])) {
-                frontFilled++;
-            }
-        }
-        return frontFilled >= 2 ? 'full' : 'mini';
-    }
-    return 'none';
-}
-
 // ===== Component =====
 export const MultiplayerBattle: React.FC<Props> = ({
     ws,
-    roomCode,
+    roomCode: _roomCode,
     playerId,
     playerName,
     opponents,
@@ -353,14 +105,14 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const [beatPhaseDisplay, setBeatPhaseDisplay] = useState(0);
 
     // Voxel terrain state
-    const [worldIdx, setWorldIdx] = useState(0);
-    const [terrainSeed, setTerrainSeed] = useState(gameSeed);
+    const [worldIdx, _setWorldIdx] = useState(0);
+    const [terrainSeed, _setTerrainSeed] = useState(gameSeed);
     const [terrainTotal, setTerrainTotal] = useState(0);
     const [terrainDestroyedCount, setTerrainDestroyedCount] = useState(0);
     const [terrainParticles, setTerrainParticles] = useState<TerrainParticle[]>([]);
-    const [floatingItems, setFloatingItems] = useState<FloatingItem[]>([]);
+    const [floatingItems, _setFloatingItems] = useState<FloatingItem[]>([]);
     const nextParticleId = useRef(0);
-    const nextFloatingId = useRef(0);
+    const _nextFloatingId = useRef(0);
 
     // Feature settings (persisted in localStorage)
     const [featureSettings, setFeatureSettings] = useState<FeatureSettings>(() => {
@@ -658,6 +410,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
             lockTimerRef.current = null;
             performLock();
         }, LOCK_DELAY);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const resetLockTimer = useCallback(() => {
@@ -886,6 +639,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         pushLiveAdvancementCheck();
         sendBoardUpdate();
         spawnPiece();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sendGameOver, onGameEnd, opponent, sendGarbage, sendBoardUpdate, playLineClear, playPerfectSound, playTSpinSound, spawnPiece, render, pushLiveAdvancementCheck, showJudgmentText, vfx, destroyTerrain, spawnTerrainParticles, showActionMessage]);
 
     // Wire up startLockTimer -> performLock circular dependency
@@ -1177,6 +931,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         return () => {
             if (beatTimerRef.current) clearInterval(beatTimerRef.current);
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [playDrum, vfx]);
 
     // ===== Beat Phase Animation =====
@@ -1357,6 +1112,7 @@ export const MultiplayerBattle: React.FC<Props> = ({
         }, 16); // ~60 FPS
 
         return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [terrainParticles.length > 0]);
 
     // ===== Render =====
@@ -1382,7 +1138,6 @@ export const MultiplayerBattle: React.FC<Props> = ({
     const displayBoard = board.map(row => row.map(cell => cell ? { ...cell, ghost: false } : null));
 
     if (piece) {
-        const gy = getGhostY(piece, board);
         const shape = getShape(piece.type, piece.rotation);
         const color = getThemedColor(piece.type, 'stage', worldIdx);
 

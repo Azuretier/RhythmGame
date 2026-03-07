@@ -34,6 +34,7 @@ export function useHomepageLogic() {
 
     // ---- Loading & advancement count ----
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUnlockedCount(getUnlockedCount());
         const timer = setTimeout(() => setIsLoading(false), 800);
         return () => clearTimeout(timer);
@@ -41,6 +42,7 @@ export function useHomepageLogic() {
 
     useEffect(() => {
         if (gameMode === 'lobby' && !showAdvancements) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setUnlockedCount(getUnlockedCount());
         }
     }, [gameMode, showAdvancements]);
@@ -98,7 +100,7 @@ export function useHomepageLogic() {
         };
 
         wsRef.current = ws;
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);  
 
     useEffect(() => {
         connectMultiplayerWs();

@@ -11,8 +11,6 @@ import type { InventorySlot } from '@/types/minecraft-switch';
 import {
   getSmeltingRecipe,
   getFuelValue,
-  isFuel,
-  isSmeltable,
   SMELT_TIME,
 } from '@/lib/minecraft-switch/crafting/smelting';
 import { getMaxStackSize } from '@/lib/minecraft-switch/inventory';
@@ -377,8 +375,6 @@ export class FurnaceTileEntity extends TileEntity {
   }
 
   tick(deltaTime: number): void {
-    const wasBurning = this.isBurning();
-
     // Step 1: Decrement burn time
     if (this.isBurning()) {
       this.burnTimeRemaining = Math.max(0, this.burnTimeRemaining - deltaTime);

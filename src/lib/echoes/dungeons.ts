@@ -11,17 +11,13 @@ import type {
   DungeonTrap,
   DungeonPuzzle,
   DungeonDifficulty,
-  DungeonReward,
   DungeonStats,
   TreasureChest,
   EnemySpawn,
   WorldRegion,
-  SubRegion,
   BiomeType,
   Element,
   Position2D,
-  TerrainType,
-  WeatherType,
   ItemRarity,
   LootEntry,
 } from '@/types/echoes';
@@ -288,7 +284,8 @@ export function generateDungeonFloor(options: DungeonGenerationOptions): Dungeon
   };
 }
 
-function generateChestLoot(floor: number, rarity: ItemRarity, diffMultiplier: number): LootEntry[] {
+ 
+function generateChestLoot(floor: number, rarity: ItemRarity, _diffMultiplier: number): LootEntry[] {
   const loot: LootEntry[] = [
     {
       itemId: 'gold_coin',

@@ -7,7 +7,7 @@
 
 import { useMemo } from 'react';
 import type { MCPlayerState, WorldTile } from '@/types/minecraft-board';
-import { BLOCK_PROPERTIES, ITEM_ICONS, ITEM_COLORS, MC_BOARD_CONFIG } from '@/types/minecraft-board';
+import { ITEM_ICONS, ITEM_COLORS } from '@/types/minecraft-board';
 import { RECIPES, canCraft, countItem } from '@/lib/minecraft-board/recipes';
 import type { CraftingRecipe } from '@/lib/minecraft-board/recipes';
 import styles from './MinecraftBoard.module.css';
@@ -32,6 +32,7 @@ export default function CraftingPanel({
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
         const key = `${selfState.x + dx},${selfState.y + dy}`;
+        // eslint-disable-next-line react-hooks/refs
         const tile = exploredTilesRef.current.get(key);
         if (tile) {
           if (tile.block === 'crafting_table') ct = true;

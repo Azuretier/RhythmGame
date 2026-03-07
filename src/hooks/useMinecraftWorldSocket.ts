@@ -9,7 +9,7 @@ import type {
   MWGamePhase, MWPlayerPosition, MWBlockChange,
 } from '@/types/minecraft-world';
 import {
-  saveRoom, listOpenRooms, updateRoomStatus, deleteRoom, cleanupStaleRooms,
+  saveRoom, listOpenRooms,
 } from '@/lib/minecraft-world/firebase';
 import type { MWFirestoreRoom } from '@/types/minecraft-world';
 
@@ -107,6 +107,7 @@ export function useMinecraftWorldSocket() {
     };
 
     ws.onerror = () => { ws.close(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const attemptReconnect = useCallback(() => {

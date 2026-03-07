@@ -8,6 +8,7 @@ export default function PanoramaBackground() {
 
   useEffect(() => {
     if (!mountRef.current) return;
+    const container = mountRef.current;
 
     // 1. Setup Scene
     const scene = new THREE.Scene();
@@ -17,7 +18,7 @@ export default function PanoramaBackground() {
     
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
-    mountRef.current.appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
 
     // 2. Geometry: SWITCHED TO CYLINDER
     // RadiusTop, RadiusBottom, Height, Segments
@@ -65,7 +66,7 @@ export default function PanoramaBackground() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      if (mountRef.current) mountRef.current.removeChild(renderer.domElement);
+      if (container) container.removeChild(renderer.domElement);
       renderer.dispose();
       geometry.dispose();
       material.dispose();

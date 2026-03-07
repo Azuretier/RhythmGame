@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { TreasureBox, TreasureBoxReward } from '../types';
-import { TREASURE_BOX_TIERS, ITEM_MAP, ROGUE_CARD_MAP } from '../constants';
+import { TREASURE_BOX_TIERS, ITEM_MAP } from '../constants';
 import { ItemIcon } from './ItemIcon';
 import styles from '../VanillaGame.module.css';
 

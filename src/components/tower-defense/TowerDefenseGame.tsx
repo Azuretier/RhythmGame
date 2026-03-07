@@ -66,6 +66,7 @@ export default function TowerDefenseGame() {
       const wave = WAVES[state.currentWave - 1];
       if (wave) {
         const isBoss = wave.groups.some(g => g.enemyType === 'boss');
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setWaveBanner({ waveNumber: state.currentWave, groups: wave.groups, isBoss });
       }
     }

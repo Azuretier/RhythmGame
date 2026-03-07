@@ -129,7 +129,7 @@ function clamp(v: number, lo: number, hi: number) {
   return v < lo ? lo : v > hi ? hi : v;
 }
 
-type RGBA = [number, number, number, number];
+type _RGBA = [number, number, number, number];
 
 function setPixel(
   data: Uint8ClampedArray,
@@ -364,7 +364,7 @@ function drawSnowSide(d: Uint8ClampedArray, w: number, ox: number, oy: number, r
   for (let py = 0; py < TILE; py++) {
     for (let px = 0; px < TILE; px++) {
       if (py < 3) {
-        let r = 244, g = 244, b = 248;
+        const r = 244, g = 244, b = 248;
         const n = (rand() - 0.5) * 8;
         setPixel(d, w, ox, oy, px, py, r + n, g + n, b + n);
       } else if (py === 3) {

@@ -21,7 +21,6 @@ import GlobalNav from '@/components/layout/GlobalNav';
 import GlobalFooter from '@/components/layout/GlobalFooter';
 
 // Vercel Analytics
-import { Analytics } from "@vercel/analytics/next"
 import { GoogleAnalytics } from "@next/third-parties/google";
 
 const geistSans = localFont({
@@ -167,6 +166,7 @@ export default async function LocaleLayout({ children, params }: Props) {
                         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
                     />
                 ))}
+                {/* eslint-disable-next-line @next/next/no-page-custom-font */}
                 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap" rel="stylesheet" />
             </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ overflowX: 'hidden' }} suppressHydrationWarning>

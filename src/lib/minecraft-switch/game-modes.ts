@@ -3,7 +3,6 @@
 // Minecraft: Nintendo Switch Edition
 // =============================================================================
 
-import { Block } from '@/types/minecraft-switch';
 import type {
   GameMode,
   Difficulty,

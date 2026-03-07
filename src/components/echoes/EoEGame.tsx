@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useEoESocket, type EoEPhase } from '@/hooks/useEoESocket';
+import { useState, useEffect } from 'react';
+import { useEoESocket } from '@/hooks/useEoESocket';
 import { EoEMenu } from './EoEMenu';
 import { EoELobby } from './EoELobby';
 import { EoEBattle } from './EoEBattle';
@@ -22,6 +22,7 @@ export default function EoEGame() {
       setIsConnecting(true);
       socket.connect();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket.connectionStatus, isConnecting]);
 
   useEffect(() => {

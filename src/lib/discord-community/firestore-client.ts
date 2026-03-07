@@ -3,8 +3,8 @@
  * Used in Next.js web application (browser context)
  */
 
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, Timestamp } from 'firebase/firestore';
+import { initializeApp, getApp } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc, collection, query, getDocs, deleteDoc } from 'firebase/firestore';
 import type { UserProfile, UserRuleProgress, XPCooldown, GuildConfig } from './types';
 import { calculateLevel, getRankForLevel } from './types';
 
@@ -21,7 +21,7 @@ const firebaseConfig = {
 let app;
 try {
   app = getApp('discord-community');
-} catch (error) {
+} catch {
   app = initializeApp(firebaseConfig, 'discord-community');
 }
 

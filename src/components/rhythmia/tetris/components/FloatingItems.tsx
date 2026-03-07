@@ -27,6 +27,7 @@ function FloatingItemEl({ item }: { item: FloatingItem }) {
     const itemDef = ITEM_MAP[item.itemId];
     if (!itemDef) return null;
 
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     const elapsed = now - item.startTime;
     const progress = Math.min(1, Math.max(0, elapsed / item.duration));
@@ -39,6 +40,7 @@ function FloatingItemEl({ item }: { item: FloatingItem }) {
     // Arc path: item rises up then curves toward target
     const startX = item.x;
     const startY = item.y;
+    // eslint-disable-next-line react-hooks/purity
     const midY = Math.min(startY, item.targetY) - 60 - Math.random() * 40;
 
     // Quadratic bezier

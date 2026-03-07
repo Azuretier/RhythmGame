@@ -18,7 +18,7 @@ export function initAppCheck(app: FirebaseApp): AppCheck | null {
     // Enable debug token on localhost BEFORE checking for site key
     // so the token is logged even during initial setup
     if (window.location.hostname === "localhost") {
-        (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
     }
 
     const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY;

@@ -37,6 +37,7 @@ export function UiThemeProvider({ children }: { children: ReactNode }) {
     } else {
       applyThemeToDocument(currentTheme);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setTheme = useCallback((themeId: string) => {

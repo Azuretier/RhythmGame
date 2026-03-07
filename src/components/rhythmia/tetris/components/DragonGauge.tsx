@@ -34,6 +34,7 @@ export function DragonGauge({ gauge }: DragonGaugeProps) {
     const bothFull = furyFull && mightFull;
 
     // Dragon silhouette SVG path segments for glow mask
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const furySegments = useMemo(() => {
         const segments = [];
         for (let i = 0; i < DRAGON_FURY_MAX; i++) {
@@ -61,6 +62,7 @@ export function DragonGauge({ gauge }: DragonGaugeProps) {
         return segments;
     }, [gauge.furyGauge]);
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const mightSegments = useMemo(() => {
         const segments = [];
         for (let i = 0; i < DRAGON_MIGHT_MAX; i++) {

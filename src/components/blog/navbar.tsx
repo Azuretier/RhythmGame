@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, Moon, Sun } from 'lucide-react';
+import { Search, Moon } from 'lucide-react';
 
 export default function Navbar() {
   return (

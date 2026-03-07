@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { initializeApp, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
 import { initAppCheck, validateAppCheckToken } from "@/lib/firebase/initAppCheck";
@@ -34,7 +34,7 @@ let appCheckAvailable: Promise<boolean> = Promise.resolve(true);
 if (typeof window !== 'undefined' && isConfigured) {
   try {
     app = getApp('rhythmia');
-  } catch (error) {
+  } catch {
     app = initializeApp(firebaseConfig, 'rhythmia');
   }
 

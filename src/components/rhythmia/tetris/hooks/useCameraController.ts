@@ -141,9 +141,13 @@ export function useCameraController(): CameraControllerReturn {
     });
 
     // Attach methods to stateRef for CameraController to use
+    // eslint-disable-next-line react-hooks/refs
     (stateRef.current as CameraState & { applyOrbit: typeof applyOrbit }).applyOrbit = applyOrbit;
+    // eslint-disable-next-line react-hooks/refs
     (stateRef.current as CameraState & { applyZoom: typeof applyZoom }).applyZoom = applyZoom;
+    // eslint-disable-next-line react-hooks/refs
     (stateRef.current as CameraState & { applyPan: typeof applyPan }).applyPan = applyPan;
 
+    // eslint-disable-next-line react-hooks/refs
     return { preset: stateRef.current.preset, setPreset, resetCamera, stateRef };
 }

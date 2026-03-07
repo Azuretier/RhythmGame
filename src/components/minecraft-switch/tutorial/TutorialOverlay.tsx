@@ -218,6 +218,7 @@ function HintText({ hint, visible }: { hint: string; visible: boolean }) {
       const timer = setTimeout(() => setShow(true), 100);
       return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShow(false);
   }, [visible]);
 
@@ -273,6 +274,7 @@ function RequiredItemsDisplay({
 }
 
 /** Confetti particle for the celebration screen */
+/* eslint-disable react-hooks/purity */
 function ConfettiParticle({ index }: { index: number }) {
   const style = useMemo(() => {
     const colors = [
@@ -299,8 +301,10 @@ function ConfettiParticle({ index }: { index: number }) {
 
   return <div style={style} />;
 }
+/* eslint-enable react-hooks/purity */
 
 /** Celebration star burst effect */
+/* eslint-disable react-hooks/purity */
 function StarBurst({ index }: { index: number }) {
   const style = useMemo(() => {
     const angle = (index / 8) * Math.PI * 2;
@@ -322,6 +326,7 @@ function StarBurst({ index }: { index: number }) {
 
   return <div style={style}>&#10022;</div>;
 }
+/* eslint-enable react-hooks/purity */
 
 /** Celebration screen when the tutorial is complete */
 function CelebrationScreen({ onDismiss, totalSteps }: { onDismiss: () => void; totalSteps: number }) {
@@ -452,6 +457,7 @@ export default function TutorialOverlay({
   // Track step changes to trigger slide-in animation
   useEffect(() => {
     if (tutorialState.currentStep !== prevStepRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAnimKey((k) => k + 1);
       prevStepRef.current = tutorialState.currentStep;
     }

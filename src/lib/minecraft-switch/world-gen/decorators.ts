@@ -195,7 +195,7 @@ function placeJungleTree(world: ChunkedWorld, x: number, y: number, z: number, r
   // Large canopy
   const canopyStart = trunkHeight - 3;
   const canopyTop = trunkHeight + 2;
-  const canopyCenter = isBigTree ? 0.5 : 0;
+  const _canopyCenter = isBigTree ? 0.5 : 0;
 
   for (let dy = canopyStart; dy <= canopyTop; dy++) {
     const layerFromTop = canopyTop - dy;
