@@ -320,6 +320,7 @@ export function useGameState() {
         terrainPhaseRef,
         tdBeatsRemainingRef,
         towerHealthRef,
+        activeEffectsRef: cardSystem.activeEffectsRef,
         enterCardSelect: cardSystem.enterCardSelect,
         enterTreasureBox: dragonAndTreasure.enterTreasureBox,
         shouldSpawnTreasureBox: dragonAndTreasure.shouldSpawnTreasureBox,
@@ -768,6 +769,7 @@ export function useGameState() {
         openTreasureBox: dragonAndTreasure.openTreasureBox,
         finishTreasureBox: dragonAndTreasure.finishTreasureBox,
         // Tower defense actions (from towerDefense)
+        waveConfigRef: towerDefense.waveConfigRef,
         spawnEnemies: towerDefense.spawnEnemies,
         updateEnemies: towerDefense.updateEnemies,
         killEnemies: towerDefense.killEnemies,

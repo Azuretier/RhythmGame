@@ -1,8 +1,6 @@
 import React from 'react';
 import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, ColorTheme, getThemedColor } from '../constants';
 import { getShape, getGhostY } from '../utils/boardUtils';
-import { PauseMenu } from './PauseMenu';
-import type { GameKeybinds } from '../hooks/useKeybinds';
 import type { Piece, Board as BoardType, FeatureSettings } from '../types';
 import styles from '../VanillaGame.module.css';
 
@@ -59,32 +57,12 @@ interface BoardProps {
     currentPiece: Piece | null;
     boardBeat: boolean;
     boardShake: boolean;
-    gameOver: boolean;
-    isPaused: boolean;
-    score: number;
-    onRestart: () => void;
-    onResume?: () => void;
-    onQuit?: () => void;
     colorTheme?: ColorTheme;
-    onThemeChange?: (theme: ColorTheme) => void;
     worldIdx?: number;
     combo?: number;
     beatPhase?: number;
     boardElRef?: React.Ref<HTMLDivElement>;
-    // Settings props for pause menu
-    das?: number;
-    arr?: number;
-    sdf?: number;
-    onDasChange?: (v: number) => void;
-    onArrChange?: (v: number) => void;
-    onSdfChange?: (v: number) => void;
-    // Keybind props for pause menu
-    keybinds?: GameKeybinds;
-    onKeybindChange?: (action: keyof GameKeybinds, key: string) => void;
-    onKeybindsReset?: () => void;
-    defaultKeybinds?: GameKeybinds;
     featureSettings?: FeatureSettings;
-    onFeatureSettingsUpdate?: (settings: FeatureSettings) => void;
     activeAnomaly?: boolean;
 }
 
@@ -99,30 +77,12 @@ export const Board = React.memo(function Board({
     currentPiece,
     boardBeat,
     boardShake,
-    gameOver,
-    isPaused,
-    score,
-    onRestart,
-    onResume,
-    onQuit,
     colorTheme = 'stage',
-    onThemeChange,
     worldIdx = 0,
     combo = 0,
     beatPhase = 0,
     boardElRef,
-    das = 167,
-    arr = 33,
-    sdf = 50,
-    onDasChange,
-    onArrChange,
-    onSdfChange,
-    keybinds,
-    onKeybindChange,
-    onKeybindsReset,
-    defaultKeybinds,
     featureSettings,
-    onFeatureSettingsUpdate,
     activeAnomaly = false,
 }: BoardProps) {
     const isFever = combo >= 10;
@@ -178,9 +138,6 @@ export const Board = React.memo(function Board({
         activeAnomaly ? styles.anomaly : '',
     ].filter(Boolean).join(' '), [boardBeat, boardShake, isFever, activeAnomaly]);
 
-    // Default keybinds fallback
-    const fallbackKeybinds: GameKeybinds = { inventory: 'e', shop: 'l' };
-
     return (
         <div className={boardWrapClasses}>
             <div
@@ -202,50 +159,6 @@ export const Board = React.memo(function Board({
                     ))
                 )}
             </div>
-
-            {/* Overlay for Game Over */}
-            {gameOver && (
-                <div className={styles.gameover} style={{ display: 'flex' }}>
-                    <h2>GAME OVER</h2>
-                    <div className={styles.finalScore}>{score.toLocaleString()} pts</div>
-                    <div className={styles.pauseMenuButtons}>
-                        <button className={styles.pauseMenuBtn} onClick={onRestart}>
-                            もう一度
-                        </button>
-                        {onQuit && (
-                            <button
-                                className={`${styles.pauseMenuBtn} ${styles.pauseMenuQuitBtn}`}
-                                onClick={onQuit}
-                            >
-                                Back to Title
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Pause Menu with side navigation tabs */}
-            {isPaused && !gameOver && (
-                <PauseMenu
-                    score={score}
-                    onResume={onResume || onRestart}
-                    onQuit={onQuit}
-                    das={das}
-                    arr={arr}
-                    sdf={sdf}
-                    onDasChange={onDasChange || (() => { })}
-                    onArrChange={onArrChange || (() => { })}
-                    onSdfChange={onSdfChange || (() => { })}
-                    colorTheme={colorTheme}
-                    onThemeChange={onThemeChange}
-                    keybinds={keybinds || fallbackKeybinds}
-                    onKeybindChange={onKeybindChange || (() => { })}
-                    onKeybindsReset={onKeybindsReset || (() => { })}
-                    defaultKeybinds={defaultKeybinds || fallbackKeybinds}
-                    featureSettings={featureSettings}
-                    onFeatureSettingsUpdate={onFeatureSettingsUpdate}
-                />
-            )}
         </div>
     );
 });

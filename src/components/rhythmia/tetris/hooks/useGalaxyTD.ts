@@ -112,34 +112,29 @@ export function useGalaxyTD({
         setState(createInitialState());
     }, []);
 
-    // Clear enemies on game over only (ring stays active across phases)
-    const [prevGameOver, setPrevGameOver] = useState(gameOver);
-    if (prevGameOver !== gameOver) {
-        setPrevGameOver(gameOver);
-        if (gameOver) {
-            setState(prev => ({
-                ...prev,
-                enemies: [],
-                projectiles: [],
-                spawnTracker: null,
-                phase: 'build' as const,
-            }));
+    const visibleState = gameOver
+        ? {
+            ...state,
+            enemies: [],
+            projectiles: [],
+            spawnTracker: null,
+            phase: 'build' as const,
         }
-    }
+        : state;
 
     return {
-        state,
-        enemies: state.enemies,
-        towers: state.towers,
-        projectiles: state.projectiles,
-        gates: state.gates,
-        towerSlots: state.towerSlots,
-        waveNumber: state.currentWave,
-        gold: state.gold,
-        lives: state.lives,
-        selectedTowerType: state.selectedTowerType,
-        selectedTowerId: state.selectedTowerId,
-        phase: state.phase,
+        state: visibleState,
+        enemies: visibleState.enemies,
+        towers: visibleState.towers,
+        projectiles: visibleState.projectiles,
+        gates: visibleState.gates,
+        towerSlots: visibleState.towerSlots,
+        waveNumber: visibleState.currentWave,
+        gold: visibleState.gold,
+        lives: visibleState.lives,
+        selectedTowerType: visibleState.selectedTowerType,
+        selectedTowerId: visibleState.selectedTowerId,
+        phase: visibleState.phase,
         recentKillsRef,
         tick,
         onLineClear,

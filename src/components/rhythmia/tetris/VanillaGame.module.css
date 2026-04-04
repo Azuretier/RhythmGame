@@ -1634,108 +1634,93 @@
 .gameover {
   position: fixed;
   inset: 0;
-  display: none;
-  flex-direction: column;
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.92);
-  z-index: 200;
-  gap: 20px;
+  padding: 24px;
+  background:
+    linear-gradient(to bottom, rgba(12, 12, 12, 0.72), rgba(12, 12, 12, 0.88)),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.02) 0,
+      rgba(255, 255, 255, 0.02) 2px,
+      transparent 2px,
+      transparent 4px
+    );
+  z-index: 12000;
 }
 
-.gameover.show {
-  display: flex;
-  animation: gameoverFadeIn 0.6s ease-out;
-}
-
-@keyframes gameoverFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.gameover h2 {
-  font-size: 2.5rem;
-  font-weight: 200;
-  color: white;
-  letter-spacing: 0.3em;
-  animation: slideDown 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px) scale(0.9);
-    filter: blur(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-.gameoverStats {
+.gameoverContainer {
+  width: min(520px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 18px;
+  padding: 28px 24px;
+  color: #fff;
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  background: rgba(0, 0, 0, 0.65);
+  border: 3px solid #000;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.08),
+    0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.gameoverTitle {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.7);
 }
 
 .finalScore {
-  font-size: 1.5rem;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.7);
-  animation: scoreReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  color: #f1f1f1;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+}
+
+.gameoverButtons {
+  width: 100%;
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gameoverBtn {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
+  min-height: 44px;
+  width: 100%;
+  padding: 0 16px;
+  color: #fff;
+  background: linear-gradient(to bottom, #8b8b8b, #6d6d6d);
+  border: 2px solid #000;
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.35),
+    inset -2px -4px 0 rgba(0, 0, 0, 0.35);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.6);
+  cursor: pointer;
 }
 
-.scoreNumber {
-  font-variant-numeric: tabular-nums;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.7) 0%,
-    rgba(255, 255, 255, 1) 50%,
-    rgba(255, 255, 255, 0.7) 100%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: scoreShimmer 2s ease-in-out 1.2s both;
+.gameoverBtn:hover {
+  background: linear-gradient(to bottom, #a0a0a0, #7d7d7d);
 }
 
-.scoreSuffix {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.9rem;
+.gameoverBtn:active {
+  transform: translateY(1px);
 }
 
-@keyframes scoreShimmer {
-  0% {
-    background-position: 200% center;
-  }
-  50% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: -200% center;
-    background-size: 100% 100%;
-    background-image: none;
-    -webkit-text-fill-color: rgba(255, 255, 255, 0.9);
-  }
+.gameoverQuitBtn {
+  background: linear-gradient(to bottom, #8b6565, #6e4444);
 }
 
 @keyframes scoreReveal {

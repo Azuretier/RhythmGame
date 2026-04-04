@@ -159,7 +159,21 @@ export type CardAttribute =
     | 'lucky_drops'     // Higher rarity material drop rates
     | 'combo_amplify'   // Combo multiplier grows faster
     | 'shield'          // First miss per stage doesn't break combo
-    | 'dragon_boost';   // Enables Mandarin Fever dragon gauge system
+    | 'dragon_boost'    // Enables Mandarin Fever dragon gauge system
+    | 'tower_upgrade';  // TD tower enhancements (damage, AoE, status, pierce, etc.)
+
+// ===== Tower Upgrade Effect (metadata for tower_upgrade cards) =====
+export type TowerUpgradeEffect = {
+    damageBonus?: number;
+    fireRateMult?: number;
+    aoeRadius?: number;
+    slowChance?: number;
+    burnChance?: number;
+    stunChance?: number;
+    pierce?: number;
+    enemyHpReduction?: number;
+    lineKillMultiplier?: number;
+};
 
 // ===== Rogue-Like Card =====
 export type RogueCard = {
@@ -176,6 +190,8 @@ export type RogueCard = {
     attribute: CardAttribute;
     /** Per-attribute numeric value (uses for combo_guard, % for terrain_surge, etc.) */
     attributeValue: number;
+    /** Tower upgrade metadata (only for tower_upgrade cards) */
+    towerEffect?: TowerUpgradeEffect;
 };
 
 // ===== Equipped Card (player's deck) =====
@@ -209,6 +225,16 @@ export type ActiveEffects = {
     equipmentComboAmplify: number;
     equipmentReactionPower: number;
     equipmentEnchantments: EnchantmentType[];
+    // Tower Defense upgrade bonuses
+    towerDamageBonus: number;
+    towerFireRateMult: number;
+    towerAoeRadius: number;
+    towerSlowChance: number;
+    towerBurnChance: number;
+    towerStunChance: number;
+    towerPierce: number;
+    tdEnemyHpReduction: number;
+    lineKillMultiplier: number;
 };
 
 // ===== Card Selection Offer =====
@@ -226,6 +252,16 @@ export type GridPos = { gx: number; gz: number };
 // Minecraft-style enemy types for TD phase
 export type TDEnemyType = 'zombie' | 'skeleton' | 'creeper' | 'spider' | 'enderman' | 'slime' | 'magma_cube' | 'pig' | 'chicken' | 'cow' | 'bee' | 'cat' | 'horse' | 'rabbit' | 'wolf';
 
+// Enemy special abilities
+export type TDEnemyAbility = 'fast' | 'tank' | 'heal_aura' | 'shield_aura' | 'split' | 'stealth' | 'explosive';
+
+// Status effects applied to enemies by tower upgrades
+export interface TDStatusEffect {
+    type: 'slow' | 'burn' | 'stun';
+    remaining: number;   // beats remaining
+    magnitude: number;   // slow=speed mult, burn=damage/beat, stun=N/A
+}
+
 export type Enemy = {
     id: number;
     // World-space position (derived from grid coords for rendering)
@@ -242,6 +278,13 @@ export type Enemy = {
     spawnTime: number;
     // Minecraft mob type for visual appearance
     enemyType: TDEnemyType;
+    // Sophistication fields
+    armor: number;
+    garbageRows: number;
+    abilities: TDEnemyAbility[];
+    statusEffects: TDStatusEffect[];
+    stealthBeatsLeft: number;
+    isBoss: boolean;
 };
 
 export type Bullet = {
@@ -254,6 +297,12 @@ export type Bullet = {
     vz: number;
     targetEnemyId: number;
     alive: boolean;
+    // Sophistication fields
+    damage: number;
+    aoeRadius: number;
+    statusOnHit: TDStatusEffect | null;
+    pierce: number;       // remaining pierces (0 = dies on first hit)
+    hitEnemyIds: number[]; // enemies already hit by this bullet (for pierce)
 };
 
 // ===== Terrain Particle =====

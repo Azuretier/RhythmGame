@@ -3,17 +3,47 @@
  * Extracted from useGameState to reduce file size.
  */
 import { useState, useRef, useCallback, useEffect, type MutableRefObject } from 'react';
-import type { Enemy, Bullet, GamePhase, TDEnemyType, TerrainPhase } from '../types';
+import type { Enemy, Bullet, GamePhase, TDEnemyType, TerrainPhase, ActiveEffects, TDStatusEffect } from '../types';
 import {
     BOARD_WIDTH,
     MAX_HEALTH, ENEMY_HP,
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
-    TD_WAVE_BEATS,
+    TD_ENEMY_DEFS,
+    TD_SLOW_MAGNITUDE, TD_BURN_DAMAGE, TD_BURN_DURATION, TD_STUN_DURATION,
+    TD_HEAL_AURA_RANGE, TD_HEAL_AURA_HP, TD_SHIELD_AURA_RANGE, TD_SHIELD_AURA_ARMOR,
+    TD_STEALTH_BEATS, TD_SPLIT_HP_FACTOR,
+    DEFAULT_ACTIVE_EFFECTS,
 } from '../constants';
+import { generateWave, pickEnemyType, type TDWaveConfig } from '../td-waves';
 
 let nextEnemyId = 0;
 let nextBulletId = 0;
+
+/** Create a default enemy with all sophistication fields zeroed */
+function createEnemy(
+    id: number,
+    gx: number, gz: number,
+    enemyType: TDEnemyType,
+    hp: number, maxHp: number,
+    speed: number, armor: number, garbageRows: number,
+    abilities: string[], isBoss: boolean,
+): Enemy {
+    return {
+        id,
+        x: gx * GRID_TILE_SIZE, y: 0.5, z: gz * GRID_TILE_SIZE,
+        gridX: gx, gridZ: gz,
+        speed, health: hp, maxHealth: maxHp, alive: true,
+        spawnTime: Date.now(),
+        enemyType,
+        armor,
+        garbageRows,
+        abilities: abilities as Enemy['abilities'],
+        statusEffects: [],
+        stealthBeatsLeft: abilities.includes('stealth') ? TD_STEALTH_BEATS : 0,
+        isBoss,
+    };
+}
 
 export interface UseTowerDefenseDeps {
     /** Refs from core game state */
@@ -30,6 +60,8 @@ export interface UseTowerDefenseDeps {
     terrainPhaseRef: MutableRefObject<TerrainPhase>;
     tdBeatsRemainingRef: MutableRefObject<number>;
     towerHealthRef: MutableRefObject<number>;
+    /** Card system refs */
+    activeEffectsRef: MutableRefObject<ActiveEffects>;
     /** Card system callbacks */
     enterCardSelect: () => void;
     enterTreasureBox: () => void;
@@ -41,6 +73,7 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         gameOverRef, gamePhaseRef, stageNumberRef, boardRef,
         setBoard, setGamePhase, setTerrainPhase, setTdBeatsRemaining,
         terrainPhaseRef, tdBeatsRemainingRef, towerHealthRef,
+        activeEffectsRef,
         enterCardSelect, enterTreasureBox, shouldSpawnTreasureBox,
     } = deps;
 
@@ -50,6 +83,9 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
     const [towerHealth, setTowerHealth] = useState(MAX_HEALTH);
     const enemiesRef = useRef<Enemy[]>(enemies);
     const bulletsRef = useRef<Bullet[]>(bullets);
+
+    // Wave config ref (set on checkpoint entry)
+    const waveConfigRef = useRef<TDWaveConfig | null>(null);
 
     // Keep refs in sync
     useEffect(() => { enemiesRef.current = enemies; }, [enemies]);
@@ -65,10 +101,12 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         return set;
     }, []);
 
-    // Spawn enemies on the grid perimeter
+    // Spawn enemies on the grid perimeter using wave config
     const spawnEnemies = useCallback((count: number) => {
         const occupied = getOccupiedCells();
         const newEnemies: Enemy[] = [];
+        const waveConfig = waveConfigRef.current;
+        const effects = activeEffectsRef.current;
 
         for (let i = 0; i < count; i++) {
             const candidates: { gx: number; gz: number }[] = [];
@@ -86,35 +124,123 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
             if (candidates.length === 0) break;
 
             const cell = candidates[Math.floor(Math.random() * candidates.length)];
-            const worldX = cell.gx * GRID_TILE_SIZE;
-            const worldZ = cell.gz * GRID_TILE_SIZE;
             occupied.add(`${cell.gx},${cell.gz}`);
 
-            const enemyTypes: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
-            newEnemies.push({
-                id: nextEnemyId++,
-                x: worldX,
-                y: 0.5,
-                z: worldZ,
-                gridX: cell.gx,
-                gridZ: cell.gz,
-                speed: 1,
-                health: ENEMY_HP,
-                maxHealth: ENEMY_HP,
-                alive: true,
-                spawnTime: Date.now(),
-                enemyType: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
-            });
+            // Pick enemy type from wave pool or fallback
+            const pool = waveConfig?.pool ?? ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'] as TDEnemyType[];
+            const stageNum = stageNumberRef.current;
+            const enemyType = pickEnemyType(pool, stageNum);
+            const def = TD_ENEMY_DEFS[enemyType];
+
+            // Apply wave HP multiplier and enemy HP reduction from cards
+            const hpMult = waveConfig?.hpMult ?? 1;
+            const hpReduction = 1 - effects.tdEnemyHpReduction;
+            const finalHp = Math.max(1, Math.round(def.hp * hpMult * hpReduction));
+
+            newEnemies.push(createEnemy(
+                nextEnemyId++,
+                cell.gx, cell.gz,
+                enemyType,
+                finalHp, finalHp,
+                def.speed, def.armor, def.garbageRows,
+                [...def.abilities],
+                false,
+            ));
         }
         setEnemies(prev => [...prev, ...newEnemies]);
-    }, [getOccupiedCells]);
+    }, [getOccupiedCells, activeEffectsRef, stageNumberRef]);
 
-    // Move enemies 1 tile toward tower
-    const updateEnemies = useCallback((): number => {
+    // Spawn a boss enemy (horse) at a random perimeter cell
+    const spawnBoss = useCallback(() => {
+        const occupied = getOccupiedCells();
+        const candidates: { gx: number; gz: number }[] = [];
+        for (let gx = -GRID_HALF; gx <= GRID_HALF; gx++) {
+            for (let gz = -GRID_HALF; gz <= GRID_HALF; gz++) {
+                if (Math.abs(gx) + Math.abs(gz) === GRID_SPAWN_RING && !occupied.has(`${gx},${gz}`)) {
+                    candidates.push({ gx, gz });
+                }
+            }
+        }
+        if (candidates.length === 0) return;
+        const cell = candidates[Math.floor(Math.random() * candidates.length)];
+
+        const def = TD_ENEMY_DEFS.horse;
+        const waveConfig = waveConfigRef.current;
+        const hpMult = waveConfig?.hpMult ?? 1;
+        const hpReduction = 1 - activeEffectsRef.current.tdEnemyHpReduction;
+        const finalHp = Math.max(1, Math.round(def.hp * hpMult * hpReduction));
+
+        const boss = createEnemy(
+            nextEnemyId++,
+            cell.gx, cell.gz,
+            'horse', finalHp, finalHp,
+            def.speed, def.armor, def.garbageRows,
+            [...def.abilities], true,
+        );
+        setEnemies(prev => [...prev, boss]);
+        enemiesRef.current = [...enemiesRef.current, boss];
+    }, [getOccupiedCells, activeEffectsRef]);
+
+    // Compute shield aura bonus for an enemy from nearby wolf allies
+    const getShieldAuraBonus = useCallback((enemy: Enemy): number => {
+        let bonus = 0;
+        for (const ally of enemiesRef.current) {
+            if (!ally.alive || ally.id === enemy.id) continue;
+            if (!ally.abilities.includes('shield_aura')) continue;
+            const dist = Math.abs(ally.gridX - enemy.gridX) + Math.abs(ally.gridZ - enemy.gridZ);
+            if (dist <= TD_SHIELD_AURA_RANGE) {
+                bonus = TD_SHIELD_AURA_ARMOR; // doesn't stack from multiple wolves
+                break;
+            }
+        }
+        return bonus;
+    }, []);
+
+    // Move enemies 1 tile toward tower, process status effects, apply auras
+    const updateEnemies = useCallback((): { reached: number; garbageTotal: number } => {
         const current = enemiesRef.current;
         let reached = 0;
+        let garbageTotal = 0;
         const updated: Enemy[] = [];
 
+        // Process status effects and auras first
+        for (const e of current) {
+            if (!e.alive) continue;
+
+            // Tick status effects
+            const newEffects: TDStatusEffect[] = [];
+            for (const eff of e.statusEffects) {
+                if (eff.type === 'burn') {
+                    e.health -= TD_BURN_DAMAGE;
+                    if (e.health <= 0) {
+                        e.alive = false;
+                    }
+                }
+                const remaining = eff.remaining - 1;
+                if (remaining > 0) {
+                    newEffects.push({ ...eff, remaining });
+                }
+            }
+            e.statusEffects = newEffects;
+
+            // Decrement stealth timer
+            if (e.stealthBeatsLeft > 0) {
+                e.stealthBeatsLeft--;
+            }
+
+            // Heal aura: heal nearby allies
+            if (e.alive && e.abilities.includes('heal_aura')) {
+                for (const ally of current) {
+                    if (!ally.alive || ally.id === e.id) continue;
+                    const dist = Math.abs(ally.gridX - e.gridX) + Math.abs(ally.gridZ - e.gridZ);
+                    if (dist <= TD_HEAL_AURA_RANGE && ally.health < ally.maxHealth) {
+                        ally.health = Math.min(ally.maxHealth, ally.health + TD_HEAL_AURA_HP);
+                    }
+                }
+            }
+        }
+
+        // Sort by manhattan distance for movement priority
         const sorted = current
             .filter(e => e.alive)
             .sort((a, b) => (Math.abs(a.gridX) + Math.abs(a.gridZ)) - (Math.abs(b.gridX) + Math.abs(b.gridZ)));
@@ -127,46 +253,72 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
 
             if (manhattan <= GRID_TOWER_RADIUS) {
                 reached++;
+                garbageTotal += e.garbageRows;
                 continue;
             }
 
-            let bestDist = manhattan;
-            let bestGx = e.gridX;
-            let bestGz = e.gridZ;
-
-            const shuffled = [...dirs].sort(() => Math.random() - 0.5);
-
-            for (const [dx, dz] of shuffled) {
-                const nx = e.gridX + dx;
-                const nz = e.gridZ + dz;
-                const nd = Math.abs(nx) + Math.abs(nz);
-
-                if (nd >= manhattan) continue;
-
-                const key = `${nx},${nz}`;
-                if (claimed.has(key)) continue;
-
-                if (nd < bestDist) {
-                    bestDist = nd;
-                    bestGx = nx;
-                    bestGz = nz;
-                }
+            // Stunned enemies skip movement
+            const isStunned = e.statusEffects.some(eff => eff.type === 'stun');
+            if (isStunned) {
+                claimed.add(`${e.gridX},${e.gridZ}`);
+                updated.push({ ...e });
+                continue;
             }
 
-            claimed.add(`${bestGx},${bestGz}`);
+            // Determine movement steps (fast enemies move 2 tiles)
+            const isSlowed = e.statusEffects.some(eff => eff.type === 'slow');
+            const moveSteps = isSlowed ? 1 : e.speed;
+
+            let curGx = e.gridX;
+            let curGz = e.gridZ;
+
+            for (let step = 0; step < moveSteps; step++) {
+                const curManhattan = Math.abs(curGx) + Math.abs(curGz);
+                if (curManhattan <= GRID_TOWER_RADIUS) break;
+
+                let bestDist = curManhattan;
+                let bestGx = curGx;
+                let bestGz = curGz;
+
+                const shuffled = [...dirs].sort(() => Math.random() - 0.5);
+                for (const [dx, dz] of shuffled) {
+                    const nx = curGx + dx;
+                    const nz = curGz + dz;
+                    const nd = Math.abs(nx) + Math.abs(nz);
+                    if (nd >= curManhattan) continue;
+                    const key = `${nx},${nz}`;
+                    if (claimed.has(key)) continue;
+                    if (nd < bestDist) {
+                        bestDist = nd;
+                        bestGx = nx;
+                        bestGz = nz;
+                    }
+                }
+                curGx = bestGx;
+                curGz = bestGz;
+            }
+
+            claimed.add(`${curGx},${curGz}`);
+
+            // Check if this movement brought enemy to tower
+            if (Math.abs(curGx) + Math.abs(curGz) <= GRID_TOWER_RADIUS) {
+                reached++;
+                garbageTotal += e.garbageRows;
+                continue;
+            }
 
             updated.push({
                 ...e,
-                gridX: bestGx,
-                gridZ: bestGz,
-                x: bestGx * GRID_TILE_SIZE,
-                z: bestGz * GRID_TILE_SIZE,
+                gridX: curGx,
+                gridZ: curGz,
+                x: curGx * GRID_TILE_SIZE,
+                z: curGz * GRID_TILE_SIZE,
             });
         }
 
         setEnemies(updated);
         enemiesRef.current = updated;
-        return reached;
+        return { reached, garbageTotal };
     }, []);
 
     // Kill closest enemies
@@ -185,17 +337,35 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         });
     }, []);
 
-    // Fire a bullet from tower at the closest enemy
-    const fireBullet = useCallback((): boolean => {
-        const alive = enemiesRef.current.filter(e => e.alive);
-        if (alive.length === 0) return false;
+    // Roll a status effect for a bullet based on active effects
+    const rollStatusEffect = useCallback((): TDStatusEffect | null => {
+        const effects = activeEffectsRef.current;
+        // Try each chance (slow > burn > stun priority)
+        if (effects.towerSlowChance > 0 && Math.random() < effects.towerSlowChance) {
+            return { type: 'slow', remaining: 2, magnitude: TD_SLOW_MAGNITUDE };
+        }
+        if (effects.towerBurnChance > 0 && Math.random() < effects.towerBurnChance) {
+            return { type: 'burn', remaining: TD_BURN_DURATION, magnitude: TD_BURN_DAMAGE };
+        }
+        if (effects.towerStunChance > 0 && Math.random() < effects.towerStunChance) {
+            return { type: 'stun', remaining: TD_STUN_DURATION, magnitude: 0 };
+        }
+        return null;
+    }, [activeEffectsRef]);
 
-        let closest = alive[0];
+    // Fire a bullet from tower at the closest non-stealth enemy
+    const fireBullet = useCallback((): boolean => {
+        const effects = activeEffectsRef.current;
+        // Skip stealth enemies from targeting
+        const targetable = enemiesRef.current.filter(e => e.alive && e.stealthBeatsLeft <= 0);
+        if (targetable.length === 0) return false;
+
+        let closest = targetable[0];
         let closestDist = Math.abs(closest.gridX) + Math.abs(closest.gridZ);
-        for (let i = 1; i < alive.length; i++) {
-            const d = Math.abs(alive[i].gridX) + Math.abs(alive[i].gridZ);
+        for (let i = 1; i < targetable.length; i++) {
+            const d = Math.abs(targetable[i].gridX) + Math.abs(targetable[i].gridZ);
             if (d < closestDist) {
-                closest = alive[i];
+                closest = targetable[i];
                 closestDist = d;
             }
         }
@@ -213,18 +383,86 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
 
         const bullet: Bullet = {
             id: nextBulletId++,
-            x: 0,
-            y: startY,
-            z: 0,
-            vx,
-            vy,
-            vz,
+            x: 0, y: startY, z: 0,
+            vx, vy, vz,
             targetEnemyId: closest.id,
             alive: true,
+            damage: BULLET_DAMAGE + effects.towerDamageBonus,
+            aoeRadius: effects.towerAoeRadius,
+            statusOnHit: rollStatusEffect(),
+            pierce: effects.towerPierce,
+            hitEnemyIds: [],
         };
         setBullets(prev => [...prev, bullet]);
 
         return true;
+    }, [activeEffectsRef, rollStatusEffect]);
+
+    // Apply damage to an enemy, considering armor and shield aura
+    const applyDamage = useCallback((enemy: Enemy, rawDamage: number, statusOnHit: TDStatusEffect | null): boolean => {
+        const shieldBonus = getShieldAuraBonus(enemy);
+        const effectiveDamage = Math.max(1, rawDamage - enemy.armor - shieldBonus);
+        enemy.health -= effectiveDamage;
+
+        // Apply status effect
+        if (statusOnHit && !enemy.statusEffects.some(e => e.type === statusOnHit.type)) {
+            enemy.statusEffects.push({ ...statusOnHit });
+        }
+
+        if (enemy.health <= 0) {
+            enemy.alive = false;
+            return true; // killed
+        }
+        return false;
+    }, [getShieldAuraBonus]);
+
+    // Apply AoE splash damage to enemies near an impact point
+    const applyAoeSplash = useCallback((
+        impactX: number, impactZ: number,
+        aoeRadius: number, damage: number,
+        statusOnHit: TDStatusEffect | null,
+        excludeIds: Set<number>,
+    ): { kills: number; pendingSpawns: Enemy[] } => {
+        let kills = 0;
+        const pendingSpawns: Enemy[] = [];
+
+        for (const e of enemiesRef.current) {
+            if (!e.alive || excludeIds.has(e.id)) continue;
+            const dist = Math.abs(e.gridX * GRID_TILE_SIZE - impactX) + Math.abs(e.gridZ * GRID_TILE_SIZE - impactZ);
+            if (dist <= aoeRadius * GRID_TILE_SIZE) {
+                const killed = applyDamage(e, damage, statusOnHit);
+                excludeIds.add(e.id);
+                if (killed) {
+                    kills++;
+                    // Handle split on kill
+                    if (e.abilities.includes('split')) {
+                        const spawns = createSplitChildren(e);
+                        pendingSpawns.push(...spawns);
+                    }
+                }
+            }
+        }
+        return { kills, pendingSpawns };
+    }, [applyDamage]);
+
+    // Create split children from a slime enemy
+    const createSplitChildren = useCallback((parent: Enemy): Enemy[] => {
+        const childHp = Math.max(1, Math.floor(parent.maxHealth * TD_SPLIT_HP_FACTOR));
+        const offsets: [number, number][] = [[1, 0], [-1, 0]];
+        const children: Enemy[] = [];
+        for (const [dx, dz] of offsets) {
+            const gx = parent.gridX + dx;
+            const gz = parent.gridZ + dz;
+            if (Math.abs(gx) > GRID_HALF || Math.abs(gz) > GRID_HALF) continue;
+            children.push(createEnemy(
+                nextEnemyId++,
+                gx, gz,
+                'slime', childHp, childHp,
+                1, 0, 1,
+                [], false,
+            ));
+        }
+        return children;
     }, []);
 
     // Move bullets with gravity and check collision with enemies
@@ -243,6 +481,38 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         const updatedBullets: Bullet[] = [];
         const damagedEnemyIds: Set<number> = new Set();
         let totalKills = 0;
+        const pendingSpawns: Enemy[] = [];
+
+        const handleHit = (b: Bullet, enemy: Enemy): boolean => {
+            damagedEnemyIds.add(enemy.id);
+            b.hitEnemyIds.push(enemy.id);
+            const killed = applyDamage(enemy, b.damage, b.statusOnHit);
+            if (killed) {
+                totalKills++;
+                // Handle split on kill
+                if (enemy.abilities.includes('split')) {
+                    pendingSpawns.push(...createSplitChildren(enemy));
+                }
+            }
+
+            // AoE splash
+            if (b.aoeRadius > 0) {
+                const splash = applyAoeSplash(
+                    enemy.x, enemy.z,
+                    b.aoeRadius, b.damage, b.statusOnHit,
+                    damagedEnemyIds,
+                );
+                totalKills += splash.kills;
+                pendingSpawns.push(...splash.pendingSpawns);
+            }
+
+            // Pierce: bullet continues if pierces remain
+            if (b.pierce > 0) {
+                b.pierce--;
+                return false; // bullet stays alive
+            }
+            return true; // bullet consumed
+        };
 
         for (const b of currentBullets) {
             if (!b.alive) continue;
@@ -252,42 +522,41 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
             const newY = b.y + b.vy * dt - 0.5 * BULLET_GRAVITY * dt * dt;
             const newZ = b.z + b.vz * dt;
 
+            // Ground impact
             if (newY <= BULLET_GROUND_Y) {
                 const targetEnemy = enemiesRef.current.find(
-                    e => e.id === b.targetEnemyId && e.alive
+                    e => e.id === b.targetEnemyId && e.alive && !b.hitEnemyIds.includes(e.id)
                 );
                 if (targetEnemy && !damagedEnemyIds.has(targetEnemy.id)) {
-                    targetEnemy.health -= BULLET_DAMAGE;
-                    damagedEnemyIds.add(targetEnemy.id);
-                    if (targetEnemy.health <= 0) {
-                        targetEnemy.alive = false;
-                        totalKills++;
-                    }
+                    handleHit(b, targetEnemy);
+                } else if (b.aoeRadius > 0) {
+                    // AoE splash at ground impact even without direct hit
+                    const splash = applyAoeSplash(newX, newZ, b.aoeRadius, b.damage, b.statusOnHit, damagedEnemyIds);
+                    totalKills += splash.kills;
+                    pendingSpawns.push(...splash.pendingSpawns);
                 }
                 continue;
             }
 
+            // Check collision with target enemy
+            let bulletConsumed = false;
             const targetEnemy = enemiesRef.current.find(
-                e => e.id === b.targetEnemyId && e.alive
+                e => e.id === b.targetEnemyId && e.alive && !b.hitEnemyIds.includes(e.id)
             );
             if (targetEnemy) {
                 const targetDist = Math.sqrt(
                     (targetEnemy.x - newX) ** 2 + (targetEnemy.y - newY) ** 2 + (targetEnemy.z - newZ) ** 2
                 );
                 if (targetDist < BULLET_KILL_RADIUS) {
-                    targetEnemy.health -= BULLET_DAMAGE;
-                    damagedEnemyIds.add(targetEnemy.id);
-                    if (targetEnemy.health <= 0) {
-                        targetEnemy.alive = false;
-                        totalKills++;
-                    }
-                    continue;
+                    bulletConsumed = handleHit(b, targetEnemy);
+                    if (bulletConsumed) continue;
                 }
             }
 
-            if (!targetEnemy) {
+            // If target dead/missing, check any nearby enemy
+            if (!targetEnemy && !bulletConsumed) {
                 const alive = enemiesRef.current.filter(
-                    e => e.alive && !damagedEnemyIds.has(e.id)
+                    e => e.alive && !damagedEnemyIds.has(e.id) && !b.hitEnemyIds.includes(e.id)
                 );
                 let hitEnemy: Enemy | null = null;
                 let bestDist = Infinity;
@@ -301,13 +570,8 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
                     }
                 }
                 if (hitEnemy && bestDist < BULLET_KILL_RADIUS) {
-                    hitEnemy.health -= BULLET_DAMAGE;
-                    damagedEnemyIds.add(hitEnemy.id);
-                    if (hitEnemy.health <= 0) {
-                        hitEnemy.alive = false;
-                        totalKills++;
-                    }
-                    continue;
+                    bulletConsumed = handleHit(b, hitEnemy);
+                    if (bulletConsumed) continue;
                 }
             }
 
@@ -323,15 +587,23 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         setBullets(updatedBullets);
         bulletsRef.current = updatedBullets;
 
-        const deadEnemies = enemiesRef.current.filter(e => !e.alive);
-        if (deadEnemies.length > 0) {
-            const newEnemies = enemiesRef.current.filter(e => e.alive);
-            setEnemies(newEnemies);
-            enemiesRef.current = newEnemies;
+        // Add split children
+        if (pendingSpawns.length > 0) {
+            const allEnemies = [...enemiesRef.current, ...pendingSpawns];
+            const aliveEnemies = allEnemies.filter(e => e.alive);
+            setEnemies(aliveEnemies);
+            enemiesRef.current = aliveEnemies;
+        } else {
+            const deadEnemies = enemiesRef.current.filter(e => !e.alive);
+            if (deadEnemies.length > 0) {
+                const newEnemies = enemiesRef.current.filter(e => e.alive);
+                setEnemies(newEnemies);
+                enemiesRef.current = newEnemies;
+            }
         }
 
         return totalKills;
-    }, []);
+    }, [applyDamage, applyAoeSplash, createSplitChildren]);
 
     // Add garbage rows to the bottom of the board
     const addGarbageRows = useCallback((count: number) => {
@@ -345,34 +617,38 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         setBoard(newBoard);
     }, [boardRef, setBoard]);
 
-    // Spawn an enemy at a specific grid cell
+    // Spawn an enemy at a specific grid cell (for corruption spawning)
     const spawnEnemyAtCell = useCallback((gx: number, gz: number) => {
         const occupied = getOccupiedCells();
         const key = `${gx},${gz}`;
         if (occupied.has(key)) return;
 
-        const worldX = gx * GRID_TILE_SIZE;
-        const worldZ = gz * GRID_TILE_SIZE;
+        const pool = waveConfigRef.current?.pool ?? ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'] as TDEnemyType[];
+        const enemyType = pickEnemyType(pool, stageNumberRef.current);
+        const def = TD_ENEMY_DEFS[enemyType];
+        const hpMult = waveConfigRef.current?.hpMult ?? 1;
+        const hpReduction = 1 - activeEffectsRef.current.tdEnemyHpReduction;
+        const finalHp = Math.max(1, Math.round(def.hp * hpMult * hpReduction));
 
-        const enemyTypes: TDEnemyType[] = ['zombie', 'skeleton', 'creeper', 'spider', 'enderman'];
-        const enemy: Enemy = {
-            id: nextEnemyId++,
-            x: worldX, y: 0.5, z: worldZ,
-            gridX: gx, gridZ: gz,
-            speed: 1,
-            health: ENEMY_HP,
-            maxHealth: ENEMY_HP,
-            alive: true,
-            spawnTime: Date.now(),
-            enemyType: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
-        };
+        const enemy = createEnemy(
+            nextEnemyId++,
+            gx, gz,
+            enemyType,
+            finalHp, finalHp,
+            def.speed, def.armor, def.garbageRows,
+            [...def.abilities], false,
+        );
         setEnemies(prev => [...prev, enemy]);
         enemiesRef.current = [...enemiesRef.current, enemy];
-    }, [getOccupiedCells]);
+    }, [getOccupiedCells, activeEffectsRef, stageNumberRef]);
 
     // Enter checkpoint: transition from dig phase to TD phase
     const enterCheckpoint = useCallback(() => {
         if (gamePhaseRef.current !== 'PLAYING') return;
+
+        // Generate wave config for this stage
+        const waveConfig = generateWave(stageNumberRef.current);
+        waveConfigRef.current = waveConfig;
 
         setGamePhase('COLLAPSE');
         gamePhaseRef.current = 'COLLAPSE';
@@ -392,8 +668,16 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
             bulletsRef.current = [];
             setTowerHealth(MAX_HEALTH);
             towerHealthRef.current = MAX_HEALTH;
-            setTdBeatsRemaining(TD_WAVE_BEATS);
-            tdBeatsRemainingRef.current = TD_WAVE_BEATS;
+            setTdBeatsRemaining(waveConfig.beats);
+            tdBeatsRemainingRef.current = waveConfig.beats;
+
+            // Spawn boss if boss wave (at start of wave)
+            if (waveConfig.isBoss) {
+                setTimeout(() => {
+                    if (gameOverRef.current) return;
+                    spawnBoss();
+                }, 200);
+            }
 
             setTimeout(() => {
                 if (gameOverRef.current) return;
@@ -402,7 +686,7 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
                 gamePhaseRef.current = 'PLAYING';
             }, 1500);
         }, 1200);
-    }, [gamePhaseRef, gameOverRef, setGamePhase, setTerrainPhase, terrainPhaseRef, setTdBeatsRemaining, tdBeatsRemainingRef, towerHealthRef]);
+    }, [gamePhaseRef, gameOverRef, setGamePhase, setTerrainPhase, terrainPhaseRef, setTdBeatsRemaining, tdBeatsRemainingRef, towerHealthRef, stageNumberRef, spawnBoss]);
 
     // Complete TD wave: transition back to dig phase
     const completeWave = useCallback(() => {
@@ -435,6 +719,7 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         bulletsRef.current = [];
         setTowerHealth(MAX_HEALTH);
         towerHealthRef.current = MAX_HEALTH;
+        waveConfigRef.current = null;
         nextEnemyId = 0;
         nextBulletId = 0;
     }, [towerHealthRef]);
@@ -446,6 +731,8 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
         towerHealth,
         enemiesRef,
         bulletsRef,
+        // Wave config
+        waveConfigRef,
         // Actions
         spawnEnemies,
         updateEnemies,

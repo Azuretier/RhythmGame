@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import { useCameraController } from '../hooks/useCameraController';
 import type { CameraPreset } from '../hooks/useCameraController';
+import type { GameKeybinds } from '../hooks/useKeybinds';
 
 const ORBIT_SPEED = 0.005;
 const PAN_SPEED = 0.01;
@@ -25,7 +26,11 @@ const PRESET_ORDER: CameraPreset[] = ['isometric', 'topDown', 'closeUp', 'cinema
  * Left-click passes through to tower slot hitboxes.
  * Arrow keys, 1-7, E, L, Escape are NOT captured (reserved for tetris/TD).
  */
-export function CameraController() {
+interface CameraControllerProps {
+    keybinds: GameKeybinds;
+}
+
+export function CameraController({ keybinds }: CameraControllerProps) {
     const { gl } = useThree();
     const { stateRef, setPreset, resetCamera } = useCameraController();
 
@@ -153,15 +158,19 @@ export function CameraController() {
         };
 
         // ===== Keyboard shortcuts =====
-        // C: cycle preset, R: reset to isometric
+        // Camera shortcuts come from control settings.
         // Does NOT capture arrows, 1-7, E, L, Escape (tetris/TD keys)
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'c' || e.key === 'C') {
+            const key = e.key.toLowerCase();
+
+            if (key === keybinds.cameraCycle) {
+                e.preventDefault();
                 const currentPreset = stateRef.current.preset;
                 const idx = PRESET_ORDER.indexOf(currentPreset);
                 const nextIdx = (idx + 1) % PRESET_ORDER.length;
                 setPreset(PRESET_ORDER[nextIdx]);
-            } else if (e.key === 'r' || e.key === 'R') {
+            } else if (key === keybinds.cameraReset) {
+                e.preventDefault();
                 resetCamera();
             }
         };
@@ -188,7 +197,7 @@ export function CameraController() {
             canvas.removeEventListener('touchend', onTouchEnd);
             window.removeEventListener('keydown', onKeyDown);
         };
-    }, [gl, stateRef, setPreset, resetCamera]);
+    }, [gl, stateRef, setPreset, resetCamera, keybinds]);
 
     return null; // This component only manages camera state, no visual output
 }

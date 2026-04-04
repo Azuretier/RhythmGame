@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ADVANCEMENTS } from '@/lib/advancements/definitions';
 import { loadAdvancementState } from '@/lib/advancements/storage';
 import Advancements from '@/components/rhythmia/Advancements';
-import { getKeyLabel, type GameKeybinds } from '../hooks/useKeybinds';
+import { getKeyLabel, KEYBIND_LABELS, type GameKeybinds } from '../hooks/useKeybinds';
 import type { ColorTheme } from '../constants';
 import type { FeatureSettings } from '../types';
 import styles from './PauseMenu.module.css';
@@ -15,6 +16,7 @@ interface PauseMenuProps {
     score: number;
     onResume: () => void;
     onQuit?: () => void;
+    usePortal?: boolean;
     // Settings
     das: number;
     arr: number;
@@ -36,17 +38,18 @@ interface PauseMenuProps {
 }
 
 const TAB_CONFIG: { id: PauseTab; label: string; icon: string }[] = [
-    { id: 'overview', label: 'Overview', icon: '▶' },
-    { id: 'settings', label: 'Settings', icon: '⚙' },
-    { id: 'theme', label: 'Theme', icon: '🎨' },
-    { id: 'advancements', label: 'Achievements', icon: '★' },
-    { id: 'keybinds', label: 'Controls', icon: '⌨' },
+    { id: 'overview', label: 'Back to Game', icon: '>' },
+    { id: 'settings', label: 'Options...', icon: '>' },
+    { id: 'theme', label: 'Theme...', icon: '>' },
+    { id: 'advancements', label: 'Achievements...', icon: '>' },
+    { id: 'keybinds', label: 'Controls...', icon: '>' },
 ];
 
 export function PauseMenu({
     score,
     onResume,
     onQuit,
+    usePortal = true,
     das,
     arr,
     sdf,
@@ -67,6 +70,22 @@ export function PauseMenu({
     const [rebindingAction, setRebindingAction] = useState<keyof GameKeybinds | null>(null);
 
     const totalCount = ADVANCEMENTS.length;
+    const keybindConflicts = useMemo(() => {
+        const grouped = new Map<string, (keyof GameKeybinds)[]>();
+        for (const action of Object.keys(keybinds) as (keyof GameKeybinds)[]) {
+            const key = keybinds[action];
+            const existing = grouped.get(key) ?? [];
+            existing.push(action);
+            grouped.set(key, existing);
+        }
+
+        return Array.from(grouped.entries())
+            .filter(([, actions]) => actions.length > 1)
+            .map(([key, actions]) => ({ key, actions }));
+    }, [keybinds]);
+    const conflictedActions = useMemo(() => new Set(
+        keybindConflicts.flatMap(conflict => conflict.actions)
+    ), [keybindConflicts]);
 
     useEffect(() => {
         const state = loadAdvancementState();
@@ -96,26 +115,20 @@ export function PauseMenu({
                 return (
                     <div className={styles.tabContent}>
                         <div className={styles.overviewHeader}>
-                            <h2 className={styles.pausedTitle}>PAUSED</h2>
-                            <div className={styles.scoreDisplay}>{score.toLocaleString()} pts</div>
+                            <h2 className={styles.panelTitle}>Game Menu</h2>
+                            <div className={styles.scoreDisplay}>Score: {score.toLocaleString()}</div>
                         </div>
-                        <div className={styles.overviewActions}>
-                            <button className={styles.resumeBtn} onClick={onResume}>
-                                ▶ Resume
-                            </button>
-                            {onQuit && (
-                                <button className={styles.quitBtn} onClick={onQuit}>
-                                    Save and Quit to Title
-                                </button>
-                            )}
-                        </div>
+                        <p className={styles.panelDescription}>
+                            The game is paused. Resume play or open one of the menu screens.
+                        </p>
                     </div>
                 );
 
             case 'settings':
                 return (
                     <div className={styles.tabContent}>
-                        <h3 className={styles.tabTitle}>Game Settings</h3>
+                        <h3 className={styles.panelTitle}>Options</h3>
+                        <p className={styles.panelDescription}>Tune movement timing and input behavior.</p>
                         <div className={styles.settingsGroup}>
                             <SettingSlider
                                 label="DAS"
@@ -204,7 +217,8 @@ export function PauseMenu({
             case 'theme':
                 return (
                     <div className={styles.tabContent}>
-                        <h3 className={styles.tabTitle}>Color Theme</h3>
+                        <h3 className={styles.panelTitle}>Theme</h3>
+                        <p className={styles.panelDescription}>Choose the board palette you want to play with.</p>
                         {onThemeChange && (
                             <div className={styles.themeGrid}>
                                 {(['standard', 'stage', 'monochrome'] as ColorTheme[]).map((theme) => (
@@ -236,11 +250,25 @@ export function PauseMenu({
             case 'keybinds':
                 return (
                     <div className={styles.tabContent}>
-                        <h3 className={styles.tabTitle}>Controls</h3>
+                        <h3 className={styles.panelTitle}>Controls</h3>
+                        <p className={styles.panelDescription}>Rebind keys used during the match.</p>
+                        {keybindConflicts.length > 0 && (
+                            <div className={styles.keybindConflictBox}>
+                                <span className={styles.keybindConflictTitle}>Duplicate key warnings</span>
+                                {keybindConflicts.map(({ key, actions }) => (
+                                    <span key={key} className={styles.keybindConflictItem}>
+                                        {getKeyLabel(key)}: {actions.map(action => KEYBIND_LABELS[action]).join(', ')}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                         <div className={styles.keybindsList}>
                             {(Object.keys(keybinds) as (keyof GameKeybinds)[]).map((action) => (
-                                <div key={action} className={styles.keybindRow}>
-                                    <span className={styles.keybindLabel}>{action}</span>
+                                <div
+                                    key={action}
+                                    className={`${styles.keybindRow} ${conflictedActions.has(action) ? styles.keybindRowConflict : ''}`}
+                                >
+                                    <span className={styles.keybindLabel}>{KEYBIND_LABELS[action]}</span>
                                     <button
                                         className={`${styles.keybindKey} ${rebindingAction === action ? styles.keybindKeyListening : ''}`}
                                         onClick={() => setRebindingAction(rebindingAction === action ? null : action)}
@@ -266,34 +294,52 @@ export function PauseMenu({
         }
     };
 
-    return (
+    const menu = (
         <div className={styles.overlay}>
             <div className={styles.container}>
-                {/* Side navigation */}
-                <nav className={styles.sidebar}>
+                <h1 className={styles.pausedTitle}>Game Menu</h1>
+                <div className={styles.columns}>
+                    <nav className={styles.menuButtons}>
                     {TAB_CONFIG.map((tab) => (
                         <button
                             key={tab.id}
-                            className={`${styles.navItem} ${activeTab === tab.id ? styles.navItemActive : ''}`}
-                            onClick={() => setActiveTab(tab.id)}
+                            className={`${styles.menuButton} ${activeTab === tab.id ? styles.menuButtonActive : ''}`}
+                            onClick={() => {
+                                if (tab.id === 'overview') {
+                                    onResume();
+                                    return;
+                                }
+                                setActiveTab(tab.id);
+                            }}
                             title={tab.label}
                         >
-                            <span className={styles.navIcon}>{tab.icon}</span>
-                            <span className={styles.navLabel}>{tab.label}</span>
+                            <span className={styles.menuButtonLabel}>{tab.label}</span>
                             {tab.id === 'advancements' && (
-                                <span className={styles.navBadge}>{unlockedCount}/{totalCount}</span>
+                                <span className={styles.menuButtonMeta}>{unlockedCount}/{totalCount}</span>
                             )}
                         </button>
                     ))}
-                </nav>
+                    {onQuit && (
+                        <button className={`${styles.menuButton} ${styles.quitButton}`} onClick={onQuit}>
+                            <span className={styles.menuButtonLabel}>Save and Quit to Title</span>
+                        </button>
+                    )}
+                    </nav>
 
-                {/* Content panel */}
-                <div className={styles.panel}>
-                    {renderTabContent()}
+                    <div className={styles.panel}>
+                        {renderTabContent()}
+                    </div>
                 </div>
             </div>
         </div>
     );
+
+    if (!usePortal) {
+        return menu;
+    }
+
+    const portalRoot = typeof document !== 'undefined' ? document.body : null;
+    return portalRoot ? createPortal(menu, portalRoot) : null;
 }
 
 // --- Sub-components ---

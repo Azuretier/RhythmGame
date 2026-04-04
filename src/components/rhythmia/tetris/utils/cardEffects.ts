@@ -48,6 +48,22 @@ export function computeActiveEffects(
                 effects.dragonBoostEnabled = true;
                 effects.dragonBoostChargeMultiplier *= Math.pow(1 + card.attributeValue * 0.5, ec.stackCount);
                 break;
+            case 'tower_upgrade': {
+                const te = card.towerEffect;
+                if (!te) break;
+                for (let s = 0; s < ec.stackCount; s++) {
+                    if (te.damageBonus) effects.towerDamageBonus += te.damageBonus;
+                    if (te.fireRateMult) effects.towerFireRateMult *= te.fireRateMult;
+                    if (te.aoeRadius) effects.towerAoeRadius = Math.max(effects.towerAoeRadius, te.aoeRadius);
+                    if (te.slowChance) effects.towerSlowChance = Math.min(0.8, effects.towerSlowChance + te.slowChance);
+                    if (te.burnChance) effects.towerBurnChance = Math.min(0.8, effects.towerBurnChance + te.burnChance);
+                    if (te.stunChance) effects.towerStunChance = Math.min(0.8, effects.towerStunChance + te.stunChance);
+                    if (te.pierce) effects.towerPierce += te.pierce;
+                    if (te.enemyHpReduction) effects.tdEnemyHpReduction = Math.min(0.5, effects.tdEnemyHpReduction + te.enemyHpReduction);
+                    if (te.lineKillMultiplier) effects.lineKillMultiplier = Math.max(effects.lineKillMultiplier, te.lineKillMultiplier);
+                }
+                break;
+            }
         }
     }
 

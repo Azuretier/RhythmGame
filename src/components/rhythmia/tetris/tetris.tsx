@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import styles from './VanillaGame.module.css';
 
 // Constants and Types
-import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_PER_BEAT, ENEMIES_KILLED_PER_LINE, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION, BEAT_GOOD_WINDOW } from './constants';
+import { WORLDS, BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, TERRAIN_DAMAGE_PER_LINE, TERRAIN_PARTICLES_PER_LINE, ENEMIES_KILLED_PER_LINE, BULLET_FIRE_INTERVAL, LOCK_DELAY, MAX_LOCK_MOVES, DRAGON_BREATH_DURATION, BEAT_GOOD_WINDOW, ENEMIES_PER_BEAT } from './constants';
 import type { Piece, FeatureSettings } from './types';
 import { DEFAULT_FEATURE_SETTINGS } from './types';
 import { getModifiers } from './protocol';
@@ -31,7 +31,7 @@ import { GalaxyTDPanel } from './components/GalaxyTDPanel';
 
 // Hooks
 import { useAudio, useGameState, useDeviceType, getResponsiveCSSVars, useRhythmVFX } from './hooks';
-import { useKeybinds } from './hooks/useKeybinds';
+import { getKeyLabel, useKeybinds } from './hooks/useKeybinds';
 import { useCorruptionSystem } from './hooks/useCorruptionSystem';
 import { useGalaxyTDIntegration } from './hooks/useGalaxyTDIntegration';
 
@@ -77,6 +77,7 @@ import {
   GalaxyBoard,
 } from './components';
 import type { JudgmentDisplayMode } from './components';
+import { PauseMenu } from './components/PauseMenu';
 
 // ===== T-Spin Detection =====
 function detectTSpin(
@@ -402,6 +403,8 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
     fireBullet,
     updateBullets,
     setGameOver,
+    // Wave config
+    waveConfigRef,
   } = gameState;
 
   const {
@@ -1217,11 +1220,12 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       if (currentTerrainPhase === 'td') {
         // === TD phase beat logic ===
         // Update existing enemies FIRST (move toward tower)
-        const reached = updateEnemiesRef.current();
+        const { reached, garbageTotal } = updateEnemiesRef.current();
 
-        // Spawn new enemies if wave beats remaining
+        // Spawn new enemies if wave beats remaining (use wave config count, fallback to constant)
         if (tdBeatsRemainingRef.current > 0) {
-          spawnEnemiesRef.current(ENEMIES_PER_BEAT);
+          const perBeat = waveConfigRef.current?.enemiesPerBeat ?? ENEMIES_PER_BEAT;
+          spawnEnemiesRef.current(perBeat);
           tdBeatsRemainingRef.current--;
           setTdBeatsRemaining(tdBeatsRemainingRef.current);
         }
@@ -1232,9 +1236,9 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
           playKillSoundRef.current();
         }
 
-        // Enemies reaching tower → add garbage rows instead of HP damage
+        // Enemies reaching tower → add garbage rows
         if (reached > 0) {
-          addGarbageRowsRef.current(reached);
+          addGarbageRowsRef.current(garbageTotal);
           triggerBoardShakeRef.current();
         }
 
@@ -1274,20 +1278,29 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
   }, [isPlaying, gameOver, worldIdx, playDrum, lastBeatRef, beatTimerRef, setBoardBeat]);
 
   // Auto-fire bullet during TD phase (independent of beat timer)
+  // Uses setTimeout chain so fire rate adapts dynamically to towerFireRateMult from cards
   useEffect(() => {
     if (!isPlaying || gameOver) return;
 
-    const bulletTimer = window.setInterval(() => {
-      if (gameOverRef.current || isPausedRef.current) return;
-      // Only fire during TD phase
-      if (terrainPhaseRef.current !== 'td') return;
-      const fired = fireBulletRef.current();
-      if (fired) {
-        playShootSoundRef.current();
-      }
-    }, BULLET_FIRE_INTERVAL);
+    let cancelled = false;
+    const scheduleNext = () => {
+      if (cancelled) return;
+      const fireRateMult = activeEffectsRef.current?.towerFireRateMult ?? 1;
+      const interval = Math.max(100, BULLET_FIRE_INTERVAL / fireRateMult);
+      setTimeout(() => {
+        if (cancelled) return;
+        if (!gameOverRef.current && !isPausedRef.current && terrainPhaseRef.current === 'td') {
+          const fired = fireBulletRef.current();
+          if (fired) {
+            playShootSoundRef.current();
+          }
+        }
+        scheduleNext();
+      }, interval);
+    };
+    scheduleNext();
 
-    return () => clearInterval(bulletTimer);
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, gameOver]);
 
@@ -1410,101 +1423,99 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       if (showCardSelect || showTreasureBox) return;
 
       const currentTime = performance.now();
+      const key = e.key.toLowerCase();
 
-      switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (!keyStatesRef.current.left.pressed) {
-            keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
-            keyStatesRef.current.left = {
-              pressed: true,
-              dasCharged: false,
-              lastMoveTime: currentTime,
-              pressTime: currentTime,
-            };
-            if (!isPaused) moveHorizontal(-1);
+      if (key === keybinds.moveLeft) {
+        e.preventDefault();
+        if (!keyStatesRef.current.left.pressed) {
+          keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+          keyStatesRef.current.left = {
+            pressed: true,
+            dasCharged: false,
+            lastMoveTime: currentTime,
+            pressTime: currentTime,
+          };
+          if (!isPaused) moveHorizontal(-1);
+        }
+        return;
+      }
+
+      if (key === keybinds.moveRight) {
+        e.preventDefault();
+        if (!keyStatesRef.current.right.pressed) {
+          keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+          keyStatesRef.current.right = {
+            pressed: true,
+            dasCharged: false,
+            lastMoveTime: currentTime,
+            pressTime: currentTime,
+          };
+          if (!isPaused) moveHorizontal(1);
+        }
+        return;
+      }
+
+      if (key === keybinds.softDrop) {
+        e.preventDefault();
+        if (!keyStatesRef.current.down.pressed) {
+          keyStatesRef.current.down = {
+            pressed: true,
+            dasCharged: false,
+            lastMoveTime: currentTime,
+            pressTime: currentTime,
+          };
+          if (!isPaused && movePiece(0, 1)) {
+            setScore(prev => prev + 1);
           }
-          break;
+        }
+        return;
+      }
 
-        case 'ArrowRight':
-          e.preventDefault();
-          if (!keyStatesRef.current.right.pressed) {
-            keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
-            keyStatesRef.current.right = {
-              pressed: true,
-              dasCharged: false,
-              lastMoveTime: currentTime,
-              pressTime: currentTime,
-            };
-            if (!isPaused) moveHorizontal(1);
-          }
-          break;
+      if (key === keybinds.rotateCW) {
+        e.preventDefault();
+        if (!isPaused) rotatePiece(1);
+        return;
+      }
 
-        case 'ArrowDown':
-          e.preventDefault();
-          if (!keyStatesRef.current.down.pressed) {
-            keyStatesRef.current.down = {
-              pressed: true,
-              dasCharged: false,
-              lastMoveTime: currentTime,
-              pressTime: currentTime,
-            };
-            if (!isPaused && movePiece(0, 1)) {
-              setScore(prev => prev + 1);
-            }
-          }
-          break;
+      if (key === keybinds.rotateCCW) {
+        e.preventDefault();
+        if (!isPaused) rotatePiece(-1);
+        return;
+      }
 
-        case 'ArrowUp':
-        case 'x':
-        case 'X':
-          e.preventDefault();
-          if (!isPaused) rotatePiece(1);
-          break;
+      if (key === keybinds.hold) {
+        e.preventDefault();
+        if (!isPaused) holdCurrentPiece();
+        return;
+      }
 
-        case 'z':
-        case 'Z':
-        case 'Control':
-          e.preventDefault();
-          if (!isPaused) rotatePiece(-1);
-          break;
+      if (key === keybinds.hardDrop) {
+        e.preventDefault();
+        if (!isPaused) hardDrop();
+        return;
+      }
 
-        case 'c':
-        case 'C':
-        case 'Shift':
-          e.preventDefault();
-          if (!isPaused) holdCurrentPiece();
-          break;
-
-        case ' ':
-          e.preventDefault();
-          if (!isPaused) hardDrop();
-          break;
-
-        case 'p':
-        case 'P':
-          e.preventDefault();
-          setIsPaused(prev => !prev);
-          break;
-
-        case 'Escape':
-          e.preventDefault();
-          setIsPaused(prev => !prev);
-          break;
+      if (key === keybinds.pause) {
+        e.preventDefault();
+        setIsPaused(prev => !prev);
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowLeft':
-          keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
-          break;
-        case 'ArrowRight':
-          keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
-          break;
-        case 'ArrowDown':
-          keyStatesRef.current.down = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
-          break;
+      const key = e.key.toLowerCase();
+
+      if (key === keybinds.moveLeft) {
+        keyStatesRef.current.left = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+        return;
+      }
+
+      if (key === keybinds.moveRight) {
+        keyStatesRef.current.right = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
+        return;
+      }
+
+      if (key === keybinds.softDrop) {
+        keyStatesRef.current.down = { pressed: false, dasCharged: false, lastMoveTime: 0, pressTime: 0 };
       }
     };
 
@@ -1514,7 +1525,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [isPlaying, isPaused, gameOver, showCardSelect, showTreasureBox, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef]);
+  }, [isPlaying, isPaused, gameOver, showCardSelect, showTreasureBox, moveHorizontal, movePiece, rotatePiece, hardDrop, holdCurrentPiece, setScore, setIsPaused, keyStatesRef, keybinds]);
 
   // Mouse input handlers — move piece by hovering over board columns,
   // hold left/right button to soft drop (driven by game loop via mouseHeldRef),
@@ -1751,6 +1762,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             lineClearPulse={galaxyLineClearPulse}
             isPaused={isPaused}
             gameOver={gameOver}
+            keybinds={keybinds}
             onSlotClick={(slotIndex) => {
               if (galaxyTD.selectedTowerType) {
                 galaxyTD.placeTower(galaxyTD.selectedTowerType, slotIndex);
@@ -1798,7 +1810,7 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             {/* Left sidebar: Hold + Inventory (separate containers) */}
             <div className={styles.sidePanelLeft}>
               <div className={styles.nextWrap}>
-                <div className={styles.nextLabel}>HOLD (C)</div>
+                <div className={styles.nextLabel}>HOLD ({getKeyLabel(keybinds.hold)})</div>
                 <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
               </div>
               <ItemSlots
@@ -1895,6 +1907,51 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             isMobile={deviceType !== 'desktop'}
           />
         </div>
+      )}
+
+      {gameOver && (
+        <div className={styles.gameover}>
+          <div className={styles.gameoverContainer}>
+            <h2 className={styles.gameoverTitle}>Game Over</h2>
+            <div className={styles.finalScore}>Score: {score.toLocaleString()}</div>
+            <div className={styles.gameoverButtons}>
+              <button className={styles.gameoverBtn} onClick={() => startGame()}>
+                Play Again
+              </button>
+              {onQuit && (
+                <button
+                  className={`${styles.gameoverBtn} ${styles.gameoverQuitBtn}`}
+                  onClick={onQuit}
+                >
+                  Back to Title
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isPaused && !gameOver && !showCardSelect && (
+        <PauseMenu
+          usePortal={false}
+          score={score}
+          onResume={() => setIsPaused(false)}
+          onQuit={onQuit}
+          das={das}
+          arr={arr}
+          sdf={sdf}
+          onDasChange={setDas}
+          onArrChange={setArr}
+          onSdfChange={setSdf}
+          colorTheme={colorTheme}
+          onThemeChange={setColorTheme}
+          keybinds={keybinds}
+          onKeybindChange={setKeybind}
+          onKeybindsReset={resetKeybinds}
+          defaultKeybinds={defaultKeybinds}
+          featureSettings={featureSettings}
+          onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
+        />
       )}
 
       {/* Rhythm VFX Canvas Overlay */}

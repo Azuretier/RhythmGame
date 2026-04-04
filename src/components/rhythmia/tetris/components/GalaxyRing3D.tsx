@@ -9,6 +9,7 @@ import { CameraController } from './CameraController';
 import { useLayerInteraction } from '../hooks/useLayerInteraction';
 import type { Biome } from '../terrain-utils';
 import { DEFAULT_CAMERA_FOV } from '../galaxy-shared-constants';
+import type { GameKeybinds } from '../hooks/useKeybinds';
 
 // ===== Exported Canvas wrapper =====
 export interface GalaxyRing3DProps {
@@ -27,6 +28,7 @@ export interface GalaxyRing3DProps {
     board?: Board;
     currentPiece?: Piece | null;
     clearedRows?: number[];
+    keybinds: GameKeybinds;
     onSlotClick: (slotIndex: number) => void;
     onTowerClick: (towerId: string) => void;
 }
@@ -37,6 +39,7 @@ export function GalaxyRing3D({
     lineClearPulse = false, isPaused = false, gameOver = false,
     biome = 'forest',
     board, currentPiece, clearedRows,
+    keybinds,
     onSlotClick, onTowerClick,
 }: GalaxyRing3DProps) {
     const { canvasPointerEvents, canvasZIndex } = useLayerInteraction({
@@ -59,7 +62,7 @@ export function GalaxyRing3D({
                 zIndex: canvasZIndex,
             }}
         >
-            <CameraController />
+            <CameraController keybinds={keybinds} />
             <GalaxyRingScene
                 enemies={enemies}
                 towers={towers}

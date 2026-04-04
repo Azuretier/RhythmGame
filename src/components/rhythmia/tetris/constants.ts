@@ -160,7 +160,7 @@ export const TERRAIN_DAMAGE_PER_LINE = 4;
 // ===== Item Definitions =====
 // Items are now defined in the shared registry at @/lib/items/registry.
 // These re-exports maintain backward compatibility for game-specific code.
-import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState, TreasureBoxTier } from './types';
+import type { ItemType, RogueCard, ActiveEffects, DragonGaugeState, TreasureBoxTier, TDEnemyType, TDEnemyAbility } from './types';
 import { MATERIAL_ITEMS, TOTAL_DROP_WEIGHT as _TOTAL_DROP_WEIGHT } from '@/lib/items/registry';
 
 export const ITEMS: ItemType[] = MATERIAL_ITEMS.map(item => ({
@@ -317,6 +317,61 @@ export const ROGUE_CARDS: RogueCard[] = [
         rarity: 'legendary', baseCost: [{ itemId: 'star', count: 1 }, { itemId: 'gold', count: 2 }],
         attribute: 'dragon_boost', attributeValue: 1.0,
     },
+    // --- TOWER UPGRADE CARDS ---
+    {
+        id: 'arrow_quiver', name: 'Arrow Quiver', nameJa: '矢筒', icon: '🏹',
+        color: '#8D6E63', glowColor: '#BCAAA4',
+        description: '+1 bullet damage per hit',
+        descriptionJa: '弾丸ダメージ+1',
+        rarity: 'common', baseCost: [{ itemId: 'iron', count: 3 }],
+        attribute: 'tower_upgrade', attributeValue: 1,
+        towerEffect: { damageBonus: 1 },
+    },
+    {
+        id: 'frost_shard', name: 'Frost Shard', nameJa: '霜の欠片', icon: '❄️',
+        color: '#4FC3F7', glowColor: '#B3E5FC',
+        description: '30% chance to slow enemies on hit',
+        descriptionJa: 'ヒット時30%の確率で敵を減速',
+        rarity: 'uncommon', baseCost: [{ itemId: 'crystal', count: 2 }],
+        attribute: 'tower_upgrade', attributeValue: 1,
+        towerEffect: { slowChance: 0.3 },
+    },
+    {
+        id: 'flame_core', name: 'Flame Core', nameJa: '炎核', icon: '🔥',
+        color: '#FF7043', glowColor: '#FFAB91',
+        description: '25% chance to burn enemies on hit',
+        descriptionJa: 'ヒット時25%の確率で敵を燃焼',
+        rarity: 'uncommon', baseCost: [{ itemId: 'iron', count: 2 }, { itemId: 'crystal', count: 1 }],
+        attribute: 'tower_upgrade', attributeValue: 1,
+        towerEffect: { burnChance: 0.25 },
+    },
+    {
+        id: 'scatter_shot', name: 'Scatter Shot', nameJa: '散弾', icon: '💥',
+        color: '#FFD700', glowColor: '#FFECB3',
+        description: 'Bullets explode on impact (AoE radius 2)',
+        descriptionJa: '弾丸が着弾時に爆発（範囲2）',
+        rarity: 'rare', baseCost: [{ itemId: 'gold', count: 2 }, { itemId: 'iron', count: 1 }],
+        attribute: 'tower_upgrade', attributeValue: 1,
+        towerEffect: { aoeRadius: 2 },
+    },
+    {
+        id: 'piercing_bolt', name: 'Piercing Bolt', nameJa: '貫通弾', icon: '🗡️',
+        color: '#78909C', glowColor: '#B0BEC5',
+        description: 'Bullets pierce through +1 enemy',
+        descriptionJa: '弾丸が敵を+1体貫通',
+        rarity: 'rare', baseCost: [{ itemId: 'gold', count: 2 }],
+        attribute: 'tower_upgrade', attributeValue: 1,
+        towerEffect: { pierce: 1 },
+    },
+    {
+        id: 'fortress_heart', name: 'Fortress Heart', nameJa: '要塞の心臓', icon: '🏰',
+        color: '#E0E0E0', glowColor: '#FFFFFF',
+        description: '-20% enemy HP, line clears kill 2× enemies',
+        descriptionJa: '敵HP-20%、ライン消去で2倍の敵を撃破',
+        rarity: 'legendary', baseCost: [{ itemId: 'star', count: 1 }, { itemId: 'obsidian', count: 1 }],
+        attribute: 'tower_upgrade', attributeValue: 1,
+        towerEffect: { enemyHpReduction: 0.2, lineKillMultiplier: 2 },
+    },
 ];
 
 export const ROGUE_CARD_MAP: Record<string, RogueCard> = Object.fromEntries(
@@ -354,6 +409,16 @@ export const DEFAULT_ACTIVE_EFFECTS: ActiveEffects = {
     equipmentComboAmplify: 0,
     equipmentReactionPower: 0,
     equipmentEnchantments: [],
+    // Tower Defense upgrade defaults
+    towerDamageBonus: 0,
+    towerFireRateMult: 1,
+    towerAoeRadius: 0,
+    towerSlowChance: 0,
+    towerBurnChance: 0,
+    towerStunChance: 0,
+    towerPierce: 0,
+    tdEnemyHpReduction: 0,
+    lineKillMultiplier: 1,
 };
 
 // Max cards to offer per selection
@@ -407,6 +472,47 @@ export const ENEMIES_KILLED_PER_LINE = 2; // Enemies killed per line clear
 
 // ===== TD Wave Settings (within vanilla mode alternation) =====
 export const TD_WAVE_BEATS = 12;       // Beats of enemy spawning per TD phase
+
+// ===== TD Enemy Definitions =====
+export interface TDEnemyDef {
+    hp: number;
+    speed: number;
+    garbageRows: number;
+    armor: number;
+    abilities: TDEnemyAbility[];
+    spawnWeight: number;
+}
+
+export const TD_ENEMY_DEFS: Record<TDEnemyType, TDEnemyDef> = {
+    zombie:     { hp: 3,  speed: 1, garbageRows: 1, armor: 0, abilities: [],              spawnWeight: 30 },
+    skeleton:   { hp: 2,  speed: 1, garbageRows: 1, armor: 0, abilities: [],              spawnWeight: 25 },
+    creeper:    { hp: 4,  speed: 1, garbageRows: 3, armor: 0, abilities: ['explosive'],   spawnWeight: 10 },
+    spider:     { hp: 2,  speed: 2, garbageRows: 1, armor: 0, abilities: ['fast'],        spawnWeight: 15 },
+    enderman:   { hp: 6,  speed: 1, garbageRows: 2, armor: 2, abilities: ['stealth'],     spawnWeight: 5  },
+    slime:      { hp: 8,  speed: 1, garbageRows: 1, armor: 0, abilities: ['split'],       spawnWeight: 8  },
+    magma_cube: { hp: 10, speed: 1, garbageRows: 2, armor: 3, abilities: ['tank'],        spawnWeight: 5  },
+    pig:        { hp: 3,  speed: 1, garbageRows: 1, armor: 0, abilities: [],              spawnWeight: 20 },
+    chicken:    { hp: 1,  speed: 2, garbageRows: 1, armor: 0, abilities: ['fast'],        spawnWeight: 15 },
+    cow:        { hp: 8,  speed: 1, garbageRows: 1, armor: 2, abilities: ['tank'],        spawnWeight: 8  },
+    bee:        { hp: 2,  speed: 2, garbageRows: 1, armor: 0, abilities: ['fast'],        spawnWeight: 10 },
+    cat:        { hp: 3,  speed: 1, garbageRows: 1, armor: 0, abilities: ['heal_aura'],   spawnWeight: 5  },
+    horse:      { hp: 20, speed: 1, garbageRows: 4, armor: 5, abilities: [],              spawnWeight: 0  },
+    rabbit:     { hp: 1,  speed: 2, garbageRows: 1, armor: 0, abilities: ['fast'],        spawnWeight: 15 },
+    wolf:       { hp: 5,  speed: 1, garbageRows: 1, armor: 1, abilities: ['shield_aura'], spawnWeight: 5  },
+};
+
+// ===== TD Status Effect Constants =====
+export const TD_SLOW_MAGNITUDE = 0.5;     // Speed multiplier when slowed
+export const TD_BURN_DAMAGE = 2;          // Damage per beat from burn
+export const TD_BURN_DURATION = 3;        // Beats of burn
+export const TD_STUN_DURATION = 1;        // Beats of stun
+export const TD_HEAL_AURA_RANGE = 3;      // Manhattan distance for heal aura
+export const TD_HEAL_AURA_HP = 1;         // HP healed per beat
+export const TD_SHIELD_AURA_RANGE = 3;    // Manhattan distance for shield aura
+export const TD_SHIELD_AURA_ARMOR = 2;    // Bonus armor from shield aura
+export const TD_STEALTH_BEATS = 3;        // Beats of stealth after spawn
+export const TD_SPLIT_HP_FACTOR = 0.5;    // HP fraction for split children
+export const TD_BOSS_INTERVAL = 5;        // Boss spawns every N stages
 
 // ===== Block Grid System =====
 // Enemies move on a discrete grid, 1 tile per turn, orthogonal only (no diagonals).

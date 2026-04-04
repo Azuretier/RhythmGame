@@ -24,6 +24,9 @@ import {
     GALAXY_TOP_WIDTH,
 } from '@/components/rhythmia/tetris/galaxy-constants';
 
+const SHIELD_AURA_RANGE = 2 / GALAXY_RANGE_DIVISOR;
+const SHIELD_AURA_ARMOR = 3;
+
 let nextId = 1;
 function uid(): string {
     return `r${nextId++}`;
@@ -138,6 +141,16 @@ function hasAmplify(enemy: RingEnemy): number {
         if (eff.type === 'amplify') return 1 + eff.magnitude;
     }
     return 1;
+}
+
+function getShieldAuraArmor(state: GalaxyTDState, enemy: RingEnemy): number {
+    for (const ally of state.enemies) {
+        if (ally.dead || ally.id === enemy.id || ally.type !== 'shield') continue;
+        if (ringDistance(ally.pathFraction, enemy.pathFraction) <= SHIELD_AURA_RANGE) {
+            return SHIELD_AURA_ARMOR;
+        }
+    }
+    return 0;
 }
 
 // ===== Place tower =====
@@ -380,7 +393,8 @@ function tickAuraDamage(state: GalaxyTDState, dt: number): GalaxyTDState {
             if (d > range) return e;
 
             const amplify = hasAmplify(e);
-            const damage = Math.max(0.5, (dmgThisTick - e.armor * dt) * amplify);
+            const shieldArmor = getShieldAuraArmor({ ...state, enemies }, e);
+            const damage = Math.max(0.5, (dmgThisTick - (e.armor + shieldArmor) * dt) * amplify);
 
             const tIdx = towers.findIndex(t => t.id === tower.id);
             if (tIdx >= 0) towers[tIdx] = { ...towers[tIdx], totalDamage: towers[tIdx].totalDamage + damage };
@@ -469,7 +483,8 @@ function tickProjectiles(state: GalaxyTDState, dt: number): GalaxyTDState {
             // Hit!
             const amplify = hasAmplify(target);
             const isSniper = proj.towerType === 'sniper';
-            const armor = isSniper ? 0 : target.armor;
+            const shieldArmor = getShieldAuraArmor({ ...state, enemies }, target);
+            const armor = isSniper ? 0 : target.armor + shieldArmor;
             const damage = Math.max(1, Math.round((proj.damage - armor) * amplify));
 
             enemies = enemies.map(e => {
@@ -520,7 +535,9 @@ function tickProjectiles(state: GalaxyTDState, dt: number): GalaxyTDState {
                     }
                     if (!closest) break;
                     hit.add(closest.id);
-                    const chainDmg = Math.round(damage * 0.6);
+                    const shieldArmor = getShieldAuraArmor({ ...state, enemies }, closest);
+                    const chainArmor = closest.armor + shieldArmor;
+                    const chainDmg = Math.max(1, Math.round((proj.damage * 0.6 - chainArmor) * hasAmplify(closest)));
                     enemies = enemies.map(e => {
                         if (e.id !== closest!.id) return e;
                         const newHp = e.hp - chainDmg;
@@ -656,7 +673,9 @@ export function applyTetrisAoE(state: GalaxyTDState, damage: number): GalaxyTDSt
     let score = state.score;
     const enemies = state.enemies.map(e => {
         if (e.dead) return e;
-        const newHp = e.hp - damage;
+        const shieldArmor = getShieldAuraArmor(state, e);
+        const mitigatedDamage = Math.max(1, damage - e.armor - shieldArmor);
+        const newHp = e.hp - mitigatedDamage;
         if (newHp <= 0) {
             gold += ENEMY_DEFS[e.type].reward;
             score += ENEMY_DEFS[e.type].reward * 2;
