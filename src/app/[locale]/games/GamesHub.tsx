@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import {
-  Music, Swords, Users, Shield, Pickaxe, Globe, Gamepad2, BookOpen,
+  Music, Swords, Users, Shield, Pickaxe, Globe, Gamepad2, BookOpen, Crosshair,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useRouter } from '@/i18n/navigation';
@@ -18,12 +18,15 @@ type GameEntry = {
   badge: string;
   players: string;
   requiresAdvancements?: boolean;
+  title?: string;
+  description?: string;
 };
 
 const GAMES: GameEntry[] = [
   { id: 'vanilla', icon: Music, route: '/', badge: 'SOLO', players: '1' },
   { id: 'multiplayer', icon: Swords, route: '/', badge: '1v1', players: '2', requiresAdvancements: true },
   { id: 'arena', icon: Users, route: '/arena', badge: '9P', players: '2-9', requiresAdvancements: true },
+  { id: 't99', icon: Crosshair, route: '/t99', badge: '99P', players: '99', title: 'T99 ROYALE', description: 'Nintendo Switch inspired battle royale Tetris with simulated opponents, badge pressure, and target cycling.' },
   { id: 'towerDefense', icon: Shield, route: '/tower-defense', badge: 'TD', players: '1-4' },
   { id: 'minecraftBoard', icon: Pickaxe, route: '/minecraft-board', badge: 'BOARD', players: '2-4' },
   { id: 'minecraftWorld', icon: Globe, route: '/minecraft-world', badge: 'VOXEL', players: '1-8' },
@@ -72,8 +75,8 @@ export default function GamesHub() {
                 </div>
                 <span className={styles.badge}>{game.badge}</span>
               </div>
-              <div className={styles.cardTitle}>{t(`${game.id}.title`)}</div>
-              <div className={styles.cardDesc}>{t(`${game.id}.description`)}</div>
+              <div className={styles.cardTitle}>{game.title ?? t(`${game.id}.title`)}</div>
+              <div className={styles.cardDesc}>{game.description ?? t(`${game.id}.description`)}</div>
               <div className={styles.cardMeta}>
                 <span className={styles.players}>{game.players} players</span>
                 {isLocked && <span className={styles.lockIcon}>🔒</span>}
