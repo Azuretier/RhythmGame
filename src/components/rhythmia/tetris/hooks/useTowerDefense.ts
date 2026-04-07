@@ -3,19 +3,18 @@
  * Extracted from useGameState to reduce file size.
  */
 import { useState, useRef, useCallback, useEffect, type MutableRefObject } from 'react';
-import type { Enemy, Bullet, GamePhase, TDEnemyType, TerrainPhase, ActiveEffects, TDStatusEffect } from '../types';
+import type { Enemy, Bullet, GamePhase, TDEnemyType, TerrainPhase, ActiveEffects, TDStatusEffect, Piece } from '../types';
 import {
-    BOARD_WIDTH,
-    MAX_HEALTH, ENEMY_HP,
+    MAX_HEALTH,
     BULLET_SPEED, BULLET_GRAVITY, BULLET_KILL_RADIUS, BULLET_DAMAGE, BULLET_GROUND_Y,
     GRID_TILE_SIZE, GRID_HALF, GRID_SPAWN_RING, GRID_TOWER_RADIUS,
     TD_ENEMY_DEFS,
     TD_SLOW_MAGNITUDE, TD_BURN_DAMAGE, TD_BURN_DURATION, TD_STUN_DURATION,
     TD_HEAL_AURA_RANGE, TD_HEAL_AURA_HP, TD_SHIELD_AURA_RANGE, TD_SHIELD_AURA_ARMOR,
     TD_STEALTH_BEATS, TD_SPLIT_HP_FACTOR,
-    DEFAULT_ACTIVE_EFFECTS,
 } from '../constants';
 import { generateWave, pickEnemyType, type TDWaveConfig } from '../td-waves';
+import { applyGarbageRise } from '../utils/boardUtils';
 
 let nextEnemyId = 0;
 let nextBulletId = 0;
@@ -51,8 +50,10 @@ export interface UseTowerDefenseDeps {
     gamePhaseRef: MutableRefObject<GamePhase>;
     stageNumberRef: MutableRefObject<number>;
     boardRef: MutableRefObject<(string | null)[][]>;
+    currentPieceRef: MutableRefObject<Piece | null>;
     /** State setters from core */
     setBoard: React.Dispatch<React.SetStateAction<(string | null)[][]>>;
+    setCurrentPiece: React.Dispatch<React.SetStateAction<Piece | null>>;
     setGamePhase: React.Dispatch<React.SetStateAction<GamePhase>>;
     setTerrainPhase: React.Dispatch<React.SetStateAction<TerrainPhase>>;
     setTdBeatsRemaining: React.Dispatch<React.SetStateAction<number>>;
@@ -70,8 +71,8 @@ export interface UseTowerDefenseDeps {
 
 export function useTowerDefense(deps: UseTowerDefenseDeps) {
     const {
-        gameOverRef, gamePhaseRef, stageNumberRef, boardRef,
-        setBoard, setGamePhase, setTerrainPhase, setTdBeatsRemaining,
+        gameOverRef, gamePhaseRef, stageNumberRef, boardRef, currentPieceRef,
+        setBoard, setCurrentPiece, setGamePhase, setTerrainPhase, setTdBeatsRemaining,
         terrainPhaseRef, tdBeatsRemainingRef, towerHealthRef,
         activeEffectsRef,
         enterCardSelect, enterTreasureBox, shouldSpawnTreasureBox,
@@ -607,15 +608,12 @@ export function useTowerDefense(deps: UseTowerDefenseDeps) {
 
     // Add garbage rows to the bottom of the board
     const addGarbageRows = useCallback((count: number) => {
-        const rows: (string | null)[][] = [];
-        for (let g = 0; g < count; g++) {
-            const gapCol = Math.floor(Math.random() * BOARD_WIDTH);
-            rows.push(Array.from({ length: BOARD_WIDTH }, (_, i) => i === gapCol ? null : 'garbage'));
-        }
-        const newBoard = [...boardRef.current.slice(count), ...rows];
+        const { newBoard, adjustedPiece } = applyGarbageRise(boardRef.current, currentPieceRef.current, count);
         boardRef.current = newBoard;
+        currentPieceRef.current = adjustedPiece;
         setBoard(newBoard);
-    }, [boardRef, setBoard]);
+        setCurrentPiece(adjustedPiece);
+    }, [boardRef, currentPieceRef, setBoard, setCurrentPiece]);
 
     // Spawn an enemy at a specific grid cell (for corruption spawning)
     const spawnEnemyAtCell = useCallback((gx: number, gz: number) => {

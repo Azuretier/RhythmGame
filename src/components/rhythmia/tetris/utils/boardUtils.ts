@@ -127,6 +127,36 @@ export const clearLines = (boardState: Board): { newBoard: Board; clearedLines: 
 };
 
 /**
+ * Raise the stack with garbage rows and lift the active piece by the same amount
+ * so it keeps its relative position instead of getting buried inside the stack.
+ */
+export const applyGarbageRise = (
+    boardState: Board,
+    currentPiece: Piece | null,
+    count: number,
+    rng: () => number = Math.random,
+): { newBoard: Board; adjustedPiece: Piece | null } => {
+    if (count <= 0) {
+        return {
+            newBoard: boardState.map(row => [...row]),
+            adjustedPiece: currentPiece ? { ...currentPiece } : null,
+        };
+    }
+
+    const raisedBoard = boardState.slice(count).map(row => [...row]);
+
+    for (let i = 0; i < count; i++) {
+        const gapCol = Math.floor(rng() * BOARD_WIDTH);
+        raisedBoard.push(Array.from({ length: BOARD_WIDTH }, (_, x) => (x === gapCol ? null : 'garbage')));
+    }
+
+    return {
+        newBoard: raisedBoard,
+        adjustedPiece: currentPiece ? { ...currentPiece, y: currentPiece.y - count } : null,
+    };
+};
+
+/**
  * Calculate ghost piece position (where piece would land)
  */
 export const getGhostY = (piece: Piece, boardState: Board): number => {

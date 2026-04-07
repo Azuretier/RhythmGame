@@ -137,7 +137,6 @@ export const Rhythmia: React.FC = () => {
   const [boardBeat, setBoardBeat] = useState(false);
   const [boardShake, setBoardShake] = useState(false);
   const [scorePop, setScorePop] = useState(false);
-  const [clearingRows, setClearingRows] = useState<number[]>([]);
   const [lastRotationWasSuccessful, setLastRotationWasSuccessful] = useState(false);
   const [colorTheme, setColorTheme] = useState<ColorTheme>('stage');
 
@@ -584,12 +583,9 @@ export const Rhythmia: React.FC = () => {
     // Line clear
     let cleared = 0;
     const remainingBoard: (PieceCell | null)[][] = [];
-    const rowsToClear: number[] = [];
-
-    newBoard.forEach((row, y) => {
+    newBoard.forEach((row, _y) => {
       if (row.every(c => c !== null)) {
         cleared++;
-        rowsToClear.push(y);
       } else {
         remainingBoard.push(row);
       }
@@ -603,73 +599,64 @@ export const Rhythmia: React.FC = () => {
 
       // Update the board state ref immediately to prevent using stale state in subsequent lock() calls
       boardStateRef.current = boardForCollisionCheck;
+      setBoard(boardForCollisionCheck);
 
-      setClearingRows(rowsToClear);
-      setBoard(newBoard);
+      const currentCombo = comboRef.current;
+      const currentLevel = levelRef.current;
 
-      setTimeout(() => {
-        const currentCombo = comboRef.current;
-        const currentLevel = levelRef.current;
+      // Base scoring
+      let pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
 
-        // Base scoring
-        let pts = [0, 100, 300, 500, 800][cleared] * (currentLevel + 1) * mult * Math.max(1, currentCombo);
+      // Track tetris clears (4 lines at once)
+      if (cleared === 4) {
+        gameTetrisClearsRef.current++;
+      }
 
-        // Track tetris clears (4 lines at once)
-        if (cleared === 4) {
-          gameTetrisClearsRef.current++;
+      // T-Spin bonus scoring
+      if (tSpinType) {
+        gameTSpinsRef.current++;
+        const tSpinBonus = tSpinType === 'full' ? 400 : 100;
+        const tSpinLineBonus = cleared * 400; // Additional bonus per line cleared with T-Spin
+        pts += (tSpinBonus + tSpinLineBonus) * (currentLevel + 1);
+
+        // Show T-Spin judgment
+        if (cleared === 0) {
+          showJudgment('T-SPIN!', '#FF00FF');
+        } else if (tSpinType === 'mini') {
+          showJudgment(`T-SPIN MINI ${cleared}!`, '#FF00FF');
+        } else {
+          showJudgment(`T-SPIN ${cleared}!`, '#FF00FF');
         }
+        playTone(880, 0.3, 'square');
+      }
 
-        // T-Spin bonus scoring
-        if (tSpinType) {
-          gameTSpinsRef.current++;
-          const tSpinBonus = tSpinType === 'full' ? 400 : 100;
-          const tSpinLineBonus = cleared * 400; // Additional bonus per line cleared with T-Spin
-          pts += (tSpinBonus + tSpinLineBonus) * (currentLevel + 1);
+      const newScore = scoreRef.current + pts;
+      const newLines = linesRef.current + cleared;
 
-          // Show T-Spin judgment
-          if (cleared === 0) {
-            showJudgment('T-SPIN!', '#FF00FF');
-          } else if (tSpinType === 'mini') {
-            showJudgment(`T-SPIN MINI ${cleared}!`, '#FF00FF');
-          } else {
-            showJudgment(`T-SPIN ${cleared}!`, '#FF00FF');
-          }
-          playTone(880, 0.3, 'square');
-        }
+      updateScore(newScore);
+      scoreRef.current = newScore;
+      setLines(newLines);
+      linesRef.current = newLines;
 
-        const newScore = scoreRef.current + pts;
-        const newLines = linesRef.current + cleared;
+      // Enemy damage
+      const newEnemyHP = Math.max(0, enemyHPRef.current - cleared * 8 * mult);
+      setEnemyHP(newEnemyHP);
+      enemyHPRef.current = newEnemyHP;
 
-        updateScore(newScore);
-        scoreRef.current = newScore;
-        setLines(newLines);
-        linesRef.current = newLines;
+      if (newEnemyHP <= 0) {
+        nextWorld();
+      }
 
-        // Enemy damage
-        const newEnemyHP = Math.max(0, enemyHPRef.current - cleared * 8 * mult);
-        setEnemyHP(newEnemyHP);
-        enemyHPRef.current = newEnemyHP;
+      const newLevel = Math.floor(newLines / 10);
+      setLevel(newLevel);
+      levelRef.current = newLevel;
 
-        if (newEnemyHP <= 0) {
-          nextWorld();
-        }
+      playLineClear(cleared, worldIdxRef.current);
+      setBoardShake(true);
+      setTimeout(() => setBoardShake(false), 200);
 
-        const newLevel = Math.floor(newLines / 10);
-        setLevel(newLevel);
-        levelRef.current = newLevel;
-
-        playLineClear(cleared, worldIdxRef.current);
-        setBoardShake(true);
-        setTimeout(() => setBoardShake(false), 200);
-
-        setClearingRows([]);
-        const completedBoard = completeBoard(remainingBoard);
-        setBoard(completedBoard);
-        boardStateRef.current = completedBoard;
-
-        // Live advancement check after score/lines update
-        pushLiveAdvancementCheck();
-      }, 300);
+      // Live advancement check after score/lines update
+      pushLiveAdvancementCheck();
     } else {
       setBoard(newBoard);
       boardStateRef.current = newBoard;
@@ -830,7 +817,6 @@ export const Rhythmia: React.FC = () => {
     gameOverRef.current = false;
     setShowGameOver(false);
     setGameStarted(true);
-    setClearingRows([]);
     trackEvent('game_start', { game_mode: 'vanilla' });
 
     // Reset per-game advancement tracking
@@ -1129,12 +1115,10 @@ export const Rhythmia: React.FC = () => {
             >
               <div className={styles.board} style={{ gridTemplateColumns: `repeat(${W}, 1fr)` }}>
                 {displayBoard.flat().map((cell, i) => {
-                  const y = Math.floor(i / W);
-                  const isClearing = clearingRows.includes(y);
                   return (
                     <div
                       key={i}
-                      className={`${styles.cell} ${cell ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''} ${isClearing ? styles.clearing : ''}`}
+                      className={`${styles.cell} ${cell ? styles.filled : ''} ${cell?.ghost ? styles.ghost : ''}`}
                       style={cell ? { backgroundColor: cell.color, color: cell.color } : {}}
                     />
                   );

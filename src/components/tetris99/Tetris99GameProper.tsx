@@ -14,6 +14,7 @@ import {
   lockPiece,
   clearLines,
   tryRotation,
+  applyGarbageRise,
 } from '@/components/rhythmia/tetris/utils/boardUtils';
 import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components/rhythmia/tetris/constants';
 import { ARR, DAS, MAX_LOCK_MOVES, SOFT_DROP_SPEED } from '@/components/rhythmia/multiplayer-battle-engine';
@@ -105,6 +106,18 @@ const PLAYER_COLORS: Record<string, string> = {
   L: '#ffad5a',
   garbage: '#666666',
 };
+const AI_COLOR_TO_PIECE: Record<string, PieceType | 'garbage'> = {
+  '#00f0f0': 'I',
+  '#f0f000': 'O',
+  '#a000f0': 'T',
+  '#00f000': 'S',
+  '#f00000': 'Z',
+  '#0000f0': 'J',
+  '#f0a000': 'L',
+  '#555555': 'garbage',
+  '#666666': 'garbage',
+};
+const AI_COLOR_ENTRIES = Object.entries(AI_COLOR_TO_PIECE).filter(([, type]) => type !== 'garbage') as Array<[string, PieceType]>;
 
 const badgeStageFromPoints = (points: number) => (points >= 30 ? 4 : points >= 14 ? 3 : points >= 6 ? 2 : points >= 2 ? 1 : 0);
 const badgeMultiplier = (stage: number) => [1, 1.25, 1.5, 1.75, 2][Math.min(4, stage)] ?? 2;
@@ -146,23 +159,56 @@ function makeRng(seed: number) {
   };
 }
 
-function addGarbageRows(board: RhythmBoardState, rows: number, rng: () => number) {
-  let next = board.map(row => row.slice());
-  for (let r = 0; r < rows; r++) {
-    const gap = Math.floor(rng() * BOARD_WIDTH);
-    next = [
-      ...next.slice(1),
-      Array.from({ length: BOARD_WIDTH }, (_, x) => (x === gap ? null : 'garbage')),
-    ];
+function hexToRgb(color: string) {
+  const hex = color.trim().replace('#', '');
+  if (hex.length !== 6) return null;
+  const value = Number.parseInt(hex, 16);
+  if (Number.isNaN(value)) return null;
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+}
+
+function pieceTypeFromAiColor(color: string): PieceType | 'garbage' {
+  const normalized = color.trim().toLowerCase();
+  const exact = AI_COLOR_TO_PIECE[normalized];
+  if (exact) return exact;
+
+  const rgb = hexToRgb(normalized);
+  if (!rgb) return 'T';
+
+  let bestType: PieceType = 'T';
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (const [hex, type] of AI_COLOR_ENTRIES) {
+    const candidate = hexToRgb(hex);
+    if (!candidate) continue;
+    const distance =
+      (candidate.r - rgb.r) ** 2 +
+      (candidate.g - rgb.g) ** 2 +
+      (candidate.b - rgb.b) ** 2;
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestType = type;
+    }
   }
-  return next;
+
+  return bestType;
+}
+
+function getDisplayCellColor(cell: string | null) {
+  if (!cell) return 'rgba(255,255,255,0.04)';
+  return PLAYER_COLORS[cell] ?? PLAYER_COLORS.T;
 }
 
 function aiBoardToRhythmBoard(board: ({ color: string } | null)[][]): RhythmBoardState {
   const visible = board.map(row =>
     row.map(cell => {
       if (!cell) return null;
-      return cell.color === '#555555' ? 'garbage' : 'I';
+      return pieceTypeFromAiColor(cell.color);
     }),
   );
   return [...Array.from({ length: BUFFER_ZONE }, () => Array(BOARD_WIDTH).fill(null)), ...visible];
@@ -243,7 +289,7 @@ function MicroBoard({ bot, targeted }: { bot: BotState; targeted: boolean }) {
             <div
               key={`${bot.id}-${y}-${x}`}
               className={styles.microCell}
-              style={{ background: cell === 'garbage' ? 'rgba(102,102,102,0.92)' : cell ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.04)' }}
+              style={{ background: getDisplayCellColor(cell) }}
             />
           )),
         )}
@@ -255,6 +301,7 @@ function MicroBoard({ bot, targeted }: { bot: BotState; targeted: boolean }) {
 
 function PreviewShape({ type }: { type: PieceType | null }) {
   if (!type) return null;
+  const pieceColor = PLAYER_COLORS[type] ?? PLAYER_COLORS.T;
   const shape = {
     I: [[0, 0, 0, 0], [1, 1, 1, 1]],
     O: [[1, 1], [1, 1]],
@@ -268,7 +315,7 @@ function PreviewShape({ type }: { type: PieceType | null }) {
     <div className={styles.previewShape} style={{ gridTemplateColumns: `repeat(${shape[0].length}, 10px)` }}>
       {shape.flatMap((row, rowIndex) =>
         row.map((cell, cellIndex) => (
-          <div key={`${type}-${rowIndex}-${cellIndex}`} className={styles.previewCell} style={{ background: cell ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.06)' }} />
+          <div key={`${type}-${rowIndex}-${cellIndex}`} className={styles.previewCell} style={{ background: cell ? pieceColor : 'rgba(255,255,255,0.06)' }} />
         )),
       )}
     </div>
@@ -619,7 +666,9 @@ export default function Tetris99GameProper() {
     incomingRef.current = progressed.queue;
     if (progressed.due <= 0) return;
     lastDamagedByRef.current = progressed.lastSource;
-    boardRef.current = addGarbageRows(boardRef.current, progressed.due, rngRef.current);
+    const { newBoard, adjustedPiece } = applyGarbageRise(boardRef.current, currentPieceRef.current, progressed.due, rngRef.current);
+    boardRef.current = newBoard;
+    currentPieceRef.current = adjustedPiece;
     playSfx('garbage');
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
   }
