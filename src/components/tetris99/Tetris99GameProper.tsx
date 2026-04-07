@@ -43,6 +43,32 @@ type GarbagePacket = {
   from: string;
 };
 
+type AttackDistribution = {
+  targetId: string;
+  lines: number;
+};
+
+type FinalizeAttackResult = {
+  offset: number;
+  attackerCount: number;
+  attackerBonus: number;
+  badgeBoostPercent: number;
+  targetIds: string[];
+  distributions: AttackDistribution[];
+  nextQueue: GarbagePacket[];
+  totalSent: number;
+};
+
+type TargetManager = {
+  resolveTargets: (sourceId: string, mode: TargetMode, playerTargets?: Set<string>) => string[];
+  distributeAttack: (sourceId: string, mode: TargetMode, totalLines: number, targetIds: string[], playerTargets?: Set<string>) => AttackDistribution[];
+};
+
+type AttackerManager = {
+  countAttackers: (targetId: string, playerTargets?: Set<string>) => number;
+  getBonus: (targetId: string, playerTargets?: Set<string>) => number;
+};
+
 type BotState = {
   id: string;
   name: string;
@@ -75,6 +101,7 @@ type Snapshot = {
   kos: number;
   badges: number;
   badgePoints: number;
+  badgeBoostPercent: number;
   place: number;
   attackers: number;
   incomingGarbage: number;
@@ -118,7 +145,8 @@ const AI_COLOR_TO_PIECE: Record<string, PieceType | 'garbage'> = {
 };
 const AI_COLOR_ENTRIES = Object.entries(AI_COLOR_TO_PIECE).filter(([, type]) => type !== 'garbage') as Array<[string, PieceType]>;
 
-const badgeStageFromPoints = (points: number) => (points >= 30 ? 4 : points >= 14 ? 3 : points >= 6 ? 2 : points >= 2 ? 1 : 0);
+const badgeStageFromPoints = (points: number) => (points >= 16 ? 4 : points >= 8 ? 3 : points >= 4 ? 2 : points >= 2 ? 1 : 0);
+const badgeBoostPercentFromStage = (stage: number) => ([0, 25, 50, 75, 100][Math.max(0, Math.min(4, stage))] ?? 0);
 
 function getAttackClearType(clearedLines: number, tSpin: 'none' | 'mini' | 'full'): AttackClearType {
   if (tSpin === 'mini' && clearedLines > 0) return 'tSpinMini';
@@ -400,13 +428,30 @@ function offsetGarbageQueue(queue: GarbagePacket[], amount: number) {
   return { next, remaining, canceled };
 }
 
+function BadgeMeter({ stage, percent, compact = false }: { stage: number; percent: number; compact?: boolean }) {
+  const pips = Array.from({ length: 4 }, (_, index) => index < stage);
+  return (
+    <div className={`${styles.badgeMeter} ${compact ? styles.badgeMeterCompact : ''}`}>
+      <div className={styles.badgePips}>
+        {pips.map((active, index) => (
+          <span
+            key={`badge-pip-${index}`}
+            className={`${styles.badgePip} ${active ? styles.badgePipActive : ''}`}
+          />
+        ))}
+      </div>
+      <span className={styles.badgePercent}>{`+${percent}%`}</span>
+    </div>
+  );
+}
+
 function MicroBoard({ bot, targeted }: { bot: BotState; targeted: boolean }) {
   const cls = [styles.microCard, targeted ? styles.microCardTargeted : '', bot.targetIds.includes(PLAYER_ID) ? styles.microCardAttacker : ''].filter(Boolean).join(' ');
   return (
     <div className={cls}>
       <div className={styles.microHeader}>
         <span>{bot.name}</span>
-        <span className={styles.microBadge}>{'★'.repeat(bot.badges)}</span>
+        <BadgeMeter stage={bot.badges} percent={badgeBoostPercentFromStage(bot.badges)} compact />
       </div>
       <div className={styles.microBoard}>
         {bot.board.flatMap((row, y) =>
@@ -525,6 +570,7 @@ export default function Tetris99GameProper() {
   const badgesRef = useRef(0);
   const tSpinsRef = useRef(0);
   const incomingRef = useRef<GarbagePacket[]>([]);
+  const playerTargetIdsRef = useRef<string[]>([]);
   const backToBackRef = useRef(false);
   const lastMoveRotationRef = useRef(false);
   const lockTimerRef = useRef<number | null>(null);
@@ -555,6 +601,7 @@ export default function Tetris99GameProper() {
     kos: 0,
     badges: 0,
     badgePoints: 0,
+    badgeBoostPercent: 0,
     place: 99,
     attackers: 0,
     incomingGarbage: 0,
@@ -639,6 +686,7 @@ export default function Tetris99GameProper() {
       kos: kosRef.current,
       badges: badgesRef.current,
       badgePoints: badgePointsRef.current,
+      badgeBoostPercent: badgeBoostPercentFromStage(badgesRef.current),
       place: alive + (stateRef.current === 'gameOver' && !victoryRef.current ? 0 : 1),
       attackers,
       incomingGarbage: sumGarbage(incomingRef.current),
@@ -692,6 +740,7 @@ export default function Tetris99GameProper() {
     badgesRef.current = 0;
     tSpinsRef.current = 0;
     incomingRef.current = [];
+    playerTargetIdsRef.current = [];
     lastDamagedByRef.current = null;
     backToBackRef.current = false;
     lastMoveRotationRef.current = false;
@@ -726,6 +775,7 @@ export default function Tetris99GameProper() {
         aiPoints,
       };
     }).map(bot => ({ ...bot, badges: badgeStageFromPoints(bot.badgePoints) }));
+    refreshPlayerTargets(true);
     setBotRenderVersion(prev => prev + 1);
     spawnPiece();
     syncSnapshot('Get ready');
@@ -776,6 +826,7 @@ export default function Tetris99GameProper() {
 
   function setTargetMode(mode: TargetMode) {
     targetModeRef.current = mode;
+    refreshPlayerTargets(mode === 'random');
     syncSnapshot(`${targetLabel(mode)} selected`);
   }
 
@@ -797,37 +848,35 @@ export default function Tetris99GameProper() {
   }
 
   function candidateBadges(id: string) {
-    if (id === PLAYER_ID) return badgePointsRef.current + badgesRef.current * 10;
+    if (id === PLAYER_ID) return badgePointsRef.current;
     const bot = getBotById(id);
     if (!bot || !bot.alive) return -1;
-    return bot.badgePoints + bot.badges * 10;
+    return bot.badgePoints;
   }
 
-  function chooseWeightedRandomTarget(candidates: string[]) {
+  function chooseRandomTarget(candidates: string[]) {
     if (!candidates.length) return [];
-    const weighted = candidates.map(id => ({
-      id,
-      weight: Math.max(1, (id === PLAYER_ID ? 2 : 1) + Math.floor(candidateDanger(id) / 4) + Math.floor(candidateBadges(id) / 3)),
-    }));
-    const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
-    let roll = rngRef.current() * total;
-    for (const entry of weighted) {
-      roll -= entry.weight;
-      if (roll <= 0) return [entry.id];
+    return [candidates[Math.floor(rngRef.current() * candidates.length)] ?? candidates[0]!];
+  }
+
+  function getAttackerIds(targetId: string, playerTargets = new Set<string>()) {
+    const attackers = botsRef.current
+      .filter(bot => bot.alive && bot.id !== targetId && bot.targetIds.includes(targetId))
+      .map(bot => bot.id);
+
+    if (targetId !== PLAYER_ID && stateRef.current !== 'gameOver' && playerTargets.has(targetId)) {
+      attackers.push(PLAYER_ID);
     }
-    return [weighted[weighted.length - 1]!.id];
+
+    return [...new Set(attackers)].filter(id => id === PLAYER_ID || getBotById(id)?.alive);
   }
 
   function chooseTargets(sourceId: string, mode: TargetMode, playerTargets = new Set<string>()) {
     const candidates = getAliveOpponentIds(sourceId);
     if (!candidates.length) return [];
     if (mode === 'attackers') {
-      const attackers = botsRef.current
-        .filter(bot => bot.alive && bot.id !== sourceId && bot.targetIds.includes(sourceId))
-        .map(bot => bot.id);
-      if (sourceId !== PLAYER_ID && playerTargets.has(sourceId)) attackers.push(PLAYER_ID);
-      const uniqueAttackers = [...new Set(attackers)].filter(id => candidates.includes(id));
-      return uniqueAttackers.length ? uniqueAttackers : chooseWeightedRandomTarget(candidates);
+      const attackers = getAttackerIds(sourceId, playerTargets).filter(id => candidates.includes(id));
+      return attackers.length ? attackers : chooseRandomTarget(candidates);
     }
     if (mode === 'kos') {
       return [...candidates].sort((a, b) => candidateDanger(b) - candidateDanger(a) || candidateBadges(a) - candidateBadges(b)).slice(0, 1);
@@ -835,16 +884,101 @@ export default function Tetris99GameProper() {
     if (mode === 'badges') {
       return [...candidates].sort((a, b) => candidateBadges(b) - candidateBadges(a) || candidateDanger(b) - candidateDanger(a)).slice(0, 1);
     }
-    return chooseWeightedRandomTarget(candidates);
+    return chooseRandomTarget(candidates);
+  }
+
+  function resolveStableTargets(sourceId: string, mode: TargetMode, currentTargets: string[], playerTargets = new Set<string>()) {
+    if (mode !== 'random') return chooseTargets(sourceId, mode, playerTargets);
+    const aliveCurrent = currentTargets.filter(id => (id === PLAYER_ID ? stateRef.current !== 'gameOver' : !!getBotById(id)?.alive));
+    return aliveCurrent.length ? aliveCurrent : chooseTargets(sourceId, mode, playerTargets);
+  }
+
+  function distributeAttack(sourceId: string, mode: TargetMode, totalLines: number, targetIds: string[], playerTargets = new Set<string>()) {
+    if (totalLines <= 0 || targetIds.length === 0) return [];
+
+    const attackerIds = new Set(getAttackerIds(sourceId, playerTargets));
+    const sendFullToEach = mode === 'attackers' && targetIds.every(id => attackerIds.has(id));
+    if (sendFullToEach) {
+      return targetIds.map(targetId => ({ targetId, lines: totalLines }));
+    }
+
+    const baseLines = Math.floor(totalLines / targetIds.length);
+    let remainder = totalLines % targetIds.length;
+
+    return targetIds
+      .map(targetId => {
+        const lines = baseLines + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder -= 1;
+        return { targetId, lines };
+      })
+      .filter(entry => entry.lines > 0);
+  }
+
+  const targetManager: TargetManager = {
+    resolveTargets: chooseTargets,
+    distributeAttack,
+  };
+
+  const attackerManager: AttackerManager = {
+    countAttackers: (targetId, playerTargets = new Set<string>()) => getAttackerIds(targetId, playerTargets).length,
+    getBonus: (targetId, playerTargets = new Set<string>()) => attackerBonus(getAttackerIds(targetId, playerTargets).length),
+  };
+
+  function getBadgeStageForSource(sourceId: string) {
+    if (sourceId === PLAYER_ID) return badgesRef.current;
+    return getBotById(sourceId)?.badges ?? 0;
+  }
+
+  function refreshPlayerTargets(forceRandomRetarget = false) {
+    const currentTargets = forceRandomRetarget ? [] : playerTargetIdsRef.current;
+    playerTargetIdsRef.current = resolveStableTargets(PLAYER_ID, targetModeRef.current, currentTargets);
+    return new Set(playerTargetIdsRef.current);
+  }
+
+  function finalizeAttack(sourceId: string, mode: TargetMode, lines: number, targetIds: string[], incomingQueue: GarbagePacket[], playerTargets = new Set<string>()): FinalizeAttackResult {
+    const offsetResult = offsetGarbageQueue(incomingQueue, lines);
+    const attackerCount = attackerManager.countAttackers(sourceId, playerTargets);
+    const badgeBoostPercent = badgeBoostPercentFromStage(getBadgeStageForSource(sourceId));
+
+    if (offsetResult.remaining <= 0 || targetIds.length === 0) {
+      return {
+        offset: offsetResult.canceled,
+        attackerCount,
+        attackerBonus: 0,
+        badgeBoostPercent,
+        targetIds,
+        distributions: [],
+        nextQueue: offsetResult.next,
+        totalSent: 0,
+      };
+    }
+
+    const attackerBonusLines = attackerManager.getBonus(sourceId, playerTargets);
+    const attackWithCounter = offsetResult.remaining + attackerBonusLines;
+    const boostedAttack = Math.max(0, Math.floor(attackWithCounter * (1 + badgeBoostPercent / 100)));
+    const distributions = targetManager.distributeAttack(sourceId, mode, boostedAttack, targetIds, playerTargets);
+
+    return {
+      offset: offsetResult.canceled,
+      attackerCount,
+      attackerBonus: attackerBonusLines,
+      badgeBoostPercent,
+      targetIds,
+      distributions,
+      nextQueue: offsetResult.next,
+      totalSent: distributions.reduce((sum, entry) => sum + entry.lines, 0),
+    };
   }
 
   function updateBotTargeting(bot: BotState, playerTargets: Set<string>) {
+    const previousMode = bot.targetMode;
     const pressure = boardDanger(bot.board) + sumGarbage(bot.pendingGarbage);
     if (pressure >= 16) bot.targetMode = 'attackers';
     else if (bot.badges >= 2) bot.targetMode = 'badges';
     else if (botsRef.current.some(entry => entry.alive && entry.id !== bot.id && candidateDanger(entry.id) >= 16)) bot.targetMode = 'kos';
     else if (rngRef.current() > 0.94) bot.targetMode = 'random';
-    bot.targetIds = chooseTargets(bot.id, bot.targetMode, playerTargets);
+    const currentTargets = previousMode === bot.targetMode ? bot.targetIds : [];
+    bot.targetIds = resolveStableTargets(bot.id, bot.targetMode, currentTargets, playerTargets);
   }
 
   function awardKo(killerId: string | null, victimBadges: number) {
@@ -872,36 +1006,37 @@ export default function Tetris99GameProper() {
   }
 
   function sendAttack(lines: number) {
-    const targets = chooseTargets(PLAYER_ID, targetModeRef.current);
-    let attackPower = lines;
-    if (targetModeRef.current === 'attackers') attackPower += attackerBonus(targets.length);
-    const offset = offsetGarbageQueue(incomingRef.current, attackPower);
-    incomingRef.current = offset.next;
-    const outgoing = offset.remaining;
-    if (outgoing <= 0 || !targets.length) {
-      return { offset: offset.canceled, sent: 0 };
+    const targetIds = resolveStableTargets(PLAYER_ID, targetModeRef.current, playerTargetIdsRef.current);
+    playerTargetIdsRef.current = targetIds;
+    const attack = finalizeAttack(PLAYER_ID, targetModeRef.current, lines, targetIds, incomingRef.current);
+    incomingRef.current = attack.nextQueue;
+
+    for (const distribution of attack.distributions) {
+      const bot = getBotById(distribution.targetId);
+      if (bot?.alive) queuePacket(distribution.lines, PLAYER_ID, bot);
     }
-    for (const targetId of targets) {
-      const bot = getBotById(targetId);
-      if (bot?.alive) queuePacket(outgoing, PLAYER_ID, bot);
-    }
-    return { offset: offset.canceled, sent: outgoing };
+
+    return {
+      offset: attack.offset,
+      sent: attack.totalSent,
+      attackerBonus: attack.attackerBonus,
+      attackerCount: attack.attackerCount,
+      badgeBoostPercent: attack.badgeBoostPercent,
+      targetCount: attack.targetIds.length,
+    };
   }
 
-  function routeBotAttack(botId: string, lines: number) {
+  function routeBotAttack(botId: string, lines: number, playerTargets = new Set<string>()) {
     const bot = getBotById(botId);
     if (!bot || !bot.alive || lines <= 0) return;
-    let attackPower = lines;
-    if (bot.targetMode === 'attackers') attackPower += attackerBonus(bot.targetIds.length);
-    const offset = offsetGarbageQueue(bot.pendingGarbage, attackPower);
-    bot.pendingGarbage = offset.next;
-    const outgoing = offset.remaining;
-    if (outgoing <= 0) return;
-    for (const targetId of bot.targetIds) {
-      if (targetId === PLAYER_ID) queuePacket(outgoing, bot.id, { pendingGarbage: incomingRef.current });
+    const attack = finalizeAttack(bot.id, bot.targetMode, lines, bot.targetIds, bot.pendingGarbage, playerTargets);
+    bot.pendingGarbage = attack.nextQueue;
+
+    for (const distribution of attack.distributions) {
+      if (distribution.targetId === PLAYER_ID) queuePacket(distribution.lines, bot.id, { pendingGarbage: incomingRef.current });
       else {
-        const targetBot = getBotById(targetId);
-        if (targetBot?.alive) queuePacket(outgoing, bot.id, targetBot);
+        const targetBot = getBotById(distribution.targetId);
+        if (targetBot?.alive) queuePacket(distribution.lines, bot.id, targetBot);
       }
     }
   }
@@ -940,11 +1075,11 @@ export default function Tetris99GameProper() {
           currentBot.combo = attackResult.nextComboChain;
           currentBot.b2bActive = attackResult.nextB2bActive;
 
-          const playerTargets = new Set(chooseTargets(PLAYER_ID, targetModeRef.current));
+          const playerTargets = refreshPlayerTargets();
           updateBotTargeting(currentBot, playerTargets);
 
           if (attackResult.total > 0) {
-            routeBotAttack(currentBot.id, attackResult.total);
+            routeBotAttack(currentBot.id, attackResult.total, playerTargets);
           }
 
           const comboJustBroke = placement.clearedLines === 0 && previousComboChain > 0;
@@ -983,11 +1118,15 @@ export default function Tetris99GameProper() {
     comboRef.current = attackResult.nextComboChain;
     backToBackRef.current = attackResult.nextB2bActive;
     let attackOffset = 0;
+    let attackBonus = 0;
+    let badgeBoostPercent = 0;
 
     if (clearedLines > 0) {
       if (attackResult.total > 0) {
         const attackResolution = sendAttack(attackResult.total);
         attackOffset = attackResolution.offset;
+        attackBonus = attackResolution.attackerBonus;
+        badgeBoostPercent = attackResolution.badgeBoostPercent;
       }
       playSfx(clearedLines === 4 ? 'tetris' : 'clear');
       if (tSpin === 'full') {
@@ -1007,6 +1146,12 @@ export default function Tetris99GameProper() {
     }
     if (attackResult.comboBonus > 0) {
       status = `${status} | REN +${attackResult.comboBonus}`;
+    }
+    if (attackBonus > 0) {
+      status = `${status} | Attackers +${attackBonus}`;
+    }
+    if (badgeBoostPercent > 0) {
+      status = `${status} | Badges +${badgeBoostPercent}%`;
     }
     if (attackOffset > 0) {
       status = `${status} | Offset ${attackOffset}`;
@@ -1265,7 +1410,7 @@ export default function Tetris99GameProper() {
 
     const botLoop = window.setInterval(() => {
       if (stateRef.current !== 'playing') return;
-      const playerTargets = new Set(chooseTargets(PLAYER_ID, targetModeRef.current));
+      const playerTargets = refreshPlayerTargets();
       for (const bot of botsRef.current) {
         if (!bot.alive) continue;
         updateBotTargeting(bot, playerTargets);
@@ -1291,7 +1436,7 @@ export default function Tetris99GameProper() {
   }, [snapshot.state]);
 
   const targetedBots = useMemo(() => {
-    return new Set(chooseTargets(PLAYER_ID, snapshot.targetMode));
+    return new Set(playerTargetIdsRef.current);
   }, [botRenderVersion, snapshot.targetMode, snapshot.place, snapshot.attackers]);
 
   const leftBotBoards = useMemo(() => (
@@ -1322,7 +1467,11 @@ export default function Tetris99GameProper() {
                   <div className={styles.boardStats}>
                     <div className={styles.boardStat}><span className={styles.statLabel}>Place</span><strong className={styles.boardStatValue}>#{snapshot.place}</strong></div>
                     <div className={styles.boardStat}><span className={styles.statLabel}>Attackers</span><strong className={styles.boardStatValue}>{snapshot.attackers}</strong></div>
-                    <div className={styles.boardStat}><span className={styles.statLabel}>Badges</span><strong className={styles.boardStatValue}>{snapshot.badges}</strong></div>
+                    <div className={styles.boardStat}>
+                      <span className={styles.statLabel}>Badge Boost</span>
+                      <strong className={styles.boardStatValue}>{`+${snapshot.badgeBoostPercent}%`}</strong>
+                      <BadgeMeter stage={snapshot.badges} percent={snapshot.badgeBoostPercent} />
+                    </div>
                     <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</strong></div>
                   </div>
                   <div className={styles.boardPlayfield}>
@@ -1333,8 +1482,8 @@ export default function Tetris99GameProper() {
                         <h2 className={styles.boardGameOverTitle}>{snapshot.victory ? 'Victory Royale' : 'Game Over'}</h2>
                         <p className={styles.boardGameOverBody}>
                           {snapshot.victory
-                            ? `You closed the lobby with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points.`
-                            : `You finished #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points.`}
+                            ? `You closed the lobby with ${snapshot.kos} KOs and ${snapshot.badgePoints} badges.`
+                            : `You finished #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badges.`}
                         </p>
                         <div className={styles.actionRow}>
                           <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>Play Again</button>
@@ -1365,7 +1514,8 @@ export default function Tetris99GameProper() {
               <span className={styles.panelHeader}>Systems</span>
               <div className={styles.queueList}>
                 <div className={styles.queueItem}><span>Incoming garbage</span><strong>{snapshot.incomingGarbage}</strong></div>
-                <div className={styles.queueItem}><span>Badge points</span><strong>{snapshot.badgePoints}</strong></div>
+                <div className={styles.queueItem}><span>Badges</span><strong>{snapshot.badgePoints}</strong></div>
+                <div className={styles.queueItem}><span>Badge boost</span><strong>{`+${snapshot.badgeBoostPercent}%`}</strong></div>
                 <div className={styles.queueItem}><span>REN</span><strong>{snapshot.ren}</strong></div>
                 <div className={styles.queueItem}><span>T-Spins</span><strong>{snapshot.tSpins}</strong></div>
                 <div className={styles.queueItem}><span>Target mode</span><strong>{targetLabel(snapshot.targetMode)}</strong></div>

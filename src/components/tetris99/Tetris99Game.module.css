@@ -222,6 +222,54 @@
   color: rgba(255, 248, 238, 0.96);
 }
 
+.badgeMeter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.badgeMeterCompact {
+  gap: 4px;
+  margin-top: 0;
+}
+
+.badgePips {
+  display: flex;
+  gap: 3px;
+}
+
+.badgePip {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  border-radius: 1px;
+  background: rgba(255, 209, 102, 0.12);
+  border: 1px solid rgba(255, 209, 102, 0.18);
+}
+
+.badgeMeterCompact .badgePip {
+  width: 5px;
+  height: 5px;
+}
+
+.badgePipActive {
+  background: linear-gradient(180deg, #ffd166, #ff9a5c);
+  border-color: rgba(255, 236, 194, 0.78);
+  box-shadow: 0 0 8px rgba(255, 209, 102, 0.32);
+}
+
+.badgePercent {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: rgba(255, 234, 190, 0.88);
+  letter-spacing: 0.04em;
+}
+
+.badgeMeterCompact .badgePercent {
+  font-size: 0.42rem;
+}
+
 .playerBoard {
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
