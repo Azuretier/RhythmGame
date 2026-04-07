@@ -33,17 +33,27 @@ type Piece = {
   y: number;
 };
 
+type GarbagePacket = {
+  id: string;
+  lines: number;
+  delay: number;
+  from: string;
+};
+
+type MatchState = 'countdown' | 'playing' | 'gameOver';
+
 type BotState = {
   id: string;
   name: string;
   alive: boolean;
   board: (BoardCell | null)[][];
   heights: number[];
-  pendingGarbage: number;
+  pendingGarbage: GarbagePacket[];
   score: number;
   lines: number;
   combo: number;
   badges: number;
+  badgePoints: number;
   koCredit: boolean;
   targetingPlayer: boolean;
 };
@@ -56,12 +66,15 @@ type Snapshot = {
   lines: number;
   combo: number;
   kos: number;
+  badgePoints: number;
   badges: number;
   place: number;
   incomingGarbage: number;
   attackers: number;
   targetMode: TargetMode;
-  playing: boolean;
+  state: MatchState;
+  countdown: number;
+  statusText: string;
   gameOver: boolean;
   victory: boolean;
 };
@@ -77,6 +90,7 @@ const PIECE_COLORS: Record<PieceType, string> = {
 };
 
 const BOT_COUNT = 98;
+const GARBAGE_ENTRY_DELAY = 4;
 const BOT_NAMES = [
   'ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT',
   'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE', 'QUARTZ', 'RIFT', 'SOL', 'TITAN',
@@ -93,6 +107,14 @@ function createSpawnPiece(type: PieceType): Piece {
 
 function badgeMultiplier(badges: number) {
   return [1, 1.25, 1.5, 1.75, 2][Math.min(4, badges)] ?? 2;
+}
+
+function badgeStageFromPoints(points: number) {
+  if (points >= 30) return 4;
+  if (points >= 14) return 3;
+  if (points >= 6) return 2;
+  if (points >= 2) return 1;
+  return 0;
 }
 
 function comboAttack(combo: number) {
@@ -148,11 +170,12 @@ function createBotState(index: number, rng: () => number): BotState {
     alive: true,
     board: heightsToBoard(heights, index),
     heights,
-    pendingGarbage: 0,
+    pendingGarbage: [],
     score: Math.floor(rng() * 9000),
     lines: Math.floor(rng() * 30),
     combo: 0,
-    badges: Math.floor(rng() * 2),
+    badges: 0,
+    badgePoints: Math.floor(rng() * 2),
     koCredit: false,
     targetingPlayer: rng() > 0.72,
   };
@@ -210,6 +233,48 @@ function targetLabel(mode: TargetMode) {
   return 'Random';
 }
 
+function sumGarbage(queue: GarbagePacket[]) {
+  return queue.reduce((sum, packet) => sum + packet.lines, 0);
+}
+
+function makePacket(id: number, lines: number, from: string): GarbagePacket {
+  return { id: `packet-${id}`, lines, delay: GARBAGE_ENTRY_DELAY, from };
+}
+
+function progressGarbageQueue(queue: GarbagePacket[]) {
+  let due = 0;
+  const next = queue
+    .map(packet => ({ ...packet, delay: packet.delay - 1 }))
+    .filter(packet => {
+      if (packet.delay <= 0) {
+        due += packet.lines;
+        return false;
+      }
+      return true;
+    });
+  return { queue: next, due };
+}
+
+function cancelGarbage(queue: GarbagePacket[], amount: number) {
+  let remaining = amount;
+  const next: GarbagePacket[] = [];
+
+  for (const packet of queue) {
+    if (remaining <= 0) {
+      next.push(packet);
+      continue;
+    }
+    if (packet.lines <= remaining) {
+      remaining -= packet.lines;
+      continue;
+    }
+    next.push({ ...packet, lines: packet.lines - remaining });
+    remaining = 0;
+  }
+
+  return { queue: next, remaining };
+}
+
 function PreviewShape({ type }: { type: PieceType | null }) {
   if (!type) return null;
   const shape = getShape(type, 0);
@@ -259,6 +324,8 @@ function MicroBoard({ bot, targeted }: { bot: BotState; targeted: boolean }) {
 
 export default function Tetris99Game() {
   const router = useRouter();
+  const audioRef = useRef<AudioContext | null>(null);
+  const packetIdRef = useRef(0);
   const playerSeedRef = useRef(99_009);
   const bagRef = useRef(create7Bag(createRNG(playerSeedRef.current)));
   const garbageRngRef = useRef(createRNG(playerSeedRef.current + 17));
@@ -279,9 +346,11 @@ export default function Tetris99Game() {
   const linesRef = useRef(0);
   const comboRef = useRef(0);
   const koRef = useRef(0);
+  const badgePointsRef = useRef(0);
   const badgesRef = useRef(0);
-  const incomingGarbageRef = useRef(0);
-  const playingRef = useRef(false);
+  const incomingGarbageRef = useRef<GarbagePacket[]>([]);
+  const matchStateRef = useRef<MatchState>('countdown');
+  const countdownRef = useRef(3);
   const gameOverRef = useRef(false);
   const victoryRef = useRef(false);
   const targetModeRef = useRef<TargetMode>('random');
@@ -294,12 +363,15 @@ export default function Tetris99Game() {
     lines: 0,
     combo: 0,
     kos: 0,
+    badgePoints: 0,
     badges: 0,
     place: 99,
     incomingGarbage: 0,
     attackers: 0,
     targetMode: 'random',
-    playing: false,
+    state: 'countdown',
+    countdown: 3,
+    statusText: 'Get ready',
     gameOver: false,
     victory: false,
   });
@@ -320,13 +392,73 @@ export default function Tetris99Game() {
     return new Set([aliveBots[0]?.id].filter(Boolean));
   })();
 
+  function ensureAudio() {
+    if (!audioRef.current) {
+      audioRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    if (audioRef.current.state === 'suspended') {
+      void audioRef.current.resume();
+    }
+    return audioRef.current;
+  }
+
+  function playTone(
+    frequency: number,
+    duration: number,
+    type: OscillatorType = 'square',
+    gainValue = 0.05,
+    endFrequency?: number,
+  ) {
+    const ctx = ensureAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+    if (endFrequency) {
+      osc.frequency.exponentialRampToValueAtTime(endFrequency, ctx.currentTime + duration);
+    }
+    gain.gain.setValueAtTime(gainValue, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  }
+
+  function playSfx(kind: 'move' | 'rotate' | 'drop' | 'clear' | 'tetris' | 'garbage' | 'ko' | 'danger' | 'start' | 'win' | 'lose') {
+    if (typeof window === 'undefined') return;
+    if (kind === 'move') playTone(220, 0.04, 'square', 0.025);
+    if (kind === 'rotate') playTone(440, 0.05, 'triangle', 0.035, 520);
+    if (kind === 'drop') playTone(180, 0.08, 'sawtooth', 0.045, 80);
+    if (kind === 'clear') {
+      playTone(660, 0.12, 'triangle', 0.05, 880);
+      playTone(990, 0.1, 'triangle', 0.03);
+    }
+    if (kind === 'tetris') {
+      playTone(660, 0.18, 'triangle', 0.06, 1320);
+      playTone(330, 0.18, 'square', 0.035, 165);
+    }
+    if (kind === 'garbage') playTone(130, 0.16, 'sawtooth', 0.045, 75);
+    if (kind === 'ko') {
+      playTone(523, 0.14, 'triangle', 0.05, 1047);
+      playTone(783, 0.16, 'triangle', 0.04);
+    }
+    if (kind === 'danger') playTone(150, 0.12, 'square', 0.04, 110);
+    if (kind === 'start') playTone(440, 0.1, 'triangle', 0.05, 880);
+    if (kind === 'win') {
+      playTone(523, 0.18, 'triangle', 0.055, 1047);
+      playTone(784, 0.22, 'triangle', 0.045, 1568);
+    }
+    if (kind === 'lose') playTone(220, 0.28, 'sawtooth', 0.05, 82);
+  }
+
   function fillQueue() {
     while (queueRef.current.length < 5) {
       queueRef.current.push(bagRef.current());
     }
   }
 
-  function syncSnapshot() {
+  function syncSnapshot(statusText?: string) {
     const aliveBots = botsRef.current.filter(bot => bot.alive).length;
     setSnapshot({
       board: buildDisplayBoard(boardRef.current, pieceRef.current),
@@ -336,12 +468,15 @@ export default function Tetris99Game() {
       lines: linesRef.current,
       combo: comboRef.current,
       kos: koRef.current,
+      badgePoints: badgePointsRef.current,
       badges: badgesRef.current,
       place: aliveBots + (gameOverRef.current ? 0 : 1),
-      incomingGarbage: incomingGarbageRef.current,
+      incomingGarbage: sumGarbage(incomingGarbageRef.current),
       attackers: botsRef.current.filter(bot => bot.alive && bot.targetingPlayer).length,
       targetMode: targetModeRef.current,
-      playing: playingRef.current,
+      state: matchStateRef.current,
+      countdown: countdownRef.current,
+      statusText: statusText ?? snapshot.statusText,
       gameOver: gameOverRef.current,
       victory: victoryRef.current,
     });
@@ -353,9 +488,11 @@ export default function Tetris99Game() {
     fillQueue();
     const piece = createSpawnPiece(type);
     if (!isValid(piece, boardRef.current)) {
+      matchStateRef.current = 'gameOver';
       gameOverRef.current = true;
-      playingRef.current = false;
-      syncSnapshot();
+      victoryRef.current = false;
+      playSfx('lose');
+      syncSnapshot('Eliminated');
       return false;
     }
     pieceRef.current = piece;
@@ -371,7 +508,9 @@ export default function Tetris99Game() {
   function awardKo(count: number) {
     if (count <= 0) return;
     koRef.current += count;
-    badgesRef.current = Math.min(4, Math.floor(koRef.current / 2));
+    badgePointsRef.current += count;
+    badgesRef.current = badgeStageFromPoints(badgePointsRef.current);
+    playSfx('ko');
   }
 
   function chooseTargets() {
@@ -385,7 +524,7 @@ export default function Tetris99Game() {
       return [...aliveBots].sort((a, b) => highestStack(b.heights) - highestStack(a.heights)).slice(0, 2).map(bot => bot.id);
     }
     if (targetModeRef.current === 'badges') {
-      return [...aliveBots].sort((a, b) => b.badges - a.badges || highestStack(b.heights) - highestStack(a.heights)).slice(0, 2).map(bot => bot.id);
+      return [...aliveBots].sort((a, b) => b.badgePoints - a.badgePoints || highestStack(b.heights) - highestStack(a.heights)).slice(0, 2).map(bot => bot.id);
     }
     return [aliveBots[Math.floor(Math.random() * aliveBots.length)].id];
   }
@@ -393,12 +532,9 @@ export default function Tetris99Game() {
   function sendAttack(lines: number) {
     if (lines <= 0) return;
 
-    let remaining = lines;
-    if (incomingGarbageRef.current > 0) {
-      const canceled = Math.min(remaining, incomingGarbageRef.current);
-      incomingGarbageRef.current -= canceled;
-      remaining -= canceled;
-    }
+    const canceled = cancelGarbage(incomingGarbageRef.current, lines);
+    incomingGarbageRef.current = canceled.queue;
+    const remaining = canceled.remaining;
     if (remaining <= 0) return;
 
     const targets = chooseTargets();
@@ -408,11 +544,14 @@ export default function Tetris99Game() {
     for (const botId of targets) {
       const bot = botsRef.current.find(item => item.id === botId && item.alive);
       if (!bot) continue;
-      bot.pendingGarbage += split;
+      packetIdRef.current += 1;
+      bot.pendingGarbage.push(makePacket(packetIdRef.current, split, 'player'));
       bot.koCredit = true;
-      if (highestStack(bot.heights) + bot.pendingGarbage >= 22 + Math.floor(Math.random() * 2)) {
+      if (highestStack(bot.heights) + sumGarbage(bot.pendingGarbage) >= 22 + Math.floor(Math.random() * 2)) {
         bot.alive = false;
         bot.board = createEmptyBoard();
+        badgePointsRef.current += 1 + bot.badges;
+        badgesRef.current = badgeStageFromPoints(badgePointsRef.current);
         awarded += 1;
       }
     }
@@ -421,9 +560,12 @@ export default function Tetris99Game() {
   }
 
   function applyIncomingGarbage() {
-    if (incomingGarbageRef.current <= 0) return;
-    boardRef.current = addGarbageLines(boardRef.current, incomingGarbageRef.current, garbageRngRef.current);
-    incomingGarbageRef.current = 0;
+    const progressed = progressGarbageQueue(incomingGarbageRef.current);
+    incomingGarbageRef.current = progressed.queue;
+    if (progressed.due <= 0) return;
+    boardRef.current = addGarbageLines(boardRef.current, progressed.due, garbageRngRef.current);
+    playSfx('garbage');
+    if (isDanger(boardRef.current)) playSfx('danger');
   }
 
   function lockCurrentPiece() {
@@ -443,10 +585,13 @@ export default function Tetris99Game() {
       const attack = computeAttack(cleared, tSpin, comboRef.current, difficult && lastClearWasDifficultRef.current, badgesRef.current);
       lastClearWasDifficultRef.current = difficult;
       sendAttack(attack);
+      playSfx(cleared === 4 || tSpin === 'full' ? 'tetris' : 'clear');
+      syncSnapshot(tSpin === 'full' ? 'T-Spin' : cleared === 4 ? 'Tetris' : `${cleared} Line Clear`);
     } else {
       comboRef.current = 0;
       lastClearWasDifficultRef.current = false;
       applyIncomingGarbage();
+      syncSnapshot('Stack stabilized');
     }
 
     pieceRef.current = null;
@@ -475,7 +620,7 @@ export default function Tetris99Game() {
 
   function movePiece(dx: number, dy: number) {
     const piece = pieceRef.current;
-    if (!piece || !playingRef.current) return false;
+    if (!piece || matchStateRef.current !== 'playing') return false;
     const next = { ...piece, x: piece.x + dx, y: piece.y + dy };
     if (!isValid(next, boardRef.current)) {
       if (dy > 0) startLockTimer();
@@ -490,13 +635,14 @@ export default function Tetris99Game() {
     const below = { ...next, y: next.y + 1 };
     if (!isValid(below, boardRef.current)) startLockTimer();
     else clearLockTimer();
+    playSfx(dx !== 0 ? 'move' : 'drop');
     syncSnapshot();
     return true;
   }
 
   function rotatePiece(direction: 1 | -1) {
     const piece = pieceRef.current;
-    if (!piece || !playingRef.current) return;
+    if (!piece || matchStateRef.current !== 'playing') return;
     const rotated = tryRotate(piece, direction, boardRef.current);
     if (!rotated) return;
     pieceRef.current = rotated;
@@ -507,20 +653,22 @@ export default function Tetris99Game() {
     }
     const below = { ...rotated, y: rotated.y + 1 };
     if (!isValid(below, boardRef.current)) startLockTimer();
+    playSfx('rotate');
     syncSnapshot();
   }
 
   function hardDrop() {
     const piece = pieceRef.current;
-    if (!piece || !playingRef.current) return;
+    if (!piece || matchStateRef.current !== 'playing') return;
     const y = getGhostY(piece, boardRef.current);
     pieceRef.current = { ...piece, y };
     scoreRef.current += Math.max(0, y - piece.y) * 2;
+    playSfx('drop');
     lockCurrentPiece();
   }
 
   function holdPiece() {
-    if (!playingRef.current || holdUsedRef.current || !pieceRef.current) return;
+    if (matchStateRef.current !== 'playing' || holdUsedRef.current || !pieceRef.current) return;
     const current = pieceRef.current.type;
     const hold = holdRef.current;
     holdRef.current = current;
@@ -529,9 +677,12 @@ export default function Tetris99Game() {
     if (!hold) {
       spawnPiece();
     } else if (pieceRef.current && !isValid(pieceRef.current, boardRef.current)) {
+      matchStateRef.current = 'gameOver';
       gameOverRef.current = true;
-      playingRef.current = false;
+      victoryRef.current = false;
+      playSfx('lose');
     }
+    playSfx('rotate');
     syncSnapshot();
   }
 
@@ -545,20 +696,25 @@ export default function Tetris99Game() {
     linesRef.current = 0;
     comboRef.current = 0;
     koRef.current = 0;
+    badgePointsRef.current = 0;
     badgesRef.current = 0;
-    incomingGarbageRef.current = 0;
-    playingRef.current = true;
+    incomingGarbageRef.current = [];
+    matchStateRef.current = 'countdown';
+    countdownRef.current = 3;
     gameOverRef.current = false;
     victoryRef.current = false;
     lastMoveWasRotationRef.current = false;
     lastClearWasDifficultRef.current = false;
     botRngRef.current = createRNG(playerSeedRef.current + Math.floor(Math.random() * 10_000));
     botsRef.current = Array.from({ length: BOT_COUNT }, (_, index) => createBotState(index, botRngRef.current));
+    botsRef.current.forEach(bot => {
+      bot.badges = badgeStageFromPoints(bot.badgePoints);
+    });
     bagRef.current = create7Bag(createRNG(playerSeedRef.current + Math.floor(Math.random() * 10_000)));
     garbageRngRef.current = createRNG(playerSeedRef.current + Math.floor(Math.random() * 10_000) + 17);
     fillQueue();
     spawnPiece();
-    syncSnapshot();
+    syncSnapshot('Get ready');
   }
 
   useEffect(() => {
@@ -566,8 +722,27 @@ export default function Tetris99Game() {
   }, []);
 
   useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (matchStateRef.current !== 'countdown') return;
+      countdownRef.current -= 1;
+      if (countdownRef.current <= 0) {
+        countdownRef.current = 0;
+        matchStateRef.current = 'playing';
+        playSfx('start');
+        syncSnapshot('Fight!');
+        return;
+      }
+      playSfx('move');
+      syncSnapshot(`Starting in ${countdownRef.current}`);
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (!playingRef.current) return;
+      ensureAudio();
+      if (matchStateRef.current !== 'playing') return;
       if (event.repeat && (event.code === 'Space' || event.code === 'KeyC')) return;
       if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
         event.preventDefault();
@@ -599,7 +774,7 @@ export default function Tetris99Game() {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      if (!playingRef.current || gameOverRef.current || !pieceRef.current) return;
+      if (matchStateRef.current !== 'playing' || gameOverRef.current || !pieceRef.current) return;
       const next = { ...pieceRef.current, y: pieceRef.current.y + 1 };
       if (isValid(next, boardRef.current)) {
         pieceRef.current = next;
@@ -614,7 +789,7 @@ export default function Tetris99Game() {
 
   useEffect(() => {
     const interval = window.setInterval(() => {
-      if (!playingRef.current || gameOverRef.current) return;
+      if (matchStateRef.current !== 'playing' || gameOverRef.current) return;
 
       let playerKos = 0;
 
@@ -624,9 +799,10 @@ export default function Tetris99Game() {
         const stack = highestStack(bot.heights);
         bot.targetingPlayer = stack >= 14 || Math.random() > 0.78 || (koRef.current >= 2 && Math.random() > 0.64);
 
-        if (bot.pendingGarbage > 0) {
-          const garbage = bot.pendingGarbage;
-          bot.pendingGarbage = 0;
+        const progressed = progressGarbageQueue(bot.pendingGarbage);
+        bot.pendingGarbage = progressed.queue;
+        if (progressed.due > 0) {
+          const garbage = progressed.due;
           for (let i = 0; i < garbage; i++) {
             const hole = Math.floor(botRngRef.current() * W);
             bot.heights = bot.heights.map((height, index) => Math.min(H, height + (index === hole ? 0 : 1)));
@@ -657,12 +833,14 @@ export default function Tetris99Game() {
 
           const attack = computeAttack(clearCount, 'none', bot.combo, clearCount === 4, bot.badges);
           if (bot.targetingPlayer && attack > 0) {
-            incomingGarbageRef.current += attack;
+            packetIdRef.current += 1;
+            incomingGarbageRef.current.push(makePacket(packetIdRef.current, attack, bot.id));
           } else if (attack > 0) {
             const victims = botsRef.current.filter(candidate => candidate.alive && candidate.id !== bot.id);
             const victim = victims[Math.floor(botRngRef.current() * victims.length)];
             if (victim) {
-              victim.pendingGarbage += Math.max(1, Math.floor(attack / 2));
+              packetIdRef.current += 1;
+              victim.pendingGarbage.push(makePacket(packetIdRef.current, Math.max(1, Math.floor(attack / 2)), bot.id));
               victim.koCredit = false;
             }
           }
@@ -677,6 +855,7 @@ export default function Tetris99Game() {
         if (highestStack(bot.heights) >= H || bot.heights.reduce((sum, value) => sum + value, 0) >= 132) {
           bot.alive = false;
           bot.board = createEmptyBoard();
+          bot.badges = badgeStageFromPoints(bot.badgePoints);
           if (bot.koCredit) playerKos += 1;
         } else {
           bot.board = heightsToBoard(bot.heights, bot.lines + bot.score);
@@ -687,11 +866,12 @@ export default function Tetris99Game() {
 
       if (botsRef.current.every(bot => !bot.alive)) {
         victoryRef.current = true;
-        playingRef.current = false;
+        matchStateRef.current = 'gameOver';
         gameOverRef.current = true;
+        playSfx('win');
       }
 
-      syncSnapshot();
+      syncSnapshot(isDanger(boardRef.current) ? 'Danger zone' : 'Battle in progress');
     }, 700);
 
     return () => window.clearInterval(interval);
@@ -719,11 +899,11 @@ export default function Tetris99Game() {
             </div>
             <h1 className={styles.title}>Ninety-Nine Boards, One Survivor.</h1>
             <p className={styles.subtitle}>
-              A browser-built tribute to the Nintendo Switch battle-royale format: 98 CPU rivals, live targeting modes,
-              badge power scaling, incoming garbage pressure, and a full micro-board wall framing your main field.
+              A browser-built tribute to the Nintendo Switch battle-royale format with countdown flow, queued garbage,
+              badge-point scaling, target switching, and synthesized sound effects for movement, clears, danger, KOs, and win/loss states.
             </p>
             <div className={styles.actionRow}>
-              <button className={styles.button} onClick={resetGame}>Restart Match</button>
+              <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>Restart Match</button>
               <button className={styles.ghostButton} onClick={() => router.push('/games')}>Back to Games</button>
             </div>
           </div>
@@ -738,12 +918,12 @@ export default function Tetris99Game() {
                 <span className={styles.statValue}>{snapshot.attackers}</span>
               </div>
               <div className={styles.statCard}>
-                <span className={styles.statLabel}>Target</span>
-                <span className={styles.statValue}>{targetLabel(snapshot.targetMode)}</span>
+                <span className={styles.statLabel}>State</span>
+                <span className={styles.statValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</span>
               </div>
               <div className={styles.statCard}>
                 <span className={styles.statLabel}>Badges</span>
-                <span className={styles.statValue}>{'★'.repeat(snapshot.badges) || '0'}</span>
+                <span className={styles.statValue}>{snapshot.badges}</span>
               </div>
             </div>
           </div>
@@ -761,9 +941,9 @@ export default function Tetris99Game() {
               <div className={styles.heroHeader}>
                 <div>
                   <div className={styles.heroTitle}>Player Board</div>
-                  <div className={styles.heroSubtle}>Incoming garbage cancels when your attacks hit first.</div>
+                  <div className={styles.heroSubtle}>{snapshot.statusText}</div>
                 </div>
-                <div className={styles.heroSubtle}>98 CPU rivals alive on the side rails.</div>
+                <div className={styles.heroSubtle}>{targetLabel(snapshot.targetMode)} targeting</div>
               </div>
 
               <div className={styles.heroLayout}>
@@ -775,8 +955,8 @@ export default function Tetris99Game() {
                     </div>
                   </div>
                   <div className={styles.miniPanel}>
-                    <span className={styles.panelHeader}>Targeting</span>
-                    <div className={styles.heroSubtle}>{targetLabel(snapshot.targetMode)}</div>
+                    <span className={styles.panelHeader}>Badge Bonus</span>
+                    <div className={styles.heroSubtle}>{badgeMultiplier(snapshot.badges).toFixed(2)}x attack</div>
                   </div>
                 </div>
 
@@ -832,8 +1012,9 @@ export default function Tetris99Game() {
                     key={mode}
                     className={`${styles.targetButton} ${snapshot.targetMode === mode ? styles.targetActive : ''}`}
                     onClick={() => {
+                      ensureAudio();
                       targetModeRef.current = mode;
-                      syncSnapshot();
+                      syncSnapshot(`${targetLabel(mode)} selected`);
                     }}
                   >
                     {targetLabel(mode)}
@@ -843,17 +1024,19 @@ export default function Tetris99Game() {
             </div>
 
             <div className={styles.queueCard}>
-              <span className={styles.panelHeader}>Live Match Feed</span>
+              <span className={styles.panelHeader}>Systems</span>
               <div className={styles.queueList}>
                 <div className={styles.queueItem}><span>Players remaining</span><strong>{snapshot.place}</strong></div>
                 <div className={styles.queueItem}><span>Garbage queued</span><strong>{snapshot.incomingGarbage}</strong></div>
+                <div className={styles.queueItem}><span>Badge points</span><strong>{snapshot.badgePoints}</strong></div>
                 <div className={styles.queueItem}><span>Badge multiplier</span><strong>{badgeMultiplier(snapshot.badges).toFixed(2)}x</strong></div>
-                <div className={styles.queueItem}><span>Focus mode</span><strong>{targetLabel(snapshot.targetMode)}</strong></div>
+                <div className={styles.queueItem}><span>Target mode</span><strong>{targetLabel(snapshot.targetMode)}</strong></div>
+                <div className={styles.queueItem}><span>Status</span><strong>{snapshot.statusText}</strong></div>
               </div>
             </div>
 
             <div className={styles.controlCard}>
-              <span className={styles.panelHeader}>Controls</span>
+              <span className={styles.panelHeader}>Controls + Audio</span>
               <div className={styles.controlGrid}>
                 <div className={styles.controlPill}><span className={styles.controlKey}>A D</span>Move</div>
                 <div className={styles.controlPill}><span className={styles.controlKey}>S</span>Soft drop</div>
@@ -869,8 +1052,8 @@ export default function Tetris99Game() {
                 <h2 className={styles.resultTitle}>{snapshot.victory ? 'Victory Royale' : 'Game Over'}</h2>
                 <p className={styles.resultBody}>
                   {snapshot.victory
-                    ? `You outlasted every CPU rival and closed the lobby with ${snapshot.kos} KOs and ${snapshot.lines} cleared lines.`
-                    : `You finished in place #${snapshot.place} with ${snapshot.kos} KOs. Restart to jump straight back into another 99-board run.`}
+                    ? `You outlasted every CPU rival and closed the lobby with ${snapshot.kos} KOs, ${snapshot.lines} cleared lines, and ${snapshot.badgePoints} badge points.`
+                    : `You finished in place #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points. Restart to jump straight back into another 99-board run.`}
                 </p>
               </div>
             )}
