@@ -16,6 +16,7 @@ import {
   tryRotation,
 } from '@/components/rhythmia/tetris/utils/boardUtils';
 import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components/rhythmia/tetris/constants';
+import { ARR, DAS, MAX_LOCK_MOVES, SOFT_DROP_SPEED } from '@/components/rhythmia/multiplayer-battle-engine';
 import { TetrisAIGame, getDifficultyForRank } from '@/lib/ranked/TetrisAI';
 import { useLayoutConfig } from '@/lib/layout/context';
 import styles from './Tetris99Game.module.css';
@@ -355,6 +356,12 @@ export default function Tetris99GameProper() {
   const lastMoveRotationRef = useRef(false);
   const lockTimerRef = useRef<number | null>(null);
   const lockMovesRef = useRef(0);
+  const isOnGroundRef = useRef(false);
+  const keysRef = useRef(new Set<string>());
+  const dasTimerRef = useRef<number | null>(null);
+  const arrTimerRef = useRef<number | null>(null);
+  const softDropTimerRef = useRef<number | null>(null);
+  const lastDirRef = useRef<'left' | 'right' | ''>('');
   const botsRef = useRef<BotState[]>([]);
   const botAiGamesRef = useRef(new Map<string, TetrisAIGame>());
   const chatIdRef = useRef(0);
@@ -428,6 +435,25 @@ export default function Tetris99GameProper() {
   function clearPostMatchChatTimers() {
     for (const timer of chatTimersRef.current) window.clearTimeout(timer);
     chatTimersRef.current = [];
+  }
+
+  function clearDAS() {
+    if (dasTimerRef.current !== null) {
+      window.clearTimeout(dasTimerRef.current);
+      dasTimerRef.current = null;
+    }
+    if (arrTimerRef.current !== null) {
+      window.clearInterval(arrTimerRef.current);
+      arrTimerRef.current = null;
+    }
+    lastDirRef.current = '';
+  }
+
+  function clearSoftDrop() {
+    if (softDropTimerRef.current !== null) {
+      window.clearInterval(softDropTimerRef.current);
+      softDropTimerRef.current = null;
+    }
   }
 
   function appendServerChatMessage(authorId: string, authorName: string, text: string, self = false) {
@@ -506,6 +532,7 @@ export default function Tetris99GameProper() {
     currentPieceRef.current = piece;
     canHoldRef.current = true;
     lockMovesRef.current = 0;
+    isOnGroundRef.current = false;
     return true;
   }
 
@@ -513,6 +540,9 @@ export default function Tetris99GameProper() {
     for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
     botAiGamesRef.current.clear();
     clearPostMatchChatTimers();
+    clearDAS();
+    clearSoftDrop();
+    keysRef.current.clear();
     playerCommandsRef.current = [];
     boardRef.current = createEmptyBoard();
     currentPieceRef.current = null;
@@ -567,6 +597,9 @@ export default function Tetris99GameProper() {
     for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
     botAiGamesRef.current.clear();
     clearPostMatchChatTimers();
+    clearDAS();
+    clearSoftDrop();
+    keysRef.current.clear();
     stateRef.current = 'gameOver';
     victoryRef.current = victory;
     playSfx(victory ? 'win' : 'lose');
@@ -767,6 +800,7 @@ export default function Tetris99GameProper() {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
     }
+    isOnGroundRef.current = false;
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
     if (stateRef.current === 'playing') spawnPiece();
   }
@@ -776,6 +810,7 @@ export default function Tetris99GameProper() {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
     }
+    isOnGroundRef.current = false;
   }
 
   function startLockTimer() {
@@ -786,19 +821,58 @@ export default function Tetris99GameProper() {
     }, LOCK_DELAY);
   }
 
-  function movePiece(dx: number, dy: number) {
-    if (!currentPieceRef.current || stateRef.current !== 'playing') return;
-    const next = { ...currentPieceRef.current, x: currentPieceRef.current.x + dx, y: currentPieceRef.current.y + dy };
-    if (!isValidPosition(next, boardRef.current)) {
-      if (dy > 0) startLockTimer();
-      return;
+  function resetLockTimer() {
+    if (lockMovesRef.current >= MAX_LOCK_MOVES) return;
+    lockMovesRef.current += 1;
+    if (lockTimerRef.current !== null) {
+      clearTimeout(lockTimerRef.current);
+      lockTimerRef.current = null;
     }
+    if (currentPieceRef.current && !isValidPosition({ ...currentPieceRef.current, y: currentPieceRef.current.y + 1 }, boardRef.current)) {
+      isOnGroundRef.current = true;
+      startLockTimer();
+    }
+  }
+
+  function moveHorizontal(dx: number) {
+    if (!currentPieceRef.current || stateRef.current !== 'playing') return false;
+    const next = { ...currentPieceRef.current, x: currentPieceRef.current.x + dx };
+    if (!isValidPosition(next, boardRef.current)) return false;
     currentPieceRef.current = next;
+    lastMoveRotationRef.current = false;
+    playSfx('move');
     const grounded = !isValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
-    if (grounded) startLockTimer();
-    else clearLockTimer();
-    playSfx(dx !== 0 ? 'move' : 'drop');
+    if (grounded) {
+      isOnGroundRef.current = true;
+      resetLockTimer();
+    } else {
+      clearLockTimer();
+    }
     syncSnapshot();
+    return true;
+  }
+
+  function moveDown() {
+    if (!currentPieceRef.current || stateRef.current !== 'playing') return false;
+    const next = { ...currentPieceRef.current, y: currentPieceRef.current.y + 1 };
+    if (isValidPosition(next, boardRef.current)) {
+      currentPieceRef.current = next;
+      lastMoveRotationRef.current = false;
+      const grounded = !isValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
+      if (grounded && !isOnGroundRef.current) {
+        isOnGroundRef.current = true;
+        startLockTimer();
+      } else if (!grounded) {
+        clearLockTimer();
+      }
+      syncSnapshot();
+      return true;
+    }
+    if (!isOnGroundRef.current) {
+      isOnGroundRef.current = true;
+      startLockTimer();
+    }
+    return false;
   }
 
   function rotatePiece(direction: 1 | -1) {
@@ -807,7 +881,13 @@ export default function Tetris99GameProper() {
     if (!rotated) return;
     currentPieceRef.current = rotated;
     lastMoveRotationRef.current = true;
-    if (!isValidPosition({ ...rotated, y: rotated.y + 1 }, boardRef.current)) startLockTimer();
+    const grounded = !isValidPosition({ ...rotated, y: rotated.y + 1 }, boardRef.current);
+    if (grounded) {
+      isOnGroundRef.current = true;
+      resetLockTimer();
+    } else {
+      clearLockTimer();
+    }
     playSfx('rotate');
     syncSnapshot();
   }
@@ -828,6 +908,8 @@ export default function Tetris99GameProper() {
     holdRef.current = current;
     canHoldRef.current = false;
     currentPieceRef.current = held ? createSpawnPiece(held) : null;
+    lockMovesRef.current = 0;
+    clearLockTimer();
     if (!held) spawnPiece();
     playSfx('rotate');
     syncSnapshot('Hold');
@@ -841,7 +923,10 @@ export default function Tetris99GameProper() {
 
     const commands = playerCommandsRef.current.splice(0);
     for (const command of commands) {
-      if (command.type === 'move') movePiece(command.dx, command.dy);
+      if (command.type === 'move') {
+        if (command.dx !== 0) moveHorizontal(command.dx);
+        else if (command.dy > 0) moveDown();
+      }
       else if (command.type === 'rotate') rotatePiece(command.direction);
       else if (command.type === 'hold') holdPiece();
       else if (command.type === 'hardDrop') hardDrop();
@@ -884,19 +969,76 @@ export default function Tetris99GameProper() {
   }, []);
 
   useEffect(() => {
+    const startDAS = (dir: 'left' | 'right', dx: number) => {
+      clearDAS();
+      lastDirRef.current = dir;
+      enqueuePlayerCommand({ type: 'move', dx, dy: 0 });
+      dasTimerRef.current = window.setTimeout(() => {
+        dasTimerRef.current = null;
+        arrTimerRef.current = window.setInterval(() => enqueuePlayerCommand({ type: 'move', dx, dy: 0 }), ARR);
+      }, DAS);
+    };
+
     function onKeyDown(event: KeyboardEvent) {
       ensureAudio();
       if (stateRef.current !== 'playing') return;
-      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); enqueuePlayerCommand({ type: 'move', dx: -1, dy: 0 }); }
-      else if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); enqueuePlayerCommand({ type: 'move', dx: 1, dy: 0 }); }
-      else if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); enqueuePlayerCommand({ type: 'move', dx: 0, dy: 1 }); }
-      else if (event.code === 'ArrowUp' || event.code === 'KeyX') { event.preventDefault(); enqueuePlayerCommand({ type: 'rotate', direction: 1 }); }
-      else if (event.code === 'KeyZ') { event.preventDefault(); enqueuePlayerCommand({ type: 'rotate', direction: -1 }); }
-      else if (event.code === 'KeyC' || event.code === 'ShiftLeft') { event.preventDefault(); enqueuePlayerCommand({ type: 'hold' }); }
-      else if (event.code === 'Space') { event.preventDefault(); enqueuePlayerCommand({ type: 'hardDrop' }); }
+      if (keysRef.current.has(event.code)) return;
+      keysRef.current.add(event.code);
+
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        event.preventDefault();
+        startDAS('left', -1);
+      }
+      else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        event.preventDefault();
+        startDAS('right', 1);
+      }
+      else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+        event.preventDefault();
+        clearSoftDrop();
+        softDropTimerRef.current = window.setInterval(() => enqueuePlayerCommand({ type: 'move', dx: 0, dy: 1 }), SOFT_DROP_SPEED);
+      }
+      else if (event.code === 'ArrowUp' || event.code === 'KeyX') {
+        event.preventDefault();
+        enqueuePlayerCommand({ type: 'rotate', direction: 1 });
+      }
+      else if (event.code === 'KeyZ') {
+        event.preventDefault();
+        enqueuePlayerCommand({ type: 'rotate', direction: -1 });
+      }
+      else if (event.code === 'KeyC' || event.code === 'ShiftLeft') {
+        event.preventDefault();
+        enqueuePlayerCommand({ type: 'hold' });
+      }
+      else if (event.code === 'Space') {
+        event.preventDefault();
+        enqueuePlayerCommand({ type: 'hardDrop' });
+      }
     }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+
+    function onKeyUp(event: KeyboardEvent) {
+      keysRef.current.delete(event.code);
+
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
+        if (lastDirRef.current === 'left') clearDAS();
+      }
+      else if (event.code === 'ArrowRight' || event.code === 'KeyD') {
+        if (lastDirRef.current === 'right') clearDAS();
+      }
+      else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
+        clearSoftDrop();
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+      clearDAS();
+      clearSoftDrop();
+      keysRef.current.clear();
+    };
   }, []);
 
   useEffect(() => {
@@ -909,13 +1051,7 @@ export default function Tetris99GameProper() {
   useEffect(() => {
     const gravity = window.setInterval(() => {
       if (stateRef.current !== 'playing' || !currentPieceRef.current) return;
-      const next = { ...currentPieceRef.current, y: currentPieceRef.current.y + 1 };
-      if (isValidPosition(next, boardRef.current)) {
-        currentPieceRef.current = next;
-        syncSnapshot();
-      } else {
-        startLockTimer();
-      }
+      moveDown();
     }, snapshot.place <= 10 ? 170 : snapshot.place <= 40 ? 260 : 420);
     return () => window.clearInterval(gravity);
   }, [snapshot.place]);
