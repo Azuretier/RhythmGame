@@ -72,11 +72,20 @@ type Snapshot = {
   status: string;
 };
 
+type ChatMessage = {
+  id: string;
+  authorId: string;
+  authorName: string;
+  text: string;
+  self: boolean;
+};
+
 const BOT_COUNT = 98;
 const GARBAGE_DELAY = 3;
 const PLAYER_ID = 'player';
 const BOT_NAMES = ['ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT', 'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE'];
 const PIECES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+const POST_MATCH_CHAT_LINES = ['gg', 'gg wp', 'good game', 'close one', 'well played', 'ggs'];
 const PLAYER_COLORS: Record<string, string> = {
   I: '#3fd5ff',
   O: '#ffd54a',
@@ -340,11 +349,16 @@ export default function Tetris99GameProper() {
   const lockMovesRef = useRef(0);
   const botsRef = useRef<BotState[]>([]);
   const botAiGamesRef = useRef(new Map<string, TetrisAIGame>());
+  const chatIdRef = useRef(0);
+  const chatTimersRef = useRef<number[]>([]);
+  const chatLogRef = useRef<HTMLDivElement | null>(null);
   const targetModeRef = useRef<TargetMode>('attackers');
   const stateRef = useRef<MatchState>('countdown');
   const countdownRef = useRef(3);
   const victoryRef = useRef(false);
   const lastDamagedByRef = useRef<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState('GG');
   const [snapshot, setSnapshot] = useState<Snapshot>({
     board: createEmptyBoard(),
     currentPiece: null,
@@ -402,6 +416,41 @@ export default function Tetris99GameProper() {
     if (kind === 'lose') beep(220, 0.26, 'sawtooth', 0.05, 82);
   }
 
+  function clearPostMatchChatTimers() {
+    for (const timer of chatTimersRef.current) window.clearTimeout(timer);
+    chatTimersRef.current = [];
+  }
+
+  function appendChatMessage(authorId: string, authorName: string, text: string, self = false) {
+    chatIdRef.current += 1;
+    setChatMessages(prev => [...prev, { id: `chat-${chatIdRef.current}`, authorId, authorName, text, self }].slice(-20));
+  }
+
+  function schedulePostMatchChat(victory: boolean) {
+    clearPostMatchChatTimers();
+    const speakers = [...botsRef.current]
+      .filter(bot => bot.badges > 0 || bot.alive || bot.targetIds.includes(PLAYER_ID) || bot.lastDamagedBy === PLAYER_ID)
+      .sort((a, b) => Number(b.alive) - Number(a.alive) || b.badgePoints - a.badgePoints || b.score - a.score)
+      .slice(0, 8);
+
+    speakers.forEach((bot, index) => {
+      const delay = 500 + index * 420 + Math.floor(rngRef.current() * 260);
+      const lineIndex = (index + bot.badges + (victory ? 1 : 0)) % POST_MATCH_CHAT_LINES.length;
+      const timer = window.setTimeout(() => {
+        if (stateRef.current !== 'gameOver') return;
+        appendChatMessage(bot.id, bot.name, POST_MATCH_CHAT_LINES[lineIndex] ?? 'gg');
+      }, delay);
+      chatTimersRef.current.push(timer);
+    });
+  }
+
+  function submitChatMessage() {
+    const text = chatInput.trim();
+    if (!text || stateRef.current !== 'gameOver') return;
+    appendChatMessage(PLAYER_ID, 'YOU', text, true);
+    setChatInput('');
+  }
+
   function syncSnapshot(status?: string) {
     const alive = botsRef.current.filter(bot => bot.alive).length;
     const attackers = botsRef.current.filter(bot => bot.alive && bot.targetIds.includes(PLAYER_ID)).length;
@@ -438,10 +487,7 @@ export default function Tetris99GameProper() {
     refillQueue();
     const piece = createSpawnPiece(type);
     if (!isValidPosition(piece, boardRef.current)) {
-      stateRef.current = 'gameOver';
-      victoryRef.current = false;
-      playSfx('lose');
-      syncSnapshot('Eliminated');
+      finish(false);
       return false;
     }
     currentPieceRef.current = piece;
@@ -453,6 +499,7 @@ export default function Tetris99GameProper() {
   function resetGame() {
     for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
     botAiGamesRef.current.clear();
+    clearPostMatchChatTimers();
     boardRef.current = createEmptyBoard();
     currentPieceRef.current = null;
     holdRef.current = null;
@@ -465,6 +512,8 @@ export default function Tetris99GameProper() {
     badgesRef.current = 0;
     incomingRef.current = [];
     lastDamagedByRef.current = null;
+    setChatMessages([]);
+    setChatInput('GG');
     backToBackRef.current = false;
     lastMoveRotationRef.current = false;
     stateRef.current = 'countdown';
@@ -503,10 +552,13 @@ export default function Tetris99GameProper() {
     if (stateRef.current === 'gameOver') return;
     for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
     botAiGamesRef.current.clear();
+    clearPostMatchChatTimers();
     stateRef.current = 'gameOver';
     victoryRef.current = victory;
     playSfx(victory ? 'win' : 'lose');
     syncSnapshot(victory ? 'Winner!' : 'Game over');
+    setChatInput('GG');
+    schedulePostMatchChat(victory);
   }
 
   function queuePacket(lines: number, from: string, target: { pendingGarbage: GarbagePacket[] }) {
@@ -769,8 +821,16 @@ export default function Tetris99GameProper() {
   useEffect(() => {
     setFullscreen(true);
     resetGame();
-    return () => setFullscreen(false);
+    return () => {
+      clearPostMatchChatTimers();
+      setFullscreen(false);
+    };
   }, [setFullscreen]);
+
+  useEffect(() => {
+    if (!chatLogRef.current) return;
+    chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+  }, [chatMessages]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -922,6 +982,35 @@ export default function Tetris99GameProper() {
               <div className={styles.resultCard}>
                 <h2 className={styles.resultTitle}>{snapshot.victory ? 'Victory Royale' : 'Game Over'}</h2>
                 <p className={styles.resultBody}>{snapshot.victory ? `You closed the lobby with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points.` : `You finished #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points.`}</p>
+                <div className={styles.chatSection}>
+                  <div className={styles.chatHeader}>Post-Match Chat</div>
+                  <div ref={chatLogRef} className={styles.chatLog}>
+                    {chatMessages.length > 0 ? chatMessages.map(message => (
+                      <div key={message.id} className={`${styles.chatMessage} ${message.self ? styles.chatMessageSelf : ''}`}>
+                        <span className={styles.chatAuthor}>{message.authorName}</span>
+                        <span className={styles.chatText}>{message.text}</span>
+                      </div>
+                    )) : (
+                      <div className={styles.chatEmpty}>Say GG after the match.</div>
+                    )}
+                  </div>
+                  <form
+                    className={styles.chatForm}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      submitChatMessage();
+                    }}
+                  >
+                    <input
+                      className={styles.chatInput}
+                      value={chatInput}
+                      onChange={(event) => setChatInput(event.target.value)}
+                      maxLength={48}
+                      placeholder="Say GG..."
+                    />
+                    <button type="submit" className={styles.chatSend}>Send</button>
+                  </form>
+                </div>
                 <div className={styles.actionRow}>
                   <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>Play Again</button>
                   <button className={styles.ghostButton} onClick={() => router.push('/games')}>Leave Match</button>
