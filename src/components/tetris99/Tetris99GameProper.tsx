@@ -48,6 +48,16 @@ type AttackDistribution = {
   lines: number;
 };
 
+type AttackEffect = {
+  id: string;
+  x: number;
+  y: number;
+  length: number;
+  angle: number;
+  lines: number;
+  variant: 'player' | 'incoming' | 'bot';
+};
+
 type FinalizeAttackResult = {
   offset: number;
   attackerCount: number;
@@ -428,7 +438,7 @@ function offsetGarbageQueue(queue: GarbagePacket[], amount: number) {
   return { next, remaining, canceled };
 }
 
-function BadgeMeter({ stage, percent, compact = false }: { stage: number; percent: number; compact?: boolean }) {
+function BadgeMeter({ stage, compact = false }: { stage: number; compact?: boolean }) {
   const pips = Array.from({ length: 4 }, (_, index) => index < stage);
   return (
     <div className={`${styles.badgeMeter} ${compact ? styles.badgeMeterCompact : ''}`}>
@@ -440,18 +450,17 @@ function BadgeMeter({ stage, percent, compact = false }: { stage: number; percen
           />
         ))}
       </div>
-      <span className={styles.badgePercent}>{`+${percent}%`}</span>
     </div>
   );
 }
 
-function MicroBoard({ bot, targeted }: { bot: BotState; targeted: boolean }) {
+function MicroBoard({ bot, targeted, boardRef }: { bot: BotState; targeted: boolean; boardRef?: (node: HTMLDivElement | null) => void }) {
   const cls = [styles.microCard, targeted ? styles.microCardTargeted : '', bot.targetIds.includes(PLAYER_ID) ? styles.microCardAttacker : ''].filter(Boolean).join(' ');
   return (
-    <div className={cls}>
+    <div ref={boardRef} className={cls}>
       <div className={styles.microHeader}>
         <span>{bot.name}</span>
-        <BadgeMeter stage={bot.badges} percent={badgeBoostPercentFromStage(bot.badges)} compact />
+        <BadgeMeter stage={bot.badges} compact />
       </div>
       <div className={styles.microBoard}>
         {bot.board.flatMap((row, y) =>
@@ -553,6 +562,10 @@ export default function Tetris99GameProper() {
   const router = useRouter();
   const { setFullscreen } = useLayoutConfig();
   const audioRef = useRef<AudioContext | null>(null);
+  const arenaRef = useRef<HTMLDivElement | null>(null);
+  const playerBoardFrameRef = useRef<HTMLDivElement | null>(null);
+  const botBoardRefs = useRef(new Map<string, HTMLDivElement>());
+  const attackEffectTimersRef = useRef<number[]>([]);
   const packetIdRef = useRef(0);
   const rngRef = useRef(makeRng(99009));
   const bagRef = useRef(makeBag(rngRef.current));
@@ -590,6 +603,7 @@ export default function Tetris99GameProper() {
   const lastDamagedByRef = useRef<string | null>(null);
   const statusRef = useRef('Get ready');
   const [botRenderVersion, setBotRenderVersion] = useState(0);
+  const [attackEffects, setAttackEffects] = useState<AttackEffect[]>([]);
   const [snapshot, setSnapshot] = useState<Snapshot>({
     board: createEmptyBoard(),
     currentPiece: null,
@@ -670,6 +684,75 @@ export default function Tetris99GameProper() {
     }
   }
 
+  function clearAttackEffects() {
+    for (const timer of attackEffectTimersRef.current) {
+      window.clearTimeout(timer);
+    }
+    attackEffectTimersRef.current = [];
+    setAttackEffects([]);
+  }
+
+  function registerBotBoardRef(id: string, node: HTMLDivElement | null) {
+    if (node) botBoardRefs.current.set(id, node);
+    else botBoardRefs.current.delete(id);
+  }
+
+  function getBoardElement(id: string) {
+    if (id === PLAYER_ID) return playerBoardFrameRef.current;
+    return botBoardRefs.current.get(id) ?? null;
+  }
+
+  function queueAttackEffects(sourceId: string, distributions: AttackDistribution[]) {
+    const arena = arenaRef.current;
+    const sourceElement = getBoardElement(sourceId);
+    if (!arena || !sourceElement || distributions.length === 0) return;
+
+    const arenaRect = arena.getBoundingClientRect();
+    const sourceRect = sourceElement.getBoundingClientRect();
+    const startX = sourceRect.left + sourceRect.width / 2 - arenaRect.left;
+    const startY = sourceRect.top + sourceRect.height / 2 - arenaRect.top;
+
+    const sortedDistributions = [...distributions]
+      .sort((a, b) => b.lines - a.lines)
+      .slice(0, 10);
+
+    const effects = sortedDistributions.flatMap((distribution) => {
+      const targetElement = getBoardElement(distribution.targetId);
+      if (!targetElement) return [];
+      const targetRect = targetElement.getBoundingClientRect();
+      const endX = targetRect.left + targetRect.width / 2 - arenaRect.left;
+      const endY = targetRect.top + targetRect.height / 2 - arenaRect.top;
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const length = Math.max(24, Math.hypot(dx, dy));
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+      const variant =
+        sourceId === PLAYER_ID ? 'player' :
+          distribution.targetId === PLAYER_ID ? 'incoming' : 'bot';
+
+      packetIdRef.current += 1;
+      return [{
+        id: `trail-${packetIdRef.current}`,
+        x: startX,
+        y: startY,
+        length,
+        angle,
+        lines: distribution.lines,
+        variant,
+      } satisfies AttackEffect];
+    });
+
+    if (!effects.length) return;
+
+    setAttackEffects(prev => [...prev.slice(-18), ...effects]);
+    const effectIds = new Set(effects.map(effect => effect.id));
+    const timeout = window.setTimeout(() => {
+      setAttackEffects(prev => prev.filter(effect => !effectIds.has(effect.id)));
+      attackEffectTimersRef.current = attackEffectTimersRef.current.filter(timerId => timerId !== timeout);
+    }, 620);
+    attackEffectTimersRef.current.push(timeout);
+  }
+
   function syncSnapshot(status?: string) {
     const nextStatus = status ?? statusRef.current;
     statusRef.current = nextStatus;
@@ -727,6 +810,7 @@ export default function Tetris99GameProper() {
     botAiGamesRef.current.clear();
     clearDAS();
     clearSoftDrop();
+    clearAttackEffects();
     keysRef.current.clear();
     boardRef.current = createEmptyBoard();
     currentPieceRef.current = null;
@@ -787,6 +871,7 @@ export default function Tetris99GameProper() {
     botAiGamesRef.current.clear();
     clearDAS();
     clearSoftDrop();
+    clearAttackEffects();
     keysRef.current.clear();
     stateRef.current = 'gameOver';
     victoryRef.current = victory;
@@ -888,7 +973,8 @@ export default function Tetris99GameProper() {
   }
 
   function resolveStableTargets(sourceId: string, mode: TargetMode, currentTargets: string[], playerTargets = new Set<string>()) {
-    if (mode !== 'random') return chooseTargets(sourceId, mode, playerTargets);
+    const attackFallbackToRandom = mode === 'attackers' && getAttackerIds(sourceId, playerTargets).filter(id => getAliveOpponentIds(sourceId).includes(id)).length === 0;
+    if (mode !== 'random' && !attackFallbackToRandom) return chooseTargets(sourceId, mode, playerTargets);
     const aliveCurrent = currentTargets.filter(id => (id === PLAYER_ID ? stateRef.current !== 'gameOver' : !!getBotById(id)?.alive));
     return aliveCurrent.length ? aliveCurrent : chooseTargets(sourceId, mode, playerTargets);
   }
@@ -1015,6 +1101,7 @@ export default function Tetris99GameProper() {
       const bot = getBotById(distribution.targetId);
       if (bot?.alive) queuePacket(distribution.lines, PLAYER_ID, bot);
     }
+    queueAttackEffects(PLAYER_ID, attack.distributions);
 
     return {
       offset: attack.offset,
@@ -1039,6 +1126,7 @@ export default function Tetris99GameProper() {
         if (targetBot?.alive) queuePacket(distribution.lines, bot.id, targetBot);
       }
     }
+    queueAttackEffects(bot.id, attack.distributions);
   }
 
   function startBotAiGames() {
@@ -1297,6 +1385,7 @@ export default function Tetris99GameProper() {
     setFullscreen(true);
     resetGame();
     return () => {
+      clearAttackEffects();
       setFullscreen(false);
     };
   }, [setFullscreen]);
@@ -1440,17 +1529,41 @@ export default function Tetris99GameProper() {
   }, [botRenderVersion, snapshot.targetMode, snapshot.place, snapshot.attackers]);
 
   const leftBotBoards = useMemo(() => (
-    botsRef.current.slice(0, 49).map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} />)
+    botsRef.current.slice(0, 49).map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} boardRef={node => registerBotBoardRef(bot.id, node)} />)
   ), [botRenderVersion, targetedBots]);
 
   const rightBotBoards = useMemo(() => (
-    botsRef.current.slice(49).map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} />)
+    botsRef.current.slice(49).map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} boardRef={node => registerBotBoardRef(bot.id, node)} />)
   ), [botRenderVersion, targetedBots]);
 
   return (
     <div className={styles.page}>
       <div className={styles.shell}>
-        <div className={styles.arena}>
+        <div ref={arenaRef} className={styles.arena}>
+          <div className={styles.attackOverlay} aria-hidden="true">
+            {attackEffects.map(effect => (
+              <div
+                key={effect.id}
+                className={[
+                  styles.attackTrail,
+                  effect.variant === 'player' ? styles.attackTrailPlayer : '',
+                  effect.variant === 'incoming' ? styles.attackTrailIncoming : '',
+                  effect.variant === 'bot' ? styles.attackTrailBot : '',
+                ].filter(Boolean).join(' ')}
+                style={{
+                  left: `${effect.x}px`,
+                  top: `${effect.y}px`,
+                  width: `${effect.length}px`,
+                  transform: `translateY(-50%) rotate(${effect.angle}deg)`,
+                }}
+              >
+                <span className={styles.attackTrailDot} />
+                <span className={styles.attackTrailBeam} />
+                <span className={styles.attackTrailArrow} />
+                <span className={styles.attackTrailLabel}>{`+${effect.lines}`}</span>
+              </div>
+            ))}
+          </div>
           <div className={styles.sidePanel}>{leftBotBoards}</div>
           <div className={styles.boardStack}>
             <div className={styles.heroCard}>
@@ -1463,14 +1576,14 @@ export default function Tetris99GameProper() {
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Hold</span><div className={styles.previewBox}><PreviewShape type={snapshot.hold} /></div></div>
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>B2B</span><div className={styles.heroSubtle}>{snapshot.b2bActive ? 'Active' : 'Inactive'}</div></div>
                 </div>
-                <div className={`${styles.boardFrame} ${boardDanger(snapshot.board) >= 18 ? styles.boardFrameDanger : ''}`}>
+                <div ref={playerBoardFrameRef} className={`${styles.boardFrame} ${boardDanger(snapshot.board) >= 18 ? styles.boardFrameDanger : ''}`}>
                   <div className={styles.boardStats}>
                     <div className={styles.boardStat}><span className={styles.statLabel}>Place</span><strong className={styles.boardStatValue}>#{snapshot.place}</strong></div>
                     <div className={styles.boardStat}><span className={styles.statLabel}>Attackers</span><strong className={styles.boardStatValue}>{snapshot.attackers}</strong></div>
                     <div className={styles.boardStat}>
                       <span className={styles.statLabel}>Badge Boost</span>
                       <strong className={styles.boardStatValue}>{`+${snapshot.badgeBoostPercent}%`}</strong>
-                      <BadgeMeter stage={snapshot.badges} percent={snapshot.badgeBoostPercent} />
+                      <BadgeMeter stage={snapshot.badges} />
                     </div>
                     <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</strong></div>
                   </div>

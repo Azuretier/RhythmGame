@@ -4,11 +4,34 @@
   position: relative;
   color: #f4efe6;
   background:
-    radial-gradient(circle at top, rgba(255, 140, 66, 0.22), transparent 26%),
-    radial-gradient(circle at bottom left, rgba(34, 171, 255, 0.18), transparent 22%),
-    linear-gradient(180deg, #0d0f14 0%, #121722 36%, #0a0d13 100%);
-  font-family: "Geist Mono", "Segoe UI", sans-serif;
+    radial-gradient(circle at top, rgba(255, 120, 59, 0.3), transparent 24%),
+    radial-gradient(circle at top right, rgba(255, 42, 78, 0.18), transparent 18%),
+    radial-gradient(circle at bottom left, rgba(46, 179, 255, 0.16), transparent 24%),
+    linear-gradient(180deg, #080a10 0%, #10131e 34%, #080a10 100%);
+  font-family: "Geist Mono", "Bahnschrift", "Segoe UI", sans-serif;
   overflow: hidden;
+}
+
+.page::before,
+.page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.page::before {
+  background:
+    linear-gradient(90deg, transparent 0, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, transparent 0, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 64px 64px, 64px 64px;
+  opacity: 0.22;
+}
+
+.page::after {
+  background:
+    linear-gradient(180deg, rgba(255, 153, 93, 0.08), transparent 28%),
+    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.34));
 }
 
 .shell {
@@ -73,6 +96,7 @@
 }
 
 .arena {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(300px, 1fr) minmax(380px, 520px) minmax(300px, 1fr);
   gap: 10px;
@@ -88,9 +112,11 @@
   gap: 4px;
   padding: 6px;
   border-radius: 18px;
-  background: rgba(12, 16, 24, 0.76);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background:
+    linear-gradient(180deg, rgba(17, 22, 34, 0.94), rgba(7, 10, 18, 0.94)),
+    radial-gradient(circle at top, rgba(255, 105, 64, 0.12), transparent 42%);
+  border: 1px solid rgba(255, 153, 93, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 40px rgba(0, 0, 0, 0.34);
   min-height: 0;
   height: 100%;
   overflow: hidden;
@@ -109,8 +135,10 @@
 .queueCard,
 .resultCard {
   border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.045));
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(26, 31, 43, 0.96), rgba(8, 11, 18, 0.96)),
+    linear-gradient(135deg, rgba(255, 143, 65, 0.1), transparent 42%);
+  border: 1px solid rgba(255, 153, 93, 0.16);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 
@@ -135,7 +163,7 @@
 
 .heroSubtle {
   font-size: 0.68rem;
-  color: rgba(244, 239, 230, 0.62);
+  color: rgba(244, 239, 230, 0.68);
 }
 
 .heroLayout {
@@ -152,8 +180,8 @@
 
 .miniPanel {
   border-radius: 16px;
-  background: rgba(6, 8, 12, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.86), rgba(7, 10, 17, 0.92));
+  border: 1px solid rgba(255, 170, 118, 0.12);
   padding: 8px;
 }
 
@@ -188,13 +216,15 @@
   position: relative;
   padding: 8px 8px 10px 16px;
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(22, 29, 40, 0.95), rgba(10, 14, 22, 0.95));
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(26, 34, 48, 0.98), rgba(9, 12, 20, 0.98)),
+    radial-gradient(circle at top, rgba(255, 144, 76, 0.16), transparent 36%);
+  border: 1px solid rgba(255, 184, 121, 0.2);
   overflow: hidden;
 }
 
 .boardFrameDanger {
-  box-shadow: 0 0 0 1px rgba(255, 95, 109, 0.4), 0 0 28px rgba(255, 95, 109, 0.2);
+  box-shadow: 0 0 0 1px rgba(255, 95, 109, 0.4), 0 0 28px rgba(255, 95, 109, 0.2), inset 0 0 32px rgba(255, 75, 91, 0.08);
 }
 
 .boardPlayfield {
@@ -211,8 +241,8 @@
 .boardStat {
   padding: 4px 6px;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.22);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(8, 8, 12, 0.2));
+  border: 1px solid rgba(255, 176, 122, 0.12);
 }
 
 .boardStatValue {
@@ -259,17 +289,6 @@
   box-shadow: 0 0 8px rgba(255, 209, 102, 0.32);
 }
 
-.badgePercent {
-  font-size: 0.62rem;
-  font-weight: 700;
-  color: rgba(255, 234, 190, 0.88);
-  letter-spacing: 0.04em;
-}
-
-.badgeMeterCompact .badgePercent {
-  font-size: 0.42rem;
-}
-
 .playerBoard {
   display: grid;
   grid-template-columns: repeat(10, minmax(0, 1fr));
@@ -278,11 +297,15 @@
   margin: 0 auto;
   aspect-ratio: 1 / 2;
   align-self: center;
+  background: rgba(3, 5, 9, 0.82);
+  padding: 2px;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(255, 184, 121, 0.1);
 }
 
 .playerCell {
   aspect-ratio: 1 / 1;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .playerCellFilled {
@@ -302,7 +325,7 @@
   bottom: 12px;
   width: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
@@ -338,8 +361,8 @@
 .hudMetric {
   padding: 8px 10px;
   border-radius: 16px;
-  background: rgba(8, 11, 17, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.78), rgba(6, 8, 12, 0.78));
+  border: 1px solid rgba(255, 169, 116, 0.1);
 }
 
 .hudValue {
@@ -362,15 +385,16 @@
   padding: 8px;
   font: inherit;
   font-size: 0.8rem;
-  background: rgba(8, 11, 17, 0.5);
-  color: rgba(244, 239, 230, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(17, 22, 34, 0.84), rgba(7, 10, 16, 0.92));
+  color: rgba(244, 239, 230, 0.76);
+  border: 1px solid rgba(255, 166, 111, 0.12);
 }
 
 .targetActive {
   color: #fff9ef;
-  background: linear-gradient(180deg, rgba(255, 149, 76, 0.32), rgba(255, 95, 109, 0.2));
-  border-color: rgba(255, 184, 121, 0.55);
+  background: linear-gradient(180deg, rgba(255, 149, 76, 0.46), rgba(255, 95, 109, 0.26));
+  border-color: rgba(255, 184, 121, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 242, 221, 0.18), 0 0 16px rgba(255, 106, 94, 0.18);
 }
 
 .queueCard,
@@ -390,10 +414,92 @@
   gap: 12px;
   border-radius: 14px;
   padding: 8px 10px;
-  background: rgba(8, 11, 17, 0.48);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(10, 14, 22, 0.78), rgba(6, 9, 15, 0.84));
+  border: 1px solid rgba(255, 166, 111, 0.08);
   color: rgba(244, 239, 230, 0.76);
   font-size: 0.76rem;
+}
+
+.attackOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 4;
+}
+
+.attackTrail {
+  position: absolute;
+  height: 0;
+  transform-origin: 0 50%;
+  color: #ff8d53;
+  animation: attackTrailFlash 620ms ease-out forwards;
+}
+
+.attackTrailPlayer {
+  color: #ffb24d;
+}
+
+.attackTrailIncoming {
+  color: #ff5d6e;
+}
+
+.attackTrailBot {
+  color: #54c8ff;
+}
+
+.attackTrailDot,
+.attackTrailArrow,
+.attackTrailLabel,
+.attackTrailBeam {
+  position: absolute;
+}
+
+.attackTrailDot {
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 16px color-mix(in srgb, currentColor 70%, transparent);
+}
+
+.attackTrailBeam {
+  left: 0;
+  top: -3px;
+  width: calc(100% - 12px);
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, currentColor 90%, white 10%), color-mix(in srgb, currentColor 55%, transparent));
+  box-shadow:
+    0 0 12px color-mix(in srgb, currentColor 60%, transparent),
+    0 0 28px color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.attackTrailArrow {
+  right: -1px;
+  top: -7px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 14px solid currentColor;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, currentColor 65%, transparent));
+}
+
+.attackTrailLabel {
+  right: 10px;
+  top: -17px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(6, 8, 12, 0.82);
+  border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
+  color: #fff9ef;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .controlGrid {
@@ -427,8 +533,8 @@
   position: relative;
   border-radius: 12px;
   padding: 2px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(17, 23, 34, 0.9), rgba(8, 11, 17, 0.92));
+  border: 1px solid rgba(255, 164, 109, 0.08);
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
   min-height: 0;
   display: grid;
@@ -437,12 +543,13 @@
 }
 
 .microCardTargeted {
-  border-color: rgba(255, 185, 129, 0.52);
-  background: rgba(255, 156, 92, 0.12);
+  border-color: rgba(255, 185, 129, 0.56);
+  background: linear-gradient(180deg, rgba(255, 136, 70, 0.2), rgba(255, 96, 78, 0.12));
+  box-shadow: inset 0 0 0 1px rgba(255, 210, 170, 0.14), 0 0 14px rgba(255, 126, 73, 0.12);
 }
 
 .microCardAttacker {
-  box-shadow: inset 0 0 0 1px rgba(255, 95, 109, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(255, 95, 109, 0.34), inset 0 0 18px rgba(255, 95, 109, 0.08);
 }
 
 .microHeader {
@@ -516,6 +623,22 @@
   text-align: center;
   background: rgba(3, 4, 8, 0.76);
   backdrop-filter: blur(10px);
+}
+
+@keyframes attackTrailFlash {
+  0% {
+    opacity: 0;
+    filter: brightness(1.4);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    filter: brightness(1);
+  }
 }
 
 .boardGameOverTitle {
