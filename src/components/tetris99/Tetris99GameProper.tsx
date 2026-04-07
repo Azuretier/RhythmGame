@@ -74,28 +74,11 @@ type Snapshot = {
   status: string;
 };
 
-type ChatMessage = {
-  id: string;
-  authorId: string;
-  authorName: string;
-  text: string;
-  self: boolean;
-};
-
-type PlayerCommand =
-  | { type: 'move'; dx: number; dy: number }
-  | { type: 'rotate'; direction: 1 | -1 }
-  | { type: 'hold' }
-  | { type: 'hardDrop' }
-  | { type: 'target'; mode: TargetMode };
-
 const BOT_COUNT = 98;
 const GARBAGE_DELAY = 3;
 const PLAYER_ID = 'player';
-const SERVER_ID = 'server';
 const BOT_NAMES = ['ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT', 'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE'];
 const PIECES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-const POST_MATCH_CHAT_LINES = ['gg', 'gg wp', 'good game', 'close one', 'well played', 'ggs'];
 const PLAYER_COLORS: Record<string, string> = {
   I: '#3fd5ff',
   O: '#ffd54a',
@@ -232,19 +215,24 @@ function sumGarbage(queue: GarbagePacket[]) {
   return queue.reduce((sum, packet) => sum + packet.lines, 0);
 }
 
-function progressGarbage(queue: GarbagePacket[]) {
+function tickGarbageQueue(queue: GarbagePacket[]) {
+  return queue.map(packet => (packet.delay > 0 ? { ...packet, delay: packet.delay - 1 } : packet));
+}
+
+function collectReadyGarbage(queue: GarbagePacket[]) {
   let due = 0;
   let lastSource: string | null = null;
-  const next = queue
-    .map(packet => ({ ...packet, delay: packet.delay - 1 }))
-    .filter(packet => {
-      if (packet.delay <= 0) {
-        due += packet.lines;
-        lastSource = packet.from;
-        return false;
-      }
-      return true;
-    });
+  const next: GarbagePacket[] = [];
+
+  for (const packet of queue) {
+    if (packet.delay <= 0) {
+      due += packet.lines;
+      lastSource = packet.from;
+      continue;
+    }
+    next.push(packet);
+  }
+
   return { queue: next, due, lastSource };
 }
 
@@ -411,17 +399,13 @@ export default function Tetris99GameProper() {
   const lastDirRef = useRef<'left' | 'right' | ''>('');
   const botsRef = useRef<BotState[]>([]);
   const botAiGamesRef = useRef(new Map<string, TetrisAIGame>());
-  const chatIdRef = useRef(0);
-  const chatTimersRef = useRef<number[]>([]);
-  const chatLogRef = useRef<HTMLDivElement | null>(null);
-  const playerCommandsRef = useRef<PlayerCommand[]>([]);
   const targetModeRef = useRef<TargetMode>('attackers');
   const stateRef = useRef<MatchState>('countdown');
   const countdownRef = useRef(3);
   const victoryRef = useRef(false);
   const lastDamagedByRef = useRef<string | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState('GG');
+  const statusRef = useRef('Get ready');
+  const [botRenderVersion, setBotRenderVersion] = useState(0);
   const [snapshot, setSnapshot] = useState<Snapshot>({
     board: createEmptyBoard(),
     currentPiece: null,
@@ -479,11 +463,6 @@ export default function Tetris99GameProper() {
     if (kind === 'lose') beep(220, 0.26, 'sawtooth', 0.05, 82);
   }
 
-  function clearPostMatchChatTimers() {
-    for (const timer of chatTimersRef.current) window.clearTimeout(timer);
-    chatTimersRef.current = [];
-  }
-
   function clearDAS() {
     if (dasTimerRef.current !== null) {
       window.clearTimeout(dasTimerRef.current);
@@ -503,41 +482,9 @@ export default function Tetris99GameProper() {
     }
   }
 
-  function appendServerChatMessage(authorId: string, authorName: string, text: string, self = false) {
-    chatIdRef.current += 1;
-    setChatMessages(prev => [...prev, { id: `chat-${chatIdRef.current}`, authorId, authorName, text, self }].slice(-20));
-  }
-
-  function schedulePostMatchChat(victory: boolean) {
-    clearPostMatchChatTimers();
-    const speakers = [...botsRef.current]
-      .filter(bot => bot.badges > 0 || bot.alive || bot.targetIds.includes(PLAYER_ID) || bot.lastDamagedBy === PLAYER_ID)
-      .sort((a, b) => Number(b.alive) - Number(a.alive) || b.badgePoints - a.badgePoints || b.score - a.score)
-      .slice(0, 8);
-
-    speakers.forEach((bot, index) => {
-      const delay = 500 + index * 420 + Math.floor(rngRef.current() * 260);
-      const lineIndex = (index + bot.badges + (victory ? 1 : 0)) % POST_MATCH_CHAT_LINES.length;
-      const timer = window.setTimeout(() => {
-        if (stateRef.current !== 'gameOver') return;
-        appendServerChatMessage(bot.id, bot.name, POST_MATCH_CHAT_LINES[lineIndex] ?? 'gg');
-      }, delay);
-      chatTimersRef.current.push(timer);
-    });
-  }
-
-  function submitChatMessage() {
-    const text = chatInput.trim();
-    if (!text || stateRef.current !== 'gameOver') return;
-    appendServerChatMessage(PLAYER_ID, 'YOU', text, true);
-    setChatInput('');
-  }
-
-  function enqueuePlayerCommand(command: PlayerCommand) {
-    playerCommandsRef.current.push(command);
-  }
-
   function syncSnapshot(status?: string) {
+    const nextStatus = status ?? statusRef.current;
+    statusRef.current = nextStatus;
     const alive = botsRef.current.filter(bot => bot.alive).length;
     const attackers = botsRef.current.filter(bot => bot.alive && bot.targetIds.includes(PLAYER_ID)).length;
     setSnapshot({
@@ -559,7 +506,7 @@ export default function Tetris99GameProper() {
       countdown: countdownRef.current,
       gameOver: stateRef.current === 'gameOver',
       victory: victoryRef.current,
-      status: status ?? snapshot.status,
+      status: nextStatus,
     });
   }
 
@@ -586,11 +533,9 @@ export default function Tetris99GameProper() {
   function resetGame() {
     for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
     botAiGamesRef.current.clear();
-    clearPostMatchChatTimers();
     clearDAS();
     clearSoftDrop();
     keysRef.current.clear();
-    playerCommandsRef.current = [];
     boardRef.current = createEmptyBoard();
     currentPieceRef.current = null;
     holdRef.current = null;
@@ -603,10 +548,9 @@ export default function Tetris99GameProper() {
     badgesRef.current = 0;
     incomingRef.current = [];
     lastDamagedByRef.current = null;
-    setChatMessages([]);
-    setChatInput('GG');
     backToBackRef.current = false;
     lastMoveRotationRef.current = false;
+    statusRef.current = 'Get ready';
     stateRef.current = 'countdown';
     countdownRef.current = 3;
     victoryRef.current = false;
@@ -635,6 +579,7 @@ export default function Tetris99GameProper() {
         aiPoints,
       };
     }).map(bot => ({ ...bot, badges: badgeStageFromPoints(bot.badgePoints) }));
+    setBotRenderVersion(prev => prev + 1);
     spawnPiece();
     syncSnapshot('Get ready');
   }
@@ -643,7 +588,6 @@ export default function Tetris99GameProper() {
     if (stateRef.current === 'gameOver') return;
     for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
     botAiGamesRef.current.clear();
-    clearPostMatchChatTimers();
     clearDAS();
     clearSoftDrop();
     keysRef.current.clear();
@@ -651,9 +595,6 @@ export default function Tetris99GameProper() {
     victoryRef.current = victory;
     playSfx(victory ? 'win' : 'lose');
     syncSnapshot(victory ? 'Winner!' : 'Game over');
-    setChatInput('GG');
-    appendServerChatMessage(SERVER_ID, 'SERVER', 'Match finalized. Post-match chat is live.');
-    schedulePostMatchChat(victory);
   }
 
   function queuePacket(lines: number, from: string, target: { pendingGarbage: GarbagePacket[] }) {
@@ -662,15 +603,21 @@ export default function Tetris99GameProper() {
   }
 
   function applyPendingGarbage() {
-    const progressed = progressGarbage(incomingRef.current);
-    incomingRef.current = progressed.queue;
-    if (progressed.due <= 0) return;
-    lastDamagedByRef.current = progressed.lastSource;
-    const { newBoard, adjustedPiece } = applyGarbageRise(boardRef.current, currentPieceRef.current, progressed.due, rngRef.current);
+    const ready = collectReadyGarbage(incomingRef.current);
+    incomingRef.current = ready.queue;
+    if (ready.due <= 0) return 0;
+    lastDamagedByRef.current = ready.lastSource;
+    const { newBoard, adjustedPiece } = applyGarbageRise(boardRef.current, currentPieceRef.current, ready.due, rngRef.current);
     boardRef.current = newBoard;
     currentPieceRef.current = adjustedPiece;
     playSfx('garbage');
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
+    return ready.due;
+  }
+
+  function setTargetMode(mode: TargetMode) {
+    targetModeRef.current = mode;
+    syncSnapshot(`${targetLabel(mode)} selected`);
   }
 
   function getBotById(id: string) {
@@ -829,6 +776,8 @@ export default function Tetris99GameProper() {
     boardRef.current = newBoard;
     linesRef.current += clearedLines;
     scoreRef.current += [0, 100, 300, 500, 800][clearedLines] ?? 0;
+    let status = 'Stack stabilized';
+
     if (clearedLines > 0) {
       comboRef.current += 1;
       const difficult = clearedLines === 4;
@@ -836,13 +785,12 @@ export default function Tetris99GameProper() {
       backToBackRef.current = difficult;
       sendAttack(attack);
       playSfx(clearedLines === 4 ? 'tetris' : 'clear');
-      syncSnapshot(clearedLines === 4 ? 'Tetris' : `${clearedLines} line clear`);
+      status = clearedLines === 4 ? 'Tetris' : `${clearedLines} line clear`;
     } else {
       comboRef.current = 0;
       backToBackRef.current = false;
-      applyPendingGarbage();
-      syncSnapshot('Stack stabilized');
     }
+
     currentPieceRef.current = null;
     lastMoveRotationRef.current = false;
     if (lockTimerRef.current) {
@@ -850,8 +798,15 @@ export default function Tetris99GameProper() {
       lockTimerRef.current = null;
     }
     isOnGroundRef.current = false;
+
+    const appliedGarbage = applyPendingGarbage();
+    if (appliedGarbage > 0 && clearedLines === 0) {
+      status = `Garbage +${appliedGarbage}`;
+    }
+
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
     if (stateRef.current === 'playing') spawnPiece();
+    syncSnapshot(status);
   }
 
   function clearLockTimer() {
@@ -943,9 +898,10 @@ export default function Tetris99GameProper() {
 
   function hardDrop() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
+    const startY = currentPieceRef.current.y;
     const ghostY = getGhostY(currentPieceRef.current, boardRef.current);
     currentPieceRef.current = { ...currentPieceRef.current, y: ghostY };
-    scoreRef.current += Math.max(0, ghostY - currentPieceRef.current.y) * 2;
+    scoreRef.current += Math.max(0, ghostY - startY) * 2;
     playSfx('drop');
     lockCurrentPiece();
   }
@@ -964,41 +920,13 @@ export default function Tetris99GameProper() {
     syncSnapshot('Hold');
   }
 
-  function processPlayerCommands() {
-    if (stateRef.current !== 'playing') {
-      playerCommandsRef.current = [];
-      return;
-    }
-
-    const commands = playerCommandsRef.current.splice(0);
-    for (const command of commands) {
-      if (command.type === 'move') {
-        if (command.dx !== 0) moveHorizontal(command.dx);
-        else if (command.dy > 0) moveDown();
-      }
-      else if (command.type === 'rotate') rotatePiece(command.direction);
-      else if (command.type === 'hold') holdPiece();
-      else if (command.type === 'hardDrop') hardDrop();
-      else if (command.type === 'target') {
-        targetModeRef.current = command.mode;
-        syncSnapshot(`${targetLabel(command.mode)} selected`);
-      }
-    }
-  }
-
   useEffect(() => {
     setFullscreen(true);
     resetGame();
     return () => {
-      clearPostMatchChatTimers();
       setFullscreen(false);
     };
   }, [setFullscreen]);
-
-  useEffect(() => {
-    if (!chatLogRef.current) return;
-    chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
-  }, [chatMessages]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -1021,15 +949,14 @@ export default function Tetris99GameProper() {
     const startDAS = (dir: 'left' | 'right', dx: number) => {
       clearDAS();
       lastDirRef.current = dir;
-      enqueuePlayerCommand({ type: 'move', dx, dy: 0 });
+      moveHorizontal(dx);
       dasTimerRef.current = window.setTimeout(() => {
         dasTimerRef.current = null;
-        arrTimerRef.current = window.setInterval(() => enqueuePlayerCommand({ type: 'move', dx, dy: 0 }), ARR);
+        arrTimerRef.current = window.setInterval(() => moveHorizontal(dx), ARR);
       }, DAS);
     };
 
     function onKeyDown(event: KeyboardEvent) {
-      ensureAudio();
       if (stateRef.current !== 'playing') return;
       if (keysRef.current.has(event.code)) return;
       keysRef.current.add(event.code);
@@ -1045,23 +972,24 @@ export default function Tetris99GameProper() {
       else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
         event.preventDefault();
         clearSoftDrop();
-        softDropTimerRef.current = window.setInterval(() => enqueuePlayerCommand({ type: 'move', dx: 0, dy: 1 }), SOFT_DROP_SPEED);
+        moveDown();
+        softDropTimerRef.current = window.setInterval(() => moveDown(), SOFT_DROP_SPEED);
       }
       else if (event.code === 'ArrowUp' || event.code === 'KeyX') {
         event.preventDefault();
-        enqueuePlayerCommand({ type: 'rotate', direction: 1 });
+        rotatePiece(1);
       }
       else if (event.code === 'KeyZ') {
         event.preventDefault();
-        enqueuePlayerCommand({ type: 'rotate', direction: -1 });
+        rotatePiece(-1);
       }
       else if (event.code === 'KeyC' || event.code === 'ShiftLeft') {
         event.preventDefault();
-        enqueuePlayerCommand({ type: 'hold' });
+        holdPiece();
       }
       else if (event.code === 'Space') {
         event.preventDefault();
-        enqueuePlayerCommand({ type: 'hardDrop' });
+        hardDrop();
       }
     }
 
@@ -1091,13 +1019,6 @@ export default function Tetris99GameProper() {
   }, []);
 
   useEffect(() => {
-    const serverTick = window.setInterval(() => {
-      processPlayerCommands();
-    }, 32);
-    return () => window.clearInterval(serverTick);
-  }, []);
-
-  useEffect(() => {
     const gravity = window.setInterval(() => {
       if (stateRef.current !== 'playing' || !currentPieceRef.current) return;
       moveDown();
@@ -1120,15 +1041,16 @@ export default function Tetris99GameProper() {
       for (const bot of botsRef.current) {
         if (!bot.alive) continue;
         updateBotTargeting(bot, playerTargets);
-        const progressed = progressGarbage(bot.pendingGarbage);
-        bot.pendingGarbage = progressed.queue;
-        if (progressed.due > 0) {
-          bot.lastDamagedBy = progressed.lastSource;
-          botAiGamesRef.current.get(bot.id)?.addGarbage(progressed.due);
+        bot.pendingGarbage = tickGarbageQueue(bot.pendingGarbage);
+        const ready = collectReadyGarbage(bot.pendingGarbage);
+        bot.pendingGarbage = ready.queue;
+        if (ready.due > 0) {
+          bot.lastDamagedBy = ready.lastSource;
+          botAiGamesRef.current.get(bot.id)?.addGarbage(ready.due);
         }
         if (boardDanger(bot.board) >= 22) eliminateBot(bot);
       }
-      applyPendingGarbage();
+      incomingRef.current = tickGarbageQueue(incomingRef.current);
       if (boardDanger(boardRef.current) >= 22) {
         awardKo(lastDamagedByRef.current, badgesRef.current);
         finish(false);
@@ -1137,6 +1059,7 @@ export default function Tetris99GameProper() {
       } else {
         syncSnapshot(boardDanger(boardRef.current) >= 18 ? 'Danger zone' : 'Battle in progress');
       }
+      setBotRenderVersion(prev => prev + 1);
     }, 260);
     return () => {
       window.clearInterval(botLoop);
@@ -1147,16 +1070,21 @@ export default function Tetris99GameProper() {
 
   const targetedBots = useMemo(() => {
     return new Set(chooseTargets(PLAYER_ID, snapshot.targetMode));
-  }, [snapshot.targetMode, snapshot.place, snapshot.attackers]);
+  }, [botRenderVersion, snapshot.targetMode, snapshot.place, snapshot.attackers]);
 
-  const leftBots = botsRef.current.slice(0, 49);
-  const rightBots = botsRef.current.slice(49);
+  const leftBotBoards = useMemo(() => (
+    botsRef.current.slice(0, 49).map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} />)
+  ), [botRenderVersion, targetedBots]);
+
+  const rightBotBoards = useMemo(() => (
+    botsRef.current.slice(49).map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} />)
+  ), [botRenderVersion, targetedBots]);
 
   return (
     <div className={styles.page}>
       <div className={styles.shell}>
         <div className={styles.arena}>
-          <div className={styles.sidePanel}>{leftBots.map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} />)}</div>
+          <div className={styles.sidePanel}>{leftBotBoards}</div>
           <div className={styles.boardStack}>
             <div className={styles.heroCard}>
               <div className={styles.heroHeader}>
@@ -1207,7 +1135,7 @@ export default function Tetris99GameProper() {
               </div>
               <div className={styles.targetRow}>
                 {(['random', 'attackers', 'kos', 'badges'] as TargetMode[]).map(mode => (
-                  <button key={mode} className={`${styles.targetButton} ${snapshot.targetMode === mode ? styles.targetActive : ''}`} onClick={() => { ensureAudio(); enqueuePlayerCommand({ type: 'target', mode }); }}>{targetLabel(mode)}</button>
+                  <button key={mode} className={`${styles.targetButton} ${snapshot.targetMode === mode ? styles.targetActive : ''}`} onClick={() => setTargetMode(mode)}>{targetLabel(mode)}</button>
                 ))}
               </div>
             </div>
@@ -1221,42 +1149,9 @@ export default function Tetris99GameProper() {
               </div>
             </div>
           </div>
-          <div className={styles.sidePanel}>{rightBots.map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} />)}</div>
+          <div className={styles.sidePanel}>{rightBotBoards}</div>
         </div>
       </div>
-      <aside className={styles.chatDock}>
-        <div className={styles.chatDockHeader}>
-          <span>Server Chat</span>
-          <span className={styles.chatDockState}>{snapshot.gameOver ? 'Live' : 'Standby'}</span>
-        </div>
-        <div ref={chatLogRef} className={styles.chatLog}>
-          {chatMessages.length > 0 ? chatMessages.map(message => (
-            <div key={message.id} className={`${styles.chatMessage} ${message.self ? styles.chatMessageSelf : ''} ${message.authorId === SERVER_ID ? styles.chatMessageServer : ''}`}>
-              <span className={styles.chatAuthor}>{message.authorName}</span>
-              <span className={styles.chatText}>{message.text}</span>
-            </div>
-          )) : (
-            <div className={styles.chatEmpty}>{snapshot.gameOver ? 'Say GG after the match.' : 'Post-match chat unlocks when the match ends.'}</div>
-          )}
-        </div>
-        <form
-          className={styles.chatForm}
-          onSubmit={(event) => {
-            event.preventDefault();
-            submitChatMessage();
-          }}
-        >
-          <input
-            className={styles.chatInput}
-            value={chatInput}
-            onChange={(event) => setChatInput(event.target.value)}
-            maxLength={48}
-            placeholder={snapshot.gameOver ? 'Say GG...' : 'Chat unlocks after game end'}
-            disabled={!snapshot.gameOver}
-          />
-          <button type="submit" className={styles.chatSend} disabled={!snapshot.gameOver}>Send</button>
-        </form>
-      </aside>
     </div>
   );
 }
