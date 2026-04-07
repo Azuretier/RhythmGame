@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import { useLayoutConfig } from '@/lib/layout/context';
 import styles from './GlobalFooter.module.css';
 
@@ -9,8 +9,9 @@ export default function GlobalFooter() {
   const { showFooter } = useLayoutConfig();
   const t = useTranslations();
   const router = useRouter();
+  const pathname = usePathname();
 
-  if (!showFooter) return null;
+  if (!showFooter || pathname !== '/') return null;
 
   return (
     <footer className={styles.footer}>

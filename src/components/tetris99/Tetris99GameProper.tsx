@@ -865,9 +865,6 @@ export default function Tetris99GameProper() {
       <div className={styles.shell}>
         <div className={styles.topbar}>
           <div className={styles.topbarLeft}>
-            <div className={styles.eyebrow}><span className={styles.eyebrowDot} />Rhythmia Board + Proper AI</div>
-            <h1 className={styles.title}>Ninety-Nine Boards, One Survivor.</h1>
-            <p className={styles.subtitle}>The player field now reuses Rhythmia’s real board component and movement rules. CPU rivals run board-based placement AI, send more playable garbage pressure, and the match ends on a proper restart dialog.</p>
             <div className={styles.actionRow}>
               <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>Restart Match</button>
               <button className={styles.ghostButton} onClick={() => router.push('/games')}>Back to Games</button>
