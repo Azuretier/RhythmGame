@@ -250,6 +250,31 @@
   box-shadow: 0 0 0 1px rgba(255, 95, 109, 0.4), 0 0 28px rgba(255, 95, 109, 0.2);
 }
 
+.playerBoard {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 1px;
+  width: min(100%, 282px);
+  margin: 0 auto;
+  aspect-ratio: 1 / 2;
+  align-self: center;
+}
+
+.playerCell {
+  aspect-ratio: 1 / 1;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.playerCellFilled {
+  background: var(--player-cell-color);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 10px color-mix(in srgb, var(--player-cell-color) 45%, transparent);
+}
+
+.playerCellGhost {
+  background: color-mix(in srgb, var(--player-cell-color) 18%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--player-cell-color) 70%, rgba(255, 255, 255, 0.12));
+}
+
 .garbageRail {
   position: absolute;
   left: 8px;

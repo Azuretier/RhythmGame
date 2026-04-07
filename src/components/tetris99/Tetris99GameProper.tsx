@@ -1,21 +1,22 @@
 'use client';
 /* eslint-disable react-hooks/exhaustive-deps */
 
+import type { CSSProperties } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { Board as RhythmBoard } from '@/components/rhythmia/tetris/components/Board';
 import type { Board as RhythmBoardState, Piece as RhythmPiece } from '@/components/rhythmia/tetris/types';
 import {
   createEmptyBoard,
   createSpawnPiece,
+  getShape,
   getGhostY,
   isValidPosition,
   lockPiece,
   clearLines,
   tryRotation,
 } from '@/components/rhythmia/tetris/utils/boardUtils';
-import { BOARD_WIDTH, BOARD_HEIGHT, LOCK_DELAY } from '@/components/rhythmia/tetris/constants';
-import { AI_DIFFICULTIES, findBestMove } from '@/lib/ranked/TetrisAI';
+import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components/rhythmia/tetris/constants';
+import { TetrisAIGame, getDifficultyForRank } from '@/lib/ranked/TetrisAI';
 import styles from './Tetris99Game.module.css';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -45,6 +46,7 @@ type BotState = {
   targetIds: string[];
   pendingGarbage: GarbagePacket[];
   lastDamagedBy: string | null;
+  aiPoints: number;
 };
 
 type Snapshot = {
@@ -74,6 +76,16 @@ const GARBAGE_DELAY = 3;
 const PLAYER_ID = 'player';
 const BOT_NAMES = ['ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT', 'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE'];
 const PIECES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+const PLAYER_COLORS: Record<string, string> = {
+  I: '#3fd5ff',
+  O: '#ffd54a',
+  T: '#c084fc',
+  S: '#5ee173',
+  Z: '#ff6f7d',
+  J: '#5f8fff',
+  L: '#ffad5a',
+  garbage: '#666666',
+};
 
 const badgeStageFromPoints = (points: number) => (points >= 30 ? 4 : points >= 14 ? 3 : points >= 6 ? 2 : points >= 2 ? 1 : 0);
 const badgeMultiplier = (stage: number) => [1, 1.25, 1.5, 1.75, 2][Math.min(4, stage)] ?? 2;
@@ -127,8 +139,14 @@ function addGarbageRows(board: RhythmBoardState, rows: number, rng: () => number
   return next;
 }
 
-function boardToAi(board: RhythmBoardState) {
-  return board.map(row => row.map(cell => (cell ? { color: '#fff' } : null)));
+function aiBoardToRhythmBoard(board: ({ color: string } | null)[][]): RhythmBoardState {
+  const visible = board.map(row =>
+    row.map(cell => {
+      if (!cell) return null;
+      return cell.color === '#555555' ? 'garbage' : 'I';
+    }),
+  );
+  return [...Array.from({ length: BUFFER_ZONE }, () => Array(BOARD_WIDTH).fill(null)), ...visible];
 }
 
 function boardDanger(board: RhythmBoardState) {
@@ -238,6 +256,63 @@ function PreviewShape({ type }: { type: PieceType | null }) {
   );
 }
 
+function PlayerBoard({ board, currentPiece }: { board: RhythmBoardState; currentPiece: RhythmPiece | null }) {
+  const displayBoard = useMemo(() => {
+    const display = board.map(row => [...row]);
+
+    if (currentPiece) {
+      const shape = getShape(currentPiece.type, currentPiece.rotation);
+      const ghostY = getGhostY(currentPiece, board);
+
+      if (ghostY !== currentPiece.y) {
+        for (let y = 0; y < shape.length; y++) {
+          for (let x = 0; x < shape[y].length; x++) {
+            if (!shape[y][x]) continue;
+            const boardY = ghostY + y;
+            const boardX = currentPiece.x + x;
+            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH && display[boardY][boardX] === null) {
+              display[boardY][boardX] = `ghost-${currentPiece.type}`;
+            }
+          }
+        }
+      }
+
+      for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+          if (!shape[y][x]) continue;
+          const boardY = currentPiece.y + y;
+          const boardX = currentPiece.x + x;
+          if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+            display[boardY][boardX] = currentPiece.type;
+          }
+        }
+      }
+    }
+
+    return display.slice(BUFFER_ZONE);
+  }, [board, currentPiece]);
+
+  return (
+    <div className={styles.playerBoard}>
+      {displayBoard.flatMap((row, y) =>
+        row.map((cell, x) => {
+          const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
+          const pieceType = isGhost ? cell.slice(6) : cell;
+          const color = pieceType ? PLAYER_COLORS[pieceType] ?? '#ffffff' : 'transparent';
+          const style = pieceType ? ({ ['--player-cell-color' as string]: color } as CSSProperties) : undefined;
+          return (
+            <div
+              key={`${y}-${x}`}
+              className={`${styles.playerCell} ${pieceType ? styles.playerCellFilled : ''} ${isGhost ? styles.playerCellGhost : ''}`}
+              style={style}
+            />
+          );
+        }),
+      )}
+    </div>
+  );
+}
+
 export default function Tetris99GameProper() {
   const router = useRouter();
   const audioRef = useRef<AudioContext | null>(null);
@@ -262,6 +337,7 @@ export default function Tetris99GameProper() {
   const lockTimerRef = useRef<number | null>(null);
   const lockMovesRef = useRef(0);
   const botsRef = useRef<BotState[]>([]);
+  const botAiGamesRef = useRef(new Map<string, TetrisAIGame>());
   const targetModeRef = useRef<TargetMode>('attackers');
   const stateRef = useRef<MatchState>('countdown');
   const countdownRef = useRef(3);
@@ -373,6 +449,8 @@ export default function Tetris99GameProper() {
   }
 
   function resetGame() {
+    for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
+    botAiGamesRef.current.clear();
     boardRef.current = createEmptyBoard();
     currentPieceRef.current = null;
     holdRef.current = null;
@@ -395,6 +473,7 @@ export default function Tetris99GameProper() {
     botBagRef.current = makeBag(makeRng(44091 + Math.floor(Math.random() * 10000)));
     botsRef.current = Array.from({ length: BOT_COUNT }, (_, i) => {
       const rng = makeRng(20000 + i * 17 + Math.floor(Math.random() * 10000));
+      const aiPoints = [900, 2400, 6200, 11000][Math.floor(rng() * 4)] ?? 2400;
       return {
         id: `bot-${i}`,
         name: `${BOT_NAMES[i % BOT_NAMES.length]}-${String(i + 1).padStart(2, '0')}`,
@@ -411,6 +490,7 @@ export default function Tetris99GameProper() {
         targetIds: [],
         pendingGarbage: [],
         lastDamagedBy: null,
+        aiPoints,
       };
     }).map(bot => ({ ...bot, badges: badgeStageFromPoints(bot.badgePoints) }));
     spawnPiece();
@@ -419,6 +499,8 @@ export default function Tetris99GameProper() {
 
   function finish(victory: boolean) {
     if (stateRef.current === 'gameOver') return;
+    for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
+    botAiGamesRef.current.clear();
     stateRef.current = 'gameOver';
     victoryRef.current = victory;
     playSfx(victory ? 'win' : 'lose');
@@ -525,6 +607,8 @@ export default function Tetris99GameProper() {
 
   function eliminateBot(bot: BotState) {
     if (!bot.alive) return;
+    botAiGamesRef.current.get(bot.id)?.stop();
+    botAiGamesRef.current.delete(bot.id);
     bot.alive = false;
     bot.targetIds = [];
     awardKo(bot.lastDamagedBy, bot.badges);
@@ -540,6 +624,50 @@ export default function Tetris99GameProper() {
     for (const targetId of targets) {
       const bot = getBotById(targetId);
       if (bot?.alive) queuePacket(outgoing, PLAYER_ID, bot);
+    }
+  }
+
+  function routeBotAttack(botId: string, lines: number) {
+    const bot = getBotById(botId);
+    if (!bot || !bot.alive || lines <= 0) return;
+    let outgoing = lines;
+    if (bot.targetMode === 'attackers') outgoing += attackerBonus(bot.targetIds.length);
+    if (outgoing <= 0) return;
+    for (const targetId of bot.targetIds) {
+      if (targetId === PLAYER_ID) queuePacket(outgoing, bot.id, { pendingGarbage: incomingRef.current });
+      else {
+        const targetBot = getBotById(targetId);
+        if (targetBot?.alive) queuePacket(outgoing, bot.id, targetBot);
+      }
+    }
+  }
+
+  function startBotAiGames() {
+    for (const bot of botsRef.current) {
+      if (!bot.alive || botAiGamesRef.current.has(bot.id)) continue;
+      const aiGame = new TetrisAIGame(30000 + Number(bot.id.replace('bot-', '')) * 97, getDifficultyForRank(bot.aiPoints), {
+        onBoardUpdate: (board, score, lines, combo, piece, hold) => {
+          const currentBot = getBotById(bot.id);
+          if (!currentBot || !currentBot.alive) return;
+          currentBot.board = aiBoardToRhythmBoard(board);
+          currentBot.score = score;
+          currentBot.lines = lines;
+          currentBot.combo = combo;
+          currentBot.hold = (hold as PieceType | null | undefined) ?? null;
+          if (piece && currentBot.queue.length > 0) {
+            currentBot.queue = [...currentBot.queue.slice(1), piece as PieceType];
+          }
+        },
+        onGarbage: (lines) => {
+          routeBotAttack(bot.id, lines);
+        },
+        onGameOver: () => {
+          const currentBot = getBotById(bot.id);
+          if (currentBot) eliminateBot(currentBot);
+        },
+      });
+      botAiGamesRef.current.set(bot.id, aiGame);
+      aiGame.start();
     }
   }
 
@@ -686,56 +814,27 @@ export default function Tetris99GameProper() {
   }, [snapshot.place]);
 
   useEffect(() => {
+    if (snapshot.state !== 'playing') {
+      for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
+      botAiGamesRef.current.clear();
+      return;
+    }
+
+    startBotAiGames();
+
     const botLoop = window.setInterval(() => {
       if (stateRef.current !== 'playing') return;
       const playerTargets = new Set(chooseTargets(PLAYER_ID, targetModeRef.current));
       for (const bot of botsRef.current) {
-        if (bot.alive) updateBotTargeting(bot, playerTargets);
-      }
-      for (const bot of botsRef.current) {
         if (!bot.alive) continue;
+        updateBotTargeting(bot, playerTargets);
         const progressed = progressGarbage(bot.pendingGarbage);
         bot.pendingGarbage = progressed.queue;
         if (progressed.due > 0) {
           bot.lastDamagedBy = progressed.lastSource;
-          bot.board = addGarbageRows(bot.board, progressed.due, makeRng(progressed.due + bot.lines + bot.score));
+          botAiGamesRef.current.get(bot.id)?.addGarbage(progressed.due);
         }
-        const current = bot.queue.shift()!;
-        bot.queue.push(botBagRef.current());
-        const next = bot.queue[0];
-        const ai = boardToAi(bot.board);
-        const difficulty = snapshot.place > 60 ? AI_DIFFICULTIES.medium : snapshot.place > 20 ? AI_DIFFICULTIES.hard : AI_DIFFICULTIES.expert;
-        const move = findBestMove(current, ai, difficulty, next);
-        if (!move) {
-          eliminateBot(bot);
-          continue;
-        }
-        const piece = createSpawnPiece(current);
-        const placed = { ...piece, rotation: move.rotation, x: move.x, y: getGhostY({ ...piece, rotation: move.rotation, x: move.x }, bot.board) };
-        const locked = lockPiece(placed, bot.board);
-        const { newBoard, clearedLines } = clearLines(locked);
-        bot.board = newBoard;
-        if (clearedLines > 0) {
-          bot.combo += 1;
-          bot.lines += clearedLines;
-          bot.score += [0, 100, 300, 500, 800][clearedLines] ?? 0;
-          let attack = computeAttack(clearedLines, bot.combo, clearedLines === 4, bot.badges);
-          if (bot.targetMode === 'attackers') attack += attackerBonus(bot.targetIds.length);
-          if (attack > 0) {
-            for (const targetId of bot.targetIds) {
-              if (targetId === PLAYER_ID) queuePacket(attack, bot.id, { pendingGarbage: incomingRef.current });
-              else {
-                const targetBot = getBotById(targetId);
-                if (targetBot?.alive) queuePacket(attack, bot.id, targetBot);
-              }
-            }
-          }
-        } else {
-          bot.combo = 0;
-        }
-        if (boardDanger(bot.board) >= 22) {
-          eliminateBot(bot);
-        }
+        if (boardDanger(bot.board) >= 22) eliminateBot(bot);
       }
       applyPendingGarbage();
       if (boardDanger(boardRef.current) >= 22) {
@@ -746,9 +845,13 @@ export default function Tetris99GameProper() {
       } else {
         syncSnapshot(boardDanger(boardRef.current) >= 18 ? 'Danger zone' : 'Battle in progress');
       }
-    }, snapshot.place <= 10 ? 200 : snapshot.place <= 40 ? 330 : 520);
-    return () => window.clearInterval(botLoop);
-  }, [snapshot.place]);
+    }, 260);
+    return () => {
+      window.clearInterval(botLoop);
+      for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
+      botAiGamesRef.current.clear();
+    };
+  }, [snapshot.state]);
 
   const targetedBots = useMemo(() => {
     return new Set(chooseTargets(PLAYER_ID, snapshot.targetMode));
@@ -795,7 +898,7 @@ export default function Tetris99GameProper() {
                 </div>
                 <div className={`${styles.boardFrame} ${boardDanger(snapshot.board) >= 18 ? styles.boardFrameDanger : ''}`}>
                   <div className={styles.garbageRail}><div className={styles.garbageFill} style={{ height: `${Math.min(100, snapshot.incomingGarbage * 8)}%` }} /></div>
-                  <RhythmBoard board={snapshot.board} currentPiece={snapshot.currentPiece} boardBeat={false} boardShake={false} combo={snapshot.combo} beatPhase={0} />
+                  <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
                 </div>
                 <div className={styles.previewColumn}>
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Next</span><div className={styles.previewBox}>{snapshot.queue.map((type, i) => <PreviewShape key={`${type}-${i}`} type={type} />)}</div></div>
