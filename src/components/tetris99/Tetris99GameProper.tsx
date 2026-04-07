@@ -285,6 +285,18 @@ function collectReadyGarbage(queue: GarbagePacket[]) {
   return { queue: next, due, lastSource };
 }
 
+function collectAllGarbage(queue: GarbagePacket[]) {
+  let due = 0;
+  let lastSource: string | null = null;
+
+  for (const packet of queue) {
+    due += packet.lines;
+    lastSource = packet.from;
+  }
+
+  return { queue: [] as GarbagePacket[], due, lastSource };
+}
+
 function attackerBonus(count: number) {
   if (count <= 1) return 0;
   if (count === 2) return 1;
@@ -661,17 +673,17 @@ export default function Tetris99GameProper() {
     target.pendingGarbage.push({ id: `pkt-${packetIdRef.current}`, lines, delay: GARBAGE_DELAY, from });
   }
 
-  function applyPendingGarbage() {
-    const ready = collectReadyGarbage(incomingRef.current);
-    incomingRef.current = ready.queue;
-    if (ready.due <= 0) return 0;
-    lastDamagedByRef.current = ready.lastSource;
-    const { newBoard, adjustedPiece } = applyGarbageRise(boardRef.current, currentPieceRef.current, ready.due, rngRef.current);
+  function applyPendingGarbage(forceAll = false) {
+    const collected = forceAll ? collectAllGarbage(incomingRef.current) : collectReadyGarbage(incomingRef.current);
+    incomingRef.current = collected.queue;
+    if (collected.due <= 0) return 0;
+    lastDamagedByRef.current = collected.lastSource;
+    const { newBoard, adjustedPiece } = applyGarbageRise(boardRef.current, currentPieceRef.current, collected.due, rngRef.current);
     boardRef.current = newBoard;
     currentPieceRef.current = adjustedPiece;
     playSfx('garbage');
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
-    return ready.due;
+    return collected.due;
   }
 
   function setTargetMode(mode: TargetMode) {
@@ -872,7 +884,7 @@ export default function Tetris99GameProper() {
     }
     isOnGroundRef.current = false;
 
-    const appliedGarbage = applyPendingGarbage();
+    const appliedGarbage = applyPendingGarbage(clearedLines > 0);
     if (appliedGarbage > 0) {
       status = status === 'Stack stabilized' ? `Garbage +${appliedGarbage}` : `${status} | Garbage +${appliedGarbage}`;
     }
