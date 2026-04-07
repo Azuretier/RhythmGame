@@ -310,10 +310,10 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, t
         return (
             <>
                 <div className={styles.terrainLabel}>STAGE {stageNumber} — DEFEND</div>
-                <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
+                <div className={styles.terrainMeta}>
                     ENEMIES: {alive}
                     {tdBeatsRemaining != null && tdBeatsRemaining > 0 && (
-                        <span style={{ marginLeft: '8px', color: '#ff8888' }}>WAVE {tdBeatsRemaining}</span>
+                        <span className={styles.terrainMetaAlert}>WAVE {tdBeatsRemaining}</span>
                     )}
                 </div>
             </>
@@ -328,7 +328,7 @@ export function TerrainProgress({ terrainRemaining, terrainTotal, stageNumber, t
             <div className={styles.terrainBar}>
                 <div className={styles.terrainFill} style={{ width: `${remainingPct}%` }} />
             </div>
-            <div style={{ color: '#aaa', fontSize: '0.7em', textAlign: 'center', marginTop: '2px' }}>
+            <div className={styles.terrainMeta}>
                 {terrainRemaining} / {terrainTotal} blocks
             </div>
         </>
@@ -373,8 +373,14 @@ interface StatsProps {
 export function StatsPanel({ lines, level }: StatsProps) {
     return (
         <div className={styles.statsPanel}>
-            <div>LINES: {lines}</div>
-            <div>LEVEL: {level}</div>
+            <div className={styles.statsItem}>
+                <span className={styles.statsLabel}>Lines</span>
+                <span className={styles.statsValue}>{lines}</span>
+            </div>
+            <div className={styles.statsItem}>
+                <span className={styles.statsLabel}>Level</span>
+                <span className={styles.statsValue}>{level}</span>
+            </div>
         </div>
     );
 }

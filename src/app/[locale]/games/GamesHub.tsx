@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import {
-  Music, Swords, Users, Shield, Pickaxe, Globe, Gamepad2, BookOpen,
+  Music, Swords, Users, Shield, Pickaxe, Globe, Gamepad2, BookOpen, Crosshair,
 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useRouter } from '@/i18n/navigation';
