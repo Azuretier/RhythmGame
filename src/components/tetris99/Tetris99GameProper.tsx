@@ -1032,12 +1032,13 @@ export default function Tetris99GameProper() {
     const offsetResult = offsetGarbageQueue(incomingQueue, lines);
     const attackerCount = attackerManager.countAttackers(sourceId, playerTargets);
     const badgeBoostPercent = badgeBoostPercentFromStage(getBadgeStageForSource(sourceId));
+    const attackerBonusLines = attackerManager.getBonus(sourceId, playerTargets);
 
-    if (offsetResult.remaining <= 0 || targetIds.length === 0) {
+    if (targetIds.length === 0) {
       return {
         offset: offsetResult.canceled,
         attackerCount,
-        attackerBonus: 0,
+        attackerBonus: attackerBonusLines,
         badgeBoostPercent,
         targetIds,
         distributions: [],
@@ -1046,8 +1047,19 @@ export default function Tetris99GameProper() {
       };
     }
 
-    const attackerBonusLines = attackerManager.getBonus(sourceId, playerTargets);
     const attackWithCounter = offsetResult.remaining + attackerBonusLines;
+    if (attackWithCounter <= 0) {
+      return {
+        offset: offsetResult.canceled,
+        attackerCount,
+        attackerBonus: attackerBonusLines,
+        badgeBoostPercent,
+        targetIds,
+        distributions: [],
+        nextQueue: offsetResult.next,
+        totalSent: 0,
+      };
+    }
     const boostedAttack = Math.max(0, Math.floor(attackWithCounter * (1 + badgeBoostPercent / 100)));
     const distributions = targetManager.distributeAttack(sourceId, mode, boostedAttack, targetIds, playerTargets);
 
@@ -1122,7 +1134,7 @@ export default function Tetris99GameProper() {
 
   function routeBotAttack(botId: string, lines: number, playerTargets = new Set<string>()) {
     const bot = getBotById(botId);
-    if (!bot || !bot.alive || lines <= 0) return;
+    if (!bot || !bot.alive) return;
     const attack = finalizeAttack(bot.id, bot.targetMode, lines, bot.targetIds, bot.pendingGarbage, playerTargets);
     bot.pendingGarbage = attack.nextQueue;
 
@@ -1173,7 +1185,7 @@ export default function Tetris99GameProper() {
           const playerTargets = refreshPlayerTargets();
           updateBotTargeting(currentBot, playerTargets);
 
-          if (attackResult.total > 0) {
+          if (placement.clearedLines > 0) {
             routeBotAttack(currentBot.id, attackResult.total, playerTargets);
           }
 
@@ -1217,12 +1229,10 @@ export default function Tetris99GameProper() {
     let badgeBoostPercent = 0;
 
     if (clearedLines > 0) {
-      if (attackResult.total > 0) {
-        const attackResolution = sendAttack(attackResult.total);
-        attackOffset = attackResolution.offset;
-        attackBonus = attackResolution.attackerBonus;
-        badgeBoostPercent = attackResolution.badgeBoostPercent;
-      }
+      const attackResolution = sendAttack(attackResult.total);
+      attackOffset = attackResolution.offset;
+      attackBonus = attackResolution.attackerBonus;
+      badgeBoostPercent = attackResolution.badgeBoostPercent;
       playSfx(clearedLines === 4 ? 'tetris' : 'clear');
       if (tSpin === 'full') {
         status = `T-Spin ${clearedLines === 1 ? 'Single' : clearedLines === 2 ? 'Double' : clearedLines === 3 ? 'Triple' : 'Clear'}`;
