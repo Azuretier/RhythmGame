@@ -1697,8 +1697,13 @@ export default function Tetris99GameProper() {
                     <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</strong></div>
                   </div>
                   <div className={styles.boardPlayfield}>
-                    <IncomingGarbageRail packets={snapshot.incomingPackets} />
-                    <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
+                    <div className={styles.boardPlayfieldInner}>
+                      <div className={styles.garbagePanel}>
+                        <span className={styles.garbagePanelLabel}>Incoming</span>
+                        <IncomingGarbageRail packets={snapshot.incomingPackets} />
+                      </div>
+                      <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
+                    </div>
                     {settingsOpen && (
                       <div className={styles.settingsBoardOverlay} role="dialog" aria-modal="true" aria-label="Tetris 99 settings">
                         <div className={styles.settingsBoardPanel}>
