@@ -379,26 +379,22 @@ function attackerBonus(count: number) {
   return 9;
 }
 
-function cancelGarbage(queue: GarbagePacket[], amount: number) {
+function offsetGarbageQueue(queue: GarbagePacket[], amount: number) {
   let remaining = amount;
+  let canceled = 0;
   const next: GarbagePacket[] = [];
   for (const packet of queue) {
-    if (packet.delay <= 0) {
-      next.push(packet);
-      continue;
-    }
     if (remaining <= 0) {
       next.push(packet);
       continue;
     }
-    if (packet.lines <= remaining) {
-      remaining -= packet.lines;
-      continue;
-    }
-    next.push({ ...packet, lines: packet.lines - remaining });
-    remaining = 0;
+    const offset = Math.min(packet.lines, remaining);
+    const packetLinesLeft = packet.lines - offset;
+    canceled += offset;
+    remaining -= offset;
+    if (packetLinesLeft > 0) next.push({ ...packet, lines: packetLinesLeft });
   }
-  return { next, remaining };
+  return { next, remaining, canceled };
 }
 
 function MicroBoard({ bot, targeted }: { bot: BotState; targeted: boolean }) {
@@ -859,23 +855,30 @@ export default function Tetris99GameProper() {
   }
 
   function sendAttack(lines: number) {
-    const canceled = cancelGarbage(incomingRef.current, lines);
-    incomingRef.current = canceled.next;
     const targets = chooseTargets(PLAYER_ID, targetModeRef.current);
-    let outgoing = canceled.remaining;
-    if (targetModeRef.current === 'attackers') outgoing += attackerBonus(targets.length);
-    if (outgoing <= 0 || !targets.length) return;
+    let attackPower = lines;
+    if (targetModeRef.current === 'attackers') attackPower += attackerBonus(targets.length);
+    const offset = offsetGarbageQueue(incomingRef.current, attackPower);
+    incomingRef.current = offset.next;
+    const outgoing = offset.remaining;
+    if (outgoing <= 0 || !targets.length) {
+      return { offset: offset.canceled, sent: 0 };
+    }
     for (const targetId of targets) {
       const bot = getBotById(targetId);
       if (bot?.alive) queuePacket(outgoing, PLAYER_ID, bot);
     }
+    return { offset: offset.canceled, sent: outgoing };
   }
 
   function routeBotAttack(botId: string, lines: number) {
     const bot = getBotById(botId);
     if (!bot || !bot.alive || lines <= 0) return;
-    let outgoing = lines;
-    if (bot.targetMode === 'attackers') outgoing += attackerBonus(bot.targetIds.length);
+    let attackPower = lines;
+    if (bot.targetMode === 'attackers') attackPower += attackerBonus(bot.targetIds.length);
+    const offset = offsetGarbageQueue(bot.pendingGarbage, attackPower);
+    bot.pendingGarbage = offset.next;
+    const outgoing = offset.remaining;
     if (outgoing <= 0) return;
     for (const targetId of bot.targetIds) {
       if (targetId === PLAYER_ID) queuePacket(outgoing, bot.id, { pendingGarbage: incomingRef.current });
@@ -935,9 +938,13 @@ export default function Tetris99GameProper() {
 
     comboRef.current = attackResult.nextComboChain;
     backToBackRef.current = attackResult.nextB2bActive;
+    let attackOffset = 0;
 
     if (clearedLines > 0) {
-      if (attackResult.total > 0) sendAttack(attackResult.total);
+      if (attackResult.total > 0) {
+        const attackResolution = sendAttack(attackResult.total);
+        attackOffset = attackResolution.offset;
+      }
       playSfx(clearedLines === 4 ? 'tetris' : 'clear');
       if (tSpin === 'full') {
         status = `T-Spin ${clearedLines === 1 ? 'Single' : clearedLines === 2 ? 'Double' : clearedLines === 3 ? 'Triple' : 'Clear'}`;
@@ -956,6 +963,9 @@ export default function Tetris99GameProper() {
     }
     if (attackResult.comboBonus > 0) {
       status = `${status} | REN +${attackResult.comboBonus}`;
+    }
+    if (attackOffset > 0) {
+      status = `${status} | Offset ${attackOffset}`;
     }
 
     currentPieceRef.current = null;
