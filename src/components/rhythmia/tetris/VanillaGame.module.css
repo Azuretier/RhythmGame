@@ -60,8 +60,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px;
-  gap: 10px;
+  padding: 18px;
+  gap: 14px;
   position: relative;
   z-index: 1; /* LAYER_3D_BACKGROUND */
 }
@@ -74,45 +74,153 @@
 }
 
 /* Score display */
+.gameShell {
+  width: min(1560px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hudTopRail {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(460px, 1.6fr) minmax(220px, 0.9fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.hudCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(14, 19, 34, 0.96), rgba(8, 12, 22, 0.92)),
+    radial-gradient(circle at top left, rgba(73, 163, 255, 0.1), transparent 52%);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+}
+
+.hudCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hudEyebrow {
+  font-size: 0.62rem;
+  color: rgba(153, 181, 225, 0.74);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hudCardTitle {
+  margin-top: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(245, 248, 255, 0.96);
+  letter-spacing: 0.06em;
+}
+
+.hudScoreCard {
+  justify-content: space-between;
+}
+
+.hudScoreCard .scoreDisplay {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  text-align: left;
+}
+
+.hudScoreCard .combo {
+  justify-content: flex-start;
+}
+
+.hudStatusCard {
+  justify-content: center;
+}
+
+.hudSettingsCard {
+  justify-content: center;
+}
+
+/* Score display */
 .scoreDisplay {
   font-size: clamp(2rem, 8vw, 4rem);
   font-weight: 300;
   color: white;
   letter-spacing: 0.05em;
+  line-height: 1;
   transition: transform 0.1s;
 }
 
 .scoreDisplay.pop {
-  transform: scale(1.1);
+  transform: scale(1.04);
 }
 
 /* Combo */
 .combo {
-  font-size: clamp(1.2rem, 4vw, 2rem);
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  min-height: 1.4rem;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-weight: 500;
+  color: rgba(171, 219, 255, 0.82);
   opacity: 0;
-  transform: scale(0);
+  transform: translateY(8px);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .combo.show {
   opacity: 1;
-  transform: scale(1);
+  transform: translateY(0);
 }
 
 .combo.big {
-  transform: scale(1.3);
   color: #ffffff;
+  text-shadow: 0 0 18px rgba(138, 218, 255, 0.36);
+}
+
+.quickMetricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.quickMetric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.quickMetricLabel {
+  font-size: 0.62rem;
+  color: rgba(161, 184, 221, 0.56);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.quickMetricValue {
+  font-size: 1rem;
+  color: rgba(245, 248, 255, 0.95);
+  font-weight: 600;
 }
 
 /* Game area — three-column grid: sidebar | board+beatbar | sidebar */
 .gameArea {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr) minmax(250px, 320px);
+  gap: 18px;
   align-items: start;
 }
 
@@ -120,7 +228,7 @@
 .sidePanel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
 /* Left sidebar aligns content to the right (near the board) */
@@ -140,18 +248,140 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 14px;
+}
+
+.supportPanel {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(11, 16, 28, 0.95), rgba(6, 9, 18, 0.92)),
+    radial-gradient(circle at top, rgba(88, 194, 255, 0.08), transparent 55%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+.supportPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.supportPanelTitle {
+  font-size: 0.72rem;
+  color: rgba(241, 247, 255, 0.92);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.supportPanelMeta {
+  font-size: 0.62rem;
+  color: rgba(151, 176, 214, 0.6);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.stageShell {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(12, 17, 30, 0.94), rgba(6, 9, 18, 0.96)),
+    radial-gradient(circle at top, rgba(52, 127, 255, 0.12), transparent 56%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.stageFrameHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.stageFrameTitle {
+  margin-top: 4px;
+  font-size: 1.15rem;
+  color: rgba(247, 250, 255, 0.96);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.stageMetaGroup {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.stageMetaPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(232, 240, 255, 0.86);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.stageBoardViewport {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at center, rgba(56, 104, 204, 0.16), transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.beatModule {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.beatModuleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 /* Board */
 .boardWrap {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.25);
+  padding: 10px;
+  border: 1px solid rgba(158, 203, 255, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(2, 7, 18, 0.95), rgba(0, 0, 0, 0.88)),
+    radial-gradient(circle at top center, rgba(0, 163, 255, 0.12), transparent 52%);
   transition: box-shadow 0.1s, transform 0.1s, border-color 0.1s;
   overflow: visible;
   will-change: transform, box-shadow;
+  box-shadow:
+    0 16px 50px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .boardWrap.beat {
@@ -329,22 +559,31 @@
 
 /* NEXT / HOLD */
 .nextWrap {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  padding: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 6px;
 }
 
 .nextLabel {
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 0.65rem;
+  color: rgba(180, 204, 235, 0.48);
+  font-size: 0.62rem;
   text-align: center;
-  margin-bottom: 5px;
-  letter-spacing: 0.15em;
-  font-weight: 500;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.previewLocked {
+  padding: 16px 10px;
+  text-align: center;
+  color: rgba(255, 188, 188, 0.78);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
 }
 
 .next {
@@ -1432,16 +1671,17 @@
 /* In-game world progression display */
 .worldProgressDisplay {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  justify-content: center;
+  gap: 10px;
+  padding: 4px 0 0;
 }
 
 .worldProgressName {
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.05em;
+  font-size: 0.74rem;
+  color: rgba(241, 246, 255, 0.84);
+  letter-spacing: 0.08em;
+  font-weight: 500;
 }
 
 .worldProgressPips {
@@ -1454,17 +1694,19 @@
   height: 4px;
   border-radius: 2px;
   background: rgba(255, 255, 255, 0.12);
-  transition: background 0.3s;
+  transition: background 0.3s, box-shadow 0.3s;
 }
 
 .worldProgressPipFilled {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(122, 208, 255, 0.92);
+  box-shadow: 0 0 10px rgba(122, 208, 255, 0.3);
 }
 
 .worldProgressLabel {
-  font-size: 0.6rem;
-  color: rgba(255, 255, 255, 0.3);
-  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+  color: rgba(163, 184, 217, 0.58);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 /* Theme Navbar */
@@ -1515,21 +1757,37 @@
   width: min(250px, 70vw);
   height: 8px;
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
+  border-radius: 999px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .terrainFill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.7));
+  background: linear-gradient(90deg, rgba(112, 200, 255, 0.95), rgba(59, 135, 255, 0.95));
   transition: width 0.3s;
+  box-shadow: 0 0 16px rgba(97, 177, 255, 0.32);
 }
 
 .terrainLabel {
-  color: rgba(255, 255, 255, 0.35);
-  font-size: 0.7rem;
-  text-align: center;
-  letter-spacing: 0.1em;
+  color: rgba(237, 245, 255, 0.86);
+  font-size: 0.74rem;
+  text-align: left;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.terrainMeta {
+  color: rgba(157, 180, 214, 0.72);
+  font-size: 0.72rem;
+  text-align: left;
+  letter-spacing: 0.08em;
+}
+
+.terrainMetaAlert {
+  margin-left: 10px;
+  color: #ff9f9f;
+  text-transform: uppercase;
 }
 
 /* Wrapper for board + action toast positioning */
@@ -1939,12 +2197,63 @@
 
 /* Stats panel */
 .statsPanel {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.statsItem {
   display: flex;
-  gap: 16px;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  font-weight: 400;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.statsLabel {
+  color: rgba(157, 180, 214, 0.62);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.statsValue {
+  color: rgba(245, 248, 255, 0.95);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.protocolMiniGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.protocolMiniItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.protocolMiniLabel {
+  color: rgba(157, 180, 214, 0.6);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.protocolMiniValue {
+  color: rgba(244, 248, 255, 0.94);
+  font-size: 0.96rem;
+  font-weight: 600;
 }
 
 /* Particles */
@@ -5008,5 +5317,127 @@
 
   .treasureRewardItem {
     padding: 10px 12px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .hudTopRail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hudStatusCard {
+    grid-column: 1 / -1;
+  }
+
+  .gameArea {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) minmax(220px, 280px);
+  }
+}
+
+@media (max-width: 960px) {
+  .game {
+    height: auto;
+    min-height: 100vh;
+    justify-content: flex-start;
+  }
+
+  .gameShell {
+    gap: 14px;
+  }
+
+  .hudTopRail {
+    grid-template-columns: 1fr;
+  }
+
+  .hudStatusCard {
+    grid-column: auto;
+  }
+
+  .gameArea {
+    grid-template-columns: 1fr;
+  }
+
+  .sidePanelLeft,
+  .sidePanelRight {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .centerColumn {
+    width: 100%;
+  }
+
+  .stageFrameHeader,
+  .hudCardHeader,
+  .beatModuleHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stageMetaGroup {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .game {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .gameShell {
+    gap: 12px;
+  }
+
+  .hudCard,
+  .supportPanel,
+  .stageShell {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .stageBoardViewport {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .sidePanelLeft,
+  .sidePanelRight,
+  .quickMetricGrid,
+  .protocolMiniGrid,
+  .statsPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .scoreDisplay {
+    font-size: clamp(1.7rem, 10vw, 2.6rem);
+  }
+
+  .combo {
+    font-size: 0.92rem;
+    min-height: 1.1rem;
+  }
+
+  .stageFrameTitle,
+  .hudCardTitle {
+    font-size: 0.95rem;
+  }
+
+  .supportPanelMeta,
+  .hudEyebrow,
+  .nextLabel,
+  .quickMetricLabel,
+  .protocolMiniLabel,
+  .statsLabel,
+  .worldProgressLabel {
+    letter-spacing: 0.1em;
+  }
+
+  .actionToastContainer {
+    position: static;
+    margin-top: 10px;
+    align-items: stretch;
   }
 }

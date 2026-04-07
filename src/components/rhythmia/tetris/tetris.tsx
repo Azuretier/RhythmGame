@@ -1785,115 +1785,226 @@ export default function Rhythmia({ onQuit, onGameEnd }: RhythmiaProps) {
             onSellTower={galaxyTD.sellTower}
           />
 
-          {/* Game phase indicator */}
-          <GamePhaseIndicator
-            phase={gamePhase}
-            stageNumber={stageNumber}
-            equippedCardCount={equippedCards.length}
-            terrainPhase={terrainPhase}
-          />
+          <div className={styles.gameShell}>
+            <div className={styles.hudTopRail}>
+              <section className={`${styles.hudCard} ${styles.hudScoreCard}`}>
+                <div className={styles.hudEyebrow}>Run Score</div>
+                <ScoreDisplay score={score} scorePop={scorePop} />
+                <ComboDisplay combo={combo} />
+              </section>
 
-          <ScoreDisplay score={score} scorePop={scorePop} />
-          <ComboDisplay combo={combo} />
-          <TerrainProgress
-            terrainRemaining={terrainTotal - terrainDestroyedCount}
-            terrainTotal={terrainTotal}
-            stageNumber={stageNumber}
-            terrainPhase={terrainPhase}
-            tdBeatsRemaining={tdBeatsRemaining}
-            enemyCount={aliveEnemyCount}
-          />
-          <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
+              <section className={`${styles.hudCard} ${styles.hudStatusCard}`}>
+                <div className={styles.hudCardHeader}>
+                  <div>
+                    <div className={styles.hudEyebrow}>Battle Status</div>
+                    <div className={styles.hudCardTitle}>Stage {stageNumber} Operations</div>
+                  </div>
+                  <GamePhaseIndicator
+                    phase={gamePhase}
+                    stageNumber={stageNumber}
+                    equippedCardCount={equippedCards.length}
+                    terrainPhase={terrainPhase}
+                  />
+                </div>
+                <TerrainProgress
+                  terrainRemaining={terrainTotal - terrainDestroyedCount}
+                  terrainTotal={terrainTotal}
+                  stageNumber={stageNumber}
+                  terrainPhase={terrainPhase}
+                  tdBeatsRemaining={tdBeatsRemaining}
+                  enemyCount={aliveEnemyCount}
+                />
+                <WorldProgressDisplay worldIdx={worldIdx} stageNumber={stageNumber} />
+              </section>
+
+              <section className={`${styles.hudCard} ${styles.hudSettingsCard}`}>
+                <div className={styles.hudEyebrow}>Input Profile</div>
+                <div className={styles.quickMetricGrid}>
+                  <div className={styles.quickMetric}>
+                    <span className={styles.quickMetricLabel}>DAS</span>
+                    <span className={styles.quickMetricValue}>{das}ms</span>
+                  </div>
+                  <div className={styles.quickMetric}>
+                    <span className={styles.quickMetricLabel}>ARR</span>
+                    <span className={styles.quickMetricValue}>{arr}ms</span>
+                  </div>
+                  <div className={styles.quickMetric}>
+                    <span className={styles.quickMetricLabel}>SDF</span>
+                    <span className={styles.quickMetricValue}>{sdf}ms</span>
+                  </div>
+                  <div className={styles.quickMetric}>
+                    <span className={styles.quickMetricLabel}>Beat</span>
+                    <span className={styles.quickMetricValue}>x{protocolMods.beatWindowMultiplier.toFixed(2)}</span>
+                  </div>
+                </div>
+              </section>
+            </div>
 
           <div className={styles.gameArea} ref={gameAreaRef}>
 
             {/* Left sidebar: Hold + Inventory (separate containers) */}
             <div className={styles.sidePanelLeft}>
-              <div className={styles.nextWrap}>
-                <div className={styles.nextLabel}>HOLD ({getKeyLabel(keybinds.hold)})</div>
-                <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
-              </div>
-              <ItemSlots
-                inventory={inventory}
-                equippedCards={equippedCards}
-                activeEffects={activeEffects}
-              />
-              {/* Mandarin Fever Dragon Gauge */}
-              <DragonGauge gauge={dragonGauge} />
+              <section className={styles.supportPanel}>
+                <div className={styles.supportPanelHeader}>
+                  <span className={styles.supportPanelTitle}>Reserve</span>
+                  <span className={styles.supportPanelMeta}>{getKeyLabel(keybinds.hold)}</span>
+                </div>
+                <div className={styles.nextWrap}>
+                  <div className={styles.nextLabel}>HOLD SLOT</div>
+                  <HoldPiece pieceType={holdPiece} canHold={canHold} colorTheme={colorTheme} worldIdx={worldIdx} />
+                </div>
+              </section>
+
+              <section className={styles.supportPanel}>
+                <div className={styles.supportPanelHeader}>
+                  <span className={styles.supportPanelTitle}>Loadout</span>
+                  <span className={styles.supportPanelMeta}>{inventory.length} items</span>
+                </div>
+                <ItemSlots
+                  inventory={inventory}
+                  equippedCards={equippedCards}
+                  activeEffects={activeEffects}
+                />
+              </section>
+
+              <section className={styles.supportPanel}>
+                <div className={styles.supportPanelHeader}>
+                  <span className={styles.supportPanelTitle}>Power Core</span>
+                  <span className={styles.supportPanelMeta}>Dragon</span>
+                </div>
+                <DragonGauge gauge={dragonGauge} />
+              </section>
             </div>
 
             {/* Center column: Board + Beat bar + Stats */}
             <div className={styles.centerColumn}>
-              <div className={styles.boardActionArea}>
-              <GalaxyBoard
-                galaxyActive={true}
-                waveNumber={galaxyTD.waveNumber}
-                gold={galaxyTD.gold}
-                lives={galaxyTD.lives}
-                board={board}
-                currentPiece={currentPiece}
-                boardBeat={boardBeat}
-                boardShake={boardShake}
-                gameOver={gameOver}
-                isPaused={isPaused && !showCardSelect}
-                score={score}
-                onRestart={() => startGame()}
-                onResume={() => setIsPaused(false)}
-                onQuit={onQuit}
-                colorTheme={colorTheme}
-                onThemeChange={setColorTheme}
-                worldIdx={worldIdx}
-                combo={combo}
-                beatPhase={beatPhase}
-                boardElRef={boardElRef}
-                das={das}
-                arr={arr}
-                sdf={sdf}
-                onDasChange={setDas}
-                onArrChange={setArr}
-                onSdfChange={setSdf}
-                keybinds={keybinds}
-                onKeybindChange={setKeybind}
-                onKeybindsReset={resetKeybinds}
-                defaultKeybinds={defaultKeybinds}
-                featureSettings={featureSettings}
-                onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
-                activeAnomaly={corruption.activeAnomaly}
-              />
-              {/* Action display toasts (T-spin, Tetris, Back-to-Back) — stacking */}
-              {actionToasts.length > 0 && (
-                <div className={styles.actionToastContainer}>
-                  {actionToasts.map(toast => (
-                    <div key={toast.id} className={styles.actionToast} style={{ '--action-color': toast.color } as React.CSSProperties}>
-                      {toast.lines.map((line, i) => (
-                        <div key={`${line}-${i}`} className={styles.actionLine}>
-                          {line}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+              <section className={styles.stageShell}>
+                <div className={styles.stageFrameHeader}>
+                  <div>
+                    <div className={styles.hudEyebrow}>Main Matrix</div>
+                    <div className={styles.stageFrameTitle}>Rhythmia Core</div>
+                  </div>
+                  <div className={styles.stageMetaGroup}>
+                    <span className={styles.stageMetaPill}>World {worldIdx + 1}</span>
+                    <span className={styles.stageMetaPill}>{terrainPhase === 'td' ? 'Defense' : 'Dig'}</span>
+                  </div>
                 </div>
-              )}
-              </div>
-              {featureSettings.beatBar && (
-                <BeatBar
-                  containerRef={beatBarRef}
-                  beatZoneWidth={(BEAT_GOOD_WINDOW + activeEffects.beatExtendBonus) * protocolMods.beatWindowMultiplier}
-                />
-              )}
-              <StatsPanel lines={lines} level={level} />
+
+                <div className={styles.stageBoardViewport}>
+                  <div className={styles.boardActionArea}>
+                    <GalaxyBoard
+                      galaxyActive={true}
+                      waveNumber={galaxyTD.waveNumber}
+                      gold={galaxyTD.gold}
+                      lives={galaxyTD.lives}
+                      board={board}
+                      currentPiece={currentPiece}
+                      boardBeat={boardBeat}
+                      boardShake={boardShake}
+                      gameOver={gameOver}
+                      isPaused={isPaused && !showCardSelect}
+                      score={score}
+                      onRestart={() => startGame()}
+                      onResume={() => setIsPaused(false)}
+                      onQuit={onQuit}
+                      colorTheme={colorTheme}
+                      onThemeChange={setColorTheme}
+                      worldIdx={worldIdx}
+                      combo={combo}
+                      beatPhase={beatPhase}
+                      boardElRef={boardElRef}
+                      das={das}
+                      arr={arr}
+                      sdf={sdf}
+                      onDasChange={setDas}
+                      onArrChange={setArr}
+                      onSdfChange={setSdf}
+                      keybinds={keybinds}
+                      onKeybindChange={setKeybind}
+                      onKeybindsReset={resetKeybinds}
+                      defaultKeybinds={defaultKeybinds}
+                      featureSettings={featureSettings}
+                      onFeatureSettingsUpdate={handleFeatureSettingsUpdate}
+                      activeAnomaly={corruption.activeAnomaly}
+                    />
+                    {actionToasts.length > 0 && (
+                      <div className={styles.actionToastContainer}>
+                        {actionToasts.map(toast => (
+                          <div key={toast.id} className={styles.actionToast} style={{ '--action-color': toast.color } as React.CSSProperties}>
+                            {toast.lines.map((line, i) => (
+                              <div key={`${line}-${i}`} className={styles.actionLine}>
+                                {line}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {featureSettings.beatBar && (
+                  <div className={styles.beatModule}>
+                    <div className={styles.beatModuleHeader}>
+                      <span className={styles.supportPanelTitle}>Rhythm Sync</span>
+                      <span className={styles.supportPanelMeta}>Window x{protocolMods.beatWindowMultiplier.toFixed(2)}</span>
+                    </div>
+                    <BeatBar
+                      containerRef={beatBarRef}
+                      beatZoneWidth={(BEAT_GOOD_WINDOW + activeEffects.beatExtendBonus) * protocolMods.beatWindowMultiplier}
+                    />
+                  </div>
+                )}
+
+                <StatsPanel lines={lines} level={level} />
+              </section>
             </div>
 
             {/* Right sidebar: Next + HP bar */}
             <div className={styles.sidePanelRight}>
-              <div className={styles.nextWrap}>
-                <div className={styles.nextLabel}>NEXT</div>
-                {nextPiece && !protocolMods.advancedRules.includes('invisible_preview') && (
-                  <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />
-                )}
-              </div>
+              <section className={styles.supportPanel}>
+                <div className={styles.supportPanelHeader}>
+                  <span className={styles.supportPanelTitle}>Forecast</span>
+                  <span className={styles.supportPanelMeta}>Next</span>
+                </div>
+                <div className={styles.nextWrap}>
+                  <div className={styles.nextLabel}>UPCOMING PIECE</div>
+                  {nextPiece && !protocolMods.advancedRules.includes('invisible_preview') && (
+                    <NextPiece pieceType={nextPiece} colorTheme={colorTheme} worldIdx={worldIdx} />
+                  )}
+                  {protocolMods.advancedRules.includes('invisible_preview') && (
+                    <div className={styles.previewLocked}>Hidden by protocol</div>
+                  )}
+                </div>
+              </section>
+
+              <section className={styles.supportPanel}>
+                <div className={styles.supportPanelHeader}>
+                  <span className={styles.supportPanelTitle}>Protocol</span>
+                  <span className={styles.supportPanelMeta}>Live Modifiers</span>
+                </div>
+                <div className={styles.protocolMiniGrid}>
+                  <div className={styles.protocolMiniItem}>
+                    <span className={styles.protocolMiniLabel}>BPM</span>
+                    <span className={styles.protocolMiniValue}>x{protocolMods.bpmMultiplier.toFixed(2)}</span>
+                  </div>
+                  <div className={styles.protocolMiniItem}>
+                    <span className={styles.protocolMiniLabel}>Gravity</span>
+                    <span className={styles.protocolMiniValue}>x{protocolMods.gravityMultiplier.toFixed(2)}</span>
+                  </div>
+                  <div className={styles.protocolMiniItem}>
+                    <span className={styles.protocolMiniLabel}>Score</span>
+                    <span className={styles.protocolMiniValue}>x{protocolMods.scoreMultiplier.toFixed(2)}</span>
+                  </div>
+                  <div className={styles.protocolMiniItem}>
+                    <span className={styles.protocolMiniLabel}>Rules</span>
+                    <span className={styles.protocolMiniValue}>{protocolMods.advancedRules.length}</span>
+                  </div>
+                </div>
+              </section>
             </div>
 
+          </div>
           </div>
 
           <TouchControls
