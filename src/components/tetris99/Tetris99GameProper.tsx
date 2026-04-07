@@ -80,9 +80,17 @@ type ChatMessage = {
   self: boolean;
 };
 
+type PlayerCommand =
+  | { type: 'move'; dx: number; dy: number }
+  | { type: 'rotate'; direction: 1 | -1 }
+  | { type: 'hold' }
+  | { type: 'hardDrop' }
+  | { type: 'target'; mode: TargetMode };
+
 const BOT_COUNT = 98;
 const GARBAGE_DELAY = 3;
 const PLAYER_ID = 'player';
+const SERVER_ID = 'server';
 const BOT_NAMES = ['ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT', 'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE'];
 const PIECES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
 const POST_MATCH_CHAT_LINES = ['gg', 'gg wp', 'good game', 'close one', 'well played', 'ggs'];
@@ -352,6 +360,7 @@ export default function Tetris99GameProper() {
   const chatIdRef = useRef(0);
   const chatTimersRef = useRef<number[]>([]);
   const chatLogRef = useRef<HTMLDivElement | null>(null);
+  const playerCommandsRef = useRef<PlayerCommand[]>([]);
   const targetModeRef = useRef<TargetMode>('attackers');
   const stateRef = useRef<MatchState>('countdown');
   const countdownRef = useRef(3);
@@ -421,7 +430,7 @@ export default function Tetris99GameProper() {
     chatTimersRef.current = [];
   }
 
-  function appendChatMessage(authorId: string, authorName: string, text: string, self = false) {
+  function appendServerChatMessage(authorId: string, authorName: string, text: string, self = false) {
     chatIdRef.current += 1;
     setChatMessages(prev => [...prev, { id: `chat-${chatIdRef.current}`, authorId, authorName, text, self }].slice(-20));
   }
@@ -438,7 +447,7 @@ export default function Tetris99GameProper() {
       const lineIndex = (index + bot.badges + (victory ? 1 : 0)) % POST_MATCH_CHAT_LINES.length;
       const timer = window.setTimeout(() => {
         if (stateRef.current !== 'gameOver') return;
-        appendChatMessage(bot.id, bot.name, POST_MATCH_CHAT_LINES[lineIndex] ?? 'gg');
+        appendServerChatMessage(bot.id, bot.name, POST_MATCH_CHAT_LINES[lineIndex] ?? 'gg');
       }, delay);
       chatTimersRef.current.push(timer);
     });
@@ -447,8 +456,12 @@ export default function Tetris99GameProper() {
   function submitChatMessage() {
     const text = chatInput.trim();
     if (!text || stateRef.current !== 'gameOver') return;
-    appendChatMessage(PLAYER_ID, 'YOU', text, true);
+    appendServerChatMessage(PLAYER_ID, 'YOU', text, true);
     setChatInput('');
+  }
+
+  function enqueuePlayerCommand(command: PlayerCommand) {
+    playerCommandsRef.current.push(command);
   }
 
   function syncSnapshot(status?: string) {
@@ -500,6 +513,7 @@ export default function Tetris99GameProper() {
     for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
     botAiGamesRef.current.clear();
     clearPostMatchChatTimers();
+    playerCommandsRef.current = [];
     boardRef.current = createEmptyBoard();
     currentPieceRef.current = null;
     holdRef.current = null;
@@ -558,6 +572,7 @@ export default function Tetris99GameProper() {
     playSfx(victory ? 'win' : 'lose');
     syncSnapshot(victory ? 'Winner!' : 'Game over');
     setChatInput('GG');
+    appendServerChatMessage(SERVER_ID, 'SERVER', 'Match finalized. Post-match chat is live.');
     schedulePostMatchChat(victory);
   }
 
@@ -818,6 +833,25 @@ export default function Tetris99GameProper() {
     syncSnapshot('Hold');
   }
 
+  function processPlayerCommands() {
+    if (stateRef.current !== 'playing') {
+      playerCommandsRef.current = [];
+      return;
+    }
+
+    const commands = playerCommandsRef.current.splice(0);
+    for (const command of commands) {
+      if (command.type === 'move') movePiece(command.dx, command.dy);
+      else if (command.type === 'rotate') rotatePiece(command.direction);
+      else if (command.type === 'hold') holdPiece();
+      else if (command.type === 'hardDrop') hardDrop();
+      else if (command.type === 'target') {
+        targetModeRef.current = command.mode;
+        syncSnapshot(`${targetLabel(command.mode)} selected`);
+      }
+    }
+  }
+
   useEffect(() => {
     setFullscreen(true);
     resetGame();
@@ -853,16 +887,23 @@ export default function Tetris99GameProper() {
     function onKeyDown(event: KeyboardEvent) {
       ensureAudio();
       if (stateRef.current !== 'playing') return;
-      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); movePiece(-1, 0); }
-      else if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); movePiece(1, 0); }
-      else if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); movePiece(0, 1); }
-      else if (event.code === 'ArrowUp' || event.code === 'KeyX') { event.preventDefault(); rotatePiece(1); }
-      else if (event.code === 'KeyZ') { event.preventDefault(); rotatePiece(-1); }
-      else if (event.code === 'KeyC' || event.code === 'ShiftLeft') { event.preventDefault(); holdPiece(); }
-      else if (event.code === 'Space') { event.preventDefault(); hardDrop(); }
+      if (event.code === 'ArrowLeft' || event.code === 'KeyA') { event.preventDefault(); enqueuePlayerCommand({ type: 'move', dx: -1, dy: 0 }); }
+      else if (event.code === 'ArrowRight' || event.code === 'KeyD') { event.preventDefault(); enqueuePlayerCommand({ type: 'move', dx: 1, dy: 0 }); }
+      else if (event.code === 'ArrowDown' || event.code === 'KeyS') { event.preventDefault(); enqueuePlayerCommand({ type: 'move', dx: 0, dy: 1 }); }
+      else if (event.code === 'ArrowUp' || event.code === 'KeyX') { event.preventDefault(); enqueuePlayerCommand({ type: 'rotate', direction: 1 }); }
+      else if (event.code === 'KeyZ') { event.preventDefault(); enqueuePlayerCommand({ type: 'rotate', direction: -1 }); }
+      else if (event.code === 'KeyC' || event.code === 'ShiftLeft') { event.preventDefault(); enqueuePlayerCommand({ type: 'hold' }); }
+      else if (event.code === 'Space') { event.preventDefault(); enqueuePlayerCommand({ type: 'hardDrop' }); }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const serverTick = window.setInterval(() => {
+      processPlayerCommands();
+    }, 32);
+    return () => window.clearInterval(serverTick);
   }, []);
 
   useEffect(() => {
@@ -949,8 +990,24 @@ export default function Tetris99GameProper() {
                     <div className={styles.boardStat}><span className={styles.statLabel}>Badges</span><strong className={styles.boardStatValue}>{snapshot.badges}</strong></div>
                     <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</strong></div>
                   </div>
-                  <div className={styles.garbageRail}><div className={styles.garbageFill} style={{ height: `${Math.min(100, snapshot.incomingGarbage * 8)}%` }} /></div>
-                  <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
+                  <div className={styles.boardPlayfield}>
+                    <div className={styles.garbageRail}><div className={styles.garbageFill} style={{ height: `${Math.min(100, snapshot.incomingGarbage * 8)}%` }} /></div>
+                    <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
+                    {snapshot.gameOver && (
+                      <div className={styles.boardGameOver}>
+                        <h2 className={styles.boardGameOverTitle}>{snapshot.victory ? 'Victory Royale' : 'Game Over'}</h2>
+                        <p className={styles.boardGameOverBody}>
+                          {snapshot.victory
+                            ? `You closed the lobby with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points.`
+                            : `You finished #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points.`}
+                        </p>
+                        <div className={styles.actionRow}>
+                          <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>Play Again</button>
+                          <button className={styles.ghostButton} onClick={() => router.push('/games')}>Leave Match</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className={styles.previewColumn}>
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Next</span><div className={styles.previewBox}>{snapshot.queue.map((type, i) => <PreviewShape key={`${type}-${i}`} type={type} />)}</div></div>
@@ -965,7 +1022,7 @@ export default function Tetris99GameProper() {
               </div>
               <div className={styles.targetRow}>
                 {(['random', 'attackers', 'kos', 'badges'] as TargetMode[]).map(mode => (
-                  <button key={mode} className={`${styles.targetButton} ${snapshot.targetMode === mode ? styles.targetActive : ''}`} onClick={() => { ensureAudio(); targetModeRef.current = mode; syncSnapshot(`${targetLabel(mode)} selected`); }}>{targetLabel(mode)}</button>
+                  <button key={mode} className={`${styles.targetButton} ${snapshot.targetMode === mode ? styles.targetActive : ''}`} onClick={() => { ensureAudio(); enqueuePlayerCommand({ type: 'target', mode }); }}>{targetLabel(mode)}</button>
                 ))}
               </div>
             </div>
@@ -978,49 +1035,43 @@ export default function Tetris99GameProper() {
                 <div className={styles.queueItem}><span>Status</span><strong>{snapshot.status}</strong></div>
               </div>
             </div>
-            {snapshot.gameOver && (
-              <div className={styles.resultCard}>
-                <h2 className={styles.resultTitle}>{snapshot.victory ? 'Victory Royale' : 'Game Over'}</h2>
-                <p className={styles.resultBody}>{snapshot.victory ? `You closed the lobby with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points.` : `You finished #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badge points.`}</p>
-                <div className={styles.chatSection}>
-                  <div className={styles.chatHeader}>Post-Match Chat</div>
-                  <div ref={chatLogRef} className={styles.chatLog}>
-                    {chatMessages.length > 0 ? chatMessages.map(message => (
-                      <div key={message.id} className={`${styles.chatMessage} ${message.self ? styles.chatMessageSelf : ''}`}>
-                        <span className={styles.chatAuthor}>{message.authorName}</span>
-                        <span className={styles.chatText}>{message.text}</span>
-                      </div>
-                    )) : (
-                      <div className={styles.chatEmpty}>Say GG after the match.</div>
-                    )}
-                  </div>
-                  <form
-                    className={styles.chatForm}
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      submitChatMessage();
-                    }}
-                  >
-                    <input
-                      className={styles.chatInput}
-                      value={chatInput}
-                      onChange={(event) => setChatInput(event.target.value)}
-                      maxLength={48}
-                      placeholder="Say GG..."
-                    />
-                    <button type="submit" className={styles.chatSend}>Send</button>
-                  </form>
-                </div>
-                <div className={styles.actionRow}>
-                  <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>Play Again</button>
-                  <button className={styles.ghostButton} onClick={() => router.push('/games')}>Leave Match</button>
-                </div>
-              </div>
-            )}
           </div>
           <div className={styles.sidePanel}>{rightBots.map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} />)}</div>
         </div>
       </div>
+      <aside className={styles.chatDock}>
+        <div className={styles.chatDockHeader}>
+          <span>Server Chat</span>
+          <span className={styles.chatDockState}>{snapshot.gameOver ? 'Live' : 'Standby'}</span>
+        </div>
+        <div ref={chatLogRef} className={styles.chatLog}>
+          {chatMessages.length > 0 ? chatMessages.map(message => (
+            <div key={message.id} className={`${styles.chatMessage} ${message.self ? styles.chatMessageSelf : ''} ${message.authorId === SERVER_ID ? styles.chatMessageServer : ''}`}>
+              <span className={styles.chatAuthor}>{message.authorName}</span>
+              <span className={styles.chatText}>{message.text}</span>
+            </div>
+          )) : (
+            <div className={styles.chatEmpty}>{snapshot.gameOver ? 'Say GG after the match.' : 'Post-match chat unlocks when the match ends.'}</div>
+          )}
+        </div>
+        <form
+          className={styles.chatForm}
+          onSubmit={(event) => {
+            event.preventDefault();
+            submitChatMessage();
+          }}
+        >
+          <input
+            className={styles.chatInput}
+            value={chatInput}
+            onChange={(event) => setChatInput(event.target.value)}
+            maxLength={48}
+            placeholder={snapshot.gameOver ? 'Say GG...' : 'Chat unlocks after game end'}
+            disabled={!snapshot.gameOver}
+          />
+          <button type="submit" className={styles.chatSend} disabled={!snapshot.gameOver}>Send</button>
+        </form>
+      </aside>
     </div>
   );
 }
