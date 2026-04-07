@@ -26,7 +26,7 @@ const GAMES: GameEntry[] = [
   { id: 'vanilla', icon: Music, route: '/', badge: 'SOLO', players: '1' },
   { id: 'multiplayer', icon: Swords, route: '/', badge: '1v1', players: '2', requiresAdvancements: true },
   { id: 'arena', icon: Users, route: '/arena', badge: '9P', players: '2-9', requiresAdvancements: true },
-  { id: 't99', icon: Crosshair, route: '/t99', badge: '99P', players: '99', title: 'T99 ROYALE', description: 'Nintendo Switch inspired battle royale Tetris with simulated opponents, badge pressure, and target cycling.' },
+  { id: 'tetris99', icon: Users, route: '/tetris-99', badge: '99', players: '99', title: 'TETRIS 99 STYLE', description: 'Battle 98 CPU rivals with badges, targeting modes, and stacked garbage pressure.' },
   { id: 'towerDefense', icon: Shield, route: '/tower-defense', badge: 'TD', players: '1-4' },
   { id: 'minecraftBoard', icon: Pickaxe, route: '/minecraft-board', badge: 'BOARD', players: '2-4' },
   { id: 'minecraftWorld', icon: Globe, route: '/minecraft-world', badge: 'VOXEL', players: '1-8' },
@@ -57,6 +57,10 @@ export default function GamesHub() {
         {GAMES.map((game, i) => {
           const Icon = game.icon;
           const isLocked = game.requiresAdvancements && isArenaLocked;
+          const titleKey = `${game.id}.title`;
+          const descriptionKey = `${game.id}.description`;
+          const title = t.has(titleKey) ? t(titleKey) : game.title;
+          const description = t.has(descriptionKey) ? t(descriptionKey) : game.description;
 
           return (
             <motion.button
@@ -75,8 +79,8 @@ export default function GamesHub() {
                 </div>
                 <span className={styles.badge}>{game.badge}</span>
               </div>
-              <div className={styles.cardTitle}>{game.title ?? t(`${game.id}.title`)}</div>
-              <div className={styles.cardDesc}>{game.description ?? t(`${game.id}.description`)}</div>
+              <div className={styles.cardTitle}>{title}</div>
+              <div className={styles.cardDesc}>{description}</div>
               <div className={styles.cardMeta}>
                 <span className={styles.players}>{game.players} players</span>
                 {isLocked && <span className={styles.lockIcon}>🔒</span>}

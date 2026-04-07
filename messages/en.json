@@ -1375,6 +1375,10 @@
       "title": "9-PLAYER ARENA",
       "description": "Survive shared tempo, chaos gimmicks, and tempo shifts in 9-player simultaneous arena mode."
     },
+    "tetris99": {
+      "title": "TETRIS 99 STYLE",
+      "description": "Battle 98 CPU rivals with badges, targeting modes, and stacked garbage pressure."
+    },
     "towerDefense": {
       "title": "TOWER DEFENSE",
       "description": "Build defenses and send waves of enemies in cooperative tower defense mode."
