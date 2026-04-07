@@ -877,8 +877,14 @@ export default function Tetris99GameProper() {
       status = status === 'Stack stabilized' ? `Garbage +${appliedGarbage}` : `${status} | Garbage +${appliedGarbage}`;
     }
 
+    if (boardDanger(boardRef.current) >= 22) {
+      awardKo(lastDamagedByRef.current, badgesRef.current);
+      finish(false);
+      return;
+    }
+
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
-    if (stateRef.current === 'playing') spawnPiece();
+    if (stateRef.current === 'playing' && !spawnPiece()) return;
     syncSnapshot(status);
   }
 

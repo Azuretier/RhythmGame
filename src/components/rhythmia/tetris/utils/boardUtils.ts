@@ -143,16 +143,24 @@ export const applyGarbageRise = (
         };
     }
 
-    const raisedBoard = boardState.slice(count).map(row => [...row]);
+    const normalizedBoard = boardState.length >= BOARD_HEIGHT
+        ? boardState.slice(boardState.length - BOARD_HEIGHT).map(row => [...row])
+        : [
+            ...Array.from({ length: BOARD_HEIGHT - boardState.length }, () => Array(BOARD_WIDTH).fill(null)),
+            ...boardState.map(row => [...row]),
+        ];
 
-    for (let i = 0; i < count; i++) {
+    const rowsToRaise = Math.min(count, BOARD_HEIGHT);
+    const raisedBoard = normalizedBoard.slice(rowsToRaise);
+
+    for (let i = 0; i < rowsToRaise; i++) {
         const gapCol = Math.floor(rng() * BOARD_WIDTH);
         raisedBoard.push(Array.from({ length: BOARD_WIDTH }, (_, x) => (x === gapCol ? null : 'garbage')));
     }
 
     return {
         newBoard: raisedBoard,
-        adjustedPiece: currentPiece ? { ...currentPiece, y: currentPiece.y - count } : null,
+        adjustedPiece: currentPiece ? { ...currentPiece, y: currentPiece.y - rowsToRaise } : null,
     };
 };
 
