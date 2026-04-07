@@ -20,7 +20,11 @@ import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components
 import { ARR, DAS, MAX_LOCK_MOVES, SOFT_DROP_SPEED } from '@/components/rhythmia/multiplayer-battle-engine';
 import { TetrisAIGame, getDifficultyForRank, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 import { useLayoutConfig } from '@/lib/layout/context';
-import { loadTetris99ShowAllAttackTrails, shouldShowTetris99AttackTrail } from '@/lib/tetris99-settings';
+import {
+  loadTetris99ShowAllAttackTrails,
+  saveTetris99ShowAllAttackTrails,
+  shouldShowTetris99AttackTrail,
+} from '@/lib/tetris99-settings';
 import styles from './Tetris99Game.module.css';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -568,6 +572,7 @@ export default function Tetris99GameProper() {
   const botBoardRefs = useRef(new Map<string, HTMLDivElement>());
   const attackEffectTimersRef = useRef<number[]>([]);
   const showAllAttackTrailsRef = useRef(false);
+  const settingsOpenRef = useRef(false);
   const packetIdRef = useRef(0);
   const rngRef = useRef(makeRng(99009));
   const bagRef = useRef(makeBag(rngRef.current));
@@ -606,6 +611,8 @@ export default function Tetris99GameProper() {
   const statusRef = useRef('Get ready');
   const [botRenderVersion, setBotRenderVersion] = useState(0);
   const [attackEffects, setAttackEffects] = useState<AttackEffect[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [showAllAttackTrails, setShowAllAttackTrails] = useState(() => loadTetris99ShowAllAttackTrails());
   const [snapshot, setSnapshot] = useState<Snapshot>({
     board: createEmptyBoard(),
     currentPiece: null,
@@ -692,6 +699,31 @@ export default function Tetris99GameProper() {
     }
     attackEffectTimersRef.current = [];
     setAttackEffects([]);
+  }
+
+  function closeSettingsMenu() {
+    settingsOpenRef.current = false;
+    setSettingsOpen(false);
+  }
+
+  function openSettingsMenu() {
+    clearDAS();
+    clearSoftDrop();
+    keysRef.current.clear();
+    settingsOpenRef.current = true;
+    setSettingsOpen(true);
+  }
+
+  function toggleSettingsMenu() {
+    if (settingsOpenRef.current) closeSettingsMenu();
+    else openSettingsMenu();
+  }
+
+  function toggleAttackTrailPreference() {
+    const next = !showAllAttackTrailsRef.current;
+    showAllAttackTrailsRef.current = next;
+    setShowAllAttackTrails(next);
+    saveTetris99ShowAllAttackTrails(next);
   }
 
   function registerBotBoardRef(id: string, node: HTMLDivElement | null) {
@@ -1399,7 +1431,10 @@ export default function Tetris99GameProper() {
   }
 
   useEffect(() => {
-    showAllAttackTrailsRef.current = loadTetris99ShowAllAttackTrails();
+    showAllAttackTrailsRef.current = showAllAttackTrails;
+  }, [showAllAttackTrails]);
+
+  useEffect(() => {
     setFullscreen(true);
     resetGame();
     return () => {
@@ -1410,6 +1445,7 @@ export default function Tetris99GameProper() {
 
   useEffect(() => {
     const timer = window.setInterval(() => {
+      if (settingsOpenRef.current) return;
       if (stateRef.current !== 'countdown') return;
       countdownRef.current -= 1;
       if (countdownRef.current <= 0) {
@@ -1437,6 +1473,12 @@ export default function Tetris99GameProper() {
     };
 
     function onKeyDown(event: KeyboardEvent) {
+      if (event.code === 'Escape') {
+        event.preventDefault();
+        toggleSettingsMenu();
+        return;
+      }
+      if (settingsOpenRef.current) return;
       if (stateRef.current !== 'playing') return;
       if (keysRef.current.has(event.code)) return;
       keysRef.current.add(event.code);
@@ -1475,6 +1517,7 @@ export default function Tetris99GameProper() {
 
     function onKeyUp(event: KeyboardEvent) {
       keysRef.current.delete(event.code);
+      if (settingsOpenRef.current) return;
 
       if (event.code === 'ArrowLeft' || event.code === 'KeyA') {
         if (lastDirRef.current === 'left') clearDAS();
@@ -1500,6 +1543,7 @@ export default function Tetris99GameProper() {
 
   useEffect(() => {
     const gravity = window.setInterval(() => {
+      if (settingsOpenRef.current) return;
       if (stateRef.current !== 'playing' || !currentPieceRef.current) return;
       moveDown();
     }, snapshot.place <= 10 ? 170 : snapshot.place <= 40 ? 260 : 420);
@@ -1516,6 +1560,7 @@ export default function Tetris99GameProper() {
     startBotAiGames();
 
     const botLoop = window.setInterval(() => {
+      if (settingsOpenRef.current) return;
       if (stateRef.current !== 'playing') return;
       const playerTargets = refreshPlayerTargets();
       for (const bot of botsRef.current) {
@@ -1582,6 +1627,40 @@ export default function Tetris99GameProper() {
               </div>
             ))}
           </div>
+          {settingsOpen && (
+            <div className={styles.settingsOverlay} role="dialog" aria-modal="true" aria-label="Tetris 99 settings">
+              <button type="button" className={styles.settingsBackdrop} onClick={closeSettingsMenu} aria-label="Close settings menu" />
+              <div className={styles.settingsPanel}>
+                <div className={styles.settingsHeader}>
+                  <div>
+                    <div className={styles.settingsEyebrow}>TETRIS 99</div>
+                    <h2 className={styles.settingsTitle}>Settings</h2>
+                  </div>
+                  <button type="button" className={styles.settingsClose} onClick={closeSettingsMenu} aria-label="Close settings menu">ESC</button>
+                </div>
+                <div className={styles.settingsBody}>
+                  <div className={styles.settingsOption}>
+                    <div>
+                      <div className={styles.settingsLabel}>Show all attack trails</div>
+                      <div className={styles.settingsHint}>Off by default. When disabled, only attacks involving you are visible.</div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`${styles.settingsToggle} ${showAllAttackTrails ? styles.settingsToggleOn : ''}`}
+                      onClick={toggleAttackTrailPreference}
+                      aria-pressed={showAllAttackTrails}
+                    >
+                      <span className={styles.settingsToggleKnob} />
+                    </button>
+                  </div>
+                </div>
+                <div className={styles.settingsActions}>
+                  <button type="button" className={styles.button} onClick={closeSettingsMenu}>Resume</button>
+                  <button type="button" className={styles.ghostButton} onClick={() => router.push('/settings')}>Open Site Settings</button>
+                </div>
+              </div>
+            </div>
+          )}
           <div className={styles.sidePanel}>{leftBotBoards}</div>
           <div className={styles.boardStack}>
             <div className={styles.heroCard}>

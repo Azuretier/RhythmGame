@@ -428,6 +428,143 @@
   z-index: 4;
 }
 
+.settingsOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.settingsBackdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(2, 4, 8, 0.62);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.settingsPanel {
+  position: relative;
+  width: min(440px, calc(100% - 32px));
+  padding: 18px 18px 16px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(27, 33, 48, 0.98), rgba(10, 13, 21, 0.98)),
+    radial-gradient(circle at top, rgba(255, 145, 78, 0.14), transparent 36%);
+  border: 1px solid rgba(255, 178, 122, 0.2);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+  pointer-events: auto;
+}
+
+.settingsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settingsEyebrow {
+  margin-bottom: 6px;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 196, 149, 0.78);
+}
+
+.settingsTitle {
+  margin: 0;
+  font-size: 1.45rem;
+  line-height: 1;
+  color: #fff6e9;
+}
+
+.settingsClose {
+  min-width: 54px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 184, 121, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 241, 224, 0.74);
+  font: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.settingsBody {
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.settingsOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(11, 15, 23, 0.82), rgba(6, 8, 13, 0.88));
+  border: 1px solid rgba(255, 174, 119, 0.1);
+}
+
+.settingsLabel {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff6e9;
+}
+
+.settingsHint {
+  margin-top: 4px;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: rgba(244, 239, 230, 0.62);
+}
+
+.settingsToggle {
+  position: relative;
+  width: 56px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 179, 122, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.settingsToggleOn {
+  background: linear-gradient(180deg, rgba(255, 142, 69, 0.9), rgba(255, 94, 103, 0.82));
+  border-color: rgba(255, 211, 178, 0.3);
+}
+
+.settingsToggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #fff8ef;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 140ms ease;
+}
+
+.settingsToggleOn .settingsToggleKnob {
+  transform: translateX(26px);
+}
+
+.settingsActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .attackTrail {
   position: absolute;
   height: 0;
