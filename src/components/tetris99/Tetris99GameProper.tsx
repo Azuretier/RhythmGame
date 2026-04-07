@@ -25,6 +25,16 @@ import styles from './Tetris99Game.module.css';
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 type TargetMode = 'random' | 'attackers' | 'kos' | 'badges';
 type MatchState = 'countdown' | 'playing' | 'gameOver';
+type AttackClearType =
+  | 'none'
+  | 'single'
+  | 'double'
+  | 'triple'
+  | 'tetris'
+  | 'tSpinMini'
+  | 'tSpinSingle'
+  | 'tSpinDouble'
+  | 'tSpinTriple';
 
 type GarbagePacket = {
   id: string;
@@ -68,6 +78,7 @@ type Snapshot = {
   incomingGarbage: number;
   ren: number;
   tSpins: number;
+  b2bActive: boolean;
   targetMode: TargetMode;
   state: MatchState;
   countdown: number;
@@ -105,21 +116,83 @@ const AI_COLOR_TO_PIECE: Record<string, PieceType | 'garbage'> = {
 const AI_COLOR_ENTRIES = Object.entries(AI_COLOR_TO_PIECE).filter(([, type]) => type !== 'garbage') as Array<[string, PieceType]>;
 
 const badgeStageFromPoints = (points: number) => (points >= 30 ? 4 : points >= 14 ? 3 : points >= 6 ? 2 : points >= 2 ? 1 : 0);
-const badgeMultiplier = (stage: number) => [1, 1.25, 1.5, 1.75, 2][Math.min(4, stage)] ?? 2;
 
-function comboAttack(combo: number) {
-  if (combo <= 1) return 0;
-  if (combo <= 3) return 1;
-  if (combo <= 5) return 2;
-  if (combo <= 8) return 3;
-  return 4;
+function getAttackClearType(clearedLines: number, tSpin: 'none' | 'mini' | 'full'): AttackClearType {
+  if (tSpin === 'mini' && clearedLines > 0) return 'tSpinMini';
+  if (tSpin === 'full') {
+    if (clearedLines === 1) return 'tSpinSingle';
+    if (clearedLines === 2) return 'tSpinDouble';
+    if (clearedLines === 3) return 'tSpinTriple';
+  }
+  if (clearedLines === 1) return 'single';
+  if (clearedLines === 2) return 'double';
+  if (clearedLines === 3) return 'triple';
+  if (clearedLines === 4) return 'tetris';
+  return 'none';
 }
 
-function computeAttack(cleared: number, combo: number, backToBack: boolean, badges: number) {
-  let attack = [0, 0, 1, 2, 4][cleared] ?? 0;
-  if (backToBack && attack > 0) attack += 1;
-  attack += comboAttack(combo);
-  return Math.max(0, Math.round(attack * badgeMultiplier(badges)));
+function getBaseAttack(clearType: AttackClearType) {
+  switch (clearType) {
+    case 'double':
+      return 1;
+    case 'triple':
+      return 2;
+    case 'tetris':
+      return 4;
+    case 'tSpinMini':
+    case 'tSpinSingle':
+      return 2;
+    case 'tSpinDouble':
+      return 4;
+    case 'tSpinTriple':
+      return 6;
+    default:
+      return 0;
+  }
+}
+
+function isB2bEligible(clearType: AttackClearType) {
+  return clearType === 'tetris'
+    || clearType === 'tSpinMini'
+    || clearType === 'tSpinSingle'
+    || clearType === 'tSpinDouble'
+    || clearType === 'tSpinTriple';
+}
+
+function getComboBonus(comboChain: number) {
+  if (comboChain <= 0) return 0;
+  if (comboChain <= 2) return 1;
+  if (comboChain <= 4) return 2;
+  if (comboChain <= 6) return 3;
+  if (comboChain <= 9) return 4;
+  return 5;
+}
+
+function calculatePlacementAttack(clearType: AttackClearType, currentComboChain: number, isB2bActive: boolean) {
+  if (clearType === 'none') {
+    return {
+      total: 0,
+      base: 0,
+      b2bBonus: 0,
+      comboBonus: 0,
+      nextComboChain: 0,
+      nextB2bActive: isB2bActive,
+    };
+  }
+
+  const base = getBaseAttack(clearType);
+  const comboBonus = getComboBonus(currentComboChain);
+  const b2bEligible = isB2bEligible(clearType);
+  const b2bBonus = b2bEligible && isB2bActive ? 1 : 0;
+
+  return {
+    total: base + b2bBonus + comboBonus,
+    base,
+    b2bBonus,
+    comboBonus,
+    nextComboChain: currentComboChain + 1,
+    nextB2bActive: b2bEligible,
+  };
 }
 
 function makeBag(rng: () => number) {
@@ -488,6 +561,7 @@ export default function Tetris99GameProper() {
     incomingGarbage: 0,
     ren: 0,
     tSpins: 0,
+    b2bActive: false,
     targetMode: 'attackers',
     state: 'countdown',
     countdown: 3,
@@ -571,6 +645,7 @@ export default function Tetris99GameProper() {
       incomingGarbage: sumGarbage(incomingRef.current),
       ren: Math.max(0, comboRef.current - 1),
       tSpins: tSpinsRef.current,
+      b2bActive: backToBackRef.current,
       targetMode: targetModeRef.current,
       state: stateRef.current,
       countdown: countdownRef.current,
@@ -842,6 +917,7 @@ export default function Tetris99GameProper() {
 
   function lockCurrentPiece() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
+    const previousComboChain = comboRef.current;
     const lockedPiece = currentPieceRef.current;
     const tSpin = detectPlayerTSpin(lockedPiece, boardRef.current, lastMoveRotationRef.current);
     boardRef.current = lockPiece(lockedPiece, boardRef.current);
@@ -850,17 +926,18 @@ export default function Tetris99GameProper() {
     linesRef.current += clearedLines;
     scoreRef.current += [0, 100, 300, 500, 800][clearedLines] ?? 0;
     let status = 'Stack stabilized';
+    const clearType = getAttackClearType(clearedLines, tSpin);
+    const attackResult = calculatePlacementAttack(clearType, comboRef.current, backToBackRef.current);
 
-    if (tSpin !== 'none') {
+    if (clearType === 'tSpinMini' || clearType === 'tSpinSingle' || clearType === 'tSpinDouble' || clearType === 'tSpinTriple') {
       tSpinsRef.current += 1;
     }
 
+    comboRef.current = attackResult.nextComboChain;
+    backToBackRef.current = attackResult.nextB2bActive;
+
     if (clearedLines > 0) {
-      comboRef.current += 1;
-      const difficult = clearedLines === 4;
-      const attack = computeAttack(clearedLines, comboRef.current, difficult && backToBackRef.current, badgesRef.current);
-      backToBackRef.current = difficult;
-      sendAttack(attack);
+      if (attackResult.total > 0) sendAttack(attackResult.total);
       playSfx(clearedLines === 4 ? 'tetris' : 'clear');
       if (tSpin === 'full') {
         status = `T-Spin ${clearedLines === 1 ? 'Single' : clearedLines === 2 ? 'Double' : clearedLines === 3 ? 'Triple' : 'Clear'}`;
@@ -870,10 +947,15 @@ export default function Tetris99GameProper() {
         status = clearedLines === 4 ? 'Tetris' : `${clearedLines} line clear`;
       }
     } else {
-      comboRef.current = 0;
-      backToBackRef.current = false;
       if (tSpin === 'full') status = 'T-Spin';
       else if (tSpin === 'mini') status = 'T-Spin Mini';
+    }
+
+    if (attackResult.b2bBonus > 0) {
+      status = `${status} | B2B`;
+    }
+    if (attackResult.comboBonus > 0) {
+      status = `${status} | REN +${attackResult.comboBonus}`;
     }
 
     currentPieceRef.current = null;
@@ -884,7 +966,8 @@ export default function Tetris99GameProper() {
     }
     isOnGroundRef.current = false;
 
-    const appliedGarbage = applyPendingGarbage(clearedLines > 0);
+    const comboJustBroke = clearedLines === 0 && previousComboChain > 0;
+    const appliedGarbage = clearedLines === 0 ? applyPendingGarbage(comboJustBroke) : 0;
     if (appliedGarbage > 0) {
       status = status === 'Stack stabilized' ? `Garbage +${appliedGarbage}` : `${status} | Garbage +${appliedGarbage}`;
     }
@@ -1185,7 +1268,7 @@ export default function Tetris99GameProper() {
               <div className={styles.heroLayout}>
                 <div className={styles.previewColumn}>
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Hold</span><div className={styles.previewBox}><PreviewShape type={snapshot.hold} /></div></div>
-                  <div className={styles.miniPanel}><span className={styles.panelHeader}>Badge Bonus</span><div className={styles.heroSubtle}>{badgeMultiplier(snapshot.badges).toFixed(2)}x</div></div>
+                  <div className={styles.miniPanel}><span className={styles.panelHeader}>B2B</span><div className={styles.heroSubtle}>{snapshot.b2bActive ? 'Active' : 'Inactive'}</div></div>
                 </div>
                 <div className={`${styles.boardFrame} ${boardDanger(snapshot.board) >= 18 ? styles.boardFrameDanger : ''}`}>
                   <div className={styles.boardStats}>
