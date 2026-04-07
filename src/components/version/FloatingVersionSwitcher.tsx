@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, X, Check, Gamepad2, MessageCircle, Heart, Palette, Box, Grid3X3 } from 'lucide-react';
 import { useVersion } from '@/lib/version/context';
+import { loadTetris99ShowAllAttackTrails, saveTetris99ShowAllAttackTrails } from '@/lib/tetris99-settings';
 import {
   VERSION_METADATA,
   UI_VERSIONS,
@@ -26,6 +28,7 @@ const VERSION_ICONS: Record<UIVersion, React.ReactNode> = {
 export default function FloatingVersionSwitcher() {
   const { currentVersion, setVersion, accentColor, setAccentColor } = useVersion();
   const { value: isOpen, open, close } = useToggle(false);
+  const [showAllAttackTrails, setShowAllAttackTrails] = useState(() => loadTetris99ShowAllAttackTrails());
 
   useEscapeClose(isOpen, close);
 
@@ -41,6 +44,12 @@ export default function FloatingVersionSwitcher() {
 
   const handleAccentChange = (color: AccentColor) => {
     setAccentColor(color);
+  };
+
+  const handleAttackTrailToggle = () => {
+    const next = !showAllAttackTrails;
+    setShowAllAttackTrails(next);
+    saveTetris99ShowAllAttackTrails(next);
   };
 
   return (
@@ -172,6 +181,41 @@ export default function FloatingVersionSwitcher() {
                         );
                       })}
                     </div>
+                  </section>
+
+                  <section>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Gamepad2 size={14} className="text-white/40" />
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-white/40">
+                        Tetris 99
+                      </h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAttackTrailToggle}
+                      aria-pressed={showAllAttackTrails}
+                      className={`w-full flex items-center justify-between gap-4 px-4 py-3 rounded-xl border text-left transition-all ${
+                        showAllAttackTrails
+                          ? 'bg-orange-500/10 border-orange-300/30'
+                          : 'bg-white/[0.03] border-transparent hover:bg-white/[0.06] hover:border-white/10'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-white">
+                          Show all attack trails
+                        </div>
+                        <p className="text-xs text-white/40">
+                          Off by default. When disabled, only your own incoming and outgoing battle links are visible.
+                        </p>
+                      </div>
+                      <div className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors ${
+                        showAllAttackTrails ? 'bg-orange-400/80' : 'bg-white/15'
+                      }`}>
+                        <span className={`absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow-md transition-all ${
+                          showAllAttackTrails ? 'left-[22px]' : 'left-[2px]'
+                        }`} />
+                      </div>
+                    </button>
                   </section>
                 </div>
 

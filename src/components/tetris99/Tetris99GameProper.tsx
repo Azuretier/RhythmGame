@@ -20,6 +20,7 @@ import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components
 import { ARR, DAS, MAX_LOCK_MOVES, SOFT_DROP_SPEED } from '@/components/rhythmia/multiplayer-battle-engine';
 import { TetrisAIGame, getDifficultyForRank, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 import { useLayoutConfig } from '@/lib/layout/context';
+import { loadTetris99ShowAllAttackTrails, shouldShowTetris99AttackTrail } from '@/lib/tetris99-settings';
 import styles from './Tetris99Game.module.css';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -566,6 +567,7 @@ export default function Tetris99GameProper() {
   const playerBoardFrameRef = useRef<HTMLDivElement | null>(null);
   const botBoardRefs = useRef(new Map<string, HTMLDivElement>());
   const attackEffectTimersRef = useRef<number[]>([]);
+  const showAllAttackTrailsRef = useRef(false);
   const packetIdRef = useRef(0);
   const rngRef = useRef(makeRng(99009));
   const bagRef = useRef(makeBag(rngRef.current));
@@ -712,7 +714,12 @@ export default function Tetris99GameProper() {
     const startX = sourceRect.left + sourceRect.width / 2 - arenaRect.left;
     const startY = sourceRect.top + sourceRect.height / 2 - arenaRect.top;
 
-    const sortedDistributions = [...distributions]
+    const visibleDistributions = distributions.filter(distribution =>
+      shouldShowTetris99AttackTrail(sourceId, distribution.targetId, showAllAttackTrailsRef.current),
+    );
+    if (!visibleDistributions.length) return;
+
+    const sortedDistributions = [...visibleDistributions]
       .sort((a, b) => b.lines - a.lines)
       .slice(0, 10);
 
@@ -1382,6 +1389,7 @@ export default function Tetris99GameProper() {
   }
 
   useEffect(() => {
+    showAllAttackTrailsRef.current = loadTetris99ShowAllAttackTrails();
     setFullscreen(true);
     resetGame();
     return () => {
