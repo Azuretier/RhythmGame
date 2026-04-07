@@ -11,55 +11,7 @@
 .shell {
   width: min(1640px, 100%);
   margin: 0 auto;
-  padding: 8px 12px 12px;
-}
-
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.topbarLeft,
-.topbarRight {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: rgba(255, 233, 210, 0.72);
-}
-
-.eyebrowDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #ffa55e;
-  box-shadow: 0 0 12px rgba(255, 165, 94, 0.8);
-}
-
-.title {
-  margin: 0;
-  font-size: clamp(2rem, 4vw, 3.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.06em;
-}
-
-.subtitle {
-  margin: 0;
-  max-width: 68ch;
-  color: rgba(244, 239, 230, 0.72);
-  line-height: 1.55;
-  font-size: 0.95rem;
+  padding: 6px 10px 10px;
 }
 
 .actionRow {
@@ -105,20 +57,6 @@
   transform: translateY(-1px);
 }
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(94px, 1fr));
-  gap: 8px;
-}
-
-.statCard {
-  padding: 9px 10px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-}
-
 .statLabel {
   display: block;
   font-size: 0.58rem;
@@ -126,12 +64,6 @@
   text-transform: uppercase;
   color: rgba(244, 239, 230, 0.54);
   margin-bottom: 4px;
-}
-
-.statValue {
-  display: block;
-  font-size: 1rem;
-  font-weight: 700;
 }
 
 .arena {
@@ -249,6 +181,27 @@
 
 .boardFrameDanger {
   box-shadow: 0 0 0 1px rgba(255, 95, 109, 0.4), 0 0 28px rgba(255, 95, 109, 0.2);
+}
+
+.boardStats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 8px 8px;
+}
+
+.boardStat {
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.boardStatValue {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: rgba(255, 248, 238, 0.96);
 }
 
 .playerBoard {

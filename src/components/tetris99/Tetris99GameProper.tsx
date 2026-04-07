@@ -863,23 +863,6 @@ export default function Tetris99GameProper() {
   return (
     <div className={styles.page}>
       <div className={styles.shell}>
-        <div className={styles.topbar}>
-          <div className={styles.topbarLeft}>
-            <div className={styles.actionRow}>
-              <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>Restart Match</button>
-              <button className={styles.ghostButton} onClick={() => router.push('/games')}>Back to Games</button>
-            </div>
-          </div>
-          <div className={styles.topbarRight}>
-            <div className={styles.statsGrid}>
-              <div className={styles.statCard}><span className={styles.statLabel}>Place</span><span className={styles.statValue}>#{snapshot.place}</span></div>
-              <div className={styles.statCard}><span className={styles.statLabel}>Attackers</span><span className={styles.statValue}>{snapshot.attackers}</span></div>
-              <div className={styles.statCard}><span className={styles.statLabel}>Badges</span><span className={styles.statValue}>{snapshot.badges}</span></div>
-              <div className={styles.statCard}><span className={styles.statLabel}>State</span><span className={styles.statValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</span></div>
-            </div>
-          </div>
-        </div>
-
         <div className={styles.arena}>
           <div className={styles.sidePanel}>{leftBots.map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} />)}</div>
           <div className={styles.boardStack}>
@@ -894,6 +877,12 @@ export default function Tetris99GameProper() {
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Badge Bonus</span><div className={styles.heroSubtle}>{badgeMultiplier(snapshot.badges).toFixed(2)}x</div></div>
                 </div>
                 <div className={`${styles.boardFrame} ${boardDanger(snapshot.board) >= 18 ? styles.boardFrameDanger : ''}`}>
+                  <div className={styles.boardStats}>
+                    <div className={styles.boardStat}><span className={styles.statLabel}>Place</span><strong className={styles.boardStatValue}>#{snapshot.place}</strong></div>
+                    <div className={styles.boardStat}><span className={styles.statLabel}>Attackers</span><strong className={styles.boardStatValue}>{snapshot.attackers}</strong></div>
+                    <div className={styles.boardStat}><span className={styles.statLabel}>Badges</span><strong className={styles.boardStatValue}>{snapshot.badges}</strong></div>
+                    <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</strong></div>
+                  </div>
                   <div className={styles.garbageRail}><div className={styles.garbageFill} style={{ height: `${Math.min(100, snapshot.incomingGarbage * 8)}%` }} /></div>
                   <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
                 </div>
