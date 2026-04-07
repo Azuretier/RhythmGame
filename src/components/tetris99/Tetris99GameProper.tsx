@@ -18,7 +18,7 @@ import {
 } from '@/components/rhythmia/tetris/utils/boardUtils';
 import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components/rhythmia/tetris/constants';
 import { ARR, DAS, MAX_LOCK_MOVES, SOFT_DROP_SPEED } from '@/components/rhythmia/multiplayer-battle-engine';
-import { TetrisAIGame, getDifficultyForRank } from '@/lib/ranked/TetrisAI';
+import { TetrisAIGame, getDifficultyForRank, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 import { useLayoutConfig } from '@/lib/layout/context';
 import styles from './Tetris99Game.module.css';
 
@@ -50,6 +50,8 @@ type BotState = {
   queue: PieceType[];
   hold: PieceType | null;
   combo: number;
+  b2bActive: boolean;
+  tSpins: number;
   lines: number;
   score: number;
   badgePoints: number;
@@ -89,6 +91,7 @@ type Snapshot = {
 
 const BOT_COUNT = 98;
 const GARBAGE_DELAY = 3;
+const MAX_PENDING_GARBAGE = 12;
 const PLAYER_ID = 'player';
 const BOT_NAMES = ['ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT', 'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE'];
 const PIECES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
@@ -709,6 +712,8 @@ export default function Tetris99GameProper() {
         queue: Array.from({ length: 6 }, () => botBagRef.current()),
         hold: null,
         combo: 0,
+        b2bActive: false,
+        tSpins: 0,
         lines: 0,
         score: 0,
         badgePoints: 0,
@@ -740,8 +745,11 @@ export default function Tetris99GameProper() {
   }
 
   function queuePacket(lines: number, from: string, target: { pendingGarbage: GarbagePacket[] }) {
+    const availableSpace = Math.max(0, MAX_PENDING_GARBAGE - sumGarbage(target.pendingGarbage));
+    const queuedLines = Math.min(lines, availableSpace);
+    if (queuedLines <= 0) return;
     packetIdRef.current += 1;
-    target.pendingGarbage.push({ id: `pkt-${packetIdRef.current}`, lines, delay: GARBAGE_DELAY, from });
+    target.pendingGarbage.push({ id: `pkt-${packetIdRef.current}`, lines: queuedLines, delay: GARBAGE_DELAY, from });
   }
 
   function applyPendingGarbage(forceAll = false) {
@@ -754,6 +762,15 @@ export default function Tetris99GameProper() {
     currentPieceRef.current = adjustedPiece;
     playSfx('garbage');
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
+    return collected.due;
+  }
+
+  function applyBotPendingGarbage(bot: BotState, forceAll = false) {
+    const collected = forceAll ? collectAllGarbage(bot.pendingGarbage) : collectReadyGarbage(bot.pendingGarbage);
+    bot.pendingGarbage = collected.queue;
+    if (collected.due <= 0) return 0;
+    bot.lastDamagedBy = collected.lastSource;
+    botAiGamesRef.current.get(bot.id)?.addGarbage(collected.due);
     return collected.due;
   }
 
@@ -893,20 +910,47 @@ export default function Tetris99GameProper() {
     for (const bot of botsRef.current) {
       if (!bot.alive || botAiGamesRef.current.has(bot.id)) continue;
       const aiGame = new TetrisAIGame(30000 + Number(bot.id.replace('bot-', '')) * 97, getDifficultyForRank(bot.aiPoints), {
-        onBoardUpdate: (board, score, lines, combo, piece, hold) => {
+        onBoardUpdate: (board, score, lines, _combo, piece, hold) => {
           const currentBot = getBotById(bot.id);
           if (!currentBot || !currentBot.alive) return;
           currentBot.board = aiBoardToRhythmBoard(board);
           currentBot.score = score;
           currentBot.lines = lines;
-          currentBot.combo = combo;
           currentBot.hold = (hold as PieceType | null | undefined) ?? null;
           if (piece && currentBot.queue.length > 0) {
             currentBot.queue = [...currentBot.queue.slice(1), piece as PieceType];
           }
         },
-        onGarbage: (lines) => {
-          routeBotAttack(bot.id, lines);
+        onGarbage: () => {
+          // Tetris 99 owns combat resolution for bots so it can stay in sync
+          // with the player-side Standard attack/B2B/REN/offset rules.
+        },
+        onPlacement: (placement: AIPlacementResult) => {
+          const currentBot = getBotById(bot.id);
+          if (!currentBot || !currentBot.alive) return;
+
+          const previousComboChain = currentBot.combo;
+          const clearType = getAttackClearType(placement.clearedLines, placement.tSpin);
+          const attackResult = calculatePlacementAttack(clearType, currentBot.combo, currentBot.b2bActive);
+
+          if (clearType === 'tSpinMini' || clearType === 'tSpinSingle' || clearType === 'tSpinDouble' || clearType === 'tSpinTriple') {
+            currentBot.tSpins += 1;
+          }
+
+          currentBot.combo = attackResult.nextComboChain;
+          currentBot.b2bActive = attackResult.nextB2bActive;
+
+          const playerTargets = new Set(chooseTargets(PLAYER_ID, targetModeRef.current));
+          updateBotTargeting(currentBot, playerTargets);
+
+          if (attackResult.total > 0) {
+            routeBotAttack(currentBot.id, attackResult.total);
+          }
+
+          const comboJustBroke = placement.clearedLines === 0 && previousComboChain > 0;
+          if (placement.clearedLines === 0) {
+            applyBotPendingGarbage(currentBot, comboJustBroke);
+          }
         },
         onGameOver: () => {
           const currentBot = getBotById(bot.id);
@@ -1226,12 +1270,6 @@ export default function Tetris99GameProper() {
         if (!bot.alive) continue;
         updateBotTargeting(bot, playerTargets);
         bot.pendingGarbage = tickGarbageQueue(bot.pendingGarbage);
-        const ready = collectReadyGarbage(bot.pendingGarbage);
-        bot.pendingGarbage = ready.queue;
-        if (ready.due > 0) {
-          bot.lastDamagedBy = ready.lastSource;
-          botAiGamesRef.current.get(bot.id)?.addGarbage(ready.due);
-        }
         if (boardDanger(bot.board) >= 22) eliminateBot(bot);
       }
       incomingRef.current = tickGarbageQueue(incomingRef.current);

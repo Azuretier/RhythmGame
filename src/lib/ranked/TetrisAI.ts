@@ -13,6 +13,16 @@ interface Piece {
   y: number;
 }
 
+export interface AIPlacementResult {
+  pieceType: PieceType;
+  rotation: 0 | 1 | 2 | 3;
+  x: number;
+  y: number;
+  clearedLines: number;
+  tSpin: 'none' | 'mini' | 'full';
+  combo: number;
+}
+
 interface AIMove {
   rotation: 0 | 1 | 2 | 3;
   x: number;
@@ -195,6 +205,51 @@ function clearLines(board: (BoardCell | null)[][]): { board: (BoardCell | null)[
     remaining.unshift(Array(W).fill(null));
   }
   return { board: remaining, cleared };
+}
+
+function detectTSpin(piece: Piece, board: (BoardCell | null)[][], wasRotation: boolean): 'none' | 'mini' | 'full' {
+  if (piece.type !== 'T' || !wasRotation) return 'none';
+
+  const cx = piece.x + 1;
+  const cy = piece.y + 1;
+  const corners: Array<[number, number]> = [
+    [cx - 1, cy - 1], [cx + 1, cy - 1],
+    [cx - 1, cy + 1], [cx + 1, cy + 1],
+  ];
+
+  let filledCorners = 0;
+  for (const [x, y] of corners) {
+    if (x < 0 || x >= W || y < 0 || y >= H || board[y]?.[x]) {
+      filledCorners += 1;
+    }
+  }
+
+  if (filledCorners < 3) return 'none';
+
+  const frontCorners: Array<[number, number]> = [];
+  switch (piece.rotation) {
+    case 0:
+      frontCorners.push([cx - 1, cy - 1], [cx + 1, cy - 1]);
+      break;
+    case 1:
+      frontCorners.push([cx + 1, cy - 1], [cx + 1, cy + 1]);
+      break;
+    case 2:
+      frontCorners.push([cx - 1, cy + 1], [cx + 1, cy + 1]);
+      break;
+    case 3:
+      frontCorners.push([cx - 1, cy - 1], [cx - 1, cy + 1]);
+      break;
+  }
+
+  let frontFilled = 0;
+  for (const [x, y] of frontCorners) {
+    if (x < 0 || x >= W || y < 0 || y >= H || board[y]?.[x]) {
+      frontFilled += 1;
+    }
+  }
+
+  return frontFilled >= 2 ? 'full' : 'mini';
 }
 
 function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
@@ -386,6 +441,7 @@ export interface AIGameCallbacks {
   onBoardUpdate: (board: (BoardCell | null)[][], score: number, lines: number, combo: number, piece?: string, hold?: string | null) => void;
   onGarbage: (lines: number) => void;
   onGameOver: () => void;
+  onPlacement?: (result: AIPlacementResult) => void;
 }
 
 export class TetrisAIGame {
@@ -573,11 +629,13 @@ export class TetrisAIGame {
     }
 
     // Lock piece
+    const boardBeforeLock = this.board.map(row => [...row]);
     this.board = lockPiece(landedPiece, this.board);
 
     // Clear lines
     const { board: clearedBoard, cleared } = clearLines(this.board);
     this.board = clearedBoard;
+    const tSpin = detectTSpin(landedPiece, boardBeforeLock, actualPieceType === 'T');
 
     if (cleared > 0) {
       this.combo++;
@@ -603,6 +661,16 @@ export class TetrisAIGame {
       actualPieceType,
       this.holdPiece,
     );
+
+    this.callbacks.onPlacement?.({
+      pieceType: actualPieceType,
+      rotation: bestMove.rotation,
+      x: bestMove.x,
+      y: landY,
+      clearedLines: cleared,
+      tSpin,
+      combo: this.combo,
+    });
 
     // Play next piece
     this.playNextPiece();
