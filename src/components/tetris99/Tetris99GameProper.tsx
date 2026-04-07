@@ -385,26 +385,23 @@ function sumGarbage(queue: GarbagePacket[]) {
 }
 
 function tickGarbageQueue(queue: GarbagePacket[]) {
-  return queue.map(packet => (packet.delay > 0 ? { ...packet, delay: packet.delay - 1 } : packet));
+  if (!queue.length) return queue;
+  const [nextPacket, ...rest] = queue;
+  if (nextPacket.delay <= 0) return queue;
+  return [{ ...nextPacket, delay: nextPacket.delay - 1 }, ...rest];
 }
 
 function collectNextReadyGarbage(queue: GarbagePacket[]) {
-  let due = 0;
-  let lastSource: string | null = null;
-  let consumed = false;
-  const next: GarbagePacket[] = [];
-
-  for (const packet of queue) {
-    if (!consumed && packet.delay <= 0) {
-      due = packet.lines;
-      lastSource = packet.from;
-      consumed = true;
-      continue;
-    }
-    next.push(packet);
+  if (!queue.length) {
+    return { queue, due: 0, lastSource: null as string | null };
   }
 
-  return { queue: next, due, lastSource };
+  const [nextPacket, ...rest] = queue;
+  if (nextPacket.delay > 0) {
+    return { queue, due: 0, lastSource: null as string | null };
+  }
+
+  return { queue: rest, due: nextPacket.lines, lastSource: nextPacket.from };
 }
 
 function attackerBonus(count: number) {
