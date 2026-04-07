@@ -66,6 +66,8 @@ type Snapshot = {
   place: number;
   attackers: number;
   incomingGarbage: number;
+  ren: number;
+  tSpins: number;
   targetMode: TargetMode;
   state: MatchState;
   countdown: number;
@@ -187,6 +189,53 @@ function getDisplayCellColor(cell: string | null) {
   return PLAYER_COLORS[cell] ?? PLAYER_COLORS.T;
 }
 
+function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotation: boolean): 'none' | 'mini' | 'full' {
+  if (piece.type !== 'T' || !wasRotation) return 'none';
+
+  const cx = piece.x + 1;
+  const cy = piece.y + 1;
+  const corners: Array<[number, number]> = [
+    [cx - 1, cy - 1], [cx + 1, cy - 1],
+    [cx - 1, cy + 1], [cx + 1, cy + 1],
+  ];
+
+  let filledCorners = 0;
+  for (const [x, y] of corners) {
+    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT || board[y]?.[x]) {
+      filledCorners += 1;
+    }
+  }
+
+  if (filledCorners < 3) return 'none';
+
+  const frontCorners: Array<[number, number]> = [];
+  switch (piece.rotation) {
+    case 0:
+      frontCorners.push([cx - 1, cy - 1], [cx + 1, cy - 1]);
+      break;
+    case 1:
+      frontCorners.push([cx + 1, cy - 1], [cx + 1, cy + 1]);
+      break;
+    case 2:
+      frontCorners.push([cx - 1, cy + 1], [cx + 1, cy + 1]);
+      break;
+    case 3:
+      frontCorners.push([cx - 1, cy - 1], [cx - 1, cy + 1]);
+      break;
+    default:
+      return 'none';
+  }
+
+  let frontFilled = 0;
+  for (const [x, y] of frontCorners) {
+    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT || board[y]?.[x]) {
+      frontFilled += 1;
+    }
+  }
+
+  return frontFilled >= 2 ? 'full' : 'mini';
+}
+
 function aiBoardToRhythmBoard(board: ({ color: string } | null)[][]): RhythmBoardState {
   const visible = board.map(row =>
     row.map(cell => {
@@ -249,6 +298,10 @@ function cancelGarbage(queue: GarbagePacket[], amount: number) {
   let remaining = amount;
   const next: GarbagePacket[] = [];
   for (const packet of queue) {
+    if (packet.delay <= 0) {
+      next.push(packet);
+      continue;
+    }
     if (remaining <= 0) {
       next.push(packet);
       continue;
@@ -386,6 +439,7 @@ export default function Tetris99GameProper() {
   const kosRef = useRef(0);
   const badgePointsRef = useRef(0);
   const badgesRef = useRef(0);
+  const tSpinsRef = useRef(0);
   const incomingRef = useRef<GarbagePacket[]>([]);
   const backToBackRef = useRef(false);
   const lastMoveRotationRef = useRef(false);
@@ -420,6 +474,8 @@ export default function Tetris99GameProper() {
     place: 99,
     attackers: 0,
     incomingGarbage: 0,
+    ren: 0,
+    tSpins: 0,
     targetMode: 'attackers',
     state: 'countdown',
     countdown: 3,
@@ -501,6 +557,8 @@ export default function Tetris99GameProper() {
       place: alive + (stateRef.current === 'gameOver' && !victoryRef.current ? 0 : 1),
       attackers,
       incomingGarbage: sumGarbage(incomingRef.current),
+      ren: Math.max(0, comboRef.current - 1),
+      tSpins: tSpinsRef.current,
       targetMode: targetModeRef.current,
       state: stateRef.current,
       countdown: countdownRef.current,
@@ -546,6 +604,7 @@ export default function Tetris99GameProper() {
     kosRef.current = 0;
     badgePointsRef.current = 0;
     badgesRef.current = 0;
+    tSpinsRef.current = 0;
     incomingRef.current = [];
     lastDamagedByRef.current = null;
     backToBackRef.current = false;
@@ -771,12 +830,18 @@ export default function Tetris99GameProper() {
 
   function lockCurrentPiece() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
-    boardRef.current = lockPiece(currentPieceRef.current, boardRef.current);
+    const lockedPiece = currentPieceRef.current;
+    const tSpin = detectPlayerTSpin(lockedPiece, boardRef.current, lastMoveRotationRef.current);
+    boardRef.current = lockPiece(lockedPiece, boardRef.current);
     const { newBoard, clearedLines } = clearLines(boardRef.current);
     boardRef.current = newBoard;
     linesRef.current += clearedLines;
     scoreRef.current += [0, 100, 300, 500, 800][clearedLines] ?? 0;
     let status = 'Stack stabilized';
+
+    if (tSpin !== 'none') {
+      tSpinsRef.current += 1;
+    }
 
     if (clearedLines > 0) {
       comboRef.current += 1;
@@ -785,10 +850,18 @@ export default function Tetris99GameProper() {
       backToBackRef.current = difficult;
       sendAttack(attack);
       playSfx(clearedLines === 4 ? 'tetris' : 'clear');
-      status = clearedLines === 4 ? 'Tetris' : `${clearedLines} line clear`;
+      if (tSpin === 'full') {
+        status = `T-Spin ${clearedLines === 1 ? 'Single' : clearedLines === 2 ? 'Double' : clearedLines === 3 ? 'Triple' : 'Clear'}`;
+      } else if (tSpin === 'mini') {
+        status = `T-Spin Mini${clearedLines > 0 ? ` ${clearedLines}` : ''}`;
+      } else {
+        status = clearedLines === 4 ? 'Tetris' : `${clearedLines} line clear`;
+      }
     } else {
       comboRef.current = 0;
       backToBackRef.current = false;
+      if (tSpin === 'full') status = 'T-Spin';
+      else if (tSpin === 'mini') status = 'T-Spin Mini';
     }
 
     currentPieceRef.current = null;
@@ -800,8 +873,8 @@ export default function Tetris99GameProper() {
     isOnGroundRef.current = false;
 
     const appliedGarbage = applyPendingGarbage();
-    if (appliedGarbage > 0 && clearedLines === 0) {
-      status = `Garbage +${appliedGarbage}`;
+    if (appliedGarbage > 0) {
+      status = status === 'Stack stabilized' ? `Garbage +${appliedGarbage}` : `${status} | Garbage +${appliedGarbage}`;
     }
 
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
@@ -1144,6 +1217,8 @@ export default function Tetris99GameProper() {
               <div className={styles.queueList}>
                 <div className={styles.queueItem}><span>Incoming garbage</span><strong>{snapshot.incomingGarbage}</strong></div>
                 <div className={styles.queueItem}><span>Badge points</span><strong>{snapshot.badgePoints}</strong></div>
+                <div className={styles.queueItem}><span>REN</span><strong>{snapshot.ren}</strong></div>
+                <div className={styles.queueItem}><span>T-Spins</span><strong>{snapshot.tSpins}</strong></div>
                 <div className={styles.queueItem}><span>Target mode</span><strong>{targetLabel(snapshot.targetMode)}</strong></div>
                 <div className={styles.queueItem}><span>Status</span><strong>{snapshot.status}</strong></div>
               </div>
