@@ -33,8 +33,12 @@ export default function GlobalNav() {
     (route) => routePath === route || routePath.startsWith(route + '/')
   );
 
+  if (!showNav) {
+    return null;
+  }
+
   // Show back button on game pages instead of nav
-  if (isGamePage || !showNav) {
+  if (isGamePage) {
     return (
       <button className={styles.backButton} onClick={() => router.push('/')}>
         <ArrowLeft size={14} />

@@ -17,6 +17,7 @@ import {
 } from '@/components/rhythmia/tetris/utils/boardUtils';
 import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components/rhythmia/tetris/constants';
 import { TetrisAIGame, getDifficultyForRank } from '@/lib/ranked/TetrisAI';
+import { useLayoutConfig } from '@/lib/layout/context';
 import styles from './Tetris99Game.module.css';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -315,6 +316,7 @@ function PlayerBoard({ board, currentPiece }: { board: RhythmBoardState; current
 
 export default function Tetris99GameProper() {
   const router = useRouter();
+  const { setFullscreen } = useLayoutConfig();
   const audioRef = useRef<AudioContext | null>(null);
   const packetIdRef = useRef(0);
   const rngRef = useRef(makeRng(99009));
@@ -764,7 +766,11 @@ export default function Tetris99GameProper() {
     syncSnapshot('Hold');
   }
 
-  useEffect(() => { resetGame(); }, []);
+  useEffect(() => {
+    setFullscreen(true);
+    resetGame();
+    return () => setFullscreen(false);
+  }, [setFullscreen]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {

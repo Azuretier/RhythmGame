@@ -1,17 +1,22 @@
 .page {
   min-height: 100vh;
+  height: 100vh;
   color: #f4efe6;
   background:
     radial-gradient(circle at top, rgba(255, 140, 66, 0.22), transparent 26%),
     radial-gradient(circle at bottom left, rgba(34, 171, 255, 0.18), transparent 22%),
     linear-gradient(180deg, #0d0f14 0%, #121722 36%, #0a0d13 100%);
   font-family: "Geist Mono", "Segoe UI", sans-serif;
+  overflow: hidden;
 }
 
 .shell {
   width: min(1640px, 100%);
   margin: 0 auto;
+  height: 100%;
   padding: 6px 10px 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .actionRow {
@@ -70,23 +75,31 @@
   display: grid;
   grid-template-columns: minmax(300px, 1fr) minmax(380px, 520px) minmax(300px, 1fr);
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .sidePanel {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-  padding: 8px;
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  padding: 6px;
   border-radius: 18px;
   background: rgba(12, 16, 24, 0.76);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .boardStack {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+  min-height: 0;
+  align-content: start;
 }
 
 .heroCard,
@@ -101,15 +114,15 @@
 }
 
 .heroCard {
-  padding: 14px;
+  padding: 10px;
 }
 
 .heroHeader {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .heroTitle {
@@ -120,14 +133,14 @@
 }
 
 .heroSubtle {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: rgba(244, 239, 230, 0.62);
 }
 
 .heroLayout {
   display: grid;
   grid-template-columns: 80px minmax(0, 1fr) 104px;
-  gap: 12px;
+  gap: 8px;
   align-items: start;
 }
 
@@ -140,7 +153,7 @@
   border-radius: 16px;
   background: rgba(6, 8, 12, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  padding: 10px;
+  padding: 8px;
 }
 
 .panelHeader {
@@ -172,7 +185,7 @@
 
 .boardFrame {
   position: relative;
-  padding: 10px 10px 12px 18px;
+  padding: 8px 8px 10px 16px;
   border-radius: 22px;
   background: linear-gradient(180deg, rgba(22, 29, 40, 0.95), rgba(10, 14, 22, 0.95));
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -186,12 +199,12 @@
 .boardStats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  margin: 0 0 8px 8px;
+  gap: 4px;
+  margin: 0 0 6px 6px;
 }
 
 .boardStat {
-  padding: 6px 8px;
+  padding: 4px 6px;
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -199,7 +212,7 @@
 
 .boardStatValue {
   display: block;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: rgba(255, 248, 238, 0.96);
 }
@@ -260,17 +273,17 @@
 }
 
 .hudCard {
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 
 .hudGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .hudMetric {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 16px;
   background: rgba(8, 11, 17, 0.52);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -278,23 +291,24 @@
 
 .hudValue {
   display: block;
-  margin-top: 6px;
-  font-size: 1.1rem;
+  margin-top: 4px;
+  font-size: 1rem;
   font-weight: 700;
 }
 
 .targetRow {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-top: 8px;
 }
 
 .targetButton {
-  min-height: 52px;
-  border-radius: 16px;
-  padding: 10px;
+  min-height: 42px;
+  border-radius: 14px;
+  padding: 8px;
   font: inherit;
+  font-size: 0.8rem;
   background: rgba(8, 11, 17, 0.5);
   color: rgba(244, 239, 230, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -308,13 +322,13 @@
 
 .queueCard,
 .controlCard {
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 
 .queueList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .queueItem {
@@ -322,11 +336,11 @@
   justify-content: space-between;
   gap: 12px;
   border-radius: 14px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: rgba(8, 11, 17, 0.48);
   border: 1px solid rgba(255, 255, 255, 0.06);
   color: rgba(244, 239, 230, 0.76);
-  font-size: 0.83rem;
+  font-size: 0.76rem;
 }
 
 .controlGrid {
@@ -359,10 +373,14 @@
 .microCard {
   position: relative;
   border-radius: 12px;
-  padding: 4px;
+  padding: 2px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .microCardTargeted {
@@ -378,12 +396,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
-  padding-inline: 2px;
-  font-size: 0.45rem;
-  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+  padding-inline: 1px;
+  font-size: 0.36rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: rgba(244, 239, 230, 0.62);
+  line-height: 1;
 }
 
 .microBadge {
@@ -394,6 +413,8 @@
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 1px;
+  min-height: 0;
+  align-content: stretch;
 }
 
 .microCell {
