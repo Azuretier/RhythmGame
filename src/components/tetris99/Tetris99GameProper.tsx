@@ -41,8 +41,10 @@ type BotState = {
   badgePoints: number;
   badges: number;
   alive: boolean;
-  targetPlayer: boolean;
+  targetMode: TargetMode;
+  targetIds: string[];
   pendingGarbage: GarbagePacket[];
+  lastDamagedBy: string | null;
 };
 
 type Snapshot = {
@@ -69,6 +71,7 @@ type Snapshot = {
 
 const BOT_COUNT = 98;
 const GARBAGE_DELAY = 3;
+const PLAYER_ID = 'player';
 const BOT_NAMES = ['ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT', 'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE'];
 const PIECES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
 
@@ -112,22 +115,13 @@ function makeRng(seed: number) {
   };
 }
 
-function seedBoard(rows: number, rng: () => number) {
-  let board = createEmptyBoard();
-  for (let r = 0; r < rows; r++) {
-    const gap = Math.floor(rng() * BOARD_WIDTH);
-    board = [...board.slice(1), Array.from({ length: BOARD_WIDTH }, (_, x) => (x === gap ? null : PIECES[(x + r) % PIECES.length]))];
-  }
-  return board;
-}
-
 function addGarbageRows(board: RhythmBoardState, rows: number, rng: () => number) {
   let next = board.map(row => row.slice());
   for (let r = 0; r < rows; r++) {
     const gap = Math.floor(rng() * BOARD_WIDTH);
     next = [
       ...next.slice(1),
-      Array.from({ length: BOARD_WIDTH }, (_, x) => (x === gap ? null : PIECES[(x + r) % PIECES.length])),
+      Array.from({ length: BOARD_WIDTH }, (_, x) => (x === gap ? null : 'garbage')),
     ];
   }
   return next;
@@ -157,16 +151,27 @@ function sumGarbage(queue: GarbagePacket[]) {
 
 function progressGarbage(queue: GarbagePacket[]) {
   let due = 0;
+  let lastSource: string | null = null;
   const next = queue
     .map(packet => ({ ...packet, delay: packet.delay - 1 }))
     .filter(packet => {
       if (packet.delay <= 0) {
         due += packet.lines;
+        lastSource = packet.from;
         return false;
       }
       return true;
     });
-  return { queue: next, due };
+  return { queue: next, due, lastSource };
+}
+
+function attackerBonus(count: number) {
+  if (count <= 1) return 0;
+  if (count === 2) return 1;
+  if (count === 3) return 3;
+  if (count === 4) return 5;
+  if (count === 5) return 7;
+  return 9;
 }
 
 function cancelGarbage(queue: GarbagePacket[], amount: number) {
@@ -188,7 +193,7 @@ function cancelGarbage(queue: GarbagePacket[], amount: number) {
 }
 
 function MicroBoard({ bot, targeted }: { bot: BotState; targeted: boolean }) {
-  const cls = [styles.microCard, targeted ? styles.microCardTargeted : '', bot.targetPlayer ? styles.microCardAttacker : ''].filter(Boolean).join(' ');
+  const cls = [styles.microCard, targeted ? styles.microCardTargeted : '', bot.targetIds.includes(PLAYER_ID) ? styles.microCardAttacker : ''].filter(Boolean).join(' ');
   return (
     <div className={cls}>
       <div className={styles.microHeader}>
@@ -198,7 +203,11 @@ function MicroBoard({ bot, targeted }: { bot: BotState; targeted: boolean }) {
       <div className={styles.microBoard}>
         {bot.board.flatMap((row, y) =>
           row.map((cell, x) => (
-            <div key={`${bot.id}-${y}-${x}`} className={styles.microCell} style={{ background: cell ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.04)' }} />
+            <div
+              key={`${bot.id}-${y}-${x}`}
+              className={styles.microCell}
+              style={{ background: cell === 'garbage' ? 'rgba(102,102,102,0.92)' : cell ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.04)' }}
+            />
           )),
         )}
       </div>
@@ -257,6 +266,7 @@ export default function Tetris99GameProper() {
   const stateRef = useRef<MatchState>('countdown');
   const countdownRef = useRef(3);
   const victoryRef = useRef(false);
+  const lastDamagedByRef = useRef<string | null>(null);
   const [snapshot, setSnapshot] = useState<Snapshot>({
     board: createEmptyBoard(),
     currentPiece: null,
@@ -316,7 +326,7 @@ export default function Tetris99GameProper() {
 
   function syncSnapshot(status?: string) {
     const alive = botsRef.current.filter(bot => bot.alive).length;
-    const attackers = botsRef.current.filter(bot => bot.alive && bot.targetPlayer).length;
+    const attackers = botsRef.current.filter(bot => bot.alive && bot.targetIds.includes(PLAYER_ID)).length;
     setSnapshot({
       board: boardRef.current,
       currentPiece: currentPieceRef.current,
@@ -374,6 +384,7 @@ export default function Tetris99GameProper() {
     badgePointsRef.current = 0;
     badgesRef.current = 0;
     incomingRef.current = [];
+    lastDamagedByRef.current = null;
     backToBackRef.current = false;
     lastMoveRotationRef.current = false;
     stateRef.current = 'countdown';
@@ -387,17 +398,19 @@ export default function Tetris99GameProper() {
       return {
         id: `bot-${i}`,
         name: `${BOT_NAMES[i % BOT_NAMES.length]}-${String(i + 1).padStart(2, '0')}`,
-        board: seedBoard(1 + Math.floor(rng() * 6), rng),
+        board: createEmptyBoard(),
         queue: Array.from({ length: 6 }, () => botBagRef.current()),
         hold: null,
         combo: 0,
-        lines: Math.floor(rng() * 18),
-        score: Math.floor(rng() * 4000),
-        badgePoints: Math.floor(rng() * 2),
+        lines: 0,
+        score: 0,
+        badgePoints: 0,
         badges: 0,
         alive: true,
-        targetPlayer: rng() > 0.74,
+        targetMode: (['random', 'attackers', 'kos', 'badges'] as TargetMode[])[Math.floor(rng() * 4)] ?? 'random',
+        targetIds: [],
         pendingGarbage: [],
+        lastDamagedBy: null,
       };
     }).map(bot => ({ ...bot, badges: badgeStageFromPoints(bot.badgePoints) }));
     spawnPiece();
@@ -421,35 +434,112 @@ export default function Tetris99GameProper() {
     const progressed = progressGarbage(incomingRef.current);
     incomingRef.current = progressed.queue;
     if (progressed.due <= 0) return;
+    lastDamagedByRef.current = progressed.lastSource;
     boardRef.current = addGarbageRows(boardRef.current, progressed.due, rngRef.current);
     playSfx('garbage');
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
   }
 
-  function chooseTargets() {
-    const alive = botsRef.current.filter(bot => bot.alive);
-    if (targetModeRef.current === 'attackers') {
-      const attackers = alive.filter(bot => bot.targetPlayer);
-      return (attackers.length ? attackers : alive.slice(0, 3)).map(bot => bot.id);
+  function getBotById(id: string) {
+    return botsRef.current.find(bot => bot.id === id) ?? null;
+  }
+
+  function getAliveOpponentIds(sourceId: string) {
+    const ids = botsRef.current.filter(bot => bot.alive && bot.id !== sourceId).map(bot => bot.id);
+    if (sourceId !== PLAYER_ID && stateRef.current !== 'gameOver') ids.unshift(PLAYER_ID);
+    return ids;
+  }
+
+  function candidateDanger(id: string) {
+    if (id === PLAYER_ID) return boardDanger(boardRef.current) + sumGarbage(incomingRef.current) * 2;
+    const bot = getBotById(id);
+    if (!bot || !bot.alive) return -1;
+    return boardDanger(bot.board) + sumGarbage(bot.pendingGarbage) * 2;
+  }
+
+  function candidateBadges(id: string) {
+    if (id === PLAYER_ID) return badgePointsRef.current + badgesRef.current * 10;
+    const bot = getBotById(id);
+    if (!bot || !bot.alive) return -1;
+    return bot.badgePoints + bot.badges * 10;
+  }
+
+  function chooseWeightedRandomTarget(candidates: string[]) {
+    if (!candidates.length) return [];
+    const weighted = candidates.map(id => ({
+      id,
+      weight: Math.max(1, (id === PLAYER_ID ? 2 : 1) + Math.floor(candidateDanger(id) / 4) + Math.floor(candidateBadges(id) / 3)),
+    }));
+    const total = weighted.reduce((sum, entry) => sum + entry.weight, 0);
+    let roll = rngRef.current() * total;
+    for (const entry of weighted) {
+      roll -= entry.weight;
+      if (roll <= 0) return [entry.id];
     }
-    if (targetModeRef.current === 'kos') {
-      return [...alive].sort((a, b) => boardDanger(b.board) - boardDanger(a.board)).slice(0, 3).map(bot => bot.id);
+    return [weighted[weighted.length - 1]!.id];
+  }
+
+  function chooseTargets(sourceId: string, mode: TargetMode, playerTargets = new Set<string>()) {
+    const candidates = getAliveOpponentIds(sourceId);
+    if (!candidates.length) return [];
+    if (mode === 'attackers') {
+      const attackers = botsRef.current
+        .filter(bot => bot.alive && bot.id !== sourceId && bot.targetIds.includes(sourceId))
+        .map(bot => bot.id);
+      if (sourceId !== PLAYER_ID && playerTargets.has(sourceId)) attackers.push(PLAYER_ID);
+      const uniqueAttackers = [...new Set(attackers)].filter(id => candidates.includes(id));
+      return uniqueAttackers.length ? uniqueAttackers : chooseWeightedRandomTarget(candidates);
     }
-    if (targetModeRef.current === 'badges') {
-      return [...alive].sort((a, b) => b.badgePoints - a.badgePoints).slice(0, 3).map(bot => bot.id);
+    if (mode === 'kos') {
+      return [...candidates].sort((a, b) => candidateDanger(b) - candidateDanger(a) || candidateBadges(a) - candidateBadges(b)).slice(0, 1);
     }
-    return alive.length ? [alive[(linesRef.current + scoreRef.current) % alive.length].id] : [];
+    if (mode === 'badges') {
+      return [...candidates].sort((a, b) => candidateBadges(b) - candidateBadges(a) || candidateDanger(b) - candidateDanger(a)).slice(0, 1);
+    }
+    return chooseWeightedRandomTarget(candidates);
+  }
+
+  function updateBotTargeting(bot: BotState, playerTargets: Set<string>) {
+    const pressure = boardDanger(bot.board) + sumGarbage(bot.pendingGarbage);
+    if (pressure >= 16) bot.targetMode = 'attackers';
+    else if (bot.badges >= 2) bot.targetMode = 'badges';
+    else if (botsRef.current.some(entry => entry.alive && entry.id !== bot.id && candidateDanger(entry.id) >= 16)) bot.targetMode = 'kos';
+    else if (rngRef.current() > 0.94) bot.targetMode = 'random';
+    bot.targetIds = chooseTargets(bot.id, bot.targetMode, playerTargets);
+  }
+
+  function awardKo(killerId: string | null, victimBadges: number) {
+    if (!killerId) return;
+    if (killerId === PLAYER_ID) {
+      kosRef.current += 1;
+      badgePointsRef.current += 1 + victimBadges;
+      badgesRef.current = badgeStageFromPoints(badgePointsRef.current);
+      playSfx('ko');
+      return;
+    }
+    const killer = getBotById(killerId);
+    if (!killer || !killer.alive) return;
+    killer.badgePoints += 1 + victimBadges;
+    killer.badges = badgeStageFromPoints(killer.badgePoints);
+  }
+
+  function eliminateBot(bot: BotState) {
+    if (!bot.alive) return;
+    bot.alive = false;
+    bot.targetIds = [];
+    awardKo(bot.lastDamagedBy, bot.badges);
   }
 
   function sendAttack(lines: number) {
     const canceled = cancelGarbage(incomingRef.current, lines);
     incomingRef.current = canceled.next;
-    if (canceled.remaining <= 0) return;
-    const targets = chooseTargets();
-    const split = Math.max(1, Math.ceil(canceled.remaining / Math.max(1, targets.length)));
+    const targets = chooseTargets(PLAYER_ID, targetModeRef.current);
+    let outgoing = canceled.remaining;
+    if (targetModeRef.current === 'attackers') outgoing += attackerBonus(targets.length);
+    if (outgoing <= 0 || !targets.length) return;
     for (const targetId of targets) {
-      const bot = botsRef.current.find(entry => entry.id === targetId && entry.alive);
-      if (bot) queuePacket(split, 'player', bot);
+      const bot = getBotById(targetId);
+      if (bot?.alive) queuePacket(outgoing, PLAYER_ID, bot);
     }
   }
 
@@ -598,11 +688,16 @@ export default function Tetris99GameProper() {
   useEffect(() => {
     const botLoop = window.setInterval(() => {
       if (stateRef.current !== 'playing') return;
+      const playerTargets = new Set(chooseTargets(PLAYER_ID, targetModeRef.current));
+      for (const bot of botsRef.current) {
+        if (bot.alive) updateBotTargeting(bot, playerTargets);
+      }
       for (const bot of botsRef.current) {
         if (!bot.alive) continue;
         const progressed = progressGarbage(bot.pendingGarbage);
         bot.pendingGarbage = progressed.queue;
         if (progressed.due > 0) {
+          bot.lastDamagedBy = progressed.lastSource;
           bot.board = addGarbageRows(bot.board, progressed.due, makeRng(progressed.due + bot.lines + bot.score));
         }
         const current = bot.queue.shift()!;
@@ -612,7 +707,7 @@ export default function Tetris99GameProper() {
         const difficulty = snapshot.place > 60 ? AI_DIFFICULTIES.medium : snapshot.place > 20 ? AI_DIFFICULTIES.hard : AI_DIFFICULTIES.expert;
         const move = findBestMove(current, ai, difficulty, next);
         if (!move) {
-          bot.alive = false;
+          eliminateBot(bot);
           continue;
         }
         const piece = createSpawnPiece(current);
@@ -624,24 +719,27 @@ export default function Tetris99GameProper() {
           bot.combo += 1;
           bot.lines += clearedLines;
           bot.score += [0, 100, 300, 500, 800][clearedLines] ?? 0;
-          const attack = computeAttack(clearedLines, bot.combo, clearedLines === 4, bot.badges);
-          bot.targetPlayer = boardDanger(bot.board) >= 14 || bot.badges >= 2 || Math.random() > 0.8;
-          if (bot.targetPlayer && attack > 0) queuePacket(attack, bot.id, { pendingGarbage: incomingRef.current });
+          let attack = computeAttack(clearedLines, bot.combo, clearedLines === 4, bot.badges);
+          if (bot.targetMode === 'attackers') attack += attackerBonus(bot.targetIds.length);
+          if (attack > 0) {
+            for (const targetId of bot.targetIds) {
+              if (targetId === PLAYER_ID) queuePacket(attack, bot.id, { pendingGarbage: incomingRef.current });
+              else {
+                const targetBot = getBotById(targetId);
+                if (targetBot?.alive) queuePacket(attack, bot.id, targetBot);
+              }
+            }
+          }
         } else {
           bot.combo = 0;
         }
         if (boardDanger(bot.board) >= 22) {
-          bot.alive = false;
-          if (bot.pendingGarbage.some(packet => packet.from === 'player')) {
-            kosRef.current += 1;
-            badgePointsRef.current += 1 + bot.badges;
-            badgesRef.current = badgeStageFromPoints(badgePointsRef.current);
-            playSfx('ko');
-          }
+          eliminateBot(bot);
         }
       }
       applyPendingGarbage();
       if (boardDanger(boardRef.current) >= 22) {
+        awardKo(lastDamagedByRef.current, badgesRef.current);
         finish(false);
       } else if (botsRef.current.every(bot => !bot.alive)) {
         finish(true);
@@ -653,11 +751,7 @@ export default function Tetris99GameProper() {
   }, [snapshot.place]);
 
   const targetedBots = useMemo(() => {
-    const alive = botsRef.current.filter(bot => bot.alive);
-    if (snapshot.targetMode === 'attackers') return new Set(alive.filter(bot => bot.targetPlayer).map(bot => bot.id));
-    if (snapshot.targetMode === 'kos') return new Set([...alive].sort((a, b) => boardDanger(b.board) - boardDanger(a.board)).slice(0, 3).map(bot => bot.id));
-    if (snapshot.targetMode === 'badges') return new Set([...alive].sort((a, b) => b.badgePoints - a.badgePoints).slice(0, 3).map(bot => bot.id));
-    return new Set(alive.slice(0, 1).map(bot => bot.id));
+    return new Set(chooseTargets(PLAYER_ID, snapshot.targetMode));
   }, [snapshot.targetMode, snapshot.place, snapshot.attackers]);
 
   const leftBots = botsRef.current.slice(0, 49);
