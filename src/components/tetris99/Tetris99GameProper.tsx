@@ -388,33 +388,23 @@ function tickGarbageQueue(queue: GarbagePacket[]) {
   return queue.map(packet => (packet.delay > 0 ? { ...packet, delay: packet.delay - 1 } : packet));
 }
 
-function collectReadyGarbage(queue: GarbagePacket[]) {
+function collectNextReadyGarbage(queue: GarbagePacket[]) {
   let due = 0;
   let lastSource: string | null = null;
+  let consumed = false;
   const next: GarbagePacket[] = [];
 
   for (const packet of queue) {
-    if (packet.delay <= 0) {
-      due += packet.lines;
+    if (!consumed && packet.delay <= 0) {
+      due = packet.lines;
       lastSource = packet.from;
+      consumed = true;
       continue;
     }
     next.push(packet);
   }
 
   return { queue: next, due, lastSource };
-}
-
-function collectAllGarbage(queue: GarbagePacket[]) {
-  let due = 0;
-  let lastSource: string | null = null;
-
-  for (const packet of queue) {
-    due += packet.lines;
-    lastSource = packet.from;
-  }
-
-  return { queue: [] as GarbagePacket[], due, lastSource };
 }
 
 function attackerBonus(count: number) {
@@ -465,33 +455,43 @@ function getPacketTimerProgress(packet: GarbagePacket) {
 }
 
 function IncomingGarbageRail({ packets }: { packets: GarbagePacket[] }) {
-  let offsetLines = 0;
+  const filledBlocks = packets.flatMap(packet =>
+    Array.from({ length: Math.min(packet.lines, MAX_PENDING_GARBAGE) }, (_, index) => ({
+      id: `${packet.id}-${index}`,
+      from: packet.from,
+      progress: getPacketTimerProgress(packet),
+      delay: packet.delay,
+    })),
+  ).slice(0, MAX_PENDING_GARBAGE);
+
+  const emptyCount = Math.max(0, MAX_PENDING_GARBAGE - filledBlocks.length);
+  const displayBlocks = [
+    ...Array.from({ length: emptyCount }, () => null),
+    ...filledBlocks.slice().reverse(),
+  ];
 
   return (
     <div className={styles.garbageRail}>
-      {packets.map(packet => {
-        const bottom = `${(offsetLines / MAX_PENDING_GARBAGE) * 100}%`;
-        const height = `${(packet.lines / MAX_PENDING_GARBAGE) * 100}%`;
-        offsetLines += packet.lines;
-        const progress = getPacketTimerProgress(packet);
-        const toneClass =
-          packet.delay <= 0 ? styles.garbageSegmentHot :
-            packet.delay === 1 ? styles.garbageSegmentWarm :
-              packet.delay === 2 ? styles.garbageSegmentReady :
-                styles.garbageSegmentCool;
+      {displayBlocks.map((block, index) => {
+        const toneClass = !block ? '' :
+          block.delay <= 0 ? styles.garbageBlockHot :
+            block.delay === 1 ? styles.garbageBlockWarm :
+              block.delay === 2 ? styles.garbageBlockReady :
+                styles.garbageBlockCool;
 
         return (
           <div
-            key={packet.id}
-            className={`${styles.garbageSegment} ${toneClass}`}
-            style={{ bottom, height }}
-            title={`${packet.from} +${packet.lines}`}
+            key={block?.id ?? `empty-${index}`}
+            className={`${styles.garbageBlock} ${block ? styles.garbageBlockActive : ''} ${toneClass}`}
+            title={block ? `${block.from} +1` : undefined}
+            style={block ? ({ ['--garbage-progress' as string]: `${Math.max(10, block.progress * 100)}%` }) : undefined}
           >
-            <div className={styles.garbageSegmentStripe} />
-            <div
-              className={styles.garbageSegmentTimer}
-              style={{ height: `${Math.max(12, progress * 100)}%` }}
-            />
+            {block && (
+              <>
+                <div className={styles.garbageBlockStripe} />
+                <div className={styles.garbageBlockTimer} />
+              </>
+            )}
           </div>
         );
       })}
@@ -968,8 +968,8 @@ export default function Tetris99GameProper() {
     target.pendingGarbage.push({ id: `pkt-${packetIdRef.current}`, lines: queuedLines, delay: GARBAGE_DELAY, from });
   }
 
-  function applyPendingGarbage(forceAll = false) {
-    const collected = forceAll ? collectAllGarbage(incomingRef.current) : collectReadyGarbage(incomingRef.current);
+  function applyPendingGarbage() {
+    const collected = collectNextReadyGarbage(incomingRef.current);
     incomingRef.current = collected.queue;
     if (collected.due <= 0) return 0;
     lastDamagedByRef.current = collected.lastSource;
@@ -981,8 +981,8 @@ export default function Tetris99GameProper() {
     return collected.due;
   }
 
-  function applyBotPendingGarbage(bot: BotState, forceAll = false) {
-    const collected = forceAll ? collectAllGarbage(bot.pendingGarbage) : collectReadyGarbage(bot.pendingGarbage);
+  function applyBotPendingGarbage(bot: BotState) {
+    const collected = collectNextReadyGarbage(bot.pendingGarbage);
     bot.pendingGarbage = collected.queue;
     if (collected.due <= 0) return 0;
     bot.lastDamagedBy = collected.lastSource;
@@ -1245,7 +1245,6 @@ export default function Tetris99GameProper() {
           const currentBot = getBotById(bot.id);
           if (!currentBot || !currentBot.alive) return;
 
-          const previousComboChain = currentBot.combo;
           const clearType = getAttackClearType(placement.clearedLines, placement.tSpin);
           const attackResult = calculatePlacementAttack(clearType, currentBot.combo, currentBot.b2bActive);
 
@@ -1263,9 +1262,8 @@ export default function Tetris99GameProper() {
             routeBotAttack(currentBot.id, attackResult.total, playerTargets);
           }
 
-          const comboJustBroke = placement.clearedLines === 0 && previousComboChain > 0;
           if (placement.clearedLines === 0) {
-            applyBotPendingGarbage(currentBot, comboJustBroke);
+            applyBotPendingGarbage(currentBot);
           }
         },
         onGameOver: () => {
@@ -1280,7 +1278,6 @@ export default function Tetris99GameProper() {
 
   function lockCurrentPiece() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
-    const previousComboChain = comboRef.current;
     const lockedPiece = currentPieceRef.current;
     const tSpin = detectPlayerTSpin(lockedPiece, boardRef.current, lastMoveRotationRef.current);
     boardRef.current = lockPiece(lockedPiece, boardRef.current);
@@ -1344,8 +1341,7 @@ export default function Tetris99GameProper() {
     }
     isOnGroundRef.current = false;
 
-    const comboJustBroke = clearedLines === 0 && previousComboChain > 0;
-    const appliedGarbage = clearedLines === 0 ? applyPendingGarbage(comboJustBroke) : 0;
+    const appliedGarbage = clearedLines === 0 ? applyPendingGarbage() : 0;
     if (appliedGarbage > 0) {
       status = status === 'Stack stabilized' ? `Garbage +${appliedGarbage}` : `${status} | Garbage +${appliedGarbage}`;
     }
@@ -1504,6 +1500,19 @@ export default function Tetris99GameProper() {
   }, []);
 
   useEffect(() => {
+    function onEscapeKey(event: KeyboardEvent) {
+      if (event.code !== 'Escape') return;
+      event.preventDefault();
+      toggleSettingsMenu();
+    }
+
+    window.addEventListener('keydown', onEscapeKey);
+    return () => {
+      window.removeEventListener('keydown', onEscapeKey);
+    };
+  }, []);
+
+  useEffect(() => {
     const startDAS = (dir: 'left' | 'right', dx: number) => {
       clearDAS();
       lastDirRef.current = dir;
@@ -1515,11 +1524,6 @@ export default function Tetris99GameProper() {
     };
 
     function onKeyDown(event: KeyboardEvent) {
-      if (event.code === 'Escape') {
-        event.preventDefault();
-        toggleSettingsMenu();
-        return;
-      }
       if (settingsOpenRef.current) return;
       if (stateRef.current !== 'playing') return;
       if (keysRef.current.has(event.code)) return;
@@ -1669,40 +1673,6 @@ export default function Tetris99GameProper() {
               </div>
             ))}
           </div>
-          {settingsOpen && (
-            <div className={styles.settingsOverlay} role="dialog" aria-modal="true" aria-label="Tetris 99 settings">
-              <button type="button" className={styles.settingsBackdrop} onClick={closeSettingsMenu} aria-label="Close settings menu" />
-              <div className={styles.settingsPanel}>
-                <div className={styles.settingsHeader}>
-                  <div>
-                    <div className={styles.settingsEyebrow}>TETRIS 99</div>
-                    <h2 className={styles.settingsTitle}>Settings</h2>
-                  </div>
-                  <button type="button" className={styles.settingsClose} onClick={closeSettingsMenu} aria-label="Close settings menu">ESC</button>
-                </div>
-                <div className={styles.settingsBody}>
-                  <div className={styles.settingsOption}>
-                    <div>
-                      <div className={styles.settingsLabel}>Show all attack trails</div>
-                      <div className={styles.settingsHint}>Off by default. When disabled, only attacks involving you are visible.</div>
-                    </div>
-                    <button
-                      type="button"
-                      className={`${styles.settingsToggle} ${showAllAttackTrails ? styles.settingsToggleOn : ''}`}
-                      onClick={toggleAttackTrailPreference}
-                      aria-pressed={showAllAttackTrails}
-                    >
-                      <span className={styles.settingsToggleKnob} />
-                    </button>
-                  </div>
-                </div>
-                <div className={styles.settingsActions}>
-                  <button type="button" className={styles.button} onClick={closeSettingsMenu}>Resume</button>
-                  <button type="button" className={styles.ghostButton} onClick={() => router.push('/settings')}>Open Site Settings</button>
-                </div>
-              </div>
-            </div>
-          )}
           <div className={styles.sidePanel}>{leftBotBoards}</div>
           <div className={styles.boardStack}>
             <div className={styles.heroCard}>
@@ -1729,6 +1699,34 @@ export default function Tetris99GameProper() {
                   <div className={styles.boardPlayfield}>
                     <IncomingGarbageRail packets={snapshot.incomingPackets} />
                     <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
+                    {settingsOpen && (
+                      <div className={styles.settingsBoardOverlay} role="dialog" aria-modal="true" aria-label="Tetris 99 settings">
+                        <div className={styles.settingsBoardPanel}>
+                          <div className={styles.settingsEyebrow}>TETRIS 99</div>
+                          <h2 className={styles.settingsTitle}>Settings</h2>
+                          <div className={styles.settingsBody}>
+                            <div className={styles.settingsOption}>
+                              <div>
+                                <div className={styles.settingsLabel}>Attack Trail Visibility</div>
+                                <div className={styles.settingsHint}>
+                                  Off by default. When disabled, only attacks involving you are visible.
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                className={`${styles.settingsToggle} ${showAllAttackTrails ? styles.settingsToggleOn : ''}`}
+                                onClick={toggleAttackTrailPreference}
+                                aria-pressed={showAllAttackTrails}
+                                aria-label="Toggle full attack trail visibility"
+                              >
+                                <span className={styles.settingsToggleKnob} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className={styles.settingsHintLine}>Press ESC to close</div>
+                        </div>
+                      </div>
+                    )}
                     {snapshot.gameOver && (
                       <div className={styles.boardGameOver}>
                         <h2 className={styles.boardGameOverTitle}>{snapshot.victory ? 'Victory Royale' : 'Game Over'}</h2>
