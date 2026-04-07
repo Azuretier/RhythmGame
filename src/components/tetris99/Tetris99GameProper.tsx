@@ -1029,10 +1029,10 @@ export default function Tetris99GameProper() {
   }
 
   function finalizeAttack(sourceId: string, mode: TargetMode, lines: number, targetIds: string[], incomingQueue: GarbagePacket[], playerTargets = new Set<string>()): FinalizeAttackResult {
-    const offsetResult = offsetGarbageQueue(incomingQueue, lines);
     const attackerCount = attackerManager.countAttackers(sourceId, playerTargets);
     const badgeBoostPercent = badgeBoostPercentFromStage(getBadgeStageForSource(sourceId));
     const attackerBonusLines = attackerManager.getBonus(sourceId, playerTargets);
+    const offsetResult = offsetGarbageQueue(incomingQueue, lines + attackerBonusLines);
 
     if (targetIds.length === 0) {
       return {
@@ -1047,7 +1047,7 @@ export default function Tetris99GameProper() {
       };
     }
 
-    const attackWithCounter = offsetResult.remaining + attackerBonusLines;
+    const attackWithCounter = offsetResult.remaining;
     if (attackWithCounter <= 0) {
       return {
         offset: offsetResult.canceled,
