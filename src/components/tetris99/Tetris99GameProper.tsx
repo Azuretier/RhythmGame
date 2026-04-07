@@ -120,6 +120,7 @@ type Snapshot = {
   place: number;
   attackers: number;
   incomingGarbage: number;
+  incomingPackets: GarbagePacket[];
   ren: number;
   tSpins: number;
   b2bActive: boolean;
@@ -459,6 +460,45 @@ function BadgeMeter({ stage, compact = false }: { stage: number; compact?: boole
   );
 }
 
+function getPacketTimerProgress(packet: GarbagePacket) {
+  return Math.max(0, Math.min(1, (GARBAGE_DELAY - packet.delay) / Math.max(1, GARBAGE_DELAY)));
+}
+
+function IncomingGarbageRail({ packets }: { packets: GarbagePacket[] }) {
+  let offsetLines = 0;
+
+  return (
+    <div className={styles.garbageRail}>
+      {packets.map(packet => {
+        const bottom = `${(offsetLines / MAX_PENDING_GARBAGE) * 100}%`;
+        const height = `${(packet.lines / MAX_PENDING_GARBAGE) * 100}%`;
+        offsetLines += packet.lines;
+        const progress = getPacketTimerProgress(packet);
+        const toneClass =
+          packet.delay <= 0 ? styles.garbageSegmentHot :
+            packet.delay === 1 ? styles.garbageSegmentWarm :
+              packet.delay === 2 ? styles.garbageSegmentReady :
+                styles.garbageSegmentCool;
+
+        return (
+          <div
+            key={packet.id}
+            className={`${styles.garbageSegment} ${toneClass}`}
+            style={{ bottom, height }}
+            title={`${packet.from} +${packet.lines}`}
+          >
+            <div className={styles.garbageSegmentStripe} />
+            <div
+              className={styles.garbageSegmentTimer}
+              style={{ height: `${Math.max(12, progress * 100)}%` }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function MicroBoard({ bot, targeted, boardRef }: { bot: BotState; targeted: boolean; boardRef?: (node: HTMLDivElement | null) => void }) {
   const cls = [styles.microCard, targeted ? styles.microCardTargeted : '', bot.targetIds.includes(PLAYER_ID) ? styles.microCardAttacker : ''].filter(Boolean).join(' ');
   return (
@@ -628,6 +668,7 @@ export default function Tetris99GameProper() {
     place: 99,
     attackers: 0,
     incomingGarbage: 0,
+    incomingPackets: [],
     ren: 0,
     tSpins: 0,
     b2bActive: false,
@@ -812,6 +853,7 @@ export default function Tetris99GameProper() {
       place: alive + (stateRef.current === 'gameOver' && !victoryRef.current ? 0 : 1),
       attackers,
       incomingGarbage: sumGarbage(incomingRef.current),
+      incomingPackets: incomingRef.current.map(packet => ({ ...packet })),
       ren: Math.max(0, comboRef.current - 1),
       tSpins: tSpinsRef.current,
       b2bActive: backToBackRef.current,
@@ -1685,7 +1727,7 @@ export default function Tetris99GameProper() {
                     <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</strong></div>
                   </div>
                   <div className={styles.boardPlayfield}>
-                    <div className={styles.garbageRail}><div className={styles.garbageFill} style={{ height: `${Math.min(100, snapshot.incomingGarbage * 8)}%` }} /></div>
+                    <IncomingGarbageRail packets={snapshot.incomingPackets} />
                     <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
                     {snapshot.gameOver && (
                       <div className={styles.boardGameOver}>
