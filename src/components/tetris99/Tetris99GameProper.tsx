@@ -68,6 +68,7 @@ type FinalizeAttackResult = {
   attackerCount: number;
   attackerBonus: number;
   badgeBoostPercent: number;
+  marginBonus: number;
   targetIds: string[];
   distributions: AttackDistribution[];
   nextQueue: GarbagePacket[];
@@ -152,6 +153,9 @@ const BOT_STATE_TICK_MS = 260;
 const GARBAGE_TIMER_START_PLAYERS = 50;
 const GARBAGE_TIMER_TOP10_PLAYERS = 10;
 const GRAVITY_RAMP_START_PLAYERS = 49;
+const MARGIN_TIME_START_MS = 10 * 60 * 1000;
+const MARGIN_TIME_STEP_MS = 30 * 1000;
+const MARGIN_TIME_MAX_BONUS = 11;
 const BOT_NAMES = ['ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT', 'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE'];
 const PIECES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
 const PLAYER_COLORS: Record<string, string> = {
@@ -705,6 +709,8 @@ export default function Tetris99GameProper() {
   const targetModeRef = useRef<TargetMode>('attackers');
   const stateRef = useRef<MatchState>('countdown');
   const countdownRef = useRef(3);
+  const battleStartedAtRef = useRef<number | null>(null);
+  const battleEndedAtRef = useRef<number | null>(null);
   const matchStartedAtRef = useRef<number | null>(null);
   const matchEndedAtRef = useRef<number | null>(null);
   const pauseStartedAtRef = useRef<number | null>(null);
@@ -936,6 +942,15 @@ export default function Tetris99GameProper() {
     return aliveBots + playerAlive;
   }
 
+  function getBattleElapsedMs() {
+    if (!battleStartedAtRef.current) return 0;
+    const end = battleEndedAtRef.current ?? Date.now();
+    const pausedForCurrentSession = pauseStartedAtRef.current !== null && battleEndedAtRef.current === null
+      ? end - pauseStartedAtRef.current
+      : 0;
+    return Math.max(0, end - battleStartedAtRef.current - pausedDurationMsRef.current - pausedForCurrentSession);
+  }
+
   function getGravityRampElapsedMs() {
     if (!matchStartedAtRef.current) return 0;
     const end = matchEndedAtRef.current ?? Date.now();
@@ -943,6 +958,12 @@ export default function Tetris99GameProper() {
       ? end - pauseStartedAtRef.current
       : 0;
     return Math.max(0, end - matchStartedAtRef.current - pausedDurationMsRef.current - pausedForCurrentSession);
+  }
+
+  function getMarginTimeBonus(elapsedMs: number) {
+    if (elapsedMs < MARGIN_TIME_START_MS) return 0;
+    const steps = Math.floor((elapsedMs - MARGIN_TIME_START_MS) / MARGIN_TIME_STEP_MS);
+    return Math.min(MARGIN_TIME_MAX_BONUS, 1 + steps);
   }
 
   function syncMatchSpeed() {
@@ -1051,6 +1072,8 @@ export default function Tetris99GameProper() {
     statusRef.current = 'Get ready';
     stateRef.current = 'countdown';
     countdownRef.current = 3;
+    battleStartedAtRef.current = null;
+    battleEndedAtRef.current = null;
     matchStartedAtRef.current = null;
     matchEndedAtRef.current = null;
     pauseStartedAtRef.current = null;
@@ -1100,6 +1123,7 @@ export default function Tetris99GameProper() {
     keysRef.current.clear();
     garbageSparklePacketRef.current = null;
     stateRef.current = 'gameOver';
+    battleEndedAtRef.current = battleStartedAtRef.current ? Date.now() : null;
     matchEndedAtRef.current = matchStartedAtRef.current ? Date.now() : null;
     victoryRef.current = victory;
     playSfx(victory ? 'win' : 'lose');
@@ -1255,6 +1279,7 @@ export default function Tetris99GameProper() {
     const badgeBoostPercent = badgeBoostPercentFromStage(getBadgeStageForSource(sourceId));
     const attackerBonusLines = attackerManager.getBonus(sourceId, playerTargets);
     const offsetResult = offsetGarbageQueue(incomingQueue, lines + attackerBonusLines);
+    const marginBonus = getMarginTimeBonus(getBattleElapsedMs());
 
     if (targetIds.length === 0) {
       return {
@@ -1262,6 +1287,7 @@ export default function Tetris99GameProper() {
         attackerCount,
         attackerBonus: attackerBonusLines,
         badgeBoostPercent,
+        marginBonus: 0,
         targetIds,
         distributions: [],
         nextQueue: offsetResult.next,
@@ -1276,6 +1302,7 @@ export default function Tetris99GameProper() {
         attackerCount,
         attackerBonus: attackerBonusLines,
         badgeBoostPercent,
+        marginBonus: 0,
         targetIds,
         distributions: [],
         nextQueue: offsetResult.next,
@@ -1283,17 +1310,22 @@ export default function Tetris99GameProper() {
       };
     }
     const boostedAttack = Math.max(0, Math.floor(attackWithCounter * (1 + badgeBoostPercent / 100)));
-    const distributions = targetManager.distributeAttack(sourceId, mode, boostedAttack, targetIds, playerTargets);
+    const marginAdjustedAttack = marginBonus > 0
+      ? targetManager
+        .distributeAttack(sourceId, mode, boostedAttack, targetIds, playerTargets)
+        .map(distribution => ({ ...distribution, lines: distribution.lines + marginBonus }))
+      : targetManager.distributeAttack(sourceId, mode, boostedAttack, targetIds, playerTargets);
 
     return {
       offset: offsetResult.canceled,
       attackerCount,
       attackerBonus: attackerBonusLines,
       badgeBoostPercent,
+      marginBonus,
       targetIds,
-      distributions,
+      distributions: marginAdjustedAttack,
       nextQueue: offsetResult.next,
-      totalSent: distributions.reduce((sum, entry) => sum + entry.lines, 0),
+      totalSent: marginAdjustedAttack.reduce((sum, entry) => sum + entry.lines, 0),
     };
   }
 
@@ -1351,6 +1383,7 @@ export default function Tetris99GameProper() {
       attackerBonus: attack.attackerBonus,
       attackerCount: attack.attackerCount,
       badgeBoostPercent: attack.badgeBoostPercent,
+      marginBonus: attack.marginBonus,
       targetCount: attack.targetIds.length,
     };
   }
@@ -1448,12 +1481,14 @@ export default function Tetris99GameProper() {
     let attackOffset = 0;
     let attackBonus = 0;
     let badgeBoostPercent = 0;
+    let marginBonus = 0;
 
     if (clearedLines > 0) {
       const attackResolution = sendAttack(attackResult.total);
       attackOffset = attackResolution.offset;
       attackBonus = attackResolution.attackerBonus;
       badgeBoostPercent = attackResolution.badgeBoostPercent;
+      marginBonus = attackResolution.marginBonus;
       playSfx(clearedLines === 4 ? 'tetris' : 'clear');
       if (tSpin === 'full') {
         status = `T-Spin ${clearedLines === 1 ? 'Single' : clearedLines === 2 ? 'Double' : clearedLines === 3 ? 'Triple' : 'Clear'}`;
@@ -1475,6 +1510,9 @@ export default function Tetris99GameProper() {
     }
     if (attackBonus > 0) {
       status = `${status} | Attackers +${attackBonus}`;
+    }
+    if (marginBonus > 0) {
+      status = `${status} | Margin +${marginBonus}`;
     }
     if (badgeBoostPercent > 0) {
       status = `${status} | Badges +${badgeBoostPercent}%`;
@@ -1639,6 +1677,8 @@ export default function Tetris99GameProper() {
       if (countdownRef.current <= 0) {
         countdownRef.current = 0;
         stateRef.current = 'playing';
+        battleStartedAtRef.current = Date.now();
+        battleEndedAtRef.current = null;
         matchEndedAtRef.current = null;
         pauseStartedAtRef.current = null;
         pausedDurationMsRef.current = 0;
