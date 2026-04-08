@@ -451,6 +451,7 @@ export class TetrisAIGame {
   private combo = 0;
   private gameOver = false;
   private difficulty: AIDifficulty;
+  private speedMultiplier = 1;
   private callbacks: AIGameCallbacks;
   private rng: () => number;
   private bag: PieceType[] = [];
@@ -522,6 +523,10 @@ export class TetrisAIGame {
     this.pendingGarbage += count;
   }
 
+  setSpeedMultiplier(multiplier: number): void {
+    this.speedMultiplier = Math.max(0.35, multiplier);
+  }
+
   isGameOver(): boolean {
     return this.gameOver;
   }
@@ -534,7 +539,8 @@ export class TetrisAIGame {
 
     // Add small random delay variation for realism
     const delayVariation = Math.floor(Math.random() * 200) - 50;
-    const delay = Math.max(150, this.difficulty.moveDelay + delayVariation);
+    const baseDelay = Math.round(this.difficulty.moveDelay * this.speedMultiplier);
+    const delay = Math.max(70, baseDelay + delayVariation);
 
     this.moveTimer = setTimeout(() => {
       if (this.gameOver) return;

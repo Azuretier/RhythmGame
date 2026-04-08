@@ -127,9 +127,18 @@ type Snapshot = {
   targetMode: TargetMode;
   state: MatchState;
   countdown: number;
+  speedStage: number;
+  speedLabel: string;
   gameOver: boolean;
   victory: boolean;
   status: string;
+};
+
+type SpeedProfile = {
+  label: string;
+  gravityMs: number;
+  garbageTickMs: number;
+  aiDelayScale: number;
 };
 
 const BOT_COUNT = 98;
@@ -160,9 +169,43 @@ const AI_COLOR_TO_PIECE: Record<string, PieceType | 'garbage'> = {
   '#666666': 'garbage',
 };
 const AI_COLOR_ENTRIES = Object.entries(AI_COLOR_TO_PIECE).filter(([, type]) => type !== 'garbage') as Array<[string, PieceType]>;
+const SPEED_PROFILES: SpeedProfile[] = [
+  { label: 'Slow', gravityMs: 680, garbageTickMs: 420, aiDelayScale: 1.25 },
+  { label: 'Warm', gravityMs: 560, garbageTickMs: 360, aiDelayScale: 1.12 },
+  { label: 'Mid', gravityMs: 440, garbageTickMs: 300, aiDelayScale: 1.0 },
+  { label: 'Fast', gravityMs: 330, garbageTickMs: 240, aiDelayScale: 0.88 },
+  { label: 'Rush', gravityMs: 240, garbageTickMs: 190, aiDelayScale: 0.76 },
+  { label: 'Frenzy', gravityMs: 165, garbageTickMs: 145, aiDelayScale: 0.66 },
+  { label: 'Max', gravityMs: 110, garbageTickMs: 110, aiDelayScale: 0.56 },
+];
 
 const badgeStageFromPoints = (points: number) => (points >= 16 ? 4 : points >= 8 ? 3 : points >= 4 ? 2 : points >= 2 ? 1 : 0);
 const badgeBoostPercentFromStage = (stage: number) => ([0, 25, 50, 75, 100][Math.max(0, Math.min(4, stage))] ?? 0);
+const getSpeedProfile = (stage: number) => SPEED_PROFILES[Math.max(0, Math.min(SPEED_PROFILES.length - 1, stage))] ?? SPEED_PROFILES[0];
+
+function getTimeSpeedStage(elapsedMs: number) {
+  if (elapsedMs < 30_000) return 0;
+  if (elapsedMs < 60_000) return 1;
+  if (elapsedMs < 90_000) return 2;
+  if (elapsedMs < 120_000) return 3;
+  if (elapsedMs < 150_000) return 4;
+  if (elapsedMs < 180_000) return 5;
+  return 6;
+}
+
+function getAliveSpeedStage(alivePlayers: number) {
+  if (alivePlayers > 80) return 0;
+  if (alivePlayers > 60) return 1;
+  if (alivePlayers > 40) return 2;
+  if (alivePlayers > 25) return 3;
+  if (alivePlayers > 15) return 4;
+  if (alivePlayers > 8) return 5;
+  return 6;
+}
+
+function getMatchSpeedStage(elapsedMs: number, alivePlayers: number) {
+  return Math.max(getTimeSpeedStage(elapsedMs), getAliveSpeedStage(alivePlayers));
+}
 
 function getAttackClearType(clearedLines: number, tSpin: 'none' | 'mini' | 'full'): AttackClearType {
   if (tSpin === 'mini' && clearedLines > 0) return 'tSpinMini';
@@ -645,6 +688,11 @@ export default function Tetris99GameProper() {
   const targetModeRef = useRef<TargetMode>('attackers');
   const stateRef = useRef<MatchState>('countdown');
   const countdownRef = useRef(3);
+  const matchStartedAtRef = useRef<number | null>(null);
+  const matchEndedAtRef = useRef<number | null>(null);
+  const pauseStartedAtRef = useRef<number | null>(null);
+  const pausedDurationMsRef = useRef(0);
+  const speedStageRef = useRef(0);
   const victoryRef = useRef(false);
   const lastDamagedByRef = useRef<string | null>(null);
   const statusRef = useRef('Get ready');
@@ -674,6 +722,8 @@ export default function Tetris99GameProper() {
     targetMode: 'attackers',
     state: 'countdown',
     countdown: 3,
+    speedStage: 0,
+    speedLabel: getSpeedProfile(0).label,
     gameOver: false,
     victory: false,
     status: 'Get ready',
@@ -766,6 +816,10 @@ export default function Tetris99GameProper() {
   }
 
   function closeSettingsMenu() {
+    if (pauseStartedAtRef.current !== null) {
+      pausedDurationMsRef.current += Date.now() - pauseStartedAtRef.current;
+      pauseStartedAtRef.current = null;
+    }
     settingsOpenRef.current = false;
     setSettingsOpen(false);
   }
@@ -774,6 +828,9 @@ export default function Tetris99GameProper() {
     clearDAS();
     clearSoftDrop();
     keysRef.current.clear();
+    if (stateRef.current === 'playing' && pauseStartedAtRef.current === null) {
+      pauseStartedAtRef.current = Date.now();
+    }
     settingsOpenRef.current = true;
     setSettingsOpen(true);
   }
@@ -856,11 +913,45 @@ export default function Tetris99GameProper() {
     attackEffectTimersRef.current.push(timeout);
   }
 
+  function getAlivePlayerCount() {
+    const aliveBots = botsRef.current.filter(bot => bot.alive).length;
+    const playerAlive = stateRef.current === 'gameOver' && !victoryRef.current ? 0 : 1;
+    return aliveBots + playerAlive;
+  }
+
+  function getMatchElapsedMs() {
+    if (!matchStartedAtRef.current) return 0;
+    const end = matchEndedAtRef.current ?? Date.now();
+    const pausedForCurrentSession = pauseStartedAtRef.current !== null && matchEndedAtRef.current === null
+      ? end - pauseStartedAtRef.current
+      : 0;
+    return Math.max(0, end - matchStartedAtRef.current - pausedDurationMsRef.current - pausedForCurrentSession);
+  }
+
+  function syncMatchSpeed() {
+    const nextStage =
+      stateRef.current === 'countdown'
+        ? 0
+        : getMatchSpeedStage(getMatchElapsedMs(), getAlivePlayerCount());
+
+    if (speedStageRef.current !== nextStage) {
+      speedStageRef.current = nextStage;
+      const nextAiDelayScale = getSpeedProfile(nextStage).aiDelayScale;
+      for (const aiGame of botAiGamesRef.current.values()) {
+        aiGame.setSpeedMultiplier(nextAiDelayScale);
+      }
+    }
+
+    return nextStage;
+  }
+
   function syncSnapshot(status?: string) {
     const nextStatus = status ?? statusRef.current;
     statusRef.current = nextStatus;
     const alive = botsRef.current.filter(bot => bot.alive).length;
     const attackers = botsRef.current.filter(bot => bot.alive && bot.targetIds.includes(PLAYER_ID)).length;
+    const speedStage = syncMatchSpeed();
+    const speedProfile = getSpeedProfile(speedStage);
     setSnapshot({
       board: boardRef.current,
       currentPiece: currentPieceRef.current,
@@ -883,6 +974,8 @@ export default function Tetris99GameProper() {
       targetMode: targetModeRef.current,
       state: stateRef.current,
       countdown: countdownRef.current,
+      speedStage,
+      speedLabel: speedProfile.label,
       gameOver: stateRef.current === 'gameOver',
       victory: victoryRef.current,
       status: nextStatus,
@@ -936,6 +1029,11 @@ export default function Tetris99GameProper() {
     statusRef.current = 'Get ready';
     stateRef.current = 'countdown';
     countdownRef.current = 3;
+    matchStartedAtRef.current = null;
+    matchEndedAtRef.current = null;
+    pauseStartedAtRef.current = null;
+    pausedDurationMsRef.current = 0;
+    speedStageRef.current = 0;
     victoryRef.current = false;
     rngRef.current = makeRng(99009 + Math.floor(Math.random() * 10000));
     bagRef.current = makeBag(rngRef.current);
@@ -980,6 +1078,7 @@ export default function Tetris99GameProper() {
     keysRef.current.clear();
     garbageSparklePacketRef.current = null;
     stateRef.current = 'gameOver';
+    matchEndedAtRef.current = matchStartedAtRef.current ? Date.now() : null;
     victoryRef.current = victory;
     playSfx(victory ? 'win' : 'lose');
     syncSnapshot(victory ? 'Winner!' : 'Game over');
@@ -1299,6 +1398,7 @@ export default function Tetris99GameProper() {
           if (currentBot) eliminateBot(currentBot);
         },
       });
+      aiGame.setSpeedMultiplier(getSpeedProfile(speedStageRef.current).aiDelayScale);
       botAiGamesRef.current.set(bot.id, aiGame);
       aiGame.start();
     }
@@ -1517,6 +1617,10 @@ export default function Tetris99GameProper() {
       if (countdownRef.current <= 0) {
         countdownRef.current = 0;
         stateRef.current = 'playing';
+        matchStartedAtRef.current = Date.now();
+        matchEndedAtRef.current = null;
+        pauseStartedAtRef.current = null;
+        pausedDurationMsRef.current = 0;
         playSfx('start');
         syncSnapshot('Fight!');
         return;
@@ -1616,13 +1720,14 @@ export default function Tetris99GameProper() {
   }, []);
 
   useEffect(() => {
+    const speedProfile = getSpeedProfile(snapshot.speedStage);
     const gravity = window.setInterval(() => {
       if (settingsOpenRef.current) return;
       if (stateRef.current !== 'playing' || !currentPieceRef.current) return;
       moveDown();
-    }, snapshot.place <= 10 ? 170 : snapshot.place <= 40 ? 260 : 420);
+    }, speedProfile.gravityMs);
     return () => window.clearInterval(gravity);
-  }, [snapshot.place]);
+  }, [snapshot.speedStage]);
 
   useEffect(() => {
     if (snapshot.state !== 'playing') {
@@ -1633,6 +1738,7 @@ export default function Tetris99GameProper() {
 
     startBotAiGames();
 
+    const speedProfile = getSpeedProfile(snapshot.speedStage);
     const botLoop = window.setInterval(() => {
       if (settingsOpenRef.current) return;
       if (stateRef.current !== 'playing') return;
@@ -1654,13 +1760,13 @@ export default function Tetris99GameProper() {
         syncSnapshot(boardDanger(boardRef.current) >= 18 ? 'Danger zone' : 'Battle in progress');
       }
       setBotRenderVersion(prev => prev + 1);
-    }, 260);
+    }, speedProfile.garbageTickMs);
     return () => {
       window.clearInterval(botLoop);
       for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
       botAiGamesRef.current.clear();
     };
-  }, [snapshot.state]);
+  }, [snapshot.state, snapshot.speedStage]);
 
   const targetedBots = useMemo(() => {
     return new Set(playerTargetIdsRef.current);
@@ -1707,7 +1813,7 @@ export default function Tetris99GameProper() {
             <div className={styles.heroCard}>
               <div className={styles.heroHeader}>
                 <div><div className={styles.heroTitle}>Player Board</div><div className={styles.heroSubtle}>{snapshot.status}</div></div>
-                <div className={styles.heroSubtle}>{targetLabel(snapshot.targetMode)} targeting</div>
+                <div className={styles.heroSubtle}>{`${targetLabel(snapshot.targetMode)} targeting | ${snapshot.speedLabel} speed`}</div>
               </div>
               <div className={styles.heroLayout}>
                 <div className={styles.previewColumn}>
