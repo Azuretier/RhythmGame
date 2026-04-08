@@ -101,6 +101,13 @@ type ServerMessage =
   | PlayerDefeatedMessage
   | SetSpeedStageMessage;
 
+type BotEliminatedEvent = {
+  type: 'bot-eliminated';
+  matchId: number;
+  victimId: string;
+  killerId: string | null;
+};
+
 const scope = self as DedicatedWorkerGlobalScope;
 
 const BOT_COUNT = 98;
@@ -134,6 +141,7 @@ const SPEED_AI_DELAY_SCALES = [1.1, 1.0, 0.92, 0.84, 0.74, 0.64, 0.58, 0.52, 0.4
 let currentMatchId = 0;
 let running = false;
 let paused = false;
+let matchResolved = false;
 let packetId = 0;
 let currentSpeedStage = 0;
 let snapshotTimer: ReturnType<typeof setTimeout> | null = null;
@@ -385,6 +393,35 @@ function getAlivePlayerCount() {
   return bots.filter(bot => bot.alive).length + (playerState.alive ? 1 : 0);
 }
 
+function finishResolvedMatch(winnerId: string | null) {
+  if (matchResolved) return;
+  matchResolved = true;
+  running = false;
+  paused = false;
+  stopAllAiGames();
+  const winnerName = winnerId === PLAYER_ID
+    ? 'YOU'
+    : (winnerId ? getBotById(winnerId)?.name ?? null : null);
+  scope.postMessage({
+    type: 'match-finished',
+    matchId: currentMatchId,
+    winnerId,
+    winnerName,
+  });
+}
+
+function maybeResolveMatch() {
+  if (matchResolved || !running) return;
+  const aliveBots = bots.filter(bot => bot.alive);
+  if (playerState.alive) {
+    if (aliveBots.length === 0) finishResolvedMatch(PLAYER_ID);
+    return;
+  }
+  if (aliveBots.length <= 1) {
+    finishResolvedMatch(aliveBots[0]?.id ?? null);
+  }
+}
+
 function getSpeedAiDelayScale(stage: number) {
   return SPEED_AI_DELAY_SCALES[Math.max(0, Math.min(SPEED_AI_DELAY_SCALES.length - 1, stage))] ?? SPEED_AI_DELAY_SCALES[0];
 }
@@ -574,11 +611,15 @@ function eliminateBot(bot: BotSnapshot) {
   aiGames.delete(bot.id);
   bot.alive = false;
   bot.targetIds = [];
+  scope.postMessage({
+    type: 'bot-eliminated',
+    matchId: currentMatchId,
+    victimId: bot.id,
+    killerId: bot.lastDamagedBy,
+  } satisfies BotEliminatedEvent);
   awardKo(bot.lastDamagedBy, bot.badges, bot.id);
   scheduleSnapshot();
-  if (!bots.some(entry => entry.alive)) {
-    scope.postMessage({ type: 'all-bots-eliminated', matchId: currentMatchId });
-  }
+  maybeResolveMatch();
 }
 
 function routeBotAttack(botId: string, lines: number) {
@@ -665,6 +706,7 @@ function resetMatch(matchId: number) {
   currentMatchId = matchId;
   running = false;
   paused = false;
+  matchResolved = false;
   packetId = 0;
   stopAllAiGames();
   botSeedRng = makeRng(44091 + Math.floor(Math.random() * 10000));
@@ -676,7 +718,7 @@ function resetMatch(matchId: number) {
 }
 
 function startMatch(matchId: number) {
-  if (matchId !== currentMatchId || running) return;
+  if (matchId !== currentMatchId || running || matchResolved) return;
   running = true;
   paused = false;
 
@@ -752,6 +794,7 @@ function resumeMatch(matchId: number) {
 
 function stopMatch(matchId: number) {
   if (matchId !== currentMatchId) return;
+  matchResolved = true;
   running = false;
   paused = false;
   stopAllAiGames();
@@ -774,6 +817,7 @@ function handlePlayerDefeated(matchId: number, killerId: string | null, victimBa
   killer.badgePoints += 1 + victimBadges;
   killer.badges = badgeStageFromPoints(killer.badgePoints);
   scheduleSnapshot();
+  maybeResolveMatch();
 }
 
 function handleSyncPlayer(matchId: number, nextPlayerState: PlayerState) {
@@ -782,6 +826,12 @@ function handleSyncPlayer(matchId: number, nextPlayerState: PlayerState) {
     ...nextPlayerState,
     targetIds: [...nextPlayerState.targetIds],
   };
+  bots.forEach(bot => {
+    if (!bot.alive) return;
+    refreshBotTargeting(bot);
+  });
+  maybeResolveMatch();
+  scheduleSnapshot();
 }
 
 function handleSetSpeedStage(matchId: number, stage: number) {

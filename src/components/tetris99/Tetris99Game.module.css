@@ -487,6 +487,49 @@
   box-shadow: inset 0 1px 0 rgba(255, 242, 221, 0.18), 0 0 16px rgba(255, 106, 94, 0.18);
 }
 
+.targetButton:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.spectatingBanner {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  z-index: 7;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(8, 11, 18, 0.86), rgba(5, 7, 12, 0.92));
+  border: 1px solid rgba(255, 172, 116, 0.18);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+}
+
+.spectatingCopy {
+  display: grid;
+  gap: 4px;
+}
+
+.spectatingTitle {
+  font-size: 0.84rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff2df;
+}
+
+.spectatingBody {
+  max-width: 30ch;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: rgba(244, 239, 230, 0.74);
+}
+
 .queueCard,
 .controlCard {
   padding: 10px 12px;
@@ -861,10 +904,31 @@
   overflow: hidden;
 }
 
+.microCardClickable {
+  cursor: pointer;
+}
+
+.microCardClickable:hover {
+  transform: translateY(-1px) scale(1.01);
+  border-color: rgba(255, 184, 121, 0.3);
+}
+
+.microCardClickable:focus-visible {
+  outline: none;
+  border-color: rgba(255, 211, 165, 0.76);
+  box-shadow: 0 0 0 2px rgba(255, 169, 102, 0.28);
+}
+
 .microCardTargeted {
   border-color: rgba(255, 185, 129, 0.56);
   background: linear-gradient(180deg, rgba(255, 136, 70, 0.2), rgba(255, 96, 78, 0.12));
   box-shadow: inset 0 0 0 1px rgba(255, 210, 170, 0.14), 0 0 14px rgba(255, 126, 73, 0.12);
+}
+
+.microCardFocused {
+  border-color: rgba(255, 223, 145, 0.78);
+  background: linear-gradient(180deg, rgba(255, 183, 73, 0.24), rgba(255, 116, 82, 0.16));
+  box-shadow: inset 0 0 0 1px rgba(255, 236, 193, 0.2), 0 0 18px rgba(255, 182, 73, 0.18);
 }
 
 .microCardAttacker {
