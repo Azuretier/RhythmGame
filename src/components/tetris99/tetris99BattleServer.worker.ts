@@ -39,6 +39,7 @@ type BotSnapshot = {
   combo: number;
   b2bActive: boolean;
   tSpins: number;
+  kos: number;
   lines: number;
   score: number;
   badgePoints: number;
@@ -106,6 +107,13 @@ type BotEliminatedEvent = {
   matchId: number;
   victimId: string;
   killerId: string | null;
+};
+
+type BotSfxEvent = {
+  type: 'bot-sfx';
+  matchId: number;
+  sourceId: string;
+  kind: 'drop' | 'clear' | 'tetris' | 'garbage' | 'ko' | 'lose';
 };
 
 const scope = self as DedicatedWorkerGlobalScope;
@@ -422,6 +430,15 @@ function maybeResolveMatch() {
   }
 }
 
+function emitBotSfx(sourceId: string, kind: BotSfxEvent['kind']) {
+  scope.postMessage({
+    type: 'bot-sfx',
+    matchId: currentMatchId,
+    sourceId,
+    kind,
+  } satisfies BotSfxEvent);
+}
+
 function getSpeedAiDelayScale(stage: number) {
   return SPEED_AI_DELAY_SCALES[Math.max(0, Math.min(SPEED_AI_DELAY_SCALES.length - 1, stage))] ?? SPEED_AI_DELAY_SCALES[0];
 }
@@ -574,6 +591,7 @@ function applyBotPendingGarbage(bot: BotSnapshot) {
   bot.pendingGarbage = collected.queue;
   if (collected.due <= 0) return;
   bot.lastDamagedBy = collected.lastSource;
+  emitBotSfx(bot.id, 'garbage');
   aiGames.get(bot.id)?.addGarbage(collected.due);
 }
 
@@ -601,14 +619,17 @@ function awardKo(killerId: string | null, victimBadges: number, victimId: string
   }
   const killer = getBotById(killerId);
   if (!killer || !killer.alive) return;
+  killer.kos += 1;
   killer.badgePoints += 1 + victimBadges;
   killer.badges = badgeStageFromPoints(killer.badgePoints);
+  emitBotSfx(killer.id, 'ko');
 }
 
 function eliminateBot(bot: BotSnapshot) {
   if (!bot.alive) return;
   aiGames.get(bot.id)?.stop();
   aiGames.delete(bot.id);
+  emitBotSfx(bot.id, 'lose');
   bot.alive = false;
   bot.targetIds = [];
   scope.postMessage({
@@ -688,6 +709,7 @@ function createInitialBot(index: number): BotSnapshot {
     combo: 0,
     b2bActive: false,
     tSpins: 0,
+    kos: 0,
     lines: 0,
     score: 0,
     badgePoints: 0,
@@ -758,8 +780,10 @@ function startMatch(matchId: number) {
         refreshBotTargeting(currentBot);
 
         if (placement.clearedLines > 0) {
+          emitBotSfx(currentBot.id, placement.clearedLines === 4 ? 'tetris' : 'clear');
           routeBotAttack(currentBot.id, attackResult.total);
         } else {
+          emitBotSfx(currentBot.id, 'drop');
           applyBotPendingGarbage(currentBot);
           scheduleSnapshot();
         }
@@ -814,8 +838,10 @@ function handlePlayerDefeated(matchId: number, killerId: string | null, victimBa
   if (!killerId || killerId === PLAYER_ID) return;
   const killer = getBotById(killerId);
   if (!killer || !killer.alive) return;
+  killer.kos += 1;
   killer.badgePoints += 1 + victimBadges;
   killer.badges = badgeStageFromPoints(killer.badgePoints);
+  emitBotSfx(killer.id, 'ko');
   scheduleSnapshot();
   maybeResolveMatch();
 }

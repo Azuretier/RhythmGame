@@ -91,6 +91,7 @@ type BotState = {
   combo: number;
   b2bActive: boolean;
   tSpins: number;
+  kos: number;
   lines: number;
   score: number;
   badgePoints: number;
@@ -165,6 +166,7 @@ type MatchServerEvent =
   | { type: 'attack'; matchId: number; sourceId: string; distributions: AttackDistribution[] }
   | { type: 'player-ko'; matchId: number; victimId: string; badgeGain: number }
   | { type: 'bot-eliminated'; matchId: number; victimId: string; killerId: string | null }
+  | { type: 'bot-sfx'; matchId: number; sourceId: string; kind: 'drop' | 'clear' | 'tetris' | 'garbage' | 'ko' | 'lose' }
   | { type: 'match-finished'; matchId: number; winnerId: string | null; winnerName: string | null };
 
 type SpeedProfile = {
@@ -548,9 +550,17 @@ function boardDanger(board: RhythmBoardState) {
 
 function targetLabel(mode: TargetMode) {
   if (mode === 'attackers') return 'Attackers';
-  if (mode === 'kos') return 'KOs';
+  if (mode === 'kos') return 'K.O.s';
   if (mode === 'badges') return 'Badges';
   return 'Random';
+}
+
+function getTargetModeFromArrow(code: string): TargetMode | null {
+  if (code === 'ArrowLeft') return 'random';
+  if (code === 'ArrowUp') return 'kos';
+  if (code === 'ArrowRight') return 'badges';
+  if (code === 'ArrowDown') return 'attackers';
+  return null;
 }
 
 function clearTypePanelTitle(clearType: AttackClearType) {
@@ -840,6 +850,7 @@ export default function Tetris99GameProper() {
   const botBoardRefs = useRef(new Map<string, HTMLDivElement>());
   const attackEffectTimersRef = useRef<number[]>([]);
   const speedNoticeTimerRef = useRef<number | null>(null);
+  const targetModeNoticeTimerRef = useRef<number | null>(null);
   const actionPanelTimerRef = useRef<number | null>(null);
   const snapshotFrameRef = useRef<number | null>(null);
   const matchServerRef = useRef<Worker | null>(null);
@@ -890,6 +901,7 @@ export default function Tetris99GameProper() {
   const eliminatedPlaceRef = useRef<number | null>(null);
   const manualTargetIdRef = useRef<string | null>(null);
   const spectatePinnedRef = useRef(false);
+  const spectateTargetIdRef = useRef<string | null>(null);
   const victoryRef = useRef(false);
   const winnerNameRef = useRef<string | null>(null);
   const lastDamagedByRef = useRef<string | null>(null);
@@ -898,6 +910,7 @@ export default function Tetris99GameProper() {
   const [attackEffects, setAttackEffects] = useState<AttackEffect[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [speedNotice, setSpeedNotice] = useState<string | null>(null);
+  const [targetModeNotice, setTargetModeNotice] = useState<string | null>(null);
   const [actionPanel, setActionPanel] = useState<{ eyebrow: string | null; title: string } | null>(null);
   const [showAllAttackTrails, setShowAllAttackTrails] = useState(() => loadTetris99ShowAllAttackTrails());
   const [manualTargetId, setManualTargetId] = useState<string | null>(null);
@@ -1056,6 +1069,14 @@ export default function Tetris99GameProper() {
     setSpeedNotice(null);
   }
 
+  function clearTargetModeNotice() {
+    if (targetModeNoticeTimerRef.current !== null) {
+      window.clearTimeout(targetModeNoticeTimerRef.current);
+      targetModeNoticeTimerRef.current = null;
+    }
+    setTargetModeNotice(null);
+  }
+
   function clearActionPanel() {
     if (actionPanelTimerRef.current !== null) {
       window.clearTimeout(actionPanelTimerRef.current);
@@ -1080,6 +1101,15 @@ export default function Tetris99GameProper() {
       setSpeedNotice(null);
       speedNoticeTimerRef.current = null;
     }, 1350);
+  }
+
+  function showTargetModeNoticeForMode(mode: TargetMode) {
+    clearTargetModeNotice();
+    setTargetModeNotice(targetLabel(mode));
+    targetModeNoticeTimerRef.current = window.setTimeout(() => {
+      setTargetModeNotice(null);
+      targetModeNoticeTimerRef.current = null;
+    }, 1000);
   }
 
   function closeSettingsMenu() {
@@ -1355,6 +1385,7 @@ export default function Tetris99GameProper() {
     clearSoftDrop();
     clearAttackEffects();
     clearSpeedNotice();
+    clearTargetModeNotice();
     clearActionPanel();
     keysRef.current.clear();
     if (snapshotFrameRef.current !== null) {
@@ -1410,6 +1441,7 @@ export default function Tetris99GameProper() {
         combo: 0,
         b2bActive: false,
         tSpins: 0,
+        kos: 0,
         lines: 0,
         score: 0,
         badgePoints: 0,
@@ -1440,6 +1472,7 @@ export default function Tetris99GameProper() {
     clearSoftDrop();
     clearLockTimer();
     clearSpeedNotice();
+    clearTargetModeNotice();
     clearActionPanel();
     keysRef.current.clear();
     garbageSparklePacketRef.current = null;
@@ -1476,6 +1509,7 @@ export default function Tetris99GameProper() {
     clearLockTimer();
     clearAttackEffects();
     clearSpeedNotice();
+    clearTargetModeNotice();
     clearActionPanel();
     keysRef.current.clear();
     garbageSparklePacketRef.current = null;
@@ -1530,6 +1564,7 @@ export default function Tetris99GameProper() {
     targetModeRef.current = mode;
     refreshPlayerTargets(mode === 'random');
     pushPlayerStateToServer();
+    showTargetModeNoticeForMode(mode);
     syncSnapshot(`${targetLabel(mode)} selected`);
   }
 
@@ -1999,6 +2034,10 @@ export default function Tetris99GameProper() {
   }, [showAllAttackTrails]);
 
   useEffect(() => {
+    spectateTargetIdRef.current = spectateTargetId;
+  }, [spectateTargetId]);
+
+  useEffect(() => {
     if (!snapshot.spectating) return;
     if (!spectateTargetId) {
       const fallbackId = getPreferredSpectateBotId();
@@ -2056,8 +2095,29 @@ export default function Tetris99GameProper() {
       }
 
       if (message.type === 'bot-eliminated') {
-        if (message.killerId && message.killerId !== PLAYER_ID) {
+        if (
+          message.killerId
+          && message.killerId !== PLAYER_ID
+          && (!spectateTargetIdRef.current || spectateTargetIdRef.current !== message.killerId || playerAliveRef.current)
+        ) {
           playSfx('koOther');
+        }
+        return;
+      }
+
+      if (message.type === 'bot-sfx') {
+        if (!playerAliveRef.current && stateRef.current !== 'gameOver' && spectateTargetIdRef.current === message.sourceId) {
+          playSfx(message.kind === 'drop'
+            ? 'drop'
+            : message.kind === 'clear'
+              ? 'clear'
+              : message.kind === 'tetris'
+                ? 'tetris'
+                : message.kind === 'garbage'
+                  ? 'garbage'
+                  : message.kind === 'ko'
+                    ? 'ko'
+                    : 'lose');
         }
         return;
       }
@@ -2080,6 +2140,7 @@ export default function Tetris99GameProper() {
       }
       clearAttackEffects();
       clearSpeedNotice();
+      clearTargetModeNotice();
       clearActionPanel();
       setFullscreen(false);
     };
@@ -2144,6 +2205,14 @@ export default function Tetris99GameProper() {
       if (settingsOpenRef.current) return;
       if (!playerAliveRef.current) return;
       if (stateRef.current !== 'playing') return;
+      if (event.ctrlKey) {
+        const nextMode = getTargetModeFromArrow(event.code);
+        if (nextMode) {
+          event.preventDefault();
+          setTargetMode(nextMode);
+        }
+        return;
+      }
       if (keysRef.current.has(event.code)) return;
       keysRef.current.add(event.code);
 
@@ -2270,15 +2339,10 @@ export default function Tetris99GameProper() {
   const centerCurrentPiece = spectateBot ? null : snapshot.currentPiece;
   const centerHold = spectateBot?.hold ?? snapshot.hold;
   const centerQueue = spectateBot?.queue.slice(0, 5) ?? snapshot.queue;
-  const centerB2bActive = spectateBot?.b2bActive ?? snapshot.b2bActive;
   const centerBadgeStage = spectateBot?.badges ?? snapshot.badges;
-  const centerBadgePoints = spectateBot?.badgePoints ?? snapshot.badgePoints;
+  const centerKos = spectateBot?.kos ?? snapshot.kos;
   const centerBadgeBoostPercent = spectateBot ? badgeBoostPercentFromStage(spectateBot.badges) : snapshot.badgeBoostPercent;
   const centerDanger = spectateBot?.danger ?? boardDanger(snapshot.board);
-  const centerLines = spectateBot?.lines ?? snapshot.lines;
-  const centerScore = spectateBot?.score ?? snapshot.score;
-  const centerRen = spectateBot ? Math.max(0, spectateBot.combo - 1) : snapshot.ren;
-  const centerIncomingGarbage = spectateBot ? sumGarbage(spectateBot.pendingGarbage) : snapshot.incomingGarbage;
   const renderAlivePlayers = useMemo(() => (
     botsRef.current.filter(bot => bot.alive).length + (snapshot.playerOut || snapshot.gameOver ? 0 : 1)
   ), [botRenderVersion, snapshot.playerOut, snapshot.gameOver]);
@@ -2342,57 +2406,17 @@ export default function Tetris99GameProper() {
           <div className={styles.sidePanel}>{leftBotBoards}</div>
           <div className={styles.boardStack}>
             <div className={styles.heroCard}>
-              <div className={styles.heroHeader}>
-                <div>
-                  <div className={styles.heroTitle}>{spectateBot ? `Spectating ${spectateBot.name}` : 'Player Board'}</div>
-                  <div className={styles.heroSubtle}>
-                    {spectateBot ? 'Click another bot board to switch focus' : snapshot.status}
-                  </div>
-                </div>
-                <div className={styles.heroSubtle}>
-                  {spectateBot
-                    ? `${targetLabel(spectateBot.targetMode)} targeting | ${snapshot.speedLabel} speed`
-                    : `${manualTargetId ? 'Manual target' : targetLabel(snapshot.targetMode)} targeting | ${snapshot.speedLabel} speed`}
-                </div>
-              </div>
               <div className={styles.heroLayout}>
                 <div className={styles.previewColumn}>
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Hold</span><div className={styles.previewBox}><PreviewShape type={centerHold} /></div></div>
-                  <div className={styles.miniPanel}><span className={styles.panelHeader}>B2B</span><div className={styles.heroSubtle}>{centerB2bActive ? 'Active' : 'Inactive'}</div></div>
                 </div>
                 <div ref={playerBoardFrameRef} className={`${styles.boardFrame} ${centerDanger >= 18 ? styles.boardFrameDanger : ''}`}>
-                  <div className={styles.boardStats}>
-                    <div className={styles.boardStat}>
-                      <span className={styles.statLabel}>{spectateBot ? 'Watch' : 'Place'}</span>
-                      <strong className={styles.boardStatValue}>{spectateBot ? spectateBot.name : `#${snapshot.place}`}</strong>
-                    </div>
-                    <div className={styles.boardStat}>
-                      <span className={styles.statLabel}>{spectateBot ? 'Danger' : 'Attackers'}</span>
-                      <strong className={styles.boardStatValue}>{spectateBot ? spectateBot.danger : snapshot.attackers}</strong>
-                    </div>
-                    <div className={styles.boardStat}>
-                      <span className={styles.statLabel}>Badge Boost</span>
-                      <strong className={styles.boardStatValue}>{`+${centerBadgeBoostPercent}%`}</strong>
-                      <BadgeMeter stage={centerBadgeStage} />
-                    </div>
-                    <div className={styles.boardStat}>
-                      <span className={styles.statLabel}>State</span>
-                      <strong className={styles.boardStatValue}>
-                        {spectateBot
-                          ? (spectateBot.alive ? 'LIVE' : 'OUT')
-                          : snapshot.state === 'countdown'
-                            ? snapshot.countdown
-                            : snapshot.victory
-                              ? 'WIN'
-                              : snapshot.playerOut
-                                ? 'OUT'
-                                : snapshot.gameOver
-                                  ? 'END'
-                                  : 'LIVE'}
-                      </strong>
-                    </div>
-                  </div>
                   <div className={styles.boardPlayfield}>
+                    {targetModeNotice && !snapshot.gameOver && !snapshot.playerOut && (
+                      <div className={styles.targetModeNoticeOverlay} aria-hidden="true">
+                        <div className={styles.targetModeNoticeText}>{targetModeNotice}</div>
+                      </div>
+                    )}
                     {actionPanel && !snapshot.gameOver && (
                       <div className={styles.actionPanelOverlay} aria-hidden="true">
                         {actionPanel.eyebrow && <div className={styles.actionPanelEyebrow}>{actionPanel.eyebrow}</div>}
@@ -2401,7 +2425,7 @@ export default function Tetris99GameProper() {
                     )}
                     <div className={styles.boardPlayfieldInner}>
                       <div className={styles.garbagePanel}>
-                        <span className={styles.garbagePanelLabel}>{spectateBot ? 'Target' : 'Incoming'}</span>
+                        <span className={styles.garbagePanelLabel}>Incoming</span>
                         <IncomingGarbageRail packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets} alivePlayers={renderAlivePlayers} />
                       </div>
                       <PlayerBoard board={centerBoard} currentPiece={centerCurrentPiece} />
@@ -2478,38 +2502,22 @@ export default function Tetris99GameProper() {
                 </div>
                 <div className={styles.previewColumn}>
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Next</span><div className={styles.previewBox}>{centerQueue.map((type, i) => <PreviewShape key={`${type}-${i}`} type={type} />)}</div></div>
+                  <div className={`${styles.miniPanel} ${styles.battleInfoPanel}`}>
+                    <div className={styles.battleInfoMetric}>
+                      <span className={styles.panelHeader}>K.O.</span>
+                      <strong className={styles.battleInfoValue}>{String(centerKos).padStart(2, '0')}</strong>
+                    </div>
+                    <div className={styles.battleInfoMetric}>
+                      <span className={styles.panelHeader}>Players</span>
+                      <strong className={styles.battleInfoValue}>{String(renderAlivePlayers).padStart(2, '0')}</strong>
+                    </div>
+                    <div className={styles.battleInfoMetric}>
+                      <span className={styles.panelHeader}>Badges</span>
+                      <BadgeMeter stage={centerBadgeStage} />
+                      <div className={styles.battleInfoBoost}>{`+${centerBadgeBoostPercent}%`}</div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className={styles.hudCard}>
-              <div className={styles.hudGrid}>
-                <div className={styles.hudMetric}><span className={styles.statLabel}>Score</span><span className={styles.hudValue}>{centerScore.toLocaleString()}</span></div>
-                <div className={styles.hudMetric}><span className={styles.statLabel}>Lines</span><span className={styles.hudValue}>{centerLines}</span></div>
-                <div className={styles.hudMetric}><span className={styles.statLabel}>{spectateBot ? 'Badges' : 'KOs'}</span><span className={styles.hudValue}>{spectateBot ? centerBadgePoints : snapshot.kos}</span></div>
-              </div>
-              <div className={styles.targetRow}>
-                {(['random', 'attackers', 'kos', 'badges'] as TargetMode[]).map(mode => (
-                  <button
-                    key={mode}
-                    className={`${styles.targetButton} ${snapshot.targetMode === mode ? styles.targetActive : ''}`}
-                    onClick={() => setTargetMode(mode)}
-                    disabled={snapshot.playerOut || snapshot.gameOver}
-                  >
-                    {targetLabel(mode)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className={styles.queueCard}>
-              <span className={styles.panelHeader}>Systems</span>
-              <div className={styles.queueList}>
-                <div className={styles.queueItem}><span>Incoming garbage</span><strong>{centerIncomingGarbage}</strong></div>
-                <div className={styles.queueItem}><span>Badges</span><strong>{centerBadgePoints}</strong></div>
-                <div className={styles.queueItem}><span>Badge boost</span><strong>{`+${centerBadgeBoostPercent}%`}</strong></div>
-                <div className={styles.queueItem}><span>REN</span><strong>{centerRen}</strong></div>
-                <div className={styles.queueItem}><span>T-Spins</span><strong>{spectateBot ? spectateBot.tSpins : snapshot.tSpins}</strong></div>
-                <div className={styles.queueItem}><span>Target mode</span><strong>{spectateBot ? targetLabel(spectateBot.targetMode) : (manualTargetId ? 'Manual' : targetLabel(snapshot.targetMode))}</strong></div>
-                <div className={styles.queueItem}><span>Status</span><strong>{spectateBot ? (spectateBot.alive ? 'Spectating live bot' : 'Spectating KO bot') : snapshot.status}</strong></div>
               </div>
             </div>
           </div>
