@@ -20,7 +20,7 @@ import styles from './Tetris99Game.module.css';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 type TargetMode = 'random' | 'attackers' | 'kos' | 'badges';
-type MatchState = 'countdown' | 'playing' | 'gameOver';
+type MatchState = 'countdown' | 'playing' | 'spectating' | 'gameOver';
 type AttackClearType =
   | 'none'
   | 'single'
@@ -130,8 +130,29 @@ type Snapshot = {
   speedLabel: string;
   gameOver: boolean;
   victory: boolean;
+  winnerName: string | null;
   status: string;
 };
+
+type SfxKind =
+  | 'move'
+  | 'rotate'
+  | 'hold'
+  | 'drop'
+  | 'clearSingle'
+  | 'clearDouble'
+  | 'clearTriple'
+  | 'tetris'
+  | 'tSpin'
+  | 'garbage'
+  | 'garbageSparkle'
+  | 'ko'
+  | 'countdown'
+  | 'start'
+  | 'danger'
+  | 'playerOut'
+  | 'win'
+  | 'lose';
 
 type MatchServerMessage =
   | { type: 'reset'; matchId: number }
@@ -244,6 +265,10 @@ function getGravityStage(elapsedMs: number, alivePlayers: number) {
     }
   }
   return stage;
+}
+
+function isMatchLiveState(state: MatchState) {
+  return state === 'playing' || state === 'spectating';
 }
 
 function getAttackClearType(clearedLines: number, tSpin: 'none' | 'mini' | 'full'): AttackClearType {
@@ -846,6 +871,9 @@ export default function Tetris99GameProper() {
   const pausedDurationMsRef = useRef(0);
   const speedStageRef = useRef(0);
   const victoryRef = useRef(false);
+  const playerAliveRef = useRef(true);
+  const finalPlaceRef = useRef<number | null>(null);
+  const winnerNameRef = useRef<string | null>(null);
   const lastDamagedByRef = useRef<string | null>(null);
   const statusRef = useRef('Get ready');
   const [botRenderVersion, setBotRenderVersion] = useState(0);
@@ -880,6 +908,7 @@ export default function Tetris99GameProper() {
     speedLabel: getSpeedProfile(0).label,
     gameOver: false,
     victory: false,
+    winnerName: null,
     status: 'Get ready',
   });
 
@@ -889,7 +918,7 @@ export default function Tetris99GameProper() {
     return audioRef.current;
   }
 
-  function beep(freq: number, duration: number, type: OscillatorType, gainValue: number, end?: number, startDelay = 0) {
+  function tone(freq: number, duration: number, type: OscillatorType, gainValue: number, end?: number, startDelay = 0) {
     const ctx = ensureAudio();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -905,22 +934,120 @@ export default function Tetris99GameProper() {
     osc.stop(startTime + duration);
   }
 
-  function playSfx(kind: 'move' | 'rotate' | 'drop' | 'clear' | 'tetris' | 'garbage' | 'garbageSparkle' | 'ko' | 'start' | 'danger' | 'win' | 'lose') {
-    if (kind === 'move') beep(220, 0.04, 'square', 0.025);
-    if (kind === 'rotate') beep(440, 0.05, 'triangle', 0.03, 520);
-    if (kind === 'drop') beep(180, 0.08, 'sawtooth', 0.05, 80);
-    if (kind === 'clear') { beep(660, 0.12, 'triangle', 0.05, 880); beep(990, 0.1, 'triangle', 0.03); }
-    if (kind === 'tetris') { beep(660, 0.18, 'triangle', 0.06, 1320); beep(330, 0.18, 'square', 0.035, 165); }
-    if (kind === 'garbage') beep(130, 0.14, 'sawtooth', 0.045, 75);
-    if (kind === 'garbageSparkle') {
-      beep(1175, 0.05, 'triangle', 0.018, 1568);
-      beep(1568, 0.08, 'sine', 0.014, 2349, 0.035);
+  function sweep(from: number, to: number, duration: number, type: OscillatorType, gainValue: number, startDelay = 0) {
+    tone(from, duration, type, gainValue, to, startDelay);
+  }
+
+  function noise(duration: number, gainValue: number, filterFreq: number, filterQ: number, startDelay = 0) {
+    const ctx = ensureAudio();
+    const startTime = ctx.currentTime + startDelay;
+    const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i += 1) {
+      data[i] = Math.random() * 2 - 1;
     }
-    if (kind === 'ko') { beep(523, 0.14, 'triangle', 0.05, 1047); beep(783, 0.16, 'triangle', 0.04); }
-    if (kind === 'start') beep(440, 0.1, 'triangle', 0.05, 880);
-    if (kind === 'danger') beep(150, 0.12, 'square', 0.04, 110);
-    if (kind === 'win') { beep(523, 0.18, 'triangle', 0.055, 1047); beep(784, 0.22, 'triangle', 0.045, 1568); }
-    if (kind === 'lose') beep(220, 0.26, 'sawtooth', 0.05, 82);
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(filterFreq, startTime);
+    filter.Q.setValueAtTime(filterQ, startTime);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(gainValue, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(startTime);
+    source.stop(startTime + duration);
+  }
+
+  function playSfx(kind: SfxKind) {
+    if (kind === 'move') {
+      tone(320, 0.026, 'square', 0.015);
+      tone(640, 0.024, 'triangle', 0.006, 720, 0.004);
+    }
+    if (kind === 'rotate') {
+      sweep(520, 760, 0.05, 'triangle', 0.022);
+      tone(1040, 0.032, 'sine', 0.006, 1180, 0.01);
+    }
+    if (kind === 'hold') {
+      sweep(430, 920, 0.08, 'triangle', 0.026);
+      tone(1180, 0.07, 'sine', 0.01, 1490, 0.035);
+    }
+    if (kind === 'drop') {
+      sweep(240, 78, 0.11, 'sawtooth', 0.048);
+      noise(0.04, 0.016, 480, 1.2, 0.016);
+    }
+    if (kind === 'clearSingle') {
+      tone(698, 0.09, 'triangle', 0.028, 932);
+      tone(932, 0.08, 'sine', 0.012, 1175, 0.04);
+    }
+    if (kind === 'clearDouble') {
+      tone(622, 0.1, 'triangle', 0.03, 830);
+      tone(830, 0.09, 'triangle', 0.02, 1047, 0.04);
+      tone(1244, 0.06, 'sine', 0.01, 1568, 0.08);
+    }
+    if (kind === 'clearTriple') {
+      tone(622, 0.1, 'triangle', 0.03, 830);
+      tone(932, 0.1, 'triangle', 0.022, 1244, 0.04);
+      tone(1397, 0.09, 'sine', 0.012, 1760, 0.08);
+    }
+    if (kind === 'tetris') {
+      tone(523, 0.14, 'triangle', 0.034, 784);
+      tone(784, 0.16, 'triangle', 0.026, 1175, 0.05);
+      tone(1175, 0.2, 'triangle', 0.018, 1568, 0.11);
+      sweep(196, 88, 0.18, 'square', 0.024, 0.02);
+    }
+    if (kind === 'tSpin') {
+      sweep(560, 860, 0.07, 'triangle', 0.024);
+      tone(1120, 0.08, 'triangle', 0.016, 1490, 0.045);
+      tone(1490, 0.12, 'sine', 0.012, 1865, 0.085);
+    }
+    if (kind === 'garbage') {
+      sweep(145, 66, 0.16, 'sawtooth', 0.042);
+      noise(0.055, 0.022, 220, 0.9, 0.012);
+    }
+    if (kind === 'garbageSparkle') {
+      tone(1319, 0.045, 'triangle', 0.014, 1760);
+      tone(1760, 0.07, 'sine', 0.011, 2637, 0.035);
+      tone(2093, 0.05, 'triangle', 0.007, 2794, 0.07);
+    }
+    if (kind === 'ko') {
+      tone(659, 0.11, 'triangle', 0.026, 988);
+      tone(988, 0.12, 'triangle', 0.022, 1319, 0.05);
+      tone(1319, 0.14, 'sine', 0.012, 1760, 0.1);
+    }
+    if (kind === 'countdown') {
+      tone(660, 0.07, 'triangle', 0.024, 740);
+    }
+    if (kind === 'start') {
+      tone(523, 0.08, 'triangle', 0.024, 784);
+      tone(784, 0.1, 'triangle', 0.024, 1047, 0.05);
+      tone(1047, 0.16, 'triangle', 0.03, 1397, 0.11);
+    }
+    if (kind === 'danger') {
+      sweep(210, 145, 0.09, 'square', 0.028);
+      noise(0.03, 0.012, 980, 3.4, 0.02);
+    }
+    if (kind === 'playerOut') {
+      sweep(620, 170, 0.18, 'sawtooth', 0.038);
+      tone(196, 0.22, 'triangle', 0.022, 110, 0.04);
+      noise(0.08, 0.018, 420, 1.4, 0.03);
+    }
+    if (kind === 'win') {
+      tone(523, 0.14, 'triangle', 0.03, 784);
+      tone(784, 0.14, 'triangle', 0.026, 1175, 0.06);
+      tone(1047, 0.18, 'triangle', 0.024, 1568, 0.12);
+      tone(1568, 0.28, 'sine', 0.016, 2093, 0.18);
+    }
+    if (kind === 'lose') {
+      sweep(360, 110, 0.24, 'sawtooth', 0.032);
+      tone(146, 0.26, 'triangle', 0.018, 82, 0.03);
+    }
   }
 
   function syncGarbageSparkle(queue: GarbagePacket[]) {
@@ -1017,7 +1144,7 @@ export default function Tetris99GameProper() {
     clearDAS();
     clearSoftDrop();
     keysRef.current.clear();
-    if (stateRef.current === 'playing' && pauseStartedAtRef.current === null) {
+    if (isMatchLiveState(stateRef.current) && pauseStartedAtRef.current === null) {
       pauseStartedAtRef.current = Date.now();
     }
     settingsOpenRef.current = true;
@@ -1057,7 +1184,7 @@ export default function Tetris99GameProper() {
       type: 'sync-player',
       matchId: matchIdRef.current,
       player: {
-        alive: !(stateRef.current === 'gameOver' && !victoryRef.current),
+        alive: playerAliveRef.current,
         boardDanger: boardDanger(boardRef.current),
         pendingGarbage: sumGarbage(incomingRef.current),
         badgePoints: badgePointsRef.current,
@@ -1127,7 +1254,7 @@ export default function Tetris99GameProper() {
 
   function getAlivePlayerCount() {
     const aliveBots = botsRef.current.filter(bot => bot.alive).length;
-    const playerAlive = stateRef.current === 'gameOver' && !victoryRef.current ? 0 : 1;
+    const playerAlive = playerAliveRef.current ? 1 : 0;
     return aliveBots + playerAlive;
   }
 
@@ -1171,7 +1298,7 @@ export default function Tetris99GameProper() {
   }
 
   function updateSpeedStage(announce = false) {
-    if (stateRef.current !== 'playing') {
+    if (!isMatchLiveState(stateRef.current)) {
       matchStartedAtRef.current = null;
       matchEndedAtRef.current = null;
       return applySpeedStage(0, false);
@@ -1218,8 +1345,8 @@ export default function Tetris99GameProper() {
         badges: badgesRef.current,
         badgePoints: badgePointsRef.current,
         badgeBoostPercent: badgeBoostPercentFromStage(badgesRef.current),
-        place: alive + (stateRef.current === 'gameOver' && !victoryRef.current ? 0 : 1),
-        attackers,
+        place: finalPlaceRef.current ?? (alive + (playerAliveRef.current ? 1 : 0)),
+        attackers: playerAliveRef.current ? attackers : 0,
         incomingGarbage: sumGarbage(incomingRef.current),
         incomingPackets: incomingRef.current.map(packet => ({ ...packet })),
         ren: Math.max(0, comboRef.current - 1),
@@ -1232,6 +1359,7 @@ export default function Tetris99GameProper() {
         speedLabel: `${speedProfile.label} | ${(getGarbageChargeWindowMs(alivePlayers) / 1000).toFixed(1)}s`,
         gameOver: stateRef.current === 'gameOver',
         victory: victoryRef.current,
+        winnerName: winnerNameRef.current,
         status: nextStatus,
       });
 
@@ -1249,7 +1377,7 @@ export default function Tetris99GameProper() {
     refillQueue();
     const piece = createT99SpawnPiece(type);
     if (!isT99ValidPosition(piece, boardRef.current)) {
-      finish(false);
+      enterSpectatorMode();
       return false;
     }
     currentPieceRef.current = piece;
@@ -1300,6 +1428,9 @@ export default function Tetris99GameProper() {
     pausedDurationMsRef.current = 0;
     speedStageRef.current = 0;
     victoryRef.current = false;
+    playerAliveRef.current = true;
+    finalPlaceRef.current = null;
+    winnerNameRef.current = null;
     rngRef.current = makeRng(99009 + Math.floor(Math.random() * 10000));
     bagRef.current = makeBag(rngRef.current);
     botBagRef.current = makeBag(makeRng(44091 + Math.floor(Math.random() * 10000)));
@@ -1337,20 +1468,26 @@ export default function Tetris99GameProper() {
     syncSnapshot('Get ready');
   }
 
-  function finish(victory: boolean) {
+  function enterSpectatorMode() {
+    if (!playerAliveRef.current || victoryRef.current) return;
     if (stateRef.current === 'gameOver') return;
+
+    finalPlaceRef.current = botsRef.current.filter(bot => bot.alive).length + 1;
     clearDAS();
     clearSoftDrop();
+    clearLockTimer();
     clearAttackEffects();
     clearSpeedNotice();
     clearActionPanel();
     keysRef.current.clear();
     garbageSparklePacketRef.current = null;
-    stateRef.current = 'gameOver';
+    playerAliveRef.current = false;
+    playerTargetIdsRef.current = [];
+    currentPieceRef.current = null;
+    incomingRef.current = [];
+    stateRef.current = 'spectating';
     battleEndedAtRef.current = battleStartedAtRef.current ? Date.now() : null;
-    matchEndedAtRef.current = matchStartedAtRef.current ? Date.now() : null;
-    victoryRef.current = victory;
-    if (!victory && lastDamagedByRef.current && lastDamagedByRef.current !== PLAYER_ID) {
+    if (lastDamagedByRef.current && lastDamagedByRef.current !== PLAYER_ID) {
       postMatchServerMessage({
         type: 'player-defeated',
         matchId: matchIdRef.current,
@@ -1358,9 +1495,29 @@ export default function Tetris99GameProper() {
         victimBadges: badgesRef.current,
       });
     }
+    playSfx('playerOut');
+    pushPlayerStateToServer();
+    syncSnapshot('You are out. Spectating the final battle.');
+  }
+
+  function finish(victory: boolean, winnerName: string | null = null) {
+    if (stateRef.current === 'gameOver') return;
+    clearDAS();
+    clearSoftDrop();
+    clearLockTimer();
+    clearAttackEffects();
+    clearSpeedNotice();
+    clearActionPanel();
+    keysRef.current.clear();
+    garbageSparklePacketRef.current = null;
+    stateRef.current = 'gameOver';
+    battleEndedAtRef.current = battleStartedAtRef.current ? (battleEndedAtRef.current ?? Date.now()) : null;
+    matchEndedAtRef.current = matchStartedAtRef.current ? Date.now() : null;
+    victoryRef.current = victory;
+    winnerNameRef.current = victory ? 'YOU' : winnerName;
     postMatchServerMessage({ type: 'stop', matchId: matchIdRef.current });
     playSfx(victory ? 'win' : 'lose');
-    syncSnapshot(victory ? 'Winner!' : 'Game over');
+    syncSnapshot(victory ? 'Winner!' : winnerName ? `${winnerName} wins` : 'Match complete');
   }
 
   function queuePacket(lines: number, from: string, target: { pendingGarbage: GarbagePacket[] }) {
@@ -1398,7 +1555,7 @@ export default function Tetris99GameProper() {
 
   function getAliveOpponentIds(sourceId: string) {
     const ids = botsRef.current.filter(bot => bot.alive && bot.id !== sourceId).map(bot => bot.id);
-    if (sourceId !== PLAYER_ID && stateRef.current !== 'gameOver') ids.unshift(PLAYER_ID);
+    if (sourceId !== PLAYER_ID && playerAliveRef.current) ids.unshift(PLAYER_ID);
     return ids;
   }
 
@@ -1433,7 +1590,7 @@ export default function Tetris99GameProper() {
       .filter(bot => bot.alive && bot.id !== targetId && bot.targetIds.includes(targetId))
       .map(bot => bot.id);
 
-    if (targetId !== PLAYER_ID && stateRef.current !== 'gameOver' && playerTargets.has(targetId)) {
+    if (targetId !== PLAYER_ID && playerAliveRef.current && playerTargets.has(targetId)) {
       attackers.push(PLAYER_ID);
     }
 
@@ -1464,7 +1621,7 @@ export default function Tetris99GameProper() {
       return chooseRandomTarget(candidates);
     }
     if (mode !== 'random') return chooseTargets(sourceId, mode, playerTargets);
-    const aliveCurrent = currentTargets.filter(id => (id === PLAYER_ID ? stateRef.current !== 'gameOver' : !!getBotById(id)?.alive));
+    const aliveCurrent = currentTargets.filter(id => (id === PLAYER_ID ? playerAliveRef.current : !!getBotById(id)?.alive));
     return aliveCurrent.length ? aliveCurrent : chooseTargets(sourceId, mode, playerTargets);
   }
 
@@ -1505,6 +1662,10 @@ export default function Tetris99GameProper() {
   }
 
   function refreshPlayerTargets(forceRandomRetarget = false) {
+    if (!playerAliveRef.current) {
+      playerTargetIdsRef.current = [];
+      return new Set<string>();
+    }
     const currentTargets = forceRandomRetarget ? [] : playerTargetIdsRef.current;
     playerTargetIdsRef.current = resolveStableTargets(PLAYER_ID, targetModeRef.current, currentTargets);
     return new Set(playerTargetIdsRef.current);
@@ -1618,7 +1779,11 @@ export default function Tetris99GameProper() {
       attackBonus = attackResolution.attackerBonus;
       badgeBoostPercent = attackResolution.badgeBoostPercent;
       marginBonus = attackResolution.marginBonus;
-      playSfx(clearedLines === 4 ? 'tetris' : 'clear');
+      if (tSpin !== 'none') playSfx('tSpin');
+      else if (clearedLines === 4) playSfx('tetris');
+      else if (clearedLines === 3) playSfx('clearTriple');
+      else if (clearedLines === 2) playSfx('clearDouble');
+      else playSfx('clearSingle');
       if (tSpin === 'full') {
         status = `T-Spin ${clearedLines === 1 ? 'Single' : clearedLines === 2 ? 'Double' : clearedLines === 3 ? 'Triple' : 'Clear'}`;
       } else if (tSpin === 'mini') {
@@ -1665,7 +1830,7 @@ export default function Tetris99GameProper() {
     }
 
     if (garbageResult.toppedOut) {
-      finish(false);
+      enterSpectatorMode();
       return;
     }
 
@@ -1787,7 +1952,7 @@ export default function Tetris99GameProper() {
     if (held) {
       const nextPiece = createT99SpawnPiece(held);
       if (!isT99ValidPosition(nextPiece, boardRef.current)) {
-        finish(false);
+        enterSpectatorMode();
         return;
       }
       currentPieceRef.current = nextPiece;
@@ -1797,7 +1962,7 @@ export default function Tetris99GameProper() {
     lockMovesRef.current = 0;
     clearLockTimer();
     if (!held) spawnPiece();
-    playSfx('rotate');
+    playSfx('hold');
     lastMoveRotationRef.current = false;
     lastRotationKickRef.current = null;
     syncSnapshot('Hold');
@@ -1825,13 +1990,18 @@ export default function Tetris99GameProper() {
         }));
         refreshPlayerTargets();
         setBotRenderVersion(prev => prev + 1);
-        syncSnapshot();
+        const aliveBots = message.bots.filter(bot => bot.alive);
+        if (!playerAliveRef.current && aliveBots.length <= 1) {
+          finish(false, aliveBots[0]?.name ?? null);
+          return;
+        }
+        syncSnapshot(stateRef.current === 'spectating' ? `Spectating ${aliveBots.length} survivor${aliveBots.length === 1 ? '' : 's'}` : undefined);
         return;
       }
 
       if (message.type === 'attack') {
         for (const distribution of message.distributions) {
-          if (distribution.targetId === PLAYER_ID) {
+          if (distribution.targetId === PLAYER_ID && playerAliveRef.current) {
             queuePacket(distribution.lines, message.sourceId, { pendingGarbage: incomingRef.current });
           }
         }
@@ -1851,7 +2021,7 @@ export default function Tetris99GameProper() {
       }
 
       if (message.type === 'all-bots-eliminated') {
-        finish(true);
+        finish(playerAliveRef.current, playerAliveRef.current ? 'YOU' : null);
       }
     };
 
@@ -1888,11 +2058,11 @@ export default function Tetris99GameProper() {
         pausedDurationMsRef.current = 0;
         postMatchServerMessage({ type: 'start', matchId: matchIdRef.current });
         pushPlayerStateToServer();
-        playSfx('start');
-        syncSnapshot('Fight!');
-        return;
-      }
-      playSfx('move');
+      playSfx('start');
+      syncSnapshot('Fight!');
+      return;
+    }
+      playSfx('countdown');
       syncSnapshot(`Starting in ${countdownRef.current}`);
     }, 1000);
     return () => window.clearInterval(timer);
@@ -2028,14 +2198,14 @@ export default function Tetris99GameProper() {
   }, [snapshot.state]);
 
   useEffect(() => {
-    if (snapshot.state !== 'playing') return;
+    if (!isMatchLiveState(snapshot.state)) return;
 
     updateSpeedStage(false);
     syncSnapshot();
 
     const speedLoop = window.setInterval(() => {
       if (settingsOpenRef.current) return;
-      if (stateRef.current !== 'playing') return;
+      if (!isMatchLiveState(stateRef.current)) return;
       const changed = updateSpeedStage(true);
       if (changed) syncSnapshot();
     }, 250);
@@ -2054,6 +2224,27 @@ export default function Tetris99GameProper() {
   const rightBotBoards = useMemo(() => (
     botsRef.current.slice(49).map(bot => <MicroBoard key={bot.id} bot={bot} targeted={targetedBots.has(bot.id)} boardRef={node => registerBotBoardRef(bot.id, node)} />)
   ), [botRenderVersion, targetedBots]);
+
+  const spectating = snapshot.state === 'spectating';
+  const survivingOpponents = botsRef.current.filter(bot => bot.alive).length;
+  const stateDisplay =
+    snapshot.state === 'countdown' ? snapshot.countdown :
+      snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') :
+        spectating ? 'VIEW' : 'LIVE';
+  const overlayTitle = snapshot.gameOver
+    ? (snapshot.victory ? 'Victory Royale' : 'Match Complete')
+    : spectating
+      ? 'You Are Out'
+      : null;
+  const overlayBody = snapshot.gameOver
+    ? (snapshot.victory
+      ? `You closed the lobby with ${snapshot.kos} KOs and ${snapshot.badgePoints} badges.`
+      : snapshot.winnerName
+        ? `${snapshot.winnerName} survived the lobby. You finished #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badges.`
+        : `You finished #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badges.`)
+    : spectating
+      ? `You finished #${snapshot.place}. ${survivingOpponents} survivor${survivingOpponents === 1 ? '' : 's'} remain. The match will keep running until a winner is decided.`
+      : null;
 
   return (
     <div className={styles.page}>
@@ -2104,7 +2295,7 @@ export default function Tetris99GameProper() {
                       <strong className={styles.boardStatValue}>{`+${snapshot.badgeBoostPercent}%`}</strong>
                       <BadgeMeter stage={snapshot.badges} />
                     </div>
-                    <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</strong></div>
+                    <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{stateDisplay}</strong></div>
                   </div>
                   <div className={styles.boardPlayfield}>
                     {actionPanel && !snapshot.gameOver && (
@@ -2154,16 +2345,12 @@ export default function Tetris99GameProper() {
                         </div>
                       </div>
                     )}
-                    {snapshot.gameOver && (
+                    {(spectating || snapshot.gameOver) && overlayTitle && overlayBody && (
                       <div className={styles.boardGameOver}>
-                        <h2 className={styles.boardGameOverTitle}>{snapshot.victory ? 'Victory Royale' : 'Game Over'}</h2>
-                        <p className={styles.boardGameOverBody}>
-                          {snapshot.victory
-                            ? `You closed the lobby with ${snapshot.kos} KOs and ${snapshot.badgePoints} badges.`
-                            : `You finished #${snapshot.place} with ${snapshot.kos} KOs and ${snapshot.badgePoints} badges.`}
-                        </p>
+                        <h2 className={styles.boardGameOverTitle}>{overlayTitle}</h2>
+                        <p className={styles.boardGameOverBody}>{overlayBody}</p>
                         <div className={styles.actionRow}>
-                          <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>Play Again</button>
+                          <button className={styles.button} onClick={() => { ensureAudio(); resetGame(); }}>{spectating ? 'Rematch' : 'Play Again'}</button>
                           <button className={styles.ghostButton} onClick={() => router.push('/games')}>Leave Match</button>
                         </div>
                       </div>
