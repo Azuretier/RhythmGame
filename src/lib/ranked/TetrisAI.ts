@@ -29,9 +29,15 @@ interface AIMove {
   score: number;
 }
 
+export interface AIBoardConfig {
+  visibleRows?: number;
+  hiddenRows?: number;
+}
+
 // Board dimensions
 const W = 10;
-const H = 20;
+const DEFAULT_VISIBLE_ROWS = 20;
+const DEFAULT_HIDDEN_ROWS = 0;
 
 // Minimum score advantage the next/hold piece must have to justify saving the current piece
 const HOLD_ADVANTAGE_THRESHOLD = 0.5;
@@ -84,8 +90,17 @@ const SHAPES: Record<PieceType, number[][][]> = {
 };
 
 // I-pieces start one row above the visible board to allow valid 4-wide placement
-function getInitialY(type: PieceType): number {
+function getInitialY(type: PieceType, hiddenRows = DEFAULT_HIDDEN_ROWS): number {
+  if (hiddenRows > 0) return hiddenRows - 1;
   return type === 'I' ? -1 : 0;
+}
+
+function getBoardHeight(board: (BoardCell | null)[][]): number {
+  return board.length;
+}
+
+function getVisibleStart(board: (BoardCell | null)[][], visibleRows = DEFAULT_VISIBLE_ROWS): number {
+  return Math.max(0, getBoardHeight(board) - visibleRows);
 }
 
 // AI difficulty weights
@@ -166,13 +181,14 @@ function getShape(type: PieceType, rotation: number): number[][] {
 }
 
 function isValid(piece: Piece, board: (BoardCell | null)[][]): boolean {
+  const boardHeight = getBoardHeight(board);
   const shape = getShape(piece.type, piece.rotation);
   for (let y = 0; y < shape.length; y++) {
     for (let x = 0; x < shape[y].length; x++) {
       if (shape[y][x]) {
         const nx = piece.x + x;
         const ny = piece.y + y;
-        if (nx < 0 || nx >= W || ny >= H) return false;
+        if (nx < 0 || nx >= W || ny >= boardHeight) return false;
         if (ny >= 0 && board[ny][nx]) return false;
       }
     }
@@ -181,6 +197,7 @@ function isValid(piece: Piece, board: (BoardCell | null)[][]): boolean {
 }
 
 function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
+  const boardHeight = getBoardHeight(board);
   const newBoard = board.map(row => [...row]);
   const shape = getShape(piece.type, piece.rotation);
   const color = COLORS[piece.type];
@@ -189,7 +206,7 @@ function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | nu
       if (shape[y][x]) {
         const ny = piece.y + y;
         const nx = piece.x + x;
-        if (ny >= 0 && ny < H && nx >= 0 && nx < W) {
+        if (ny >= 0 && ny < boardHeight && nx >= 0 && nx < W) {
           newBoard[ny][nx] = { color };
         }
       }
@@ -199,9 +216,10 @@ function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | nu
 }
 
 function clearLines(board: (BoardCell | null)[][]): { board: (BoardCell | null)[][]; cleared: number } {
+  const boardHeight = getBoardHeight(board);
   const remaining = board.filter(row => row.some(cell => cell === null));
-  const cleared = H - remaining.length;
-  while (remaining.length < H) {
+  const cleared = boardHeight - remaining.length;
+  while (remaining.length < boardHeight) {
     remaining.unshift(Array(W).fill(null));
   }
   return { board: remaining, cleared };
@@ -209,6 +227,7 @@ function clearLines(board: (BoardCell | null)[][]): { board: (BoardCell | null)[
 
 function detectTSpin(piece: Piece, board: (BoardCell | null)[][], wasRotation: boolean): 'none' | 'mini' | 'full' {
   if (piece.type !== 'T' || !wasRotation) return 'none';
+  const boardHeight = getBoardHeight(board);
 
   const cx = piece.x + 1;
   const cy = piece.y + 1;
@@ -219,7 +238,7 @@ function detectTSpin(piece: Piece, board: (BoardCell | null)[][], wasRotation: b
 
   let filledCorners = 0;
   for (const [x, y] of corners) {
-    if (x < 0 || x >= W || y < 0 || y >= H || board[y]?.[x]) {
+    if (x < 0 || x >= W || y < 0 || y >= boardHeight || board[y]?.[x]) {
       filledCorners += 1;
     }
   }
@@ -244,7 +263,7 @@ function detectTSpin(piece: Piece, board: (BoardCell | null)[][], wasRotation: b
 
   let frontFilled = 0;
   for (const [x, y] of frontCorners) {
-    if (x < 0 || x >= W || y < 0 || y >= H || board[y]?.[x]) {
+    if (x < 0 || x >= W || y < 0 || y >= boardHeight || board[y]?.[x]) {
       frontFilled += 1;
     }
   }
@@ -261,11 +280,12 @@ function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
 // ===== Heuristic Evaluation =====
 
 function getColumnHeights(board: (BoardCell | null)[][]): number[] {
+  const boardHeight = getBoardHeight(board);
   const heights = new Array(W).fill(0);
   for (let x = 0; x < W; x++) {
-    for (let y = 0; y < H; y++) {
+    for (let y = 0; y < boardHeight; y++) {
       if (board[y][x]) {
-        heights[x] = H - y;
+        heights[x] = boardHeight - y;
         break;
       }
     }
@@ -274,10 +294,11 @@ function getColumnHeights(board: (BoardCell | null)[][]): number[] {
 }
 
 function countHoles(board: (BoardCell | null)[][]): number {
+  const boardHeight = getBoardHeight(board);
   let holes = 0;
   for (let x = 0; x < W; x++) {
     let foundBlock = false;
-    for (let y = 0; y < H; y++) {
+    for (let y = 0; y < boardHeight; y++) {
       if (board[y][x]) {
         foundBlock = true;
       } else if (foundBlock) {
@@ -301,10 +322,11 @@ function getAggregateHeight(heights: number[]): number {
 }
 
 function getWellDepth(heights: number[]): number {
+  const boardHeight = Math.max(DEFAULT_VISIBLE_ROWS, ...heights, 0);
   let maxWell = 0;
   for (let i = 0; i < W; i++) {
-    const left = i > 0 ? heights[i - 1] : H;
-    const right = i < W - 1 ? heights[i + 1] : H;
+    const left = i > 0 ? heights[i - 1] : boardHeight;
+    const right = i < W - 1 ? heights[i + 1] : boardHeight;
     const well = Math.min(left, right) - heights[i];
     if (well > maxWell) maxWell = well;
   }
@@ -336,7 +358,11 @@ function evaluateBoard(
 function getAllPossibleMoves(
   pieceType: PieceType,
   board: (BoardCell | null)[][],
+  boardConfig: AIBoardConfig = {},
 ): AIMove[] {
+  const hiddenRows = boardConfig.hiddenRows ?? DEFAULT_HIDDEN_ROWS;
+  const visibleRows = boardConfig.visibleRows ?? DEFAULT_VISIBLE_ROWS;
+  const visibleStart = getVisibleStart(board, visibleRows);
   const moves: AIMove[] = [];
   const rotations: (0 | 1 | 2 | 3)[] = pieceType === 'O' ? [0] : [0, 1, 2, 3];
 
@@ -346,7 +372,7 @@ function getAllPossibleMoves(
 
     // Try all x positions
     for (let x = -2; x < W + 2; x++) {
-      const piece: Piece = { type: pieceType, rotation, x, y: getInitialY(pieceType) };
+      const piece: Piece = { type: pieceType, rotation, x, y: getInitialY(pieceType, hiddenRows) };
 
       if (!isValid(piece, board)) continue;
 
@@ -362,12 +388,12 @@ function getAllPossibleMoves(
       let aboveBoard = true;
       for (let sy = 0; sy < shape.length; sy++) {
         for (let sx = 0; sx < shapeWidth; sx++) {
-          if (shape[sy][sx] && landY + sy >= 0) {
+          if (shape[sy][sx] && landY + sy >= visibleStart) {
             aboveBoard = false;
           }
         }
       }
-      if (aboveBoard) continue;
+      if (hiddenRows === 0 && aboveBoard) continue;
 
       moves.push({ rotation, x, score: 0 });
       // Store cleared board info for later evaluation
@@ -384,13 +410,15 @@ export function findBestMove(
   board: (BoardCell | null)[][],
   difficulty: AIDifficulty,
   nextPieceType?: PieceType,
+  boardConfig: AIBoardConfig = {},
 ): AIMove | null {
-  const moves = getAllPossibleMoves(pieceType, board);
+  const hiddenRows = boardConfig.hiddenRows ?? DEFAULT_HIDDEN_ROWS;
+  const moves = getAllPossibleMoves(pieceType, board, boardConfig);
   if (moves.length === 0) return null;
 
   // Score each move
   for (const move of moves) {
-    const piece: Piece = { type: pieceType, rotation: move.rotation, x: move.x, y: getInitialY(pieceType) };
+    const piece: Piece = { type: pieceType, rotation: move.rotation, x: move.x, y: getInitialY(pieceType, hiddenRows) };
     const landY = getGhostY(piece, board);
     const landedPiece: Piece = { ...piece, y: landY };
     const newBoard = lockPiece(landedPiece, board);
@@ -399,11 +427,11 @@ export function findBestMove(
 
     // 1-piece look-ahead: blend in the best achievable score for the next piece
     if (difficulty.lookAhead && nextPieceType) {
-      const nextMoves = getAllPossibleMoves(nextPieceType, clearedBoard);
+      const nextMoves = getAllPossibleMoves(nextPieceType, clearedBoard, boardConfig);
       if (nextMoves.length > 0) {
         let bestNextScore = -Infinity;
         for (const nextMove of nextMoves) {
-          const np: Piece = { type: nextPieceType, rotation: nextMove.rotation, x: nextMove.x, y: getInitialY(nextPieceType) };
+          const np: Piece = { type: nextPieceType, rotation: nextMove.rotation, x: nextMove.x, y: getInitialY(nextPieceType, hiddenRows) };
           const nLandY = getGhostY(np, clearedBoard);
           const nLanded: Piece = { ...np, y: nLandY };
           const nBoard = lockPiece(nLanded, clearedBoard);
@@ -461,14 +489,19 @@ export class TetrisAIGame {
   private holdPiece: PieceType | null = null;
   private holdUsed = false;
   private nextQueue: PieceType[] = [];
+  private visibleRows: number;
+  private hiddenRows: number;
 
   constructor(
     seed: number,
     difficulty: AIDifficulty,
     callbacks: AIGameCallbacks,
+    boardConfig: AIBoardConfig = {},
   ) {
     this.difficulty = difficulty;
     this.callbacks = callbacks;
+    this.visibleRows = boardConfig.visibleRows ?? DEFAULT_VISIBLE_ROWS;
+    this.hiddenRows = boardConfig.hiddenRows ?? DEFAULT_HIDDEN_ROWS;
 
     // Create seeded RNG (same as multiplayer)
     let s = seed;
@@ -483,7 +516,7 @@ export class TetrisAIGame {
       return gs / 0x7fffffff;
     };
 
-    this.board = Array.from({ length: H }, () => Array(W).fill(null));
+    this.board = Array.from({ length: this.visibleRows + this.hiddenRows }, () => Array(W).fill(null));
     this.fillQueue();
   }
 
@@ -555,6 +588,7 @@ export class TetrisAIGame {
     if (this.pendingGarbage > 0) {
       this.applyGarbage(this.pendingGarbage);
       this.pendingGarbage = 0;
+      if (this.gameOver) return;
     }
 
     // Determine the piece to actually play (may swap with hold)
@@ -564,9 +598,9 @@ export class TetrisAIGame {
       if (this.holdPiece !== null) {
         // Swap with hold if the hold piece achieves a better score.
         // Cache both evaluations so the winning result is reused directly at execution.
-        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0]);
+        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
         const currentScore = cachedBestMove?.score ?? -Infinity;
-        const holdBestMove = findBestMove(this.holdPiece, this.board, this.difficulty, this.nextQueue[0]);
+        const holdBestMove = findBestMove(this.holdPiece, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
         const holdScore = holdBestMove?.score ?? -Infinity;
         if (holdScore > currentScore) {
           const saved = this.holdPiece;
@@ -579,10 +613,10 @@ export class TetrisAIGame {
       } else if (this.nextQueue.length > 0) {
         // No hold piece yet — save current if next piece gives a significantly better placement.
         // Evaluate the next piece with nextQueue[1] as its look-ahead (the piece that follows it).
-        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0]);
+        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
         const currentScore = cachedBestMove?.score ?? -Infinity;
         const nextLookahead = this.nextQueue[1] ?? pieceType;
-        const nextBestMove = findBestMove(this.nextQueue[0], this.board, this.difficulty, nextLookahead);
+        const nextBestMove = findBestMove(this.nextQueue[0], this.board, this.difficulty, nextLookahead, { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
         const nextScore = nextBestMove?.score ?? -Infinity;
         if (nextScore > currentScore + HOLD_ADVANTAGE_THRESHOLD) {
           this.holdPiece = pieceType;
@@ -598,8 +632,21 @@ export class TetrisAIGame {
       }
     }
 
+    const spawnPiece: Piece = {
+      type: actualPieceType,
+      rotation: 0,
+      x: Math.floor((W - getShape(actualPieceType, 0)[0].length) / 2),
+      y: getInitialY(actualPieceType, this.hiddenRows),
+    };
+
+    if (!isValid(spawnPiece, this.board)) {
+      this.gameOver = true;
+      this.callbacks.onGameOver();
+      return;
+    }
+
     // Find best move, with look-ahead when enabled (reuse cached result if available)
-    const bestMove = cachedBestMove ?? findBestMove(actualPieceType, this.board, this.difficulty, this.nextQueue[0]);
+    const bestMove = cachedBestMove ?? findBestMove(actualPieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
 
     if (!bestMove) {
       // Game over - can't place
@@ -613,7 +660,7 @@ export class TetrisAIGame {
       type: actualPieceType,
       rotation: bestMove.rotation,
       x: bestMove.x,
-      y: getInitialY(actualPieceType),
+      y: getInitialY(actualPieceType, this.hiddenRows),
     };
 
     const landY = getGhostY(piece, this.board);
@@ -622,13 +669,14 @@ export class TetrisAIGame {
     // Check if piece is above board
     const shape = getShape(actualPieceType, bestMove.rotation);
     let aboveBoard = true;
+    const visibleStart = getVisibleStart(this.board, this.visibleRows);
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
-        if (shape[y][x] && landY + y >= 0) aboveBoard = false;
+        if (shape[y][x] && landY + y >= visibleStart) aboveBoard = false;
       }
     }
 
-    if (aboveBoard) {
+    if (this.hiddenRows === 0 && aboveBoard) {
       this.gameOver = true;
       this.callbacks.onGameOver();
       return;
@@ -684,8 +732,17 @@ export class TetrisAIGame {
 
   private applyGarbage(count: number): void {
     if (count <= 0) return;
-    const newBoard = this.board.slice(count);
-    for (let i = 0; i < count; i++) {
+    const rowsToRaise = Math.min(count, this.board.length);
+    if (this.hiddenRows > 0) {
+      const overflowed = this.board.slice(0, rowsToRaise).some(row => row.some(Boolean));
+      if (overflowed) {
+        this.gameOver = true;
+        this.callbacks.onGameOver();
+        return;
+      }
+    }
+    const newBoard = this.board.slice(rowsToRaise);
+    for (let i = 0; i < rowsToRaise; i++) {
       const row: (BoardCell | null)[] = Array(W).fill({ color: '#555555' } as BoardCell);
       const gap = Math.floor(this.garbageRng() * W);
       row[gap] = null;

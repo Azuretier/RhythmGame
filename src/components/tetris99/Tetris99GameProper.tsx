@@ -544,13 +544,16 @@ function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotat
 }
 
 function aiBoardToRhythmBoard(board: ({ color: string } | null)[][]): RhythmBoardState {
-  const visible = board.map(row =>
+  const mapped = board.map(row =>
     row.map(cell => {
       if (!cell) return null;
       return pieceTypeFromAiColor(cell.color);
     }),
   );
-  return [...Array.from({ length: T99_BUFFER_ZONE }, () => Array(BOARD_WIDTH).fill(null)), ...visible];
+  if (mapped.length >= T99_BOARD_HEIGHT) {
+    return mapped.slice(mapped.length - T99_BOARD_HEIGHT);
+  }
+  return [...Array.from({ length: T99_BUFFER_ZONE }, () => Array(BOARD_WIDTH).fill(null)), ...mapped];
 }
 
 function boardDanger(board: RhythmBoardState) {
@@ -1614,7 +1617,7 @@ export default function Tetris99GameProper() {
           const currentBot = getBotById(bot.id);
           if (currentBot) eliminateBot(currentBot);
         },
-      });
+      }, { visibleRows: T99_VISIBLE_HEIGHT, hiddenRows: T99_BUFFER_ZONE });
       aiGame.setSpeedMultiplier(getSpeedProfile(speedStageRef.current).aiDelayScale);
       botAiGamesRef.current.set(bot.id, aiGame);
       aiGame.start();
