@@ -113,7 +113,7 @@ type BotSfxEvent = {
   type: 'bot-sfx';
   matchId: number;
   sourceId: string;
-  kind: 'drop' | 'clear' | 'tetris' | 'garbage' | 'ko' | 'lose';
+  kind: 'drop' | 'lock' | 'clear' | 'tetris' | 'tSpin' | 'tSpinMini' | 'garbage' | 'ko' | 'lose';
 };
 
 const scope = self as DedicatedWorkerGlobalScope;
@@ -780,10 +780,19 @@ function startMatch(matchId: number) {
         refreshBotTargeting(currentBot);
 
         if (placement.clearedLines > 0) {
-          emitBotSfx(currentBot.id, placement.clearedLines === 4 ? 'tetris' : 'clear');
+          emitBotSfx(
+            currentBot.id,
+            placement.tSpin === 'full'
+              ? 'tSpin'
+              : placement.tSpin === 'mini'
+                ? 'tSpinMini'
+                : placement.clearedLines === 4
+                  ? 'tetris'
+                  : 'clear',
+          );
           routeBotAttack(currentBot.id, attackResult.total);
         } else {
-          emitBotSfx(currentBot.id, 'drop');
+          emitBotSfx(currentBot.id, 'lock');
           applyBotPendingGarbage(currentBot);
           scheduleSnapshot();
         }

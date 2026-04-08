@@ -166,7 +166,7 @@ type MatchServerEvent =
   | { type: 'attack'; matchId: number; sourceId: string; distributions: AttackDistribution[] }
   | { type: 'player-ko'; matchId: number; victimId: string; badgeGain: number }
   | { type: 'bot-eliminated'; matchId: number; victimId: string; killerId: string | null }
-  | { type: 'bot-sfx'; matchId: number; sourceId: string; kind: 'drop' | 'clear' | 'tetris' | 'garbage' | 'ko' | 'lose' }
+  | { type: 'bot-sfx'; matchId: number; sourceId: string; kind: 'drop' | 'lock' | 'clear' | 'tetris' | 'tSpin' | 'tSpinMini' | 'garbage' | 'ko' | 'lose' }
   | { type: 'match-finished'; matchId: number; winnerId: string | null; winnerName: string | null };
 
 type SpeedProfile = {
@@ -184,6 +184,9 @@ const PLAYER_ID = 'player';
 const T99_VISIBLE_HEIGHT = 20;
 const T99_BUFFER_ZONE = 20;
 const T99_BOARD_HEIGHT = T99_VISIBLE_HEIGHT + T99_BUFFER_ZONE;
+const PREVIEW_SLOT_COUNT = 5;
+const PREVIEW_GRID_COLUMNS = 4;
+const PREVIEW_GRID_ROWS = 2;
 const FRAME_MS = 1000 / 60;
 const GARBAGE_QUEUE_TICK_MS = 50;
 const GARBAGE_TIMER_START_PLAYERS = 50;
@@ -203,6 +206,15 @@ const PLAYER_COLORS: Record<string, string> = {
   J: '#5f8fff',
   L: '#ffad5a',
   garbage: '#666666',
+};
+const PREVIEW_SHAPES: Record<PieceType, number[][]> = {
+  I: [[0, 0, 0, 0], [1, 1, 1, 1]],
+  O: [[1, 1], [1, 1]],
+  T: [[0, 1, 0], [1, 1, 1]],
+  S: [[0, 1, 1], [1, 1, 0]],
+  Z: [[1, 1, 0], [0, 1, 1]],
+  J: [[1, 0, 0], [1, 1, 1]],
+  L: [[0, 0, 1], [1, 1, 1]],
 };
 const SPEED_PROFILES: SpeedProfile[] = [
   { level: 1, label: 'LV 1', startMs: 0, gravityFrames: 60, softDropFrames: 3, aiDelayScale: 1.1 },
@@ -761,22 +773,41 @@ function MicroBoard({
 }
 
 function PreviewShape({ type }: { type: PieceType | null }) {
-  if (!type) return null;
-  const pieceColor = PLAYER_COLORS[type] ?? PLAYER_COLORS.T;
-  const shape = {
-    I: [[0, 0, 0, 0], [1, 1, 1, 1]],
-    O: [[1, 1], [1, 1]],
-    T: [[0, 1, 0], [1, 1, 1]],
-    S: [[0, 1, 1], [1, 1, 0]],
-    Z: [[1, 1, 0], [0, 1, 1]],
-    J: [[1, 0, 0], [1, 1, 1]],
-    L: [[0, 0, 1], [1, 1, 1]],
-  }[type];
+  const pieceColor = type ? (PLAYER_COLORS[type] ?? PLAYER_COLORS.T) : 'transparent';
+  const shape = type ? PREVIEW_SHAPES[type] : null;
+  const display = Array.from({ length: PREVIEW_GRID_ROWS }, () => Array<number>(PREVIEW_GRID_COLUMNS).fill(0));
+
+  if (shape) {
+    const xOffset = Math.max(0, Math.round((PREVIEW_GRID_COLUMNS - shape[0].length) / 2));
+    const yOffset = Math.max(0, Math.round((PREVIEW_GRID_ROWS - shape.length) / 2));
+
+    for (let y = 0; y < shape.length; y++) {
+      for (let x = 0; x < shape[y].length; x++) {
+        if (!shape[y][x]) continue;
+        const displayY = y + yOffset;
+        const displayX = x + xOffset;
+        if (displayY >= 0 && displayY < PREVIEW_GRID_ROWS && displayX >= 0 && displayX < PREVIEW_GRID_COLUMNS) {
+          display[displayY][displayX] = 1;
+        }
+      }
+    }
+  }
+
   return (
-    <div className={styles.previewShape} style={{ gridTemplateColumns: `repeat(${shape[0].length}, 10px)` }}>
-      {shape.flatMap((row, rowIndex) =>
+    <div
+      className={`${styles.previewShape} ${!type ? styles.previewShapeEmpty : ''}`}
+      style={{ gridTemplateColumns: `repeat(${PREVIEW_GRID_COLUMNS}, 10px)` }}
+    >
+      {display.flatMap((row, rowIndex) =>
         row.map((cell, cellIndex) => (
-          <div key={`${type}-${rowIndex}-${cellIndex}`} className={styles.previewCell} style={{ background: cell ? pieceColor : 'rgba(255,255,255,0.06)' }} />
+          <div
+            key={`${type ?? 'empty'}-${rowIndex}-${cellIndex}`}
+            className={styles.previewCell}
+            style={{
+              background: cell ? pieceColor : 'transparent',
+              boxShadow: cell ? 'inset 0 0 0 1px rgba(255, 255, 255, 0.08)' : 'none',
+            }}
+          />
         )),
       )}
     </div>
@@ -844,6 +875,7 @@ export default function Tetris99GameProper() {
   const router = useRouter();
   const { setFullscreen } = useLayoutConfig();
   const audioRef = useRef<AudioContext | null>(null);
+  const noiseBufferRef = useRef<AudioBuffer | null>(null);
   const garbageSparklePacketRef = useRef<{ packetId: string; yellowPlayed: boolean; redPlayed: boolean } | null>(null);
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const playerBoardFrameRef = useRef<HTMLDivElement | null>(null);
@@ -953,52 +985,197 @@ export default function Tetris99GameProper() {
     return audioRef.current;
   }
 
-  function beep(freq: number, duration: number, type: OscillatorType, gainValue: number, end?: number, startDelay = 0) {
+  function getNoiseBuffer(ctx: AudioContext) {
+    if (!noiseBufferRef.current || noiseBufferRef.current.sampleRate !== ctx.sampleRate) {
+      const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.8), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      noiseBufferRef.current = buffer;
+    }
+    return noiseBufferRef.current;
+  }
+
+  function playTone(options: {
+    freq: number;
+    duration: number;
+    type: OscillatorType;
+    gainValue: number;
+    endFreq?: number;
+    startDelay?: number;
+    attack?: number;
+    detune?: number;
+    filterType?: BiquadFilterType;
+    filterFreq?: number;
+    filterQ?: number;
+  }) {
     const ctx = ensureAudio();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    const startTime = ctx.currentTime + startDelay;
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, startTime);
-    if (end) osc.frequency.exponentialRampToValueAtTime(end, startTime + duration);
-    gain.gain.setValueAtTime(gainValue, startTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-    osc.connect(gain);
+    const startTime = ctx.currentTime + (options.startDelay ?? 0);
+    const attack = options.attack ?? 0.003;
+    osc.type = options.type;
+    osc.frequency.setValueAtTime(options.freq, startTime);
+    if (options.endFreq) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, options.endFreq), startTime + options.duration);
+    }
+    if (options.detune) {
+      osc.detune.setValueAtTime(options.detune, startTime);
+    }
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, options.gainValue), startTime + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + options.duration);
+
+    if (options.filterType) {
+      const filter = ctx.createBiquadFilter();
+      filter.type = options.filterType;
+      filter.frequency.setValueAtTime(options.filterFreq ?? Math.max(200, options.freq * 2), startTime);
+      filter.Q.value = options.filterQ ?? 0.7;
+      osc.connect(filter);
+      filter.connect(gain);
+    } else {
+      osc.connect(gain);
+    }
+
     gain.connect(ctx.destination);
     osc.start(startTime);
-    osc.stop(startTime + duration);
+    osc.stop(startTime + options.duration);
   }
 
-  function playSfx(kind: 'move' | 'rotate' | 'drop' | 'clear' | 'tetris' | 'garbage' | 'garbageSparkleYellow' | 'garbageSparkleRed' | 'ko' | 'koOther' | 'start' | 'danger' | 'win' | 'lose') {
-    if (kind === 'move') beep(220, 0.04, 'square', 0.025);
-    if (kind === 'rotate') beep(440, 0.05, 'triangle', 0.03, 520);
-    if (kind === 'drop') beep(180, 0.08, 'sawtooth', 0.05, 80);
-    if (kind === 'clear') { beep(660, 0.12, 'triangle', 0.05, 880); beep(990, 0.1, 'triangle', 0.03); }
-    if (kind === 'tetris') { beep(660, 0.18, 'triangle', 0.06, 1320); beep(330, 0.18, 'square', 0.035, 165); }
-    if (kind === 'garbage') beep(130, 0.14, 'sawtooth', 0.045, 75);
-    if (kind === 'garbageSparkleYellow') {
-      beep(932, 0.045, 'triangle', 0.014, 1245);
-      beep(1245, 0.065, 'sine', 0.012, 1662, 0.03);
+  function playNoiseBurst(options: {
+    duration: number;
+    gainValue: number;
+    startDelay?: number;
+    filterType?: BiquadFilterType;
+    filterFreq?: number;
+    filterQ?: number;
+  }) {
+    const ctx = ensureAudio();
+    const source = ctx.createBufferSource();
+    source.buffer = getNoiseBuffer(ctx);
+    const gain = ctx.createGain();
+    const startTime = ctx.currentTime + (options.startDelay ?? 0);
+    const filter = ctx.createBiquadFilter();
+    filter.type = options.filterType ?? 'highpass';
+    filter.frequency.setValueAtTime(options.filterFreq ?? 1400, startTime);
+    filter.Q.value = options.filterQ ?? 0.8;
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, options.gainValue), startTime + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + options.duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(startTime);
+    source.stop(startTime + options.duration);
+  }
+
+  function playSfx(kind: 'move' | 'rotate' | 'hold' | 'lock' | 'drop' | 'clear' | 'tetris' | 'tSpin' | 'tSpinMini' | 'garbage' | 'garbageSparkleYellow' | 'garbageSparkleRed' | 'ko' | 'koOther' | 'countdown' | 'start' | 'danger' | 'menu' | 'target' | 'win' | 'lose') {
+    switch (kind) {
+      case 'move':
+        playTone({ freq: 300, endFreq: 248, duration: 0.028, type: 'square', gainValue: 0.009, filterType: 'lowpass', filterFreq: 1100 });
+        playNoiseBurst({ duration: 0.02, gainValue: 0.0035, filterType: 'highpass', filterFreq: 2600 });
+        break;
+      case 'rotate':
+        playTone({ freq: 530, endFreq: 780, duration: 0.046, type: 'triangle', gainValue: 0.014, filterType: 'highpass', filterFreq: 420 });
+        playNoiseBurst({ duration: 0.028, gainValue: 0.0045, startDelay: 0.01, filterType: 'bandpass', filterFreq: 2100, filterQ: 1.6 });
+        break;
+      case 'hold':
+        playTone({ freq: 360, endFreq: 610, duration: 0.06, type: 'triangle', gainValue: 0.018 });
+        playTone({ freq: 180, endFreq: 260, duration: 0.07, type: 'square', gainValue: 0.008, startDelay: 0.01, filterType: 'lowpass', filterFreq: 900 });
+        break;
+      case 'lock':
+        playTone({ freq: 176, endFreq: 98, duration: 0.08, type: 'sawtooth', gainValue: 0.018, filterType: 'lowpass', filterFreq: 620 });
+        playNoiseBurst({ duration: 0.06, gainValue: 0.009, filterType: 'bandpass', filterFreq: 780, filterQ: 1.4 });
+        break;
+      case 'drop':
+        playTone({ freq: 290, endFreq: 78, duration: 0.12, type: 'sawtooth', gainValue: 0.024, filterType: 'lowpass', filterFreq: 820 });
+        playTone({ freq: 610, endFreq: 182, duration: 0.055, type: 'square', gainValue: 0.01, filterType: 'lowpass', filterFreq: 1400 });
+        playNoiseBurst({ duration: 0.085, gainValue: 0.012, filterType: 'lowpass', filterFreq: 1200 });
+        break;
+      case 'clear':
+        playTone({ freq: 740, endFreq: 1047, duration: 0.08, type: 'triangle', gainValue: 0.02 });
+        playTone({ freq: 1109, endFreq: 1397, duration: 0.085, type: 'triangle', gainValue: 0.015, startDelay: 0.045 });
+        playNoiseBurst({ duration: 0.08, gainValue: 0.006, startDelay: 0.035, filterType: 'bandpass', filterFreq: 2300, filterQ: 1.8 });
+        break;
+      case 'tetris':
+        playTone({ freq: 220, endFreq: 140, duration: 0.12, type: 'sawtooth', gainValue: 0.014, filterType: 'lowpass', filterFreq: 540 });
+        playTone({ freq: 740, endFreq: 1319, duration: 0.14, type: 'triangle', gainValue: 0.024, startDelay: 0.015 });
+        playTone({ freq: 1175, endFreq: 1760, duration: 0.15, type: 'triangle', gainValue: 0.02, startDelay: 0.06 });
+        playNoiseBurst({ duration: 0.14, gainValue: 0.01, startDelay: 0.04, filterType: 'bandpass', filterFreq: 2500, filterQ: 1.4 });
+        break;
+      case 'tSpinMini':
+        playTone({ freq: 466, endFreq: 740, duration: 0.055, type: 'triangle', gainValue: 0.018 });
+        playTone({ freq: 880, endFreq: 622, duration: 0.075, type: 'square', gainValue: 0.01, startDelay: 0.02 });
+        playNoiseBurst({ duration: 0.05, gainValue: 0.004, startDelay: 0.02, filterType: 'bandpass', filterFreq: 1950, filterQ: 1.9 });
+        break;
+      case 'tSpin':
+        playTone({ freq: 415, endFreq: 659, duration: 0.05, type: 'triangle', gainValue: 0.018 });
+        playTone({ freq: 659, endFreq: 1245, duration: 0.09, type: 'triangle', gainValue: 0.024, startDelay: 0.03 });
+        playTone({ freq: 208, endFreq: 311, duration: 0.09, type: 'square', gainValue: 0.008, startDelay: 0.015, filterType: 'lowpass', filterFreq: 980 });
+        playNoiseBurst({ duration: 0.095, gainValue: 0.008, startDelay: 0.045, filterType: 'bandpass', filterFreq: 2200, filterQ: 1.6 });
+        break;
+      case 'garbage':
+        playTone({ freq: 142, endFreq: 76, duration: 0.16, type: 'sawtooth', gainValue: 0.022, filterType: 'lowpass', filterFreq: 420 });
+        playTone({ freq: 92, endFreq: 61, duration: 0.13, type: 'square', gainValue: 0.01, startDelay: 0.025, filterType: 'lowpass', filterFreq: 300 });
+        playNoiseBurst({ duration: 0.14, gainValue: 0.016, filterType: 'lowpass', filterFreq: 520 });
+        break;
+      case 'garbageSparkleYellow':
+        playTone({ freq: 1175, endFreq: 1568, duration: 0.04, type: 'triangle', gainValue: 0.01 });
+        playTone({ freq: 1661, endFreq: 2093, duration: 0.055, type: 'sine', gainValue: 0.009, startDelay: 0.028 });
+        playNoiseBurst({ duration: 0.03, gainValue: 0.003, startDelay: 0.01, filterType: 'highpass', filterFreq: 3200 });
+        break;
+      case 'garbageSparkleRed':
+        playTone({ freq: 1319, endFreq: 1760, duration: 0.045, type: 'triangle', gainValue: 0.012 });
+        playTone({ freq: 1976, endFreq: 2637, duration: 0.06, type: 'sine', gainValue: 0.011, startDelay: 0.024 });
+        playTone({ freq: 2637, endFreq: 3136, duration: 0.05, type: 'triangle', gainValue: 0.007, startDelay: 0.07 });
+        playNoiseBurst({ duration: 0.04, gainValue: 0.004, startDelay: 0.018, filterType: 'highpass', filterFreq: 3600 });
+        break;
+      case 'ko':
+        playTone({ freq: 740, endFreq: 988, duration: 0.05, type: 'square', gainValue: 0.015 });
+        playTone({ freq: 988, endFreq: 1480, duration: 0.09, type: 'triangle', gainValue: 0.025, startDelay: 0.028 });
+        playTone({ freq: 1480, endFreq: 1976, duration: 0.11, type: 'triangle', gainValue: 0.018, startDelay: 0.085 });
+        playTone({ freq: 196, endFreq: 104, duration: 0.11, type: 'sawtooth', gainValue: 0.012, filterType: 'lowpass', filterFreq: 460 });
+        playNoiseBurst({ duration: 0.09, gainValue: 0.008, startDelay: 0.02, filterType: 'bandpass', filterFreq: 1700, filterQ: 1.2 });
+        break;
+      case 'koOther':
+        playTone({ freq: 205, endFreq: 118, duration: 0.13, type: 'sawtooth', gainValue: 0.014, filterType: 'lowpass', filterFreq: 500 });
+        playTone({ freq: 152, endFreq: 82, duration: 0.14, type: 'triangle', gainValue: 0.008, startDelay: 0.03, filterType: 'lowpass', filterFreq: 320 });
+        playNoiseBurst({ duration: 0.12, gainValue: 0.012, filterType: 'lowpass', filterFreq: 650 });
+        break;
+      case 'countdown':
+        playTone({ freq: 740, endFreq: 784, duration: 0.05, type: 'square', gainValue: 0.012 });
+        break;
+      case 'start':
+        playTone({ freq: 659, endFreq: 988, duration: 0.08, type: 'triangle', gainValue: 0.022 });
+        playTone({ freq: 988, endFreq: 1319, duration: 0.11, type: 'triangle', gainValue: 0.02, startDelay: 0.05 });
+        playTone({ freq: 329, endFreq: 220, duration: 0.08, type: 'square', gainValue: 0.008, filterType: 'lowpass', filterFreq: 760 });
+        break;
+      case 'danger':
+        playTone({ freq: 190, endFreq: 154, duration: 0.1, type: 'square', gainValue: 0.016, filterType: 'lowpass', filterFreq: 780 });
+        playTone({ freq: 380, endFreq: 320, duration: 0.095, type: 'triangle', gainValue: 0.01, startDelay: 0.01 });
+        break;
+      case 'menu':
+        playTone({ freq: 520, endFreq: 784, duration: 0.045, type: 'triangle', gainValue: 0.012 });
+        break;
+      case 'target':
+        playTone({ freq: 466, endFreq: 699, duration: 0.04, type: 'triangle', gainValue: 0.012 });
+        playTone({ freq: 699, endFreq: 932, duration: 0.05, type: 'triangle', gainValue: 0.009, startDelay: 0.02 });
+        break;
+      case 'win':
+        playTone({ freq: 523, endFreq: 784, duration: 0.12, type: 'triangle', gainValue: 0.018 });
+        playTone({ freq: 659, endFreq: 1047, duration: 0.14, type: 'triangle', gainValue: 0.016, startDelay: 0.05 });
+        playTone({ freq: 784, endFreq: 1568, duration: 0.18, type: 'triangle', gainValue: 0.018, startDelay: 0.11 });
+        playNoiseBurst({ duration: 0.14, gainValue: 0.007, startDelay: 0.08, filterType: 'bandpass', filterFreq: 2600, filterQ: 1.4 });
+        break;
+      case 'lose':
+        playTone({ freq: 280, endFreq: 92, duration: 0.22, type: 'sawtooth', gainValue: 0.022, filterType: 'lowpass', filterFreq: 520 });
+        playTone({ freq: 139, endFreq: 69, duration: 0.2, type: 'square', gainValue: 0.009, startDelay: 0.02, filterType: 'lowpass', filterFreq: 260 });
+        playNoiseBurst({ duration: 0.16, gainValue: 0.012, filterType: 'lowpass', filterFreq: 480 });
+        break;
+      default:
+        break;
     }
-    if (kind === 'garbageSparkleRed') {
-      beep(1047, 0.045, 'triangle', 0.018, 1568);
-      beep(1568, 0.07, 'sine', 0.016, 2093, 0.028);
-      beep(2093, 0.06, 'triangle', 0.011, 2637, 0.075);
-    }
-    if (kind === 'ko') {
-      beep(659, 0.06, 'square', 0.03, 988);
-      beep(988, 0.09, 'triangle', 0.048, 1480, 0.04);
-      beep(1319, 0.11, 'triangle', 0.03, 1760, 0.09);
-    }
-    if (kind === 'koOther') {
-      beep(210, 0.09, 'sawtooth', 0.022, 152);
-      beep(162, 0.12, 'square', 0.019, 108, 0.04);
-      beep(118, 0.16, 'triangle', 0.014, 78, 0.09);
-    }
-    if (kind === 'start') beep(440, 0.1, 'triangle', 0.05, 880);
-    if (kind === 'danger') beep(150, 0.12, 'square', 0.04, 110);
-    if (kind === 'win') { beep(523, 0.18, 'triangle', 0.055, 1047); beep(784, 0.22, 'triangle', 0.045, 1568); }
-    if (kind === 'lose') beep(220, 0.26, 'sawtooth', 0.05, 82);
   }
 
   function syncGarbageSparkle(queue: GarbagePacket[]) {
@@ -1120,6 +1297,7 @@ export default function Tetris99GameProper() {
     settingsOpenRef.current = false;
     setSettingsOpen(false);
     postMatchServerMessage({ type: 'resume', matchId: matchIdRef.current });
+    playSfx('menu');
   }
 
   function openSettingsMenu() {
@@ -1132,6 +1310,7 @@ export default function Tetris99GameProper() {
     settingsOpenRef.current = true;
     setSettingsOpen(true);
     postMatchServerMessage({ type: 'pause', matchId: matchIdRef.current });
+    playSfx('menu');
   }
 
   function toggleSettingsMenu() {
@@ -1564,6 +1743,7 @@ export default function Tetris99GameProper() {
     targetModeRef.current = mode;
     refreshPlayerTargets(mode === 'random');
     pushPlayerStateToServer();
+    playSfx('target');
     showTargetModeNoticeForMode(mode);
     syncSnapshot(`${targetLabel(mode)} selected`);
   }
@@ -1844,7 +2024,15 @@ export default function Tetris99GameProper() {
       attackBonus = attackResolution.attackerBonus;
       badgeBoostPercent = attackResolution.badgeBoostPercent;
       marginBonus = attackResolution.marginBonus;
-      playSfx(clearedLines === 4 ? 'tetris' : 'clear');
+      playSfx(
+        tSpin === 'full'
+          ? 'tSpin'
+          : tSpin === 'mini'
+            ? 'tSpinMini'
+            : clearedLines === 4
+              ? 'tetris'
+              : 'clear',
+      );
       if (tSpin === 'full') {
         status = `T-Spin ${clearedLines === 1 ? 'Single' : clearedLines === 2 ? 'Double' : clearedLines === 3 ? 'Triple' : 'Clear'}`;
       } else if (tSpin === 'mini') {
@@ -1853,6 +2041,7 @@ export default function Tetris99GameProper() {
         status = clearedLines === 4 ? 'Tetris' : `${clearedLines} line clear`;
       }
     } else {
+      playSfx('lock');
       if (tSpin === 'full') status = 'T-Spin';
       else if (tSpin === 'mini') status = 'T-Spin Mini';
     }
@@ -2023,7 +2212,7 @@ export default function Tetris99GameProper() {
     lockMovesRef.current = 0;
     clearLockTimer();
     if (!held) spawnPiece();
-    playSfx('rotate');
+    playSfx('hold');
     lastMoveRotationRef.current = false;
     lastRotationKickRef.current = null;
     syncSnapshot('Hold');
@@ -2109,10 +2298,16 @@ export default function Tetris99GameProper() {
         if (!playerAliveRef.current && stateRef.current !== 'gameOver' && spectateTargetIdRef.current === message.sourceId) {
           playSfx(message.kind === 'drop'
             ? 'drop'
+            : message.kind === 'lock'
+              ? 'lock'
             : message.kind === 'clear'
               ? 'clear'
               : message.kind === 'tetris'
                 ? 'tetris'
+                : message.kind === 'tSpin'
+                  ? 'tSpin'
+                  : message.kind === 'tSpinMini'
+                    ? 'tSpinMini'
                 : message.kind === 'garbage'
                   ? 'garbage'
                   : message.kind === 'ko'
@@ -2165,7 +2360,7 @@ export default function Tetris99GameProper() {
         syncSnapshot('Fight!');
         return;
       }
-      playSfx('move');
+      playSfx('countdown');
       syncSnapshot(`Starting in ${countdownRef.current}`);
     }, 1000);
     return () => window.clearInterval(timer);
@@ -2338,7 +2533,7 @@ export default function Tetris99GameProper() {
   const centerBoard = spectateBot?.board ?? snapshot.board;
   const centerCurrentPiece = spectateBot ? null : snapshot.currentPiece;
   const centerHold = spectateBot?.hold ?? snapshot.hold;
-  const centerQueue = spectateBot?.queue.slice(0, 5) ?? snapshot.queue;
+  const centerQueue = spectateBot?.queue.slice(0, PREVIEW_SLOT_COUNT) ?? snapshot.queue;
   const centerBadgeStage = spectateBot?.badges ?? snapshot.badges;
   const centerKos = spectateBot?.kos ?? snapshot.kos;
   const centerBadgeBoostPercent = spectateBot ? badgeBoostPercentFromStage(spectateBot.badges) : snapshot.badgeBoostPercent;
@@ -2423,6 +2618,12 @@ export default function Tetris99GameProper() {
                         <div className={styles.actionPanelTitle}>{actionPanel.title}</div>
                       </div>
                     )}
+                    {snapshot.state === 'countdown' && !snapshot.gameOver && (
+                      <div className={styles.countdownOverlay} aria-hidden="true">
+                        <div className={styles.countdownEyebrow}>Ready</div>
+                        <div className={styles.countdownValue}>{snapshot.countdown}</div>
+                      </div>
+                    )}
                     <div className={styles.boardPlayfieldInner}>
                       <div className={styles.garbagePanel}>
                         <span className={styles.garbagePanelLabel}>Incoming</span>
@@ -2501,7 +2702,7 @@ export default function Tetris99GameProper() {
                   </div>
                 </div>
                 <div className={styles.previewColumn}>
-                  <div className={styles.miniPanel}><span className={styles.panelHeader}>Next</span><div className={styles.previewBox}>{centerQueue.map((type, i) => <PreviewShape key={`${type}-${i}`} type={type} />)}</div></div>
+                  <div className={styles.miniPanel}><span className={styles.panelHeader}>Next</span><div className={styles.previewBox}>{Array.from({ length: PREVIEW_SLOT_COUNT }, (_, index) => <PreviewShape key={`next-${index}`} type={centerQueue[index] ?? null} />)}</div></div>
                   <div className={`${styles.miniPanel} ${styles.battleInfoPanel}`}>
                     <div className={styles.battleInfoMetric}>
                       <span className={styles.panelHeader}>K.O.</span>
