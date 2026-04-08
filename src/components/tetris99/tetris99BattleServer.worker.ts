@@ -10,7 +10,8 @@ type AttackClearType =
   | 'double'
   | 'triple'
   | 'tetris'
-  | 'tSpinMini'
+  | 'tSpinMiniSingle'
+  | 'tSpinMiniDouble'
   | 'tSpinSingle'
   | 'tSpinDouble'
   | 'tSpinTriple';
@@ -240,7 +241,10 @@ function badgeStageFromPoints(points: number) {
 }
 
 function getAttackClearType(clearedLines: number, tSpin: 'none' | 'mini' | 'full'): AttackClearType {
-  if (tSpin === 'mini' && clearedLines > 0) return 'tSpinMini';
+  if (tSpin === 'mini') {
+    if (clearedLines === 1) return 'tSpinMiniSingle';
+    if (clearedLines === 2) return 'tSpinMiniDouble';
+  }
   if (tSpin === 'full') {
     if (clearedLines === 1) return 'tSpinSingle';
     if (clearedLines === 2) return 'tSpinDouble';
@@ -261,7 +265,10 @@ function getBaseAttack(clearType: AttackClearType) {
       return 2;
     case 'tetris':
       return 4;
-    case 'tSpinMini':
+    case 'tSpinMiniDouble':
+      return 1;
+    case 'tSpinMiniSingle':
+      return 0;
     case 'tSpinSingle':
       return 2;
     case 'tSpinDouble':
@@ -275,7 +282,8 @@ function getBaseAttack(clearType: AttackClearType) {
 
 function isB2bEligible(clearType: AttackClearType) {
   return clearType === 'tetris'
-    || clearType === 'tSpinMini'
+    || clearType === 'tSpinMiniSingle'
+    || clearType === 'tSpinMiniDouble'
     || clearType === 'tSpinSingle'
     || clearType === 'tSpinDouble'
     || clearType === 'tSpinTriple';
@@ -446,8 +454,13 @@ function chooseTargets(sourceId: string, mode: TargetMode) {
 }
 
 function resolveStableTargets(sourceId: string, mode: TargetMode, currentTargets: string[]) {
-  const attackFallbackToRandom = mode === 'attackers' && getAttackerIds(sourceId).filter(id => getAliveOpponentIds(sourceId).includes(id)).length === 0;
-  if (mode !== 'random' && !attackFallbackToRandom) return chooseTargets(sourceId, mode);
+  if (mode === 'attackers') {
+    const candidates = getAliveOpponentIds(sourceId);
+    const attackers = getAttackerIds(sourceId).filter(id => candidates.includes(id));
+    if (attackers.length) return attackers;
+    return chooseRandomTarget(candidates);
+  }
+  if (mode !== 'random') return chooseTargets(sourceId, mode);
   const aliveCurrent = currentTargets.filter(id => (id === PLAYER_ID ? playerState.alive : !!getBotById(id)?.alive));
   return aliveCurrent.length ? aliveCurrent : chooseTargets(sourceId, mode);
 }
@@ -694,7 +707,7 @@ function startMatch(matchId: number) {
         const clearType = getAttackClearType(placement.clearedLines, placement.tSpin);
         const attackResult = calculatePlacementAttack(clearType, currentBot.combo, currentBot.b2bActive);
 
-        if (clearType === 'tSpinMini' || clearType === 'tSpinSingle' || clearType === 'tSpinDouble' || clearType === 'tSpinTriple') {
+        if (clearType === 'tSpinMiniSingle' || clearType === 'tSpinMiniDouble' || clearType === 'tSpinSingle' || clearType === 'tSpinDouble' || clearType === 'tSpinTriple') {
           currentBot.tSpins += 1;
         }
 

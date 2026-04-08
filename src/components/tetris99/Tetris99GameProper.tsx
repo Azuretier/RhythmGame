@@ -27,10 +27,16 @@ type AttackClearType =
   | 'double'
   | 'triple'
   | 'tetris'
-  | 'tSpinMini'
+  | 'tSpinMiniSingle'
+  | 'tSpinMiniDouble'
   | 'tSpinSingle'
   | 'tSpinDouble'
   | 'tSpinTriple';
+
+type RotationKickInfo = {
+  dx: number;
+  dy: number;
+};
 
 type GarbagePacket = {
   id: string;
@@ -241,7 +247,10 @@ function getGravityStage(elapsedMs: number, alivePlayers: number) {
 }
 
 function getAttackClearType(clearedLines: number, tSpin: 'none' | 'mini' | 'full'): AttackClearType {
-  if (tSpin === 'mini' && clearedLines > 0) return 'tSpinMini';
+  if (tSpin === 'mini') {
+    if (clearedLines === 1) return 'tSpinMiniSingle';
+    if (clearedLines === 2) return 'tSpinMiniDouble';
+  }
   if (tSpin === 'full') {
     if (clearedLines === 1) return 'tSpinSingle';
     if (clearedLines === 2) return 'tSpinDouble';
@@ -262,7 +271,10 @@ function getBaseAttack(clearType: AttackClearType) {
       return 2;
     case 'tetris':
       return 4;
-    case 'tSpinMini':
+    case 'tSpinMiniDouble':
+      return 1;
+    case 'tSpinMiniSingle':
+      return 0;
     case 'tSpinSingle':
       return 2;
     case 'tSpinDouble':
@@ -276,7 +288,8 @@ function getBaseAttack(clearType: AttackClearType) {
 
 function isB2bEligible(clearType: AttackClearType) {
   return clearType === 'tetris'
-    || clearType === 'tSpinMini'
+    || clearType === 'tSpinMiniSingle'
+    || clearType === 'tSpinMiniDouble'
     || clearType === 'tSpinSingle'
     || clearType === 'tSpinDouble'
     || clearType === 'tSpinTriple';
@@ -379,7 +392,7 @@ function isT99ValidPosition(piece: RhythmPiece, boardState: RhythmBoardState): b
   return true;
 }
 
-function tryT99Rotation(piece: RhythmPiece, direction: 1 | -1, boardState: RhythmBoardState): RhythmPiece | null {
+function tryT99Rotation(piece: RhythmPiece, direction: 1 | -1, boardState: RhythmBoardState): { piece: RhythmPiece; kick: RotationKickInfo } | null {
   const nextRotation = (piece.rotation + direction + 4) % 4;
   const kicks = getT99WallKicks(piece.type as PieceType, piece.rotation, nextRotation);
 
@@ -390,7 +403,7 @@ function tryT99Rotation(piece: RhythmPiece, direction: 1 | -1, boardState: Rhyth
       x: piece.x + dx,
       y: piece.y - dy,
     };
-    if (isT99ValidPosition(rotated, boardState)) return rotated;
+    if (isT99ValidPosition(rotated, boardState)) return { piece: rotated, kick: { dx, dy } };
   }
 
   return null;
@@ -472,7 +485,7 @@ function getDisplayCellColor(cell: string | null) {
   return PLAYER_COLORS[cell] ?? PLAYER_COLORS.T;
 }
 
-function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotation: boolean): 'none' | 'mini' | 'full' {
+function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotation: boolean, lastKick: RotationKickInfo | null): 'none' | 'mini' | 'full' {
   if (piece.type !== 'T' || !wasRotation) return 'none';
   const boardHeight = board.length;
 
@@ -517,7 +530,9 @@ function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotat
     }
   }
 
-  return frontFilled >= 2 ? 'full' : 'mini';
+  if (frontFilled >= 2) return 'full';
+  if (lastKick && Math.abs(lastKick.dx) === 1 && Math.abs(lastKick.dy) === 2) return 'full';
+  return 'mini';
 }
 
 function boardDanger(board: RhythmBoardState) {
@@ -532,6 +547,25 @@ function targetLabel(mode: TargetMode) {
   if (mode === 'kos') return 'KOs';
   if (mode === 'badges') return 'Badges';
   return 'Random';
+}
+
+function clearTypePanelTitle(clearType: AttackClearType) {
+  switch (clearType) {
+    case 'tetris':
+      return 'TETRIS';
+    case 'tSpinMiniSingle':
+      return 'MINI T-SPIN SINGLE';
+    case 'tSpinMiniDouble':
+      return 'MINI T-SPIN DOUBLE';
+    case 'tSpinSingle':
+      return 'T-SPIN SINGLE';
+    case 'tSpinDouble':
+      return 'T-SPIN DOUBLE';
+    case 'tSpinTriple':
+      return 'T-SPIN TRIPLE';
+    default:
+      return null;
+  }
 }
 
 function sumGarbage(queue: GarbagePacket[]) {
@@ -765,6 +799,7 @@ export default function Tetris99GameProper() {
   const botBoardRefs = useRef(new Map<string, HTMLDivElement>());
   const attackEffectTimersRef = useRef<number[]>([]);
   const speedNoticeTimerRef = useRef<number | null>(null);
+  const actionPanelTimerRef = useRef<number | null>(null);
   const snapshotFrameRef = useRef<number | null>(null);
   const matchServerRef = useRef<Worker | null>(null);
   const matchIdRef = useRef(0);
@@ -790,6 +825,7 @@ export default function Tetris99GameProper() {
   const playerTargetIdsRef = useRef<string[]>([]);
   const backToBackRef = useRef(false);
   const lastMoveRotationRef = useRef(false);
+  const lastRotationKickRef = useRef<RotationKickInfo | null>(null);
   const lockTimerRef = useRef<number | null>(null);
   const lockMovesRef = useRef(0);
   const isOnGroundRef = useRef(false);
@@ -816,6 +852,7 @@ export default function Tetris99GameProper() {
   const [attackEffects, setAttackEffects] = useState<AttackEffect[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [speedNotice, setSpeedNotice] = useState<string | null>(null);
+  const [actionPanel, setActionPanel] = useState<{ eyebrow: string | null; title: string } | null>(null);
   const [showAllAttackTrails, setShowAllAttackTrails] = useState(() => loadTetris99ShowAllAttackTrails());
   const [snapshot, setSnapshot] = useState<Snapshot>({
     board: createT99EmptyBoard(),
@@ -938,6 +975,23 @@ export default function Tetris99GameProper() {
       speedNoticeTimerRef.current = null;
     }
     setSpeedNotice(null);
+  }
+
+  function clearActionPanel() {
+    if (actionPanelTimerRef.current !== null) {
+      window.clearTimeout(actionPanelTimerRef.current);
+      actionPanelTimerRef.current = null;
+    }
+    setActionPanel(null);
+  }
+
+  function showActionPanel(title: string, eyebrow: string | null = null) {
+    clearActionPanel();
+    setActionPanel({ title, eyebrow });
+    actionPanelTimerRef.current = window.setTimeout(() => {
+      setActionPanel(null);
+      actionPanelTimerRef.current = null;
+    }, 1400);
   }
 
   function showSpeedNoticeForStage(stage: number) {
@@ -1202,6 +1256,7 @@ export default function Tetris99GameProper() {
     canHoldRef.current = true;
     lockMovesRef.current = 0;
     isOnGroundRef.current = false;
+    lastRotationKickRef.current = null;
     return true;
   }
 
@@ -1210,6 +1265,7 @@ export default function Tetris99GameProper() {
     clearSoftDrop();
     clearAttackEffects();
     clearSpeedNotice();
+    clearActionPanel();
     keysRef.current.clear();
     if (snapshotFrameRef.current !== null) {
       window.cancelAnimationFrame(snapshotFrameRef.current);
@@ -1232,6 +1288,7 @@ export default function Tetris99GameProper() {
     lastDamagedByRef.current = null;
     backToBackRef.current = false;
     lastMoveRotationRef.current = false;
+    lastRotationKickRef.current = null;
     statusRef.current = 'Get ready';
     stateRef.current = 'countdown';
     countdownRef.current = 3;
@@ -1286,6 +1343,7 @@ export default function Tetris99GameProper() {
     clearSoftDrop();
     clearAttackEffects();
     clearSpeedNotice();
+    clearActionPanel();
     keysRef.current.clear();
     garbageSparklePacketRef.current = null;
     stateRef.current = 'gameOver';
@@ -1399,8 +1457,13 @@ export default function Tetris99GameProper() {
   }
 
   function resolveStableTargets(sourceId: string, mode: TargetMode, currentTargets: string[], playerTargets = new Set<string>()) {
-    const attackFallbackToRandom = mode === 'attackers' && getAttackerIds(sourceId, playerTargets).filter(id => getAliveOpponentIds(sourceId).includes(id)).length === 0;
-    if (mode !== 'random' && !attackFallbackToRandom) return chooseTargets(sourceId, mode, playerTargets);
+    if (mode === 'attackers') {
+      const candidates = getAliveOpponentIds(sourceId);
+      const attackers = getAttackerIds(sourceId, playerTargets).filter(id => candidates.includes(id));
+      if (attackers.length) return attackers;
+      return chooseRandomTarget(candidates);
+    }
+    if (mode !== 'random') return chooseTargets(sourceId, mode, playerTargets);
     const aliveCurrent = currentTargets.filter(id => (id === PLAYER_ID ? stateRef.current !== 'gameOver' : !!getBotById(id)?.alive));
     return aliveCurrent.length ? aliveCurrent : chooseTargets(sourceId, mode, playerTargets);
   }
@@ -1528,7 +1591,7 @@ export default function Tetris99GameProper() {
   function lockCurrentPiece() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
     const lockedPiece = currentPieceRef.current;
-    const tSpin = detectPlayerTSpin(lockedPiece, boardRef.current, lastMoveRotationRef.current);
+    const tSpin = detectPlayerTSpin(lockedPiece, boardRef.current, lastMoveRotationRef.current, lastRotationKickRef.current);
     boardRef.current = lockT99Piece(lockedPiece, boardRef.current);
     const { newBoard, clearedLines } = clearT99Lines(boardRef.current);
     boardRef.current = newBoard;
@@ -1538,7 +1601,7 @@ export default function Tetris99GameProper() {
     const clearType = getAttackClearType(clearedLines, tSpin);
     const attackResult = calculatePlacementAttack(clearType, comboRef.current, backToBackRef.current);
 
-    if (clearType === 'tSpinMini' || clearType === 'tSpinSingle' || clearType === 'tSpinDouble' || clearType === 'tSpinTriple') {
+    if (clearType === 'tSpinMiniSingle' || clearType === 'tSpinMiniDouble' || clearType === 'tSpinSingle' || clearType === 'tSpinDouble' || clearType === 'tSpinTriple') {
       tSpinsRef.current += 1;
     }
 
@@ -1559,7 +1622,7 @@ export default function Tetris99GameProper() {
       if (tSpin === 'full') {
         status = `T-Spin ${clearedLines === 1 ? 'Single' : clearedLines === 2 ? 'Double' : clearedLines === 3 ? 'Triple' : 'Clear'}`;
       } else if (tSpin === 'mini') {
-        status = `T-Spin Mini${clearedLines > 0 ? ` ${clearedLines}` : ''}`;
+        status = clearedLines === 1 ? 'Mini T-Spin Single' : clearedLines === 2 ? 'Mini T-Spin Double' : 'Mini T-Spin';
       } else {
         status = clearedLines === 4 ? 'Tetris' : `${clearedLines} line clear`;
       }
@@ -1589,6 +1652,7 @@ export default function Tetris99GameProper() {
 
     currentPieceRef.current = null;
     lastMoveRotationRef.current = false;
+    lastRotationKickRef.current = null;
     if (lockTimerRef.current) {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
@@ -1606,6 +1670,10 @@ export default function Tetris99GameProper() {
     }
 
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
+    const panelTitle = clearTypePanelTitle(clearType);
+    if (panelTitle) {
+      showActionPanel(panelTitle, attackResult.b2bBonus > 0 ? 'BACK-TO-BACK' : null);
+    }
     if (stateRef.current === 'playing' && !spawnPiece()) return;
     syncSnapshot(status);
   }
@@ -1645,6 +1713,7 @@ export default function Tetris99GameProper() {
     if (!isT99ValidPosition(next, boardRef.current)) return false;
     currentPieceRef.current = next;
     lastMoveRotationRef.current = false;
+    lastRotationKickRef.current = null;
     playSfx('move');
     const grounded = !isT99ValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
     if (grounded) {
@@ -1663,6 +1732,7 @@ export default function Tetris99GameProper() {
     if (isT99ValidPosition(next, boardRef.current)) {
       currentPieceRef.current = next;
       lastMoveRotationRef.current = false;
+      lastRotationKickRef.current = null;
       const grounded = !isT99ValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
       if (grounded && !isOnGroundRef.current) {
         isOnGroundRef.current = true;
@@ -1684,9 +1754,10 @@ export default function Tetris99GameProper() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
     const rotated = tryT99Rotation(currentPieceRef.current, direction, boardRef.current);
     if (!rotated) return;
-    currentPieceRef.current = rotated;
+    currentPieceRef.current = rotated.piece;
     lastMoveRotationRef.current = true;
-    const grounded = !isT99ValidPosition({ ...rotated, y: rotated.y + 1 }, boardRef.current);
+    lastRotationKickRef.current = rotated.kick;
+    const grounded = !isT99ValidPosition({ ...rotated.piece, y: rotated.piece.y + 1 }, boardRef.current);
     if (grounded) {
       isOnGroundRef.current = true;
       resetLockTimer();
@@ -1727,6 +1798,8 @@ export default function Tetris99GameProper() {
     clearLockTimer();
     if (!held) spawnPiece();
     playSfx('rotate');
+    lastMoveRotationRef.current = false;
+    lastRotationKickRef.current = null;
     syncSnapshot('Hold');
   }
 
@@ -1795,6 +1868,7 @@ export default function Tetris99GameProper() {
       }
       clearAttackEffects();
       clearSpeedNotice();
+      clearActionPanel();
       setFullscreen(false);
     };
   }, [setFullscreen]);
@@ -2033,6 +2107,12 @@ export default function Tetris99GameProper() {
                     <div className={styles.boardStat}><span className={styles.statLabel}>State</span><strong className={styles.boardStatValue}>{snapshot.state === 'countdown' ? snapshot.countdown : snapshot.gameOver ? (snapshot.victory ? 'WIN' : 'OUT') : 'LIVE'}</strong></div>
                   </div>
                   <div className={styles.boardPlayfield}>
+                    {actionPanel && !snapshot.gameOver && (
+                      <div className={styles.actionPanelOverlay} aria-hidden="true">
+                        {actionPanel.eyebrow && <div className={styles.actionPanelEyebrow}>{actionPanel.eyebrow}</div>}
+                        <div className={styles.actionPanelTitle}>{actionPanel.title}</div>
+                      </div>
+                    )}
                     <div className={styles.boardPlayfieldInner}>
                       <div className={styles.garbagePanel}>
                         <span className={styles.garbagePanelLabel}>Incoming</span>
