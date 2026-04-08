@@ -6,17 +6,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import type { Board as RhythmBoardState, Piece as RhythmPiece } from '@/components/rhythmia/tetris/types';
 import {
-  createEmptyBoard,
-  createSpawnPiece,
   getShape,
-  getGhostY,
-  isValidPosition,
-  lockPiece,
-  clearLines,
-  tryRotation,
-  applyGarbageRise,
 } from '@/components/rhythmia/tetris/utils/boardUtils';
-import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components/rhythmia/tetris/constants';
+import { BOARD_WIDTH, LOCK_DELAY, ROTATION_NAMES, WALL_KICKS_I, WALL_KICKS_JLSTZ } from '@/components/rhythmia/tetris/constants';
 import { ARR, DAS, MAX_LOCK_MOVES } from '@/components/rhythmia/multiplayer-battle-engine';
 import { TetrisAIGame, getDifficultyForRank, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 import { useLayoutConfig } from '@/lib/layout/context';
@@ -147,6 +139,9 @@ type SpeedProfile = {
 const BOT_COUNT = 98;
 const MAX_PENDING_GARBAGE = 12;
 const PLAYER_ID = 'player';
+const T99_VISIBLE_HEIGHT = 20;
+const T99_BUFFER_ZONE = 20;
+const T99_BOARD_HEIGHT = T99_VISIBLE_HEIGHT + T99_BUFFER_ZONE;
 const FRAME_MS = 1000 / 60;
 const GARBAGE_QUEUE_TICK_MS = 50;
 const BOT_STATE_TICK_MS = 260;
@@ -368,6 +363,133 @@ function pieceTypeFromAiColor(color: string): PieceType | 'garbage' {
   return bestType;
 }
 
+function createT99EmptyBoard(): RhythmBoardState {
+  return Array.from({ length: T99_BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
+}
+
+function normalizeT99Board(boardState: RhythmBoardState): RhythmBoardState {
+  if (boardState.length === T99_BOARD_HEIGHT) return boardState.map(row => [...row]);
+  if (boardState.length > T99_BOARD_HEIGHT) {
+    return boardState.slice(boardState.length - T99_BOARD_HEIGHT).map(row => [...row]);
+  }
+  return [
+    ...Array.from({ length: T99_BOARD_HEIGHT - boardState.length }, () => Array(BOARD_WIDTH).fill(null)),
+    ...boardState.map(row => [...row]),
+  ];
+}
+
+function getT99WallKicks(type: PieceType, fromRotation: number, toRotation: number): [number, number][] {
+  const from = ROTATION_NAMES[fromRotation];
+  const to = ROTATION_NAMES[toRotation];
+  const key = `${from}->${to}`;
+
+  if (type === 'I') return WALL_KICKS_I[key] || [[0, 0]];
+  if (type === 'O') return [[0, 0]];
+  return WALL_KICKS_JLSTZ[key] || [[0, 0]];
+}
+
+function isT99ValidPosition(piece: RhythmPiece, boardState: RhythmBoardState): boolean {
+  const shape = getShape(piece.type, piece.rotation);
+  for (let y = 0; y < shape.length; y++) {
+    for (let x = 0; x < shape[y].length; x++) {
+      if (!shape[y][x]) continue;
+      const newX = piece.x + x;
+      const newY = piece.y + y;
+      if (newX < 0 || newX >= BOARD_WIDTH || newY >= T99_BOARD_HEIGHT) return false;
+      if (newY >= 0 && boardState[newY]?.[newX] !== null) return false;
+    }
+  }
+  return true;
+}
+
+function tryT99Rotation(piece: RhythmPiece, direction: 1 | -1, boardState: RhythmBoardState): RhythmPiece | null {
+  const nextRotation = (piece.rotation + direction + 4) % 4;
+  const kicks = getT99WallKicks(piece.type as PieceType, piece.rotation, nextRotation);
+
+  for (const [dx, dy] of kicks) {
+    const rotated = {
+      ...piece,
+      rotation: nextRotation,
+      x: piece.x + dx,
+      y: piece.y - dy,
+    };
+    if (isT99ValidPosition(rotated, boardState)) return rotated;
+  }
+
+  return null;
+}
+
+function lockT99Piece(piece: RhythmPiece, boardState: RhythmBoardState): RhythmBoardState {
+  const nextBoard = normalizeT99Board(boardState);
+  const shape = getShape(piece.type, piece.rotation);
+
+  for (let y = 0; y < shape.length; y++) {
+    for (let x = 0; x < shape[y].length; x++) {
+      if (!shape[y][x]) continue;
+      const boardY = piece.y + y;
+      const boardX = piece.x + x;
+      if (boardY >= 0 && boardY < T99_BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+        nextBoard[boardY][boardX] = piece.type;
+      }
+    }
+  }
+
+  return nextBoard;
+}
+
+function clearT99Lines(boardState: RhythmBoardState): { newBoard: RhythmBoardState; clearedLines: number } {
+  const remaining = boardState.filter(row => row.some(cell => cell === null));
+  const clearedLines = T99_BOARD_HEIGHT - remaining.length;
+
+  while (remaining.length < T99_BOARD_HEIGHT) {
+    remaining.unshift(Array(BOARD_WIDTH).fill(null));
+  }
+
+  return { newBoard: remaining, clearedLines };
+}
+
+function getT99GhostY(piece: RhythmPiece, boardState: RhythmBoardState): number {
+  let ghostY = piece.y;
+  while (isT99ValidPosition({ ...piece, y: ghostY + 1 }, boardState)) {
+    ghostY += 1;
+  }
+  return ghostY;
+}
+
+function createT99SpawnPiece(type: PieceType): RhythmPiece {
+  const shape = getShape(type, 0);
+  return {
+    type,
+    rotation: 0,
+    x: Math.floor((BOARD_WIDTH - shape[0].length) / 2),
+    y: T99_BUFFER_ZONE - 1,
+  };
+}
+
+function applyT99GarbageRise(
+  boardState: RhythmBoardState,
+  count: number,
+  rng: () => number = Math.random,
+): { newBoard: RhythmBoardState; overflowed: boolean } {
+  if (count <= 0) {
+    return { newBoard: normalizeT99Board(boardState), overflowed: false };
+  }
+
+  const normalizedBoard = normalizeT99Board(boardState);
+  const rowsToRaise = Math.min(count, T99_BOARD_HEIGHT);
+  const overflowed = normalizedBoard
+    .slice(0, rowsToRaise)
+    .some(row => row.some(Boolean));
+
+  const raisedBoard = normalizedBoard.slice(rowsToRaise);
+  for (let i = 0; i < rowsToRaise; i++) {
+    const gapCol = Math.floor(rng() * BOARD_WIDTH);
+    raisedBoard.push(Array.from({ length: BOARD_WIDTH }, (_, x) => (x === gapCol ? null : 'garbage')));
+  }
+
+  return { newBoard: raisedBoard, overflowed };
+}
+
 function getDisplayCellColor(cell: string | null) {
   if (!cell) return 'rgba(255,255,255,0.04)';
   return PLAYER_COLORS[cell] ?? PLAYER_COLORS.T;
@@ -375,6 +497,7 @@ function getDisplayCellColor(cell: string | null) {
 
 function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotation: boolean): 'none' | 'mini' | 'full' {
   if (piece.type !== 'T' || !wasRotation) return 'none';
+  const boardHeight = board.length;
 
   const cx = piece.x + 1;
   const cy = piece.y + 1;
@@ -385,7 +508,7 @@ function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotat
 
   let filledCorners = 0;
   for (const [x, y] of corners) {
-    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT || board[y]?.[x]) {
+    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= boardHeight || board[y]?.[x]) {
       filledCorners += 1;
     }
   }
@@ -412,7 +535,7 @@ function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotat
 
   let frontFilled = 0;
   for (const [x, y] of frontCorners) {
-    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT || board[y]?.[x]) {
+    if (x < 0 || x >= BOARD_WIDTH || y < 0 || y >= boardHeight || board[y]?.[x]) {
       frontFilled += 1;
     }
   }
@@ -427,12 +550,12 @@ function aiBoardToRhythmBoard(board: ({ color: string } | null)[][]): RhythmBoar
       return pieceTypeFromAiColor(cell.color);
     }),
   );
-  return [...Array.from({ length: BUFFER_ZONE }, () => Array(BOARD_WIDTH).fill(null)), ...visible];
+  return [...Array.from({ length: T99_BUFFER_ZONE }, () => Array(BOARD_WIDTH).fill(null)), ...visible];
 }
 
 function boardDanger(board: RhythmBoardState) {
-  for (let y = 0; y < BOARD_HEIGHT; y++) {
-    if (board[y].some(Boolean)) return BOARD_HEIGHT - y;
+  for (let y = 0; y < board.length; y++) {
+    if (board[y].some(Boolean)) return board.length - y;
   }
   return 0;
 }
@@ -562,7 +685,7 @@ function IncomingGarbageRail({ packets, alivePlayers }: { packets: GarbagePacket
 
 function MicroBoard({ bot, targeted, boardRef }: { bot: BotState; targeted: boolean; boardRef?: (node: HTMLDivElement | null) => void }) {
   const cls = [styles.microCard, targeted ? styles.microCardTargeted : '', bot.targetIds.includes(PLAYER_ID) ? styles.microCardAttacker : ''].filter(Boolean).join(' ');
-  const visibleBoard = bot.board.slice(BUFFER_ZONE);
+  const visibleBoard = bot.board.slice(bot.board.length - T99_VISIBLE_HEIGHT);
   return (
     <div ref={boardRef} className={cls}>
       <div className={styles.microHeader}>
@@ -614,7 +737,7 @@ function PlayerBoard({ board, currentPiece }: { board: RhythmBoardState; current
 
     if (currentPiece) {
       const shape = getShape(currentPiece.type, currentPiece.rotation);
-      const ghostY = getGhostY(currentPiece, board);
+      const ghostY = getT99GhostY(currentPiece, board);
 
       if (ghostY !== currentPiece.y) {
         for (let y = 0; y < shape.length; y++) {
@@ -622,7 +745,7 @@ function PlayerBoard({ board, currentPiece }: { board: RhythmBoardState; current
             if (!shape[y][x]) continue;
             const boardY = ghostY + y;
             const boardX = currentPiece.x + x;
-            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH && display[boardY][boardX] === null) {
+            if (boardY >= 0 && boardY < display.length && boardX >= 0 && boardX < BOARD_WIDTH && display[boardY][boardX] === null) {
               display[boardY][boardX] = `ghost-${currentPiece.type}`;
             }
           }
@@ -634,14 +757,14 @@ function PlayerBoard({ board, currentPiece }: { board: RhythmBoardState; current
           if (!shape[y][x]) continue;
           const boardY = currentPiece.y + y;
           const boardX = currentPiece.x + x;
-          if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+          if (boardY >= 0 && boardY < display.length && boardX >= 0 && boardX < BOARD_WIDTH) {
             display[boardY][boardX] = currentPiece.type;
           }
         }
       }
     }
 
-    return display.slice(BUFFER_ZONE);
+    return display.slice(display.length - T99_VISIBLE_HEIGHT);
   }, [board, currentPiece]);
 
   return (
@@ -683,7 +806,7 @@ export default function Tetris99GameProper() {
   const currentPieceRef = useRef<RhythmPiece | null>(null);
   const holdRef = useRef<PieceType | null>(null);
   const canHoldRef = useRef(true);
-  const boardRef = useRef<RhythmBoardState>(createEmptyBoard());
+  const boardRef = useRef<RhythmBoardState>(createT99EmptyBoard());
   const queueRef = useRef<PieceType[]>([]);
   const comboRef = useRef(0);
   const linesRef = useRef(0);
@@ -724,7 +847,7 @@ export default function Tetris99GameProper() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showAllAttackTrails, setShowAllAttackTrails] = useState(() => loadTetris99ShowAllAttackTrails());
   const [snapshot, setSnapshot] = useState<Snapshot>({
-    board: createEmptyBoard(),
+    board: createT99EmptyBoard(),
     currentPiece: null,
     hold: null,
     queue: [],
@@ -1033,8 +1156,8 @@ export default function Tetris99GameProper() {
     refillQueue();
     const type = queueRef.current.shift()!;
     refillQueue();
-    const piece = createSpawnPiece(type);
-    if (!isValidPosition(piece, boardRef.current)) {
+    const piece = createT99SpawnPiece(type);
+    if (!isT99ValidPosition(piece, boardRef.current)) {
       finish(false);
       return false;
     }
@@ -1052,7 +1175,7 @@ export default function Tetris99GameProper() {
     clearSoftDrop();
     clearAttackEffects();
     keysRef.current.clear();
-    boardRef.current = createEmptyBoard();
+    boardRef.current = createT99EmptyBoard();
     currentPieceRef.current = null;
     holdRef.current = null;
     queueRef.current = [];
@@ -1089,7 +1212,7 @@ export default function Tetris99GameProper() {
       return {
         id: `bot-${i}`,
         name: `${BOT_NAMES[i % BOT_NAMES.length]}-${String(i + 1).padStart(2, '0')}`,
-        board: createEmptyBoard(),
+        board: createT99EmptyBoard(),
         queue: Array.from({ length: 6 }, () => botBagRef.current()),
         hold: null,
         combo: 0,
@@ -1143,14 +1266,13 @@ export default function Tetris99GameProper() {
     const collected = collectNextReadyGarbage(incomingRef.current, getAlivePlayerCount());
     incomingRef.current = collected.queue;
     syncGarbageSparkle(incomingRef.current);
-    if (collected.due <= 0) return 0;
+    if (collected.due <= 0) return { applied: 0, toppedOut: false };
     lastDamagedByRef.current = collected.lastSource;
-    const { newBoard, adjustedPiece } = applyGarbageRise(boardRef.current, currentPieceRef.current, collected.due, rngRef.current);
+    const { newBoard, overflowed } = applyT99GarbageRise(boardRef.current, collected.due, rngRef.current);
     boardRef.current = newBoard;
-    currentPieceRef.current = adjustedPiece;
     playSfx('garbage');
     if (boardDanger(boardRef.current) >= 20) playSfx('danger');
-    return collected.due;
+    return { applied: collected.due, toppedOut: overflowed };
   }
 
   function applyBotPendingGarbage(bot: BotState) {
@@ -1463,8 +1585,8 @@ export default function Tetris99GameProper() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
     const lockedPiece = currentPieceRef.current;
     const tSpin = detectPlayerTSpin(lockedPiece, boardRef.current, lastMoveRotationRef.current);
-    boardRef.current = lockPiece(lockedPiece, boardRef.current);
-    const { newBoard, clearedLines } = clearLines(boardRef.current);
+    boardRef.current = lockT99Piece(lockedPiece, boardRef.current);
+    const { newBoard, clearedLines } = clearT99Lines(boardRef.current);
     boardRef.current = newBoard;
     linesRef.current += clearedLines;
     scoreRef.current += [0, 100, 300, 500, 800][clearedLines] ?? 0;
@@ -1529,12 +1651,12 @@ export default function Tetris99GameProper() {
     }
     isOnGroundRef.current = false;
 
-    const appliedGarbage = clearedLines === 0 ? applyPendingGarbage() : 0;
-    if (appliedGarbage > 0) {
-      status = status === 'Stack stabilized' ? `Garbage +${appliedGarbage}` : `${status} | Garbage +${appliedGarbage}`;
+    const garbageResult = clearedLines === 0 ? applyPendingGarbage() : { applied: 0, toppedOut: false };
+    if (garbageResult.applied > 0) {
+      status = status === 'Stack stabilized' ? `Garbage +${garbageResult.applied}` : `${status} | Garbage +${garbageResult.applied}`;
     }
 
-    if (boardDanger(boardRef.current) >= 22) {
+    if (garbageResult.toppedOut) {
       awardKo(lastDamagedByRef.current, badgesRef.current);
       finish(false);
       return;
@@ -1568,7 +1690,7 @@ export default function Tetris99GameProper() {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
     }
-    if (currentPieceRef.current && !isValidPosition({ ...currentPieceRef.current, y: currentPieceRef.current.y + 1 }, boardRef.current)) {
+    if (currentPieceRef.current && !isT99ValidPosition({ ...currentPieceRef.current, y: currentPieceRef.current.y + 1 }, boardRef.current)) {
       isOnGroundRef.current = true;
       startLockTimer();
     }
@@ -1577,11 +1699,11 @@ export default function Tetris99GameProper() {
   function moveHorizontal(dx: number) {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return false;
     const next = { ...currentPieceRef.current, x: currentPieceRef.current.x + dx };
-    if (!isValidPosition(next, boardRef.current)) return false;
+    if (!isT99ValidPosition(next, boardRef.current)) return false;
     currentPieceRef.current = next;
     lastMoveRotationRef.current = false;
     playSfx('move');
-    const grounded = !isValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
+    const grounded = !isT99ValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
     if (grounded) {
       isOnGroundRef.current = true;
       resetLockTimer();
@@ -1595,10 +1717,10 @@ export default function Tetris99GameProper() {
   function moveDown() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return false;
     const next = { ...currentPieceRef.current, y: currentPieceRef.current.y + 1 };
-    if (isValidPosition(next, boardRef.current)) {
+    if (isT99ValidPosition(next, boardRef.current)) {
       currentPieceRef.current = next;
       lastMoveRotationRef.current = false;
-      const grounded = !isValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
+      const grounded = !isT99ValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
       if (grounded && !isOnGroundRef.current) {
         isOnGroundRef.current = true;
         startLockTimer();
@@ -1617,11 +1739,11 @@ export default function Tetris99GameProper() {
 
   function rotatePiece(direction: 1 | -1) {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
-    const rotated = tryRotation(currentPieceRef.current, direction, boardRef.current);
+    const rotated = tryT99Rotation(currentPieceRef.current, direction, boardRef.current);
     if (!rotated) return;
     currentPieceRef.current = rotated;
     lastMoveRotationRef.current = true;
-    const grounded = !isValidPosition({ ...rotated, y: rotated.y + 1 }, boardRef.current);
+    const grounded = !isT99ValidPosition({ ...rotated, y: rotated.y + 1 }, boardRef.current);
     if (grounded) {
       isOnGroundRef.current = true;
       resetLockTimer();
@@ -1635,7 +1757,7 @@ export default function Tetris99GameProper() {
   function hardDrop() {
     if (!currentPieceRef.current || stateRef.current !== 'playing') return;
     const startY = currentPieceRef.current.y;
-    const ghostY = getGhostY(currentPieceRef.current, boardRef.current);
+    const ghostY = getT99GhostY(currentPieceRef.current, boardRef.current);
     currentPieceRef.current = { ...currentPieceRef.current, y: ghostY };
     scoreRef.current += Math.max(0, ghostY - startY) * 2;
     playSfx('drop');
@@ -1648,7 +1770,16 @@ export default function Tetris99GameProper() {
     const held = holdRef.current;
     holdRef.current = current;
     canHoldRef.current = false;
-    currentPieceRef.current = held ? createSpawnPiece(held) : null;
+    if (held) {
+      const nextPiece = createT99SpawnPiece(held);
+      if (!isT99ValidPosition(nextPiece, boardRef.current)) {
+        finish(false);
+        return;
+      }
+      currentPieceRef.current = nextPiece;
+    } else {
+      currentPieceRef.current = null;
+    }
     lockMovesRef.current = 0;
     clearLockTimer();
     if (!held) spawnPiece();
@@ -1821,12 +1952,8 @@ export default function Tetris99GameProper() {
       for (const bot of botsRef.current) {
         if (!bot.alive) continue;
         updateBotTargeting(bot, playerTargets);
-        if (boardDanger(bot.board) >= 22) eliminateBot(bot);
       }
-      if (boardDanger(boardRef.current) >= 22) {
-        awardKo(lastDamagedByRef.current, badgesRef.current);
-        finish(false);
-      } else if (botsRef.current.every(bot => !bot.alive)) {
+      if (botsRef.current.every(bot => !bot.alive)) {
         finish(true);
       } else {
         syncSnapshot(boardDanger(boardRef.current) >= 18 ? 'Danger zone' : 'Battle in progress');
