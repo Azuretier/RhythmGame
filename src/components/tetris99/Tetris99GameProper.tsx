@@ -605,6 +605,7 @@ export default function Tetris99GameProper() {
   const router = useRouter();
   const { setFullscreen } = useLayoutConfig();
   const audioRef = useRef<AudioContext | null>(null);
+  const garbageSparklePacketRef = useRef<string | null>(null);
   const arenaRef = useRef<HTMLDivElement | null>(null);
   const playerBoardFrameRef = useRef<HTMLDivElement | null>(null);
   const botBoardRefs = useRef(new Map<string, HTMLDivElement>());
@@ -684,33 +685,57 @@ export default function Tetris99GameProper() {
     return audioRef.current;
   }
 
-  function beep(freq: number, duration: number, type: OscillatorType, gainValue: number, end?: number) {
+  function beep(freq: number, duration: number, type: OscillatorType, gainValue: number, end?: number, startDelay = 0) {
     const ctx = ensureAudio();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    const startTime = ctx.currentTime + startDelay;
     osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    if (end) osc.frequency.exponentialRampToValueAtTime(end, ctx.currentTime + duration);
-    gain.gain.setValueAtTime(gainValue, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.frequency.setValueAtTime(freq, startTime);
+    if (end) osc.frequency.exponentialRampToValueAtTime(end, startTime + duration);
+    gain.gain.setValueAtTime(gainValue, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
   }
 
-  function playSfx(kind: 'move' | 'rotate' | 'drop' | 'clear' | 'tetris' | 'garbage' | 'ko' | 'start' | 'danger' | 'win' | 'lose') {
+  function playSfx(kind: 'move' | 'rotate' | 'drop' | 'clear' | 'tetris' | 'garbage' | 'garbageSparkle' | 'ko' | 'start' | 'danger' | 'win' | 'lose') {
     if (kind === 'move') beep(220, 0.04, 'square', 0.025);
     if (kind === 'rotate') beep(440, 0.05, 'triangle', 0.03, 520);
     if (kind === 'drop') beep(180, 0.08, 'sawtooth', 0.05, 80);
     if (kind === 'clear') { beep(660, 0.12, 'triangle', 0.05, 880); beep(990, 0.1, 'triangle', 0.03); }
     if (kind === 'tetris') { beep(660, 0.18, 'triangle', 0.06, 1320); beep(330, 0.18, 'square', 0.035, 165); }
     if (kind === 'garbage') beep(130, 0.14, 'sawtooth', 0.045, 75);
+    if (kind === 'garbageSparkle') {
+      beep(1175, 0.05, 'triangle', 0.018, 1568);
+      beep(1568, 0.08, 'sine', 0.014, 2349, 0.035);
+    }
     if (kind === 'ko') { beep(523, 0.14, 'triangle', 0.05, 1047); beep(783, 0.16, 'triangle', 0.04); }
     if (kind === 'start') beep(440, 0.1, 'triangle', 0.05, 880);
     if (kind === 'danger') beep(150, 0.12, 'square', 0.04, 110);
     if (kind === 'win') { beep(523, 0.18, 'triangle', 0.055, 1047); beep(784, 0.22, 'triangle', 0.045, 1568); }
     if (kind === 'lose') beep(220, 0.26, 'sawtooth', 0.05, 82);
+  }
+
+  function syncGarbageSparkle(queue: GarbagePacket[]) {
+    const nextPacket = queue[0] ?? null;
+    if (!nextPacket) {
+      garbageSparklePacketRef.current = null;
+      return;
+    }
+
+    if (garbageSparklePacketRef.current && garbageSparklePacketRef.current !== nextPacket.id) {
+      garbageSparklePacketRef.current = null;
+    }
+
+    if (garbageSparklePacketRef.current === nextPacket.id) return;
+
+    if (getPacketTimerProgress(nextPacket) >= 0.8 && stateRef.current === 'playing') {
+      garbageSparklePacketRef.current = nextPacket.id;
+      playSfx('garbageSparkle');
+    }
   }
 
   function clearDAS() {
@@ -903,6 +928,7 @@ export default function Tetris99GameProper() {
     badgesRef.current = 0;
     tSpinsRef.current = 0;
     incomingRef.current = [];
+    garbageSparklePacketRef.current = null;
     playerTargetIdsRef.current = [];
     lastDamagedByRef.current = null;
     backToBackRef.current = false;
@@ -952,6 +978,7 @@ export default function Tetris99GameProper() {
     clearSoftDrop();
     clearAttackEffects();
     keysRef.current.clear();
+    garbageSparklePacketRef.current = null;
     stateRef.current = 'gameOver';
     victoryRef.current = victory;
     playSfx(victory ? 'win' : 'lose');
@@ -964,11 +991,13 @@ export default function Tetris99GameProper() {
     if (queuedLines <= 0) return;
     packetIdRef.current += 1;
     target.pendingGarbage.push({ id: `pkt-${packetIdRef.current}`, lines: queuedLines, delay: GARBAGE_DELAY, from });
+    if (target.pendingGarbage === incomingRef.current) syncGarbageSparkle(incomingRef.current);
   }
 
   function applyPendingGarbage() {
     const collected = collectNextReadyGarbage(incomingRef.current);
     incomingRef.current = collected.queue;
+    syncGarbageSparkle(incomingRef.current);
     if (collected.due <= 0) return 0;
     lastDamagedByRef.current = collected.lastSource;
     const { newBoard, adjustedPiece } = applyGarbageRise(boardRef.current, currentPieceRef.current, collected.due, rngRef.current);
@@ -1187,6 +1216,7 @@ export default function Tetris99GameProper() {
     playerTargetIdsRef.current = targetIds;
     const attack = finalizeAttack(PLAYER_ID, targetModeRef.current, lines, targetIds, incomingRef.current);
     incomingRef.current = attack.nextQueue;
+    syncGarbageSparkle(incomingRef.current);
 
     for (const distribution of attack.distributions) {
       const bot = getBotById(distribution.targetId);
@@ -1614,6 +1644,7 @@ export default function Tetris99GameProper() {
         if (boardDanger(bot.board) >= 22) eliminateBot(bot);
       }
       incomingRef.current = tickGarbageQueue(incomingRef.current);
+      syncGarbageSparkle(incomingRef.current);
       if (boardDanger(boardRef.current) >= 22) {
         awardKo(lastDamagedByRef.current, badgesRef.current);
         finish(false);
