@@ -498,6 +498,7 @@ function IncomingGarbageRail({ packets }: { packets: GarbagePacket[] }) {
 
 function MicroBoard({ bot, targeted, boardRef }: { bot: BotState; targeted: boolean; boardRef?: (node: HTMLDivElement | null) => void }) {
   const cls = [styles.microCard, targeted ? styles.microCardTargeted : '', bot.targetIds.includes(PLAYER_ID) ? styles.microCardAttacker : ''].filter(Boolean).join(' ');
+  const visibleBoard = bot.board.slice(BUFFER_ZONE);
   return (
     <div ref={boardRef} className={cls}>
       <div className={styles.microHeader}>
@@ -505,7 +506,7 @@ function MicroBoard({ bot, targeted, boardRef }: { bot: BotState; targeted: bool
         <BadgeMeter stage={bot.badges} compact />
       </div>
       <div className={styles.microBoard}>
-        {bot.board.flatMap((row, y) =>
+        {visibleBoard.flatMap((row, y) =>
           row.map((cell, x) => (
             <div
               key={`${bot.id}-${y}-${x}`}
