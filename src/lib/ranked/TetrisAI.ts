@@ -486,6 +486,11 @@ export class TetrisAIGame {
   private garbageRng: () => number;
   private pendingGarbage = 0;
   private moveTimer: ReturnType<typeof setTimeout> | null = null;
+  private paused = false;
+  private scheduledPieceType: PieceType | null = null;
+  private scheduledAt = 0;
+  private scheduledDelayMs = 0;
+  private remainingDelayMs = 0;
   private holdPiece: PieceType | null = null;
   private holdUsed = false;
   private nextQueue: PieceType[] = [];
@@ -541,6 +546,7 @@ export class TetrisAIGame {
   }
 
   start(): void {
+    this.paused = false;
     this.playNextPiece();
   }
 
@@ -550,6 +556,27 @@ export class TetrisAIGame {
       this.moveTimer = null;
     }
     this.gameOver = true;
+  }
+
+  pause(): void {
+    if (this.gameOver || this.paused) return;
+    this.paused = true;
+    if (this.moveTimer) {
+      clearTimeout(this.moveTimer);
+      this.moveTimer = null;
+      const elapsed = Math.max(0, Date.now() - this.scheduledAt);
+      this.remainingDelayMs = Math.max(0, this.scheduledDelayMs - elapsed);
+    }
+  }
+
+  resume(): void {
+    if (this.gameOver || !this.paused) return;
+    this.paused = false;
+    if (this.scheduledPieceType) {
+      this.schedulePiece(this.scheduledPieceType, this.remainingDelayMs || this.scheduledDelayMs);
+      return;
+    }
+    this.playNextPiece();
   }
 
   addGarbage(count: number): void {
@@ -564,8 +591,24 @@ export class TetrisAIGame {
     return this.gameOver;
   }
 
+  private schedulePiece(pieceType: PieceType, delay: number): void {
+    if (this.gameOver || this.paused) return;
+    this.scheduledPieceType = pieceType;
+    this.scheduledDelayMs = delay;
+    this.remainingDelayMs = delay;
+    this.scheduledAt = Date.now();
+    this.moveTimer = setTimeout(() => {
+      this.moveTimer = null;
+      this.scheduledPieceType = null;
+      this.scheduledDelayMs = 0;
+      this.remainingDelayMs = 0;
+      if (this.gameOver || this.paused) return;
+      this.executePiece(pieceType);
+    }, delay);
+  }
+
   private playNextPiece(): void {
-    if (this.gameOver) return;
+    if (this.gameOver || this.paused) return;
 
     const pieceType = this.nextPiece();
     this.holdUsed = false;
@@ -574,11 +617,7 @@ export class TetrisAIGame {
     const delayVariation = Math.floor(Math.random() * 200) - 50;
     const baseDelay = Math.round(this.difficulty.moveDelay * this.speedMultiplier);
     const delay = Math.max(70, baseDelay + delayVariation);
-
-    this.moveTimer = setTimeout(() => {
-      if (this.gameOver) return;
-      this.executePiece(pieceType);
-    }, delay);
+    this.schedulePiece(pieceType, delay);
   }
 
   private executePiece(pieceType: PieceType): void {
