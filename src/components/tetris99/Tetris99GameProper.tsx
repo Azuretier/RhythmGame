@@ -17,7 +17,7 @@ import {
   applyGarbageRise,
 } from '@/components/rhythmia/tetris/utils/boardUtils';
 import { BOARD_WIDTH, BOARD_HEIGHT, BUFFER_ZONE, LOCK_DELAY } from '@/components/rhythmia/tetris/constants';
-import { ARR, DAS, MAX_LOCK_MOVES, SOFT_DROP_SPEED } from '@/components/rhythmia/multiplayer-battle-engine';
+import { ARR, DAS, MAX_LOCK_MOVES } from '@/components/rhythmia/multiplayer-battle-engine';
 import { TetrisAIGame, getDifficultyForRank, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 import { useLayoutConfig } from '@/lib/layout/context';
 import {
@@ -44,7 +44,7 @@ type AttackClearType =
 type GarbagePacket = {
   id: string;
   lines: number;
-  delay: number;
+  chargeMs: number;
   from: string;
 };
 
@@ -135,16 +135,23 @@ type Snapshot = {
 };
 
 type SpeedProfile = {
+  level: number;
   label: string;
-  gravityMs: number;
-  garbageTickMs: number;
+  startMs: number;
+  gravityFrames: number;
+  softDropFrames: number;
   aiDelayScale: number;
 };
 
 const BOT_COUNT = 98;
-const GARBAGE_DELAY = 3;
 const MAX_PENDING_GARBAGE = 12;
 const PLAYER_ID = 'player';
+const FRAME_MS = 1000 / 60;
+const GARBAGE_QUEUE_TICK_MS = 50;
+const BOT_STATE_TICK_MS = 260;
+const GARBAGE_TIMER_START_PLAYERS = 50;
+const GARBAGE_TIMER_TOP10_PLAYERS = 10;
+const GRAVITY_RAMP_START_PLAYERS = 49;
 const BOT_NAMES = ['ALPHA', 'BLAZE', 'COMET', 'DELTA', 'EMBER', 'FROST', 'GLINT', 'HALO', 'ION', 'JOLT', 'KAI', 'LUMEN', 'MIRAGE', 'NOVA', 'ONYX', 'PULSE'];
 const PIECES: PieceType[] = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
 const PLAYER_COLORS: Record<string, string> = {
@@ -170,41 +177,51 @@ const AI_COLOR_TO_PIECE: Record<string, PieceType | 'garbage'> = {
 };
 const AI_COLOR_ENTRIES = Object.entries(AI_COLOR_TO_PIECE).filter(([, type]) => type !== 'garbage') as Array<[string, PieceType]>;
 const SPEED_PROFILES: SpeedProfile[] = [
-  { label: 'Slow', gravityMs: 680, garbageTickMs: 420, aiDelayScale: 1.25 },
-  { label: 'Warm', gravityMs: 560, garbageTickMs: 360, aiDelayScale: 1.12 },
-  { label: 'Mid', gravityMs: 440, garbageTickMs: 300, aiDelayScale: 1.0 },
-  { label: 'Fast', gravityMs: 330, garbageTickMs: 240, aiDelayScale: 0.88 },
-  { label: 'Rush', gravityMs: 240, garbageTickMs: 190, aiDelayScale: 0.76 },
-  { label: 'Frenzy', gravityMs: 165, garbageTickMs: 145, aiDelayScale: 0.66 },
-  { label: 'Max', gravityMs: 110, garbageTickMs: 110, aiDelayScale: 0.56 },
+  { level: 1, label: 'LV 1', startMs: 0, gravityFrames: 60, softDropFrames: 3, aiDelayScale: 1.1 },
+  { level: 2, label: 'LV 2', startMs: 10_000, gravityFrames: 50, softDropFrames: 3, aiDelayScale: 1.0 },
+  { level: 3, label: 'LV 3', startMs: 30_000, gravityFrames: 40, softDropFrames: 2, aiDelayScale: 0.92 },
+  { level: 4, label: 'LV 4', startMs: 50_000, gravityFrames: 30, softDropFrames: 2, aiDelayScale: 0.84 },
+  { level: 5, label: 'LV 5', startMs: 70_000, gravityFrames: 20, softDropFrames: 1, aiDelayScale: 0.74 },
+  { level: 6, label: 'LV 6', startMs: 90_000, gravityFrames: 10, softDropFrames: 1, aiDelayScale: 0.64 },
+  { level: 7, label: 'LV 7', startMs: 110_000, gravityFrames: 8, softDropFrames: 1, aiDelayScale: 0.58 },
+  { level: 8, label: 'LV 8', startMs: 130_000, gravityFrames: 6, softDropFrames: 1, aiDelayScale: 0.52 },
+  { level: 9, label: 'LV 9', startMs: 150_000, gravityFrames: 4, softDropFrames: 1, aiDelayScale: 0.46 },
+  { level: 10, label: 'LV 10', startMs: 170_000, gravityFrames: 2, softDropFrames: 1, aiDelayScale: 0.4 },
+  { level: 11, label: 'LV 11', startMs: 190_000, gravityFrames: 1, softDropFrames: 1, aiDelayScale: 0.35 },
 ];
 
 const badgeStageFromPoints = (points: number) => (points >= 16 ? 4 : points >= 8 ? 3 : points >= 4 ? 2 : points >= 2 ? 1 : 0);
 const badgeBoostPercentFromStage = (stage: number) => ([0, 25, 50, 75, 100][Math.max(0, Math.min(4, stage))] ?? 0);
 const getSpeedProfile = (stage: number) => SPEED_PROFILES[Math.max(0, Math.min(SPEED_PROFILES.length - 1, stage))] ?? SPEED_PROFILES[0];
 
-function getTimeSpeedStage(elapsedMs: number) {
-  if (elapsedMs < 30_000) return 0;
-  if (elapsedMs < 60_000) return 1;
-  if (elapsedMs < 90_000) return 2;
-  if (elapsedMs < 120_000) return 3;
-  if (elapsedMs < 150_000) return 4;
-  if (elapsedMs < 180_000) return 5;
-  return 6;
+function framesToMs(frames: number) {
+  return Math.round(frames * FRAME_MS);
 }
 
-function getAliveSpeedStage(alivePlayers: number) {
-  if (alivePlayers > 80) return 0;
-  if (alivePlayers > 60) return 1;
-  if (alivePlayers > 40) return 2;
-  if (alivePlayers > 25) return 3;
-  if (alivePlayers > 15) return 4;
-  if (alivePlayers > 8) return 5;
-  return 6;
+function getGarbagePhaseMs(alivePlayers: number) {
+  if (alivePlayers <= GARBAGE_TIMER_TOP10_PLAYERS) return 500;
+  if (alivePlayers <= GARBAGE_TIMER_START_PLAYERS) return 1500;
+  return 2500;
 }
 
-function getMatchSpeedStage(elapsedMs: number, alivePlayers: number) {
-  return Math.max(getTimeSpeedStage(elapsedMs), getAliveSpeedStage(alivePlayers));
+function getGarbageChargeWindowMs(alivePlayers: number) {
+  return getGarbagePhaseMs(alivePlayers) * 2;
+}
+
+function shouldRampGravity(alivePlayers: number) {
+  return alivePlayers <= GRAVITY_RAMP_START_PLAYERS;
+}
+
+function getGravityStage(elapsedMs: number, alivePlayers: number) {
+  if (!shouldRampGravity(alivePlayers)) return 0;
+
+  let stage = 0;
+  for (let i = 0; i < SPEED_PROFILES.length; i++) {
+    if (elapsedMs >= SPEED_PROFILES[i].startMs) {
+      stage = i;
+    }
+  }
+  return stage;
 }
 
 function getAttackClearType(clearedLines: number, tSpin: 'none' | 'mini' | 'full'): AttackClearType {
@@ -427,20 +444,21 @@ function sumGarbage(queue: GarbagePacket[]) {
   return queue.reduce((sum, packet) => sum + packet.lines, 0);
 }
 
-function tickGarbageQueue(queue: GarbagePacket[]) {
+function tickGarbageQueue(queue: GarbagePacket[], elapsedMs: number, alivePlayers: number) {
   if (!queue.length) return queue;
   const [nextPacket, ...rest] = queue;
-  if (nextPacket.delay <= 0) return queue;
-  return [{ ...nextPacket, delay: nextPacket.delay - 1 }, ...rest];
+  const chargeWindowMs = getGarbageChargeWindowMs(alivePlayers);
+  if (nextPacket.chargeMs >= chargeWindowMs) return queue;
+  return [{ ...nextPacket, chargeMs: Math.min(chargeWindowMs, nextPacket.chargeMs + elapsedMs) }, ...rest];
 }
 
-function collectNextReadyGarbage(queue: GarbagePacket[]) {
+function collectNextReadyGarbage(queue: GarbagePacket[], alivePlayers: number) {
   if (!queue.length) {
     return { queue, due: 0, lastSource: null as string | null };
   }
 
   const [nextPacket, ...rest] = queue;
-  if (nextPacket.delay > 0) {
+  if (nextPacket.chargeMs < getGarbageChargeWindowMs(alivePlayers)) {
     return { queue, due: 0, lastSource: null as string | null };
   }
 
@@ -490,17 +508,17 @@ function BadgeMeter({ stage, compact = false }: { stage: number; compact?: boole
   );
 }
 
-function getPacketTimerProgress(packet: GarbagePacket) {
-  return Math.max(0, Math.min(1, (GARBAGE_DELAY - packet.delay) / Math.max(1, GARBAGE_DELAY)));
+function getPacketTimerProgress(packet: GarbagePacket, alivePlayers: number) {
+  return Math.max(0, Math.min(1, packet.chargeMs / Math.max(1, getGarbageChargeWindowMs(alivePlayers))));
 }
 
-function IncomingGarbageRail({ packets }: { packets: GarbagePacket[] }) {
-  const filledBlocks = packets.flatMap(packet =>
+function IncomingGarbageRail({ packets, alivePlayers }: { packets: GarbagePacket[]; alivePlayers: number }) {
+  const filledBlocks = packets.flatMap((packet, packetIndex) =>
     Array.from({ length: Math.min(packet.lines, MAX_PENDING_GARBAGE) }, (_, index) => ({
       id: `${packet.id}-${index}`,
       from: packet.from,
-      progress: getPacketTimerProgress(packet),
-      delay: packet.delay,
+      progress: packetIndex === 0 ? getPacketTimerProgress(packet, alivePlayers) : 0,
+      active: packetIndex === 0,
     })),
   ).slice(0, MAX_PENDING_GARBAGE);
 
@@ -513,20 +531,19 @@ function IncomingGarbageRail({ packets }: { packets: GarbagePacket[] }) {
   return (
     <div className={styles.garbageRail}>
       {displayBlocks.map((block, index) => {
-        const toneClass = !block ? '' :
-          block.delay <= 0 ? styles.garbageBlockHot :
-            block.delay === 1 ? styles.garbageBlockWarm :
-              block.delay === 2 ? styles.garbageBlockReady :
-                styles.garbageBlockCool;
+        const toneClass = !block || !block.active ? '' :
+          block.progress >= 1 ? styles.garbageBlockHot :
+            block.progress >= 0.5 ? styles.garbageBlockWarm :
+              styles.garbageBlockCool;
 
         return (
           <div
             key={block?.id ?? `empty-${index}`}
-            className={`${styles.garbageBlock} ${block ? styles.garbageBlockActive : ''} ${toneClass}`}
+            className={`${styles.garbageBlock} ${block && !block.active ? styles.garbageBlockQueued : ''} ${block?.active ? styles.garbageBlockActive : ''} ${toneClass} ${block?.active && block.progress >= 1 ? styles.garbageBlockFlashing : ''}`}
             title={block ? `${block.from} +1` : undefined}
-            style={block ? ({ ['--garbage-progress' as string]: `${Math.max(10, block.progress * 100)}%` }) : undefined}
+            style={block?.active ? ({ ['--garbage-progress' as string]: `${Math.max(10, block.progress * 100)}%` }) : undefined}
           >
-            {block && (
+            {block?.active && (
               <>
                 <div className={styles.garbageBlockStripe} />
                 <div className={styles.garbageBlockTimer} />
@@ -782,7 +799,7 @@ export default function Tetris99GameProper() {
 
     if (garbageSparklePacketRef.current === nextPacket.id) return;
 
-    if (getPacketTimerProgress(nextPacket) >= 0.8 && stateRef.current === 'playing') {
+    if (getPacketTimerProgress(nextPacket, getAlivePlayerCount()) >= 0.8 && stateRef.current === 'playing') {
       garbageSparklePacketRef.current = nextPacket.id;
       playSfx('garbageSparkle');
     }
@@ -919,7 +936,7 @@ export default function Tetris99GameProper() {
     return aliveBots + playerAlive;
   }
 
-  function getMatchElapsedMs() {
+  function getGravityRampElapsedMs() {
     if (!matchStartedAtRef.current) return 0;
     const end = matchEndedAtRef.current ?? Date.now();
     const pausedForCurrentSession = pauseStartedAtRef.current !== null && matchEndedAtRef.current === null
@@ -929,10 +946,14 @@ export default function Tetris99GameProper() {
   }
 
   function syncMatchSpeed() {
-    const nextStage =
-      stateRef.current === 'countdown'
-        ? 0
-        : getMatchSpeedStage(getMatchElapsedMs(), getAlivePlayerCount());
+    const alivePlayers = getAlivePlayerCount();
+    if (stateRef.current === 'playing' && shouldRampGravity(alivePlayers) && !matchStartedAtRef.current) {
+      matchStartedAtRef.current = Date.now();
+    }
+
+    const nextStage = stateRef.current === 'countdown'
+      ? 0
+      : getGravityStage(getGravityRampElapsedMs(), alivePlayers);
 
     if (speedStageRef.current !== nextStage) {
       speedStageRef.current = nextStage;
@@ -949,6 +970,7 @@ export default function Tetris99GameProper() {
     const nextStatus = status ?? statusRef.current;
     statusRef.current = nextStatus;
     const alive = botsRef.current.filter(bot => bot.alive).length;
+    const alivePlayers = getAlivePlayerCount();
     const attackers = botsRef.current.filter(bot => bot.alive && bot.targetIds.includes(PLAYER_ID)).length;
     const speedStage = syncMatchSpeed();
     const speedProfile = getSpeedProfile(speedStage);
@@ -975,7 +997,7 @@ export default function Tetris99GameProper() {
       state: stateRef.current,
       countdown: countdownRef.current,
       speedStage,
-      speedLabel: speedProfile.label,
+      speedLabel: `${speedProfile.label} | ${(getGarbageChargeWindowMs(alivePlayers) / 1000).toFixed(1)}s`,
       gameOver: stateRef.current === 'gameOver',
       victory: victoryRef.current,
       status: nextStatus,
@@ -1089,12 +1111,12 @@ export default function Tetris99GameProper() {
     const queuedLines = Math.min(lines, availableSpace);
     if (queuedLines <= 0) return;
     packetIdRef.current += 1;
-    target.pendingGarbage.push({ id: `pkt-${packetIdRef.current}`, lines: queuedLines, delay: GARBAGE_DELAY, from });
+    target.pendingGarbage.push({ id: `pkt-${packetIdRef.current}`, lines: queuedLines, chargeMs: 0, from });
     if (target.pendingGarbage === incomingRef.current) syncGarbageSparkle(incomingRef.current);
   }
 
   function applyPendingGarbage() {
-    const collected = collectNextReadyGarbage(incomingRef.current);
+    const collected = collectNextReadyGarbage(incomingRef.current, getAlivePlayerCount());
     incomingRef.current = collected.queue;
     syncGarbageSparkle(incomingRef.current);
     if (collected.due <= 0) return 0;
@@ -1108,7 +1130,7 @@ export default function Tetris99GameProper() {
   }
 
   function applyBotPendingGarbage(bot: BotState) {
-    const collected = collectNextReadyGarbage(bot.pendingGarbage);
+    const collected = collectNextReadyGarbage(bot.pendingGarbage, getAlivePlayerCount());
     bot.pendingGarbage = collected.queue;
     if (collected.due <= 0) return 0;
     bot.lastDamagedBy = collected.lastSource;
@@ -1617,7 +1639,6 @@ export default function Tetris99GameProper() {
       if (countdownRef.current <= 0) {
         countdownRef.current = 0;
         stateRef.current = 'playing';
-        matchStartedAtRef.current = Date.now();
         matchEndedAtRef.current = null;
         pauseStartedAtRef.current = null;
         pausedDurationMsRef.current = 0;
@@ -1645,6 +1666,12 @@ export default function Tetris99GameProper() {
   }, []);
 
   useEffect(() => {
+    const startSoftDrop = () => {
+      clearSoftDrop();
+      const intervalMs = framesToMs(getSpeedProfile(speedStageRef.current).softDropFrames);
+      softDropTimerRef.current = window.setInterval(() => moveDown(), intervalMs);
+    };
+
     const startDAS = (dir: 'left' | 'right', dx: number) => {
       clearDAS();
       lastDirRef.current = dir;
@@ -1671,9 +1698,8 @@ export default function Tetris99GameProper() {
       }
       else if (event.code === 'ArrowDown' || event.code === 'KeyS') {
         event.preventDefault();
-        clearSoftDrop();
         moveDown();
-        softDropTimerRef.current = window.setInterval(() => moveDown(), SOFT_DROP_SPEED);
+        startSoftDrop();
       }
       else if (event.code === 'ArrowUp' || event.code === 'KeyX') {
         event.preventDefault();
@@ -1725,8 +1751,18 @@ export default function Tetris99GameProper() {
       if (settingsOpenRef.current) return;
       if (stateRef.current !== 'playing' || !currentPieceRef.current) return;
       moveDown();
-    }, speedProfile.gravityMs);
+    }, framesToMs(speedProfile.gravityFrames));
     return () => window.clearInterval(gravity);
+  }, [snapshot.speedStage]);
+
+  useEffect(() => {
+    if (settingsOpenRef.current) return;
+    if (stateRef.current !== 'playing') return;
+    if (!keysRef.current.has('ArrowDown') && !keysRef.current.has('KeyS')) return;
+    clearSoftDrop();
+    const intervalMs = framesToMs(getSpeedProfile(snapshot.speedStage).softDropFrames);
+    softDropTimerRef.current = window.setInterval(() => moveDown(), intervalMs);
+    return () => clearSoftDrop();
   }, [snapshot.speedStage]);
 
   useEffect(() => {
@@ -1738,7 +1774,6 @@ export default function Tetris99GameProper() {
 
     startBotAiGames();
 
-    const speedProfile = getSpeedProfile(snapshot.speedStage);
     const botLoop = window.setInterval(() => {
       if (settingsOpenRef.current) return;
       if (stateRef.current !== 'playing') return;
@@ -1746,11 +1781,8 @@ export default function Tetris99GameProper() {
       for (const bot of botsRef.current) {
         if (!bot.alive) continue;
         updateBotTargeting(bot, playerTargets);
-        bot.pendingGarbage = tickGarbageQueue(bot.pendingGarbage);
         if (boardDanger(bot.board) >= 22) eliminateBot(bot);
       }
-      incomingRef.current = tickGarbageQueue(incomingRef.current);
-      syncGarbageSparkle(incomingRef.current);
       if (boardDanger(boardRef.current) >= 22) {
         awardKo(lastDamagedByRef.current, badgesRef.current);
         finish(false);
@@ -1760,13 +1792,33 @@ export default function Tetris99GameProper() {
         syncSnapshot(boardDanger(boardRef.current) >= 18 ? 'Danger zone' : 'Battle in progress');
       }
       setBotRenderVersion(prev => prev + 1);
-    }, speedProfile.garbageTickMs);
+    }, BOT_STATE_TICK_MS);
     return () => {
       window.clearInterval(botLoop);
       for (const aiGame of botAiGamesRef.current.values()) aiGame.stop();
       botAiGamesRef.current.clear();
     };
-  }, [snapshot.state, snapshot.speedStage]);
+  }, [snapshot.state]);
+
+  useEffect(() => {
+    if (snapshot.state !== 'playing') return;
+
+    const garbageLoop = window.setInterval(() => {
+      if (settingsOpenRef.current) return;
+      if (stateRef.current !== 'playing') return;
+      const hadIncoming = incomingRef.current.length > 0;
+      const alivePlayers = getAlivePlayerCount();
+      incomingRef.current = tickGarbageQueue(incomingRef.current, GARBAGE_QUEUE_TICK_MS, alivePlayers);
+      syncGarbageSparkle(incomingRef.current);
+      for (const bot of botsRef.current) {
+        if (!bot.alive) continue;
+        bot.pendingGarbage = tickGarbageQueue(bot.pendingGarbage, GARBAGE_QUEUE_TICK_MS, alivePlayers);
+      }
+      if (hadIncoming || incomingRef.current.length > 0) syncSnapshot();
+    }, GARBAGE_QUEUE_TICK_MS);
+
+    return () => window.clearInterval(garbageLoop);
+  }, [snapshot.state]);
 
   const targetedBots = useMemo(() => {
     return new Set(playerTargetIdsRef.current);
@@ -1835,7 +1887,7 @@ export default function Tetris99GameProper() {
                     <div className={styles.boardPlayfieldInner}>
                       <div className={styles.garbagePanel}>
                         <span className={styles.garbagePanelLabel}>Incoming</span>
-                        <IncomingGarbageRail packets={snapshot.incomingPackets} />
+                        <IncomingGarbageRail packets={snapshot.incomingPackets} alivePlayers={snapshot.place} />
                       </div>
                       <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
                     </div>
