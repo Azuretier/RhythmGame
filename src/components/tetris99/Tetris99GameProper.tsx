@@ -797,6 +797,7 @@ export default function Tetris99GameProper() {
   const playerBoardFrameRef = useRef<HTMLDivElement | null>(null);
   const botBoardRefs = useRef(new Map<string, HTMLDivElement>());
   const attackEffectTimersRef = useRef<number[]>([]);
+  const speedNoticeTimerRef = useRef<number | null>(null);
   const showAllAttackTrailsRef = useRef(false);
   const settingsOpenRef = useRef(false);
   const packetIdRef = useRef(0);
@@ -845,6 +846,7 @@ export default function Tetris99GameProper() {
   const [botRenderVersion, setBotRenderVersion] = useState(0);
   const [attackEffects, setAttackEffects] = useState<AttackEffect[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [speedNotice, setSpeedNotice] = useState<string | null>(null);
   const [showAllAttackTrails, setShowAllAttackTrails] = useState(() => loadTetris99ShowAllAttackTrails());
   const [snapshot, setSnapshot] = useState<Snapshot>({
     board: createT99EmptyBoard(),
@@ -959,6 +961,23 @@ export default function Tetris99GameProper() {
     }
     attackEffectTimersRef.current = [];
     setAttackEffects([]);
+  }
+
+  function clearSpeedNotice() {
+    if (speedNoticeTimerRef.current !== null) {
+      window.clearTimeout(speedNoticeTimerRef.current);
+      speedNoticeTimerRef.current = null;
+    }
+    setSpeedNotice(null);
+  }
+
+  function showSpeedNoticeForStage(stage: number) {
+    clearSpeedNotice();
+    setSpeedNotice(`Speed Up! ${getSpeedProfile(stage).label}`);
+    speedNoticeTimerRef.current = window.setTimeout(() => {
+      setSpeedNotice(null);
+      speedNoticeTimerRef.current = null;
+    }, 1350);
   }
 
   function closeSettingsMenu() {
@@ -1089,25 +1108,44 @@ export default function Tetris99GameProper() {
     return Math.min(MARGIN_TIME_MAX_BONUS, 1 + steps);
   }
 
-  function syncMatchSpeed() {
+  function applySpeedStage(nextStage: number, announce = false) {
+    const normalizedStage = Math.max(0, Math.min(SPEED_PROFILES.length - 1, nextStage));
+    const previousStage = speedStageRef.current;
+    if (previousStage === normalizedStage) return false;
+
+    speedStageRef.current = normalizedStage;
+    const nextAiDelayScale = getSpeedProfile(normalizedStage).aiDelayScale;
+    for (const aiGame of botAiGamesRef.current.values()) {
+      aiGame.setSpeedMultiplier(nextAiDelayScale);
+    }
+
+    if (announce && normalizedStage > previousStage && stateRef.current === 'playing') {
+      showSpeedNoticeForStage(normalizedStage);
+    }
+
+    return true;
+  }
+
+  function updateSpeedStage(announce = false) {
+    if (stateRef.current !== 'playing') {
+      matchStartedAtRef.current = null;
+      matchEndedAtRef.current = null;
+      return applySpeedStage(0, false);
+    }
+
     const alivePlayers = getAlivePlayerCount();
-    if (stateRef.current === 'playing' && shouldRampGravity(alivePlayers) && !matchStartedAtRef.current) {
+    if (!shouldRampGravity(alivePlayers)) {
+      matchStartedAtRef.current = null;
+      matchEndedAtRef.current = null;
+      return applySpeedStage(0, false);
+    }
+
+    if (!matchStartedAtRef.current) {
       matchStartedAtRef.current = Date.now();
+      matchEndedAtRef.current = null;
     }
 
-    const nextStage = stateRef.current === 'countdown'
-      ? 0
-      : getGravityStage(getGravityRampElapsedMs(), alivePlayers);
-
-    if (speedStageRef.current !== nextStage) {
-      speedStageRef.current = nextStage;
-      const nextAiDelayScale = getSpeedProfile(nextStage).aiDelayScale;
-      for (const aiGame of botAiGamesRef.current.values()) {
-        aiGame.setSpeedMultiplier(nextAiDelayScale);
-      }
-    }
-
-    return nextStage;
+    return applySpeedStage(getGravityStage(getGravityRampElapsedMs(), alivePlayers), announce);
   }
 
   function syncSnapshot(status?: string) {
@@ -1116,7 +1154,7 @@ export default function Tetris99GameProper() {
     const alive = botsRef.current.filter(bot => bot.alive).length;
     const alivePlayers = getAlivePlayerCount();
     const attackers = botsRef.current.filter(bot => bot.alive && bot.targetIds.includes(PLAYER_ID)).length;
-    const speedStage = syncMatchSpeed();
+    const speedStage = speedStageRef.current;
     const speedProfile = getSpeedProfile(speedStage);
     setSnapshot({
       board: boardRef.current,
@@ -1174,6 +1212,7 @@ export default function Tetris99GameProper() {
     clearDAS();
     clearSoftDrop();
     clearAttackEffects();
+    clearSpeedNotice();
     keysRef.current.clear();
     boardRef.current = createT99EmptyBoard();
     currentPieceRef.current = null;
@@ -1243,6 +1282,7 @@ export default function Tetris99GameProper() {
     clearDAS();
     clearSoftDrop();
     clearAttackEffects();
+    clearSpeedNotice();
     keysRef.current.clear();
     garbageSparklePacketRef.current = null;
     stateRef.current = 'gameOver';
@@ -1796,6 +1836,7 @@ export default function Tetris99GameProper() {
     resetGame();
     return () => {
       clearAttackEffects();
+      clearSpeedNotice();
       setFullscreen(false);
     };
   }, [setFullscreen]);
@@ -1987,6 +2028,22 @@ export default function Tetris99GameProper() {
     return () => window.clearInterval(garbageLoop);
   }, [snapshot.state]);
 
+  useEffect(() => {
+    if (snapshot.state !== 'playing') return;
+
+    updateSpeedStage(false);
+    syncSnapshot();
+
+    const speedLoop = window.setInterval(() => {
+      if (settingsOpenRef.current) return;
+      if (stateRef.current !== 'playing') return;
+      const changed = updateSpeedStage(true);
+      if (changed) syncSnapshot();
+    }, 250);
+
+    return () => window.clearInterval(speedLoop);
+  }, [snapshot.state]);
+
   const targetedBots = useMemo(() => {
     return new Set(playerTargetIdsRef.current);
   }, [botRenderVersion, snapshot.targetMode, snapshot.place, snapshot.attackers]);
@@ -2058,6 +2115,12 @@ export default function Tetris99GameProper() {
                       </div>
                       <PlayerBoard board={snapshot.board} currentPiece={snapshot.currentPiece} />
                     </div>
+                    {speedNotice && !snapshot.gameOver && (
+                      <div className={styles.speedNoticeOverlay} aria-hidden="true">
+                        <div className={styles.speedNoticeEyebrow}>Speed Up</div>
+                        <div className={styles.speedNoticeValue}>{speedNotice.replace('Speed Up! ', '')}</div>
+                      </div>
+                    )}
                     {settingsOpen && (
                       <div className={styles.settingsBoardOverlay} role="dialog" aria-modal="true" aria-label="Tetris 99 settings">
                         <div className={styles.settingsBoardPanel}>

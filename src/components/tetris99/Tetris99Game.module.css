@@ -530,6 +530,64 @@
   backdrop-filter: blur(10px);
 }
 
+.speedNoticeOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  pointer-events: none;
+  text-align: center;
+  animation: speedNoticeFade 1350ms ease forwards;
+}
+
+.speedNoticeEyebrow {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(8, 12, 18, 0.82);
+  border: 1px solid rgba(255, 205, 146, 0.3);
+  color: rgba(255, 214, 171, 0.92);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.speedNoticeValue {
+  padding: 12px 18px;
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 147, 79, 0.9), rgba(255, 74, 102, 0.86)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent);
+  border: 1px solid rgba(255, 232, 205, 0.4);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
+  color: #fff7eb;
+  font-size: clamp(1.1rem, 2.6vw, 1.6rem);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@keyframes speedNoticeFade {
+  0% {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+
+  12%,
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
 .settingsBoardPanel {
   position: relative;
   width: min(100%, 280px);
