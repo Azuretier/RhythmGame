@@ -1021,7 +1021,7 @@
 
 .microCard {
   position: relative;
-  border-radius: 12px;
+  border-radius: 1px;
   padding: 2px;
   background: linear-gradient(180deg, rgba(17, 23, 34, 0.9), rgba(8, 11, 17, 0.92));
   border: 1px solid rgba(255, 164, 109, 0.08);
