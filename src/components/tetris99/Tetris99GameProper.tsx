@@ -86,6 +86,7 @@ type BotState = {
   id: string;
   name: string;
   board: RhythmBoardState;
+  currentPiece: RhythmPiece | null;
   queue: PieceType[];
   hold: PieceType | null;
   combo: number;
@@ -1615,6 +1616,7 @@ export default function Tetris99GameProper() {
         id: `bot-${i}`,
         name: `${BOT_NAMES[i % BOT_NAMES.length]}-${String(i + 1).padStart(2, '0')}`,
         board: createT99EmptyBoard(),
+        currentPiece: null,
         queue: Array.from({ length: 6 }, () => botBagRef.current()),
         hold: null,
         combo: 0,
@@ -2252,6 +2254,7 @@ export default function Tetris99GameProper() {
         botsRef.current = message.bots.map(bot => ({
           ...bot,
           board: bot.board.map(row => [...row]),
+          currentPiece: bot.currentPiece ? { ...bot.currentPiece } : null,
           queue: [...bot.queue],
           targetIds: [...bot.targetIds],
           pendingGarbage: bot.pendingGarbage.map(packet => ({ ...packet })),
@@ -2531,7 +2534,7 @@ export default function Tetris99GameProper() {
   }, [botRenderVersion, snapshot.spectating, spectateTargetId]);
 
   const centerBoard = spectateBot?.board ?? snapshot.board;
-  const centerCurrentPiece = spectateBot ? null : snapshot.currentPiece;
+  const centerCurrentPiece = spectateBot?.currentPiece ?? snapshot.currentPiece;
   const centerHold = spectateBot?.hold ?? snapshot.hold;
   const centerQueue = spectateBot?.queue.slice(0, PREVIEW_SLOT_COUNT) ?? snapshot.queue;
   const centerBadgeStage = spectateBot?.badges ?? snapshot.badges;
