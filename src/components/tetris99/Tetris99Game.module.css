@@ -171,7 +171,7 @@
 
 .heroLayout {
   display: grid;
-  grid-template-columns: 68px minmax(0, 1fr) 96px;
+  grid-template-columns: 60px minmax(0, 1fr) 96px;
   gap: 4px;
   align-items: stretch;
   flex: 1;
@@ -182,6 +182,11 @@
   display: grid;
   gap: 4px;
   align-content: stretch;
+  min-height: 0;
+}
+
+.previewColumnCompact {
+  grid-template-rows: auto 1fr;
 }
 
 .miniPanel {
@@ -255,23 +260,27 @@
 
 .boardPlayfieldInner {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 6px;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   min-height: 100%;
 }
 
 .garbagePanel {
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 6px;
-  padding: 4px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px 4px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(10, 14, 22, 0.88), rgba(5, 7, 12, 0.94));
   border: 1px solid rgba(255, 175, 119, 0.1);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  min-height: 0;
+}
+
+.garbagePanelCompact {
+  flex: 1;
 }
 
 .targetModeNoticeOverlay {
@@ -323,6 +332,7 @@
   color: rgba(255, 220, 183, 0.6);
   writing-mode: vertical-rl;
   text-orientation: mixed;
+  line-height: 1;
 }
 
 .boardStats {
@@ -414,53 +424,65 @@
 }
 
 .garbageRail {
-  width: 18px;
-  min-height: 300px;
-  display: grid;
-  grid-template-rows: repeat(12, minmax(0, 1fr));
-  gap: 3px;
-  padding: 2px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, rgba(26, 31, 43, 0.96), rgba(9, 12, 19, 0.96));
-  box-shadow: inset 0 0 0 1px rgba(255, 186, 129, 0.14);
+  --garbage-cell-size: 18px;
+  width: var(--garbage-cell-size);
+  min-height: calc(var(--garbage-cell-size) * 12 + 44px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
-.garbageBlock {
-  position: relative;
-  border-radius: 3px;
+.garbageRailEmpty {
+  width: 100%;
+  height: var(--garbage-cell-size);
+  border-radius: 4px;
   background: rgba(255, 255, 255, 0.045);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  overflow: hidden;
 }
 
-.garbageBlockActive {
+.garbageGroup {
+  position: relative;
+  width: 100%;
+  min-height: var(--garbage-cell-size);
+  height: calc(var(--garbage-group-lines, 1) * var(--garbage-cell-size));
+  border-radius: 4px;
+  background: var(--garbage-cell-color, #58606c);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 10px color-mix(in srgb, var(--garbage-cell-color, #58606c) 40%, transparent);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.garbageGroupActive {
   box-shadow:
     inset 0 0 0 1px rgba(255, 248, 232, 0.16),
-    0 0 0 1px rgba(0, 0, 0, 0.18);
+    0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 0 14px color-mix(in srgb, var(--garbage-cell-color, #58606c) 56%, transparent);
 }
 
-.garbageBlockQueued {
-  background: linear-gradient(180deg, #818895, #58606c);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+.garbageGroupQueued {
+  --garbage-cell-color: #69707c;
 }
 
-.garbageBlockCool {
-  background: linear-gradient(180deg, #ffe27a, #ffbf47);
+.garbageGroupCool {
+  --garbage-cell-color: #ffca54;
 }
 
-.garbageBlockWarm {
-  background: linear-gradient(180deg, #ff6f68, #ff324f);
+.garbageGroupWarm {
+  --garbage-cell-color: #ff5f63;
 }
 
-.garbageBlockHot {
-  background: linear-gradient(180deg, #ff8d84, #ff405a);
+.garbageGroupHot {
+  --garbage-cell-color: #ff6d57;
 }
 
-.garbageBlockFlashing {
+.garbageGroupFlashing {
   animation: garbageBlockFlash 180ms steps(2, jump-none) infinite;
 }
 
-.garbageBlockStripe {
+.garbageGroupStripe {
   position: absolute;
   inset: 0;
   background:
@@ -469,7 +491,7 @@
   opacity: 0.34;
 }
 
-.garbageBlockTimer {
+.garbageGroupTimer {
   position: absolute;
   inset: auto 0 0;
   height: var(--garbage-progress, 10%);
@@ -1195,6 +1217,15 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .previewColumnCompact {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .garbageRail {
+    --garbage-cell-size: 16px;
+  }
+
   .targetRow,
   .hudGrid,
   .controlGrid {
@@ -1220,5 +1251,9 @@
 
   .sidePanel {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .garbageRail {
+    --garbage-cell-size: 14px;
   }
 }

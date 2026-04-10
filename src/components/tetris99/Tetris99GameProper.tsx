@@ -667,45 +667,63 @@ function getPacketTimerProgress(packet: GarbagePacket, alivePlayers: number) {
 }
 
 function IncomingGarbageRail({ packets, alivePlayers }: { packets: GarbagePacket[]; alivePlayers: number }) {
-  const filledBlocks = packets.flatMap((packet, packetIndex) =>
-    Array.from({ length: Math.min(packet.lines, MAX_PENDING_GARBAGE) }, (_, index) => ({
-      id: `${packet.id}-${index}`,
+  let remainingLines = MAX_PENDING_GARBAGE;
+  const visibleGroups = packets.reduce<Array<{
+    id: string;
+    from: string;
+    lines: number;
+    progress: number;
+    active: boolean;
+  }>>((groups, packet, packetIndex) => {
+    if (remainingLines <= 0) return groups;
+
+    const lines = Math.min(packet.lines, remainingLines);
+    if (lines <= 0) return groups;
+
+    remainingLines -= lines;
+    groups.push({
+      id: packet.id,
       from: packet.from,
+      lines,
       progress: packetIndex === 0 ? getPacketTimerProgress(packet, alivePlayers) : 0,
       active: packetIndex === 0,
-    })),
-  ).slice(0, MAX_PENDING_GARBAGE);
+    });
 
-  const emptyCount = Math.max(0, MAX_PENDING_GARBAGE - filledBlocks.length);
-  const displayBlocks = [
-    ...Array.from({ length: emptyCount }, () => null),
-    ...filledBlocks.slice().reverse(),
-  ];
+    return groups;
+  }, []);
 
   return (
     <div className={styles.garbageRail}>
-      {displayBlocks.map((block, index) => {
-        const toneClass = !block || !block.active ? '' :
-          block.progress >= 1 ? styles.garbageBlockHot :
-            block.progress >= 0.5 ? styles.garbageBlockWarm :
-              styles.garbageBlockCool;
+      {visibleGroups.length === 0
+        ? <div className={styles.garbageRailEmpty} aria-hidden="true" />
+        : visibleGroups.slice().reverse().map(group => {
+          const toneClass = !group.active
+            ? styles.garbageGroupQueued
+            : group.progress >= 1
+              ? styles.garbageGroupHot
+              : group.progress >= 0.5
+                ? styles.garbageGroupWarm
+                : styles.garbageGroupCool;
 
-        return (
-          <div
-            key={block?.id ?? `empty-${index}`}
-            className={`${styles.garbageBlock} ${block && !block.active ? styles.garbageBlockQueued : ''} ${block?.active ? styles.garbageBlockActive : ''} ${toneClass} ${block?.active && block.progress >= 1 ? styles.garbageBlockFlashing : ''}`}
-            title={block ? `${block.from} +1` : undefined}
-            style={block?.active ? ({ ['--garbage-progress' as string]: `${Math.max(10, block.progress * 100)}%` }) : undefined}
-          >
-            {block?.active && (
-              <>
-                <div className={styles.garbageBlockStripe} />
-                <div className={styles.garbageBlockTimer} />
-              </>
-            )}
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={group.id}
+              className={`${styles.garbageGroup} ${toneClass} ${group.active ? styles.garbageGroupActive : ''} ${group.active && group.progress >= 1 ? styles.garbageGroupFlashing : ''}`}
+              title={`${group.from} +${group.lines}`}
+              style={{
+                ['--garbage-group-lines' as string]: String(group.lines),
+                ['--garbage-progress' as string]: `${Math.max(10, group.progress * 100)}%`,
+              } as CSSProperties}
+            >
+              {group.active && (
+                <>
+                  <div className={styles.garbageGroupStripe} />
+                  <div className={styles.garbageGroupTimer} />
+                </>
+              )}
+            </div>
+          );
+        })}
     </div>
   );
 }
@@ -2602,8 +2620,12 @@ export default function Tetris99GameProper() {
           <div className={styles.boardStack}>
             <div className={styles.heroCard}>
               <div className={styles.heroLayout}>
-                <div className={styles.previewColumn}>
+                <div className={`${styles.previewColumn} ${styles.previewColumnCompact}`}>
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Hold</span><div className={styles.previewBox}><PreviewShape type={centerHold} /></div></div>
+                  <div className={`${styles.garbagePanel} ${styles.garbagePanelCompact}`}>
+                    <span className={styles.garbagePanelLabel}>Incoming</span>
+                    <IncomingGarbageRail packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets} alivePlayers={renderAlivePlayers} />
+                  </div>
                 </div>
                 <div ref={playerBoardFrameRef} className={`${styles.boardFrame} ${centerDanger >= 18 ? styles.boardFrameDanger : ''}`}>
                   <div className={styles.boardPlayfield}>
@@ -2625,10 +2647,6 @@ export default function Tetris99GameProper() {
                       </div>
                     )}
                     <div className={styles.boardPlayfieldInner}>
-                      <div className={styles.garbagePanel}>
-                        <span className={styles.garbagePanelLabel}>Incoming</span>
-                        <IncomingGarbageRail packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets} alivePlayers={renderAlivePlayers} />
-                      </div>
                       <PlayerBoard board={centerBoard} currentPiece={centerCurrentPiece} />
                     </div>
                     {speedNotice && !snapshot.gameOver && (
