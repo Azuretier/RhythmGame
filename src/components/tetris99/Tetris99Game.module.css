@@ -35,7 +35,8 @@
 }
 
 .shell {
-  width: min(1640px, 100%);
+  width: 100%;
+  max-width: 1800px;
   margin: 0 auto;
   height: 100%;
   padding: 6px 10px 10px;
@@ -98,7 +99,7 @@
 .arena {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(220px, 292px) minmax(520px, 720px) minmax(220px, 292px);
+  grid-template-columns: minmax(340px, 520px) minmax(520px, 720px) minmax(340px, 520px);
   justify-content: center;
   gap: 4px;
   align-items: stretch;
