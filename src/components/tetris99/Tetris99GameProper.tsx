@@ -158,7 +158,7 @@ type MatchServerMessage =
     };
   }
   | { type: 'player-attack'; matchId: number; distributions: AttackDistribution[] }
-  | { type: 'player-defeated'; matchId: number; killerId: string | null; victimBadges: number }
+  | { type: 'player-defeated'; matchId: number; killerId: string | null; victimBadgePoints: number }
   | { type: 'set-speed-stage'; matchId: number; stage: number };
 
 type MatchServerEvent =
@@ -1673,7 +1673,7 @@ export default function Tetris99GameProper() {
         type: 'player-defeated',
         matchId: matchIdRef.current,
         killerId: lastDamagedByRef.current,
-        victimBadges: badgesRef.current,
+        victimBadgePoints: badgePointsRef.current,
       });
     }
     playSfx('lose');
