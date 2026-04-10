@@ -192,6 +192,8 @@ const GARBAGE_QUEUE_TICK_MS = 50;
 const GARBAGE_TIMER_START_PLAYERS = 50;
 const GARBAGE_TIMER_TOP10_PLAYERS = 10;
 const GRAVITY_RAMP_START_PLAYERS = 49;
+const FORCED_MIDGAME_PRESSURE_MS = 90 * 1000;
+const FORCED_TOP10_PRESSURE_MS = 3 * 60 * 1000;
 const MARGIN_TIME_START_MS = 10 * 60 * 1000;
 const MARGIN_TIME_STEP_MS = 30 * 1000;
 const MARGIN_TIME_MAX_BONUS = 11;
@@ -248,13 +250,17 @@ function getGarbageChargeWindowMs(alivePlayers: number) {
   return getGarbagePhaseMs(alivePlayers) * 2;
 }
 
-function shouldRampGravity(alivePlayers: number) {
-  return alivePlayers <= GRAVITY_RAMP_START_PLAYERS;
+function getPressureAlivePlayers(alivePlayers: number, elapsedMs: number) {
+  if (elapsedMs >= FORCED_TOP10_PRESSURE_MS) {
+    return Math.min(alivePlayers, GARBAGE_TIMER_TOP10_PLAYERS);
+  }
+  if (elapsedMs >= FORCED_MIDGAME_PRESSURE_MS) {
+    return Math.min(alivePlayers, GRAVITY_RAMP_START_PLAYERS);
+  }
+  return alivePlayers;
 }
 
-function getGravityStage(elapsedMs: number, alivePlayers: number) {
-  if (!shouldRampGravity(alivePlayers)) return 0;
-
+function getGravityStage(elapsedMs: number) {
   let stage = 0;
   for (let i = 0; i < SPEED_PROFILES.length; i++) {
     if (elapsedMs >= SPEED_PROFILES[i].startMs) {
@@ -1429,12 +1435,7 @@ export default function Tetris99GameProper() {
   }
 
   function getGravityRampElapsedMs() {
-    if (!matchStartedAtRef.current) return 0;
-    const end = matchEndedAtRef.current ?? Date.now();
-    const pausedForCurrentSession = pauseStartedAtRef.current !== null && matchEndedAtRef.current === null
-      ? end - pauseStartedAtRef.current
-      : 0;
-    return Math.max(0, end - matchStartedAtRef.current - pausedDurationMsRef.current - pausedForCurrentSession);
+    return getBattleElapsedMs();
   }
 
   function getMarginTimeBonus(elapsedMs: number) {
@@ -1465,19 +1466,12 @@ export default function Tetris99GameProper() {
       return applySpeedStage(0, false);
     }
 
-    const alivePlayers = getAlivePlayerCount();
-    if (!shouldRampGravity(alivePlayers)) {
-      matchStartedAtRef.current = null;
-      matchEndedAtRef.current = null;
-      return applySpeedStage(0, false);
-    }
-
     if (!matchStartedAtRef.current) {
       matchStartedAtRef.current = Date.now();
       matchEndedAtRef.current = null;
     }
 
-    return applySpeedStage(getGravityStage(getGravityRampElapsedMs(), alivePlayers), announce);
+    return applySpeedStage(getGravityStage(getGravityRampElapsedMs()), announce);
   }
 
   function syncSnapshot(status?: string) {
@@ -1490,6 +1484,7 @@ export default function Tetris99GameProper() {
       const nextStatus = statusRef.current;
       const alive = botsRef.current.filter(bot => bot.alive).length;
       const alivePlayers = getAlivePlayerCount();
+      const pressureAlivePlayers = getPressureAlivePlayers(alivePlayers, getBattleElapsedMs());
       const attackers = botsRef.current.filter(bot => bot.alive && bot.targetIds.includes(PLAYER_ID)).length;
       const speedStage = speedStageRef.current;
       const speedProfile = getSpeedProfile(speedStage);
@@ -1525,7 +1520,7 @@ export default function Tetris99GameProper() {
         state: stateRef.current,
         countdown: countdownRef.current,
         speedStage,
-        speedLabel: `${speedProfile.label} | ${(getGarbageChargeWindowMs(alivePlayers) / 1000).toFixed(1)}s`,
+        speedLabel: `${speedProfile.label} | ${(getGarbageChargeWindowMs(pressureAlivePlayers) / 1000).toFixed(1)}s`,
         gameOver,
         playerOut,
         spectating: playerOut && !gameOver,
@@ -1725,7 +1720,8 @@ export default function Tetris99GameProper() {
   }
 
   function applyPendingGarbage() {
-    const collected = collectNextReadyGarbage(incomingRef.current, getAlivePlayerCount());
+    const pressureAlivePlayers = getPressureAlivePlayers(getAlivePlayerCount(), getBattleElapsedMs());
+    const collected = collectNextReadyGarbage(incomingRef.current, pressureAlivePlayers);
     incomingRef.current = collected.queue;
     syncGarbageSparkle(incomingRef.current);
     if (collected.due <= 0) return { applied: 0, toppedOut: false };
@@ -2496,11 +2492,11 @@ export default function Tetris99GameProper() {
         if (stateRef.current !== 'playing') return;
         if (!playerAliveRef.current) return;
         const hadIncoming = incomingRef.current.length > 0;
-        const alivePlayers = getAlivePlayerCount();
-        incomingRef.current = tickGarbageQueue(incomingRef.current, GARBAGE_QUEUE_TICK_MS, alivePlayers);
-      syncGarbageSparkle(incomingRef.current);
-      if (hadIncoming || incomingRef.current.length > 0) syncSnapshot();
-    }, GARBAGE_QUEUE_TICK_MS);
+        const pressureAlivePlayers = getPressureAlivePlayers(getAlivePlayerCount(), getBattleElapsedMs());
+        incomingRef.current = tickGarbageQueue(incomingRef.current, GARBAGE_QUEUE_TICK_MS, pressureAlivePlayers);
+        syncGarbageSparkle(incomingRef.current);
+        if (hadIncoming || incomingRef.current.length > 0) syncSnapshot();
+      }, GARBAGE_QUEUE_TICK_MS);
 
     return () => window.clearInterval(garbageLoop);
   }, [snapshot.state]);
@@ -2541,6 +2537,9 @@ export default function Tetris99GameProper() {
   const renderAlivePlayers = useMemo(() => (
     botsRef.current.filter(bot => bot.alive).length + (snapshot.playerOut || snapshot.gameOver ? 0 : 1)
   ), [botRenderVersion, snapshot.playerOut, snapshot.gameOver]);
+  const renderPressureAlivePlayers = useMemo(() => (
+    getPressureAlivePlayers(renderAlivePlayers, getBattleElapsedMs())
+  ), [renderAlivePlayers, snapshot.speedStage, snapshot.incomingPackets, snapshot.state]);
 
   const leftBotBoards = useMemo(() => (
     botsRef.current.slice(0, 49).map(bot => (
@@ -2627,7 +2626,7 @@ export default function Tetris99GameProper() {
                     <div className={styles.boardPlayfieldInner}>
                       <div className={styles.garbagePanel}>
                         <span className={styles.garbagePanelLabel}>Incoming</span>
-                        <IncomingGarbageRail packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets} alivePlayers={renderAlivePlayers} />
+                        <IncomingGarbageRail packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets} alivePlayers={renderPressureAlivePlayers} />
                       </div>
                       <PlayerBoard board={centerBoard} currentPiece={centerCurrentPiece} />
                     </div>

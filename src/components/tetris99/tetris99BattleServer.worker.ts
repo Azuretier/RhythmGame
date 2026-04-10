@@ -125,6 +125,9 @@ const BOT_STATE_TICK_MS = 260;
 const GARBAGE_QUEUE_TICK_MS = 50;
 const GARBAGE_TIMER_START_PLAYERS = 50;
 const GARBAGE_TIMER_TOP10_PLAYERS = 10;
+const GRAVITY_RAMP_START_PLAYERS = 49;
+const FORCED_MIDGAME_PRESSURE_MS = 90 * 1000;
+const FORCED_TOP10_PRESSURE_MS = 3 * 60 * 1000;
 const T99_VISIBLE_HEIGHT = 20;
 const T99_BUFFER_ZONE = 20;
 const T99_BOARD_HEIGHT = T99_VISIBLE_HEIGHT + T99_BUFFER_ZONE;
@@ -152,6 +155,9 @@ let paused = false;
 let matchResolved = false;
 let packetId = 0;
 let currentSpeedStage = 0;
+let battleStartedAt = 0;
+let pauseStartedAt = 0;
+let pausedDurationMs = 0;
 let snapshotTimer: ReturnType<typeof setTimeout> | null = null;
 let garbageTimer: ReturnType<typeof setInterval> | null = null;
 let botTimer: ReturnType<typeof setInterval> | null = null;
@@ -349,6 +355,16 @@ function getGarbageChargeWindowMs(alivePlayers: number) {
   return getGarbagePhaseMs(alivePlayers) * 2;
 }
 
+function getPressureAlivePlayers(alivePlayers: number, elapsedMs: number) {
+  if (elapsedMs >= FORCED_TOP10_PRESSURE_MS) {
+    return Math.min(alivePlayers, GARBAGE_TIMER_TOP10_PLAYERS);
+  }
+  if (elapsedMs >= FORCED_MIDGAME_PRESSURE_MS) {
+    return Math.min(alivePlayers, GRAVITY_RAMP_START_PLAYERS);
+  }
+  return alivePlayers;
+}
+
 function tickGarbageQueue(queue: GarbagePacket[], elapsedMs: number, alivePlayers: number) {
   if (!queue.length) return queue;
   const [nextPacket, ...rest] = queue;
@@ -399,6 +415,17 @@ function offsetGarbageQueue(queue: GarbagePacket[], amount: number) {
 
 function getAlivePlayerCount() {
   return bots.filter(bot => bot.alive).length + (playerState.alive ? 1 : 0);
+}
+
+function getBattleElapsedMs() {
+  if (!battleStartedAt) return 0;
+  const now = Date.now();
+  const pausedForCurrentSession = paused && pauseStartedAt ? now - pauseStartedAt : 0;
+  return Math.max(0, now - battleStartedAt - pausedDurationMs - pausedForCurrentSession);
+}
+
+function getPressureAlivePlayerCount() {
+  return getPressureAlivePlayers(getAlivePlayerCount(), getBattleElapsedMs());
 }
 
 function finishResolvedMatch(winnerId: string | null) {
@@ -587,7 +614,7 @@ function queuePacket(lines: number, from: string, target: BotSnapshot) {
 }
 
 function applyBotPendingGarbage(bot: BotSnapshot) {
-  const collected = collectNextReadyGarbage(bot.pendingGarbage, getAlivePlayerCount());
+  const collected = collectNextReadyGarbage(bot.pendingGarbage, getPressureAlivePlayerCount());
   bot.pendingGarbage = collected.queue;
   if (collected.due <= 0) return;
   bot.lastDamagedBy = collected.lastSource;
@@ -730,6 +757,9 @@ function resetMatch(matchId: number) {
   paused = false;
   matchResolved = false;
   packetId = 0;
+  battleStartedAt = 0;
+  pauseStartedAt = 0;
+  pausedDurationMs = 0;
   stopAllAiGames();
   botSeedRng = makeRng(44091 + Math.floor(Math.random() * 10000));
   bots = Array.from({ length: BOT_COUNT }, (_, index) => createInitialBot(index));
@@ -743,6 +773,9 @@ function startMatch(matchId: number) {
   if (matchId !== currentMatchId || running || matchResolved) return;
   running = true;
   paused = false;
+  battleStartedAt = Date.now();
+  pauseStartedAt = 0;
+  pausedDurationMs = 0;
 
   for (const bot of bots) {
     if (!bot.alive || aiGames.has(bot.id)) continue;
@@ -812,6 +845,7 @@ function startMatch(matchId: number) {
 function pauseMatch(matchId: number) {
   if (matchId !== currentMatchId || paused) return;
   paused = true;
+  pauseStartedAt = Date.now();
   for (const aiGame of aiGames.values()) {
     aiGame.pause();
   }
@@ -820,6 +854,10 @@ function pauseMatch(matchId: number) {
 function resumeMatch(matchId: number) {
   if (matchId !== currentMatchId || !paused) return;
   paused = false;
+  if (pauseStartedAt) {
+    pausedDurationMs += Date.now() - pauseStartedAt;
+    pauseStartedAt = 0;
+  }
   for (const aiGame of aiGames.values()) {
     aiGame.resume();
   }
@@ -830,6 +868,7 @@ function stopMatch(matchId: number) {
   matchResolved = true;
   running = false;
   paused = false;
+  pauseStartedAt = 0;
   stopAllAiGames();
 }
 
@@ -882,7 +921,7 @@ function ensureLoops() {
   if (!garbageTimer) {
     garbageTimer = setInterval(() => {
       if (!running || paused) return;
-      const alivePlayers = getAlivePlayerCount();
+      const alivePlayers = getPressureAlivePlayerCount();
       let changed = false;
       bots.forEach(bot => {
         if (!bot.alive) return;
