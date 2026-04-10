@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { TetrisAIGame, getDifficultyForRank, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
+import { BEST_AI_DIFFICULTY, TetrisAIGame, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 type TargetMode = 'random' | 'attackers' | 'kos' | 'badges';
@@ -145,6 +145,7 @@ const AI_COLOR_TO_PIECE: Record<string, PieceType | 'garbage'> = {
 };
 const AI_COLOR_ENTRIES = Object.entries(AI_COLOR_TO_PIECE).filter(([, type]) => type !== 'garbage') as Array<[string, PieceType]>;
 const SPEED_AI_DELAY_SCALES = [1.1, 1.0, 0.92, 0.84, 0.74, 0.64, 0.58, 0.52, 0.46, 0.4, 0.35];
+const T99_BOT_AI_POINTS = 11000;
 
 let currentMatchId = 0;
 let running = false;
@@ -699,7 +700,6 @@ function stopAllAiGames() {
 
 function createInitialBot(index: number): BotSnapshot {
   const rng = makeRng(20000 + index * 17 + Math.floor(botSeedRng() * 10000));
-  const aiPoints = [900, 2400, 6200, 11000][Math.floor(rng() * 4)] ?? 2400;
   return {
     id: `bot-${index}`,
     name: `${BOT_NAMES[index % BOT_NAMES.length]}-${String(index + 1).padStart(2, '0')}`,
@@ -719,7 +719,7 @@ function createInitialBot(index: number): BotSnapshot {
     targetIds: [],
     pendingGarbage: [],
     lastDamagedBy: null,
-    aiPoints,
+    aiPoints: T99_BOT_AI_POINTS,
     danger: 0,
   };
 }
@@ -746,7 +746,7 @@ function startMatch(matchId: number) {
 
   for (const bot of bots) {
     if (!bot.alive || aiGames.has(bot.id)) continue;
-    const aiGame = new TetrisAIGame(30000 + Number(bot.id.replace('bot-', '')) * 97, getDifficultyForRank(bot.aiPoints), {
+    const aiGame = new TetrisAIGame(30000 + Number(bot.id.replace('bot-', '')) * 97, BEST_AI_DIFFICULTY, {
       onBoardUpdate: (board, score, lines, _combo, piece, hold) => {
         const currentBot = getBotById(bot.id);
         if (!currentBot || !currentBot.alive) return;

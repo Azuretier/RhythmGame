@@ -2,6 +2,7 @@
 // Smart AI opponent for ranked matches
 // Uses heuristic-based evaluation with configurable difficulty
 
+import { ARR, DAS } from '@/components/rhythmia/multiplayer-battle-engine';
 import type { BoardCell } from '@/types/multiplayer';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -23,10 +24,27 @@ export interface AIPlacementResult {
   combo: number;
 }
 
+type AIInputAction = 'hold' | 'moveLeft' | 'moveRight' | 'rotateCW' | 'rotateCCW' | 'hardDrop';
+
+interface AIInputPlan {
+  actions: AIInputAction[];
+  durationMs: number;
+}
+
 interface AIMove {
   rotation: 0 | 1 | 2 | 3;
   x: number;
   score: number;
+  inputPlan: AIInputPlan;
+}
+
+type AIHoldAction = 'none' | 'swap' | 'store';
+
+interface AIExecutionPlan {
+  sourcePieceType: PieceType;
+  actualPieceType: PieceType;
+  holdAction: AIHoldAction;
+  move: AIMove;
 }
 
 export interface AIBoardConfig {
@@ -38,6 +56,7 @@ export interface AIBoardConfig {
 const W = 10;
 const DEFAULT_VISIBLE_ROWS = 20;
 const DEFAULT_HIDDEN_ROWS = 0;
+const AI_TAP_MS = ARR;
 
 // Minimum score advantage the next/hold piece must have to justify saving the current piece
 const HOLD_ADVANTAGE_THRESHOLD = 0.5;
@@ -87,6 +106,30 @@ const SHAPES: Record<PieceType, number[][][]> = {
     [[0,0,0],[1,1,1],[1,0,0]],
     [[1,1,0],[0,1,0],[0,1,0]],
   ],
+};
+
+const ROTATION_NAMES = ['0', 'R', '2', 'L'] as const;
+
+const WALL_KICK_JLSTZ: Record<string, [number, number][]> = {
+  '0->R': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  'R->2': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '2->L': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+  'L->0': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  'R->0': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+  '2->R': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+  'L->2': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+  '0->L': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+};
+
+const WALL_KICK_I: Record<string, [number, number][]> = {
+  '0->R': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  'R->2': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+  '2->L': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  'L->0': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  'R->0': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+  '2->R': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+  'L->2': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+  '0->L': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
 };
 
 // I-pieces start one row above the visible board to allow valid 4-wide placement
@@ -168,6 +211,8 @@ export const AI_DIFFICULTIES: Record<string, AIDifficulty> = {
   },
 };
 
+export const BEST_AI_DIFFICULTY = AI_DIFFICULTIES.expert;
+
 // Get AI difficulty based on rank points
 export function getDifficultyForRank(points: number): AIDifficulty {
   if (points < 1500) return AI_DIFFICULTIES.easy;
@@ -194,6 +239,82 @@ function isValid(piece: Piece, board: (BoardCell | null)[][]): boolean {
     }
   }
   return true;
+}
+
+function getWallKicks(type: PieceType, from: number, to: number): [number, number][] {
+  const key = `${ROTATION_NAMES[from]}->${ROTATION_NAMES[to]}`;
+  if (type === 'I') return WALL_KICK_I[key] || [[0, 0]];
+  if (type === 'O') return [[0, 0]];
+  return WALL_KICK_JLSTZ[key] || [[0, 0]];
+}
+
+function tryRotate(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][]): Piece | null {
+  const toRotation = ((piece.rotation + direction + 4) % 4) as Piece['rotation'];
+  const kicks = getWallKicks(piece.type, piece.rotation, toRotation);
+
+  for (const [dx, dy] of kicks) {
+    const candidate: Piece = {
+      ...piece,
+      rotation: toRotation,
+      x: piece.x + dx,
+      y: piece.y - dy,
+    };
+    if (isValid(candidate, board)) return candidate;
+  }
+
+  return null;
+}
+
+function createSpawnPiece(type: PieceType, hiddenRows = DEFAULT_HIDDEN_ROWS): Piece {
+  return {
+    type,
+    rotation: 0,
+    x: Math.floor((W - getShape(type, 0)[0].length) / 2),
+    y: getInitialY(type, hiddenRows),
+  };
+}
+
+function normalizeRotation(type: PieceType, rotation: number): Piece['rotation'] {
+  return (type === 'O' ? 0 : rotation) as Piece['rotation'];
+}
+
+function estimateHorizontalRunMs(count: number): number {
+  if (count <= 0) return 0;
+  const tapTime = count * AI_TAP_MS;
+  const holdTime = count === 1
+    ? AI_TAP_MS
+    : AI_TAP_MS + DAS + Math.max(0, count - 2) * ARR;
+  return Math.min(tapTime, holdTime);
+}
+
+function estimateInputDuration(actions: AIInputAction[]): number {
+  let total = 0;
+  let index = 0;
+
+  while (index < actions.length) {
+    const action = actions[index];
+    if (action === 'moveLeft' || action === 'moveRight') {
+      let count = 0;
+      while (actions[index] === action) {
+        count += 1;
+        index += 1;
+      }
+      total += estimateHorizontalRunMs(count);
+      continue;
+    }
+
+    total += AI_TAP_MS;
+    index += 1;
+  }
+
+  return Math.max(AI_TAP_MS, total);
+}
+
+function buildInputPlan(actions: AIInputAction[]): AIInputPlan {
+  return {
+    actions,
+    durationMs: estimateInputDuration(actions),
+  };
 }
 
 function lockPiece(piece: Piece, board: (BoardCell | null)[][]): (BoardCell | null)[][] {
@@ -363,46 +484,75 @@ function getAllPossibleMoves(
   const hiddenRows = boardConfig.hiddenRows ?? DEFAULT_HIDDEN_ROWS;
   const visibleRows = boardConfig.visibleRows ?? DEFAULT_VISIBLE_ROWS;
   const visibleStart = getVisibleStart(board, visibleRows);
-  const moves: AIMove[] = [];
-  const rotations: (0 | 1 | 2 | 3)[] = pieceType === 'O' ? [0] : [0, 1, 2, 3];
+  const spawnPiece = createSpawnPiece(pieceType, hiddenRows);
+  if (!isValid(spawnPiece, board)) return [];
 
-  for (const rotation of rotations) {
-    const shape = getShape(pieceType, rotation);
-    const shapeWidth = shape[0].length;
+  const movesByPlacement = new Map<string, AIMove>();
+  const queue: Array<{ piece: Piece; actions: AIInputAction[] }> = [{ piece: spawnPiece, actions: [] }];
+  const visited = new Set<string>([
+    `${spawnPiece.x}:${normalizeRotation(pieceType, spawnPiece.rotation)}:${spawnPiece.y}`,
+  ]);
 
-    // Try all x positions
-    for (let x = -2; x < W + 2; x++) {
-      const piece: Piece = { type: pieceType, rotation, x, y: getInitialY(pieceType, hiddenRows) };
+  const recordPlacement = (piece: Piece, actions: AIInputAction[]) => {
+    const rotation = normalizeRotation(piece.type, piece.rotation);
+    const shape = getShape(piece.type, rotation);
+    const landedPiece: Piece = { ...piece, rotation, y: getGhostY({ ...piece, rotation }, board) };
 
-      if (!isValid(piece, board)) continue;
-
-      // Drop to bottom
-      const landY = getGhostY(piece, board);
-      const landedPiece: Piece = { ...piece, y: landY };
-
-      // Lock and evaluate
-      const newBoard = lockPiece(landedPiece, board);
-      const { board: clearedBoard, cleared } = clearLines(newBoard);
-
-      // Check that piece isn't entirely above the board
-      let aboveBoard = true;
-      for (let sy = 0; sy < shape.length; sy++) {
-        for (let sx = 0; sx < shapeWidth; sx++) {
-          if (shape[sy][sx] && landY + sy >= visibleStart) {
-            aboveBoard = false;
-          }
+    let aboveBoard = true;
+    for (let sy = 0; sy < shape.length; sy++) {
+      for (let sx = 0; sx < shape[sy].length; sx++) {
+        if (shape[sy][sx] && landedPiece.y + sy >= visibleStart) {
+          aboveBoard = false;
         }
       }
-      if (hiddenRows === 0 && aboveBoard) continue;
+    }
+    if (hiddenRows === 0 && aboveBoard) return;
 
-      moves.push({ rotation, x, score: 0 });
-      // Store cleared board info for later evaluation
-      (moves[moves.length - 1] as AIMove & { clearedBoard: (BoardCell | null)[][]; cleared: number }).clearedBoard = clearedBoard;
-      (moves[moves.length - 1] as AIMove & { cleared: number }).cleared = cleared;
+    const key = `${landedPiece.x}:${rotation}`;
+    if (movesByPlacement.has(key)) return;
+    movesByPlacement.set(key, {
+      rotation,
+      x: landedPiece.x,
+      score: 0,
+      inputPlan: buildInputPlan([...actions, 'hardDrop']),
+    });
+  };
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    recordPlacement(current.piece, current.actions);
+
+    const nextStates: Array<{ piece: Piece | null; action: AIInputAction }> = [
+      {
+        piece: isValid({ ...current.piece, x: current.piece.x - 1 }, board)
+          ? { ...current.piece, x: current.piece.x - 1 }
+          : null,
+        action: 'moveLeft',
+      },
+      {
+        piece: isValid({ ...current.piece, x: current.piece.x + 1 }, board)
+          ? { ...current.piece, x: current.piece.x + 1 }
+          : null,
+        action: 'moveRight',
+      },
+      { piece: tryRotate(current.piece, 1, board), action: 'rotateCW' },
+      { piece: tryRotate(current.piece, -1, board), action: 'rotateCCW' },
+    ];
+
+    for (const nextState of nextStates) {
+      if (!nextState.piece) continue;
+      const normalizedRotation = normalizeRotation(nextState.piece.type, nextState.piece.rotation);
+      const key = `${nextState.piece.x}:${normalizedRotation}:${nextState.piece.y}`;
+      if (visited.has(key)) continue;
+      visited.add(key);
+      queue.push({
+        piece: { ...nextState.piece, rotation: normalizedRotation },
+        actions: [...current.actions, nextState.action],
+      });
     }
   }
 
-  return moves;
+  return [...movesByPlacement.values()];
 }
 
 export function findBestMove(
@@ -462,6 +612,69 @@ export function findBestMove(
   return moves[0];
 }
 
+function chooseExecutionPlan(
+  pieceType: PieceType,
+  board: (BoardCell | null)[][],
+  difficulty: AIDifficulty,
+  holdPiece: PieceType | null,
+  nextQueue: PieceType[],
+  boardConfig: AIBoardConfig,
+): AIExecutionPlan | null {
+  const withHoldAction = (move: AIMove): AIMove => ({
+    ...move,
+    inputPlan: buildInputPlan(['hold', ...move.inputPlan.actions]),
+  });
+
+  const currentMove = findBestMove(pieceType, board, difficulty, nextQueue[0], boardConfig);
+
+  if (!difficulty.useHold) {
+    return currentMove ? {
+      sourcePieceType: pieceType,
+      actualPieceType: pieceType,
+      holdAction: 'none',
+      move: currentMove,
+    } : null;
+  }
+
+  if (holdPiece !== null) {
+    const holdMove = findBestMove(holdPiece, board, difficulty, nextQueue[0], boardConfig);
+    const currentScore = currentMove?.score ?? -Infinity;
+    const holdScore = holdMove?.score ?? -Infinity;
+
+    if (holdMove && (holdScore > currentScore || !currentMove)) {
+      return {
+        sourcePieceType: pieceType,
+        actualPieceType: holdPiece,
+        holdAction: 'swap',
+        move: withHoldAction(holdMove),
+      };
+    }
+  } else if (nextQueue.length > 0) {
+    const nextLookahead = nextQueue[1] ?? pieceType;
+    const nextMove = findBestMove(nextQueue[0], board, difficulty, nextLookahead, boardConfig);
+    const currentScore = currentMove?.score ?? -Infinity;
+    const nextScore = nextMove?.score ?? -Infinity;
+
+    if (nextMove && (nextScore > currentScore + HOLD_ADVANTAGE_THRESHOLD || !currentMove)) {
+      return {
+        sourcePieceType: pieceType,
+        actualPieceType: nextQueue[0],
+        holdAction: 'store',
+        move: withHoldAction(nextMove),
+      };
+    }
+  }
+
+  if (!currentMove) return null;
+
+  return {
+    sourcePieceType: pieceType,
+    actualPieceType: pieceType,
+    holdAction: 'none',
+    move: currentMove,
+  };
+}
+
 // ===== AI Game Runner =====
 // Runs a complete AI game loop, emitting board updates via callback
 
@@ -487,7 +700,9 @@ export class TetrisAIGame {
   private pendingGarbage = 0;
   private moveTimer: ReturnType<typeof setTimeout> | null = null;
   private paused = false;
+  private scheduledPhase: 'thinking' | 'input' | null = null;
   private scheduledPieceType: PieceType | null = null;
+  private pendingExecution: AIExecutionPlan | null = null;
   private scheduledAt = 0;
   private scheduledDelayMs = 0;
   private remainingDelayMs = 0;
@@ -555,6 +770,11 @@ export class TetrisAIGame {
       clearTimeout(this.moveTimer);
       this.moveTimer = null;
     }
+    this.scheduledPhase = null;
+    this.scheduledPieceType = null;
+    this.pendingExecution = null;
+    this.scheduledDelayMs = 0;
+    this.remainingDelayMs = 0;
     this.gameOver = true;
   }
 
@@ -572,8 +792,13 @@ export class TetrisAIGame {
   resume(): void {
     if (this.gameOver || !this.paused) return;
     this.paused = false;
-    if (this.scheduledPieceType) {
-      this.schedulePiece(this.scheduledPieceType, this.remainingDelayMs || this.scheduledDelayMs);
+    const delay = this.remainingDelayMs || this.scheduledDelayMs;
+    if (this.scheduledPhase === 'thinking' && this.scheduledPieceType) {
+      this.scheduleThinkingPhase(this.scheduledPieceType, delay);
+      return;
+    }
+    if (this.scheduledPhase === 'input' && this.pendingExecution) {
+      this.scheduleInputPhase(this.pendingExecution, delay);
       return;
     }
     this.playNextPiece();
@@ -591,19 +816,37 @@ export class TetrisAIGame {
     return this.gameOver;
   }
 
-  private schedulePiece(pieceType: PieceType, delay: number): void {
+  private scheduleThinkingPhase(pieceType: PieceType, delay: number): void {
     if (this.gameOver || this.paused) return;
+    this.scheduledPhase = 'thinking';
     this.scheduledPieceType = pieceType;
+    this.pendingExecution = null;
     this.scheduledDelayMs = delay;
     this.remainingDelayMs = delay;
     this.scheduledAt = Date.now();
     this.moveTimer = setTimeout(() => {
       this.moveTimer = null;
-      this.scheduledPieceType = null;
       this.scheduledDelayMs = 0;
       this.remainingDelayMs = 0;
       if (this.gameOver || this.paused) return;
-      this.executePiece(pieceType);
+      this.beginPieceExecution(pieceType);
+    }, delay);
+  }
+
+  private scheduleInputPhase(executionPlan: AIExecutionPlan, delay: number): void {
+    if (this.gameOver || this.paused) return;
+    this.scheduledPhase = 'input';
+    this.scheduledPieceType = executionPlan.sourcePieceType;
+    this.pendingExecution = executionPlan;
+    this.scheduledDelayMs = delay;
+    this.remainingDelayMs = delay;
+    this.scheduledAt = Date.now();
+    this.moveTimer = setTimeout(() => {
+      this.moveTimer = null;
+      this.scheduledDelayMs = 0;
+      this.remainingDelayMs = 0;
+      if (this.gameOver || this.paused) return;
+      this.executePlannedPiece(executionPlan);
     }, delay);
   }
 
@@ -617,10 +860,10 @@ export class TetrisAIGame {
     const delayVariation = Math.floor(Math.random() * 200) - 50;
     const baseDelay = Math.round(this.difficulty.moveDelay * this.speedMultiplier);
     const delay = Math.max(70, baseDelay + delayVariation);
-    this.schedulePiece(pieceType, delay);
+    this.scheduleThinkingPhase(pieceType, delay);
   }
 
-  private executePiece(pieceType: PieceType): void {
+  private beginPieceExecution(pieceType: PieceType): void {
     if (this.gameOver) return;
 
     // Apply pending garbage before placing
@@ -630,83 +873,72 @@ export class TetrisAIGame {
       if (this.gameOver) return;
     }
 
-    // Determine the piece to actually play (may swap with hold)
-    let actualPieceType = pieceType;
-    let cachedBestMove: AIMove | null | undefined;
-    if (this.difficulty.useHold && !this.holdUsed) {
-      if (this.holdPiece !== null) {
-        // Swap with hold if the hold piece achieves a better score.
-        // Cache both evaluations so the winning result is reused directly at execution.
-        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-        const currentScore = cachedBestMove?.score ?? -Infinity;
-        const holdBestMove = findBestMove(this.holdPiece, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-        const holdScore = holdBestMove?.score ?? -Infinity;
-        if (holdScore > currentScore) {
-          const saved = this.holdPiece;
-          this.holdPiece = pieceType;
-          this.holdUsed = true;
-          actualPieceType = saved;
-          // Reuse the move evaluated during the decision — same board and look-ahead
-          cachedBestMove = holdBestMove;
-        }
-      } else if (this.nextQueue.length > 0) {
-        // No hold piece yet — save current if next piece gives a significantly better placement.
-        // Evaluate the next piece with nextQueue[1] as its look-ahead (the piece that follows it).
-        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-        const currentScore = cachedBestMove?.score ?? -Infinity;
-        const nextLookahead = this.nextQueue[1] ?? pieceType;
-        const nextBestMove = findBestMove(this.nextQueue[0], this.board, this.difficulty, nextLookahead, { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-        const nextScore = nextBestMove?.score ?? -Infinity;
-        if (nextScore > currentScore + HOLD_ADVANTAGE_THRESHOLD) {
-          this.holdPiece = pieceType;
-          this.holdUsed = true;
-          actualPieceType = this.nextQueue.shift()!;
-          this.fillQueue();
-          // Reuse the move evaluated during the decision — same board and look-ahead.
-          // nextBestMove was computed with nextLookahead = nextQueue[1] before the shift;
-          // after shift nextQueue[0] becomes that same piece, but we skip the recompute
-          // entirely by reusing the cached result.
-          cachedBestMove = nextBestMove;
-        }
-      }
+    const boardConfig = { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows };
+    const executionPlan = chooseExecutionPlan(
+      pieceType,
+      this.board,
+      this.difficulty,
+      this.holdPiece,
+      this.nextQueue,
+      boardConfig,
+    );
+
+    if (!executionPlan) {
+      this.gameOver = true;
+      this.callbacks.onGameOver();
+      return;
     }
 
-    const spawnPiece: Piece = {
-      type: actualPieceType,
-      rotation: 0,
-      x: Math.floor((W - getShape(actualPieceType, 0)[0].length) / 2),
-      y: getInitialY(actualPieceType, this.hiddenRows),
-    };
-
+    const spawnPiece = createSpawnPiece(executionPlan.actualPieceType, this.hiddenRows);
     if (!isValid(spawnPiece, this.board)) {
       this.gameOver = true;
       this.callbacks.onGameOver();
       return;
     }
 
-    // Find best move, with look-ahead when enabled (reuse cached result if available)
-    const bestMove = cachedBestMove ?? findBestMove(actualPieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
+    this.scheduleInputPhase(executionPlan, executionPlan.move.inputPlan.durationMs);
+  }
 
-    if (!bestMove) {
-      // Game over - can't place
-      this.gameOver = true;
-      this.callbacks.onGameOver();
+  private executePlannedPiece(executionPlan: AIExecutionPlan): void {
+    if (this.gameOver) return;
+
+    if (
+      executionPlan.holdAction === 'store'
+      && this.nextQueue[0] !== executionPlan.actualPieceType
+    ) {
+      this.beginPieceExecution(executionPlan.sourcePieceType);
       return;
     }
 
-    // Create and place piece
+    const spawnPiece = createSpawnPiece(executionPlan.actualPieceType, this.hiddenRows);
     const piece: Piece = {
-      type: actualPieceType,
-      rotation: bestMove.rotation,
-      x: bestMove.x,
-      y: getInitialY(actualPieceType, this.hiddenRows),
+      ...spawnPiece,
+      rotation: executionPlan.move.rotation,
+      x: executionPlan.move.x,
     };
+
+    if (!isValid(spawnPiece, this.board) || !isValid(piece, this.board)) {
+      this.beginPieceExecution(executionPlan.sourcePieceType);
+      return;
+    }
+
+    if (executionPlan.holdAction === 'swap') {
+      this.holdPiece = executionPlan.sourcePieceType;
+      this.holdUsed = true;
+    } else if (executionPlan.holdAction === 'store') {
+      this.holdPiece = executionPlan.sourcePieceType;
+      this.holdUsed = true;
+      if (this.nextQueue[0] === executionPlan.actualPieceType) {
+        this.nextQueue.shift();
+        this.fillQueue();
+      }
+    }
 
     const landY = getGhostY(piece, this.board);
     const landedPiece: Piece = { ...piece, y: landY };
 
     // Check if piece is above board
-    const shape = getShape(actualPieceType, bestMove.rotation);
+    const shape = getShape(executionPlan.actualPieceType, executionPlan.move.rotation);
     let aboveBoard = true;
     const visibleStart = getVisibleStart(this.board, this.visibleRows);
     for (let y = 0; y < shape.length; y++) {
@@ -728,7 +960,7 @@ export class TetrisAIGame {
     // Clear lines
     const { board: clearedBoard, cleared } = clearLines(this.board);
     this.board = clearedBoard;
-    const tSpin = detectTSpin(landedPiece, boardBeforeLock, actualPieceType === 'T');
+    const tSpin = detectTSpin(landedPiece, boardBeforeLock, executionPlan.actualPieceType === 'T');
 
     if (cleared > 0) {
       this.combo++;
@@ -751,19 +983,23 @@ export class TetrisAIGame {
       this.score,
       this.lines,
       this.combo,
-      actualPieceType,
+      executionPlan.actualPieceType,
       this.holdPiece,
     );
 
     this.callbacks.onPlacement?.({
-      pieceType: actualPieceType,
-      rotation: bestMove.rotation,
-      x: bestMove.x,
+      pieceType: executionPlan.actualPieceType,
+      rotation: executionPlan.move.rotation,
+      x: executionPlan.move.x,
       y: landY,
       clearedLines: cleared,
       tSpin,
       combo: this.combo,
     });
+
+    this.scheduledPhase = null;
+    this.scheduledPieceType = null;
+    this.pendingExecution = null;
 
     // Play next piece
     this.playNextPiece();
