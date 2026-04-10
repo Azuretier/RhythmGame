@@ -192,7 +192,7 @@ const GARBAGE_QUEUE_TICK_MS = 50;
 const GARBAGE_TIMER_START_PLAYERS = 50;
 const GARBAGE_TIMER_TOP10_PLAYERS = 10;
 const GRAVITY_RAMP_START_PLAYERS = 49;
-const FORCED_MIDGAME_PRESSURE_MS = 90 * 1000;
+const FORCED_MIDGAME_PRESSURE_MS = 60 * 1000;
 const FORCED_TOP10_PRESSURE_MS = 3 * 60 * 1000;
 const MARGIN_TIME_START_MS = 10 * 60 * 1000;
 const MARGIN_TIME_STEP_MS = 30 * 1000;
@@ -258,6 +258,10 @@ function getPressureAlivePlayers(alivePlayers: number, elapsedMs: number) {
     return Math.min(alivePlayers, GRAVITY_RAMP_START_PLAYERS);
   }
   return alivePlayers;
+}
+
+function shouldRampGravity(alivePlayers: number, elapsedMs: number) {
+  return alivePlayers <= GRAVITY_RAMP_START_PLAYERS || elapsedMs >= FORCED_MIDGAME_PRESSURE_MS;
 }
 
 function getGravityStage(elapsedMs: number) {
@@ -1435,7 +1439,12 @@ export default function Tetris99GameProper() {
   }
 
   function getGravityRampElapsedMs() {
-    return getBattleElapsedMs();
+    if (!matchStartedAtRef.current) return 0;
+    const end = matchEndedAtRef.current ?? Date.now();
+    const pausedForCurrentSession = pauseStartedAtRef.current !== null && matchEndedAtRef.current === null
+      ? end - pauseStartedAtRef.current
+      : 0;
+    return Math.max(0, end - matchStartedAtRef.current - pausedDurationMsRef.current - pausedForCurrentSession);
   }
 
   function getMarginTimeBonus(elapsedMs: number) {
@@ -1461,6 +1470,14 @@ export default function Tetris99GameProper() {
 
   function updateSpeedStage(announce = false) {
     if (stateRef.current !== 'playing') {
+      matchStartedAtRef.current = null;
+      matchEndedAtRef.current = null;
+      return applySpeedStage(0, false);
+    }
+
+    const alivePlayers = getAlivePlayerCount();
+    const battleElapsedMs = getBattleElapsedMs();
+    if (!shouldRampGravity(alivePlayers, battleElapsedMs)) {
       matchStartedAtRef.current = null;
       matchEndedAtRef.current = null;
       return applySpeedStage(0, false);
