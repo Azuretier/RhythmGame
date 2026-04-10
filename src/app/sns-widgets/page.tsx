@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { FaTwitter, FaDiscord, FaYoutube, FaInstagram, FaGithub } from 'react-icons/fa';
-import TwitterWidget from '@/components/sns-widgets/TwitterWidget';
-import DiscordWidget from '@/components/sns-widgets/DiscordWidget';
-import YouTubeWidget from '@/components/sns-widgets/YouTubeWidget';
-import InstagramWidget from '@/components/sns-widgets/InstagramWidget';
-import GitHubWidget from '@/components/sns-widgets/GitHubWidget';
+import TwitterWidget from '@/features/sns-widgets/components/TwitterWidget';
+import DiscordWidget from '@/features/sns-widgets/components/DiscordWidget';
+import YouTubeWidget from '@/features/sns-widgets/components/YouTubeWidget';
+import InstagramWidget from '@/features/sns-widgets/components/InstagramWidget';
+import GitHubWidget from '@/features/sns-widgets/components/GitHubWidget';
 
 type WidgetType = 'twitter' | 'discord' | 'youtube' | 'instagram' | 'github';
 

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import LoyaltyDashboard from '@/components/loyalty/LoyaltyDashboard';
+import LoyaltyDashboard from '@/features/loyalty/components/LoyaltyDashboard';
 
 const baseUrl = 'https://azuretier.net';
 

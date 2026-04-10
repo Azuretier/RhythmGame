@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import ShopPage from '@/components/shop/ShopPage';
+import ShopPage from '@/features/shop/components/ShopPage';
 
 const baseUrl = 'https://azuretier.net';
 

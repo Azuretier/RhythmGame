@@ -5,8 +5,8 @@ import { AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import LoadingScreen from "./LoadingScreen";
-import VersionSelector from "../version/VersionSelector";
-import VersionSwitcher from "../version/VersionSwitcher";
+import HomepageVersionSelector from "../version/HomepageVersionSelector";
+import HomepageVersionSwitcher from "../version/HomepageVersionSwitcher";
 import { UIVersion } from "@/lib/version/types";
 import { useVersion } from "@/lib/version/context";
 import {
@@ -142,14 +142,14 @@ export default function InteractiveHomepage() {
 
       {/* Version selector (first time only) */}
       {!loading && showVersionSelector && (
-        <VersionSelector onSelect={handleVersionSelect} />
+        <HomepageVersionSelector onSelect={handleVersionSelect} />
       )}
 
       {/* Main UI based on selected version */}
       {!loading && !showVersionSelector && selectedVersion && (
         <>
           {renderVersionUI()}
-          <VersionSwitcher />
+          <HomepageVersionSwitcher />
         </>
       )}
     </>

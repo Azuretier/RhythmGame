@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import EchoesPageClient from './EchoesPageClient';
+import EchoesPageContent from '@/features/echoes/components/EchoesPageContent';
 
 const baseUrl = 'https://azuretier.net';
 
@@ -36,5 +36,5 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default function EchoesPage() {
-  return <EchoesPageClient />;
+  return <EchoesPageContent />;
 }

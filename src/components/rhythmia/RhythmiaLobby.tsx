@@ -21,13 +21,13 @@ import onlineStyles from '@/components/profile/OnlineUsers.module.css';
 import VanillaGame from '@/components/rhythmia/tetris';
 import MultiplayerGame from '@/components/rhythmia/MultiplayerGame';
 import LocaleSwitcher from '@/components/LocaleSwitcher';
-import LoyaltyWidget from '@/components/loyalty/LoyaltyWidget';
+import LoyaltyWidget from '@/features/loyalty/components/LoyaltyWidget';
 import AnimatedLogo from '@/components/rhythmia/AnimatedLogo';
 import { useRouter } from '@/i18n/navigation';
 import { useSlideScroll } from '@/hooks/useSlideScroll';
 import SkinAmbientEffects from '@/components/profile/SkinAmbientEffects';
-import InventoryPanel from '@/components/inventory/InventoryPanel';
-import CrystalBalance from '@/components/shop/CrystalBalance';
+import InventoryPanel from '@/features/inventory/components/InventoryPanel';
+import CrystalBalance from '@/features/shop/components/CrystalBalance';
 
 const GameModeMap = dynamic(() => import('@/components/rhythmia/GameModeMap'), { ssr: false });
 

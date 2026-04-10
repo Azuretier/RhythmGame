@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getMessages } from 'next-intl/server';
-import WikiPage from '@/components/wiki/WikiPage';
+import WikiPage from '@/features/wiki/components/WikiPage';
 
 const baseUrl = 'https://azuretier.net';
 

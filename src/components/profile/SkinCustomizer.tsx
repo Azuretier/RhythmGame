@@ -12,7 +12,7 @@ import { getIconById } from '@/lib/profile/types';
 import type { Skin } from '@/lib/skin/types';
 import ThemeSwitcher from './ThemeSwitcher';
 import ShapeSwitcher from './ShapeSwitcher';
-import VersionSwitcher from './VersionSwitcher';
+import ProfileVersionControls from './ProfileVersionControls';
 import styles from './SkinCustomizer.module.css';
 
 const MAX_NAME_LENGTH = 10;
@@ -303,7 +303,7 @@ export default function SkinCustomizer({ onClose, inline }: SkinCustomizerProps)
 
         {/* Site Version selection */}
         <div className={styles.sectionLabel}>{tVersion('selectVersion')}</div>
-        <VersionSwitcher />
+        <ProfileVersionControls />
 
         {/* Google Account Sync */}
         <div className={styles.sectionLabel}>{tSync('sectionTitle')}</div>

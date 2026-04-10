@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import SettingsPage from './SettingsPage';
+import SettingsPageContent from '@/features/settings/components/SettingsPageContent';
 
 const baseUrl = 'https://azuretier.net';
 
@@ -35,5 +35,5 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default function SettingsRoute() {
-  return <SettingsPage />;
+  return <SettingsPageContent />;
 }

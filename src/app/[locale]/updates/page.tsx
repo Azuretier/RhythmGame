@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getMessages } from 'next-intl/server';
-import UpdatesPage from '@/components/main/UpdatesPage';
+import UpdatesPageContent from '@/features/updates/components/UpdatesPageContent';
 
 const baseUrl = 'https://azuretier.net';
 
@@ -26,5 +26,5 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default function UpdatesRoute() {
-  return <UpdatesPage />;
+  return <UpdatesPageContent />;
 }

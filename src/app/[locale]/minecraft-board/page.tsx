@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import MinecraftBoardGame from '@/components/minecraft-board/MinecraftBoardGame';
+import MinecraftBoardGame from '@/features/minecraft-board/components/MinecraftBoardGame';
 
 const baseUrl = 'https://azuretier.net';
 

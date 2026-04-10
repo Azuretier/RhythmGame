@@ -1,6 +1,6 @@
-import Navbar from '@/components/blog/navbar';
-import Profile from '@/components/blog/profile';
-import PostCard from '@/components/blog/post-card';
+import BlogNavbar from '@/features/blog/components/BlogNavbar';
+import BlogProfile from '@/features/blog/components/BlogProfile';
+import BlogPostCard from '@/features/blog/components/BlogPostCard';
 
 export default function Home() {
   const posts = [
@@ -20,10 +20,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 transition-colors duration-300">
-      <Navbar />
+      <BlogNavbar />
       
       <main className="max-w-3xl mx-auto px-6 pb-20">
-        <Profile />
+        <BlogProfile />
         
         <div className="flex justify-between items-end mb-6 border-b border-neutral-200 dark:border-neutral-800 pb-4">
           <h2 className="text-xl font-bold tracking-tight">Recent Posts</h2>
@@ -32,7 +32,7 @@ export default function Home() {
 
         <div className="flex flex-col">
           {posts.map((post, idx) => (
-            <PostCard key={idx} {...post} />
+            <BlogPostCard key={idx} {...post} />
           ))}
         </div>
       </main>

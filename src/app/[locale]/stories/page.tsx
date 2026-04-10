@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import StoryViewer from '@/components/stories/StoryViewer';
+import StoryViewer from '@/features/stories/components/StoryViewer';
 
 const baseUrl = 'https://azuretier.net';
 

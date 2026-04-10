@@ -16,8 +16,8 @@ import {
 } from './GalaxyTerrain';
 import type { MobMeshData } from '../minecraft-mobs';
 import type { TDEnemyType } from '../types';
-import { createProjectileMesh, animateProjectile, disposeProjectileGroup, disposeSharedProjectileResources } from '@/components/tower-defense/td-projectiles';
-import type { ProjectileMeshData } from '@/components/tower-defense/td-projectiles';
+import { createProjectileMesh, animateProjectile, disposeProjectileGroup, disposeSharedProjectileResources } from '@/features/tower-defense/components/td-projectiles';
+import type { ProjectileMeshData } from '@/features/tower-defense/components/td-projectiles';
 import {
     GALAXY_PATH_LENGTH,
     GALAXY_TOWERS_PER_SIDE_TB,

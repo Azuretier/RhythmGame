@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import ChapterPageClient from './ChapterPageClient';
+import ChapterPageContent from '@/features/chapter/components/ChapterPageContent';
 
 const baseUrl = 'https://azuretier.net';
 
@@ -36,5 +36,5 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default function ChapterPage() {
-  return <ChapterPageClient />;
+  return <ChapterPageContent />;
 }

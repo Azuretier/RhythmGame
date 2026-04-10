@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import TowerDefensePageClient from './TowerDefensePageClient';
+import TowerDefensePageContent from '@/features/tower-defense/components/TowerDefensePageContent';
 
 const baseUrl = 'https://azuretier.net';
 
@@ -36,5 +36,5 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default function TowerDefensePage() {
-  return <TowerDefensePageClient />;
+  return <TowerDefensePageContent />;
 }

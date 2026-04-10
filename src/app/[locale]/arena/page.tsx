@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import ArenaGame from '@/components/arena/ArenaGame';
+import ArenaGame from '@/features/arena/components/ArenaGame';
 
 const baseUrl = 'https://azuretier.net';
 

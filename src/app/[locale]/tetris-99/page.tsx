@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import Tetris99Game from '@/components/tetris99/Tetris99GameProper';
+import Tetris99Game from '@/features/tetris99/components/Tetris99GameProper';
 
 const baseUrl = 'https://azuretier.net';
 

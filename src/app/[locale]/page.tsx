@@ -6,7 +6,7 @@ import V1_0_0_UI from '@/components/home/v1.0.0/V1_0_0_UI';
 import V1_0_1_UI from '@/components/home/v1.0.1/V1_0_1_UI';
 import V1_0_2_UI from '@/components/home/v1.0.2/V1_0_2_UI';
 import V1_1_0_UI from '@/components/home/v1.1.0/V1_1_0_UI';
-import FloatingVersionSwitcher from '@/components/version/FloatingVersionSwitcher';
+import FloatingSiteSettings from '@/components/version/FloatingSiteSettings';
 
 export default function HomePage() {
     const { currentVersion } = useVersion();
@@ -30,7 +30,7 @@ export default function HomePage() {
     return (
         <>
             {renderPage()}
-            <FloatingVersionSwitcher />
+            <FloatingSiteSettings />
         </>
     );
 }

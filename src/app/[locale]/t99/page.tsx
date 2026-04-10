@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import T99Game from '@/components/t99/T99Game';
+import T99Game from '@/features/t99/components/T99Game';
 
 const baseUrl = 'https://azuretier.net';
 

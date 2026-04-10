@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import GamesHub from './GamesHub';
+import GamesPageContent from '@/features/games/components/GamesPageContent';
 
 const baseUrl = 'https://azuretier.net';
 
@@ -36,5 +36,5 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 export default function GamesPage() {
-  return <GamesHub />;
+  return <GamesPageContent />;
 }
