@@ -668,41 +668,48 @@ function getPacketTimerProgress(packet: GarbagePacket, alivePlayers: number) {
   return Math.max(0, Math.min(1, packet.chargeMs / Math.max(1, getGarbageChargeWindowMs(alivePlayers))));
 }
 
+function getGarbageMeterColor(progress: number) {
+  if (progress >= 1) return '#ff405a';
+  if (progress >= 0.5) return '#ff5f68';
+  return '#ffbf47';
+}
+
 function IncomingGarbageRail({ packets, alivePlayers }: { packets: GarbagePacket[]; alivePlayers: number }) {
-  const filledBlocks = packets.flatMap((packet, packetIndex) =>
-    Array.from({ length: Math.min(packet.lines, MAX_PENDING_GARBAGE) }, (_, index) => ({
-      id: `${packet.id}-${index}`,
-      from: packet.from,
+  let visibleLines = 0;
+  const visiblePackets = packets.reduce<Array<GarbagePacket & { visibleLines: number; progress: number; active: boolean }>>((acc, packet, packetIndex) => {
+    const remainingLines = MAX_PENDING_GARBAGE - visibleLines;
+    if (remainingLines <= 0) return acc;
+
+    const packetLines = Math.min(packet.lines, remainingLines);
+    visibleLines += packetLines;
+    acc.push({
+      ...packet,
+      visibleLines: packetLines,
       progress: packetIndex === 0 ? getPacketTimerProgress(packet, alivePlayers) : 0,
       active: packetIndex === 0,
-    })),
-  ).slice(0, MAX_PENDING_GARBAGE);
-
-  const emptyCount = Math.max(0, MAX_PENDING_GARBAGE - filledBlocks.length);
-  const displayBlocks = [
-    ...Array.from({ length: emptyCount }, () => null),
-    ...filledBlocks.slice().reverse(),
-  ];
+    });
+    return acc;
+  }, []);
 
   return (
     <div className={styles.garbageRail}>
-      {displayBlocks.map((block, index) => {
-        const toneClass = !block || !block.active ? '' :
-          block.progress >= 1 ? styles.garbageBlockHot :
-            block.progress >= 0.5 ? styles.garbageBlockWarm :
-              styles.garbageBlockCool;
-
+      {visiblePackets.map(packet => {
+        const packetColor = packet.active ? getGarbageMeterColor(packet.progress) : PLAYER_COLORS.garbage;
         return (
           <div
-            key={block?.id ?? `empty-${index}`}
-            className={`${styles.garbageBlock} ${block && !block.active ? styles.garbageBlockQueued : ''} ${block?.active ? styles.garbageBlockActive : ''} ${toneClass} ${block?.active && block.progress >= 1 ? styles.garbageBlockFlashing : ''}`}
-            title={block ? `${block.from} +1` : undefined}
-            style={block?.active ? ({ ['--garbage-progress' as string]: `${Math.max(10, block.progress * 100)}%` }) : undefined}
+            key={packet.id}
+            className={`${styles.garbagePacket} ${styles.playerCellFilled} ${packet.active ? styles.garbagePacketActive : styles.garbagePacketQueued} ${packet.active && packet.progress >= 1 ? styles.garbagePacketFlashing : ''}`}
+            title={`${packet.from} +${packet.visibleLines}`}
+            style={{
+              ['--garbage-lines' as string]: String(packet.visibleLines),
+              ['--player-cell-color' as string]: packetColor,
+              ...(packet.active ? { ['--garbage-progress' as string]: `${Math.max(10, packet.progress * 100)}%` } : {}),
+            } as CSSProperties}
           >
-            {block?.active && (
+            {packet.active && (
               <>
-                <div className={styles.garbageBlockStripe} />
-                <div className={styles.garbageBlockTimer} />
+                <div className={styles.garbagePacketStripe} />
+                <div className={styles.garbagePacketTimer} />
               </>
             )}
           </div>
@@ -774,10 +781,12 @@ function MicroBoard({
   );
 }
 
-function PreviewShape({ type }: { type: PieceType | null }) {
+function PreviewShape({ type, compact = false }: { type: PieceType | null; compact?: boolean }) {
   const pieceColor = type ? (PLAYER_COLORS[type] ?? PLAYER_COLORS.T) : 'transparent';
   const shape = type ? PREVIEW_SHAPES[type] : null;
   const display = Array.from({ length: PREVIEW_GRID_ROWS }, () => Array<number>(PREVIEW_GRID_COLUMNS).fill(0));
+  const gridCellSize = compact ? 8 : 10;
+  const displayCellSize = compact ? 7 : 9;
 
   if (shape) {
     const xOffset = Math.max(0, Math.round((PREVIEW_GRID_COLUMNS - shape[0].length) / 2));
@@ -797,8 +806,8 @@ function PreviewShape({ type }: { type: PieceType | null }) {
 
   return (
     <div
-      className={`${styles.previewShape} ${!type ? styles.previewShapeEmpty : ''}`}
-      style={{ gridTemplateColumns: `repeat(${PREVIEW_GRID_COLUMNS}, 10px)` }}
+      className={`${styles.previewShape} ${compact ? styles.previewShapeCompact : ''} ${!type ? styles.previewShapeEmpty : ''}`}
+      style={{ gridTemplateColumns: `repeat(${PREVIEW_GRID_COLUMNS}, ${gridCellSize}px)` }}
     >
       {display.flatMap((row, rowIndex) =>
         row.map((cell, cellIndex) => (
@@ -806,6 +815,8 @@ function PreviewShape({ type }: { type: PieceType | null }) {
             key={`${type ?? 'empty'}-${rowIndex}-${cellIndex}`}
             className={styles.previewCell}
             style={{
+              width: `${displayCellSize}px`,
+              height: `${displayCellSize}px`,
               background: cell ? pieceColor : 'transparent',
               boxShadow: cell ? 'inset 0 0 0 1px rgba(255, 255, 255, 0.08)' : 'none',
             }}
@@ -2606,7 +2617,7 @@ export default function Tetris99GameProper() {
             <div className={styles.heroCard}>
               <div className={styles.heroLayout}>
                 <div className={styles.previewColumn}>
-                  <div className={styles.miniPanel}><span className={styles.panelHeader}>Hold</span><div className={styles.previewBox}><PreviewShape type={centerHold} /></div></div>
+                  <div className={`${styles.miniPanel} ${styles.miniPanelCompact}`}><span className={styles.panelHeader}>Hold</span><div className={`${styles.previewBox} ${styles.previewBoxCompact}`}><PreviewShape type={centerHold} compact /></div></div>
                 </div>
                 <div ref={playerBoardFrameRef} className={`${styles.boardFrame} ${centerDanger >= 18 ? styles.boardFrameDanger : ''}`}>
                   <div className={styles.boardPlayfield}>
