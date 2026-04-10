@@ -175,7 +175,7 @@
 
 .heroLayout {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 84px;
+  grid-template-columns: 88px minmax(0, 1fr) 92px;
   gap: 3px;
   align-items: stretch;
   flex: 1;
@@ -186,6 +186,10 @@
   display: grid;
   gap: 3px;
   align-content: stretch;
+}
+
+.previewColumnHold {
+  justify-items: center;
 }
 
 .miniPanel {
@@ -233,6 +237,14 @@
   opacity: 0.22;
 }
 
+.holdPreview {
+  filter: drop-shadow(0 0 8px rgba(114, 255, 187, 0.22));
+}
+
+.holdPreview .previewCell {
+  border-radius: 1px;
+}
+
 .boardFrame {
   position: relative;
   padding: 4px;
@@ -259,9 +271,7 @@
 }
 
 .boardPlayfieldInner {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px;
+  display: flex;
   align-items: stretch;
   justify-content: center;
   min-height: 100%;
@@ -277,6 +287,103 @@
   background: linear-gradient(180deg, rgba(10, 14, 22, 0.88), rgba(5, 7, 12, 0.94));
   border: 1px solid rgba(255, 175, 119, 0.1);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.t99HoldRail {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  justify-items: center;
+  align-content: stretch;
+  filter: drop-shadow(0 0 10px rgba(72, 240, 255, 0.18));
+}
+
+.t99HoldCasing {
+  width: 100%;
+  padding: 6px 4px 10px;
+  border-top: 4px solid #4cf6ff;
+  border-left: 4px solid #4cf6ff;
+  border-right: 4px solid #4cf6ff;
+  background:
+    linear-gradient(180deg, rgba(4, 11, 15, 0.98), rgba(2, 6, 9, 0.98)),
+    linear-gradient(180deg, rgba(93, 243, 255, 0.12), transparent 36%);
+  box-shadow:
+    inset 0 0 0 1px rgba(200, 255, 255, 0.08),
+    0 0 18px rgba(60, 219, 255, 0.12);
+}
+
+.t99HoldHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.t99HoldLabel {
+  color: #baffff;
+  font-size: 0.52rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(93, 243, 255, 0.3);
+}
+
+.t99HoldType {
+  min-width: 14px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  padding-inline: 2px;
+  border: 1px solid rgba(125, 246, 255, 0.65);
+  background: rgba(1, 8, 11, 0.94);
+  color: #efffff;
+  font-size: 0.56rem;
+  line-height: 1;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.t99HoldWindow {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(180deg, rgba(1, 7, 10, 0.98), rgba(1, 4, 6, 0.98)),
+    radial-gradient(circle at 50% 24%, rgba(86, 255, 171, 0.12), transparent 34%);
+  box-shadow:
+    inset 0 0 0 1px rgba(89, 249, 255, 0.18),
+    inset 0 12px 24px rgba(0, 0, 0, 0.28);
+}
+
+.t99GarbageStem {
+  position: relative;
+  width: 40px;
+  height: 100%;
+  min-height: 0;
+  padding: 6px 3px 8px;
+  border-left: 4px solid #4cf6ff;
+  border-right: 4px solid #4cf6ff;
+  border-bottom: 4px solid #4cf6ff;
+  background:
+    linear-gradient(180deg, rgba(4, 10, 14, 0.98) 0%, rgba(2, 6, 9, 0.98) 76%, rgba(34, 24, 6, 0.98) 92%, rgba(255, 182, 56, 0.98) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(200, 255, 255, 0.08),
+    0 0 18px rgba(60, 219, 255, 0.12);
+  overflow: hidden;
+}
+
+.t99GarbageStem::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  bottom: -4px;
+  height: 30px;
+  background: radial-gradient(circle at 50% 100%, rgba(255, 237, 121, 0.92), rgba(255, 170, 56, 0.72) 38%, transparent 72%);
+  filter: blur(8px);
+  pointer-events: none;
 }
 
 .targetModeNoticeOverlay {
@@ -428,6 +535,47 @@
   border-radius: 8px;
   background: linear-gradient(180deg, rgba(26, 31, 43, 0.96), rgba(9, 12, 19, 0.96));
   box-shadow: inset 0 0 0 1px rgba(255, 186, 129, 0.14);
+}
+
+.garbageRailTower {
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  gap: 2px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.garbageRailTower .garbageBlock {
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: inset 0 0 0 1px rgba(76, 246, 255, 0.08);
+}
+
+.garbageRailTower .garbageBlockQueued {
+  background: linear-gradient(180deg, #8e99ab, #566173);
+}
+
+.garbageRailTower .garbageBlockCool {
+  background: linear-gradient(180deg, #ffe971, #ffc53d);
+}
+
+.garbageRailTower .garbageBlockWarm {
+  background: linear-gradient(180deg, #ff7769, #ff394d);
+}
+
+.garbageRailTower .garbageBlockHot {
+  background: linear-gradient(180deg, #ffb1a0, #ff5563);
+}
+
+.garbageRailTower .garbageBlockStripe {
+  opacity: 0.24;
+}
+
+.garbageRailTower .garbageBlockTimer {
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
 }
 
 .garbageBlock {
@@ -1199,6 +1347,19 @@
   .previewColumn {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .previewColumnHold {
+    grid-template-columns: 1fr;
+  }
+
+  .t99HoldRail {
+    width: 88px;
+    height: auto;
+  }
+
+  .t99GarbageStem {
+    min-height: 180px;
   }
 
   .targetRow,

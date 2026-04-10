@@ -666,7 +666,15 @@ function getPacketTimerProgress(packet: GarbagePacket, alivePlayers: number) {
   return Math.max(0, Math.min(1, packet.chargeMs / Math.max(1, getGarbageChargeWindowMs(alivePlayers))));
 }
 
-function IncomingGarbageRail({ packets, alivePlayers }: { packets: GarbagePacket[]; alivePlayers: number }) {
+function IncomingGarbageRail({
+  packets,
+  alivePlayers,
+  className,
+}: {
+  packets: GarbagePacket[];
+  alivePlayers: number;
+  className?: string;
+}) {
   const filledBlocks = packets.flatMap((packet, packetIndex) =>
     Array.from({ length: Math.min(packet.lines, MAX_PENDING_GARBAGE) }, (_, index) => ({
       id: `${packet.id}-${index}`,
@@ -683,7 +691,7 @@ function IncomingGarbageRail({ packets, alivePlayers }: { packets: GarbagePacket
   ];
 
   return (
-    <div className={styles.garbageRail}>
+    <div className={[styles.garbageRail, className ?? ''].filter(Boolean).join(' ')}>
       {displayBlocks.map((block, index) => {
         const toneClass = !block || !block.active ? '' :
           block.progress >= 1 ? styles.garbageBlockHot :
@@ -772,10 +780,19 @@ function MicroBoard({
   );
 }
 
-function PreviewShape({ type }: { type: PieceType | null }) {
+function PreviewShape({
+  type,
+  cellSize = 10,
+  className,
+}: {
+  type: PieceType | null;
+  cellSize?: number;
+  className?: string;
+}) {
   const pieceColor = type ? (PLAYER_COLORS[type] ?? PLAYER_COLORS.T) : 'transparent';
   const shape = type ? PREVIEW_SHAPES[type] : null;
   const display = Array.from({ length: PREVIEW_GRID_ROWS }, () => Array<number>(PREVIEW_GRID_COLUMNS).fill(0));
+  const previewCellSize = Math.max(8, cellSize - 1);
 
   if (shape) {
     const xOffset = Math.max(0, Math.round((PREVIEW_GRID_COLUMNS - shape[0].length) / 2));
@@ -795,8 +812,11 @@ function PreviewShape({ type }: { type: PieceType | null }) {
 
   return (
     <div
-      className={`${styles.previewShape} ${!type ? styles.previewShapeEmpty : ''}`}
-      style={{ gridTemplateColumns: `repeat(${PREVIEW_GRID_COLUMNS}, 10px)` }}
+      className={[styles.previewShape, !type ? styles.previewShapeEmpty : '', className ?? ''].filter(Boolean).join(' ')}
+      style={{
+        gridTemplateColumns: `repeat(${PREVIEW_GRID_COLUMNS}, ${cellSize}px)`,
+        gridAutoRows: `${cellSize}px`,
+      }}
     >
       {display.flatMap((row, rowIndex) =>
         row.map((cell, cellIndex) => (
@@ -806,6 +826,8 @@ function PreviewShape({ type }: { type: PieceType | null }) {
             style={{
               background: cell ? pieceColor : 'transparent',
               boxShadow: cell ? 'inset 0 0 0 1px rgba(255, 255, 255, 0.08)' : 'none',
+              width: `${previewCellSize}px`,
+              height: `${previewCellSize}px`,
             }}
           />
         )),
@@ -2602,8 +2624,25 @@ export default function Tetris99GameProper() {
           <div className={styles.boardStack}>
             <div className={styles.heroCard}>
               <div className={styles.heroLayout}>
-                <div className={styles.previewColumn}>
-                  <div className={styles.miniPanel}><span className={styles.panelHeader}>Hold</span><div className={styles.previewBox}><PreviewShape type={centerHold} /></div></div>
+                <div className={`${styles.previewColumn} ${styles.previewColumnHold}`}>
+                  <div className={styles.t99HoldRail}>
+                    <div className={styles.t99HoldCasing}>
+                      <div className={styles.t99HoldHeader}>
+                        <span className={styles.t99HoldLabel}>HOLD</span>
+                        <span className={styles.t99HoldType}>{centerHold ?? '\u00A0'}</span>
+                      </div>
+                      <div className={styles.t99HoldWindow}>
+                        <PreviewShape type={centerHold} cellSize={13} className={styles.holdPreview} />
+                      </div>
+                    </div>
+                    <div className={styles.t99GarbageStem}>
+                      <IncomingGarbageRail
+                        packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets}
+                        alivePlayers={renderAlivePlayers}
+                        className={styles.garbageRailTower}
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div ref={playerBoardFrameRef} className={`${styles.boardFrame} ${centerDanger >= 18 ? styles.boardFrameDanger : ''}`}>
                   <div className={styles.boardPlayfield}>
@@ -2625,10 +2664,6 @@ export default function Tetris99GameProper() {
                       </div>
                     )}
                     <div className={styles.boardPlayfieldInner}>
-                      <div className={styles.garbagePanel}>
-                        <span className={styles.garbagePanelLabel}>Incoming</span>
-                        <IncomingGarbageRail packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets} alivePlayers={renderAlivePlayers} />
-                      </div>
                       <PlayerBoard board={centerBoard} currentPiece={centerCurrentPiece} />
                     </div>
                     {speedNotice && !snapshot.gameOver && (
