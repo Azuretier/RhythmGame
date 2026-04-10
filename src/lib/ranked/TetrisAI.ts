@@ -24,10 +24,23 @@ export interface AIPlacementResult {
   combo: number;
 }
 
+export interface AIActivePieceState {
+  type: PieceType;
+  rotation: 0 | 1 | 2 | 3;
+  x: number;
+  y: number;
+}
+
 type AIInputAction = 'hold' | 'moveLeft' | 'moveRight' | 'rotateCW' | 'rotateCCW' | 'hardDrop';
+
+interface AIInputStep {
+  action: AIInputAction;
+  delayMs: number;
+}
 
 interface AIInputPlan {
   actions: AIInputAction[];
+  steps: AIInputStep[];
   durationMs: number;
 }
 
@@ -56,7 +69,8 @@ export interface AIBoardConfig {
 const W = 10;
 const DEFAULT_VISIBLE_ROWS = 20;
 const DEFAULT_HIDDEN_ROWS = 0;
-const AI_TAP_MS = ARR;
+const AI_TAP_MS = 75;
+const AI_ACTION_MS = 50;
 
 // Minimum score advantage the next/hold piece must have to justify saving the current piece
 const HOLD_ADVANTAGE_THRESHOLD = 0.5;
@@ -280,15 +294,40 @@ function normalizeRotation(type: PieceType, rotation: number): Piece['rotation']
 
 function estimateHorizontalRunMs(count: number): number {
   if (count <= 0) return 0;
-  const tapTime = count * AI_TAP_MS;
+  const tapTime = Math.max(AI_ACTION_MS, (count - 1) * AI_TAP_MS + AI_ACTION_MS);
   const holdTime = count === 1
-    ? AI_TAP_MS
-    : AI_TAP_MS + DAS + Math.max(0, count - 2) * ARR;
+    ? AI_ACTION_MS
+    : AI_ACTION_MS + DAS + Math.max(0, count - 2) * ARR;
   return Math.min(tapTime, holdTime);
 }
 
-function estimateInputDuration(actions: AIInputAction[]): number {
-  let total = 0;
+function buildHorizontalSteps(action: 'moveLeft' | 'moveRight', count: number): AIInputStep[] {
+  if (count <= 0) return [];
+
+  const tapTime = Math.max(AI_ACTION_MS, (count - 1) * AI_TAP_MS + AI_ACTION_MS);
+  const holdTime = count === 1
+    ? AI_ACTION_MS
+    : AI_ACTION_MS + DAS + Math.max(0, count - 2) * ARR;
+
+  if (holdTime < tapTime && count > 1) {
+    const steps: AIInputStep[] = [{ action, delayMs: AI_ACTION_MS }];
+    for (let index = 1; index < count; index++) {
+      steps.push({
+        action,
+        delayMs: index === 1 ? DAS : ARR,
+      });
+    }
+    return steps;
+  }
+
+  return Array.from({ length: count }, (_, index) => ({
+    action,
+    delayMs: index === 0 ? AI_ACTION_MS : AI_TAP_MS,
+  }));
+}
+
+function buildInputSteps(actions: AIInputAction[]): AIInputStep[] {
+  const steps: AIInputStep[] = [];
   let index = 0;
 
   while (index < actions.length) {
@@ -299,20 +338,29 @@ function estimateInputDuration(actions: AIInputAction[]): number {
         count += 1;
         index += 1;
       }
-      total += estimateHorizontalRunMs(count);
+      steps.push(...buildHorizontalSteps(action, count));
       continue;
     }
 
-    total += AI_TAP_MS;
+    steps.push({
+      action,
+      delayMs: AI_ACTION_MS,
+    });
     index += 1;
   }
 
-  return Math.max(AI_TAP_MS, total);
+  return steps;
+}
+
+function estimateInputDuration(actions: AIInputAction[]): number {
+  return Math.max(AI_ACTION_MS, buildInputSteps(actions).reduce((sum, step) => sum + step.delayMs, 0));
 }
 
 function buildInputPlan(actions: AIInputAction[]): AIInputPlan {
+  const steps = buildInputSteps(actions);
   return {
     actions,
+    steps,
     durationMs: estimateInputDuration(actions),
   };
 }
@@ -680,6 +728,7 @@ function chooseExecutionPlan(
 
 export interface AIGameCallbacks {
   onBoardUpdate: (board: (BoardCell | null)[][], score: number, lines: number, combo: number, piece?: string, hold?: string | null) => void;
+  onActivePieceUpdate?: (board: (BoardCell | null)[][], piece: AIActivePieceState | null, hold?: string | null) => void;
   onGarbage: (lines: number) => void;
   onGameOver: () => void;
   onPlacement?: (result: AIPlacementResult) => void;
@@ -700,6 +749,8 @@ export class TetrisAIGame {
   private pendingGarbage = 0;
   private moveTimer: ReturnType<typeof setTimeout> | null = null;
   private paused = false;
+  private activePiece: Piece | null = null;
+  private inputStepIndex = 0;
   private scheduledPhase: 'thinking' | 'input' | null = null;
   private scheduledPieceType: PieceType | null = null;
   private pendingExecution: AIExecutionPlan | null = null;
@@ -770,6 +821,8 @@ export class TetrisAIGame {
       clearTimeout(this.moveTimer);
       this.moveTimer = null;
     }
+    this.activePiece = null;
+    this.inputStepIndex = 0;
     this.scheduledPhase = null;
     this.scheduledPieceType = null;
     this.pendingExecution = null;
@@ -816,6 +869,14 @@ export class TetrisAIGame {
     return this.gameOver;
   }
 
+  private emitActivePieceUpdate(): void {
+    this.callbacks.onActivePieceUpdate?.(
+      this.board,
+      this.activePiece ? { ...this.activePiece } : null,
+      this.holdPiece,
+    );
+  }
+
   private scheduleThinkingPhase(pieceType: PieceType, delay: number): void {
     if (this.gameOver || this.paused) return;
     this.scheduledPhase = 'thinking';
@@ -846,7 +907,11 @@ export class TetrisAIGame {
       this.scheduledDelayMs = 0;
       this.remainingDelayMs = 0;
       if (this.gameOver || this.paused) return;
-      this.executePlannedPiece(executionPlan);
+      if (this.inputStepIndex >= executionPlan.move.inputPlan.steps.length) {
+        this.finalizeActivePiece(executionPlan);
+        return;
+      }
+      this.executeInputStep(executionPlan);
     }, delay);
   }
 
@@ -873,6 +938,13 @@ export class TetrisAIGame {
       if (this.gameOver) return;
     }
 
+    const sourcePiece = createSpawnPiece(pieceType, this.hiddenRows);
+    if (!isValid(sourcePiece, this.board)) {
+      this.gameOver = true;
+      this.callbacks.onGameOver();
+      return;
+    }
+
     const boardConfig = { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows };
     const executionPlan = chooseExecutionPlan(
       pieceType,
@@ -889,56 +961,115 @@ export class TetrisAIGame {
       return;
     }
 
-    const spawnPiece = createSpawnPiece(executionPlan.actualPieceType, this.hiddenRows);
-    if (!isValid(spawnPiece, this.board)) {
+    this.activePiece = sourcePiece;
+    this.inputStepIndex = 0;
+    this.emitActivePieceUpdate();
+    const firstDelay = executionPlan.move.inputPlan.steps[0]?.delayMs ?? AI_ACTION_MS;
+    this.scheduleInputPhase(executionPlan, firstDelay);
+  }
+
+  private executeInputStep(executionPlan: AIExecutionPlan): void {
+    const currentStep = executionPlan.move.inputPlan.steps[this.inputStepIndex];
+    if (!currentStep || !this.activePiece || this.gameOver) return;
+
+    switch (currentStep.action) {
+      case 'hold':
+        this.performHoldAction();
+        if (this.gameOver) return;
+        break;
+      case 'moveLeft': {
+        const moved = { ...this.activePiece, x: this.activePiece.x - 1 };
+        if (isValid(moved, this.board)) {
+          this.activePiece = moved;
+        }
+        break;
+      }
+      case 'moveRight': {
+        const moved = { ...this.activePiece, x: this.activePiece.x + 1 };
+        if (isValid(moved, this.board)) {
+          this.activePiece = moved;
+        }
+        break;
+      }
+      case 'rotateCW': {
+        const rotated = tryRotate(this.activePiece, 1, this.board);
+        if (rotated) this.activePiece = rotated;
+        break;
+      }
+      case 'rotateCCW': {
+        const rotated = tryRotate(this.activePiece, -1, this.board);
+        if (rotated) this.activePiece = rotated;
+        break;
+      }
+      case 'hardDrop':
+        this.activePiece = { ...this.activePiece, y: getGhostY(this.activePiece, this.board) };
+        this.inputStepIndex = executionPlan.move.inputPlan.steps.length;
+        this.emitActivePieceUpdate();
+        this.scheduleInputPhase(executionPlan, AI_ACTION_MS);
+        return;
+    }
+
+    this.inputStepIndex += 1;
+    this.emitActivePieceUpdate();
+
+    const nextStep = executionPlan.move.inputPlan.steps[this.inputStepIndex];
+    if (nextStep) {
+      this.scheduleInputPhase(executionPlan, nextStep.delayMs);
+      return;
+    }
+
+    this.scheduleInputPhase(executionPlan, AI_ACTION_MS);
+  }
+
+  private performHoldAction(): void {
+    const piece = this.activePiece;
+    if (!piece || this.holdUsed) return;
+
+    this.holdUsed = true;
+    const previousHold = this.holdPiece;
+    this.holdPiece = piece.type;
+
+    if (previousHold) {
+      const swappedPiece = createSpawnPiece(previousHold, this.hiddenRows);
+      if (!isValid(swappedPiece, this.board)) {
+        this.gameOver = true;
+        this.callbacks.onGameOver();
+        return;
+      }
+      this.activePiece = swappedPiece;
+      return;
+    }
+
+    const nextType = this.nextQueue.shift();
+    this.fillQueue();
+    if (!nextType) {
       this.gameOver = true;
       this.callbacks.onGameOver();
       return;
     }
 
-    this.scheduleInputPhase(executionPlan, executionPlan.move.inputPlan.durationMs);
+    const nextPiece = createSpawnPiece(nextType, this.hiddenRows);
+    if (!isValid(nextPiece, this.board)) {
+      this.gameOver = true;
+      this.callbacks.onGameOver();
+      return;
+    }
+
+    this.activePiece = nextPiece;
   }
 
-  private executePlannedPiece(executionPlan: AIExecutionPlan): void {
-    if (this.gameOver) return;
+  private finalizeActivePiece(executionPlan: AIExecutionPlan): void {
+    if (!this.activePiece || this.gameOver) return;
 
-    if (
-      executionPlan.holdAction === 'store'
-      && this.nextQueue[0] !== executionPlan.actualPieceType
-    ) {
-      this.beginPieceExecution(executionPlan.sourcePieceType);
-      return;
-    }
-
-    const spawnPiece = createSpawnPiece(executionPlan.actualPieceType, this.hiddenRows);
-    const piece: Piece = {
-      ...spawnPiece,
-      rotation: executionPlan.move.rotation,
-      x: executionPlan.move.x,
-    };
-
-    if (!isValid(spawnPiece, this.board) || !isValid(piece, this.board)) {
-      this.beginPieceExecution(executionPlan.sourcePieceType);
-      return;
-    }
-
-    if (executionPlan.holdAction === 'swap') {
-      this.holdPiece = executionPlan.sourcePieceType;
-      this.holdUsed = true;
-    } else if (executionPlan.holdAction === 'store') {
-      this.holdPiece = executionPlan.sourcePieceType;
-      this.holdUsed = true;
-      if (this.nextQueue[0] === executionPlan.actualPieceType) {
-        this.nextQueue.shift();
-        this.fillQueue();
-      }
-    }
-
+    const piece = {
+      ...this.activePiece,
+      rotation: normalizeRotation(this.activePiece.type, this.activePiece.rotation),
+    } as Piece;
     const landY = getGhostY(piece, this.board);
     const landedPiece: Piece = { ...piece, y: landY };
 
     // Check if piece is above board
-    const shape = getShape(executionPlan.actualPieceType, executionPlan.move.rotation);
+    const shape = getShape(landedPiece.type, landedPiece.rotation);
     let aboveBoard = true;
     const visibleStart = getVisibleStart(this.board, this.visibleRows);
     for (let y = 0; y < shape.length; y++) {
@@ -960,7 +1091,7 @@ export class TetrisAIGame {
     // Clear lines
     const { board: clearedBoard, cleared } = clearLines(this.board);
     this.board = clearedBoard;
-    const tSpin = detectTSpin(landedPiece, boardBeforeLock, executionPlan.actualPieceType === 'T');
+    const tSpin = detectTSpin(landedPiece, boardBeforeLock, landedPiece.type === 'T');
 
     if (cleared > 0) {
       this.combo++;
@@ -983,20 +1114,22 @@ export class TetrisAIGame {
       this.score,
       this.lines,
       this.combo,
-      executionPlan.actualPieceType,
+      landedPiece.type,
       this.holdPiece,
     );
 
     this.callbacks.onPlacement?.({
-      pieceType: executionPlan.actualPieceType,
-      rotation: executionPlan.move.rotation,
-      x: executionPlan.move.x,
+      pieceType: landedPiece.type,
+      rotation: landedPiece.rotation,
+      x: landedPiece.x,
       y: landY,
       clearedLines: cleared,
       tSpin,
       combo: this.combo,
     });
 
+    this.activePiece = null;
+    this.inputStepIndex = 0;
     this.scheduledPhase = null;
     this.scheduledPieceType = null;
     this.pendingExecution = null;
