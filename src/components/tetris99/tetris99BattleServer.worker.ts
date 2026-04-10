@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 
-import { TetrisAIGame, getDifficultyForRank, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
+import type { Piece as RhythmPiece } from '@/components/rhythmia/tetris/types';
+import { TetrisAIGame, getDifficultyForRank, type AIActivePieceState, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 type TargetMode = 'random' | 'attackers' | 'kos' | 'badges';
@@ -34,6 +35,7 @@ type BotSnapshot = {
   id: string;
   name: string;
   board: VisibleBoard;
+  currentPiece: RhythmPiece | null;
   queue: PieceType[];
   hold: PieceType | null;
   combo: number;
@@ -83,7 +85,7 @@ type PlayerDefeatedMessage = {
   type: 'player-defeated';
   matchId: number;
   killerId: string | null;
-  victimBadges: number;
+  victimBadgePoints: number;
 };
 type SetSpeedStageMessage = {
   type: 'set-speed-stage';
@@ -251,6 +253,15 @@ function aiBoardToVisibleBoard(board: ({ color: string } | null)[][]) {
   return {
     visibleBoard: fullBoard.slice(fullBoard.length - T99_VISIBLE_HEIGHT),
     danger: boardDanger(fullBoard),
+  };
+}
+
+function aiPieceToVisiblePiece(piece: AIActivePieceState): RhythmPiece {
+  return {
+    type: piece.type,
+    rotation: piece.rotation,
+    x: piece.x,
+    y: piece.y - (T99_BOARD_HEIGHT - T99_VISIBLE_HEIGHT),
   };
 }
 
@@ -633,21 +644,21 @@ function refreshBotTargeting(bot: BotSnapshot) {
   bot.targetIds = resolveStableTargets(bot.id, bot.targetMode, currentTargets);
 }
 
-function awardKo(killerId: string | null, victimBadges: number, victimId: string) {
+function awardKo(killerId: string | null, victimBadgePoints: number, victimId: string) {
   if (!killerId) return;
   if (killerId === PLAYER_ID) {
     scope.postMessage({
       type: 'player-ko',
       matchId: currentMatchId,
       victimId,
-      badgeGain: 1 + victimBadges,
+      badgeGain: 1 + victimBadgePoints,
     });
     return;
   }
   const killer = getBotById(killerId);
   if (!killer || !killer.alive) return;
   killer.kos += 1;
-  killer.badgePoints += 1 + victimBadges;
+  killer.badgePoints += 1 + victimBadgePoints;
   killer.badges = badgeStageFromPoints(killer.badgePoints);
   emitBotSfx(killer.id, 'ko');
 }
@@ -665,7 +676,7 @@ function eliminateBot(bot: BotSnapshot) {
     victimId: bot.id,
     killerId: bot.lastDamagedBy,
   } satisfies BotEliminatedEvent);
-  awardKo(bot.lastDamagedBy, bot.badges, bot.id);
+  awardKo(bot.lastDamagedBy, bot.badgePoints, bot.id);
   scheduleSnapshot();
   maybeResolveMatch();
 }
@@ -699,6 +710,7 @@ function serializeBot(bot: BotSnapshot): BotSnapshot {
   return {
     ...bot,
     board: bot.board.map(row => [...row]),
+    currentPiece: bot.currentPiece ? { ...bot.currentPiece } : null,
     queue: [...bot.queue],
     targetIds: [...bot.targetIds],
     pendingGarbage: bot.pendingGarbage.map(packet => ({ ...packet })),
@@ -731,6 +743,7 @@ function createInitialBot(index: number): BotSnapshot {
     id: `bot-${index}`,
     name: `${BOT_NAMES[index % BOT_NAMES.length]}-${String(index + 1).padStart(2, '0')}`,
     board: createEmptyVisibleBoard(),
+    currentPiece: null,
     queue: Array.from({ length: 6 }, () => PIECES[Math.floor(rng() * PIECES.length)] ?? 'T'),
     hold: null,
     combo: 0,
@@ -794,6 +807,12 @@ function startMatch(matchId: number) {
         }
         scheduleSnapshot();
       },
+      onActivePieceUpdate: activePiece => {
+        const currentBot = getBotById(bot.id);
+        if (!currentBot || !currentBot.alive) return;
+        currentBot.currentPiece = activePiece ? aiPieceToVisiblePiece(activePiece) : null;
+        scheduleSnapshot();
+      },
       onGarbage: () => {
         // Battle resolution is owned by this worker so combat stays authoritative.
       },
@@ -810,6 +829,7 @@ function startMatch(matchId: number) {
 
         currentBot.combo = attackResult.nextComboChain;
         currentBot.b2bActive = attackResult.nextB2bActive;
+        currentBot.currentPiece = null;
         refreshBotTargeting(currentBot);
 
         if (placement.clearedLines > 0) {
@@ -832,7 +852,10 @@ function startMatch(matchId: number) {
       },
       onGameOver: () => {
         const currentBot = getBotById(bot.id);
-        if (currentBot) eliminateBot(currentBot);
+        if (currentBot) {
+          currentBot.currentPiece = null;
+          eliminateBot(currentBot);
+        }
       },
     }, { visibleRows: T99_VISIBLE_HEIGHT, hiddenRows: T99_BUFFER_ZONE });
 
@@ -881,13 +904,13 @@ function handlePlayerAttack(matchId: number, distributions: AttackDistribution[]
   scheduleSnapshot();
 }
 
-function handlePlayerDefeated(matchId: number, killerId: string | null, victimBadges: number) {
+function handlePlayerDefeated(matchId: number, killerId: string | null, victimBadgePoints: number) {
   if (matchId !== currentMatchId) return;
   if (!killerId || killerId === PLAYER_ID) return;
   const killer = getBotById(killerId);
   if (!killer || !killer.alive) return;
   killer.kos += 1;
-  killer.badgePoints += 1 + victimBadges;
+  killer.badgePoints += 1 + victimBadgePoints;
   killer.badges = badgeStageFromPoints(killer.badgePoints);
   emitBotSfx(killer.id, 'ko');
   scheduleSnapshot();
@@ -974,7 +997,7 @@ scope.onmessage = (event: MessageEvent<ServerMessage>) => {
       handlePlayerAttack(message.matchId, message.distributions);
       break;
     case 'player-defeated':
-      handlePlayerDefeated(message.matchId, message.killerId, message.victimBadges);
+      handlePlayerDefeated(message.matchId, message.killerId, message.victimBadgePoints);
       break;
     case 'set-speed-stage':
       handleSetSpeedStage(message.matchId, message.stage);

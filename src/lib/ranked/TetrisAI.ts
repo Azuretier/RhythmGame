@@ -3,6 +3,7 @@
 // Uses heuristic-based evaluation with configurable difficulty
 
 import type { BoardCell } from '@/types/multiplayer';
+import { ROTATION_NAMES, WALL_KICKS_I, WALL_KICKS_JLSTZ } from '@/components/rhythmia/tetris/constants';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 
@@ -23,11 +24,25 @@ export interface AIPlacementResult {
   combo: number;
 }
 
+export interface AIActivePieceState {
+  type: PieceType;
+  rotation: 0 | 1 | 2 | 3;
+  x: number;
+  y: number;
+}
+
 interface AIMove {
   rotation: 0 | 1 | 2 | 3;
   x: number;
   score: number;
 }
+
+type AIInputAction = 'hold' | 'left' | 'right' | 'down' | 'rotateCW' | 'rotateCCW';
+
+type AIPlannedMove = {
+  move: AIMove;
+  plan: AIInputAction[];
+};
 
 export interface AIBoardConfig {
   visibleRows?: number;
@@ -277,6 +292,132 @@ function getGhostY(piece: Piece, board: (BoardCell | null)[][]): number {
   return gy;
 }
 
+function getSpawnPiece(pieceType: PieceType, hiddenRows = DEFAULT_HIDDEN_ROWS): Piece {
+  return {
+    type: pieceType,
+    rotation: 0,
+    x: Math.floor((W - getShape(pieceType, 0)[0].length) / 2),
+    y: getInitialY(pieceType, hiddenRows),
+  };
+}
+
+function getWallKicks(type: PieceType, from: 0 | 1 | 2 | 3, to: 0 | 1 | 2 | 3): [number, number][] {
+  if (type === 'O') return [[0, 0]];
+  const key = `${ROTATION_NAMES[from]}->${ROTATION_NAMES[to]}`;
+  if (type === 'I') return WALL_KICKS_I[key] ?? [[0, 0]];
+  return WALL_KICKS_JLSTZ[key] ?? [[0, 0]];
+}
+
+function tryRotatePiece(piece: Piece, direction: 1 | -1, board: (BoardCell | null)[][]): Piece | null {
+  const nextRotation = ((piece.rotation + direction + 4) % 4) as 0 | 1 | 2 | 3;
+  const kicks = getWallKicks(piece.type, piece.rotation, nextRotation);
+
+  for (const [dx, dy] of kicks) {
+    const rotated: Piece = {
+      ...piece,
+      rotation: nextRotation,
+      x: piece.x + dx,
+      y: piece.y - dy,
+    };
+    if (isValid(rotated, board)) return rotated;
+  }
+
+  return null;
+}
+
+function applyInputAction(piece: Piece, action: AIInputAction, board: (BoardCell | null)[][]): Piece | null {
+  switch (action) {
+    case 'left': {
+      const moved = { ...piece, x: piece.x - 1 };
+      return isValid(moved, board) ? moved : null;
+    }
+    case 'right': {
+      const moved = { ...piece, x: piece.x + 1 };
+      return isValid(moved, board) ? moved : null;
+    }
+    case 'down': {
+      const moved = { ...piece, y: piece.y + 1 };
+      return isValid(moved, board) ? moved : null;
+    }
+    case 'rotateCW':
+      return tryRotatePiece(piece, 1, board);
+    case 'rotateCCW':
+      return tryRotatePiece(piece, -1, board);
+    default:
+      return piece;
+  }
+}
+
+function getActionDelayMs(action: AIInputAction, previousAction: AIInputAction | null): number {
+  if (action === 'hold') return 75;
+  if (action === 'left' || action === 'right') {
+    return previousAction === action ? 33 : 167;
+  }
+  if (action === 'down') return 33;
+  return 50;
+}
+
+function serializePieceState(piece: Piece): string {
+  return `${piece.x},${piece.y},${piece.rotation}`;
+}
+
+function buildPlannedInputs(
+  pieceType: PieceType,
+  move: AIMove,
+  board: (BoardCell | null)[][],
+  boardConfig: AIBoardConfig = {},
+): AIInputAction[] | null {
+  const hiddenRows = boardConfig.hiddenRows ?? DEFAULT_HIDDEN_ROWS;
+  const spawnPiece = getSpawnPiece(pieceType, hiddenRows);
+  if (!isValid(spawnPiece, board)) return null;
+
+  const targetPiece: Piece = {
+    type: pieceType,
+    rotation: move.rotation,
+    x: move.x,
+    y: getGhostY({
+      type: pieceType,
+      rotation: move.rotation,
+      x: move.x,
+      y: getInitialY(pieceType, hiddenRows),
+    }, board),
+  };
+
+  if (!isValid(targetPiece, board)) return null;
+
+  const queue: Array<{ piece: Piece; plan: AIInputAction[] }> = [{ piece: spawnPiece, plan: [] }];
+  const visited = new Set([serializePieceState(spawnPiece)]);
+  const actions: AIInputAction[] = ['rotateCW', 'rotateCCW', 'left', 'right', 'down'];
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) break;
+
+    if (
+      current.piece.x === targetPiece.x
+      && current.piece.y === targetPiece.y
+      && current.piece.rotation === targetPiece.rotation
+    ) {
+      return current.plan;
+    }
+
+    for (const action of actions) {
+      const nextPiece = applyInputAction(current.piece, action, board);
+      if (!nextPiece || nextPiece.y > targetPiece.y) continue;
+
+      const key = serializePieceState(nextPiece);
+      if (visited.has(key)) continue;
+      visited.add(key);
+      queue.push({
+        piece: nextPiece,
+        plan: [...current.plan, action],
+      });
+    }
+  }
+
+  return null;
+}
+
 // ===== Heuristic Evaluation =====
 
 function getColumnHeights(board: (BoardCell | null)[][]): number[] {
@@ -405,16 +546,16 @@ function getAllPossibleMoves(
   return moves;
 }
 
-export function findBestMove(
+function getScoredMoves(
   pieceType: PieceType,
   board: (BoardCell | null)[][],
   difficulty: AIDifficulty,
   nextPieceType?: PieceType,
   boardConfig: AIBoardConfig = {},
-): AIMove | null {
+): AIMove[] {
   const hiddenRows = boardConfig.hiddenRows ?? DEFAULT_HIDDEN_ROWS;
   const moves = getAllPossibleMoves(pieceType, board, boardConfig);
-  if (moves.length === 0) return null;
+  if (moves.length === 0) return [];
 
   // Score each move
   for (const move of moves) {
@@ -449,17 +590,58 @@ export function findBestMove(
 
   // Sort by score (highest first)
   moves.sort((a, b) => b.score - a.score);
+  return moves;
+}
 
-  // Apply mistake rate: sometimes pick a suboptimal move
+export function findBestMove(
+  pieceType: PieceType,
+  board: (BoardCell | null)[][],
+  difficulty: AIDifficulty,
+  nextPieceType?: PieceType,
+  boardConfig: AIBoardConfig = {},
+): AIMove | null {
+  const moves = getScoredMoves(pieceType, board, difficulty, nextPieceType, boardConfig);
+  if (moves.length === 0) return null;
+
   if (Math.random() < difficulty.mistakeRate && moves.length > 1) {
     const index = Math.min(
       Math.floor(Math.random() * Math.min(5, moves.length)),
-      moves.length - 1
+      moves.length - 1,
     );
     return moves[index];
   }
 
   return moves[0];
+}
+
+function findBestPlannedMove(
+  pieceType: PieceType,
+  board: (BoardCell | null)[][],
+  difficulty: AIDifficulty,
+  nextPieceType?: PieceType,
+  boardConfig: AIBoardConfig = {},
+): AIPlannedMove | null {
+  const moves = getScoredMoves(pieceType, board, difficulty, nextPieceType, boardConfig);
+  if (moves.length === 0) return null;
+
+  let preferredIndex = -1;
+  if (Math.random() < difficulty.mistakeRate && moves.length > 1) {
+    preferredIndex = Math.min(
+      Math.floor(Math.random() * Math.min(5, moves.length)),
+      moves.length - 1,
+    );
+  }
+
+  const orderedMoves = preferredIndex >= 0
+    ? [moves[preferredIndex], ...moves.filter((_, index) => index !== preferredIndex)]
+    : moves;
+
+  for (const move of orderedMoves) {
+    const plan = buildPlannedInputs(pieceType, move, board, boardConfig);
+    if (plan) return { move, plan };
+  }
+
+  return null;
 }
 
 // ===== AI Game Runner =====
@@ -470,6 +652,7 @@ export interface AIGameCallbacks {
   onGarbage: (lines: number) => void;
   onGameOver: () => void;
   onPlacement?: (result: AIPlacementResult) => void;
+  onActivePieceUpdate?: (piece: AIActivePieceState | null) => void;
 }
 
 export class TetrisAIGame {
@@ -487,7 +670,7 @@ export class TetrisAIGame {
   private pendingGarbage = 0;
   private moveTimer: ReturnType<typeof setTimeout> | null = null;
   private paused = false;
-  private scheduledPieceType: PieceType | null = null;
+  private scheduledAction: (() => void) | null = null;
   private scheduledAt = 0;
   private scheduledDelayMs = 0;
   private remainingDelayMs = 0;
@@ -496,6 +679,7 @@ export class TetrisAIGame {
   private nextQueue: PieceType[] = [];
   private visibleRows: number;
   private hiddenRows: number;
+  private activePiece: Piece | null = null;
 
   constructor(
     seed: number,
@@ -555,6 +739,9 @@ export class TetrisAIGame {
       clearTimeout(this.moveTimer);
       this.moveTimer = null;
     }
+    this.scheduledAction = null;
+    this.activePiece = null;
+    this.callbacks.onActivePieceUpdate?.(null);
     this.gameOver = true;
   }
 
@@ -572,8 +759,8 @@ export class TetrisAIGame {
   resume(): void {
     if (this.gameOver || !this.paused) return;
     this.paused = false;
-    if (this.scheduledPieceType) {
-      this.schedulePiece(this.scheduledPieceType, this.remainingDelayMs || this.scheduledDelayMs);
+    if (this.scheduledAction) {
+      this.scheduleAfter(this.remainingDelayMs || this.scheduledDelayMs, this.scheduledAction);
       return;
     }
     this.playNextPiece();
@@ -591,19 +778,20 @@ export class TetrisAIGame {
     return this.gameOver;
   }
 
-  private schedulePiece(pieceType: PieceType, delay: number): void {
+  private scheduleAfter(delay: number, action: () => void): void {
     if (this.gameOver || this.paused) return;
-    this.scheduledPieceType = pieceType;
+    this.scheduledAction = action;
     this.scheduledDelayMs = delay;
     this.remainingDelayMs = delay;
     this.scheduledAt = Date.now();
     this.moveTimer = setTimeout(() => {
       this.moveTimer = null;
-      this.scheduledPieceType = null;
+      const scheduledAction = this.scheduledAction;
+      this.scheduledAction = null;
       this.scheduledDelayMs = 0;
       this.remainingDelayMs = 0;
       if (this.gameOver || this.paused) return;
-      this.executePiece(pieceType);
+      scheduledAction?.();
     }, delay);
   }
 
@@ -617,118 +805,52 @@ export class TetrisAIGame {
     const delayVariation = Math.floor(Math.random() * 200) - 50;
     const baseDelay = Math.round(this.difficulty.moveDelay * this.speedMultiplier);
     const delay = Math.max(70, baseDelay + delayVariation);
-    this.schedulePiece(pieceType, delay);
+    this.scheduleAfter(delay, () => this.executePiece(pieceType));
   }
 
-  private executePiece(pieceType: PieceType): void {
+  private updateActivePiece(piece: Piece | null): void {
+    this.activePiece = piece ? { ...piece } : null;
+    this.callbacks.onActivePieceUpdate?.(
+      this.activePiece
+        ? {
+          type: this.activePiece.type,
+          rotation: this.activePiece.rotation,
+          x: this.activePiece.x,
+          y: this.activePiece.y,
+        }
+        : null,
+    );
+  }
+
+  private triggerGameOver(): void {
     if (this.gameOver) return;
+    this.gameOver = true;
+    this.updateActivePiece(null);
+    this.callbacks.onGameOver();
+  }
 
-    // Apply pending garbage before placing
-    if (this.pendingGarbage > 0) {
-      this.applyGarbage(this.pendingGarbage);
-      this.pendingGarbage = 0;
-      if (this.gameOver) return;
-    }
-
-    // Determine the piece to actually play (may swap with hold)
-    let actualPieceType = pieceType;
-    let cachedBestMove: AIMove | null | undefined;
-    if (this.difficulty.useHold && !this.holdUsed) {
-      if (this.holdPiece !== null) {
-        // Swap with hold if the hold piece achieves a better score.
-        // Cache both evaluations so the winning result is reused directly at execution.
-        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-        const currentScore = cachedBestMove?.score ?? -Infinity;
-        const holdBestMove = findBestMove(this.holdPiece, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-        const holdScore = holdBestMove?.score ?? -Infinity;
-        if (holdScore > currentScore) {
-          const saved = this.holdPiece;
-          this.holdPiece = pieceType;
-          this.holdUsed = true;
-          actualPieceType = saved;
-          // Reuse the move evaluated during the decision — same board and look-ahead
-          cachedBestMove = holdBestMove;
-        }
-      } else if (this.nextQueue.length > 0) {
-        // No hold piece yet — save current if next piece gives a significantly better placement.
-        // Evaluate the next piece with nextQueue[1] as its look-ahead (the piece that follows it).
-        cachedBestMove = findBestMove(pieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-        const currentScore = cachedBestMove?.score ?? -Infinity;
-        const nextLookahead = this.nextQueue[1] ?? pieceType;
-        const nextBestMove = findBestMove(this.nextQueue[0], this.board, this.difficulty, nextLookahead, { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-        const nextScore = nextBestMove?.score ?? -Infinity;
-        if (nextScore > currentScore + HOLD_ADVANTAGE_THRESHOLD) {
-          this.holdPiece = pieceType;
-          this.holdUsed = true;
-          actualPieceType = this.nextQueue.shift()!;
-          this.fillQueue();
-          // Reuse the move evaluated during the decision — same board and look-ahead.
-          // nextBestMove was computed with nextLookahead = nextQueue[1] before the shift;
-          // after shift nextQueue[0] becomes that same piece, but we skip the recompute
-          // entirely by reusing the cached result.
-          cachedBestMove = nextBestMove;
-        }
-      }
-    }
-
-    const spawnPiece: Piece = {
-      type: actualPieceType,
-      rotation: 0,
-      x: Math.floor((W - getShape(actualPieceType, 0)[0].length) / 2),
-      y: getInitialY(actualPieceType, this.hiddenRows),
-    };
-
-    if (!isValid(spawnPiece, this.board)) {
-      this.gameOver = true;
-      this.callbacks.onGameOver();
-      return;
-    }
-
-    // Find best move, with look-ahead when enabled (reuse cached result if available)
-    const bestMove = cachedBestMove ?? findBestMove(actualPieceType, this.board, this.difficulty, this.nextQueue[0], { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows });
-
-    if (!bestMove) {
-      // Game over - can't place
-      this.gameOver = true;
-      this.callbacks.onGameOver();
-      return;
-    }
-
-    // Create and place piece
-    const piece: Piece = {
-      type: actualPieceType,
-      rotation: bestMove.rotation,
-      x: bestMove.x,
-      y: getInitialY(actualPieceType, this.hiddenRows),
-    };
-
-    const landY = getGhostY(piece, this.board);
-    const landedPiece: Piece = { ...piece, y: landY };
-
-    // Check if piece is above board
-    const shape = getShape(actualPieceType, bestMove.rotation);
+  private lockResolvedPiece(piece: Piece, rotatedIntoPlace: boolean): void {
+    const shape = getShape(piece.type, piece.rotation);
     let aboveBoard = true;
     const visibleStart = getVisibleStart(this.board, this.visibleRows);
     for (let y = 0; y < shape.length; y++) {
       for (let x = 0; x < shape[y].length; x++) {
-        if (shape[y][x] && landY + y >= visibleStart) aboveBoard = false;
+        if (shape[y][x] && piece.y + y >= visibleStart) aboveBoard = false;
       }
     }
 
     if (this.hiddenRows === 0 && aboveBoard) {
-      this.gameOver = true;
-      this.callbacks.onGameOver();
+      this.triggerGameOver();
       return;
     }
 
-    // Lock piece
     const boardBeforeLock = this.board.map(row => [...row]);
-    this.board = lockPiece(landedPiece, this.board);
+    this.updateActivePiece(null);
+    this.board = lockPiece(piece, this.board);
 
-    // Clear lines
     const { board: clearedBoard, cleared } = clearLines(this.board);
     this.board = clearedBoard;
-    const tSpin = detectTSpin(landedPiece, boardBeforeLock, actualPieceType === 'T');
+    const tSpin = detectTSpin(piece, boardBeforeLock, rotatedIntoPlace);
 
     if (cleared > 0) {
       this.combo++;
@@ -736,7 +858,6 @@ export class TetrisAIGame {
       this.score += base * Math.max(1, this.combo);
       this.lines += cleared;
 
-      // Send garbage
       const garbageToSend = [0, 0, 1, 2, 4][cleared] + Math.floor(this.combo / 3);
       if (garbageToSend > 0) {
         this.callbacks.onGarbage(garbageToSend);
@@ -745,28 +866,129 @@ export class TetrisAIGame {
       this.combo = 0;
     }
 
-    // Emit board update
     this.callbacks.onBoardUpdate(
       this.board,
       this.score,
       this.lines,
       this.combo,
-      actualPieceType,
+      piece.type,
       this.holdPiece,
     );
 
     this.callbacks.onPlacement?.({
-      pieceType: actualPieceType,
-      rotation: bestMove.rotation,
-      x: bestMove.x,
-      y: landY,
+      pieceType: piece.type,
+      rotation: piece.rotation,
+      x: piece.x,
+      y: piece.y,
       clearedLines: cleared,
       tSpin,
       combo: this.combo,
     });
 
-    // Play next piece
     this.playNextPiece();
+  }
+
+  private performPlannedInputs(
+    piece: Piece,
+    plan: AIInputAction[],
+    stepIndex = 0,
+    previousAction: AIInputAction | null = null,
+    rotatedIntoPlace = false,
+  ): void {
+    if (this.gameOver) return;
+
+    if (stepIndex >= plan.length) {
+      this.scheduleAfter(getActionDelayMs('down', previousAction), () => {
+        this.lockResolvedPiece(piece, rotatedIntoPlace);
+      });
+      return;
+    }
+
+    const action = plan[stepIndex];
+    const nextPiece = applyInputAction(piece, action, this.board);
+
+    if (!nextPiece) {
+      this.lockResolvedPiece(piece, rotatedIntoPlace);
+      return;
+    }
+
+    const nextRotatedIntoPlace = rotatedIntoPlace || action === 'rotateCW' || action === 'rotateCCW';
+    this.scheduleAfter(getActionDelayMs(action, previousAction), () => {
+      this.updateActivePiece(nextPiece);
+      this.performPlannedInputs(nextPiece, plan, stepIndex + 1, action, nextRotatedIntoPlace);
+    });
+  }
+
+  private executePiece(pieceType: PieceType): void {
+    if (this.gameOver) return;
+
+    if (this.pendingGarbage > 0) {
+      this.applyGarbage(this.pendingGarbage);
+      this.pendingGarbage = 0;
+      if (this.gameOver) return;
+    }
+
+    const boardConfig = { visibleRows: this.visibleRows, hiddenRows: this.hiddenRows };
+    let actualPieceType = pieceType;
+    let plannedMove = findBestPlannedMove(pieceType, this.board, this.difficulty, this.nextQueue[0], boardConfig);
+    let usedHold = false;
+
+    if (this.difficulty.useHold && !this.holdUsed) {
+      if (this.holdPiece !== null) {
+        const holdPlannedMove = findBestPlannedMove(this.holdPiece, this.board, this.difficulty, this.nextQueue[0], boardConfig);
+        const currentScore = plannedMove?.move.score ?? -Infinity;
+        const holdScore = holdPlannedMove?.move.score ?? -Infinity;
+        if (holdScore > currentScore) {
+          const savedHoldPiece = this.holdPiece;
+          this.holdPiece = pieceType;
+          this.holdUsed = true;
+          usedHold = true;
+          actualPieceType = savedHoldPiece;
+          plannedMove = holdPlannedMove;
+        }
+      } else if (this.nextQueue.length > 0) {
+        const nextLookahead = this.nextQueue[1] ?? pieceType;
+        const nextPlannedMove = findBestPlannedMove(this.nextQueue[0], this.board, this.difficulty, nextLookahead, boardConfig);
+        const currentScore = plannedMove?.move.score ?? -Infinity;
+        const nextScore = nextPlannedMove?.move.score ?? -Infinity;
+        if (nextScore > currentScore + HOLD_ADVANTAGE_THRESHOLD) {
+          this.holdPiece = pieceType;
+          this.holdUsed = true;
+          usedHold = true;
+          actualPieceType = this.nextQueue.shift()!;
+          this.fillQueue();
+          plannedMove = nextPlannedMove;
+        }
+      }
+    }
+
+    const initialSpawnPiece = getSpawnPiece(pieceType, this.hiddenRows);
+    if (!isValid(initialSpawnPiece, this.board)) {
+      this.triggerGameOver();
+      return;
+    }
+
+    this.updateActivePiece(initialSpawnPiece);
+
+    if (!plannedMove) {
+      this.triggerGameOver();
+      return;
+    }
+
+    if (usedHold) {
+      const heldSpawnPiece = getSpawnPiece(actualPieceType, this.hiddenRows);
+      this.scheduleAfter(getActionDelayMs('hold', null), () => {
+        if (!isValid(heldSpawnPiece, this.board)) {
+          this.triggerGameOver();
+          return;
+        }
+        this.updateActivePiece(heldSpawnPiece);
+        this.performPlannedInputs(heldSpawnPiece, plannedMove.plan);
+      });
+      return;
+    }
+
+    this.performPlannedInputs(initialSpawnPiece, plannedMove.plan);
   }
 
   private applyGarbage(count: number): void {
@@ -775,8 +997,7 @@ export class TetrisAIGame {
     if (this.hiddenRows > 0) {
       const overflowed = this.board.slice(0, rowsToRaise).some(row => row.some(Boolean));
       if (overflowed) {
-        this.gameOver = true;
-        this.callbacks.onGameOver();
+        this.triggerGameOver();
         return;
       }
     }
