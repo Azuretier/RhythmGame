@@ -189,7 +189,14 @@
 }
 
 .previewColumnHold {
-  justify-items: center;
+  justify-items: stretch;
+}
+
+.utilityPanel {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  width: 100%;
 }
 
 .miniPanel {
@@ -287,17 +294,6 @@
   background: linear-gradient(180deg, rgba(10, 14, 22, 0.88), rgba(5, 7, 12, 0.94));
   border: 1px solid rgba(255, 175, 119, 0.1);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.t99HoldRail {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  justify-items: center;
-  align-content: stretch;
-  filter: drop-shadow(0 0 10px rgba(72, 240, 255, 0.18));
 }
 
 .t99HoldCasing {
@@ -537,10 +533,10 @@
   box-shadow: inset 0 0 0 1px rgba(255, 186, 129, 0.14);
 }
 
-.garbageRailTower {
-  width: 100%;
-  min-height: 100%;
-  height: 100%;
+.garbageRailSquares {
+  width: 18px;
+  min-height: auto;
+  grid-template-rows: repeat(12, 18px);
   gap: 2px;
   padding: 0;
   border-radius: 0;
@@ -548,34 +544,8 @@
   box-shadow: none;
 }
 
-.garbageRailTower .garbageBlock {
-  border-radius: 0;
-  background: rgba(255, 255, 255, 0.025);
-  box-shadow: inset 0 0 0 1px rgba(76, 246, 255, 0.08);
-}
-
-.garbageRailTower .garbageBlockQueued {
-  background: linear-gradient(180deg, #8e99ab, #566173);
-}
-
-.garbageRailTower .garbageBlockCool {
-  background: linear-gradient(180deg, #ffe971, #ffc53d);
-}
-
-.garbageRailTower .garbageBlockWarm {
-  background: linear-gradient(180deg, #ff7769, #ff394d);
-}
-
-.garbageRailTower .garbageBlockHot {
-  background: linear-gradient(180deg, #ffb1a0, #ff5563);
-}
-
-.garbageRailTower .garbageBlockStripe {
-  opacity: 0.24;
-}
-
-.garbageRailTower .garbageBlockTimer {
-  box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+.garbageRailSquares .garbageBlock {
+  border-radius: 2px;
 }
 
 .garbageBlock {
@@ -1351,15 +1321,6 @@
 
   .previewColumnHold {
     grid-template-columns: 1fr;
-  }
-
-  .t99HoldRail {
-    width: 88px;
-    height: auto;
-  }
-
-  .t99GarbageStem {
-    min-height: 180px;
   }
 
   .targetRow,
