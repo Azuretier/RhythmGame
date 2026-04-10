@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { TetrisAIGame, getDifficultyForRank, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
+import { BEST_AI_DIFFICULTY, TetrisAIGame, type AIActivePieceState, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 type TargetMode = 'random' | 'attackers' | 'kos' | 'badges';
@@ -30,10 +30,18 @@ type AttackDistribution = {
   lines: number;
 };
 
+type VisiblePiece = {
+  type: PieceType;
+  rotation: 0 | 1 | 2 | 3;
+  x: number;
+  y: number;
+};
+
 type BotSnapshot = {
   id: string;
   name: string;
   board: VisibleBoard;
+  currentPiece: VisiblePiece | null;
   queue: PieceType[];
   hold: PieceType | null;
   combo: number;
@@ -145,6 +153,7 @@ const AI_COLOR_TO_PIECE: Record<string, PieceType | 'garbage'> = {
 };
 const AI_COLOR_ENTRIES = Object.entries(AI_COLOR_TO_PIECE).filter(([, type]) => type !== 'garbage') as Array<[string, PieceType]>;
 const SPEED_AI_DELAY_SCALES = [1.1, 1.0, 0.92, 0.84, 0.74, 0.64, 0.58, 0.52, 0.46, 0.4, 0.35];
+const T99_BOT_AI_POINTS = 11000;
 
 let currentMatchId = 0;
 let running = false;
@@ -245,6 +254,16 @@ function aiBoardToVisibleBoard(board: ({ color: string } | null)[][]) {
   return {
     visibleBoard: fullBoard.slice(fullBoard.length - T99_VISIBLE_HEIGHT),
     danger: boardDanger(fullBoard),
+  };
+}
+
+function aiPieceToVisiblePiece(piece: AIActivePieceState | null): VisiblePiece | null {
+  if (!piece) return null;
+  return {
+    type: piece.type,
+    rotation: piece.rotation,
+    x: piece.x,
+    y: piece.y - T99_BUFFER_ZONE,
   };
 }
 
@@ -631,6 +650,7 @@ function eliminateBot(bot: BotSnapshot) {
   aiGames.delete(bot.id);
   emitBotSfx(bot.id, 'lose');
   bot.alive = false;
+  bot.currentPiece = null;
   bot.targetIds = [];
   scope.postMessage({
     type: 'bot-eliminated',
@@ -672,6 +692,7 @@ function serializeBot(bot: BotSnapshot): BotSnapshot {
   return {
     ...bot,
     board: bot.board.map(row => [...row]),
+    currentPiece: bot.currentPiece ? { ...bot.currentPiece } : null,
     queue: [...bot.queue],
     targetIds: [...bot.targetIds],
     pendingGarbage: bot.pendingGarbage.map(packet => ({ ...packet })),
@@ -699,11 +720,11 @@ function stopAllAiGames() {
 
 function createInitialBot(index: number): BotSnapshot {
   const rng = makeRng(20000 + index * 17 + Math.floor(botSeedRng() * 10000));
-  const aiPoints = [900, 2400, 6200, 11000][Math.floor(rng() * 4)] ?? 2400;
   return {
     id: `bot-${index}`,
     name: `${BOT_NAMES[index % BOT_NAMES.length]}-${String(index + 1).padStart(2, '0')}`,
     board: createEmptyVisibleBoard(),
+    currentPiece: null,
     queue: Array.from({ length: 6 }, () => PIECES[Math.floor(rng() * PIECES.length)] ?? 'T'),
     hold: null,
     combo: 0,
@@ -719,7 +740,7 @@ function createInitialBot(index: number): BotSnapshot {
     targetIds: [],
     pendingGarbage: [],
     lastDamagedBy: null,
-    aiPoints,
+    aiPoints: T99_BOT_AI_POINTS,
     danger: 0,
   };
 }
@@ -746,12 +767,13 @@ function startMatch(matchId: number) {
 
   for (const bot of bots) {
     if (!bot.alive || aiGames.has(bot.id)) continue;
-    const aiGame = new TetrisAIGame(30000 + Number(bot.id.replace('bot-', '')) * 97, getDifficultyForRank(bot.aiPoints), {
+    const aiGame = new TetrisAIGame(30000 + Number(bot.id.replace('bot-', '')) * 97, BEST_AI_DIFFICULTY, {
       onBoardUpdate: (board, score, lines, _combo, piece, hold) => {
         const currentBot = getBotById(bot.id);
         if (!currentBot || !currentBot.alive) return;
         const view = aiBoardToVisibleBoard(board);
         currentBot.board = view.visibleBoard;
+        currentBot.currentPiece = null;
         currentBot.danger = view.danger;
         currentBot.score = score;
         currentBot.lines = lines;
@@ -759,6 +781,16 @@ function startMatch(matchId: number) {
         if (piece && currentBot.queue.length > 0) {
           currentBot.queue = [...currentBot.queue.slice(1), piece as PieceType];
         }
+        scheduleSnapshot();
+      },
+      onActivePieceUpdate: (board, piece, hold) => {
+        const currentBot = getBotById(bot.id);
+        if (!currentBot || !currentBot.alive) return;
+        const view = aiBoardToVisibleBoard(board);
+        currentBot.board = view.visibleBoard;
+        currentBot.currentPiece = aiPieceToVisiblePiece(piece);
+        currentBot.danger = view.danger;
+        currentBot.hold = (hold as PieceType | null | undefined) ?? currentBot.hold;
         scheduleSnapshot();
       },
       onGarbage: () => {
