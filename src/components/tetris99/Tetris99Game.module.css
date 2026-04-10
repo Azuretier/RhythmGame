@@ -175,7 +175,7 @@
 
 .heroLayout {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) 84px;
+  grid-template-columns: 72px minmax(0, 1fr) 84px;
   gap: 3px;
   align-items: stretch;
   flex: 1;
@@ -188,6 +188,10 @@
   align-content: stretch;
 }
 
+.previewColumnLeft {
+  grid-template-rows: minmax(124px, 1fr) auto;
+}
+
 .miniPanel {
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(10, 14, 22, 0.78), rgba(7, 10, 17, 0.86));
@@ -195,15 +199,15 @@
   padding: 6px;
 }
 
-.miniPanelCompact {
-  padding: 4px 2px;
+.holdPanel {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 124px;
 }
 
-.miniPanelCompact .panelHeader {
-  margin-bottom: 4px;
-  font-size: 0.52rem;
-  letter-spacing: 0.12em;
-  text-align: center;
+.holdPanel .previewBox {
+  align-content: center;
+  min-height: 0;
 }
 
 .panelHeader {
@@ -223,10 +227,6 @@
   gap: 4px;
 }
 
-.previewBoxCompact {
-  gap: 1px;
-}
-
 .previewShape {
   display: grid;
   gap: 2px;
@@ -235,13 +235,6 @@
   min-height: 22px;
   justify-content: center;
   align-content: center;
-}
-
-.previewShapeCompact {
-  gap: 1px;
-  grid-auto-rows: 7px;
-  min-width: 31px;
-  min-height: 15px;
 }
 
 .previewCell {
@@ -282,9 +275,9 @@
 
 .boardPlayfieldInner {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 4px;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  align-items: center;
   justify-content: center;
   min-height: 100%;
 }
@@ -292,9 +285,9 @@
 .garbagePanel {
   display: grid;
   justify-items: center;
-  align-content: center;
-  gap: 6px;
-  padding: 4px 2px;
+  align-content: start;
+  gap: 8px;
+  padding: 6px 4px 8px;
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(10, 14, 22, 0.88), rgba(5, 7, 12, 0.94));
   border: 1px solid rgba(255, 175, 119, 0.1);
@@ -348,8 +341,7 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(255, 220, 183, 0.6);
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+  text-align: center;
 }
 
 .boardStats {
@@ -1223,7 +1215,12 @@
     grid-template-columns: 1fr;
   }
 
-  .previewColumn {
+  .previewColumnLeft {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(116px, auto) auto;
+  }
+
+  .previewColumnRight {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

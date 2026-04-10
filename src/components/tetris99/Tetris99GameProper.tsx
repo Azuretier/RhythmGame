@@ -2650,8 +2650,12 @@ export default function Tetris99GameProper() {
           <div className={styles.boardStack}>
             <div className={styles.heroCard}>
               <div className={styles.heroLayout}>
-                <div className={styles.previewColumn}>
-                  <div className={`${styles.miniPanel} ${styles.miniPanelCompact}`}><span className={styles.panelHeader}>Hold</span><div className={`${styles.previewBox} ${styles.previewBoxCompact}`}><PreviewShape type={centerHold} compact /></div></div>
+                <div className={`${styles.previewColumn} ${styles.previewColumnLeft}`}>
+                  <div className={`${styles.miniPanel} ${styles.holdPanel}`}><span className={styles.panelHeader}>Hold</span><div className={styles.previewBox}><PreviewShape type={centerHold} /></div></div>
+                  <div className={styles.garbagePanel}>
+                    <span className={styles.garbagePanelLabel}>Incoming</span>
+                    <IncomingGarbageRail packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets} alivePlayers={renderAlivePlayers} cellSize={playfieldCellSize} />
+                  </div>
                 </div>
                 <div ref={playerBoardFrameRef} className={`${styles.boardFrame} ${centerDanger >= 18 ? styles.boardFrameDanger : ''}`}>
                   <div className={styles.boardPlayfield}>
@@ -2673,10 +2677,6 @@ export default function Tetris99GameProper() {
                       </div>
                     )}
                     <div className={styles.boardPlayfieldInner}>
-                      <div className={styles.garbagePanel}>
-                        <span className={styles.garbagePanelLabel}>Incoming</span>
-                        <IncomingGarbageRail packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets} alivePlayers={renderAlivePlayers} cellSize={playfieldCellSize} />
-                      </div>
                       <PlayerBoard board={centerBoard} currentPiece={centerCurrentPiece} boardRef={centerPlayerBoardRef} />
                     </div>
                     {speedNotice && !snapshot.gameOver && (
@@ -2749,7 +2749,7 @@ export default function Tetris99GameProper() {
                     )}
                   </div>
                 </div>
-                <div className={styles.previewColumn}>
+                <div className={`${styles.previewColumn} ${styles.previewColumnRight}`}>
                   <div className={styles.miniPanel}><span className={styles.panelHeader}>Next</span><div className={styles.previewBox}>{Array.from({ length: PREVIEW_SLOT_COUNT }, (_, index) => <PreviewShape key={`next-${index}`} type={centerQueue[index] ?? null} />)}</div></div>
                   <div className={`${styles.miniPanel} ${styles.battleInfoPanel}`}>
                     <div className={styles.battleInfoMetric}>
