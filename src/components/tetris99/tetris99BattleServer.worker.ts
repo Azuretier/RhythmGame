@@ -91,7 +91,7 @@ type PlayerDefeatedMessage = {
   type: 'player-defeated';
   matchId: number;
   killerId: string | null;
-  victimBadges: number;
+  victimBadgePoints: number;
 };
 type SetSpeedStageMessage = {
   type: 'set-speed-stage';
@@ -273,6 +273,10 @@ function badgeStageFromPoints(points: number) {
   if (points >= 4) return 2;
   if (points >= 2) return 1;
   return 0;
+}
+
+function getKoBadgeGain(victimBadgePoints: number) {
+  return 1 + Math.max(0, victimBadgePoints);
 }
 
 function getAttackClearType(clearedLines: number, tSpin: 'none' | 'mini' | 'full'): AttackClearType {
@@ -625,21 +629,22 @@ function refreshBotTargeting(bot: BotSnapshot) {
   bot.targetIds = resolveStableTargets(bot.id, bot.targetMode, currentTargets);
 }
 
-function awardKo(killerId: string | null, victimBadges: number, victimId: string) {
+function awardKo(killerId: string | null, victimBadgePoints: number, victimId: string) {
   if (!killerId) return;
+  const badgeGain = getKoBadgeGain(victimBadgePoints);
   if (killerId === PLAYER_ID) {
     scope.postMessage({
       type: 'player-ko',
       matchId: currentMatchId,
       victimId,
-      badgeGain: 1 + victimBadges,
+      badgeGain,
     });
     return;
   }
   const killer = getBotById(killerId);
   if (!killer || !killer.alive) return;
   killer.kos += 1;
-  killer.badgePoints += 1 + victimBadges;
+  killer.badgePoints += badgeGain;
   killer.badges = badgeStageFromPoints(killer.badgePoints);
   emitBotSfx(killer.id, 'ko');
 }
@@ -658,7 +663,7 @@ function eliminateBot(bot: BotSnapshot) {
     victimId: bot.id,
     killerId: bot.lastDamagedBy,
   } satisfies BotEliminatedEvent);
-  awardKo(bot.lastDamagedBy, bot.badges, bot.id);
+  awardKo(bot.lastDamagedBy, bot.badgePoints, bot.id);
   scheduleSnapshot();
   maybeResolveMatch();
 }
@@ -874,13 +879,13 @@ function handlePlayerAttack(matchId: number, distributions: AttackDistribution[]
   scheduleSnapshot();
 }
 
-function handlePlayerDefeated(matchId: number, killerId: string | null, victimBadges: number) {
+function handlePlayerDefeated(matchId: number, killerId: string | null, victimBadgePoints: number) {
   if (matchId !== currentMatchId) return;
   if (!killerId || killerId === PLAYER_ID) return;
   const killer = getBotById(killerId);
   if (!killer || !killer.alive) return;
   killer.kos += 1;
-  killer.badgePoints += 1 + victimBadges;
+  killer.badgePoints += getKoBadgeGain(victimBadgePoints);
   killer.badges = badgeStageFromPoints(killer.badgePoints);
   emitBotSfx(killer.id, 'ko');
   scheduleSnapshot();
@@ -967,7 +972,7 @@ scope.onmessage = (event: MessageEvent<ServerMessage>) => {
       handlePlayerAttack(message.matchId, message.distributions);
       break;
     case 'player-defeated':
-      handlePlayerDefeated(message.matchId, message.killerId, message.victimBadges);
+      handlePlayerDefeated(message.matchId, message.killerId, message.victimBadgePoints);
       break;
     case 'set-speed-stage':
       handleSetSpeedStage(message.matchId, message.stage);
