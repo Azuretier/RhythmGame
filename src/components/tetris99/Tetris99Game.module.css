@@ -175,7 +175,7 @@
 
 .heroLayout {
   display: grid;
-  grid-template-columns: 50px minmax(0, 1fr) 84px;
+  grid-template-columns: 42px minmax(0, 1fr) 84px;
   gap: 3px;
   align-items: stretch;
   flex: 1;
@@ -184,7 +184,7 @@
 
 .previewColumn {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   align-content: stretch;
 }
 
@@ -196,7 +196,14 @@
 }
 
 .miniPanelCompact {
-  padding: 5px 4px;
+  padding: 4px 2px;
+}
+
+.miniPanelCompact .panelHeader {
+  margin-bottom: 4px;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-align: center;
 }
 
 .panelHeader {
@@ -217,7 +224,7 @@
 }
 
 .previewBoxCompact {
-  gap: 2px;
+  gap: 1px;
 }
 
 .previewShape {
@@ -232,9 +239,9 @@
 
 .previewShapeCompact {
   gap: 1px;
-  grid-auto-rows: 8px;
-  min-width: 35px;
-  min-height: 17px;
+  grid-auto-rows: 7px;
+  min-width: 31px;
+  min-height: 15px;
 }
 
 .previewCell {
@@ -434,47 +441,49 @@
 }
 
 .garbageRail {
-  --garbage-cell-size: clamp(18px, calc((100vh - 120px) / 20), 32px);
-  width: var(--garbage-cell-size);
-  min-height: calc(var(--garbage-cell-size) * 12 + 14px);
+  width: var(--garbage-cell-size, 18px);
+  min-height: calc(var(--garbage-cell-size, 18px) * 12 + 22px);
   display: flex;
   flex-direction: column-reverse;
   justify-content: flex-start;
   align-items: stretch;
-  gap: 4px;
-  padding: 2px;
+  gap: 2px;
+  padding: 0;
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(26, 31, 43, 0.96), rgba(9, 12, 19, 0.96));
-  box-shadow: inset 0 0 0 1px rgba(255, 186, 129, 0.14);
+  background: transparent;
+  box-shadow: none;
 }
 
 .garbagePacket {
   --garbage-lines: 1;
   position: relative;
   width: 100%;
-  min-height: var(--garbage-cell-size);
-  height: calc(var(--garbage-cell-size) * var(--garbage-lines));
-  border-radius: 4px;
+  min-height: calc(var(--garbage-cell-size, 18px) * var(--garbage-lines));
+  border-radius: 0;
   overflow: hidden;
 }
 
-.garbagePacket::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 30%);
-  pointer-events: none;
+.garbagePacketCells {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: var(--garbage-cell-size, 18px);
+  gap: 0;
+}
+
+.garbageCell {
+  width: 100%;
+  height: var(--garbage-cell-size, 18px);
+  border-radius: 0;
 }
 
 .garbagePacketActive {
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 248, 232, 0.16),
-    0 0 0 1px rgba(0, 0, 0, 0.18),
-    0 0 16px color-mix(in srgb, var(--player-cell-color) 36%, transparent);
+  filter: saturate(1.04);
 }
 
 .garbagePacketQueued {
-  opacity: 0.94;
+  opacity: 0.92;
 }
 
 .garbagePacketFlashing {
@@ -484,15 +493,17 @@
 .garbagePacketStripe {
   position: absolute;
   inset: 0;
+  z-index: 2;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0 28%, transparent 28% 50%, rgba(255, 255, 255, 0.14) 50% 72%, transparent 72% 100%);
   background-size: 8px 8px;
-  opacity: 0.24;
+  opacity: 0.14;
 }
 
 .garbagePacketTimer {
   position: absolute;
   inset: auto 0 0;
+  z-index: 2;
   height: var(--garbage-progress, 10%);
   min-height: 1px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 243, 219, 0.42));
@@ -1217,10 +1228,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .garbageRail {
-    --garbage-cell-size: clamp(16px, 6vw, 24px);
-  }
-
   .targetRow,
   .hudGrid,
   .controlGrid {
@@ -1235,10 +1242,6 @@
 @media (max-width: 640px) {
   .shell {
     padding-inline: 10px;
-  }
-
-  .garbageRail {
-    --garbage-cell-size: clamp(14px, 6vw, 20px);
   }
 
   .statsGrid,
