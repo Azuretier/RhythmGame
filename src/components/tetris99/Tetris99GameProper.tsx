@@ -498,9 +498,10 @@ function applyT99GarbageRise(
   return { newBoard: raisedBoard, overflowed };
 }
 
-function getDisplayCellColor(cell: string | null) {
-  if (!cell) return 'rgba(255,255,255,0.04)';
-  return PLAYER_COLORS[cell] ?? PLAYER_COLORS.T;
+function getFilledCellStyle(cell: string | null, colorOverride?: string): CSSProperties | undefined {
+  const color = colorOverride ?? (cell ? PLAYER_COLORS[cell] ?? PLAYER_COLORS.T : null);
+  if (!color) return undefined;
+  return { ['--player-cell-color' as string]: color } as CSSProperties;
 }
 
 function detectPlayerTSpin(piece: RhythmPiece, board: RhythmBoardState, wasRotation: boolean, lastKick: RotationKickInfo | null): 'none' | 'mini' | 'full' {
@@ -670,47 +671,77 @@ function IncomingGarbageRail({
   packets,
   alivePlayers,
   className,
+  cellSize = 18,
 }: {
   packets: GarbagePacket[];
   alivePlayers: number;
   className?: string;
+  cellSize?: number;
 }) {
-  const filledBlocks = packets.flatMap((packet, packetIndex) =>
-    Array.from({ length: Math.min(packet.lines, MAX_PENDING_GARBAGE) }, (_, index) => ({
-      id: `${packet.id}-${index}`,
+  const visiblePackets: Array<{
+    id: string;
+    from: string;
+    lines: number;
+    progress: number;
+    active: boolean;
+  }> = [];
+
+  let remainingLines = MAX_PENDING_GARBAGE;
+  for (let packetIndex = 0; packetIndex < packets.length; packetIndex += 1) {
+    if (remainingLines <= 0) break;
+    const packet = packets[packetIndex];
+    const lines = Math.min(packet.lines, remainingLines);
+    visiblePackets.push({
+      id: packet.id,
       from: packet.from,
+      lines,
       progress: packetIndex === 0 ? getPacketTimerProgress(packet, alivePlayers) : 0,
       active: packetIndex === 0,
-    })),
-  ).slice(0, MAX_PENDING_GARBAGE);
-
-  const emptyCount = Math.max(0, MAX_PENDING_GARBAGE - filledBlocks.length);
-  const displayBlocks = [
-    ...Array.from({ length: emptyCount }, () => null),
-    ...filledBlocks.slice().reverse(),
-  ];
+    });
+    remainingLines -= lines;
+  }
 
   return (
-    <div className={[styles.garbageRail, className ?? ''].filter(Boolean).join(' ')}>
-      {displayBlocks.map((block, index) => {
-        const toneClass = !block || !block.active ? '' :
-          block.progress >= 1 ? styles.garbageBlockHot :
-            block.progress >= 0.5 ? styles.garbageBlockWarm :
-              styles.garbageBlockCool;
+    <div
+      className={[styles.garbageRail, className ?? ''].filter(Boolean).join(' ')}
+      style={{ ['--garbage-cell-size' as string]: `${cellSize}px` }}
+    >
+      {visiblePackets.slice().reverse().map(packet => {
+        const toneClass = !packet.active ? ''
+          : packet.progress >= 1 ? styles.garbageBlockHot
+            : packet.progress >= 0.5 ? styles.garbageBlockWarm
+              : styles.garbageBlockCool;
+        const toneColor = !packet.active
+          ? '#818895'
+          : packet.progress >= 1
+            ? '#ff405a'
+            : packet.progress >= 0.5
+              ? '#ff324f'
+              : '#ffbf47';
 
         return (
           <div
-            key={block?.id ?? `empty-${index}`}
-            className={`${styles.garbageBlock} ${block && !block.active ? styles.garbageBlockQueued : ''} ${block?.active ? styles.garbageBlockActive : ''} ${toneClass} ${block?.active && block.progress >= 1 ? styles.garbageBlockFlashing : ''}`}
-            title={block ? `${block.from} +1` : undefined}
-            style={block?.active ? ({ ['--garbage-progress' as string]: `${Math.max(10, block.progress * 100)}%` }) : undefined}
+            key={packet.id}
+            className={styles.garbagePacketGroup}
+            title={`${packet.from} +${packet.lines}`}
           >
-            {block?.active && (
-              <>
-                <div className={styles.garbageBlockStripe} />
-                <div className={styles.garbageBlockTimer} />
-              </>
-            )}
+            {Array.from({ length: packet.lines }, (_, index) => (
+              <div
+                key={`${packet.id}-${index}`}
+                className={`${styles.playerCell} ${styles.playerCellFilled} ${styles.garbageBlock} ${!packet.active ? styles.garbageBlockQueued : ''} ${packet.active ? styles.garbageBlockActive : ''} ${toneClass} ${packet.active && packet.progress >= 1 ? styles.garbageBlockFlashing : ''}`}
+                style={{
+                  ...getFilledCellStyle('garbage', toneColor),
+                  ...(packet.active ? ({ ['--garbage-progress' as string]: `${Math.max(10, packet.progress * 100)}%` }) : {}),
+                }}
+              >
+                {packet.active && (
+                  <>
+                    <div className={styles.garbageBlockStripe} />
+                    <div className={styles.garbageBlockTimer} />
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         );
       })}
@@ -769,8 +800,8 @@ function MicroBoard({
           row.map((cell, x) => (
             <div
               key={`${bot.id}-${y}-${x}`}
-              className={styles.microCell}
-              style={{ background: getDisplayCellColor(cell) }}
+              className={`${styles.playerCell} ${cell ? styles.playerCellFilled : ''} ${styles.microCell}`}
+              style={getFilledCellStyle(cell)}
             />
           )),
         )}
@@ -822,10 +853,9 @@ function PreviewShape({
         row.map((cell, cellIndex) => (
           <div
             key={`${type ?? 'empty'}-${rowIndex}-${cellIndex}`}
-            className={styles.previewCell}
+            className={`${styles.previewCell} ${cell ? `${styles.playerCell} ${styles.playerCellFilled}` : ''}`}
             style={{
-              background: cell ? pieceColor : 'transparent',
-              boxShadow: cell ? 'inset 0 0 0 1px rgba(255, 255, 255, 0.08)' : 'none',
+              ...getFilledCellStyle(cell ? type : null, pieceColor),
               width: `${previewCellSize}px`,
               height: `${previewCellSize}px`,
             }}
@@ -836,7 +866,15 @@ function PreviewShape({
   );
 }
 
-function PlayerBoard({ board, currentPiece }: { board: RhythmBoardState; currentPiece: RhythmPiece | null }) {
+function PlayerBoard({
+  board,
+  currentPiece,
+  boardRef,
+}: {
+  board: RhythmBoardState;
+  currentPiece: RhythmPiece | null;
+  boardRef?: (node: HTMLDivElement | null) => void;
+}) {
   const displayBoard = useMemo(() => {
     const display = board.map(row => [...row]);
 
@@ -873,7 +911,7 @@ function PlayerBoard({ board, currentPiece }: { board: RhythmBoardState; current
   }, [board, currentPiece]);
 
   return (
-    <div className={styles.playerBoard}>
+    <div ref={boardRef} className={styles.playerBoard}>
       {displayBoard.flatMap((row, y) =>
         row.map((cell, x) => {
           const isGhost = typeof cell === 'string' && cell.startsWith('ghost-');
@@ -969,6 +1007,8 @@ export default function Tetris99GameProper() {
   const [showAllAttackTrails, setShowAllAttackTrails] = useState(() => loadTetris99ShowAllAttackTrails());
   const [manualTargetId, setManualTargetId] = useState<string | null>(null);
   const [spectateTargetId, setSpectateTargetId] = useState<string | null>(null);
+  const [playerBoardElement, setPlayerBoardElement] = useState<HTMLDivElement | null>(null);
+  const [playerCellSize, setPlayerCellSize] = useState(18);
   const [snapshot, setSnapshot] = useState<Snapshot>({
     board: createT99EmptyBoard(),
     currentPiece: null,
@@ -2245,6 +2285,32 @@ export default function Tetris99GameProper() {
   }, [showAllAttackTrails]);
 
   useEffect(() => {
+    if (!playerBoardElement) return;
+
+    const updatePlayerCellSize = () => {
+      const styles = window.getComputedStyle(playerBoardElement);
+      const paddingX = Number.parseFloat(styles.paddingLeft || '0') + Number.parseFloat(styles.paddingRight || '0');
+      const gap = Number.parseFloat(styles.columnGap || styles.gap || '0');
+      const usableWidth = playerBoardElement.clientWidth - paddingX - gap * (BOARD_WIDTH - 1);
+      const nextCellSize = usableWidth / BOARD_WIDTH;
+      if (Number.isFinite(nextCellSize) && nextCellSize > 0) {
+        setPlayerCellSize(nextCellSize);
+      }
+    };
+
+    updatePlayerCellSize();
+
+    const observer = new ResizeObserver(() => {
+      updatePlayerCellSize();
+    });
+    observer.observe(playerBoardElement);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [playerBoardElement]);
+
+  useEffect(() => {
     spectateTargetIdRef.current = spectateTargetId;
   }, [spectateTargetId]);
 
@@ -2625,13 +2691,10 @@ export default function Tetris99GameProper() {
             <div className={styles.heroCard}>
               <div className={styles.heroLayout}>
                 <div className={`${styles.previewColumn} ${styles.previewColumnHold}`}>
-                  <div className={styles.t99HoldCasing}>
-                    <div className={styles.t99HoldHeader}>
-                      <span className={styles.t99HoldLabel}>HOLD</span>
-                      <span className={styles.t99HoldType}>{centerHold ?? '\u00A0'}</span>
-                    </div>
-                    <div className={styles.t99HoldWindow}>
-                      <PreviewShape type={centerHold} cellSize={13} className={styles.holdPreview} />
+                  <div className={`${styles.miniPanel} ${styles.utilityPanel} ${styles.holdPanel}`}>
+                    <span className={styles.panelHeader}>Hold</span>
+                    <div className={styles.previewBox}>
+                      <PreviewShape type={centerHold} />
                     </div>
                   </div>
                   <div className={`${styles.miniPanel} ${styles.utilityPanel}`}>
@@ -2641,6 +2704,7 @@ export default function Tetris99GameProper() {
                         packets={spectateBot?.pendingGarbage ?? snapshot.incomingPackets}
                         alivePlayers={renderAlivePlayers}
                         className={styles.garbageRailSquares}
+                        cellSize={playerCellSize}
                       />
                     </div>
                   </div>
@@ -2665,7 +2729,7 @@ export default function Tetris99GameProper() {
                       </div>
                     )}
                     <div className={styles.boardPlayfieldInner}>
-                      <PlayerBoard board={centerBoard} currentPiece={centerCurrentPiece} />
+                      <PlayerBoard board={centerBoard} currentPiece={centerCurrentPiece} boardRef={setPlayerBoardElement} />
                     </div>
                     {speedNotice && !snapshot.gameOver && (
                       <div className={styles.speedNoticeOverlay} aria-hidden="true">
