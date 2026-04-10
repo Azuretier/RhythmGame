@@ -10,7 +10,7 @@ import {
   clearLines,
   addGarbageLines,
 } from '@/components/rhythmia/multiplayer-battle-engine';
-import { AI_DIFFICULTIES, findBestMove, type AIDifficulty } from '@/lib/ranked/TetrisAI';
+import { BEST_AI_DIFFICULTY, findBestMove, type AIDifficulty } from '@/lib/ranked/TetrisAI';
 
 export type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
 export type TargetMode = 'random' | 'attackers' | 'kos' | 'badges';
@@ -119,10 +119,8 @@ export function boardDanger(board: (BoardCell | null)[][]) {
 }
 
 function difficultyForPlace(place: number): AIDifficulty {
-  if (place > 70) return AI_DIFFICULTIES.easy;
-  if (place > 35) return AI_DIFFICULTIES.medium;
-  if (place > 10) return AI_DIFFICULTIES.hard;
-  return AI_DIFFICULTIES.expert;
+  void place;
+  return BEST_AI_DIFFICULTY;
 }
 
 function createBotQueue(rng: () => number) {
