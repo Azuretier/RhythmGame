@@ -1849,6 +1849,8 @@ export default function Tetris99GameProper() {
       const candidates = getAliveOpponentIds(sourceId);
       const attackers = getAttackerIds(sourceId, playerTargets).filter(id => candidates.includes(id));
       if (attackers.length) return attackers;
+      const aliveCurrent = currentTargets.filter(id => candidates.includes(id));
+      if (aliveCurrent.length) return aliveCurrent;
       return chooseRandomTarget(candidates);
     }
     if (mode !== 'random') return chooseTargets(sourceId, mode, playerTargets);
