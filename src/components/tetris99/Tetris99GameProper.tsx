@@ -16,6 +16,12 @@ import {
   saveTetris99ShowAllAttackTrails,
   shouldShowTetris99AttackTrail,
 } from '@/lib/tetris99-settings';
+import {
+  createPlacementLockState,
+  updatePlacementLockAfterManipulation,
+  updatePlacementLockOnTouchdown,
+  type PlacementLockState,
+} from './lockdown';
 import styles from './Tetris99Game.module.css';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
@@ -940,6 +946,8 @@ export default function Tetris99GameProper() {
   const lastRotationKickRef = useRef<RotationKickInfo | null>(null);
   const lockTimerRef = useRef<number | null>(null);
   const lockMovesRef = useRef(0);
+  const hasTouchedGroundRef = useRef(false);
+  const lockOnNextGroundRef = useRef(false);
   const isOnGroundRef = useRef(false);
   const keysRef = useRef(new Set<string>());
   const dasTimerRef = useRef<number | null>(null);
@@ -1582,7 +1590,7 @@ export default function Tetris99GameProper() {
     }
     currentPieceRef.current = piece;
     canHoldRef.current = true;
-    lockMovesRef.current = 0;
+    resetPlacementLockState();
     isOnGroundRef.current = false;
     lastRotationKickRef.current = null;
     return true;
@@ -2107,6 +2115,7 @@ export default function Tetris99GameProper() {
     currentPieceRef.current = null;
     lastMoveRotationRef.current = false;
     lastRotationKickRef.current = null;
+    resetPlacementLockState();
     if (lockTimerRef.current) {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
@@ -2140,6 +2149,24 @@ export default function Tetris99GameProper() {
     isOnGroundRef.current = false;
   }
 
+  function getPlacementLockState(): PlacementLockState {
+    return {
+      movesUsed: lockMovesRef.current,
+      hasTouchedGround: hasTouchedGroundRef.current,
+      lockOnNextGround: lockOnNextGroundRef.current,
+    };
+  }
+
+  function setPlacementLockState(state: PlacementLockState) {
+    lockMovesRef.current = state.movesUsed;
+    hasTouchedGroundRef.current = state.hasTouchedGround;
+    lockOnNextGroundRef.current = state.lockOnNextGround;
+  }
+
+  function resetPlacementLockState() {
+    setPlacementLockState(createPlacementLockState());
+  }
+
   function startLockTimer() {
     if (lockTimerRef.current !== null) return;
     lockTimerRef.current = window.setTimeout(() => {
@@ -2148,9 +2175,7 @@ export default function Tetris99GameProper() {
     }, LOCK_DELAY);
   }
 
-  function resetLockTimer() {
-    if (lockMovesRef.current >= MAX_LOCK_MOVES) return;
-    lockMovesRef.current += 1;
+  function restartLockTimer() {
     if (lockTimerRef.current !== null) {
       clearTimeout(lockTimerRef.current);
       lockTimerRef.current = null;
@@ -2158,6 +2183,47 @@ export default function Tetris99GameProper() {
     if (currentPieceRef.current && !isT99ValidPosition({ ...currentPieceRef.current, y: currentPieceRef.current.y + 1 }, boardRef.current)) {
       isOnGroundRef.current = true;
       startLockTimer();
+    }
+  }
+
+  function handleTouchdown() {
+    const { nextState, shouldLockNow } = updatePlacementLockOnTouchdown(getPlacementLockState());
+    setPlacementLockState(nextState);
+    isOnGroundRef.current = true;
+    if (shouldLockNow) {
+      lockCurrentPiece();
+      return true;
+    }
+    startLockTimer();
+    return false;
+  }
+
+  function handleManipulationLockState(grounded: boolean) {
+    const { nextState, timerAction } = updatePlacementLockAfterManipulation(
+      getPlacementLockState(),
+      grounded,
+      MAX_LOCK_MOVES,
+    );
+    setPlacementLockState(nextState);
+
+    switch (timerAction) {
+      case 'start':
+        isOnGroundRef.current = true;
+        startLockTimer();
+        return false;
+      case 'restart':
+        isOnGroundRef.current = true;
+        restartLockTimer();
+        return false;
+      case 'clear':
+        clearLockTimer();
+        return false;
+      case 'lock':
+        isOnGroundRef.current = true;
+        lockCurrentPiece();
+        return true;
+      default:
+        return false;
     }
   }
 
@@ -2170,12 +2236,7 @@ export default function Tetris99GameProper() {
     lastRotationKickRef.current = null;
     playSfx('move');
     const grounded = !isT99ValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
-    if (grounded) {
-      isOnGroundRef.current = true;
-      resetLockTimer();
-    } else {
-      clearLockTimer();
-    }
+    if (handleManipulationLockState(grounded)) return true;
     syncSnapshot();
     return true;
   }
@@ -2189,8 +2250,7 @@ export default function Tetris99GameProper() {
       lastRotationKickRef.current = null;
       const grounded = !isT99ValidPosition({ ...next, y: next.y + 1 }, boardRef.current);
       if (grounded && !isOnGroundRef.current) {
-        isOnGroundRef.current = true;
-        startLockTimer();
+        if (handleTouchdown()) return false;
       } else if (!grounded) {
         clearLockTimer();
       }
@@ -2198,8 +2258,7 @@ export default function Tetris99GameProper() {
       return true;
     }
     if (!isOnGroundRef.current) {
-      isOnGroundRef.current = true;
-      startLockTimer();
+      if (handleTouchdown()) return false;
     }
     return false;
   }
@@ -2212,13 +2271,8 @@ export default function Tetris99GameProper() {
     lastMoveRotationRef.current = true;
     lastRotationKickRef.current = rotated.kick;
     const grounded = !isT99ValidPosition({ ...rotated.piece, y: rotated.piece.y + 1 }, boardRef.current);
-    if (grounded) {
-      isOnGroundRef.current = true;
-      resetLockTimer();
-    } else {
-      clearLockTimer();
-    }
     playSfx('rotate');
+    if (handleManipulationLockState(grounded)) return;
     syncSnapshot();
   }
 
@@ -2248,7 +2302,7 @@ export default function Tetris99GameProper() {
     } else {
       currentPieceRef.current = null;
     }
-    lockMovesRef.current = 0;
+    resetPlacementLockState();
     clearLockTimer();
     if (!held) spawnPiece();
     playSfx('hold');
