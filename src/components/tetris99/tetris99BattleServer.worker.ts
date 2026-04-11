@@ -3,8 +3,7 @@
 import { BEST_AI_DIFFICULTY, TetrisAIGame, type AIActivePieceState, type AIPlacementResult } from '@/lib/ranked/TetrisAI';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
-type AutoTargetMode = 'random' | 'attackers' | 'kos' | 'badges';
-type TargetMode = AutoTargetMode | 'manual';
+type TargetMode = 'random' | 'attackers' | 'kos' | 'badges';
 type AttackClearType =
   | 'none'
   | 'single'
@@ -129,7 +128,7 @@ const scope = self as DedicatedWorkerGlobalScope;
 
 const BOT_COUNT = 98;
 const PLAYER_ID = 'player';
-const AUTO_TARGET_MODES: AutoTargetMode[] = ['random', 'attackers', 'kos', 'badges'];
+const AUTO_TARGET_MODES: TargetMode[] = ['random', 'attackers', 'kos', 'badges'];
 const BOARD_WIDTH = 10;
 const BOT_STATE_TICK_MS = 260;
 const GARBAGE_QUEUE_TICK_MS = 50;
@@ -533,10 +532,6 @@ function chooseTargets(sourceId: string, mode: TargetMode) {
 }
 
 function resolveStableTargets(sourceId: string, mode: TargetMode, currentTargets: string[]) {
-  if (mode === 'manual') {
-    const aliveCurrent = currentTargets.filter(id => (id === PLAYER_ID ? playerState.alive : !!getBotById(id)?.alive));
-    return aliveCurrent.length ? aliveCurrent : chooseRandomTarget(getAliveOpponentIds(sourceId));
-  }
   if (mode === 'attackers') {
     const candidates = getAliveOpponentIds(sourceId);
     const attackers = getAttackerIds(sourceId).filter(id => candidates.includes(id));

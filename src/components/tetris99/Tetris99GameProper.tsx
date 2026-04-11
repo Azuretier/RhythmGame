@@ -19,8 +19,7 @@ import {
 import styles from './Tetris99Game.module.css';
 
 type PieceType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'L' | 'J';
-type AutoTargetMode = 'random' | 'attackers' | 'kos' | 'badges';
-type TargetMode = AutoTargetMode | 'manual';
+type TargetMode = 'random' | 'attackers' | 'kos' | 'badges';
 type MatchState = 'countdown' | 'playing' | 'gameOver';
 type AttackClearType =
   | 'none'
@@ -183,7 +182,7 @@ type SpeedProfile = {
 const BOT_COUNT = 98;
 const MAX_PENDING_GARBAGE = 12;
 const PLAYER_ID = 'player';
-const AUTO_TARGET_MODES: AutoTargetMode[] = ['random', 'attackers', 'kos', 'badges'];
+const AUTO_TARGET_MODES: TargetMode[] = ['random', 'attackers', 'kos', 'badges'];
 const T99_VISIBLE_HEIGHT = 20;
 const T99_BUFFER_ZONE = 20;
 const T99_BOARD_HEIGHT = T99_VISIBLE_HEIGHT + T99_BUFFER_ZONE;
@@ -565,14 +564,13 @@ function boardDanger(board: RhythmBoardState) {
 }
 
 function targetLabel(mode: TargetMode) {
-  if (mode === 'manual') return 'Manual';
   if (mode === 'attackers') return 'Attackers';
   if (mode === 'kos') return 'K.O.s';
   if (mode === 'badges') return 'Badges';
   return 'Random';
 }
 
-function getTargetModeFromArrow(code: string): AutoTargetMode | null {
+function getTargetModeFromArrow(code: string): TargetMode | null {
   if (code === 'ArrowLeft') return 'random';
   if (code === 'ArrowUp') return 'kos';
   if (code === 'ArrowRight') return 'badges';
@@ -765,6 +763,7 @@ function MicroBoard({
       ref={boardRef}
       className={cls}
       onClick={clickable ? handleSelect : undefined}
+      onMouseDown={clickable ? (event) => event.preventDefault() : undefined}
       onKeyDown={clickable ? (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -772,7 +771,6 @@ function MicroBoard({
         }
       } : undefined}
       role={clickable ? 'button' : undefined}
-      tabIndex={clickable ? 0 : undefined}
       aria-pressed={clickable ? focused || targeted : undefined}
       aria-label={clickable ? `Select ${bot.name}` : undefined}
     >
@@ -936,6 +934,7 @@ export default function Tetris99GameProper() {
   const tSpinsRef = useRef(0);
   const incomingRef = useRef<GarbagePacket[]>([]);
   const playerTargetIdsRef = useRef<string[]>([]);
+  const autoTargetIdsRef = useRef<string[]>([]);
   const backToBackRef = useRef(false);
   const lastMoveRotationRef = useRef(false);
   const lastRotationKickRef = useRef<RotationKickInfo | null>(null);
@@ -949,7 +948,6 @@ export default function Tetris99GameProper() {
   const lastDirRef = useRef<'left' | 'right' | ''>('');
   const botsRef = useRef<BotState[]>([]);
   const targetModeRef = useRef<TargetMode>('attackers');
-  const autoTargetModeRef = useRef<AutoTargetMode>('attackers');
   const stateRef = useRef<MatchState>('countdown');
   const countdownRef = useRef(3);
   const battleStartedAtRef = useRef<number | null>(null);
@@ -1616,6 +1614,7 @@ export default function Tetris99GameProper() {
     incomingRef.current = [];
     garbageSparklePacketRef.current = null;
     playerTargetIdsRef.current = [];
+    autoTargetIdsRef.current = [];
     lastDamagedByRef.current = null;
     backToBackRef.current = false;
     lastMoveRotationRef.current = false;
@@ -1633,7 +1632,6 @@ export default function Tetris99GameProper() {
     playerAliveRef.current = true;
     eliminatedPlaceRef.current = null;
     manualTargetIdRef.current = null;
-    targetModeRef.current = autoTargetModeRef.current;
     spectatePinnedRef.current = false;
     victoryRef.current = false;
     winnerNameRef.current = null;
@@ -1695,6 +1693,7 @@ export default function Tetris99GameProper() {
     winnerNameRef.current = null;
     currentPieceRef.current = null;
     playerTargetIdsRef.current = [];
+    autoTargetIdsRef.current = [];
     incomingRef.current = [];
     spectatePinnedRef.current = false;
     setSpectateTargetId(getPreferredSpectateBotId(lastDamagedByRef.current));
@@ -1738,6 +1737,7 @@ export default function Tetris99GameProper() {
     }
     manualTargetIdRef.current = null;
     setManualTargetId(null);
+    autoTargetIdsRef.current = [];
     spectatePinnedRef.current = false;
     settingsOpenRef.current = false;
     setSettingsOpen(false);
@@ -1769,10 +1769,9 @@ export default function Tetris99GameProper() {
     return { applied: collected.due, toppedOut: overflowed };
   }
 
-  function setTargetMode(mode: AutoTargetMode) {
+  function setTargetMode(mode: TargetMode) {
     manualTargetIdRef.current = null;
     setManualTargetId(null);
-    autoTargetModeRef.current = mode;
     targetModeRef.current = mode;
     refreshPlayerTargets(mode === 'random');
     pushPlayerStateToServer();
@@ -1846,10 +1845,6 @@ export default function Tetris99GameProper() {
   }
 
   function resolveStableTargets(sourceId: string, mode: TargetMode, currentTargets: string[], playerTargets = new Set<string>()) {
-    if (mode === 'manual') {
-      const aliveCurrent = currentTargets.filter(id => (id === PLAYER_ID ? playerAliveRef.current : !!getBotById(id)?.alive));
-      return aliveCurrent.length ? aliveCurrent : chooseRandomTarget(getAliveOpponentIds(sourceId));
-    }
     if (mode === 'attackers') {
       const candidates = getAliveOpponentIds(sourceId);
       const attackers = getAttackerIds(sourceId, playerTargets).filter(id => candidates.includes(id));
@@ -1900,23 +1895,24 @@ export default function Tetris99GameProper() {
   function refreshPlayerTargets(forceRandomRetarget = false) {
     if (!playerAliveRef.current) {
       playerTargetIdsRef.current = [];
+      autoTargetIdsRef.current = [];
       return new Set<string>();
     }
+
+    const currentTargets = forceRandomRetarget ? [] : autoTargetIdsRef.current;
+    autoTargetIdsRef.current = resolveStableTargets(PLAYER_ID, targetModeRef.current, currentTargets);
+
     if (manualTargetIdRef.current) {
       const manualTargetBot = getBotById(manualTargetIdRef.current);
       if (manualTargetBot?.alive) {
-        targetModeRef.current = 'manual';
         playerTargetIdsRef.current = [manualTargetBot.id];
         return new Set(playerTargetIdsRef.current);
       }
       manualTargetIdRef.current = null;
       setManualTargetId(null);
-      targetModeRef.current = autoTargetModeRef.current;
     }
-    const effectiveMode = targetModeRef.current === 'manual' ? autoTargetModeRef.current : targetModeRef.current;
-    targetModeRef.current = effectiveMode;
-    const currentTargets = forceRandomRetarget ? [] : playerTargetIdsRef.current;
-    playerTargetIdsRef.current = resolveStableTargets(PLAYER_ID, effectiveMode, currentTargets);
+
+    playerTargetIdsRef.current = autoTargetIdsRef.current;
     return new Set(playerTargetIdsRef.current);
   }
 
@@ -1937,8 +1933,7 @@ export default function Tetris99GameProper() {
       if (manualTargetIdRef.current === bot.id) {
         manualTargetIdRef.current = null;
         setManualTargetId(null);
-        targetModeRef.current = autoTargetModeRef.current;
-        refreshPlayerTargets(autoTargetModeRef.current === 'random');
+        refreshPlayerTargets(targetModeRef.current === 'random');
         pushPlayerStateToServer();
         syncSnapshot('Auto targeting resumed');
         return;
@@ -1946,11 +1941,9 @@ export default function Tetris99GameProper() {
 
       manualTargetIdRef.current = bot.id;
       setManualTargetId(bot.id);
-      targetModeRef.current = 'manual';
       playerTargetIdsRef.current = [bot.id];
       pushPlayerStateToServer();
       playSfx('target');
-      showTargetModeNoticeForMode('manual');
       syncSnapshot(`${bot.name} targeted`);
       return;
     }
