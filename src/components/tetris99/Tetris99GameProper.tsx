@@ -1999,8 +1999,7 @@ export default function Tetris99GameProper() {
   }
 
   function sendAttack(lines: number) {
-    const targetIds = resolveStableTargets(PLAYER_ID, targetModeRef.current, playerTargetIdsRef.current);
-    playerTargetIdsRef.current = targetIds;
+    const targetIds = [...refreshPlayerTargets()];
     const attack = finalizeAttack(PLAYER_ID, targetModeRef.current, lines, targetIds, incomingRef.current);
     incomingRef.current = attack.nextQueue;
     syncGarbageSparkle(incomingRef.current);
