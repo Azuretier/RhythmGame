@@ -1368,6 +1368,14 @@ export default function Tetris99GameProper() {
 
   function pushPlayerStateToServer() {
     if (!matchServerRef.current || matchIdRef.current === 0) return;
+    const activeManualTargetId = manualTargetIdRef.current
+      && getBotById(manualTargetIdRef.current)?.alive
+      ? manualTargetIdRef.current
+      : null;
+    const targetIds = activeManualTargetId ? [activeManualTargetId] : [...playerTargetIdsRef.current];
+    if (activeManualTargetId) {
+      playerTargetIdsRef.current = targetIds;
+    }
     postMatchServerMessage({
       type: 'sync-player',
       matchId: matchIdRef.current,
@@ -1378,7 +1386,7 @@ export default function Tetris99GameProper() {
         badgePoints: badgePointsRef.current,
         badges: badgesRef.current,
         targetMode: targetModeRef.current,
-        targetIds: [...playerTargetIdsRef.current],
+        targetIds,
         marginBonus: getMarginTimeBonus(getBattleElapsedMs()),
       },
     });
@@ -1887,17 +1895,23 @@ export default function Tetris99GameProper() {
     return getBotById(sourceId)?.badges ?? 0;
   }
 
+  function getActiveManualTargetId() {
+    if (!manualTargetIdRef.current) return null;
+    const manualTargetBot = getBotById(manualTargetIdRef.current);
+    return manualTargetBot?.alive ? manualTargetBot.id : null;
+  }
+
   function refreshPlayerTargets(forceRandomRetarget = false) {
     if (!playerAliveRef.current) {
       playerTargetIdsRef.current = [];
       return new Set<string>();
     }
+    const activeManualTargetId = getActiveManualTargetId();
+    if (activeManualTargetId) {
+      playerTargetIdsRef.current = [activeManualTargetId];
+      return new Set(playerTargetIdsRef.current);
+    }
     if (manualTargetIdRef.current) {
-      const manualTargetBot = getBotById(manualTargetIdRef.current);
-      if (manualTargetBot?.alive) {
-        playerTargetIdsRef.current = [manualTargetBot.id];
-        return new Set(playerTargetIdsRef.current);
-      }
       manualTargetIdRef.current = null;
       setManualTargetId(null);
     }
@@ -2569,7 +2583,8 @@ export default function Tetris99GameProper() {
   }, [snapshot.state]);
 
   const targetedBots = useMemo(() => {
-    return new Set(playerTargetIdsRef.current);
+    const activeManualTargetId = manualTargetId && getBotById(manualTargetId)?.alive ? manualTargetId : null;
+    return new Set(activeManualTargetId ? [activeManualTargetId] : playerTargetIdsRef.current);
   }, [botRenderVersion, snapshot.targetMode, snapshot.place, snapshot.attackers, manualTargetId, snapshot.playerOut, snapshot.gameOver]);
 
   const spectateBot = useMemo(() => {
